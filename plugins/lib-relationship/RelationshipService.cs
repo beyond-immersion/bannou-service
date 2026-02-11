@@ -370,86 +370,84 @@ public partial class RelationshipService : IRelationshipService
         CreateRelationshipRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogDebug("Creating relationship between {Entity1Id} ({Entity1Type}) and {Entity2Id} ({Entity2Type}) with type {TypeId}",
+            body.Entity1Id, body.Entity1Type, body.Entity2Id, body.Entity2Type, body.RelationshipTypeId);
+
+        // Validate that entities are different
+        if (body.Entity1Id == body.Entity2Id && body.Entity1Type == body.Entity2Type)
         {
-            _logger.LogDebug("Creating relationship between {Entity1Id} ({Entity1Type}) and {Entity2Id} ({Entity2Type}) with type {TypeId}",
-                body.Entity1Id, body.Entity1Type, body.Entity2Id, body.Entity2Type, body.RelationshipTypeId);
-
-            // Validate that entities are different
-            if (body.Entity1Id == body.Entity2Id && body.Entity1Type == body.Entity2Type)
-            {
-                _logger.LogDebug("Cannot create relationship between an entity and itself");
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Build composite key for uniqueness check - normalize entity order for consistent key
-            var compositeKey = BuildCompositeKey(
-                body.Entity1Id, body.Entity1Type,
-                body.Entity2Id, body.Entity2Type,
-                body.RelationshipTypeId);
-
-            // Acquire distributed lock on composite key to prevent concurrent duplicate creation
-            await using var lockResponse = await _lockProvider.LockAsync(
-                StateStoreDefinitions.RelationshipLock,
-                compositeKey,
-                Guid.NewGuid().ToString(),
-                _configuration.LockTimeoutSeconds,
-                cancellationToken);
-
-            if (!lockResponse.Success)
-            {
-                _logger.LogWarning("Could not acquire lock for composite key during relationship creation");
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Check composite uniqueness under lock
-            var existingId = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Relationship)
-                .GetAsync(compositeKey, cancellationToken);
-
-            if (!string.IsNullOrEmpty(existingId))
-            {
-                _logger.LogDebug("Relationship already exists with composite key: {CompositeKey}", compositeKey);
-                return (StatusCodes.Conflict, null);
-            }
-
-            var relationshipId = Guid.NewGuid();
-            var now = DateTimeOffset.UtcNow;
-
-            var model = new RelationshipModel
-            {
-                RelationshipId = relationshipId,
-                Entity1Id = body.Entity1Id,
-                Entity1Type = body.Entity1Type,
-                Entity2Id = body.Entity2Id,
-                Entity2Type = body.Entity2Type,
-                RelationshipTypeId = body.RelationshipTypeId,
-                StartedAt = body.StartedAt,
-                Metadata = body.Metadata,
-                CreatedAt = now,
-                UpdatedAt = now
-            };
-
-            // Save the relationship
-            var relationshipKey = BuildRelationshipKey(relationshipId);
-            await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
-                .SaveAsync(relationshipKey, model, cancellationToken: cancellationToken);
-
-            // Update composite uniqueness index
-            await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Relationship)
-                .SaveAsync(compositeKey, relationshipId.ToString(), cancellationToken: cancellationToken);
-
-            // Update entity indices (both entities)
-            await AddToEntityIndexAsync(body.Entity1Type, body.Entity1Id, relationshipId, cancellationToken);
-            await AddToEntityIndexAsync(body.Entity2Type, body.Entity2Id, relationshipId, cancellationToken);
-
-            // Update type index
-            await AddToTypeIndexAsync(body.RelationshipTypeId, relationshipId, cancellationToken);
-
-            // Publish relationship created event
-            await PublishRelationshipCreatedEventAsync(model, cancellationToken);
-
-            _logger.LogInformation("Created relationship: {RelationshipId}", relationshipId);
-            return (StatusCodes.OK, MapToResponse(model));
+            _logger.LogDebug("Cannot create relationship between an entity and itself");
+            return (StatusCodes.BadRequest, null);
         }
+
+        // Build composite key for uniqueness check - normalize entity order for consistent key
+        var compositeKey = BuildCompositeKey(
+            body.Entity1Id, body.Entity1Type,
+            body.Entity2Id, body.Entity2Type,
+            body.RelationshipTypeId);
+
+        // Acquire distributed lock on composite key to prevent concurrent duplicate creation
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.RelationshipLock,
+            compositeKey,
+            Guid.NewGuid().ToString(),
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Could not acquire lock for composite key during relationship creation");
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Check composite uniqueness under lock
+        var existingId = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Relationship)
+            .GetAsync(compositeKey, cancellationToken);
+
+        if (!string.IsNullOrEmpty(existingId))
+        {
+            _logger.LogDebug("Relationship already exists with composite key: {CompositeKey}", compositeKey);
+            return (StatusCodes.Conflict, null);
+        }
+
+        var relationshipId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+
+        var model = new RelationshipModel
+        {
+            RelationshipId = relationshipId,
+            Entity1Id = body.Entity1Id,
+            Entity1Type = body.Entity1Type,
+            Entity2Id = body.Entity2Id,
+            Entity2Type = body.Entity2Type,
+            RelationshipTypeId = body.RelationshipTypeId,
+            StartedAt = body.StartedAt,
+            Metadata = body.Metadata,
+            CreatedAt = now,
+            UpdatedAt = now
+        };
+
+        // Save the relationship
+        var relationshipKey = BuildRelationshipKey(relationshipId);
+        await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
+            .SaveAsync(relationshipKey, model, cancellationToken: cancellationToken);
+
+        // Update composite uniqueness index
+        await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Relationship)
+            .SaveAsync(compositeKey, relationshipId.ToString(), cancellationToken: cancellationToken);
+
+        // Update entity indices (both entities)
+        await AddToEntityIndexAsync(body.Entity1Type, body.Entity1Id, relationshipId, cancellationToken);
+        await AddToEntityIndexAsync(body.Entity2Type, body.Entity2Id, relationshipId, cancellationToken);
+
+        // Update type index
+        await AddToTypeIndexAsync(body.RelationshipTypeId, relationshipId, cancellationToken);
+
+        // Publish relationship created event
+        await PublishRelationshipCreatedEventAsync(model, cancellationToken);
+
+        _logger.LogInformation("Created relationship: {RelationshipId}", relationshipId);
+        return (StatusCodes.OK, MapToResponse(model));
     }
 
     /// <summary>
@@ -462,84 +460,82 @@ public partial class RelationshipService : IRelationshipService
         UpdateRelationshipRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogDebug("Updating relationship: {RelationshipId}", body.RelationshipId);
+
+        // Acquire distributed lock on relationship ID to prevent concurrent updates
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.RelationshipLock,
+            body.RelationshipId.ToString(),
+            Guid.NewGuid().ToString(),
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
         {
-            _logger.LogDebug("Updating relationship: {RelationshipId}", body.RelationshipId);
-
-            // Acquire distributed lock on relationship ID to prevent concurrent updates
-            await using var lockResponse = await _lockProvider.LockAsync(
-                StateStoreDefinitions.RelationshipLock,
-                body.RelationshipId.ToString(),
-                Guid.NewGuid().ToString(),
-                _configuration.LockTimeoutSeconds,
-                cancellationToken);
-
-            if (!lockResponse.Success)
-            {
-                _logger.LogWarning("Could not acquire lock for relationship update {RelationshipId}", body.RelationshipId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            var relationshipKey = BuildRelationshipKey(body.RelationshipId);
-            var model = await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
-                .GetAsync(relationshipKey, cancellationToken);
-
-            if (model == null)
-            {
-                _logger.LogDebug("Relationship not found: {RelationshipId}", body.RelationshipId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Check if relationship has ended
-            if (model.EndedAt.HasValue)
-            {
-                _logger.LogDebug("Cannot update ended relationship: {RelationshipId}", body.RelationshipId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Track changed fields
-            var changedFields = new List<string>();
-            var needsSave = false;
-
-            // Handle relationship type migration (used for type merge operations)
-            if (body.RelationshipTypeId.HasValue && body.RelationshipTypeId.Value != model.RelationshipTypeId)
-            {
-                // Update type indexes: add to new first, then remove from old
-                // (add-then-remove makes crash window benign - temporarily in both indexes rather than orphaned)
-                await AddToTypeIndexAsync(body.RelationshipTypeId.Value, model.RelationshipId, cancellationToken);
-                await RemoveFromTypeIndexAsync(model.RelationshipTypeId, model.RelationshipId, cancellationToken);
-
-                changedFields.Add("relationshipTypeId");
-                model.RelationshipTypeId = body.RelationshipTypeId.Value;
-                needsSave = true;
-            }
-
-            // Handle metadata updates
-            if (body.Metadata != null)
-            {
-                changedFields.Add("metadata");
-                model.Metadata = body.Metadata;
-                needsSave = true;
-            }
-
-            if (needsSave)
-            {
-                model.UpdatedAt = DateTimeOffset.UtcNow;
-                await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
-                    .SaveAsync(relationshipKey, model, cancellationToken: cancellationToken);
-
-                // Publish relationship updated event
-                await PublishRelationshipUpdatedEventAsync(model, changedFields, cancellationToken);
-
-                _logger.LogInformation("Updated relationship: {RelationshipId}, ChangedFields: {ChangedFields}",
-                    body.RelationshipId, string.Join(", ", changedFields));
-            }
-            else
-            {
-                _logger.LogDebug("No changes to update for relationship: {RelationshipId}", body.RelationshipId);
-            }
-
-            return (StatusCodes.OK, MapToResponse(model));
+            _logger.LogWarning("Could not acquire lock for relationship update {RelationshipId}", body.RelationshipId);
+            return (StatusCodes.Conflict, null);
         }
+
+        var relationshipKey = BuildRelationshipKey(body.RelationshipId);
+        var model = await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
+            .GetAsync(relationshipKey, cancellationToken);
+
+        if (model == null)
+        {
+            _logger.LogDebug("Relationship not found: {RelationshipId}", body.RelationshipId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Check if relationship has ended
+        if (model.EndedAt.HasValue)
+        {
+            _logger.LogDebug("Cannot update ended relationship: {RelationshipId}", body.RelationshipId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Track changed fields
+        var changedFields = new List<string>();
+        var needsSave = false;
+
+        // Handle relationship type migration (used for type merge operations)
+        if (body.RelationshipTypeId.HasValue && body.RelationshipTypeId.Value != model.RelationshipTypeId)
+        {
+            // Update type indexes: add to new first, then remove from old
+            // (add-then-remove makes crash window benign - temporarily in both indexes rather than orphaned)
+            await AddToTypeIndexAsync(body.RelationshipTypeId.Value, model.RelationshipId, cancellationToken);
+            await RemoveFromTypeIndexAsync(model.RelationshipTypeId, model.RelationshipId, cancellationToken);
+
+            changedFields.Add("relationshipTypeId");
+            model.RelationshipTypeId = body.RelationshipTypeId.Value;
+            needsSave = true;
+        }
+
+        // Handle metadata updates
+        if (body.Metadata != null)
+        {
+            changedFields.Add("metadata");
+            model.Metadata = body.Metadata;
+            needsSave = true;
+        }
+
+        if (needsSave)
+        {
+            model.UpdatedAt = DateTimeOffset.UtcNow;
+            await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
+                .SaveAsync(relationshipKey, model, cancellationToken: cancellationToken);
+
+            // Publish relationship updated event
+            await PublishRelationshipUpdatedEventAsync(model, changedFields, cancellationToken);
+
+            _logger.LogInformation("Updated relationship: {RelationshipId}, ChangedFields: {ChangedFields}",
+                body.RelationshipId, string.Join(", ", changedFields));
+        }
+        else
+        {
+            _logger.LogDebug("No changes to update for relationship: {RelationshipId}", body.RelationshipId);
+        }
+
+        return (StatusCodes.OK, MapToResponse(model));
     }
 
     /// <summary>
@@ -554,61 +550,59 @@ public partial class RelationshipService : IRelationshipService
         EndRelationshipRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogDebug("Ending relationship: {RelationshipId}", body.RelationshipId);
+
+        // Acquire distributed lock on relationship ID to prevent concurrent end/update races
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.RelationshipLock,
+            body.RelationshipId.ToString(),
+            Guid.NewGuid().ToString(),
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
         {
-            _logger.LogDebug("Ending relationship: {RelationshipId}", body.RelationshipId);
-
-            // Acquire distributed lock on relationship ID to prevent concurrent end/update races
-            await using var lockResponse = await _lockProvider.LockAsync(
-                StateStoreDefinitions.RelationshipLock,
-                body.RelationshipId.ToString(),
-                Guid.NewGuid().ToString(),
-                _configuration.LockTimeoutSeconds,
-                cancellationToken);
-
-            if (!lockResponse.Success)
-            {
-                _logger.LogWarning("Could not acquire lock for ending relationship {RelationshipId}", body.RelationshipId);
-                return StatusCodes.Conflict;
-            }
-
-            var relationshipKey = BuildRelationshipKey(body.RelationshipId);
-            var model = await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
-                .GetAsync(relationshipKey, cancellationToken);
-
-            if (model == null)
-            {
-                _logger.LogDebug("Relationship not found: {RelationshipId}", body.RelationshipId);
-                return StatusCodes.NotFound;
-            }
-
-            // Check if already ended
-            if (model.EndedAt.HasValue)
-            {
-                _logger.LogDebug("Relationship already ended: {RelationshipId}", body.RelationshipId);
-                return StatusCodes.Conflict;
-            }
-
-            // Set ended timestamp (use current time if not specified or default)
-            model.EndedAt = body.EndedAt == default ? DateTimeOffset.UtcNow : body.EndedAt;
-            model.UpdatedAt = DateTimeOffset.UtcNow;
-
-            await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
-                .SaveAsync(relationshipKey, model, cancellationToken: cancellationToken);
-
-            // Clear composite uniqueness key to allow new relationships
-            var compositeKey = BuildCompositeKey(
-                model.Entity1Id, model.Entity1Type,
-                model.Entity2Id, model.Entity2Type,
-                model.RelationshipTypeId);
-            await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Relationship)
-                .DeleteAsync(compositeKey, cancellationToken);
-
-            // Publish relationship deleted/ended event
-            await PublishRelationshipDeletedEventAsync(model, body.Reason ?? "Relationship ended", cancellationToken);
-
-            _logger.LogInformation("Ended relationship: {RelationshipId}", body.RelationshipId);
-            return StatusCodes.OK;
+            _logger.LogWarning("Could not acquire lock for ending relationship {RelationshipId}", body.RelationshipId);
+            return StatusCodes.Conflict;
         }
+
+        var relationshipKey = BuildRelationshipKey(body.RelationshipId);
+        var model = await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
+            .GetAsync(relationshipKey, cancellationToken);
+
+        if (model == null)
+        {
+            _logger.LogDebug("Relationship not found: {RelationshipId}", body.RelationshipId);
+            return StatusCodes.NotFound;
+        }
+
+        // Check if already ended
+        if (model.EndedAt.HasValue)
+        {
+            _logger.LogDebug("Relationship already ended: {RelationshipId}", body.RelationshipId);
+            return StatusCodes.Conflict;
+        }
+
+        // Set ended timestamp (use current time if not specified or default)
+        model.EndedAt = body.EndedAt == default ? DateTimeOffset.UtcNow : body.EndedAt;
+        model.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship)
+            .SaveAsync(relationshipKey, model, cancellationToken: cancellationToken);
+
+        // Clear composite uniqueness key to allow new relationships
+        var compositeKey = BuildCompositeKey(
+            model.Entity1Id, model.Entity1Type,
+            model.Entity2Id, model.Entity2Type,
+            model.RelationshipTypeId);
+        await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Relationship)
+            .DeleteAsync(compositeKey, cancellationToken);
+
+        // Publish relationship deleted/ended event
+        await PublishRelationshipDeletedEventAsync(model, body.Reason ?? "Relationship ended", cancellationToken);
+
+        _logger.LogInformation("Ended relationship: {RelationshipId}", body.RelationshipId);
+        return StatusCodes.OK;
     }
 
     #endregion
@@ -627,105 +621,103 @@ public partial class RelationshipService : IRelationshipService
         CleanupByEntityRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogInformation(
+            "Starting cleanup of relationships for deleted entity {EntityId} ({EntityType})",
+            body.EntityId, body.EntityType);
+
+        var entityIndexKey = BuildEntityIndexKey(body.EntityType, body.EntityId);
+        var store = _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship);
+        var relationshipIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Relationship)
+            .GetAsync(entityIndexKey, cancellationToken) ?? new List<Guid>();
+
+        if (relationshipIds.Count == 0)
         {
-            _logger.LogInformation(
-                "Starting cleanup of relationships for deleted entity {EntityId} ({EntityType})",
-                body.EntityId, body.EntityType);
-
-            var entityIndexKey = BuildEntityIndexKey(body.EntityType, body.EntityId);
-            var store = _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship);
-            var relationshipIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Relationship)
-                .GetAsync(entityIndexKey, cancellationToken) ?? new List<Guid>();
-
-            if (relationshipIds.Count == 0)
-            {
-                _logger.LogDebug("No relationships found for entity {EntityId} ({EntityType})", body.EntityId, body.EntityType);
-                return (StatusCodes.OK, new CleanupByEntityResponse
-                {
-                    RelationshipsEnded = 0,
-                    AlreadyEnded = 0,
-                    Success = true
-                });
-            }
-
-            var keys = relationshipIds.Select(BuildRelationshipKey).ToList();
-            var bulkResults = await store.GetBulkAsync(keys, cancellationToken);
-
-            var endedCount = 0;
-            var alreadyEndedCount = 0;
-            var now = DateTimeOffset.UtcNow;
-
-            foreach (var (key, model) in bulkResults)
-            {
-                if (model == null)
-                {
-                    _logger.LogWarning("Relationship {Key} in entity index but not found in store during cleanup", key);
-                    continue;
-                }
-
-                // Skip already-ended relationships (pre-lock check to avoid unnecessary lock acquisition)
-                if (model.EndedAt.HasValue)
-                {
-                    alreadyEndedCount++;
-                    continue;
-                }
-
-                // Acquire distributed lock per relationship to prevent race conditions with
-                // concurrent EndRelationship/UpdateRelationship calls (per IMPLEMENTATION TENETS)
-                await using var lockResponse = await _lockProvider.LockAsync(
-                    StateStoreDefinitions.RelationshipLock,
-                    model.RelationshipId.ToString(),
-                    Guid.NewGuid().ToString(),
-                    _configuration.LockTimeoutSeconds,
-                    cancellationToken);
-
-                if (!lockResponse.Success)
-                {
-                    _logger.LogWarning("Could not acquire lock for relationship {RelationshipId} during cleanup", model.RelationshipId);
-                    continue;
-                }
-
-                // Re-fetch after lock acquisition to ensure we have latest state
-                var relationshipKey = BuildRelationshipKey(model.RelationshipId);
-                var latestModel = await store.GetAsync(relationshipKey, cancellationToken);
-
-                if (latestModel == null || latestModel.EndedAt.HasValue)
-                {
-                    alreadyEndedCount++;
-                    continue;
-                }
-
-                // End the relationship (soft-delete)
-                latestModel.EndedAt = now;
-                latestModel.UpdatedAt = now;
-
-                await store.SaveAsync(relationshipKey, latestModel, cancellationToken: cancellationToken);
-
-                // Clear composite uniqueness key to allow future recreation
-                var compositeKey = BuildCompositeKey(
-                    latestModel.Entity1Id, latestModel.Entity1Type,
-                    latestModel.Entity2Id, latestModel.Entity2Type,
-                    latestModel.RelationshipTypeId);
-                await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Relationship)
-                    .DeleteAsync(compositeKey, cancellationToken);
-
-                // Publish deletion event for each ended relationship
-                await PublishRelationshipDeletedEventAsync(latestModel, "Entity deleted (cascade cleanup)", cancellationToken);
-
-                endedCount++;
-            }
-
-            _logger.LogInformation(
-                "Cleanup complete for entity {EntityId} ({EntityType}): ended {EndedCount}, already ended {AlreadyEndedCount}",
-                body.EntityId, body.EntityType, endedCount, alreadyEndedCount);
-
+            _logger.LogDebug("No relationships found for entity {EntityId} ({EntityType})", body.EntityId, body.EntityType);
             return (StatusCodes.OK, new CleanupByEntityResponse
             {
-                RelationshipsEnded = endedCount,
-                AlreadyEnded = alreadyEndedCount,
+                RelationshipsEnded = 0,
+                AlreadyEnded = 0,
                 Success = true
             });
         }
+
+        var keys = relationshipIds.Select(BuildRelationshipKey).ToList();
+        var bulkResults = await store.GetBulkAsync(keys, cancellationToken);
+
+        var endedCount = 0;
+        var alreadyEndedCount = 0;
+        var now = DateTimeOffset.UtcNow;
+
+        foreach (var (key, model) in bulkResults)
+        {
+            if (model == null)
+            {
+                _logger.LogWarning("Relationship {Key} in entity index but not found in store during cleanup", key);
+                continue;
+            }
+
+            // Skip already-ended relationships (pre-lock check to avoid unnecessary lock acquisition)
+            if (model.EndedAt.HasValue)
+            {
+                alreadyEndedCount++;
+                continue;
+            }
+
+            // Acquire distributed lock per relationship to prevent race conditions with
+            // concurrent EndRelationship/UpdateRelationship calls (per IMPLEMENTATION TENETS)
+            await using var lockResponse = await _lockProvider.LockAsync(
+                StateStoreDefinitions.RelationshipLock,
+                model.RelationshipId.ToString(),
+                Guid.NewGuid().ToString(),
+                _configuration.LockTimeoutSeconds,
+                cancellationToken);
+
+            if (!lockResponse.Success)
+            {
+                _logger.LogWarning("Could not acquire lock for relationship {RelationshipId} during cleanup", model.RelationshipId);
+                continue;
+            }
+
+            // Re-fetch after lock acquisition to ensure we have latest state
+            var relationshipKey = BuildRelationshipKey(model.RelationshipId);
+            var latestModel = await store.GetAsync(relationshipKey, cancellationToken);
+
+            if (latestModel == null || latestModel.EndedAt.HasValue)
+            {
+                alreadyEndedCount++;
+                continue;
+            }
+
+            // End the relationship (soft-delete)
+            latestModel.EndedAt = now;
+            latestModel.UpdatedAt = now;
+
+            await store.SaveAsync(relationshipKey, latestModel, cancellationToken: cancellationToken);
+
+            // Clear composite uniqueness key to allow future recreation
+            var compositeKey = BuildCompositeKey(
+                latestModel.Entity1Id, latestModel.Entity1Type,
+                latestModel.Entity2Id, latestModel.Entity2Type,
+                latestModel.RelationshipTypeId);
+            await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Relationship)
+                .DeleteAsync(compositeKey, cancellationToken);
+
+            // Publish deletion event for each ended relationship
+            await PublishRelationshipDeletedEventAsync(latestModel, "Entity deleted (cascade cleanup)", cancellationToken);
+
+            endedCount++;
+        }
+
+        _logger.LogInformation(
+            "Cleanup complete for entity {EntityId} ({EntityType}): ended {EndedCount}, already ended {AlreadyEndedCount}",
+            body.EntityId, body.EntityType, endedCount, alreadyEndedCount);
+
+        return (StatusCodes.OK, new CleanupByEntityResponse
+        {
+            RelationshipsEnded = endedCount,
+            AlreadyEnded = alreadyEndedCount,
+            Success = true
+        });
     }
 
     #endregion
@@ -743,22 +735,20 @@ public partial class RelationshipService : IRelationshipService
         GetRelationshipTypeRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogDebug("Getting relationship type by ID: {TypeId}", body.RelationshipTypeId);
+
+        var typeKey = BuildRtTypeKey(body.RelationshipTypeId);
+        var model = await _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType)
+            .GetAsync(typeKey, cancellationToken);
+
+        if (model == null)
         {
-            _logger.LogDebug("Getting relationship type by ID: {TypeId}", body.RelationshipTypeId);
-
-            var typeKey = BuildRtTypeKey(body.RelationshipTypeId);
-            var model = await _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType)
-                .GetAsync(typeKey, cancellationToken);
-
-            if (model == null)
-            {
-                _logger.LogDebug("Relationship type not found: {TypeId}", body.RelationshipTypeId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            var response = MapToTypeResponse(model);
-            return (StatusCodes.OK, response);
+            _logger.LogDebug("Relationship type not found: {TypeId}", body.RelationshipTypeId);
+            return (StatusCodes.NotFound, null);
         }
+
+        var response = MapToTypeResponse(model);
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -768,32 +758,30 @@ public partial class RelationshipService : IRelationshipService
         GetRelationshipTypeByCodeRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogDebug("Getting relationship type by code: {Code}", body.Code);
+
+        var codeIndexKey = BuildRtCodeIndexKey(body.Code.ToUpperInvariant());
+        var typeIdStr = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.RelationshipType)
+            .GetAsync(codeIndexKey, cancellationToken);
+
+        if (string.IsNullOrEmpty(typeIdStr) || !Guid.TryParse(typeIdStr, out var typeId))
         {
-            _logger.LogDebug("Getting relationship type by code: {Code}", body.Code);
-
-            var codeIndexKey = BuildRtCodeIndexKey(body.Code.ToUpperInvariant());
-            var typeIdStr = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.RelationshipType)
-                .GetAsync(codeIndexKey, cancellationToken);
-
-            if (string.IsNullOrEmpty(typeIdStr) || !Guid.TryParse(typeIdStr, out var typeId))
-            {
-                _logger.LogDebug("Relationship type not found for code: {Code}", body.Code);
-                return (StatusCodes.NotFound, null);
-            }
-
-            var typeKey = BuildRtTypeKey(typeId);
-            var model = await _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType)
-                .GetAsync(typeKey, cancellationToken);
-
-            if (model == null)
-            {
-                _logger.LogDebug("Relationship type not found: {TypeId}", typeId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            var response = MapToTypeResponse(model);
-            return (StatusCodes.OK, response);
+            _logger.LogDebug("Relationship type not found for code: {Code}", body.Code);
+            return (StatusCodes.NotFound, null);
         }
+
+        var typeKey = BuildRtTypeKey(typeId);
+        var model = await _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType)
+            .GetAsync(typeKey, cancellationToken);
+
+        if (model == null)
+        {
+            _logger.LogDebug("Relationship type not found: {TypeId}", typeId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        var response = MapToTypeResponse(model);
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -803,61 +791,59 @@ public partial class RelationshipService : IRelationshipService
         ListRelationshipTypesRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogDebug("Listing relationship types");
+
+        var allTypeIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.RelationshipType)
+            .GetAsync(RT_ALL_TYPES_KEY, cancellationToken) ?? new List<Guid>();
+
+        if (allTypeIds.Count == 0)
         {
-            _logger.LogDebug("Listing relationship types");
-
-            var allTypeIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.RelationshipType)
-                .GetAsync(RT_ALL_TYPES_KEY, cancellationToken) ?? new List<Guid>();
-
-            if (allTypeIds.Count == 0)
-            {
-                return (StatusCodes.OK, new RelationshipTypeListResponse
-                {
-                    Types = new List<RelationshipTypeResponse>(),
-                    TotalCount = 0
-                });
-            }
-
-            // Bulk load all types
-            var keys = allTypeIds.Select(BuildRtTypeKey).ToList();
-            var bulkResults = await _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType)
-                .GetBulkAsync(keys, cancellationToken);
-
-            var types = new List<RelationshipTypeModel>();
-            foreach (var (_, model) in bulkResults)
-            {
-                if (model != null) types.Add(model);
-            }
-
-            // Apply filters
-            var filtered = types.AsEnumerable();
-
-            // Filter out deprecated types by default
-            if (body.IncludeDeprecated != true)
-            {
-                filtered = filtered.Where(t => !t.IsDeprecated);
-            }
-
-            if (!string.IsNullOrEmpty(body.Category))
-            {
-                filtered = filtered.Where(t =>
-                    string.Equals(t.Category, body.Category, StringComparison.OrdinalIgnoreCase));
-            }
-
-            if (body.RootsOnly == true)
-            {
-                filtered = filtered.Where(t => !t.ParentTypeId.HasValue);
-            }
-
-            var typesList = filtered.ToList();
-            var responses = typesList.Select(MapToTypeResponse).ToList();
-
             return (StatusCodes.OK, new RelationshipTypeListResponse
             {
-                Types = responses,
-                TotalCount = responses.Count
+                Types = new List<RelationshipTypeResponse>(),
+                TotalCount = 0
             });
         }
+
+        // Bulk load all types
+        var keys = allTypeIds.Select(BuildRtTypeKey).ToList();
+        var bulkResults = await _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType)
+            .GetBulkAsync(keys, cancellationToken);
+
+        var types = new List<RelationshipTypeModel>();
+        foreach (var (_, model) in bulkResults)
+        {
+            if (model != null) types.Add(model);
+        }
+
+        // Apply filters
+        var filtered = types.AsEnumerable();
+
+        // Filter out deprecated types by default
+        if (body.IncludeDeprecated != true)
+        {
+            filtered = filtered.Where(t => !t.IsDeprecated);
+        }
+
+        if (!string.IsNullOrEmpty(body.Category))
+        {
+            filtered = filtered.Where(t =>
+                string.Equals(t.Category, body.Category, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (body.RootsOnly == true)
+        {
+            filtered = filtered.Where(t => !t.ParentTypeId.HasValue);
+        }
+
+        var typesList = filtered.ToList();
+        var responses = typesList.Select(MapToTypeResponse).ToList();
+
+        return (StatusCodes.OK, new RelationshipTypeListResponse
+        {
+            Types = responses,
+            TotalCount = responses.Count
+        });
     }
 
     /// <summary>
@@ -867,50 +853,48 @@ public partial class RelationshipService : IRelationshipService
         GetChildRelationshipTypesRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogDebug("Getting child types for parent: {ParentId}", body.ParentTypeId);
+
+        // Verify parent exists
+        var parentKey = BuildRtTypeKey(body.ParentTypeId);
+        var parent = await _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType)
+            .GetAsync(parentKey, cancellationToken);
+
+        if (parent == null)
         {
-            _logger.LogDebug("Getting child types for parent: {ParentId}", body.ParentTypeId);
+            return (StatusCodes.NotFound, null);
+        }
 
-            // Verify parent exists
-            var parentKey = BuildRtTypeKey(body.ParentTypeId);
-            var parent = await _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType)
-                .GetAsync(parentKey, cancellationToken);
+        var childIds = await GetChildTypeIdsAsync(body.ParentTypeId, body.Recursive == true, cancellationToken);
 
-            if (parent == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            var childIds = await GetChildTypeIdsAsync(body.ParentTypeId, body.Recursive == true, cancellationToken);
-
-            if (childIds.Count == 0)
-            {
-                return (StatusCodes.OK, new RelationshipTypeListResponse
-                {
-                    Types = new List<RelationshipTypeResponse>(),
-                    TotalCount = 0
-                });
-            }
-
-            // Bulk load children
-            var keys = childIds.Select(BuildRtTypeKey).ToList();
-            var bulkResults = await _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType)
-                .GetBulkAsync(keys, cancellationToken);
-
-            var responses = new List<RelationshipTypeResponse>();
-            foreach (var (_, model) in bulkResults)
-            {
-                if (model != null)
-                {
-                    responses.Add(MapToTypeResponse(model));
-                }
-            }
-
+        if (childIds.Count == 0)
+        {
             return (StatusCodes.OK, new RelationshipTypeListResponse
             {
-                Types = responses,
-                TotalCount = responses.Count
+                Types = new List<RelationshipTypeResponse>(),
+                TotalCount = 0
             });
         }
+
+        // Bulk load children
+        var keys = childIds.Select(BuildRtTypeKey).ToList();
+        var bulkResults = await _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType)
+            .GetBulkAsync(keys, cancellationToken);
+
+        var responses = new List<RelationshipTypeResponse>();
+        foreach (var (_, model) in bulkResults)
+        {
+            if (model != null)
+            {
+                responses.Add(MapToTypeResponse(model));
+            }
+        }
+
+        return (StatusCodes.OK, new RelationshipTypeListResponse
+        {
+            Types = responses,
+            TotalCount = responses.Count
+        });
     }
 
     /// <summary>
@@ -920,66 +904,64 @@ public partial class RelationshipService : IRelationshipService
         MatchesHierarchyRequest body,
         CancellationToken cancellationToken = default)
     {
-        {
-            _logger.LogDebug("Checking hierarchy match: {TypeId} -> {AncestorId}",
-                body.TypeId, body.AncestorTypeId);
+        _logger.LogDebug("Checking hierarchy match: {TypeId} -> {AncestorId}",
+            body.TypeId, body.AncestorTypeId);
 
-            // If they're the same, it's a match with depth 0
-            if (body.TypeId == body.AncestorTypeId)
+        // If they're the same, it's a match with depth 0
+        if (body.TypeId == body.AncestorTypeId)
+        {
+            return (StatusCodes.OK, new MatchesHierarchyResponse
+            {
+                Matches = true,
+                Depth = 0
+            });
+        }
+
+        // Get the type and traverse up the hierarchy
+        var typeKey = BuildRtTypeKey(body.TypeId);
+        var store = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
+        var currentType = await store.GetAsync(typeKey, cancellationToken);
+
+        if (currentType == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Verify ancestor exists
+        var ancestorKey = BuildRtTypeKey(body.AncestorTypeId);
+        var ancestor = await store.GetAsync(ancestorKey, cancellationToken);
+
+        if (ancestor == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        var depth = 0;
+        var currentParentId = currentType.ParentTypeId;
+
+        while (currentParentId.HasValue && depth < _configuration.MaxHierarchyDepth)
+        {
+            depth++;
+            if (currentParentId.Value == body.AncestorTypeId)
             {
                 return (StatusCodes.OK, new MatchesHierarchyResponse
                 {
                     Matches = true,
-                    Depth = 0
+                    Depth = depth
                 });
             }
 
-            // Get the type and traverse up the hierarchy
-            var typeKey = BuildRtTypeKey(body.TypeId);
-            var store = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
-            var currentType = await store.GetAsync(typeKey, cancellationToken);
+            var parentKey = BuildRtTypeKey(currentParentId.Value);
+            var parentType = await store.GetAsync(parentKey, cancellationToken);
 
-            if (currentType == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Verify ancestor exists
-            var ancestorKey = BuildRtTypeKey(body.AncestorTypeId);
-            var ancestor = await store.GetAsync(ancestorKey, cancellationToken);
-
-            if (ancestor == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            var depth = 0;
-            var currentParentId = currentType.ParentTypeId;
-
-            while (currentParentId.HasValue && depth < _configuration.MaxHierarchyDepth)
-            {
-                depth++;
-                if (currentParentId.Value == body.AncestorTypeId)
-                {
-                    return (StatusCodes.OK, new MatchesHierarchyResponse
-                    {
-                        Matches = true,
-                        Depth = depth
-                    });
-                }
-
-                var parentKey = BuildRtTypeKey(currentParentId.Value);
-                var parentType = await store.GetAsync(parentKey, cancellationToken);
-
-                currentParentId = parentType?.ParentTypeId;
-            }
-
-            return (StatusCodes.OK, new MatchesHierarchyResponse
-            {
-                Matches = false,
-                Depth = -1
-            });
+            currentParentId = parentType?.ParentTypeId;
         }
+
+        return (StatusCodes.OK, new MatchesHierarchyResponse
+        {
+            Matches = false,
+            Depth = -1
+        });
     }
 
     /// <summary>
@@ -989,40 +971,38 @@ public partial class RelationshipService : IRelationshipService
         GetAncestorsRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogDebug("Getting ancestors for type: {TypeId}", body.TypeId);
+
+        var typeKey = BuildRtTypeKey(body.TypeId);
+        var store = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
+        var currentType = await store.GetAsync(typeKey, cancellationToken);
+
+        if (currentType == null)
         {
-            _logger.LogDebug("Getting ancestors for type: {TypeId}", body.TypeId);
-
-            var typeKey = BuildRtTypeKey(body.TypeId);
-            var store = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
-            var currentType = await store.GetAsync(typeKey, cancellationToken);
-
-            if (currentType == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            var ancestors = new List<RelationshipTypeResponse>();
-            var currentParentId = currentType.ParentTypeId;
-            var iterations = 0;
-
-            while (currentParentId.HasValue && iterations < _configuration.MaxHierarchyDepth)
-            {
-                iterations++;
-                var parentKey = BuildRtTypeKey(currentParentId.Value);
-                var parentType = await store.GetAsync(parentKey, cancellationToken);
-
-                if (parentType == null) break;
-
-                ancestors.Add(MapToTypeResponse(parentType));
-                currentParentId = parentType.ParentTypeId;
-            }
-
-            return (StatusCodes.OK, new RelationshipTypeListResponse
-            {
-                Types = ancestors,
-                TotalCount = ancestors.Count
-            });
+            return (StatusCodes.NotFound, null);
         }
+
+        var ancestors = new List<RelationshipTypeResponse>();
+        var currentParentId = currentType.ParentTypeId;
+        var iterations = 0;
+
+        while (currentParentId.HasValue && iterations < _configuration.MaxHierarchyDepth)
+        {
+            iterations++;
+            var parentKey = BuildRtTypeKey(currentParentId.Value);
+            var parentType = await store.GetAsync(parentKey, cancellationToken);
+
+            if (parentType == null) break;
+
+            ancestors.Add(MapToTypeResponse(parentType));
+            currentParentId = parentType.ParentTypeId;
+        }
+
+        return (StatusCodes.OK, new RelationshipTypeListResponse
+        {
+            Types = ancestors,
+            TotalCount = ancestors.Count
+        });
     }
 
     #endregion
@@ -1036,108 +1016,106 @@ public partial class RelationshipService : IRelationshipService
         CreateRelationshipTypeRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogDebug("Creating relationship type: {Code}", body.Code);
+
+        var code = body.Code.ToUpperInvariant();
+        var codeIndexKey = BuildRtCodeIndexKey(code);
+
+        // Acquire distributed lock on code to prevent concurrent duplicate creation
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.RelationshipLock,
+            codeIndexKey,
+            Guid.NewGuid().ToString(),
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
         {
-            _logger.LogDebug("Creating relationship type: {Code}", body.Code);
-
-            var code = body.Code.ToUpperInvariant();
-            var codeIndexKey = BuildRtCodeIndexKey(code);
-
-            // Acquire distributed lock on code to prevent concurrent duplicate creation
-            await using var lockResponse = await _lockProvider.LockAsync(
-                StateStoreDefinitions.RelationshipLock,
-                codeIndexKey,
-                Guid.NewGuid().ToString(),
-                _configuration.LockTimeoutSeconds,
-                cancellationToken);
-
-            if (!lockResponse.Success)
-            {
-                _logger.LogWarning("Could not acquire lock for relationship type creation with code {Code}", code);
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Check if code already exists under lock
-            var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.RelationshipType);
-            var existingIdStr = await stringStore.GetAsync(codeIndexKey, cancellationToken);
-
-            if (!string.IsNullOrEmpty(existingIdStr))
-            {
-                _logger.LogDebug("Relationship type with code already exists: {Code}", code);
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Validate parent if specified
-            string? parentTypeCode = null;
-            var depth = 0;
-            var modelStore = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
-            if (body.ParentTypeId.HasValue)
-            {
-                var parentKey = BuildRtTypeKey(body.ParentTypeId.Value);
-                var parent = await modelStore.GetAsync(parentKey, cancellationToken);
-
-                if (parent == null)
-                {
-                    _logger.LogDebug("Parent type not found: {ParentId}", body.ParentTypeId);
-                    return (StatusCodes.BadRequest, null);
-                }
-                parentTypeCode = parent.Code;
-                depth = parent.Depth + 1;
-            }
-
-            // Resolve inverse type if specified by code
-            Guid? inverseTypeId = null;
-            if (!string.IsNullOrEmpty(body.InverseTypeCode))
-            {
-                var inverseIndexKey = BuildRtCodeIndexKey(body.InverseTypeCode.ToUpperInvariant());
-                var resolvedInverseIdStr = await stringStore.GetAsync(inverseIndexKey, cancellationToken);
-                if (!string.IsNullOrEmpty(resolvedInverseIdStr) && Guid.TryParse(resolvedInverseIdStr, out var resolvedInverseId))
-                {
-                    inverseTypeId = resolvedInverseId;
-                }
-            }
-
-            var typeId = Guid.NewGuid();
-            var now = DateTimeOffset.UtcNow;
-
-            var model = new RelationshipTypeModel
-            {
-                RelationshipTypeId = typeId,
-                Code = code,
-                Name = body.Name,
-                Description = body.Description,
-                Category = body.Category,
-                ParentTypeId = body.ParentTypeId,
-                ParentTypeCode = parentTypeCode,
-                InverseTypeId = inverseTypeId,
-                InverseTypeCode = body.InverseTypeCode,
-                IsBidirectional = body.IsBidirectional,
-                Depth = depth,
-                Metadata = body.Metadata,
-                CreatedAt = now,
-                UpdatedAt = now
-            };
-
-            // Save the model
-            var typeKey = BuildRtTypeKey(typeId);
-            await modelStore.SaveAsync(typeKey, model, cancellationToken: cancellationToken);
-
-            // Update code index (store typeId as string since state store requires reference type)
-            await stringStore.SaveAsync(codeIndexKey, typeId.ToString(), cancellationToken: cancellationToken);
-
-            // Update parent's children index
-            if (body.ParentTypeId.HasValue)
-            {
-                await AddToRtParentIndexAsync(body.ParentTypeId.Value, typeId, cancellationToken);
-            }
-
-            // Update all types list
-            await AddToRtAllTypesListAsync(typeId, cancellationToken);
-
-            await PublishRelationshipTypeCreatedEventAsync(model, cancellationToken);
-
-            var response = MapToTypeResponse(model);
-            return (StatusCodes.OK, response);
+            _logger.LogWarning("Could not acquire lock for relationship type creation with code {Code}", code);
+            return (StatusCodes.Conflict, null);
         }
+
+        // Check if code already exists under lock
+        var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.RelationshipType);
+        var existingIdStr = await stringStore.GetAsync(codeIndexKey, cancellationToken);
+
+        if (!string.IsNullOrEmpty(existingIdStr))
+        {
+            _logger.LogDebug("Relationship type with code already exists: {Code}", code);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Validate parent if specified
+        string? parentTypeCode = null;
+        var depth = 0;
+        var modelStore = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
+        if (body.ParentTypeId.HasValue)
+        {
+            var parentKey = BuildRtTypeKey(body.ParentTypeId.Value);
+            var parent = await modelStore.GetAsync(parentKey, cancellationToken);
+
+            if (parent == null)
+            {
+                _logger.LogDebug("Parent type not found: {ParentId}", body.ParentTypeId);
+                return (StatusCodes.BadRequest, null);
+            }
+            parentTypeCode = parent.Code;
+            depth = parent.Depth + 1;
+        }
+
+        // Resolve inverse type if specified by code
+        Guid? inverseTypeId = null;
+        if (!string.IsNullOrEmpty(body.InverseTypeCode))
+        {
+            var inverseIndexKey = BuildRtCodeIndexKey(body.InverseTypeCode.ToUpperInvariant());
+            var resolvedInverseIdStr = await stringStore.GetAsync(inverseIndexKey, cancellationToken);
+            if (!string.IsNullOrEmpty(resolvedInverseIdStr) && Guid.TryParse(resolvedInverseIdStr, out var resolvedInverseId))
+            {
+                inverseTypeId = resolvedInverseId;
+            }
+        }
+
+        var typeId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+
+        var model = new RelationshipTypeModel
+        {
+            RelationshipTypeId = typeId,
+            Code = code,
+            Name = body.Name,
+            Description = body.Description,
+            Category = body.Category,
+            ParentTypeId = body.ParentTypeId,
+            ParentTypeCode = parentTypeCode,
+            InverseTypeId = inverseTypeId,
+            InverseTypeCode = body.InverseTypeCode,
+            IsBidirectional = body.IsBidirectional,
+            Depth = depth,
+            Metadata = body.Metadata,
+            CreatedAt = now,
+            UpdatedAt = now
+        };
+
+        // Save the model
+        var typeKey = BuildRtTypeKey(typeId);
+        await modelStore.SaveAsync(typeKey, model, cancellationToken: cancellationToken);
+
+        // Update code index (store typeId as string since state store requires reference type)
+        await stringStore.SaveAsync(codeIndexKey, typeId.ToString(), cancellationToken: cancellationToken);
+
+        // Update parent's children index
+        if (body.ParentTypeId.HasValue)
+        {
+            await AddToRtParentIndexAsync(body.ParentTypeId.Value, typeId, cancellationToken);
+        }
+
+        // Update all types list
+        await AddToRtAllTypesListAsync(typeId, cancellationToken);
+
+        await PublishRelationshipTypeCreatedEventAsync(model, cancellationToken);
+
+        var response = MapToTypeResponse(model);
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -1147,132 +1125,130 @@ public partial class RelationshipService : IRelationshipService
         UpdateRelationshipTypeRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogDebug("Updating relationship type: {TypeId}", body.RelationshipTypeId);
+
+        // Acquire distributed lock on type ID to prevent concurrent updates
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.RelationshipLock,
+            body.RelationshipTypeId.ToString(),
+            Guid.NewGuid().ToString(),
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
         {
-            _logger.LogDebug("Updating relationship type: {TypeId}", body.RelationshipTypeId);
-
-            // Acquire distributed lock on type ID to prevent concurrent updates
-            await using var lockResponse = await _lockProvider.LockAsync(
-                StateStoreDefinitions.RelationshipLock,
-                body.RelationshipTypeId.ToString(),
-                Guid.NewGuid().ToString(),
-                _configuration.LockTimeoutSeconds,
-                cancellationToken);
-
-            if (!lockResponse.Success)
-            {
-                _logger.LogWarning("Could not acquire lock for relationship type update {TypeId}", body.RelationshipTypeId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            var typeKey = BuildRtTypeKey(body.RelationshipTypeId);
-            var modelStore = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
-            var existing = await modelStore.GetAsync(typeKey, cancellationToken);
-
-            if (existing == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            var changedFields = new List<string>();
-
-            if (!string.IsNullOrEmpty(body.Name) && body.Name != existing.Name)
-            {
-                existing.Name = body.Name;
-                changedFields.Add("name");
-            }
-
-            if (body.Description != null && body.Description != existing.Description)
-            {
-                existing.Description = body.Description;
-                changedFields.Add("description");
-            }
-
-            if (body.Category != null && body.Category != existing.Category)
-            {
-                existing.Category = body.Category;
-                changedFields.Add("category");
-            }
-
-            if (body.IsBidirectional.HasValue && body.IsBidirectional.Value != existing.IsBidirectional)
-            {
-                existing.IsBidirectional = body.IsBidirectional.Value;
-                changedFields.Add("isBidirectional");
-            }
-
-            if (body.Metadata != null)
-            {
-                existing.Metadata = body.Metadata;
-                changedFields.Add("metadata");
-            }
-
-            // Handle parent type change
-            if (body.ParentTypeId.HasValue)
-            {
-                var newParentId = body.ParentTypeId.Value;
-                if (newParentId != existing.ParentTypeId)
-                {
-                    // Validate new parent exists
-                    var parentKey = BuildRtTypeKey(newParentId);
-                    var parent = await modelStore.GetAsync(parentKey, cancellationToken);
-
-                    if (parent == null)
-                    {
-                        return (StatusCodes.BadRequest, null);
-                    }
-
-                    // Check for circular hierarchy - prevent making an ancestor into a descendant
-                    if (await WouldCreateCycleAsync(existing.RelationshipTypeId, newParentId, cancellationToken))
-                    {
-                        _logger.LogDebug("Cannot set parent {NewParentId} for type {TypeId}: would create circular hierarchy",
-                            newParentId, existing.RelationshipTypeId);
-                        return (StatusCodes.BadRequest, null);
-                    }
-
-                    // Remove from old parent's index
-                    if (existing.ParentTypeId.HasValue)
-                    {
-                        await RemoveFromRtParentIndexAsync(existing.ParentTypeId.Value, existing.RelationshipTypeId, cancellationToken);
-                    }
-
-                    // Add to new parent's index
-                    await AddToRtParentIndexAsync(newParentId, existing.RelationshipTypeId, cancellationToken);
-
-                    existing.ParentTypeId = newParentId;
-                    existing.ParentTypeCode = parent.Code;
-                    existing.Depth = parent.Depth + 1;
-                    changedFields.Add("parentTypeId");
-                }
-            }
-
-            // Handle inverse type code change
-            if (body.InverseTypeCode != null && body.InverseTypeCode != existing.InverseTypeCode)
-            {
-                if (string.IsNullOrEmpty(body.InverseTypeCode))
-                {
-                    existing.InverseTypeId = null;
-                    existing.InverseTypeCode = null;
-                }
-                else
-                {
-                    var inverseIndexKey = BuildRtCodeIndexKey(body.InverseTypeCode.ToUpperInvariant());
-                    var inverseIdStr = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.RelationshipType)
-                        .GetAsync(inverseIndexKey, cancellationToken);
-                    existing.InverseTypeId = Guid.TryParse(inverseIdStr, out var inverseId) ? inverseId : null;
-                    existing.InverseTypeCode = body.InverseTypeCode;
-                }
-                changedFields.Add("inverseTypeCode");
-            }
-
-            if (changedFields.Count > 0)
-            {
-                existing.UpdatedAt = DateTimeOffset.UtcNow;
-                await modelStore.SaveAsync(typeKey, existing, cancellationToken: cancellationToken);
-                await PublishRelationshipTypeUpdatedEventAsync(existing, changedFields, cancellationToken);
-            }
-
-            var response = MapToTypeResponse(existing);
-            return (StatusCodes.OK, response);
+            _logger.LogWarning("Could not acquire lock for relationship type update {TypeId}", body.RelationshipTypeId);
+            return (StatusCodes.Conflict, null);
         }
+
+        var typeKey = BuildRtTypeKey(body.RelationshipTypeId);
+        var modelStore = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
+        var existing = await modelStore.GetAsync(typeKey, cancellationToken);
+
+        if (existing == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        var changedFields = new List<string>();
+
+        if (!string.IsNullOrEmpty(body.Name) && body.Name != existing.Name)
+        {
+            existing.Name = body.Name;
+            changedFields.Add("name");
+        }
+
+        if (body.Description != null && body.Description != existing.Description)
+        {
+            existing.Description = body.Description;
+            changedFields.Add("description");
+        }
+
+        if (body.Category != null && body.Category != existing.Category)
+        {
+            existing.Category = body.Category;
+            changedFields.Add("category");
+        }
+
+        if (body.IsBidirectional.HasValue && body.IsBidirectional.Value != existing.IsBidirectional)
+        {
+            existing.IsBidirectional = body.IsBidirectional.Value;
+            changedFields.Add("isBidirectional");
+        }
+
+        if (body.Metadata != null)
+        {
+            existing.Metadata = body.Metadata;
+            changedFields.Add("metadata");
+        }
+
+        // Handle parent type change
+        if (body.ParentTypeId.HasValue)
+        {
+            var newParentId = body.ParentTypeId.Value;
+            if (newParentId != existing.ParentTypeId)
+            {
+                // Validate new parent exists
+                var parentKey = BuildRtTypeKey(newParentId);
+                var parent = await modelStore.GetAsync(parentKey, cancellationToken);
+
+                if (parent == null)
+                {
+                    return (StatusCodes.BadRequest, null);
+                }
+
+                // Check for circular hierarchy - prevent making an ancestor into a descendant
+                if (await WouldCreateCycleAsync(existing.RelationshipTypeId, newParentId, cancellationToken))
+                {
+                    _logger.LogDebug("Cannot set parent {NewParentId} for type {TypeId}: would create circular hierarchy",
+                        newParentId, existing.RelationshipTypeId);
+                    return (StatusCodes.BadRequest, null);
+                }
+
+                // Remove from old parent's index
+                if (existing.ParentTypeId.HasValue)
+                {
+                    await RemoveFromRtParentIndexAsync(existing.ParentTypeId.Value, existing.RelationshipTypeId, cancellationToken);
+                }
+
+                // Add to new parent's index
+                await AddToRtParentIndexAsync(newParentId, existing.RelationshipTypeId, cancellationToken);
+
+                existing.ParentTypeId = newParentId;
+                existing.ParentTypeCode = parent.Code;
+                existing.Depth = parent.Depth + 1;
+                changedFields.Add("parentTypeId");
+            }
+        }
+
+        // Handle inverse type code change
+        if (body.InverseTypeCode != null && body.InverseTypeCode != existing.InverseTypeCode)
+        {
+            if (string.IsNullOrEmpty(body.InverseTypeCode))
+            {
+                existing.InverseTypeId = null;
+                existing.InverseTypeCode = null;
+            }
+            else
+            {
+                var inverseIndexKey = BuildRtCodeIndexKey(body.InverseTypeCode.ToUpperInvariant());
+                var inverseIdStr = await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.RelationshipType)
+                    .GetAsync(inverseIndexKey, cancellationToken);
+                existing.InverseTypeId = Guid.TryParse(inverseIdStr, out var inverseId) ? inverseId : null;
+                existing.InverseTypeCode = body.InverseTypeCode;
+            }
+            changedFields.Add("inverseTypeCode");
+        }
+
+        if (changedFields.Count > 0)
+        {
+            existing.UpdatedAt = DateTimeOffset.UtcNow;
+            await modelStore.SaveAsync(typeKey, existing, cancellationToken: cancellationToken);
+            await PublishRelationshipTypeUpdatedEventAsync(existing, changedFields, cancellationToken);
+        }
+
+        var response = MapToTypeResponse(existing);
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -1282,85 +1258,83 @@ public partial class RelationshipService : IRelationshipService
         DeleteRelationshipTypeRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogDebug("Deleting relationship type: {TypeId}", body.RelationshipTypeId);
+
+        // Acquire distributed lock on type ID for safe delete validation + cleanup
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.RelationshipLock,
+            body.RelationshipTypeId.ToString(),
+            Guid.NewGuid().ToString(),
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
         {
-            _logger.LogDebug("Deleting relationship type: {TypeId}", body.RelationshipTypeId);
-
-            // Acquire distributed lock on type ID for safe delete validation + cleanup
-            await using var lockResponse = await _lockProvider.LockAsync(
-                StateStoreDefinitions.RelationshipLock,
-                body.RelationshipTypeId.ToString(),
-                Guid.NewGuid().ToString(),
-                _configuration.LockTimeoutSeconds,
-                cancellationToken);
-
-            if (!lockResponse.Success)
-            {
-                _logger.LogWarning("Could not acquire lock for relationship type deletion {TypeId}", body.RelationshipTypeId);
-                return StatusCodes.Conflict;
-            }
-
-            var typeKey = BuildRtTypeKey(body.RelationshipTypeId);
-            var modelStore = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
-            var existing = await modelStore.GetAsync(typeKey, cancellationToken);
-
-            if (existing == null)
-            {
-                return StatusCodes.NotFound;
-            }
-
-            // Check deprecation requirement (per API schema: "Only deprecated types...can be deleted")
-            if (!existing.IsDeprecated)
-            {
-                _logger.LogDebug("Cannot delete non-deprecated type: {TypeId}", body.RelationshipTypeId);
-                return StatusCodes.Conflict;
-            }
-
-            // Check for relationship references internally (includes ended relationships)
-            var (listStatus, listResponse) = await this.ListRelationshipsByTypeAsync(
-                new ListRelationshipsByTypeRequest
-                {
-                    RelationshipTypeId = body.RelationshipTypeId,
-                    IncludeEnded = true,
-                    Page = 1,
-                    PageSize = 1
-                },
-                cancellationToken);
-
-            if (listStatus == StatusCodes.OK && listResponse?.Relationships != null && listResponse.Relationships.Count > 0)
-            {
-                _logger.LogDebug("Cannot delete type with existing relationships: {TypeId}", body.RelationshipTypeId);
-                return StatusCodes.Conflict;
-            }
-
-            // Check if type has children
-            var childIds = await GetChildTypeIdsAsync(body.RelationshipTypeId, false, cancellationToken);
-            if (childIds.Count > 0)
-            {
-                _logger.LogDebug("Cannot delete type with children: {TypeId}", body.RelationshipTypeId);
-                return StatusCodes.Conflict;
-            }
-
-            // Delete the type
-            await modelStore.DeleteAsync(typeKey, cancellationToken);
-
-            // Remove from code index
-            var codeIndexKey = BuildRtCodeIndexKey(existing.Code);
-            await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.RelationshipType)
-                .DeleteAsync(codeIndexKey, cancellationToken);
-
-            // Remove from parent's children index
-            if (existing.ParentTypeId.HasValue)
-            {
-                await RemoveFromRtParentIndexAsync(existing.ParentTypeId.Value, existing.RelationshipTypeId, cancellationToken);
-            }
-
-            // Remove from all types list
-            await RemoveFromRtAllTypesListAsync(existing.RelationshipTypeId, cancellationToken);
-
-            await PublishRelationshipTypeDeletedEventAsync(existing, cancellationToken);
-
-            return StatusCodes.OK;
+            _logger.LogWarning("Could not acquire lock for relationship type deletion {TypeId}", body.RelationshipTypeId);
+            return StatusCodes.Conflict;
         }
+
+        var typeKey = BuildRtTypeKey(body.RelationshipTypeId);
+        var modelStore = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
+        var existing = await modelStore.GetAsync(typeKey, cancellationToken);
+
+        if (existing == null)
+        {
+            return StatusCodes.NotFound;
+        }
+
+        // Check deprecation requirement (per API schema: "Only deprecated types...can be deleted")
+        if (!existing.IsDeprecated)
+        {
+            _logger.LogDebug("Cannot delete non-deprecated type: {TypeId}", body.RelationshipTypeId);
+            return StatusCodes.Conflict;
+        }
+
+        // Check for relationship references internally (includes ended relationships)
+        var (listStatus, listResponse) = await this.ListRelationshipsByTypeAsync(
+            new ListRelationshipsByTypeRequest
+            {
+                RelationshipTypeId = body.RelationshipTypeId,
+                IncludeEnded = true,
+                Page = 1,
+                PageSize = 1
+            },
+            cancellationToken);
+
+        if (listStatus == StatusCodes.OK && listResponse?.Relationships != null && listResponse.Relationships.Count > 0)
+        {
+            _logger.LogDebug("Cannot delete type with existing relationships: {TypeId}", body.RelationshipTypeId);
+            return StatusCodes.Conflict;
+        }
+
+        // Check if type has children
+        var childIds = await GetChildTypeIdsAsync(body.RelationshipTypeId, false, cancellationToken);
+        if (childIds.Count > 0)
+        {
+            _logger.LogDebug("Cannot delete type with children: {TypeId}", body.RelationshipTypeId);
+            return StatusCodes.Conflict;
+        }
+
+        // Delete the type
+        await modelStore.DeleteAsync(typeKey, cancellationToken);
+
+        // Remove from code index
+        var codeIndexKey = BuildRtCodeIndexKey(existing.Code);
+        await _stateStoreFactory.GetStore<string>(StateStoreDefinitions.RelationshipType)
+            .DeleteAsync(codeIndexKey, cancellationToken);
+
+        // Remove from parent's children index
+        if (existing.ParentTypeId.HasValue)
+        {
+            await RemoveFromRtParentIndexAsync(existing.ParentTypeId.Value, existing.RelationshipTypeId, cancellationToken);
+        }
+
+        // Remove from all types list
+        await RemoveFromRtAllTypesListAsync(existing.RelationshipTypeId, cancellationToken);
+
+        await PublishRelationshipTypeDeletedEventAsync(existing, cancellationToken);
+
+        return StatusCodes.OK;
     }
 
     /// <summary>
@@ -1370,147 +1344,145 @@ public partial class RelationshipService : IRelationshipService
         SeedRelationshipTypesRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogDebug("Seeding {Count} relationship types", body.Types.Count);
+
+        var created = 0;
+        var updated = 0;
+        var skipped = 0;
+        var errors = new List<string>();
+
+        // First pass: create types without parent references
+        var codeToId = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.RelationshipType);
+
+        // Load existing code-to-id mappings
+        foreach (var seedType in body.Types)
         {
-            _logger.LogDebug("Seeding {Count} relationship types", body.Types.Count);
+            var code = seedType.Code.ToUpperInvariant();
+            var codeIndexKey = BuildRtCodeIndexKey(code);
+            var existingId = await stringStore.GetAsync(codeIndexKey, cancellationToken);
 
-            var created = 0;
-            var updated = 0;
-            var skipped = 0;
-            var errors = new List<string>();
-
-            // First pass: create types without parent references
-            var codeToId = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.RelationshipType);
-
-            // Load existing code-to-id mappings
-            foreach (var seedType in body.Types)
+            if (!string.IsNullOrEmpty(existingId))
             {
-                var code = seedType.Code.ToUpperInvariant();
-                var codeIndexKey = BuildRtCodeIndexKey(code);
-                var existingId = await stringStore.GetAsync(codeIndexKey, cancellationToken);
+                codeToId[code] = existingId;
+            }
+        }
 
-                if (!string.IsNullOrEmpty(existingId))
+        // Process types in order (parent types first for depth calculation)
+        var processed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var pending = body.Types.ToList();
+        var maxIterations = pending.Count * 2; // Prevent infinite loops
+        var iteration = 0;
+
+        while (pending.Count > 0 && iteration < maxIterations)
+        {
+            iteration++;
+            var toProcess = pending.Where(t =>
+                string.IsNullOrEmpty(t.ParentTypeCode) ||
+                processed.Contains(t.ParentTypeCode.ToUpperInvariant())).ToList();
+
+            if (toProcess.Count == 0)
+            {
+                // Remaining items have unresolvable parents
+                foreach (var unresolved in pending)
                 {
-                    codeToId[code] = existingId;
+                    errors.Add($"Unresolved parent type '{unresolved.ParentTypeCode}' for '{unresolved.Code}'");
                 }
+                break;
             }
 
-            // Process types in order (parent types first for depth calculation)
-            var processed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var pending = body.Types.ToList();
-            var maxIterations = pending.Count * 2; // Prevent infinite loops
-            var iteration = 0;
-
-            while (pending.Count > 0 && iteration < maxIterations)
+            foreach (var seedType in toProcess)
             {
-                iteration++;
-                var toProcess = pending.Where(t =>
-                    string.IsNullOrEmpty(t.ParentTypeCode) ||
-                    processed.Contains(t.ParentTypeCode.ToUpperInvariant())).ToList();
+                pending.Remove(seedType);
+                var code = seedType.Code.ToUpperInvariant();
 
-                if (toProcess.Count == 0)
+                try
                 {
-                    // Remaining items have unresolvable parents
-                    foreach (var unresolved in pending)
+                    if (codeToId.TryGetValue(code, out var existingId))
                     {
-                        errors.Add($"Unresolved parent type '{unresolved.ParentTypeCode}' for '{unresolved.Code}'");
-                    }
-                    break;
-                }
-
-                foreach (var seedType in toProcess)
-                {
-                    pending.Remove(seedType);
-                    var code = seedType.Code.ToUpperInvariant();
-
-                    try
-                    {
-                        if (codeToId.TryGetValue(code, out var existingId))
+                        // Type exists
+                        if (body.UpdateExisting == true)
                         {
-                            // Type exists
-                            if (body.UpdateExisting == true)
+                            // Update existing type
+                            var updateRequest = new UpdateRelationshipTypeRequest
                             {
-                                // Update existing type
-                                var updateRequest = new UpdateRelationshipTypeRequest
-                                {
-                                    RelationshipTypeId = Guid.Parse(existingId),
-                                    Name = seedType.Name,
-                                    Description = seedType.Description,
-                                    Category = seedType.Category,
-                                    InverseTypeCode = seedType.InverseTypeCode,
-                                    IsBidirectional = seedType.IsBidirectional
-                                };
-
-                                if (!string.IsNullOrEmpty(seedType.ParentTypeCode) &&
-                                    codeToId.TryGetValue(seedType.ParentTypeCode.ToUpperInvariant(), out var parentId))
-                                {
-                                    updateRequest.ParentTypeId = Guid.Parse(parentId);
-                                }
-
-                                var (status, _) = await UpdateRelationshipTypeAsync(updateRequest, cancellationToken);
-                                if (status == StatusCodes.OK)
-                                {
-                                    updated++;
-                                }
-                                else
-                                {
-                                    errors.Add($"Failed to update '{code}': {status}");
-                                }
-                            }
-                            else
-                            {
-                                skipped++;
-                            }
-                        }
-                        else
-                        {
-                            // Create new type
-                            var createRequest = new CreateRelationshipTypeRequest
-                            {
-                                Code = code,
+                                RelationshipTypeId = Guid.Parse(existingId),
                                 Name = seedType.Name,
                                 Description = seedType.Description,
                                 Category = seedType.Category,
                                 InverseTypeCode = seedType.InverseTypeCode,
-                                IsBidirectional = seedType.IsBidirectional,
-                                Metadata = seedType.Metadata
+                                IsBidirectional = seedType.IsBidirectional
                             };
 
                             if (!string.IsNullOrEmpty(seedType.ParentTypeCode) &&
                                 codeToId.TryGetValue(seedType.ParentTypeCode.ToUpperInvariant(), out var parentId))
                             {
-                                createRequest.ParentTypeId = Guid.Parse(parentId);
+                                updateRequest.ParentTypeId = Guid.Parse(parentId);
                             }
 
-                            var (status, response) = await CreateRelationshipTypeAsync(createRequest, cancellationToken);
-                            if (status == StatusCodes.OK && response != null)
+                            var (status, _) = await UpdateRelationshipTypeAsync(updateRequest, cancellationToken);
+                            if (status == StatusCodes.OK)
                             {
-                                codeToId[code] = response.RelationshipTypeId.ToString();
-                                created++;
+                                updated++;
                             }
                             else
                             {
-                                errors.Add($"Failed to create '{code}': {status}");
+                                errors.Add($"Failed to update '{code}': {status}");
                             }
                         }
-
-                        processed.Add(code);
+                        else
+                        {
+                            skipped++;
+                        }
                     }
-                    catch (Exception typeEx)
+                    else
                     {
-                        errors.Add($"Error processing '{code}': {typeEx.Message}");
+                        // Create new type
+                        var createRequest = new CreateRelationshipTypeRequest
+                        {
+                            Code = code,
+                            Name = seedType.Name,
+                            Description = seedType.Description,
+                            Category = seedType.Category,
+                            InverseTypeCode = seedType.InverseTypeCode,
+                            IsBidirectional = seedType.IsBidirectional,
+                            Metadata = seedType.Metadata
+                        };
+
+                        if (!string.IsNullOrEmpty(seedType.ParentTypeCode) &&
+                            codeToId.TryGetValue(seedType.ParentTypeCode.ToUpperInvariant(), out var parentId))
+                        {
+                            createRequest.ParentTypeId = Guid.Parse(parentId);
+                        }
+
+                        var (status, response) = await CreateRelationshipTypeAsync(createRequest, cancellationToken);
+                        if (status == StatusCodes.OK && response != null)
+                        {
+                            codeToId[code] = response.RelationshipTypeId.ToString();
+                            created++;
+                        }
+                        else
+                        {
+                            errors.Add($"Failed to create '{code}': {status}");
+                        }
                     }
+
+                    processed.Add(code);
+                }
+                catch (Exception typeEx)
+                {
+                    errors.Add($"Error processing '{code}': {typeEx.Message}");
                 }
             }
-
-            return (StatusCodes.OK, new SeedRelationshipTypesResponse
-            {
-                Created = created,
-                Updated = updated,
-                Skipped = skipped,
-                Errors = errors
-            });
         }
+
+        return (StatusCodes.OK, new SeedRelationshipTypesResponse
+        {
+            Created = created,
+            Updated = updated,
+            Skipped = skipped,
+            Errors = errors
+        });
     }
 
     #endregion
@@ -1524,52 +1496,50 @@ public partial class RelationshipService : IRelationshipService
         DeprecateRelationshipTypeRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogDebug("Deprecating relationship type: {TypeId}", body.RelationshipTypeId);
+
+        // Acquire distributed lock on type ID to prevent concurrent state changes
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.RelationshipLock,
+            body.RelationshipTypeId.ToString(),
+            Guid.NewGuid().ToString(),
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
         {
-            _logger.LogDebug("Deprecating relationship type: {TypeId}", body.RelationshipTypeId);
-
-            // Acquire distributed lock on type ID to prevent concurrent state changes
-            await using var lockResponse = await _lockProvider.LockAsync(
-                StateStoreDefinitions.RelationshipLock,
-                body.RelationshipTypeId.ToString(),
-                Guid.NewGuid().ToString(),
-                _configuration.LockTimeoutSeconds,
-                cancellationToken);
-
-            if (!lockResponse.Success)
-            {
-                _logger.LogWarning("Could not acquire lock for relationship type deprecation {TypeId}", body.RelationshipTypeId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            var typeKey = BuildRtTypeKey(body.RelationshipTypeId);
-            var store = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
-            var model = await store.GetAsync(typeKey, cancellationToken);
-
-            if (model == null)
-            {
-                _logger.LogDebug("Relationship type not found for deprecation: {TypeId}", body.RelationshipTypeId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            if (model.IsDeprecated)
-            {
-                _logger.LogDebug("Relationship type already deprecated: {TypeId}", body.RelationshipTypeId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            model.IsDeprecated = true;
-            model.DeprecatedAt = DateTimeOffset.UtcNow;
-            model.DeprecationReason = body.Reason;
-            model.UpdatedAt = DateTimeOffset.UtcNow;
-
-            await store.SaveAsync(typeKey, model, cancellationToken: cancellationToken);
-
-            // Publish updated event with deprecation fields
-            await PublishRelationshipTypeUpdatedEventAsync(model, new[] { "isDeprecated", "deprecatedAt", "deprecationReason" }, cancellationToken);
-
-            _logger.LogInformation("Deprecated relationship type: {TypeId}", body.RelationshipTypeId);
-            return (StatusCodes.OK, MapToTypeResponse(model));
+            _logger.LogWarning("Could not acquire lock for relationship type deprecation {TypeId}", body.RelationshipTypeId);
+            return (StatusCodes.Conflict, null);
         }
+
+        var typeKey = BuildRtTypeKey(body.RelationshipTypeId);
+        var store = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
+        var model = await store.GetAsync(typeKey, cancellationToken);
+
+        if (model == null)
+        {
+            _logger.LogDebug("Relationship type not found for deprecation: {TypeId}", body.RelationshipTypeId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        if (model.IsDeprecated)
+        {
+            _logger.LogDebug("Relationship type already deprecated: {TypeId}", body.RelationshipTypeId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        model.IsDeprecated = true;
+        model.DeprecatedAt = DateTimeOffset.UtcNow;
+        model.DeprecationReason = body.Reason;
+        model.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await store.SaveAsync(typeKey, model, cancellationToken: cancellationToken);
+
+        // Publish updated event with deprecation fields
+        await PublishRelationshipTypeUpdatedEventAsync(model, new[] { "isDeprecated", "deprecatedAt", "deprecationReason" }, cancellationToken);
+
+        _logger.LogInformation("Deprecated relationship type: {TypeId}", body.RelationshipTypeId);
+        return (StatusCodes.OK, MapToTypeResponse(model));
     }
 
     /// <summary>
@@ -1579,52 +1549,50 @@ public partial class RelationshipService : IRelationshipService
         UndeprecateRelationshipTypeRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogDebug("Undeprecating relationship type: {TypeId}", body.RelationshipTypeId);
+
+        // Acquire distributed lock on type ID to prevent concurrent state changes
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.RelationshipLock,
+            body.RelationshipTypeId.ToString(),
+            Guid.NewGuid().ToString(),
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
         {
-            _logger.LogDebug("Undeprecating relationship type: {TypeId}", body.RelationshipTypeId);
-
-            // Acquire distributed lock on type ID to prevent concurrent state changes
-            await using var lockResponse = await _lockProvider.LockAsync(
-                StateStoreDefinitions.RelationshipLock,
-                body.RelationshipTypeId.ToString(),
-                Guid.NewGuid().ToString(),
-                _configuration.LockTimeoutSeconds,
-                cancellationToken);
-
-            if (!lockResponse.Success)
-            {
-                _logger.LogWarning("Could not acquire lock for relationship type undeprecation {TypeId}", body.RelationshipTypeId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            var typeKey = BuildRtTypeKey(body.RelationshipTypeId);
-            var store = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
-            var model = await store.GetAsync(typeKey, cancellationToken);
-
-            if (model == null)
-            {
-                _logger.LogDebug("Relationship type not found for undeprecation: {TypeId}", body.RelationshipTypeId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            if (!model.IsDeprecated)
-            {
-                _logger.LogDebug("Relationship type not deprecated: {TypeId}", body.RelationshipTypeId);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            model.IsDeprecated = false;
-            model.DeprecatedAt = null;
-            model.DeprecationReason = null;
-            model.UpdatedAt = DateTimeOffset.UtcNow;
-
-            await store.SaveAsync(typeKey, model, cancellationToken: cancellationToken);
-
-            // Publish updated event with deprecation fields cleared
-            await PublishRelationshipTypeUpdatedEventAsync(model, new[] { "isDeprecated", "deprecatedAt", "deprecationReason" }, cancellationToken);
-
-            _logger.LogInformation("Undeprecated relationship type: {TypeId}", body.RelationshipTypeId);
-            return (StatusCodes.OK, MapToTypeResponse(model));
+            _logger.LogWarning("Could not acquire lock for relationship type undeprecation {TypeId}", body.RelationshipTypeId);
+            return (StatusCodes.Conflict, null);
         }
+
+        var typeKey = BuildRtTypeKey(body.RelationshipTypeId);
+        var store = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
+        var model = await store.GetAsync(typeKey, cancellationToken);
+
+        if (model == null)
+        {
+            _logger.LogDebug("Relationship type not found for undeprecation: {TypeId}", body.RelationshipTypeId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        if (!model.IsDeprecated)
+        {
+            _logger.LogDebug("Relationship type not deprecated: {TypeId}", body.RelationshipTypeId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        model.IsDeprecated = false;
+        model.DeprecatedAt = null;
+        model.DeprecationReason = null;
+        model.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await store.SaveAsync(typeKey, model, cancellationToken: cancellationToken);
+
+        // Publish updated event with deprecation fields cleared
+        await PublishRelationshipTypeUpdatedEventAsync(model, new[] { "isDeprecated", "deprecatedAt", "deprecationReason" }, cancellationToken);
+
+        _logger.LogInformation("Undeprecated relationship type: {TypeId}", body.RelationshipTypeId);
+        return (StatusCodes.OK, MapToTypeResponse(model));
     }
 
     /// <summary>
@@ -1635,341 +1603,339 @@ public partial class RelationshipService : IRelationshipService
         MergeRelationshipTypeRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogDebug("Merging relationship type {SourceId} into {TargetId}",
+            body.SourceTypeId, body.TargetTypeId);
+
+        // Verify source exists and is deprecated
+        var sourceKey = BuildRtTypeKey(body.SourceTypeId);
+        var typeStore = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
+        var sourceModel = await typeStore.GetAsync(sourceKey, cancellationToken);
+
+        if (sourceModel == null)
         {
-            _logger.LogDebug("Merging relationship type {SourceId} into {TargetId}",
-                body.SourceTypeId, body.TargetTypeId);
+            _logger.LogDebug("Source relationship type not found: {TypeId}", body.SourceTypeId);
+            return (StatusCodes.NotFound, null);
+        }
 
-            // Verify source exists and is deprecated
-            var sourceKey = BuildRtTypeKey(body.SourceTypeId);
-            var typeStore = _stateStoreFactory.GetStore<RelationshipTypeModel>(StateStoreDefinitions.RelationshipType);
-            var sourceModel = await typeStore.GetAsync(sourceKey, cancellationToken);
+        if (!sourceModel.IsDeprecated)
+        {
+            _logger.LogDebug("Source relationship type must be deprecated before merging: {TypeId}", body.SourceTypeId);
+            return (StatusCodes.BadRequest, null);
+        }
 
-            if (sourceModel == null)
-            {
-                _logger.LogDebug("Source relationship type not found: {TypeId}", body.SourceTypeId);
-                return (StatusCodes.NotFound, null);
-            }
+        // Verify target exists and is not deprecated
+        var targetKey = BuildRtTypeKey(body.TargetTypeId);
+        var targetModel = await typeStore.GetAsync(targetKey, cancellationToken);
 
-            if (!sourceModel.IsDeprecated)
-            {
-                _logger.LogDebug("Source relationship type must be deprecated before merging: {TypeId}", body.SourceTypeId);
-                return (StatusCodes.BadRequest, null);
-            }
+        if (targetModel == null)
+        {
+            _logger.LogDebug("Target relationship type not found: {TypeId}", body.TargetTypeId);
+            return (StatusCodes.NotFound, null);
+        }
 
-            // Verify target exists and is not deprecated
-            var targetKey = BuildRtTypeKey(body.TargetTypeId);
-            var targetModel = await typeStore.GetAsync(targetKey, cancellationToken);
+        if (targetModel.IsDeprecated)
+        {
+            _logger.LogDebug("Cannot merge into deprecated target type: {TypeId}", body.TargetTypeId);
+            return (StatusCodes.Conflict, null);
+        }
 
-            if (targetModel == null)
-            {
-                _logger.LogDebug("Target relationship type not found: {TypeId}", body.TargetTypeId);
-                return (StatusCodes.NotFound, null);
-            }
+        // Acquire distributed locks on both type indexes.
+        // Lock ordering: deterministic (source before target) to prevent deadlocks.
+        var sourceIndexKey = BuildTypeIndexKey(body.SourceTypeId);
+        var targetIndexKey = BuildTypeIndexKey(body.TargetTypeId);
 
-            if (targetModel.IsDeprecated)
-            {
-                _logger.LogDebug("Cannot merge into deprecated target type: {TypeId}", body.TargetTypeId);
-                return (StatusCodes.Conflict, null);
-            }
+        await using var sourceIndexLock = await _lockProvider.LockAsync(
+            StateStoreDefinitions.RelationshipLock,
+            sourceIndexKey,
+            Guid.NewGuid().ToString(),
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
 
-            // Acquire distributed locks on both type indexes.
-            // Lock ordering: deterministic (source before target) to prevent deadlocks.
-            var sourceIndexKey = BuildTypeIndexKey(body.SourceTypeId);
-            var targetIndexKey = BuildTypeIndexKey(body.TargetTypeId);
+        if (!sourceIndexLock.Success)
+        {
+            _logger.LogWarning("Could not acquire lock for source type index during merge: {TypeId}", body.SourceTypeId);
+            return (StatusCodes.Conflict, null);
+        }
 
-            await using var sourceIndexLock = await _lockProvider.LockAsync(
-                StateStoreDefinitions.RelationshipLock,
-                sourceIndexKey,
-                Guid.NewGuid().ToString(),
-                _configuration.LockTimeoutSeconds,
-                cancellationToken);
+        await using var targetIndexLock = await _lockProvider.LockAsync(
+            StateStoreDefinitions.RelationshipLock,
+            targetIndexKey,
+            Guid.NewGuid().ToString(),
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
 
-            if (!sourceIndexLock.Success)
-            {
-                _logger.LogWarning("Could not acquire lock for source type index during merge: {TypeId}", body.SourceTypeId);
-                return (StatusCodes.Conflict, null);
-            }
+        if (!targetIndexLock.Success)
+        {
+            _logger.LogWarning("Could not acquire lock for target type index during merge: {TypeId}", body.TargetTypeId);
+            return (StatusCodes.Conflict, null);
+        }
 
-            await using var targetIndexLock = await _lockProvider.LockAsync(
-                StateStoreDefinitions.RelationshipLock,
-                targetIndexKey,
-                Guid.NewGuid().ToString(),
-                _configuration.LockTimeoutSeconds,
-                cancellationToken);
+        // Read both type indexes directly from state store (bypasses ListRelationshipsByTypeAsync)
+        var indexStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Relationship);
+        var sourceRelationshipIds = await indexStore.GetAsync(sourceIndexKey, cancellationToken) ?? new List<Guid>();
+        var targetRelationshipIds = await indexStore.GetAsync(targetIndexKey, cancellationToken) ?? new List<Guid>();
 
-            if (!targetIndexLock.Success)
-            {
-                _logger.LogWarning("Could not acquire lock for target type index during merge: {TypeId}", body.TargetTypeId);
-                return (StatusCodes.Conflict, null);
-            }
+        if (sourceRelationshipIds.Count == 0)
+        {
+            _logger.LogInformation("No relationships to migrate for source type {SourceId}", body.SourceTypeId);
 
-            // Read both type indexes directly from state store (bypasses ListRelationshipsByTypeAsync)
-            var indexStore = _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Relationship);
-            var sourceRelationshipIds = await indexStore.GetAsync(sourceIndexKey, cancellationToken) ?? new List<Guid>();
-            var targetRelationshipIds = await indexStore.GetAsync(targetIndexKey, cancellationToken) ?? new List<Guid>();
+            // Publish summary event even when there's nothing to migrate
+            await PublishMergedEventAsync(body.SourceTypeId, body.TargetTypeId, 0, 0, false, cancellationToken);
 
-            if (sourceRelationshipIds.Count == 0)
-            {
-                _logger.LogInformation("No relationships to migrate for source type {SourceId}", body.SourceTypeId);
-
-                // Publish summary event even when there's nothing to migrate
-                await PublishMergedEventAsync(body.SourceTypeId, body.TargetTypeId, 0, 0, false, cancellationToken);
-
-                // Handle delete-after-merge with no relationships
-                var emptySourceDeleted = false;
-                if (body.DeleteAfterMerge)
-                {
-                    var deleteResult = await DeleteRelationshipTypeAsync(
-                        new DeleteRelationshipTypeRequest { RelationshipTypeId = body.SourceTypeId },
-                        cancellationToken);
-                    emptySourceDeleted = deleteResult == StatusCodes.OK;
-                }
-
-                return (StatusCodes.OK, new MergeRelationshipTypeResponse
-                {
-                    SourceTypeId = body.SourceTypeId,
-                    TargetTypeId = body.TargetTypeId,
-                    RelationshipsMigrated = 0,
-                    RelationshipsFailed = 0,
-                    MigrationErrors = new List<MigrationError>(),
-                    SourceDeleted = emptySourceDeleted
-                });
-            }
-
-            // Bulk-load all source relationship models
-            var relationshipStore = _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship);
-            var compositeStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Relationship);
-            var keys = sourceRelationshipIds.Select(BuildRelationshipKey).ToList();
-            var bulkResults = await relationshipStore.GetBulkAsync(keys, cancellationToken);
-
-            var migratedCount = 0;
-            var failedCount = 0;
-            var migrationErrors = new List<MigrationError>();
-            var maxErrorsToTrack = _configuration.MaxMigrationErrorsToTrack;
-            var migratedIds = new List<Guid>();
-            var removedFromSourceIds = new List<Guid>();
-
-            // Process each relationship individually (with per-relationship lock for composite key safety)
-            foreach (var (bulkKey, bulkModel) in bulkResults)
-            {
-                if (bulkModel == null)
-                {
-                    _logger.LogError("Relationship {Key} in source type index but failed to load during merge", bulkKey);
-                    continue;
-                }
-
-                try
-                {
-                    // Acquire per-relationship lock for composite key operations
-                    await using var relationshipLock = await _lockProvider.LockAsync(
-                        StateStoreDefinitions.RelationshipLock,
-                        bulkModel.RelationshipId.ToString(),
-                        Guid.NewGuid().ToString(),
-                        _configuration.LockTimeoutSeconds,
-                        cancellationToken);
-
-                    if (!relationshipLock.Success)
-                    {
-                        _logger.LogWarning("Could not acquire lock for relationship {RelationshipId} during merge", bulkModel.RelationshipId);
-                        failedCount++;
-                        if (migrationErrors.Count < maxErrorsToTrack)
-                        {
-                            migrationErrors.Add(new MigrationError
-                            {
-                                RelationshipId = bulkModel.RelationshipId,
-                                Error = "Could not acquire relationship lock"
-                            });
-                        }
-                        continue;
-                    }
-
-                    // Re-read model under lock (may have changed since bulk load)
-                    var relationshipKey = BuildRelationshipKey(bulkModel.RelationshipId);
-                    var model = await relationshipStore.GetAsync(relationshipKey, cancellationToken);
-
-                    if (model == null)
-                    {
-                        _logger.LogWarning("Relationship {RelationshipId} disappeared during merge", bulkModel.RelationshipId);
-                        removedFromSourceIds.Add(bulkModel.RelationshipId);
-                        continue;
-                    }
-
-                    // Idempotent: already migrated (e.g., retry scenario)
-                    if (model.RelationshipTypeId == body.TargetTypeId)
-                    {
-                        migratedCount++;
-                        removedFromSourceIds.Add(model.RelationshipId);
-                        migratedIds.Add(model.RelationshipId);
-                        continue;
-                    }
-
-                    // Delete old composite key (may not exist for ended relationships)
-                    var oldCompositeKey = BuildCompositeKey(
-                        model.Entity1Id, model.Entity1Type,
-                        model.Entity2Id, model.Entity2Type,
-                        model.RelationshipTypeId);
-                    await compositeStore.DeleteAsync(oldCompositeKey, cancellationToken);
-
-                    // Try-create new composite key for the target type.
-                    // For ended relationships, skip composite key creation (the End flow already
-                    // deleted their composite key, and they shouldn't occupy the target's key space).
-                    var collisionDetected = false;
-                    if (!model.EndedAt.HasValue)
-                    {
-                        var newCompositeKey = BuildCompositeKey(
-                            model.Entity1Id, model.Entity1Type,
-                            model.Entity2Id, model.Entity2Type,
-                            body.TargetTypeId);
-                        var existingComposite = await compositeStore.GetAsync(newCompositeKey, cancellationToken);
-
-                        if (existingComposite != null)
-                        {
-                            // Collision: an active relationship already exists for this entity pair + target type.
-                            // End this relationship as a duplicate.
-                            collisionDetected = true;
-
-                            model.EndedAt = DateTimeOffset.UtcNow;
-                            model.UpdatedAt = DateTimeOffset.UtcNow;
-                            model.RelationshipTypeId = body.TargetTypeId;
-                            await relationshipStore.SaveAsync(relationshipKey, model, cancellationToken: cancellationToken);
-
-                            await PublishRelationshipDeletedEventAsync(model, $"Duplicate detected during merge into type {body.TargetTypeId}", cancellationToken);
-
-                            _logger.LogInformation(
-                                "Composite key collision during merge: relationship {RelationshipId} ended as duplicate (entity pair already exists for target type {TargetTypeId})",
-                                model.RelationshipId, body.TargetTypeId);
-
-                            failedCount++;
-                            removedFromSourceIds.Add(model.RelationshipId);
-                            migratedIds.Add(model.RelationshipId);
-                            if (migrationErrors.Count < maxErrorsToTrack)
-                            {
-                                migrationErrors.Add(new MigrationError
-                                {
-                                    RelationshipId = model.RelationshipId,
-                                    Error = $"Composite key collision: entity pair already has active relationship for target type {body.TargetTypeId}"
-                                });
-                            }
-                        }
-                        else
-                        {
-                            // No collision: create the new composite key
-                            await compositeStore.SaveAsync(newCompositeKey, model.RelationshipId.ToString(), cancellationToken: cancellationToken);
-                        }
-                    }
-
-                    if (!collisionDetected)
-                    {
-                        // Update the model to target type
-                        model.RelationshipTypeId = body.TargetTypeId;
-                        model.UpdatedAt = DateTimeOffset.UtcNow;
-                        await relationshipStore.SaveAsync(relationshipKey, model, cancellationToken: cancellationToken);
-
-                        migratedCount++;
-                        removedFromSourceIds.Add(model.RelationshipId);
-                        migratedIds.Add(model.RelationshipId);
-                    }
-                }
-                catch (Exception relEx)
-                {
-                    _logger.LogError(relEx, "Failed to migrate relationship {RelationshipId} during merge from {SourceId} to {TargetId}",
-                        bulkModel.RelationshipId, body.SourceTypeId, body.TargetTypeId);
-                    failedCount++;
-
-                    if (migrationErrors.Count < maxErrorsToTrack)
-                    {
-                        migrationErrors.Add(new MigrationError
-                        {
-                            RelationshipId = bulkModel.RelationshipId,
-                            Error = relEx.Message
-                        });
-                    }
-                }
-            }
-
-            // Batch-update type indexes (both locks are held)
-            if (migratedIds.Count > 0)
-            {
-                foreach (var id in migratedIds)
-                {
-                    if (!targetRelationshipIds.Contains(id))
-                    {
-                        targetRelationshipIds.Add(id);
-                    }
-                }
-                await indexStore.SaveAsync(targetIndexKey, targetRelationshipIds, cancellationToken: cancellationToken);
-            }
-
-            if (removedFromSourceIds.Count > 0)
-            {
-                foreach (var id in removedFromSourceIds)
-                {
-                    sourceRelationshipIds.Remove(id);
-                }
-                await indexStore.SaveAsync(sourceIndexKey, sourceRelationshipIds, cancellationToken: cancellationToken);
-            }
-
-            // Type index locks are released by await using when scope exits
-
-            if (failedCount > 0)
-            {
-                _logger.LogError("Relationship type merge completed with {FailedCount} failed migrations", failedCount);
-
-                await _messageBus.TryPublishErrorAsync(
-                    "relationship",
-                    "MergeRelationshipType",
-                    "PartialMigrationFailure",
-                    $"Failed to migrate {failedCount} relationships from type {body.SourceTypeId} to {body.TargetTypeId}",
-                    dependency: null,
-                    endpoint: "post:/relationship-type/merge",
-                    details: new { SourceTypeId = body.SourceTypeId, TargetTypeId = body.TargetTypeId, FailedCount = failedCount, MigratedCount = migratedCount },
-                    stack: null,
-                    cancellationToken: cancellationToken);
-            }
-
-            _logger.LogInformation("Merged relationship type {SourceId} into {TargetId}, migrated {MigratedCount} relationships (failed: {FailedCount})",
-                body.SourceTypeId, body.TargetTypeId, migratedCount, failedCount);
-
-            // Handle delete-after-merge if requested and all migrations succeeded
-            var sourceDeleted = false;
+            // Handle delete-after-merge with no relationships
+            var emptySourceDeleted = false;
             if (body.DeleteAfterMerge)
             {
-                if (failedCount > 0)
-                {
-                    _logger.LogWarning("Skipping delete-after-merge for relationship type {SourceId}: {FailedCount} migrations failed",
-                        body.SourceTypeId, failedCount);
-                }
-                else
-                {
-                    var deleteResult = await DeleteRelationshipTypeAsync(
-                        new DeleteRelationshipTypeRequest { RelationshipTypeId = body.SourceTypeId },
-                        cancellationToken);
-
-                    if (deleteResult == StatusCodes.OK)
-                    {
-                        sourceDeleted = true;
-                    }
-                    else
-                    {
-                        _logger.LogWarning("Delete-after-merge failed for relationship type {SourceId} with status {Status}",
-                            body.SourceTypeId, deleteResult);
-                    }
-                }
+                var deleteResult = await DeleteRelationshipTypeAsync(
+                    new DeleteRelationshipTypeRequest { RelationshipTypeId = body.SourceTypeId },
+                    cancellationToken);
+                emptySourceDeleted = deleteResult == StatusCodes.OK;
             }
-
-            // Publish single summary event (replaces N individual relationship.updated events)
-            await PublishMergedEventAsync(body.SourceTypeId, body.TargetTypeId, migratedCount, failedCount, sourceDeleted, cancellationToken);
 
             return (StatusCodes.OK, new MergeRelationshipTypeResponse
             {
                 SourceTypeId = body.SourceTypeId,
                 TargetTypeId = body.TargetTypeId,
-                RelationshipsMigrated = migratedCount,
-                RelationshipsFailed = failedCount,
-                MigrationErrors = migrationErrors,
-                SourceDeleted = sourceDeleted
+                RelationshipsMigrated = 0,
+                RelationshipsFailed = 0,
+                MigrationErrors = new List<MigrationError>(),
+                SourceDeleted = emptySourceDeleted
             });
         }
+
+        // Bulk-load all source relationship models
+        var relationshipStore = _stateStoreFactory.GetStore<RelationshipModel>(StateStoreDefinitions.Relationship);
+        var compositeStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Relationship);
+        var keys = sourceRelationshipIds.Select(BuildRelationshipKey).ToList();
+        var bulkResults = await relationshipStore.GetBulkAsync(keys, cancellationToken);
+
+        var migratedCount = 0;
+        var failedCount = 0;
+        var migrationErrors = new List<MigrationError>();
+        var maxErrorsToTrack = _configuration.MaxMigrationErrorsToTrack;
+        var migratedIds = new List<Guid>();
+        var removedFromSourceIds = new List<Guid>();
+
+        // Process each relationship individually (with per-relationship lock for composite key safety)
+        foreach (var (bulkKey, bulkModel) in bulkResults)
+        {
+            if (bulkModel == null)
+            {
+                _logger.LogError("Relationship {Key} in source type index but failed to load during merge", bulkKey);
+                continue;
+            }
+
+            try
+            {
+                // Acquire per-relationship lock for composite key operations
+                await using var relationshipLock = await _lockProvider.LockAsync(
+                    StateStoreDefinitions.RelationshipLock,
+                    bulkModel.RelationshipId.ToString(),
+                    Guid.NewGuid().ToString(),
+                    _configuration.LockTimeoutSeconds,
+                    cancellationToken);
+
+                if (!relationshipLock.Success)
+                {
+                    _logger.LogWarning("Could not acquire lock for relationship {RelationshipId} during merge", bulkModel.RelationshipId);
+                    failedCount++;
+                    if (migrationErrors.Count < maxErrorsToTrack)
+                    {
+                        migrationErrors.Add(new MigrationError
+                        {
+                            RelationshipId = bulkModel.RelationshipId,
+                            Error = "Could not acquire relationship lock"
+                        });
+                    }
+                    continue;
+                }
+
+                // Re-read model under lock (may have changed since bulk load)
+                var relationshipKey = BuildRelationshipKey(bulkModel.RelationshipId);
+                var model = await relationshipStore.GetAsync(relationshipKey, cancellationToken);
+
+                if (model == null)
+                {
+                    _logger.LogWarning("Relationship {RelationshipId} disappeared during merge", bulkModel.RelationshipId);
+                    removedFromSourceIds.Add(bulkModel.RelationshipId);
+                    continue;
+                }
+
+                // Idempotent: already migrated (e.g., retry scenario)
+                if (model.RelationshipTypeId == body.TargetTypeId)
+                {
+                    migratedCount++;
+                    removedFromSourceIds.Add(model.RelationshipId);
+                    migratedIds.Add(model.RelationshipId);
+                    continue;
+                }
+
+                // Delete old composite key (may not exist for ended relationships)
+                var oldCompositeKey = BuildCompositeKey(
+                    model.Entity1Id, model.Entity1Type,
+                    model.Entity2Id, model.Entity2Type,
+                    model.RelationshipTypeId);
+                await compositeStore.DeleteAsync(oldCompositeKey, cancellationToken);
+
+                // Try-create new composite key for the target type.
+                // For ended relationships, skip composite key creation (the End flow already
+                // deleted their composite key, and they shouldn't occupy the target's key space).
+                var collisionDetected = false;
+                if (!model.EndedAt.HasValue)
+                {
+                    var newCompositeKey = BuildCompositeKey(
+                        model.Entity1Id, model.Entity1Type,
+                        model.Entity2Id, model.Entity2Type,
+                        body.TargetTypeId);
+                    var existingComposite = await compositeStore.GetAsync(newCompositeKey, cancellationToken);
+
+                    if (existingComposite != null)
+                    {
+                        // Collision: an active relationship already exists for this entity pair + target type.
+                        // End this relationship as a duplicate.
+                        collisionDetected = true;
+
+                        model.EndedAt = DateTimeOffset.UtcNow;
+                        model.UpdatedAt = DateTimeOffset.UtcNow;
+                        model.RelationshipTypeId = body.TargetTypeId;
+                        await relationshipStore.SaveAsync(relationshipKey, model, cancellationToken: cancellationToken);
+
+                        await PublishRelationshipDeletedEventAsync(model, $"Duplicate detected during merge into type {body.TargetTypeId}", cancellationToken);
+
+                        _logger.LogInformation(
+                            "Composite key collision during merge: relationship {RelationshipId} ended as duplicate (entity pair already exists for target type {TargetTypeId})",
+                            model.RelationshipId, body.TargetTypeId);
+
+                        failedCount++;
+                        removedFromSourceIds.Add(model.RelationshipId);
+                        migratedIds.Add(model.RelationshipId);
+                        if (migrationErrors.Count < maxErrorsToTrack)
+                        {
+                            migrationErrors.Add(new MigrationError
+                            {
+                                RelationshipId = model.RelationshipId,
+                                Error = $"Composite key collision: entity pair already has active relationship for target type {body.TargetTypeId}"
+                            });
+                        }
+                    }
+                    else
+                    {
+                        // No collision: create the new composite key
+                        await compositeStore.SaveAsync(newCompositeKey, model.RelationshipId.ToString(), cancellationToken: cancellationToken);
+                    }
+                }
+
+                if (!collisionDetected)
+                {
+                    // Update the model to target type
+                    model.RelationshipTypeId = body.TargetTypeId;
+                    model.UpdatedAt = DateTimeOffset.UtcNow;
+                    await relationshipStore.SaveAsync(relationshipKey, model, cancellationToken: cancellationToken);
+
+                    migratedCount++;
+                    removedFromSourceIds.Add(model.RelationshipId);
+                    migratedIds.Add(model.RelationshipId);
+                }
+            }
+            catch (Exception relEx)
+            {
+                _logger.LogError(relEx, "Failed to migrate relationship {RelationshipId} during merge from {SourceId} to {TargetId}",
+                    bulkModel.RelationshipId, body.SourceTypeId, body.TargetTypeId);
+                failedCount++;
+
+                if (migrationErrors.Count < maxErrorsToTrack)
+                {
+                    migrationErrors.Add(new MigrationError
+                    {
+                        RelationshipId = bulkModel.RelationshipId,
+                        Error = relEx.Message
+                    });
+                }
+            }
+        }
+
+        // Batch-update type indexes (both locks are held)
+        if (migratedIds.Count > 0)
+        {
+            foreach (var id in migratedIds)
+            {
+                if (!targetRelationshipIds.Contains(id))
+                {
+                    targetRelationshipIds.Add(id);
+                }
+            }
+            await indexStore.SaveAsync(targetIndexKey, targetRelationshipIds, cancellationToken: cancellationToken);
+        }
+
+        if (removedFromSourceIds.Count > 0)
+        {
+            foreach (var id in removedFromSourceIds)
+            {
+                sourceRelationshipIds.Remove(id);
+            }
+            await indexStore.SaveAsync(sourceIndexKey, sourceRelationshipIds, cancellationToken: cancellationToken);
+        }
+
+        // Type index locks are released by await using when scope exits
+
+        if (failedCount > 0)
+        {
+            _logger.LogError("Relationship type merge completed with {FailedCount} failed migrations", failedCount);
+
+            await _messageBus.TryPublishErrorAsync(
+                "relationship",
+                "MergeRelationshipType",
+                "PartialMigrationFailure",
+                $"Failed to migrate {failedCount} relationships from type {body.SourceTypeId} to {body.TargetTypeId}",
+                dependency: null,
+                endpoint: "post:/relationship-type/merge",
+                details: new { SourceTypeId = body.SourceTypeId, TargetTypeId = body.TargetTypeId, FailedCount = failedCount, MigratedCount = migratedCount },
+                stack: null,
+                cancellationToken: cancellationToken);
+        }
+
+        _logger.LogInformation("Merged relationship type {SourceId} into {TargetId}, migrated {MigratedCount} relationships (failed: {FailedCount})",
+            body.SourceTypeId, body.TargetTypeId, migratedCount, failedCount);
+
+        // Handle delete-after-merge if requested and all migrations succeeded
+        var sourceDeleted = false;
+        if (body.DeleteAfterMerge)
+        {
+            if (failedCount > 0)
+            {
+                _logger.LogWarning("Skipping delete-after-merge for relationship type {SourceId}: {FailedCount} migrations failed",
+                    body.SourceTypeId, failedCount);
+            }
+            else
+            {
+                var deleteResult = await DeleteRelationshipTypeAsync(
+                    new DeleteRelationshipTypeRequest { RelationshipTypeId = body.SourceTypeId },
+                    cancellationToken);
+
+                if (deleteResult == StatusCodes.OK)
+                {
+                    sourceDeleted = true;
+                }
+                else
+                {
+                    _logger.LogWarning("Delete-after-merge failed for relationship type {SourceId} with status {Status}",
+                        body.SourceTypeId, deleteResult);
+                }
+            }
+        }
+
+        // Publish single summary event (replaces N individual relationship.updated events)
+        await PublishMergedEventAsync(body.SourceTypeId, body.TargetTypeId, migratedCount, failedCount, sourceDeleted, cancellationToken);
+
+        return (StatusCodes.OK, new MergeRelationshipTypeResponse
+        {
+            SourceTypeId = body.SourceTypeId,
+            TargetTypeId = body.TargetTypeId,
+            RelationshipsMigrated = migratedCount,
+            RelationshipsFailed = failedCount,
+            MigrationErrors = migrationErrors,
+            SourceDeleted = sourceDeleted
+        });
     }
 
     /// <summary>

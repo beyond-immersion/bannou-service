@@ -2349,36 +2349,34 @@ public partial class DocumentationService : IDocumentationService
         };
 
         // Upload the bundle to Asset Service
+        try
         {
-            try
+            var uploadResponse = await _assetClient.RequestBundleUploadAsync(new BundleUploadRequest
             {
-                var uploadResponse = await _assetClient.RequestBundleUploadAsync(new BundleUploadRequest
-                {
-                    Owner = body.Owner,
-                    Filename = $"docs-{body.Namespace}-{archiveId:N}.bannou",
-                    Size = bundleData.Length
-                }, cancellationToken);
+                Owner = body.Owner,
+                Filename = $"docs-{body.Namespace}-{archiveId:N}.bannou",
+                Size = bundleData.Length
+            }, cancellationToken);
 
-                // Upload to pre-signed URL
-                using var httpClient = _httpClientFactory.CreateClient();
-                using var content = new ByteArrayContent(bundleData);
-                content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
-                var uploadResult = await httpClient.PutAsync(uploadResponse.UploadUrl.ToString(), content, cancellationToken);
+            // Upload to pre-signed URL
+            using var httpClient = _httpClientFactory.CreateClient();
+            using var content = new ByteArrayContent(bundleData);
+            content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+            var uploadResult = await httpClient.PutAsync(uploadResponse.UploadUrl.ToString(), content, cancellationToken);
 
-                if (uploadResult.IsSuccessStatusCode)
-                {
-                    archive.BundleAssetId = uploadResponse.UploadId;
-                    _logger.LogInformation("Archive bundle uploaded to Asset Service: {BundleId}", archive.BundleAssetId);
-                }
-                else
-                {
-                    _logger.LogWarning("Failed to upload archive bundle to Asset Service: {StatusCode}", uploadResult.StatusCode);
-                }
-            }
-            catch (Exception ex)
+            if (uploadResult.IsSuccessStatusCode)
             {
-                _logger.LogWarning(ex, "Asset Service integration failed, archive stored without bundle upload");
+                archive.BundleAssetId = uploadResponse.UploadId;
+                _logger.LogInformation("Archive bundle uploaded to Asset Service: {BundleId}", archive.BundleAssetId);
             }
+            else
+            {
+                _logger.LogWarning("Failed to upload archive bundle to Asset Service: {StatusCode}", uploadResult.StatusCode);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Asset Service integration failed, archive stored without bundle upload");
         }
 
         // Save archive record to state store

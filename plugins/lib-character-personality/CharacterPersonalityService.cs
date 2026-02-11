@@ -154,108 +154,106 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         _logger.LogDebug("Recording experience for character {CharacterId}, type {ExperienceType}, intensity {Intensity}",
             body.CharacterId, body.ExperienceType, body.Intensity);
 
+        var store = _stateStoreFactory.GetStore<PersonalityData>(StateStoreDefinitions.CharacterPersonality);
+        var key = $"{PERSONALITY_KEY_PREFIX}{body.CharacterId}";
+        var (data, etag) = await store.GetWithETagAsync(key, cancellationToken);
+
+        if (data == null)
         {
-            var store = _stateStoreFactory.GetStore<PersonalityData>(StateStoreDefinitions.CharacterPersonality);
-            var key = $"{PERSONALITY_KEY_PREFIX}{body.CharacterId}";
-            var (data, etag) = await store.GetWithETagAsync(key, cancellationToken);
-
-            if (data == null)
-            {
-                _logger.LogWarning("No personality found for character {CharacterId}", body.CharacterId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Evaluate whether evolution occurs (probability rolled once, not per-retry)
-            var evolutionProbability = _configuration.BaseEvolutionProbability * body.Intensity;
-            var roll = Random.Shared.NextDouble();
-            var evolved = roll < evolutionProbability;
-
-            var result = new ExperienceResult
-            {
-                CharacterId = body.CharacterId,
-                ExperienceRecorded = true,
-                PersonalityEvolved = evolved,
-                ChangedTraits = new List<TraitValue>()
-            };
-
-            if (evolved)
-            {
-                var affectedTraits = GetAffectedTraits(body.ExperienceType);
-                var saveSucceeded = false;
-
-                // Optimistic concurrency retry loop: re-read fresh data on conflict
-                for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
-                {
-                    if (attempt > 0)
-                    {
-                        (data, etag) = await store.GetWithETagAsync(key, cancellationToken);
-                        if (data == null)
-                        {
-                            _logger.LogWarning("Personality for character {CharacterId} deleted during evolution retry", body.CharacterId);
-                            return (StatusCodes.NotFound, null);
-                        }
-                    }
-
-                    // Apply trait shifts to fresh data each attempt
-                    var changedTraits = new List<TraitValue>();
-                    foreach (var (traitAxis, direction) in affectedTraits)
-                    {
-                        if (data.Traits.TryGetValue(traitAxis, out var currentValue))
-                        {
-                            var shift = (float)((_configuration.MinTraitShift + (_configuration.MaxTraitShift - _configuration.MinTraitShift) * body.Intensity) * direction);
-                            var newValue = Math.Clamp(currentValue + shift, -1.0f, 1.0f);
-                            data.Traits[traitAxis] = newValue;
-
-                            changedTraits.Add(new TraitValue
-                            {
-                                Axis = traitAxis,
-                                Value = newValue
-                            });
-                        }
-                    }
-
-                    data.Version++;
-                    data.UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-
-                    var saveResult = await store.TrySaveAsync(key, data, etag ?? string.Empty, cancellationToken);
-                    if (saveResult != null)
-                    {
-                        result.ChangedTraits = changedTraits;
-                        result.NewVersion = data.Version;
-                        saveSucceeded = true;
-
-                        await _messageBus.TryPublishAsync(PERSONALITY_EVOLVED_TOPIC, new PersonalityEvolvedEvent
-                        {
-                            EventId = Guid.NewGuid(),
-                            Timestamp = DateTimeOffset.UtcNow,
-                            CharacterId = body.CharacterId,
-                            ExperienceType = body.ExperienceType,
-                            Intensity = body.Intensity,
-                            Version = data.Version,
-                            AffectedTraits = affectedTraits.Keys.Select(k => k.ToString()).ToList()
-                        }, cancellationToken: cancellationToken);
-
-                        _logger.LogInformation("Personality evolved for character {CharacterId}, new version {Version}",
-                            body.CharacterId, data.Version);
-                        break;
-                    }
-
-                    _logger.LogDebug("Concurrent modification during personality evolution for character {CharacterId}, retrying (attempt {Attempt})",
-                        body.CharacterId, attempt + 1);
-                }
-
-                // If all retries exhausted without success, evolution did not persist
-                if (!saveSucceeded)
-                {
-                    _logger.LogWarning(
-                        "Personality evolution for character {CharacterId} failed after {MaxRetries} retries due to concurrent modifications; evolution rolled but not persisted",
-                        body.CharacterId, _configuration.MaxConcurrencyRetries);
-                    result.PersonalityEvolved = false;
-                }
-            }
-
-            return (StatusCodes.OK, result);
+            _logger.LogWarning("No personality found for character {CharacterId}", body.CharacterId);
+            return (StatusCodes.NotFound, null);
         }
+
+        // Evaluate whether evolution occurs (probability rolled once, not per-retry)
+        var evolutionProbability = _configuration.BaseEvolutionProbability * body.Intensity;
+        var roll = Random.Shared.NextDouble();
+        var evolved = roll < evolutionProbability;
+
+        var result = new ExperienceResult
+        {
+            CharacterId = body.CharacterId,
+            ExperienceRecorded = true,
+            PersonalityEvolved = evolved,
+            ChangedTraits = new List<TraitValue>()
+        };
+
+        if (evolved)
+        {
+            var affectedTraits = GetAffectedTraits(body.ExperienceType);
+            var saveSucceeded = false;
+
+            // Optimistic concurrency retry loop: re-read fresh data on conflict
+            for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
+            {
+                if (attempt > 0)
+                {
+                    (data, etag) = await store.GetWithETagAsync(key, cancellationToken);
+                    if (data == null)
+                    {
+                        _logger.LogWarning("Personality for character {CharacterId} deleted during evolution retry", body.CharacterId);
+                        return (StatusCodes.NotFound, null);
+                    }
+                }
+
+                // Apply trait shifts to fresh data each attempt
+                var changedTraits = new List<TraitValue>();
+                foreach (var (traitAxis, direction) in affectedTraits)
+                {
+                    if (data.Traits.TryGetValue(traitAxis, out var currentValue))
+                    {
+                        var shift = (float)((_configuration.MinTraitShift + (_configuration.MaxTraitShift - _configuration.MinTraitShift) * body.Intensity) * direction);
+                        var newValue = Math.Clamp(currentValue + shift, -1.0f, 1.0f);
+                        data.Traits[traitAxis] = newValue;
+
+                        changedTraits.Add(new TraitValue
+                        {
+                            Axis = traitAxis,
+                            Value = newValue
+                        });
+                    }
+                }
+
+                data.Version++;
+                data.UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+                var saveResult = await store.TrySaveAsync(key, data, etag ?? string.Empty, cancellationToken);
+                if (saveResult != null)
+                {
+                    result.ChangedTraits = changedTraits;
+                    result.NewVersion = data.Version;
+                    saveSucceeded = true;
+
+                    await _messageBus.TryPublishAsync(PERSONALITY_EVOLVED_TOPIC, new PersonalityEvolvedEvent
+                    {
+                        EventId = Guid.NewGuid(),
+                        Timestamp = DateTimeOffset.UtcNow,
+                        CharacterId = body.CharacterId,
+                        ExperienceType = body.ExperienceType,
+                        Intensity = body.Intensity,
+                        Version = data.Version,
+                        AffectedTraits = affectedTraits.Keys.Select(k => k.ToString()).ToList()
+                    }, cancellationToken: cancellationToken);
+
+                    _logger.LogInformation("Personality evolved for character {CharacterId}, new version {Version}",
+                        body.CharacterId, data.Version);
+                    break;
+                }
+
+                _logger.LogDebug("Concurrent modification during personality evolution for character {CharacterId}, retrying (attempt {Attempt})",
+                    body.CharacterId, attempt + 1);
+            }
+
+            // If all retries exhausted without success, evolution did not persist
+            if (!saveSucceeded)
+            {
+                _logger.LogWarning(
+                    "Personality evolution for character {CharacterId} failed after {MaxRetries} retries due to concurrent modifications; evolution rolled but not persisted",
+                    body.CharacterId, _configuration.MaxConcurrencyRetries);
+                result.PersonalityEvolved = false;
+            }
+        }
+
+        return (StatusCodes.OK, result);
     }
 
     /// <summary>
@@ -478,60 +476,58 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         var personalityDeleted = false;
         var combatPreferencesDeleted = false;
 
+        // Delete personality traits if they exist
+        var personalityStore = _stateStoreFactory.GetStore<PersonalityData>(StateStoreDefinitions.CharacterPersonality);
+        var personalityKey = $"{PERSONALITY_KEY_PREFIX}{body.CharacterId}";
+        var existingPersonality = await personalityStore.GetAsync(personalityKey, cancellationToken);
+
+        if (existingPersonality != null)
         {
-            // Delete personality traits if they exist
-            var personalityStore = _stateStoreFactory.GetStore<PersonalityData>(StateStoreDefinitions.CharacterPersonality);
-            var personalityKey = $"{PERSONALITY_KEY_PREFIX}{body.CharacterId}";
-            var existingPersonality = await personalityStore.GetAsync(personalityKey, cancellationToken);
+            await personalityStore.DeleteAsync(personalityKey, cancellationToken);
+            personalityDeleted = true;
 
-            if (existingPersonality != null)
+            // Publish deletion event
+            await _messageBus.TryPublishAsync(PERSONALITY_DELETED_TOPIC, new PersonalityDeletedEvent
             {
-                await personalityStore.DeleteAsync(personalityKey, cancellationToken);
-                personalityDeleted = true;
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                CharacterId = body.CharacterId
+            }, cancellationToken: cancellationToken);
 
-                // Publish deletion event
-                await _messageBus.TryPublishAsync(PERSONALITY_DELETED_TOPIC, new PersonalityDeletedEvent
-                {
-                    EventId = Guid.NewGuid(),
-                    Timestamp = DateTimeOffset.UtcNow,
-                    CharacterId = body.CharacterId
-                }, cancellationToken: cancellationToken);
-
-                _logger.LogInformation("Personality deleted for character {CharacterId} during cleanup", body.CharacterId);
-            }
-
-            // Delete combat preferences if they exist
-            var combatStore = _stateStoreFactory.GetStore<CombatPreferencesData>(StateStoreDefinitions.CharacterPersonality);
-            var combatKey = $"{COMBAT_KEY_PREFIX}{body.CharacterId}";
-            var existingCombat = await combatStore.GetAsync(combatKey, cancellationToken);
-
-            if (existingCombat != null)
-            {
-                await combatStore.DeleteAsync(combatKey, cancellationToken);
-                combatPreferencesDeleted = true;
-
-                // Publish deletion event
-                await _messageBus.TryPublishAsync(COMBAT_PREFERENCES_DELETED_TOPIC, new CombatPreferencesDeletedEvent
-                {
-                    EventId = Guid.NewGuid(),
-                    Timestamp = DateTimeOffset.UtcNow,
-                    CharacterId = body.CharacterId
-                }, cancellationToken: cancellationToken);
-
-                _logger.LogInformation("Combat preferences deleted for character {CharacterId} during cleanup", body.CharacterId);
-            }
-
-            _logger.LogInformation(
-                "Cleanup completed for character {CharacterId}: personality={PersonalityDeleted}, combat={CombatDeleted}",
-                body.CharacterId, personalityDeleted, combatPreferencesDeleted);
-
-            return (StatusCodes.OK, new CleanupByCharacterResponse
-            {
-                PersonalityDeleted = personalityDeleted,
-                CombatPreferencesDeleted = combatPreferencesDeleted,
-                Success = true
-            });
+            _logger.LogInformation("Personality deleted for character {CharacterId} during cleanup", body.CharacterId);
         }
+
+        // Delete combat preferences if they exist
+        var combatStore = _stateStoreFactory.GetStore<CombatPreferencesData>(StateStoreDefinitions.CharacterPersonality);
+        var combatKey = $"{COMBAT_KEY_PREFIX}{body.CharacterId}";
+        var existingCombat = await combatStore.GetAsync(combatKey, cancellationToken);
+
+        if (existingCombat != null)
+        {
+            await combatStore.DeleteAsync(combatKey, cancellationToken);
+            combatPreferencesDeleted = true;
+
+            // Publish deletion event
+            await _messageBus.TryPublishAsync(COMBAT_PREFERENCES_DELETED_TOPIC, new CombatPreferencesDeletedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                CharacterId = body.CharacterId
+            }, cancellationToken: cancellationToken);
+
+            _logger.LogInformation("Combat preferences deleted for character {CharacterId} during cleanup", body.CharacterId);
+        }
+
+        _logger.LogInformation(
+            "Cleanup completed for character {CharacterId}: personality={PersonalityDeleted}, combat={CombatDeleted}",
+            body.CharacterId, personalityDeleted, combatPreferencesDeleted);
+
+        return (StatusCodes.OK, new CleanupByCharacterResponse
+        {
+            PersonalityDeleted = personalityDeleted,
+            CombatPreferencesDeleted = combatPreferencesDeleted,
+            Success = true
+        });
     }
 
     /// <summary>
@@ -542,93 +538,91 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         _logger.LogDebug("Recording combat experience for character {CharacterId}, type {ExperienceType}, intensity {Intensity}",
             body.CharacterId, body.ExperienceType, body.Intensity);
 
+        var store = _stateStoreFactory.GetStore<CombatPreferencesData>(StateStoreDefinitions.CharacterPersonality);
+        var key = $"{COMBAT_KEY_PREFIX}{body.CharacterId}";
+        var (data, etag) = await store.GetWithETagAsync(key, cancellationToken);
+
+        if (data == null)
         {
-            var store = _stateStoreFactory.GetStore<CombatPreferencesData>(StateStoreDefinitions.CharacterPersonality);
-            var key = $"{COMBAT_KEY_PREFIX}{body.CharacterId}";
-            var (data, etag) = await store.GetWithETagAsync(key, cancellationToken);
-
-            if (data == null)
-            {
-                _logger.LogWarning("No combat preferences found for character {CharacterId}", body.CharacterId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Evaluate whether evolution occurs (probability rolled once, not per-retry)
-            var evolutionProbability = _configuration.BaseEvolutionProbability * body.Intensity;
-            var roll = Random.Shared.NextDouble();
-            var evolved = roll < evolutionProbability;
-
-            var result = new CombatEvolutionResult
-            {
-                CharacterId = body.CharacterId,
-                ExperienceRecorded = true,
-                PreferencesEvolved = evolved
-            };
-
-            if (evolved)
-            {
-                var saveSucceeded = false;
-
-                // Optimistic concurrency retry loop: re-read fresh data on conflict
-                for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
-                {
-                    if (attempt > 0)
-                    {
-                        (data, etag) = await store.GetWithETagAsync(key, cancellationToken);
-                        if (data == null)
-                        {
-                            _logger.LogWarning("Combat preferences for character {CharacterId} deleted during evolution retry", body.CharacterId);
-                            return (StatusCodes.NotFound, null);
-                        }
-                    }
-
-                    result.PreviousPreferences = MapToCombatPreferences(data);
-
-                    // Apply combat experience effects to fresh data each attempt
-                    ApplyCombatEvolution(data, body.ExperienceType, body.Intensity);
-
-                    data.Version++;
-                    data.UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-
-                    var saveResult = await store.TrySaveAsync(key, data, etag ?? string.Empty, cancellationToken);
-                    if (saveResult != null)
-                    {
-                        result.NewPreferences = MapToCombatPreferences(data);
-                        result.NewVersion = data.Version;
-                        saveSucceeded = true;
-
-                        await _messageBus.TryPublishAsync(COMBAT_PREFERENCES_EVOLVED_TOPIC, new CombatPreferencesEvolvedEvent
-                        {
-                            EventId = Guid.NewGuid(),
-                            Timestamp = DateTimeOffset.UtcNow,
-                            CharacterId = body.CharacterId,
-                            ExperienceType = body.ExperienceType,
-                            Intensity = body.Intensity,
-                            Version = data.Version
-                        }, cancellationToken: cancellationToken);
-
-                        _logger.LogInformation("Combat preferences evolved for character {CharacterId}, new version {Version}",
-                            body.CharacterId, data.Version);
-                        break;
-                    }
-
-                    _logger.LogDebug("Concurrent modification during combat evolution for character {CharacterId}, retrying (attempt {Attempt})",
-                        body.CharacterId, attempt + 1);
-                }
-
-                // If all retries exhausted without success, evolution did not persist
-                if (!saveSucceeded)
-                {
-                    _logger.LogWarning(
-                        "Combat preferences evolution for character {CharacterId} failed after {MaxRetries} retries due to concurrent modifications; evolution rolled but not persisted",
-                        body.CharacterId, _configuration.MaxConcurrencyRetries);
-                    result.PreferencesEvolved = false;
-                    result.PreviousPreferences = null;
-                }
-            }
-
-            return (StatusCodes.OK, result);
+            _logger.LogWarning("No combat preferences found for character {CharacterId}", body.CharacterId);
+            return (StatusCodes.NotFound, null);
         }
+
+        // Evaluate whether evolution occurs (probability rolled once, not per-retry)
+        var evolutionProbability = _configuration.BaseEvolutionProbability * body.Intensity;
+        var roll = Random.Shared.NextDouble();
+        var evolved = roll < evolutionProbability;
+
+        var result = new CombatEvolutionResult
+        {
+            CharacterId = body.CharacterId,
+            ExperienceRecorded = true,
+            PreferencesEvolved = evolved
+        };
+
+        if (evolved)
+        {
+            var saveSucceeded = false;
+
+            // Optimistic concurrency retry loop: re-read fresh data on conflict
+            for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
+            {
+                if (attempt > 0)
+                {
+                    (data, etag) = await store.GetWithETagAsync(key, cancellationToken);
+                    if (data == null)
+                    {
+                        _logger.LogWarning("Combat preferences for character {CharacterId} deleted during evolution retry", body.CharacterId);
+                        return (StatusCodes.NotFound, null);
+                    }
+                }
+
+                result.PreviousPreferences = MapToCombatPreferences(data);
+
+                // Apply combat experience effects to fresh data each attempt
+                ApplyCombatEvolution(data, body.ExperienceType, body.Intensity);
+
+                data.Version++;
+                data.UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+                var saveResult = await store.TrySaveAsync(key, data, etag ?? string.Empty, cancellationToken);
+                if (saveResult != null)
+                {
+                    result.NewPreferences = MapToCombatPreferences(data);
+                    result.NewVersion = data.Version;
+                    saveSucceeded = true;
+
+                    await _messageBus.TryPublishAsync(COMBAT_PREFERENCES_EVOLVED_TOPIC, new CombatPreferencesEvolvedEvent
+                    {
+                        EventId = Guid.NewGuid(),
+                        Timestamp = DateTimeOffset.UtcNow,
+                        CharacterId = body.CharacterId,
+                        ExperienceType = body.ExperienceType,
+                        Intensity = body.Intensity,
+                        Version = data.Version
+                    }, cancellationToken: cancellationToken);
+
+                    _logger.LogInformation("Combat preferences evolved for character {CharacterId}, new version {Version}",
+                        body.CharacterId, data.Version);
+                    break;
+                }
+
+                _logger.LogDebug("Concurrent modification during combat evolution for character {CharacterId}, retrying (attempt {Attempt})",
+                    body.CharacterId, attempt + 1);
+            }
+
+            // If all retries exhausted without success, evolution did not persist
+            if (!saveSucceeded)
+            {
+                _logger.LogWarning(
+                    "Combat preferences evolution for character {CharacterId} failed after {MaxRetries} retries due to concurrent modifications; evolution rolled but not persisted",
+                    body.CharacterId, _configuration.MaxConcurrencyRetries);
+                result.PreferencesEvolved = false;
+                result.PreviousPreferences = null;
+            }
+        }
+
+        return (StatusCodes.OK, result);
     }
 
     // ============================================================================
@@ -904,95 +898,93 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         var personalityRestored = false;
         var combatPreferencesRestored = false;
 
+        // Decompress the archive data
+        CharacterPersonalityArchive archiveData;
+        try
         {
-            // Decompress the archive data
-            CharacterPersonalityArchive archiveData;
-            try
-            {
-                var compressedBytes = Convert.FromBase64String(body.Data);
-                var jsonData = DecompressJsonData(compressedBytes);
-                archiveData = BannouJson.Deserialize<CharacterPersonalityArchive>(jsonData)
-                    ?? throw new InvalidOperationException("Deserialized archive data is null");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to decompress archive data for character {CharacterId}", body.CharacterId);
-                return (StatusCodes.BadRequest, new RestoreFromArchiveResponse
-                {
-                    CharacterId = body.CharacterId,
-                    PersonalityRestored = false,
-                    CombatPreferencesRestored = false,
-                    Success = false,
-                    ErrorMessage = $"Invalid archive data: {ex.Message}"
-                });
-            }
-
-            // Restore personality traits if present in archive
-            if (archiveData.HasPersonality && archiveData.Personality != null)
-            {
-                var personalityStore = _stateStoreFactory.GetStore<PersonalityData>(StateStoreDefinitions.CharacterPersonality);
-                var personalityKey = $"{PERSONALITY_KEY_PREFIX}{body.CharacterId}";
-
-                var data = new PersonalityData
-                {
-                    CharacterId = body.CharacterId,
-                    Traits = archiveData.Personality.Traits.ToDictionary(t => t.Axis, t => t.Value),
-                    ArchetypeHint = archiveData.Personality.ArchetypeHint,
-                    Version = archiveData.Personality.Version + 1, // Increment version for restored data
-                    CreatedAtUnix = archiveData.Personality.CreatedAt.ToUnixTimeSeconds(),
-                    UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
-                };
-
-                await personalityStore.SaveAsync(personalityKey, data, cancellationToken: cancellationToken);
-                personalityRestored = true;
-
-                // Register character reference for restored personality
-                await RegisterCharacterReferenceAsync(body.CharacterId.ToString(), body.CharacterId, cancellationToken);
-
-                _logger.LogInformation("Personality traits restored for character {CharacterId}", body.CharacterId);
-            }
-
-            // Restore combat preferences if present in archive
-            if (archiveData.HasCombatPreferences && archiveData.CombatPreferences != null)
-            {
-                var combatStore = _stateStoreFactory.GetStore<CombatPreferencesData>(StateStoreDefinitions.CharacterPersonality);
-                var combatKey = $"{COMBAT_KEY_PREFIX}{body.CharacterId}";
-
-                var data = new CombatPreferencesData
-                {
-                    CharacterId = body.CharacterId,
-                    Style = archiveData.CombatPreferences.Preferences.Style,
-                    PreferredRange = archiveData.CombatPreferences.Preferences.PreferredRange,
-                    GroupRole = archiveData.CombatPreferences.Preferences.GroupRole,
-                    RiskTolerance = archiveData.CombatPreferences.Preferences.RiskTolerance,
-                    RetreatThreshold = archiveData.CombatPreferences.Preferences.RetreatThreshold,
-                    ProtectAllies = archiveData.CombatPreferences.Preferences.ProtectAllies,
-                    Version = archiveData.CombatPreferences.Version + 1, // Increment version for restored data
-                    CreatedAtUnix = archiveData.CombatPreferences.CreatedAt.ToUnixTimeSeconds(),
-                    UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
-                };
-
-                await combatStore.SaveAsync(combatKey, data, cancellationToken: cancellationToken);
-                combatPreferencesRestored = true;
-
-                // Register character reference for restored combat preferences
-                await RegisterCharacterReferenceAsync($"combat-{body.CharacterId}", body.CharacterId, cancellationToken);
-
-                _logger.LogInformation("Combat preferences restored for character {CharacterId}", body.CharacterId);
-            }
-
-            _logger.LogInformation(
-                "Archive restoration completed for character {CharacterId}: personality={PersonalityRestored}, combat={CombatRestored}",
-                body.CharacterId, personalityRestored, combatPreferencesRestored);
-
-            return (StatusCodes.OK, new RestoreFromArchiveResponse
+            var compressedBytes = Convert.FromBase64String(body.Data);
+            var jsonData = DecompressJsonData(compressedBytes);
+            archiveData = BannouJson.Deserialize<CharacterPersonalityArchive>(jsonData)
+                ?? throw new InvalidOperationException("Deserialized archive data is null");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to decompress archive data for character {CharacterId}", body.CharacterId);
+            return (StatusCodes.BadRequest, new RestoreFromArchiveResponse
             {
                 CharacterId = body.CharacterId,
-                PersonalityRestored = personalityRestored,
-                CombatPreferencesRestored = combatPreferencesRestored,
-                Success = true
+                PersonalityRestored = false,
+                CombatPreferencesRestored = false,
+                Success = false,
+                ErrorMessage = $"Invalid archive data: {ex.Message}"
             });
         }
+
+        // Restore personality traits if present in archive
+        if (archiveData.HasPersonality && archiveData.Personality != null)
+        {
+            var personalityStore = _stateStoreFactory.GetStore<PersonalityData>(StateStoreDefinitions.CharacterPersonality);
+            var personalityKey = $"{PERSONALITY_KEY_PREFIX}{body.CharacterId}";
+
+            var data = new PersonalityData
+            {
+                CharacterId = body.CharacterId,
+                Traits = archiveData.Personality.Traits.ToDictionary(t => t.Axis, t => t.Value),
+                ArchetypeHint = archiveData.Personality.ArchetypeHint,
+                Version = archiveData.Personality.Version + 1, // Increment version for restored data
+                CreatedAtUnix = archiveData.Personality.CreatedAt.ToUnixTimeSeconds(),
+                UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+            };
+
+            await personalityStore.SaveAsync(personalityKey, data, cancellationToken: cancellationToken);
+            personalityRestored = true;
+
+            // Register character reference for restored personality
+            await RegisterCharacterReferenceAsync(body.CharacterId.ToString(), body.CharacterId, cancellationToken);
+
+            _logger.LogInformation("Personality traits restored for character {CharacterId}", body.CharacterId);
+        }
+
+        // Restore combat preferences if present in archive
+        if (archiveData.HasCombatPreferences && archiveData.CombatPreferences != null)
+        {
+            var combatStore = _stateStoreFactory.GetStore<CombatPreferencesData>(StateStoreDefinitions.CharacterPersonality);
+            var combatKey = $"{COMBAT_KEY_PREFIX}{body.CharacterId}";
+
+            var data = new CombatPreferencesData
+            {
+                CharacterId = body.CharacterId,
+                Style = archiveData.CombatPreferences.Preferences.Style,
+                PreferredRange = archiveData.CombatPreferences.Preferences.PreferredRange,
+                GroupRole = archiveData.CombatPreferences.Preferences.GroupRole,
+                RiskTolerance = archiveData.CombatPreferences.Preferences.RiskTolerance,
+                RetreatThreshold = archiveData.CombatPreferences.Preferences.RetreatThreshold,
+                ProtectAllies = archiveData.CombatPreferences.Preferences.ProtectAllies,
+                Version = archiveData.CombatPreferences.Version + 1, // Increment version for restored data
+                CreatedAtUnix = archiveData.CombatPreferences.CreatedAt.ToUnixTimeSeconds(),
+                UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+            };
+
+            await combatStore.SaveAsync(combatKey, data, cancellationToken: cancellationToken);
+            combatPreferencesRestored = true;
+
+            // Register character reference for restored combat preferences
+            await RegisterCharacterReferenceAsync($"combat-{body.CharacterId}", body.CharacterId, cancellationToken);
+
+            _logger.LogInformation("Combat preferences restored for character {CharacterId}", body.CharacterId);
+        }
+
+        _logger.LogInformation(
+            "Archive restoration completed for character {CharacterId}: personality={PersonalityRestored}, combat={CombatRestored}",
+            body.CharacterId, personalityRestored, combatPreferencesRestored);
+
+        return (StatusCodes.OK, new RestoreFromArchiveResponse
+        {
+            CharacterId = body.CharacterId,
+            PersonalityRestored = personalityRestored,
+            CombatPreferencesRestored = combatPreferencesRestored,
+            Success = true
+        });
     }
 
     /// <summary>

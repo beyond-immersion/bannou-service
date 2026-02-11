@@ -751,158 +751,156 @@ public partial class ContractService : IContractService
         ConsentToContractRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogInformation("Recording consent for contract: {ContractId} from {EntityId}",
+            body.ContractId, body.PartyEntityId);
+
+        var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
+        var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+
+        // Acquire contract lock for state transition
+        await using var contractLock = await _lockProvider.LockAsync(
+            "contract-instance", body.ContractId.ToString(), Guid.NewGuid().ToString(), _configuration.ContractLockTimeoutSeconds, cancellationToken);
+        if (!contractLock.Success)
         {
-            _logger.LogInformation("Recording consent for contract: {ContractId} from {EntityId}",
-                body.ContractId, body.PartyEntityId);
-
-            var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
-            var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
-
-            // Acquire contract lock for state transition
-            await using var contractLock = await _lockProvider.LockAsync(
-                "contract-instance", body.ContractId.ToString(), Guid.NewGuid().ToString(), _configuration.ContractLockTimeoutSeconds, cancellationToken);
-            if (!contractLock.Success)
-            {
-                _logger.LogWarning("Could not acquire contract lock for {ContractId}", body.ContractId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
-
-            if (model == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Guardian enforcement: locked contracts cannot be modified by parties
-            if (model.GuardianId.HasValue)
-            {
-                _logger.LogWarning("Cannot consent to locked contract: {ContractId}, guardian: {GuardianId}",
-                    body.ContractId, model.GuardianId);
-                return (StatusCodes.Forbidden, null);
-            }
-
-            if (model.Status != ContractStatus.Proposed)
-            {
-                _logger.LogWarning("Contract not in proposed status: {ContractId}", body.ContractId);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Check consent deadline (lazy expiration)
-            if (model.ProposedAt.HasValue && _configuration.DefaultConsentTimeoutDays > 0)
-            {
-                var deadline = model.ProposedAt.Value.AddDays(_configuration.DefaultConsentTimeoutDays);
-                if (DateTimeOffset.UtcNow > deadline)
-                {
-                    _logger.LogWarning(
-                        "Consent deadline expired for contract {ContractId}: proposed {ProposedAt}, deadline {Deadline}",
-                        body.ContractId, model.ProposedAt, deadline);
-
-                    // Transition to expired
-                    model.Status = ContractStatus.Expired;
-                    model.UpdatedAt = DateTimeOffset.UtcNow;
-                    var expiredEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
-                    if (expiredEtag != null)
-                    {
-                        await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}proposed", body.ContractId.ToString(), cancellationToken);
-                        await AddToListAsync($"{STATUS_INDEX_PREFIX}expired", body.ContractId.ToString(), cancellationToken);
-                    }
-
-                    return (StatusCodes.BadRequest, null);
-                }
-            }
-
-            // Find party
-            var party = model.Parties?.FirstOrDefault(p =>
-                p.EntityId == body.PartyEntityId &&
-                p.EntityType == body.PartyEntityType);
-
-            if (party == null)
-            {
-                _logger.LogWarning("Party not found in contract: {EntityId}", body.PartyEntityId);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            if (party.ConsentStatus == ConsentStatus.Consented)
-            {
-                _logger.LogWarning("Party already consented: {EntityId}", body.PartyEntityId);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Record consent
-            party.ConsentStatus = ConsentStatus.Consented;
-            party.ConsentedAt = DateTimeOffset.UtcNow;
-            model.UpdatedAt = DateTimeOffset.UtcNow;
-
-            // Check if all parties have consented
-            var remainingConsents = model.Parties?.Count(p => p.ConsentStatus != ConsentStatus.Consented) ?? 0;
-            var allConsented = model.Parties?.All(p => p.ConsentStatus == ConsentStatus.Consented) ?? false;
-
-            if (allConsented)
-            {
-                model.AcceptedAt = DateTimeOffset.UtcNow;
-
-                // Check if we should activate immediately or wait for effectiveFrom
-                if (model.EffectiveFrom == null || model.EffectiveFrom <= DateTimeOffset.UtcNow)
-                {
-                    model.EffectiveFrom = DateTimeOffset.UtcNow;
-
-                    // Activate first milestone if any, otherwise contract is immediately fulfilled
-                    if (model.Milestones?.Count > 0)
-                    {
-                        model.Status = ContractStatus.Active;
-                        model.Milestones[0].Status = MilestoneStatus.Active;
-                        model.Milestones[0].ActivatedAt = DateTimeOffset.UtcNow;
-                    }
-                    else
-                    {
-                        // No milestones means contract is immediately fulfilled (nothing to perform)
-                        model.Status = ContractStatus.Fulfilled;
-                    }
-                }
-                else
-                {
-                    model.Status = ContractStatus.Pending;
-                }
-            }
-
-            // Persist state change first, then perform side effects
-            var newEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
-            if (newEtag == null)
-            {
-                _logger.LogWarning("Concurrent modification detected for contract: {ContractId}", body.ContractId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Side effects: index updates and events (only after successful save)
-            await PublishConsentReceivedEventAsync(model, party, remainingConsents, cancellationToken);
-
-            if (allConsented)
-            {
-                await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}proposed", body.ContractId.ToString(), cancellationToken);
-
-                if (model.Status == ContractStatus.Fulfilled)
-                {
-                    // Contract with no milestones goes directly to fulfilled
-                    await AddToListAsync($"{STATUS_INDEX_PREFIX}fulfilled", body.ContractId.ToString(), cancellationToken);
-                    await PublishContractActivatedEventAsync(model, cancellationToken);
-                    await PublishContractFulfilledEventAsync(model, cancellationToken);
-                }
-                else if (model.Status == ContractStatus.Active)
-                {
-                    await AddToListAsync($"{STATUS_INDEX_PREFIX}active", body.ContractId.ToString(), cancellationToken);
-                    await PublishContractActivatedEventAsync(model, cancellationToken);
-                }
-                else
-                {
-                    await AddToListAsync($"{STATUS_INDEX_PREFIX}pending", body.ContractId.ToString(), cancellationToken);
-                }
-
-                await PublishContractAcceptedEventAsync(model, cancellationToken);
-            }
-
-            return (StatusCodes.OK, MapInstanceToResponse(model));
+            _logger.LogWarning("Could not acquire contract lock for {ContractId}", body.ContractId);
+            return (StatusCodes.Conflict, null);
         }
+
+        var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
+
+        if (model == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Guardian enforcement: locked contracts cannot be modified by parties
+        if (model.GuardianId.HasValue)
+        {
+            _logger.LogWarning("Cannot consent to locked contract: {ContractId}, guardian: {GuardianId}",
+                body.ContractId, model.GuardianId);
+            return (StatusCodes.Forbidden, null);
+        }
+
+        if (model.Status != ContractStatus.Proposed)
+        {
+            _logger.LogWarning("Contract not in proposed status: {ContractId}", body.ContractId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Check consent deadline (lazy expiration)
+        if (model.ProposedAt.HasValue && _configuration.DefaultConsentTimeoutDays > 0)
+        {
+            var deadline = model.ProposedAt.Value.AddDays(_configuration.DefaultConsentTimeoutDays);
+            if (DateTimeOffset.UtcNow > deadline)
+            {
+                _logger.LogWarning(
+                    "Consent deadline expired for contract {ContractId}: proposed {ProposedAt}, deadline {Deadline}",
+                    body.ContractId, model.ProposedAt, deadline);
+
+                // Transition to expired
+                model.Status = ContractStatus.Expired;
+                model.UpdatedAt = DateTimeOffset.UtcNow;
+                var expiredEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
+                if (expiredEtag != null)
+                {
+                    await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}proposed", body.ContractId.ToString(), cancellationToken);
+                    await AddToListAsync($"{STATUS_INDEX_PREFIX}expired", body.ContractId.ToString(), cancellationToken);
+                }
+
+                return (StatusCodes.BadRequest, null);
+            }
+        }
+
+        // Find party
+        var party = model.Parties?.FirstOrDefault(p =>
+            p.EntityId == body.PartyEntityId &&
+            p.EntityType == body.PartyEntityType);
+
+        if (party == null)
+        {
+            _logger.LogWarning("Party not found in contract: {EntityId}", body.PartyEntityId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        if (party.ConsentStatus == ConsentStatus.Consented)
+        {
+            _logger.LogWarning("Party already consented: {EntityId}", body.PartyEntityId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Record consent
+        party.ConsentStatus = ConsentStatus.Consented;
+        party.ConsentedAt = DateTimeOffset.UtcNow;
+        model.UpdatedAt = DateTimeOffset.UtcNow;
+
+        // Check if all parties have consented
+        var remainingConsents = model.Parties?.Count(p => p.ConsentStatus != ConsentStatus.Consented) ?? 0;
+        var allConsented = model.Parties?.All(p => p.ConsentStatus == ConsentStatus.Consented) ?? false;
+
+        if (allConsented)
+        {
+            model.AcceptedAt = DateTimeOffset.UtcNow;
+
+            // Check if we should activate immediately or wait for effectiveFrom
+            if (model.EffectiveFrom == null || model.EffectiveFrom <= DateTimeOffset.UtcNow)
+            {
+                model.EffectiveFrom = DateTimeOffset.UtcNow;
+
+                // Activate first milestone if any, otherwise contract is immediately fulfilled
+                if (model.Milestones?.Count > 0)
+                {
+                    model.Status = ContractStatus.Active;
+                    model.Milestones[0].Status = MilestoneStatus.Active;
+                    model.Milestones[0].ActivatedAt = DateTimeOffset.UtcNow;
+                }
+                else
+                {
+                    // No milestones means contract is immediately fulfilled (nothing to perform)
+                    model.Status = ContractStatus.Fulfilled;
+                }
+            }
+            else
+            {
+                model.Status = ContractStatus.Pending;
+            }
+        }
+
+        // Persist state change first, then perform side effects
+        var newEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
+        if (newEtag == null)
+        {
+            _logger.LogWarning("Concurrent modification detected for contract: {ContractId}", body.ContractId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Side effects: index updates and events (only after successful save)
+        await PublishConsentReceivedEventAsync(model, party, remainingConsents, cancellationToken);
+
+        if (allConsented)
+        {
+            await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}proposed", body.ContractId.ToString(), cancellationToken);
+
+            if (model.Status == ContractStatus.Fulfilled)
+            {
+                // Contract with no milestones goes directly to fulfilled
+                await AddToListAsync($"{STATUS_INDEX_PREFIX}fulfilled", body.ContractId.ToString(), cancellationToken);
+                await PublishContractActivatedEventAsync(model, cancellationToken);
+                await PublishContractFulfilledEventAsync(model, cancellationToken);
+            }
+            else if (model.Status == ContractStatus.Active)
+            {
+                await AddToListAsync($"{STATUS_INDEX_PREFIX}active", body.ContractId.ToString(), cancellationToken);
+                await PublishContractActivatedEventAsync(model, cancellationToken);
+            }
+            else
+            {
+                await AddToListAsync($"{STATUS_INDEX_PREFIX}pending", body.ContractId.ToString(), cancellationToken);
+            }
+
+            await PublishContractAcceptedEventAsync(model, cancellationToken);
+        }
+
+        return (StatusCodes.OK, MapInstanceToResponse(model));
     }
 
     /// <inheritdoc/>
@@ -910,18 +908,16 @@ public partial class ContractService : IContractService
         GetContractInstanceRequest body,
         CancellationToken cancellationToken = default)
     {
+        var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
+        var model = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
+            .GetAsync(instanceKey, cancellationToken);
+
+        if (model == null)
         {
-            var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
-            var model = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
-                .GetAsync(instanceKey, cancellationToken);
-
-            if (model == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            return (StatusCodes.OK, MapInstanceToResponse(model));
+            return (StatusCodes.NotFound, null);
         }
+
+        return (StatusCodes.OK, MapInstanceToResponse(model));
     }
 
     /// <inheritdoc/>
@@ -929,95 +925,93 @@ public partial class ContractService : IContractService
         QueryContractInstancesRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogDebug("Querying contract instances with cursor-based pagination");
+
+        // Decode cursor to get offset (null cursor = start from beginning)
+        var offset = DecodeCursorOffset(body.Cursor);
+        var pageSize = body.PageSize ?? _configuration.DefaultPageSize;
+
+        List<string> contractIds;
+
+        // Determine which index to use
+        if (body.PartyEntityId.HasValue && body.PartyEntityType.HasValue)
         {
-            _logger.LogDebug("Querying contract instances with cursor-based pagination");
-
-            // Decode cursor to get offset (null cursor = start from beginning)
-            var offset = DecodeCursorOffset(body.Cursor);
-            var pageSize = body.PageSize ?? _configuration.DefaultPageSize;
-
-            List<string> contractIds;
-
-            // Determine which index to use
-            if (body.PartyEntityId.HasValue && body.PartyEntityType.HasValue)
+            var partyIndexKey = $"{PARTY_INDEX_PREFIX}{body.PartyEntityType}:{body.PartyEntityId}";
+            contractIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract)
+                .GetAsync(partyIndexKey, cancellationToken) ?? new List<string>();
+        }
+        else if (body.TemplateId.HasValue)
+        {
+            var templateIndexKey = $"{TEMPLATE_INDEX_PREFIX}{body.TemplateId}";
+            contractIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract)
+                .GetAsync(templateIndexKey, cancellationToken) ?? new List<string>();
+        }
+        else if (body.Statuses?.Count > 0)
+        {
+            // Union of all status indexes
+            contractIds = new List<string>();
+            foreach (var status in body.Statuses)
             {
-                var partyIndexKey = $"{PARTY_INDEX_PREFIX}{body.PartyEntityType}:{body.PartyEntityId}";
-                contractIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract)
-                    .GetAsync(partyIndexKey, cancellationToken) ?? new List<string>();
+                var statusIndexKey = $"{STATUS_INDEX_PREFIX}{status.ToString().ToLowerInvariant()}";
+                var ids = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract)
+                    .GetAsync(statusIndexKey, cancellationToken) ?? new List<string>();
+                contractIds.AddRange(ids);
             }
-            else if (body.TemplateId.HasValue)
-            {
-                var templateIndexKey = $"{TEMPLATE_INDEX_PREFIX}{body.TemplateId}";
-                contractIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract)
-                    .GetAsync(templateIndexKey, cancellationToken) ?? new List<string>();
-            }
-            else if (body.Statuses?.Count > 0)
-            {
-                // Union of all status indexes
-                contractIds = new List<string>();
-                foreach (var status in body.Statuses)
-                {
-                    var statusIndexKey = $"{STATUS_INDEX_PREFIX}{status.ToString().ToLowerInvariant()}";
-                    var ids = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract)
-                        .GetAsync(statusIndexKey, cancellationToken) ?? new List<string>();
-                    contractIds.AddRange(ids);
-                }
-                contractIds = contractIds.Distinct().ToList();
-            }
-            else
-            {
-                _logger.LogWarning("No filter criteria provided for query");
-                return (StatusCodes.BadRequest, null);
-            }
+            contractIds = contractIds.Distinct().ToList();
+        }
+        else
+        {
+            _logger.LogWarning("No filter criteria provided for query");
+            return (StatusCodes.BadRequest, null);
+        }
 
-            if (contractIds.Count == 0)
-            {
-                return (StatusCodes.OK, new QueryContractInstancesResponse
-                {
-                    Contracts = new List<ContractInstanceResponse>(),
-                    NextCursor = null,
-                    HasMore = false
-                });
-            }
-
-            // Load contracts
-            var keys = contractIds.Select(id => $"{INSTANCE_PREFIX}{id}").ToList();
-            var bulkResults = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
-                .GetBulkAsync(keys, cancellationToken);
-
-            // Filter null results and extract values - OfType safely handles the null filtering
-            var contracts = bulkResults.Select(r => r.Value).OfType<ContractInstanceModel>().ToList();
-
-            // Apply additional filters
-            var filtered = contracts.AsEnumerable();
-
-            if (body.Statuses?.Count > 0)
-            {
-                var statusSet = body.Statuses.ToHashSet();
-                filtered = filtered.Where(c => statusSet.Contains(c.Status));
-            }
-
-            if (body.TemplateId.HasValue)
-            {
-                var templateId = body.TemplateId.Value;
-                filtered = filtered.Where(c => c.TemplateId == templateId);
-            }
-
-            // Cursor-based pagination: fetch pageSize + 1 to detect hasMore
-            var sorted = filtered.OrderByDescending(c => c.CreatedAt).ToList();
-            var paged = sorted.Skip(offset).Take(pageSize + 1).ToList();
-
-            var hasMore = paged.Count > pageSize;
-            var resultItems = paged.Take(pageSize).ToList();
-            var nextCursor = hasMore ? EncodeCursorOffset(offset + pageSize) : null;
-
+        if (contractIds.Count == 0)
+        {
             return (StatusCodes.OK, new QueryContractInstancesResponse
             {
-                Contracts = resultItems.Select(MapInstanceToResponse).ToList(),
-                NextCursor = nextCursor,
-                HasMore = hasMore
+                Contracts = new List<ContractInstanceResponse>(),
+                NextCursor = null,
+                HasMore = false
             });
         }
+
+        // Load contracts
+        var keys = contractIds.Select(id => $"{INSTANCE_PREFIX}{id}").ToList();
+        var bulkResults = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
+            .GetBulkAsync(keys, cancellationToken);
+
+        // Filter null results and extract values - OfType safely handles the null filtering
+        var contracts = bulkResults.Select(r => r.Value).OfType<ContractInstanceModel>().ToList();
+
+        // Apply additional filters
+        var filtered = contracts.AsEnumerable();
+
+        if (body.Statuses?.Count > 0)
+        {
+            var statusSet = body.Statuses.ToHashSet();
+            filtered = filtered.Where(c => statusSet.Contains(c.Status));
+        }
+
+        if (body.TemplateId.HasValue)
+        {
+            var templateId = body.TemplateId.Value;
+            filtered = filtered.Where(c => c.TemplateId == templateId);
+        }
+
+        // Cursor-based pagination: fetch pageSize + 1 to detect hasMore
+        var sorted = filtered.OrderByDescending(c => c.CreatedAt).ToList();
+        var paged = sorted.Skip(offset).Take(pageSize + 1).ToList();
+
+        var hasMore = paged.Count > pageSize;
+        var resultItems = paged.Take(pageSize).ToList();
+        var nextCursor = hasMore ? EncodeCursorOffset(offset + pageSize) : null;
+
+        return (StatusCodes.OK, new QueryContractInstancesResponse
+        {
+            Contracts = resultItems.Select(MapInstanceToResponse).ToList(),
+            NextCursor = nextCursor,
+            HasMore = hasMore
+        });
     }
 
     /// <inheritdoc/>
@@ -1025,71 +1019,69 @@ public partial class ContractService : IContractService
         TerminateContractInstanceRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogInformation("Terminating contract: {ContractId}", body.ContractId);
+
+        var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
+        var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+
+        // Acquire contract lock for state transition
+        await using var contractLock = await _lockProvider.LockAsync(
+            "contract-instance", body.ContractId.ToString(), Guid.NewGuid().ToString(), _configuration.ContractLockTimeoutSeconds, cancellationToken);
+        if (!contractLock.Success)
         {
-            _logger.LogInformation("Terminating contract: {ContractId}", body.ContractId);
-
-            var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
-            var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
-
-            // Acquire contract lock for state transition
-            await using var contractLock = await _lockProvider.LockAsync(
-                "contract-instance", body.ContractId.ToString(), Guid.NewGuid().ToString(), _configuration.ContractLockTimeoutSeconds, cancellationToken);
-            if (!contractLock.Success)
-            {
-                _logger.LogWarning("Could not acquire contract lock for {ContractId}", body.ContractId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
-
-            if (model == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Guardian enforcement: locked contracts cannot be terminated by parties
-            if (model.GuardianId.HasValue)
-            {
-                _logger.LogWarning("Cannot terminate locked contract: {ContractId}, guardian: {GuardianId}",
-                    body.ContractId, model.GuardianId);
-                return (StatusCodes.Forbidden, null);
-            }
-
-            // Verify requesting entity is a party
-            var requestingParty = model.Parties?.FirstOrDefault(p =>
-                p.EntityId == body.RequestingEntityId &&
-                p.EntityType == body.RequestingEntityType);
-
-            if (requestingParty == null)
-            {
-                _logger.LogWarning("Requesting entity is not a party to this contract");
-                return (StatusCodes.BadRequest, null);
-            }
-
-            var previousStatus = model.Status.ToString().ToLowerInvariant();
-            model.Status = ContractStatus.Terminated;
-            model.TerminatedAt = DateTimeOffset.UtcNow;
-            model.UpdatedAt = DateTimeOffset.UtcNow;
-
-            // Persist first
-            var newEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
-            if (newEtag == null)
-            {
-                _logger.LogWarning("Concurrent modification detected for contract: {ContractId}", body.ContractId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Then update indexes
-            await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}{previousStatus}", body.ContractId.ToString(), cancellationToken);
-            await AddToListAsync($"{STATUS_INDEX_PREFIX}terminated", body.ContractId.ToString(), cancellationToken);
-
-            // Then publish events
-            await PublishContractTerminatedEventAsync(model, body.RequestingEntityId,
-                body.RequestingEntityType, body.Reason, false, cancellationToken);
-
-            _logger.LogInformation("Terminated contract: {ContractId}", body.ContractId);
-            return (StatusCodes.OK, MapInstanceToResponse(model));
+            _logger.LogWarning("Could not acquire contract lock for {ContractId}", body.ContractId);
+            return (StatusCodes.Conflict, null);
         }
+
+        var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
+
+        if (model == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Guardian enforcement: locked contracts cannot be terminated by parties
+        if (model.GuardianId.HasValue)
+        {
+            _logger.LogWarning("Cannot terminate locked contract: {ContractId}, guardian: {GuardianId}",
+                body.ContractId, model.GuardianId);
+            return (StatusCodes.Forbidden, null);
+        }
+
+        // Verify requesting entity is a party
+        var requestingParty = model.Parties?.FirstOrDefault(p =>
+            p.EntityId == body.RequestingEntityId &&
+            p.EntityType == body.RequestingEntityType);
+
+        if (requestingParty == null)
+        {
+            _logger.LogWarning("Requesting entity is not a party to this contract");
+            return (StatusCodes.BadRequest, null);
+        }
+
+        var previousStatus = model.Status.ToString().ToLowerInvariant();
+        model.Status = ContractStatus.Terminated;
+        model.TerminatedAt = DateTimeOffset.UtcNow;
+        model.UpdatedAt = DateTimeOffset.UtcNow;
+
+        // Persist first
+        var newEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
+        if (newEtag == null)
+        {
+            _logger.LogWarning("Concurrent modification detected for contract: {ContractId}", body.ContractId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Then update indexes
+        await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}{previousStatus}", body.ContractId.ToString(), cancellationToken);
+        await AddToListAsync($"{STATUS_INDEX_PREFIX}terminated", body.ContractId.ToString(), cancellationToken);
+
+        // Then publish events
+        await PublishContractTerminatedEventAsync(model, body.RequestingEntityId,
+            body.RequestingEntityType, body.Reason, false, cancellationToken);
+
+        _logger.LogInformation("Terminated contract: {ContractId}", body.ContractId);
+        return (StatusCodes.OK, MapInstanceToResponse(model));
     }
 
     /// <inheritdoc/>
@@ -1097,87 +1089,85 @@ public partial class ContractService : IContractService
         GetContractInstanceStatusRequest body,
         CancellationToken cancellationToken = default)
     {
+        var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
+        var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+        var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
+
+        if (model == null)
         {
-            var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
-            var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
-            var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
+            return (StatusCodes.NotFound, null);
+        }
 
-            if (model == null)
+        // Lazy deadline enforcement: check all active milestones for overdue status
+        var anyProcessed = false;
+        if (model.Milestones != null)
+        {
+            foreach (var milestone in model.Milestones)
             {
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Lazy deadline enforcement: check all active milestones for overdue status
-            var anyProcessed = false;
-            if (model.Milestones != null)
-            {
-                foreach (var milestone in model.Milestones)
+                if (await ProcessOverdueMilestoneAsync(model, milestone, cancellationToken))
                 {
-                    if (await ProcessOverdueMilestoneAsync(model, milestone, cancellationToken))
-                    {
-                        anyProcessed = true;
-                    }
+                    anyProcessed = true;
                 }
             }
+        }
 
-            if (anyProcessed)
-            {
-                // Persist the updated contract
-                await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
-            }
+        if (anyProcessed)
+        {
+            // Persist the updated contract
+            await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
+        }
 
-            var milestoneProgress = model.Milestones?.Select(m => new MilestoneProgressSummary
+        var milestoneProgress = model.Milestones?.Select(m => new MilestoneProgressSummary
+        {
+            Code = m.Code,
+            Status = m.Status
+        }).ToList();
+
+        var pendingConsents = model.Parties?
+            .Where(p => p.ConsentStatus == ConsentStatus.Pending)
+            .Select(p => new PendingConsentSummary
             {
-                Code = m.Code,
-                Status = m.Status
+                EntityId = p.EntityId,
+                EntityType = p.EntityType,
+                Role = p.Role
             }).ToList();
 
-            var pendingConsents = model.Parties?
-                .Where(p => p.ConsentStatus == ConsentStatus.Pending)
-                .Select(p => new PendingConsentSummary
+        // Load any active breaches
+        List<BreachSummary>? activeBreaches = null;
+        if (model.BreachIds?.Count > 0)
+        {
+            var breachKeys = model.BreachIds.Select(id => $"{BREACH_PREFIX}{id}").ToList();
+            var breaches = await _stateStoreFactory.GetStore<BreachModel>(StateStoreDefinitions.Contract)
+                .GetBulkAsync(breachKeys, cancellationToken);
+
+            var activeStatuses = new[] { BreachStatus.Detected, BreachStatus.CurePeriod };
+            activeBreaches = breaches
+                .Select(b => b.Value)
+                .Where(breach => breach != null && activeStatuses.Contains(breach.Status))
+                .Select(breach => new BreachSummary
                 {
-                    EntityId = p.EntityId,
-                    EntityType = p.EntityType,
-                    Role = p.Role
+                    BreachId = breach.BreachId,
+                    BreachType = breach.BreachType,
+                    Status = breach.Status
                 }).ToList();
-
-            // Load any active breaches
-            List<BreachSummary>? activeBreaches = null;
-            if (model.BreachIds?.Count > 0)
-            {
-                var breachKeys = model.BreachIds.Select(id => $"{BREACH_PREFIX}{id}").ToList();
-                var breaches = await _stateStoreFactory.GetStore<BreachModel>(StateStoreDefinitions.Contract)
-                    .GetBulkAsync(breachKeys, cancellationToken);
-
-                var activeStatuses = new[] { BreachStatus.Detected, BreachStatus.CurePeriod };
-                activeBreaches = breaches
-                    .Select(b => b.Value)
-                    .Where(breach => breach != null && activeStatuses.Contains(breach.Status))
-                    .Select(breach => new BreachSummary
-                    {
-                        BreachId = breach.BreachId,
-                        BreachType = breach.BreachType,
-                        Status = breach.Status
-                    }).ToList();
-            }
-
-            int? daysUntilExpiration = null;
-            if (model.EffectiveUntil.HasValue)
-            {
-                var remaining = model.EffectiveUntil.Value - DateTimeOffset.UtcNow;
-                daysUntilExpiration = (int)Math.Ceiling(remaining.TotalDays);
-            }
-
-            return (StatusCodes.OK, new ContractInstanceStatusResponse
-            {
-                ContractId = model.ContractId,
-                Status = model.Status,
-                MilestoneProgress = milestoneProgress ?? new List<MilestoneProgressSummary>(),
-                PendingConsents = pendingConsents?.Count > 0 ? pendingConsents : null,
-                ActiveBreaches = activeBreaches?.Count > 0 ? activeBreaches : null,
-                DaysUntilExpiration = daysUntilExpiration
-            });
         }
+
+        int? daysUntilExpiration = null;
+        if (model.EffectiveUntil.HasValue)
+        {
+            var remaining = model.EffectiveUntil.Value - DateTimeOffset.UtcNow;
+            daysUntilExpiration = (int)Math.Ceiling(remaining.TotalDays);
+        }
+
+        return (StatusCodes.OK, new ContractInstanceStatusResponse
+        {
+            ContractId = model.ContractId,
+            Status = model.Status,
+            MilestoneProgress = milestoneProgress ?? new List<MilestoneProgressSummary>(),
+            PendingConsents = pendingConsents?.Count > 0 ? pendingConsents : null,
+            ActiveBreaches = activeBreaches?.Count > 0 ? activeBreaches : null,
+            DaysUntilExpiration = daysUntilExpiration
+        });
     }
 
     #endregion
@@ -1189,103 +1179,101 @@ public partial class ContractService : IContractService
         CompleteMilestoneRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogInformation("Completing milestone: {MilestoneCode} for contract {ContractId}",
+            body.MilestoneCode, body.ContractId);
+
+        var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
+        var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+
+        // Acquire contract lock for state transition
+        await using var contractLock = await _lockProvider.LockAsync(
+            "contract-instance", body.ContractId.ToString(), Guid.NewGuid().ToString(), _configuration.ContractLockTimeoutSeconds, cancellationToken);
+        if (!contractLock.Success)
         {
-            _logger.LogInformation("Completing milestone: {MilestoneCode} for contract {ContractId}",
-                body.MilestoneCode, body.ContractId);
-
-            var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
-            var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
-
-            // Acquire contract lock for state transition
-            await using var contractLock = await _lockProvider.LockAsync(
-                "contract-instance", body.ContractId.ToString(), Guid.NewGuid().ToString(), _configuration.ContractLockTimeoutSeconds, cancellationToken);
-            if (!contractLock.Success)
-            {
-                _logger.LogWarning("Could not acquire contract lock for {ContractId}", body.ContractId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
-
-            if (model == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            var milestone = model.Milestones?.FirstOrDefault(m => m.Code == body.MilestoneCode);
-            if (milestone == null)
-            {
-                _logger.LogWarning("Milestone not found: {MilestoneCode}", body.MilestoneCode);
-                return (StatusCodes.NotFound, null);
-            }
-
-            if (milestone.Status != MilestoneStatus.Active && milestone.Status != MilestoneStatus.Pending)
-            {
-                _logger.LogWarning("Milestone not in completable state: {Status}", milestone.Status);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Mark completed
-            milestone.Status = MilestoneStatus.Completed;
-            milestone.CompletedAt = DateTimeOffset.UtcNow;
-            model.UpdatedAt = DateTimeOffset.UtcNow;
-
-            // Activate next milestone if any
-            var milestones = model.Milestones;
-            if (milestones != null)
-            {
-                var currentIndex = milestones.FindIndex(m => m.Code == body.MilestoneCode);
-                if (currentIndex >= 0 && currentIndex + 1 < milestones.Count)
-                {
-                    milestones[currentIndex + 1].Status = MilestoneStatus.Active;
-                    milestones[currentIndex + 1].ActivatedAt = DateTimeOffset.UtcNow;
-                    model.CurrentMilestoneIndex = currentIndex + 1;
-                }
-            }
-
-            // Check if all required milestones are complete
-            var allRequiredComplete = model.Milestones?
-                .Where(m => m.Required)
-                .All(m => m.Status == MilestoneStatus.Completed) ?? true;
-
-            if (allRequiredComplete && model.Status == ContractStatus.Active)
-            {
-                model.Status = ContractStatus.Fulfilled;
-            }
-
-            // Persist first
-            var newEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
-            if (newEtag == null)
-            {
-                _logger.LogWarning("Concurrent modification detected for contract: {ContractId}", body.ContractId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Then update indexes (if status changed to fulfilled)
-            if (allRequiredComplete && model.Status == ContractStatus.Fulfilled)
-            {
-                await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}active", body.ContractId.ToString(), cancellationToken);
-                await AddToListAsync($"{STATUS_INDEX_PREFIX}fulfilled", body.ContractId.ToString(), cancellationToken);
-                await PublishContractFulfilledEventAsync(model, cancellationToken);
-            }
-
-            // Then execute prebound APIs (side effects after persist)
-            var apisExecuted = 0;
-            if (milestone.OnComplete?.Count > 0)
-            {
-                apisExecuted = await ExecutePreboundApisBatchedAsync(
-                    model, milestone.OnComplete, "milestone.completed", cancellationToken);
-            }
-
-            // Publish milestone completed event
-            await PublishMilestoneCompletedEventAsync(model, milestone, body.Evidence, apisExecuted, cancellationToken);
-
-            return (StatusCodes.OK, new MilestoneResponse
-            {
-                ContractId = model.ContractId,
-                Milestone = MapMilestoneToResponse(milestone)
-            });
+            _logger.LogWarning("Could not acquire contract lock for {ContractId}", body.ContractId);
+            return (StatusCodes.Conflict, null);
         }
+
+        var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
+
+        if (model == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        var milestone = model.Milestones?.FirstOrDefault(m => m.Code == body.MilestoneCode);
+        if (milestone == null)
+        {
+            _logger.LogWarning("Milestone not found: {MilestoneCode}", body.MilestoneCode);
+            return (StatusCodes.NotFound, null);
+        }
+
+        if (milestone.Status != MilestoneStatus.Active && milestone.Status != MilestoneStatus.Pending)
+        {
+            _logger.LogWarning("Milestone not in completable state: {Status}", milestone.Status);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Mark completed
+        milestone.Status = MilestoneStatus.Completed;
+        milestone.CompletedAt = DateTimeOffset.UtcNow;
+        model.UpdatedAt = DateTimeOffset.UtcNow;
+
+        // Activate next milestone if any
+        var milestones = model.Milestones;
+        if (milestones != null)
+        {
+            var currentIndex = milestones.FindIndex(m => m.Code == body.MilestoneCode);
+            if (currentIndex >= 0 && currentIndex + 1 < milestones.Count)
+            {
+                milestones[currentIndex + 1].Status = MilestoneStatus.Active;
+                milestones[currentIndex + 1].ActivatedAt = DateTimeOffset.UtcNow;
+                model.CurrentMilestoneIndex = currentIndex + 1;
+            }
+        }
+
+        // Check if all required milestones are complete
+        var allRequiredComplete = model.Milestones?
+            .Where(m => m.Required)
+            .All(m => m.Status == MilestoneStatus.Completed) ?? true;
+
+        if (allRequiredComplete && model.Status == ContractStatus.Active)
+        {
+            model.Status = ContractStatus.Fulfilled;
+        }
+
+        // Persist first
+        var newEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
+        if (newEtag == null)
+        {
+            _logger.LogWarning("Concurrent modification detected for contract: {ContractId}", body.ContractId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Then update indexes (if status changed to fulfilled)
+        if (allRequiredComplete && model.Status == ContractStatus.Fulfilled)
+        {
+            await RemoveFromListAsync($"{STATUS_INDEX_PREFIX}active", body.ContractId.ToString(), cancellationToken);
+            await AddToListAsync($"{STATUS_INDEX_PREFIX}fulfilled", body.ContractId.ToString(), cancellationToken);
+            await PublishContractFulfilledEventAsync(model, cancellationToken);
+        }
+
+        // Then execute prebound APIs (side effects after persist)
+        var apisExecuted = 0;
+        if (milestone.OnComplete?.Count > 0)
+        {
+            apisExecuted = await ExecutePreboundApisBatchedAsync(
+                model, milestone.OnComplete, "milestone.completed", cancellationToken);
+        }
+
+        // Publish milestone completed event
+        await PublishMilestoneCompletedEventAsync(model, milestone, body.Evidence, apisExecuted, cancellationToken);
+
+        return (StatusCodes.OK, new MilestoneResponse
+        {
+            ContractId = model.ContractId,
+            Milestone = MapMilestoneToResponse(milestone)
+        });
     }
 
     /// <inheritdoc/>
@@ -1293,80 +1281,78 @@ public partial class ContractService : IContractService
         FailMilestoneRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogInformation("Failing milestone: {MilestoneCode} for contract {ContractId}",
+            body.MilestoneCode, body.ContractId);
+
+        var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
+        var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+
+        // Acquire contract lock for state transition
+        await using var contractLock = await _lockProvider.LockAsync(
+            "contract-instance", body.ContractId.ToString(), Guid.NewGuid().ToString(), _configuration.ContractLockTimeoutSeconds, cancellationToken);
+        if (!contractLock.Success)
         {
-            _logger.LogInformation("Failing milestone: {MilestoneCode} for contract {ContractId}",
-                body.MilestoneCode, body.ContractId);
-
-            var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
-            var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
-
-            // Acquire contract lock for state transition
-            await using var contractLock = await _lockProvider.LockAsync(
-                "contract-instance", body.ContractId.ToString(), Guid.NewGuid().ToString(), _configuration.ContractLockTimeoutSeconds, cancellationToken);
-            if (!contractLock.Success)
-            {
-                _logger.LogWarning("Could not acquire contract lock for {ContractId}", body.ContractId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
-
-            if (model == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            var milestone = model.Milestones?.FirstOrDefault(m => m.Code == body.MilestoneCode);
-            if (milestone == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            if (milestone.Status != MilestoneStatus.Active && milestone.Status != MilestoneStatus.Pending)
-            {
-                _logger.LogWarning("Milestone not in failable state: {Status}", milestone.Status);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Mark failed or skipped based on required flag
-            var triggeredBreach = false;
-            if (milestone.Required)
-            {
-                milestone.Status = MilestoneStatus.Failed;
-                triggeredBreach = true;
-            }
-            else
-            {
-                milestone.Status = MilestoneStatus.Skipped;
-            }
-            milestone.FailedAt = DateTimeOffset.UtcNow;
-            model.UpdatedAt = DateTimeOffset.UtcNow;
-
-            // Persist first
-            var newEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
-            if (newEtag == null)
-            {
-                _logger.LogWarning("Concurrent modification detected for contract: {ContractId}", body.ContractId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Then execute prebound APIs (side effects after persist)
-            if (milestone.OnExpire?.Count > 0)
-            {
-                await ExecutePreboundApisBatchedAsync(
-                    model, milestone.OnExpire, "milestone.failed", cancellationToken);
-            }
-
-            // Then publish events
-            await PublishMilestoneFailedEventAsync(model, milestone, body.Reason ?? "Milestone failed",
-                milestone.Required, triggeredBreach, cancellationToken);
-
-            return (StatusCodes.OK, new MilestoneResponse
-            {
-                ContractId = model.ContractId,
-                Milestone = MapMilestoneToResponse(milestone)
-            });
+            _logger.LogWarning("Could not acquire contract lock for {ContractId}", body.ContractId);
+            return (StatusCodes.Conflict, null);
         }
+
+        var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
+
+        if (model == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        var milestone = model.Milestones?.FirstOrDefault(m => m.Code == body.MilestoneCode);
+        if (milestone == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        if (milestone.Status != MilestoneStatus.Active && milestone.Status != MilestoneStatus.Pending)
+        {
+            _logger.LogWarning("Milestone not in failable state: {Status}", milestone.Status);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Mark failed or skipped based on required flag
+        var triggeredBreach = false;
+        if (milestone.Required)
+        {
+            milestone.Status = MilestoneStatus.Failed;
+            triggeredBreach = true;
+        }
+        else
+        {
+            milestone.Status = MilestoneStatus.Skipped;
+        }
+        milestone.FailedAt = DateTimeOffset.UtcNow;
+        model.UpdatedAt = DateTimeOffset.UtcNow;
+
+        // Persist first
+        var newEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
+        if (newEtag == null)
+        {
+            _logger.LogWarning("Concurrent modification detected for contract: {ContractId}", body.ContractId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Then execute prebound APIs (side effects after persist)
+        if (milestone.OnExpire?.Count > 0)
+        {
+            await ExecutePreboundApisBatchedAsync(
+                model, milestone.OnExpire, "milestone.failed", cancellationToken);
+        }
+
+        // Then publish events
+        await PublishMilestoneFailedEventAsync(model, milestone, body.Reason ?? "Milestone failed",
+            milestone.Required, triggeredBreach, cancellationToken);
+
+        return (StatusCodes.OK, new MilestoneResponse
+        {
+            ContractId = model.ContractId,
+            Milestone = MapMilestoneToResponse(milestone)
+        });
     }
 
     /// <inheritdoc/>
@@ -1374,36 +1360,34 @@ public partial class ContractService : IContractService
         GetMilestoneRequest body,
         CancellationToken cancellationToken = default)
     {
+        var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
+        var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+        var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
+
+        if (model == null)
         {
-            var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
-            var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
-            var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
-
-            if (model == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            var milestone = model.Milestones?.FirstOrDefault(m => m.Code == body.MilestoneCode);
-            if (milestone == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Lazy deadline enforcement: check if milestone is overdue and process if needed
-            var wasProcessed = await ProcessOverdueMilestoneAsync(model, milestone, cancellationToken);
-            if (wasProcessed)
-            {
-                // Persist the updated contract
-                await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
-            }
-
-            return (StatusCodes.OK, new MilestoneResponse
-            {
-                ContractId = model.ContractId,
-                Milestone = MapMilestoneToResponse(milestone)
-            });
+            return (StatusCodes.NotFound, null);
         }
+
+        var milestone = model.Milestones?.FirstOrDefault(m => m.Code == body.MilestoneCode);
+        if (milestone == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Lazy deadline enforcement: check if milestone is overdue and process if needed
+        var wasProcessed = await ProcessOverdueMilestoneAsync(model, milestone, cancellationToken);
+        if (wasProcessed)
+        {
+            // Persist the updated contract
+            await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
+        }
+
+        return (StatusCodes.OK, new MilestoneResponse
+        {
+            ContractId = model.ContractId,
+            Milestone = MapMilestoneToResponse(milestone)
+        });
     }
 
     #endregion
@@ -1415,82 +1399,80 @@ public partial class ContractService : IContractService
         ReportBreachRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogInformation("Reporting breach for contract: {ContractId}", body.ContractId);
+
+        var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
+        var instanceStore = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+
+        // Acquire contract lock for state transition
+        await using var contractLock = await _lockProvider.LockAsync(
+            "contract-instance", body.ContractId.ToString(), Guid.NewGuid().ToString(), _configuration.ContractLockTimeoutSeconds, cancellationToken);
+        if (!contractLock.Success)
         {
-            _logger.LogInformation("Reporting breach for contract: {ContractId}", body.ContractId);
+            _logger.LogWarning("Could not acquire contract lock for {ContractId}", body.ContractId);
+            return (StatusCodes.Conflict, null);
+        }
 
-            var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
-            var instanceStore = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+        var (model, etag) = await instanceStore.GetWithETagAsync(instanceKey, cancellationToken);
 
-            // Acquire contract lock for state transition
-            await using var contractLock = await _lockProvider.LockAsync(
-                "contract-instance", body.ContractId.ToString(), Guid.NewGuid().ToString(), _configuration.ContractLockTimeoutSeconds, cancellationToken);
-            if (!contractLock.Success)
+        if (model == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        var breachId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+
+        // Calculate cure deadline if grace period configured
+        DateTimeOffset? cureDeadline = null;
+        if (!string.IsNullOrEmpty(model.Terms?.GracePeriodForCure))
+        {
+            // Parse ISO 8601 duration (simplified - just days for now)
+            if (model.Terms.GracePeriodForCure.StartsWith("P") && model.Terms.GracePeriodForCure.EndsWith("D"))
             {
-                _logger.LogWarning("Could not acquire contract lock for {ContractId}", body.ContractId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            var (model, etag) = await instanceStore.GetWithETagAsync(instanceKey, cancellationToken);
-
-            if (model == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            var breachId = Guid.NewGuid();
-            var now = DateTimeOffset.UtcNow;
-
-            // Calculate cure deadline if grace period configured
-            DateTimeOffset? cureDeadline = null;
-            if (!string.IsNullOrEmpty(model.Terms?.GracePeriodForCure))
-            {
-                // Parse ISO 8601 duration (simplified - just days for now)
-                if (model.Terms.GracePeriodForCure.StartsWith("P") && model.Terms.GracePeriodForCure.EndsWith("D"))
+                var daysStr = model.Terms.GracePeriodForCure.TrimStart('P').TrimEnd('D');
+                if (int.TryParse(daysStr, out var days))
                 {
-                    var daysStr = model.Terms.GracePeriodForCure.TrimStart('P').TrimEnd('D');
-                    if (int.TryParse(daysStr, out var days))
-                    {
-                        cureDeadline = now.AddDays(days);
-                    }
+                    cureDeadline = now.AddDays(days);
                 }
             }
-
-            var breachModel = new BreachModel
-            {
-                BreachId = breachId,
-                ContractId = body.ContractId,
-                BreachingEntityId = body.BreachingEntityId,
-                BreachingEntityType = body.BreachingEntityType,
-                BreachType = body.BreachType,
-                BreachedTermOrMilestone = body.BreachedTermOrMilestone,
-                Description = body.Description,
-                Status = cureDeadline.HasValue ? BreachStatus.CurePeriod : BreachStatus.Detected,
-                DetectedAt = now,
-                CureDeadline = cureDeadline
-            };
-
-            // Save breach (new entity, no concurrency concern)
-            var breachKey = $"{BREACH_PREFIX}{breachId}";
-            await _stateStoreFactory.GetStore<BreachModel>(StateStoreDefinitions.Contract)
-                .SaveAsync(breachKey, breachModel, cancellationToken: cancellationToken);
-
-            // Link breach to contract
-            model.BreachIds ??= new List<Guid>();
-            model.BreachIds.Add(breachId);
-            model.UpdatedAt = now;
-
-            var newEtag = await instanceStore.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
-            if (newEtag == null)
-            {
-                _logger.LogWarning("Concurrent modification detected for contract: {ContractId}", body.ContractId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Publish event
-            await PublishBreachDetectedEventAsync(model, breachModel, cancellationToken);
-
-            return (StatusCodes.OK, MapBreachToResponse(breachModel));
         }
+
+        var breachModel = new BreachModel
+        {
+            BreachId = breachId,
+            ContractId = body.ContractId,
+            BreachingEntityId = body.BreachingEntityId,
+            BreachingEntityType = body.BreachingEntityType,
+            BreachType = body.BreachType,
+            BreachedTermOrMilestone = body.BreachedTermOrMilestone,
+            Description = body.Description,
+            Status = cureDeadline.HasValue ? BreachStatus.CurePeriod : BreachStatus.Detected,
+            DetectedAt = now,
+            CureDeadline = cureDeadline
+        };
+
+        // Save breach (new entity, no concurrency concern)
+        var breachKey = $"{BREACH_PREFIX}{breachId}";
+        await _stateStoreFactory.GetStore<BreachModel>(StateStoreDefinitions.Contract)
+            .SaveAsync(breachKey, breachModel, cancellationToken: cancellationToken);
+
+        // Link breach to contract
+        model.BreachIds ??= new List<Guid>();
+        model.BreachIds.Add(breachId);
+        model.UpdatedAt = now;
+
+        var newEtag = await instanceStore.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
+        if (newEtag == null)
+        {
+            _logger.LogWarning("Concurrent modification detected for contract: {ContractId}", body.ContractId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Publish event
+        await PublishBreachDetectedEventAsync(model, breachModel, cancellationToken);
+
+        return (StatusCodes.OK, MapBreachToResponse(breachModel));
     }
 
     /// <inheritdoc/>
@@ -1498,48 +1480,46 @@ public partial class ContractService : IContractService
         CureBreachRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogInformation("Curing breach: {BreachId}", body.BreachId);
+
+        var breachKey = $"{BREACH_PREFIX}{body.BreachId}";
+        var breachStore = _stateStoreFactory.GetStore<BreachModel>(StateStoreDefinitions.Contract);
+        var (breachModel, etag) = await breachStore.GetWithETagAsync(breachKey, cancellationToken);
+
+        if (breachModel == null)
         {
-            _logger.LogInformation("Curing breach: {BreachId}", body.BreachId);
-
-            var breachKey = $"{BREACH_PREFIX}{body.BreachId}";
-            var breachStore = _stateStoreFactory.GetStore<BreachModel>(StateStoreDefinitions.Contract);
-            var (breachModel, etag) = await breachStore.GetWithETagAsync(breachKey, cancellationToken);
-
-            if (breachModel == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Acquire contract lock to serialize breach state changes
-            await using var contractLock = await _lockProvider.LockAsync(
-                "contract-instance", breachModel.ContractId.ToString(), Guid.NewGuid().ToString(), _configuration.ContractLockTimeoutSeconds, cancellationToken);
-            if (!contractLock.Success)
-            {
-                _logger.LogWarning("Could not acquire contract lock for {ContractId}", breachModel.ContractId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            if (breachModel.Status != BreachStatus.Detected && breachModel.Status != BreachStatus.CurePeriod)
-            {
-                _logger.LogWarning("Breach not in curable state: {Status}", breachModel.Status);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            breachModel.Status = BreachStatus.Cured;
-            breachModel.CuredAt = DateTimeOffset.UtcNow;
-
-            var newEtag = await breachStore.TrySaveAsync(breachKey, breachModel, etag ?? string.Empty, cancellationToken);
-            if (newEtag == null)
-            {
-                _logger.LogWarning("Concurrent modification detected for breach: {BreachId}", body.BreachId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Publish event
-            await PublishBreachCuredEventAsync(breachModel, body.CureEvidence, cancellationToken);
-
-            return (StatusCodes.OK, MapBreachToResponse(breachModel));
+            return (StatusCodes.NotFound, null);
         }
+
+        // Acquire contract lock to serialize breach state changes
+        await using var contractLock = await _lockProvider.LockAsync(
+            "contract-instance", breachModel.ContractId.ToString(), Guid.NewGuid().ToString(), _configuration.ContractLockTimeoutSeconds, cancellationToken);
+        if (!contractLock.Success)
+        {
+            _logger.LogWarning("Could not acquire contract lock for {ContractId}", breachModel.ContractId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        if (breachModel.Status != BreachStatus.Detected && breachModel.Status != BreachStatus.CurePeriod)
+        {
+            _logger.LogWarning("Breach not in curable state: {Status}", breachModel.Status);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        breachModel.Status = BreachStatus.Cured;
+        breachModel.CuredAt = DateTimeOffset.UtcNow;
+
+        var newEtag = await breachStore.TrySaveAsync(breachKey, breachModel, etag ?? string.Empty, cancellationToken);
+        if (newEtag == null)
+        {
+            _logger.LogWarning("Concurrent modification detected for breach: {BreachId}", body.BreachId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Publish event
+        await PublishBreachCuredEventAsync(breachModel, body.CureEvidence, cancellationToken);
+
+        return (StatusCodes.OK, MapBreachToResponse(breachModel));
     }
 
     /// <inheritdoc/>
@@ -1547,18 +1527,16 @@ public partial class ContractService : IContractService
         GetBreachRequest body,
         CancellationToken cancellationToken = default)
     {
+        var breachKey = $"{BREACH_PREFIX}{body.BreachId}";
+        var breachModel = await _stateStoreFactory.GetStore<BreachModel>(StateStoreDefinitions.Contract)
+            .GetAsync(breachKey, cancellationToken);
+
+        if (breachModel == null)
         {
-            var breachKey = $"{BREACH_PREFIX}{body.BreachId}";
-            var breachModel = await _stateStoreFactory.GetStore<BreachModel>(StateStoreDefinitions.Contract)
-                .GetAsync(breachKey, cancellationToken);
-
-            if (breachModel == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            return (StatusCodes.OK, MapBreachToResponse(breachModel));
+            return (StatusCodes.NotFound, null);
         }
+
+        return (StatusCodes.OK, MapBreachToResponse(breachModel));
     }
 
     #endregion
@@ -1570,45 +1548,43 @@ public partial class ContractService : IContractService
         UpdateContractMetadataRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogInformation("Updating metadata for contract: {ContractId}", body.ContractId);
+
+        var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
+        var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
+        var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
+
+        if (model == null)
         {
-            _logger.LogInformation("Updating metadata for contract: {ContractId}", body.ContractId);
-
-            var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
-            var store = _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract);
-            var (model, etag) = await store.GetWithETagAsync(instanceKey, cancellationToken);
-
-            if (model == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            model.GameMetadata ??= new GameMetadataModel();
-
-            if (body.MetadataType == MetadataType.InstanceData)
-            {
-                model.GameMetadata.InstanceData = body.Data;
-            }
-            else
-            {
-                model.GameMetadata.RuntimeState = body.Data;
-            }
-
-            model.UpdatedAt = DateTimeOffset.UtcNow;
-
-            var newEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
-            if (newEtag == null)
-            {
-                _logger.LogWarning("Concurrent modification detected for contract: {ContractId}", body.ContractId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            return (StatusCodes.OK, new ContractMetadataResponse
-            {
-                ContractId = model.ContractId,
-                InstanceData = model.GameMetadata.InstanceData,
-                RuntimeState = model.GameMetadata.RuntimeState
-            });
+            return (StatusCodes.NotFound, null);
         }
+
+        model.GameMetadata ??= new GameMetadataModel();
+
+        if (body.MetadataType == MetadataType.InstanceData)
+        {
+            model.GameMetadata.InstanceData = body.Data;
+        }
+        else
+        {
+            model.GameMetadata.RuntimeState = body.Data;
+        }
+
+        model.UpdatedAt = DateTimeOffset.UtcNow;
+
+        var newEtag = await store.TrySaveAsync(instanceKey, model, etag ?? string.Empty, cancellationToken);
+        if (newEtag == null)
+        {
+            _logger.LogWarning("Concurrent modification detected for contract: {ContractId}", body.ContractId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        return (StatusCodes.OK, new ContractMetadataResponse
+        {
+            ContractId = model.ContractId,
+            InstanceData = model.GameMetadata.InstanceData,
+            RuntimeState = model.GameMetadata.RuntimeState
+        });
     }
 
     /// <inheritdoc/>
@@ -1616,23 +1592,21 @@ public partial class ContractService : IContractService
         GetContractMetadataRequest body,
         CancellationToken cancellationToken = default)
     {
+        var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
+        var model = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
+            .GetAsync(instanceKey, cancellationToken);
+
+        if (model == null)
         {
-            var instanceKey = $"{INSTANCE_PREFIX}{body.ContractId}";
-            var model = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
-                .GetAsync(instanceKey, cancellationToken);
-
-            if (model == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            return (StatusCodes.OK, new ContractMetadataResponse
-            {
-                ContractId = model.ContractId,
-                InstanceData = model.GameMetadata?.InstanceData,
-                RuntimeState = model.GameMetadata?.RuntimeState
-            });
+            return (StatusCodes.NotFound, null);
         }
+
+        return (StatusCodes.OK, new ContractMetadataResponse
+        {
+            ContractId = model.ContractId,
+            InstanceData = model.GameMetadata?.InstanceData,
+            RuntimeState = model.GameMetadata?.RuntimeState
+        });
     }
 
     #endregion
@@ -1644,135 +1618,133 @@ public partial class ContractService : IContractService
         CheckConstraintRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogDebug("Checking constraint for entity: {EntityId}", body.EntityId);
+
+        // Get active contracts for entity
+        var partyIndexKey = $"{PARTY_INDEX_PREFIX}{body.EntityType}:{body.EntityId}";
+        var contractIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract)
+            .GetAsync(partyIndexKey, cancellationToken) ?? new List<string>();
+
+        if (contractIds.Count == 0)
         {
-            _logger.LogDebug("Checking constraint for entity: {EntityId}", body.EntityId);
-
-            // Get active contracts for entity
-            var partyIndexKey = $"{PARTY_INDEX_PREFIX}{body.EntityType}:{body.EntityId}";
-            var contractIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract)
-                .GetAsync(partyIndexKey, cancellationToken) ?? new List<string>();
-
-            if (contractIds.Count == 0)
+            return (StatusCodes.OK, new CheckConstraintResponse
             {
-                return (StatusCodes.OK, new CheckConstraintResponse
-                {
-                    Allowed = true,
-                    ConflictingContracts = null,
-                    Reason = null
-                });
-            }
+                Allowed = true,
+                ConflictingContracts = null,
+                Reason = null
+            });
+        }
 
-            // Load active contracts
-            var keys = contractIds.Select(id => $"{INSTANCE_PREFIX}{id}").ToList();
-            var bulkResults = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
-                .GetBulkAsync(keys, cancellationToken);
+        // Load active contracts
+        var keys = contractIds.Select(id => $"{INSTANCE_PREFIX}{id}").ToList();
+        var bulkResults = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
+            .GetBulkAsync(keys, cancellationToken);
 
-            // Filter null results and extract active contracts - OfType safely handles the null filtering
-            var activeContracts = bulkResults
-                .Select(r => r.Value)
-                .OfType<ContractInstanceModel>()
-                .Where(c => c.Status == ContractStatus.Active)
-                .ToList();
+        // Filter null results and extract active contracts - OfType safely handles the null filtering
+        var activeContracts = bulkResults
+            .Select(r => r.Value)
+            .OfType<ContractInstanceModel>()
+            .Where(c => c.Status == ContractStatus.Active)
+            .ToList();
 
-            // Check for constraint violations based on type
-            var conflicting = new List<ContractSummary>();
-            string? reason = null;
+        // Check for constraint violations based on type
+        var conflicting = new List<ContractSummary>();
+        string? reason = null;
 
-            foreach (var contract in activeContracts)
+        foreach (var contract in activeContracts)
+        {
+            var hasViolation = false;
+            var party = contract.Parties?.FirstOrDefault(p =>
+                p.EntityId == body.EntityId &&
+                p.EntityType == body.EntityType);
+
+            if (party == null) continue;
+
+            // Check custom terms for constraint-related terms
+            if (contract.Terms?.CustomTerms != null)
             {
-                var hasViolation = false;
-                var party = contract.Parties?.FirstOrDefault(p =>
-                    p.EntityId == body.EntityId &&
-                    p.EntityType == body.EntityType);
+                var customTerms = contract.Terms.CustomTerms;
 
-                if (party == null) continue;
-
-                // Check custom terms for constraint-related terms
-                if (contract.Terms?.CustomTerms != null)
+                switch (body.ConstraintType)
                 {
-                    var customTerms = contract.Terms.CustomTerms;
+                    case ConstraintType.Exclusivity:
+                        if (GetCustomTermBool(customTerms, "exclusivity"))
+                        {
+                            hasViolation = true;
+                            reason = "Entity has an exclusivity clause in an active contract";
+                        }
+                        break;
 
-                    switch (body.ConstraintType)
-                    {
-                        case ConstraintType.Exclusivity:
-                            if (GetCustomTermBool(customTerms, "exclusivity"))
+                    case ConstraintType.NonCompete:
+                        if (GetCustomTermBool(customTerms, "nonCompete"))
+                        {
+                            hasViolation = true;
+                            reason = "Entity has a non-compete clause in an active contract";
+                        }
+                        break;
+
+                    case ConstraintType.TimeCommitment:
+                        if (GetCustomTermBool(customTerms, "timeCommitment"))
+                        {
+                            var timeCommitmentType = GetCustomTermString(customTerms, "timeCommitmentType") ?? "partial";
+
+                            // Only exclusive commitments can conflict
+                            if (timeCommitmentType == "exclusive")
                             {
-                                hasViolation = true;
-                                reason = "Entity has an exclusivity clause in an active contract";
-                            }
-                            break;
-
-                        case ConstraintType.NonCompete:
-                            if (GetCustomTermBool(customTerms, "nonCompete"))
-                            {
-                                hasViolation = true;
-                                reason = "Entity has a non-compete clause in an active contract";
-                            }
-                            break;
-
-                        case ConstraintType.TimeCommitment:
-                            if (GetCustomTermBool(customTerms, "timeCommitment"))
-                            {
-                                var timeCommitmentType = GetCustomTermString(customTerms, "timeCommitmentType") ?? "partial";
-
-                                // Only exclusive commitments can conflict
-                                if (timeCommitmentType == "exclusive")
+                                // Check against all other active exclusive contracts
+                                foreach (var otherContract in activeContracts)
                                 {
-                                    // Check against all other active exclusive contracts
-                                    foreach (var otherContract in activeContracts)
+                                    if (otherContract.ContractId == contract.ContractId)
+                                        continue;
+
+                                    var otherCustomTerms = otherContract.Terms?.CustomTerms;
+                                    if (otherCustomTerms == null) continue;
+
+                                    var otherHasTimeCommitment = GetCustomTermBool(otherCustomTerms, "timeCommitment");
+                                    var otherTimeCommitmentType = GetCustomTermString(otherCustomTerms, "timeCommitmentType") ?? "partial";
+
+                                    if (!otherHasTimeCommitment || otherTimeCommitmentType != "exclusive")
+                                        continue;
+
+                                    // Check date range overlap: thisFrom <= otherUntil && thisUntil >= otherFrom
+                                    var thisFrom = contract.EffectiveFrom ?? DateTimeOffset.MinValue;
+                                    var thisUntil = contract.EffectiveUntil ?? DateTimeOffset.MaxValue;
+                                    var otherFrom = otherContract.EffectiveFrom ?? DateTimeOffset.MinValue;
+                                    var otherUntil = otherContract.EffectiveUntil ?? DateTimeOffset.MaxValue;
+
+                                    if (thisFrom <= otherUntil && thisUntil >= otherFrom)
                                     {
-                                        if (otherContract.ContractId == contract.ContractId)
-                                            continue;
-
-                                        var otherCustomTerms = otherContract.Terms?.CustomTerms;
-                                        if (otherCustomTerms == null) continue;
-
-                                        var otherHasTimeCommitment = GetCustomTermBool(otherCustomTerms, "timeCommitment");
-                                        var otherTimeCommitmentType = GetCustomTermString(otherCustomTerms, "timeCommitmentType") ?? "partial";
-
-                                        if (!otherHasTimeCommitment || otherTimeCommitmentType != "exclusive")
-                                            continue;
-
-                                        // Check date range overlap: thisFrom <= otherUntil && thisUntil >= otherFrom
-                                        var thisFrom = contract.EffectiveFrom ?? DateTimeOffset.MinValue;
-                                        var thisUntil = contract.EffectiveUntil ?? DateTimeOffset.MaxValue;
-                                        var otherFrom = otherContract.EffectiveFrom ?? DateTimeOffset.MinValue;
-                                        var otherUntil = otherContract.EffectiveUntil ?? DateTimeOffset.MaxValue;
-
-                                        if (thisFrom <= otherUntil && thisUntil >= otherFrom)
-                                        {
-                                            hasViolation = true;
-                                            reason = "Entity has conflicting exclusive time commitments in active contracts";
-                                            break;
-                                        }
+                                        hasViolation = true;
+                                        reason = "Entity has conflicting exclusive time commitments in active contracts";
+                                        break;
                                     }
                                 }
                             }
-                            break;
-                    }
-                }
-
-                if (hasViolation)
-                {
-                    conflicting.Add(new ContractSummary
-                    {
-                        ContractId = contract.ContractId,
-                        TemplateCode = contract.TemplateCode,
-                        TemplateName = null, // Would need to load template
-                        Status = contract.Status,
-                        Role = party.Role,
-                        EffectiveUntil = contract.EffectiveUntil
-                    });
+                        }
+                        break;
                 }
             }
 
-            return (StatusCodes.OK, new CheckConstraintResponse
+            if (hasViolation)
             {
-                Allowed = conflicting.Count == 0,
-                ConflictingContracts = conflicting.Count > 0 ? conflicting : null,
-                Reason = reason
-            });
+                conflicting.Add(new ContractSummary
+                {
+                    ContractId = contract.ContractId,
+                    TemplateCode = contract.TemplateCode,
+                    TemplateName = null, // Would need to load template
+                    Status = contract.Status,
+                    Role = party.Role,
+                    EffectiveUntil = contract.EffectiveUntil
+                });
+            }
         }
+
+        return (StatusCodes.OK, new CheckConstraintResponse
+        {
+            Allowed = conflicting.Count == 0,
+            ConflictingContracts = conflicting.Count > 0 ? conflicting : null,
+            Reason = reason
+        });
     }
 
     /// <inheritdoc/>
@@ -1780,64 +1752,62 @@ public partial class ContractService : IContractService
         QueryActiveContractsRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogDebug("Querying active contracts for entity: {EntityId}", body.EntityId);
+
+        var partyIndexKey = $"{PARTY_INDEX_PREFIX}{body.EntityType}:{body.EntityId}";
+        var contractIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract)
+            .GetAsync(partyIndexKey, cancellationToken) ?? new List<string>();
+
+        if (contractIds.Count == 0)
         {
-            _logger.LogDebug("Querying active contracts for entity: {EntityId}", body.EntityId);
-
-            var partyIndexKey = $"{PARTY_INDEX_PREFIX}{body.EntityType}:{body.EntityId}";
-            var contractIds = await _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.Contract)
-                .GetAsync(partyIndexKey, cancellationToken) ?? new List<string>();
-
-            if (contractIds.Count == 0)
-            {
-                return (StatusCodes.OK, new QueryActiveContractsResponse
-                {
-                    Contracts = new List<ContractSummary>()
-                });
-            }
-
-            var keys = contractIds.Select(id => $"{INSTANCE_PREFIX}{id}").ToList();
-            var bulkResults = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
-                .GetBulkAsync(keys, cancellationToken);
-
-            // Filter null results and extract active contracts - OfType safely handles the null filtering
-            var activeContracts = bulkResults
-                .Select(r => r.Value)
-                .OfType<ContractInstanceModel>()
-                .Where(c => c.Status == ContractStatus.Active)
-                .ToList();
-
-            // Filter by template codes if specified
-            if (body.TemplateCodes?.Count > 0)
-            {
-                var codeSet = body.TemplateCodes.ToHashSet(StringComparer.OrdinalIgnoreCase);
-                activeContracts = activeContracts
-                    .Where(c => codeSet.Any(code =>
-                        c.TemplateCode.StartsWith(code.TrimEnd('*'), StringComparison.OrdinalIgnoreCase)))
-                    .ToList();
-            }
-
-            var summaries = activeContracts.Select(c =>
-            {
-                var party = c.Parties?.FirstOrDefault(p =>
-                    p.EntityId == body.EntityId &&
-                    p.EntityType == body.EntityType);
-
-                return new ContractSummary
-                {
-                    ContractId = c.ContractId,
-                    TemplateCode = c.TemplateCode,
-                    TemplateName = null,
-                    Status = c.Status,
-                    Role = party?.Role ?? "unknown",
-                    EffectiveUntil = c.EffectiveUntil
-                };
-            }).ToList();
-
             return (StatusCodes.OK, new QueryActiveContractsResponse
             {
-                Contracts = summaries
+                Contracts = new List<ContractSummary>()
             });
         }
+
+        var keys = contractIds.Select(id => $"{INSTANCE_PREFIX}{id}").ToList();
+        var bulkResults = await _stateStoreFactory.GetStore<ContractInstanceModel>(StateStoreDefinitions.Contract)
+            .GetBulkAsync(keys, cancellationToken);
+
+        // Filter null results and extract active contracts - OfType safely handles the null filtering
+        var activeContracts = bulkResults
+            .Select(r => r.Value)
+            .OfType<ContractInstanceModel>()
+            .Where(c => c.Status == ContractStatus.Active)
+            .ToList();
+
+        // Filter by template codes if specified
+        if (body.TemplateCodes?.Count > 0)
+        {
+            var codeSet = body.TemplateCodes.ToHashSet(StringComparer.OrdinalIgnoreCase);
+            activeContracts = activeContracts
+                .Where(c => codeSet.Any(code =>
+                    c.TemplateCode.StartsWith(code.TrimEnd('*'), StringComparison.OrdinalIgnoreCase)))
+                .ToList();
+        }
+
+        var summaries = activeContracts.Select(c =>
+        {
+            var party = c.Parties?.FirstOrDefault(p =>
+                p.EntityId == body.EntityId &&
+                p.EntityType == body.EntityType);
+
+            return new ContractSummary
+            {
+                ContractId = c.ContractId,
+                TemplateCode = c.TemplateCode,
+                TemplateName = null,
+                Status = c.Status,
+                Role = party?.Role ?? "unknown",
+                EffectiveUntil = c.EffectiveUntil
+            };
+        }).ToList();
+
+        return (StatusCodes.OK, new QueryActiveContractsResponse
+        {
+            Contracts = summaries
+        });
     }
 
     #endregion

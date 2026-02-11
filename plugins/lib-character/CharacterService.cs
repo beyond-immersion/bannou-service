@@ -90,340 +90,328 @@ public partial class CharacterService : ICharacterService
         CreateCharacterRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogDebug("Creating character: {Name} in realm: {RealmId}", body.Name, body.RealmId);
+
+        // Validate realm exists and is active
+        var (realmExists, realmIsActive) = await ValidateRealmAsync(body.RealmId, cancellationToken);
+        if (!realmExists)
         {
-            _logger.LogDebug("Creating character: {Name} in realm: {RealmId}", body.Name, body.RealmId);
-
-            // Validate realm exists and is active
-            var (realmExists, realmIsActive) = await ValidateRealmAsync(body.RealmId, cancellationToken);
-            if (!realmExists)
-            {
-                _logger.LogWarning("Cannot create character: realm not found: {RealmId}", body.RealmId);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            if (!realmIsActive)
-            {
-                _logger.LogWarning("Cannot create character: realm is deprecated: {RealmId}", body.RealmId);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Validate species exists
-            var (speciesExists, speciesInRealm) = await ValidateSpeciesAsync(body.SpeciesId, body.RealmId, cancellationToken);
-            if (!speciesExists)
-            {
-                _logger.LogWarning("Cannot create character: species not found: {SpeciesId}", body.SpeciesId);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            if (!speciesInRealm)
-            {
-                _logger.LogWarning("Cannot create character: species {SpeciesId} is not available in realm {RealmId}",
-                    body.SpeciesId, body.RealmId);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            var characterId = Guid.NewGuid();
-            var now = DateTimeOffset.UtcNow;
-
-            // Create character model
-            var character = new CharacterModel
-            {
-                CharacterId = characterId,
-                Name = body.Name,
-                RealmId = body.RealmId,
-                SpeciesId = body.SpeciesId,
-                BirthDate = body.BirthDate,
-                Status = body.Status,
-                // Auto-set DeathDate when created with Dead status (ensures compression eligibility)
-                DeathDate = body.Status == CharacterStatus.Dead ? now : null,
-                CreatedAt = now,
-                UpdatedAt = now
-            };
-
-            // Build realm-partitioned key
-            var characterKey = BuildCharacterKey(body.RealmId.ToString(), characterId.ToString());
-
-            // Save character to state store
-            await _stateStoreFactory.GetStore<CharacterModel>(StateStoreDefinitions.Character)
-                .SaveAsync(characterKey, character, cancellationToken: cancellationToken);
-
-            // Add to realm index for efficient listing
-            await AddCharacterToRealmIndexAsync(body.RealmId.ToString(), characterId.ToString(), cancellationToken);
-
-            _logger.LogInformation("Character created: {CharacterId} in realm: {RealmId}", characterId, body.RealmId);
-
-            // Publish character created event
-            await PublishCharacterCreatedEventAsync(character);
-
-            // Publish realm joined event
-            await PublishCharacterRealmJoinedEventAsync(characterId, body.RealmId, previousRealmId: null);
-
-            var response = MapToCharacterResponse(character);
-            return (StatusCodes.OK, response);
+            _logger.LogWarning("Cannot create character: realm not found: {RealmId}", body.RealmId);
+            return (StatusCodes.BadRequest, null);
         }
+
+        if (!realmIsActive)
+        {
+            _logger.LogWarning("Cannot create character: realm is deprecated: {RealmId}", body.RealmId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Validate species exists
+        var (speciesExists, speciesInRealm) = await ValidateSpeciesAsync(body.SpeciesId, body.RealmId, cancellationToken);
+        if (!speciesExists)
+        {
+            _logger.LogWarning("Cannot create character: species not found: {SpeciesId}", body.SpeciesId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        if (!speciesInRealm)
+        {
+            _logger.LogWarning("Cannot create character: species {SpeciesId} is not available in realm {RealmId}",
+                body.SpeciesId, body.RealmId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        var characterId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+
+        // Create character model
+        var character = new CharacterModel
+        {
+            CharacterId = characterId,
+            Name = body.Name,
+            RealmId = body.RealmId,
+            SpeciesId = body.SpeciesId,
+            BirthDate = body.BirthDate,
+            Status = body.Status,
+            // Auto-set DeathDate when created with Dead status (ensures compression eligibility)
+            DeathDate = body.Status == CharacterStatus.Dead ? now : null,
+            CreatedAt = now,
+            UpdatedAt = now
+        };
+
+        // Build realm-partitioned key
+        var characterKey = BuildCharacterKey(body.RealmId.ToString(), characterId.ToString());
+
+        // Save character to state store
+        await _stateStoreFactory.GetStore<CharacterModel>(StateStoreDefinitions.Character)
+            .SaveAsync(characterKey, character, cancellationToken: cancellationToken);
+
+        // Add to realm index for efficient listing
+        await AddCharacterToRealmIndexAsync(body.RealmId.ToString(), characterId.ToString(), cancellationToken);
+
+        _logger.LogInformation("Character created: {CharacterId} in realm: {RealmId}", characterId, body.RealmId);
+
+        // Publish character created event
+        await PublishCharacterCreatedEventAsync(character);
+
+        // Publish realm joined event
+        await PublishCharacterRealmJoinedEventAsync(characterId, body.RealmId, previousRealmId: null);
+
+        var response = MapToCharacterResponse(character);
+        return (StatusCodes.OK, response);
     }
 
     public async Task<(StatusCodes, CharacterResponse?)> GetCharacterAsync(
         GetCharacterRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogDebug("Getting character: {CharacterId}", body.CharacterId);
+
+        // We need to find the character - scan realm indexes if we don't know the realm
+        var character = await FindCharacterByIdAsync(body.CharacterId.ToString(), cancellationToken);
+
+        if (character == null)
         {
-            _logger.LogDebug("Getting character: {CharacterId}", body.CharacterId);
-
-            // We need to find the character - scan realm indexes if we don't know the realm
-            var character = await FindCharacterByIdAsync(body.CharacterId.ToString(), cancellationToken);
-
-            if (character == null)
-            {
-                _logger.LogWarning("Character not found: {CharacterId}", body.CharacterId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            var response = MapToCharacterResponse(character);
-            return (StatusCodes.OK, response);
+            _logger.LogWarning("Character not found: {CharacterId}", body.CharacterId);
+            return (StatusCodes.NotFound, null);
         }
+
+        var response = MapToCharacterResponse(character);
+        return (StatusCodes.OK, response);
     }
 
     public async Task<(StatusCodes, CharacterResponse?)> UpdateCharacterAsync(
         UpdateCharacterRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogDebug("Updating character: {CharacterId}", body.CharacterId);
+
+        // Acquire distributed lock for character modification (per IMPLEMENTATION TENETS)
+        var lockOwner = $"update-character-{Guid.NewGuid():N}";
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.CharacterLock,
+            body.CharacterId.ToString(),
+            lockOwner,
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
         {
-            _logger.LogDebug("Updating character: {CharacterId}", body.CharacterId);
+            _logger.LogWarning("Failed to acquire lock for character {CharacterId}", body.CharacterId);
+            return (StatusCodes.Conflict, null);
+        }
 
-            // Acquire distributed lock for character modification (per IMPLEMENTATION TENETS)
-            var lockOwner = $"update-character-{Guid.NewGuid():N}";
-            await using var lockResponse = await _lockProvider.LockAsync(
-                StateStoreDefinitions.CharacterLock,
-                body.CharacterId.ToString(),
-                lockOwner,
-                _configuration.LockTimeoutSeconds,
-                cancellationToken);
+        // Find existing character
+        var character = await FindCharacterByIdAsync(body.CharacterId.ToString(), cancellationToken);
 
-            if (!lockResponse.Success)
-            {
-                _logger.LogWarning("Failed to acquire lock for character {CharacterId}", body.CharacterId);
-                return (StatusCodes.Conflict, null);
-            }
+        if (character == null)
+        {
+            _logger.LogWarning("Character not found for update: {CharacterId}", body.CharacterId);
+            return (StatusCodes.NotFound, null);
+        }
 
-            // Find existing character
-            var character = await FindCharacterByIdAsync(body.CharacterId.ToString(), cancellationToken);
+        // Track changes for event
+        var changedFields = new List<string>();
 
-            if (character == null)
-            {
-                _logger.LogWarning("Character not found for update: {CharacterId}", body.CharacterId);
-                return (StatusCodes.NotFound, null);
-            }
+        // Update fields if provided
+        if (body.Name != null && body.Name != character.Name)
+        {
+            changedFields.Add("name");
+            character.Name = body.Name;
+        }
 
-            // Track changes for event
-            var changedFields = new List<string>();
+        if (body.Status.HasValue && body.Status.Value != character.Status)
+        {
+            changedFields.Add("status");
+            character.Status = body.Status.Value;
 
-            // Update fields if provided
-            if (body.Name != null && body.Name != character.Name)
-            {
-                changedFields.Add("name");
-                character.Name = body.Name;
-            }
-
-            if (body.Status.HasValue && body.Status.Value != character.Status)
-            {
-                changedFields.Add("status");
-                character.Status = body.Status.Value;
-
-                // Auto-set DeathDate when status transitions to Dead (mirrors DeathDate→Dead auto-set)
-                // Skip if DeathDate is also provided in this request (handled below)
-                if (body.Status.Value == CharacterStatus.Dead && !character.DeathDate.HasValue && !body.DeathDate.HasValue)
-                {
-                    changedFields.Add("deathDate");
-                    character.DeathDate = DateTimeOffset.UtcNow;
-                }
-            }
-
-            if (body.DeathDate.HasValue)
+            // Auto-set DeathDate when status transitions to Dead (mirrors DeathDate→Dead auto-set)
+            // Skip if DeathDate is also provided in this request (handled below)
+            if (body.Status.Value == CharacterStatus.Dead && !character.DeathDate.HasValue && !body.DeathDate.HasValue)
             {
                 changedFields.Add("deathDate");
-                character.DeathDate = body.DeathDate.Value;
-
-                // If death date is set, also set status to dead
-                if (character.Status != CharacterStatus.Dead)
-                {
-                    changedFields.Add("status");
-                    character.Status = CharacterStatus.Dead;
-                }
+                character.DeathDate = DateTimeOffset.UtcNow;
             }
-
-            // Handle species migration (used for species merge operations)
-            if (body.SpeciesId.HasValue && body.SpeciesId.Value != character.SpeciesId)
-            {
-                changedFields.Add("speciesId");
-                character.SpeciesId = body.SpeciesId.Value;
-            }
-
-            character.UpdatedAt = DateTimeOffset.UtcNow;
-
-            // Save updated character
-            var characterKey = BuildCharacterKey(character.RealmId.ToString(), character.CharacterId.ToString());
-            await _stateStoreFactory.GetStore<CharacterModel>(StateStoreDefinitions.Character)
-                .SaveAsync(characterKey, character, cancellationToken: cancellationToken);
-
-            _logger.LogInformation("Character updated: {CharacterId}", body.CharacterId);
-
-            // Publish update event if there were changes
-            if (changedFields.Count > 0)
-            {
-                await PublishCharacterUpdatedEventAsync(character, changedFields);
-            }
-
-            var response = MapToCharacterResponse(character);
-            return (StatusCodes.OK, response);
         }
+
+        if (body.DeathDate.HasValue)
+        {
+            changedFields.Add("deathDate");
+            character.DeathDate = body.DeathDate.Value;
+
+            // If death date is set, also set status to dead
+            if (character.Status != CharacterStatus.Dead)
+            {
+                changedFields.Add("status");
+                character.Status = CharacterStatus.Dead;
+            }
+        }
+
+        // Handle species migration (used for species merge operations)
+        if (body.SpeciesId.HasValue && body.SpeciesId.Value != character.SpeciesId)
+        {
+            changedFields.Add("speciesId");
+            character.SpeciesId = body.SpeciesId.Value;
+        }
+
+        character.UpdatedAt = DateTimeOffset.UtcNow;
+
+        // Save updated character
+        var characterKey = BuildCharacterKey(character.RealmId.ToString(), character.CharacterId.ToString());
+        await _stateStoreFactory.GetStore<CharacterModel>(StateStoreDefinitions.Character)
+            .SaveAsync(characterKey, character, cancellationToken: cancellationToken);
+
+        _logger.LogInformation("Character updated: {CharacterId}", body.CharacterId);
+
+        // Publish update event if there were changes
+        if (changedFields.Count > 0)
+        {
+            await PublishCharacterUpdatedEventAsync(character, changedFields);
+        }
+
+        var response = MapToCharacterResponse(character);
+        return (StatusCodes.OK, response);
     }
 
     public async Task<StatusCodes> DeleteCharacterAsync(
         DeleteCharacterRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogDebug("Deleting character: {CharacterId}", body.CharacterId);
+
+        // Find existing character
+        var character = await FindCharacterByIdAsync(body.CharacterId.ToString(), cancellationToken);
+
+        if (character == null)
         {
-            _logger.LogDebug("Deleting character: {CharacterId}", body.CharacterId);
+            _logger.LogWarning("Character not found for deletion: {CharacterId}", body.CharacterId);
+            return StatusCodes.NotFound;
+        }
 
-            // Find existing character
-            var character = await FindCharacterByIdAsync(body.CharacterId.ToString(), cancellationToken);
+        var realmId = character.RealmId;
+        var characterKey = BuildCharacterKey(realmId.ToString(), character.CharacterId.ToString());
 
-            if (character == null)
+        // Check for L4 references and execute cleanup callbacks (per x-references contract)
+        // This triggers cascade deletion in CharacterPersonality, CharacterHistory, etc.
+        try
+        {
+            var resourceCheck = await _resourceClient.CheckReferencesAsync(
+                new Resource.CheckReferencesRequest
+                {
+                    ResourceType = "character",
+                    ResourceId = body.CharacterId
+                }, cancellationToken);
+
+            if (resourceCheck != null && resourceCheck.RefCount > 0)
             {
-                _logger.LogWarning("Character not found for deletion: {CharacterId}", body.CharacterId);
-                return StatusCodes.NotFound;
-            }
+                var sourceTypes = resourceCheck.Sources != null
+                    ? string.Join(", ", resourceCheck.Sources.Select(s => s.SourceType))
+                    : "unknown";
+                _logger.LogDebug(
+                    "Character {CharacterId} has {RefCount} external references from: {SourceTypes}, executing cleanup",
+                    body.CharacterId, resourceCheck.RefCount, sourceTypes);
 
-            var realmId = character.RealmId;
-            var characterKey = BuildCharacterKey(realmId.ToString(), character.CharacterId.ToString());
-
-            // Check for L4 references and execute cleanup callbacks (per x-references contract)
-            // This triggers cascade deletion in CharacterPersonality, CharacterHistory, etc.
-            try
-            {
-                var resourceCheck = await _resourceClient.CheckReferencesAsync(
-                    new Resource.CheckReferencesRequest
+                // Execute cleanup callbacks (CASCADE/DETACH) before proceeding
+                var cleanupResult = await _resourceClient.ExecuteCleanupAsync(
+                    new Resource.ExecuteCleanupRequest
                     {
                         ResourceType = "character",
-                        ResourceId = body.CharacterId
+                        ResourceId = body.CharacterId,
+                        CleanupPolicy = Resource.CleanupPolicy.ALL_REQUIRED
                     }, cancellationToken);
 
-                if (resourceCheck != null && resourceCheck.RefCount > 0)
+                if (!cleanupResult.Success)
                 {
-                    var sourceTypes = resourceCheck.Sources != null
-                        ? string.Join(", ", resourceCheck.Sources.Select(s => s.SourceType))
-                        : "unknown";
-                    _logger.LogDebug(
-                        "Character {CharacterId} has {RefCount} external references from: {SourceTypes}, executing cleanup",
-                        body.CharacterId, resourceCheck.RefCount, sourceTypes);
-
-                    // Execute cleanup callbacks (CASCADE/DETACH) before proceeding
-                    var cleanupResult = await _resourceClient.ExecuteCleanupAsync(
-                        new Resource.ExecuteCleanupRequest
-                        {
-                            ResourceType = "character",
-                            ResourceId = body.CharacterId,
-                            CleanupPolicy = Resource.CleanupPolicy.ALL_REQUIRED
-                        }, cancellationToken);
-
-                    if (!cleanupResult.Success)
-                    {
-                        _logger.LogWarning(
-                            "Cleanup blocked for character {CharacterId}: {Reason}",
-                            body.CharacterId, cleanupResult.AbortReason ?? "cleanup failed");
-                        return StatusCodes.Conflict;
-                    }
-
-                    _logger.LogDebug(
-                        "Cleanup completed for character {CharacterId}: {CallbackCount} callback(s) executed",
-                        body.CharacterId, cleanupResult.CallbackResults.Count);
+                    _logger.LogWarning(
+                        "Cleanup blocked for character {CharacterId}: {Reason}",
+                        body.CharacterId, cleanupResult.AbortReason ?? "cleanup failed");
+                    return StatusCodes.Conflict;
                 }
+
+                _logger.LogDebug(
+                    "Cleanup completed for character {CharacterId}: {CallbackCount} callback(s) executed",
+                    body.CharacterId, cleanupResult.CallbackResults.Count);
             }
-            catch (ApiException ex) when (ex.StatusCode == 404)
-            {
-                // No references registered - this is normal for characters without L4 data
-                _logger.LogDebug("No lib-resource references found for character {CharacterId}", body.CharacterId);
-            }
-            catch (ApiException ex)
-            {
-                // lib-resource unavailable - fail closed to protect referential integrity
-                _logger.LogError(ex,
-                    "lib-resource unavailable when checking references for character {CharacterId}, blocking deletion for safety",
-                    body.CharacterId);
-                await _messageBus.TryPublishErrorAsync(
-                    "character", "DeleteCharacter", "resource_service_unavailable",
-                    $"lib-resource unavailable when checking references for character {body.CharacterId}",
-                    dependency: "resource", endpoint: "post:/character/delete",
-                    details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
-                return StatusCodes.ServiceUnavailable;
-            }
-
-            // Delete character from state store
-            await _stateStoreFactory.GetStore<CharacterModel>(StateStoreDefinitions.Character)
-                .DeleteAsync(characterKey, cancellationToken);
-
-            // Remove from realm index
-            await RemoveCharacterFromRealmIndexAsync(realmId.ToString(), character.CharacterId.ToString(), cancellationToken);
-
-            _logger.LogInformation("Character deleted: {CharacterId} from realm: {RealmId}", body.CharacterId, realmId);
-
-            // Publish realm left event (reason: deletion)
-            await PublishCharacterRealmLeftEventAsync(
-                body.CharacterId,
-                realmId,
-                "deletion");
-
-            // Publish character deleted event
-            await PublishCharacterDeletedEventAsync(character);
-
-            return StatusCodes.OK;
         }
+        catch (ApiException ex) when (ex.StatusCode == 404)
+        {
+            // No references registered - this is normal for characters without L4 data
+            _logger.LogDebug("No lib-resource references found for character {CharacterId}", body.CharacterId);
+        }
+        catch (ApiException ex)
+        {
+            // lib-resource unavailable - fail closed to protect referential integrity
+            _logger.LogError(ex,
+                "lib-resource unavailable when checking references for character {CharacterId}, blocking deletion for safety",
+                body.CharacterId);
+            await _messageBus.TryPublishErrorAsync(
+                "character", "DeleteCharacter", "resource_service_unavailable",
+                $"lib-resource unavailable when checking references for character {body.CharacterId}",
+                dependency: "resource", endpoint: "post:/character/delete",
+                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return StatusCodes.ServiceUnavailable;
+        }
+
+        // Delete character from state store
+        await _stateStoreFactory.GetStore<CharacterModel>(StateStoreDefinitions.Character)
+            .DeleteAsync(characterKey, cancellationToken);
+
+        // Remove from realm index
+        await RemoveCharacterFromRealmIndexAsync(realmId.ToString(), character.CharacterId.ToString(), cancellationToken);
+
+        _logger.LogInformation("Character deleted: {CharacterId} from realm: {RealmId}", body.CharacterId, realmId);
+
+        // Publish realm left event (reason: deletion)
+        await PublishCharacterRealmLeftEventAsync(
+            body.CharacterId,
+            realmId,
+            "deletion");
+
+        // Publish character deleted event
+        await PublishCharacterDeletedEventAsync(character);
+
+        return StatusCodes.OK;
     }
 
     public async Task<(StatusCodes, CharacterListResponse?)> ListCharactersAsync(
         ListCharactersRequest body,
         CancellationToken cancellationToken = default)
     {
-        {
-            var page = body.Page > 0 ? body.Page : 1;
-            var pageSize = body.PageSize > 0 ? Math.Min(body.PageSize, _configuration.MaxPageSize) : _configuration.DefaultPageSize;
+        var page = body.Page > 0 ? body.Page : 1;
+        var pageSize = body.PageSize > 0 ? Math.Min(body.PageSize, _configuration.MaxPageSize) : _configuration.DefaultPageSize;
 
-            _logger.LogDebug(
-                "Listing characters - RealmId: {RealmId}, Page: {Page}, PageSize: {PageSize}",
-                body.RealmId,
-                page,
-                pageSize);
+        _logger.LogDebug(
+            "Listing characters - RealmId: {RealmId}, Page: {Page}, PageSize: {PageSize}",
+            body.RealmId,
+            page,
+            pageSize);
 
-            return await GetCharactersByRealmInternalAsync(
-                body.RealmId.ToString(),
-                body.Status,
-                body.SpeciesId,
-                page,
-                pageSize,
-                cancellationToken);
-        }
+        return await GetCharactersByRealmInternalAsync(
+            body.RealmId.ToString(),
+            body.Status,
+            body.SpeciesId,
+            page,
+            pageSize,
+            cancellationToken);
     }
 
     public async Task<(StatusCodes, CharacterListResponse?)> GetCharactersByRealmAsync(
         GetCharactersByRealmRequest body,
         CancellationToken cancellationToken = default)
     {
-        {
-            var page = body.Page > 0 ? body.Page : 1;
-            var pageSize = body.PageSize > 0 ? Math.Min(body.PageSize, _configuration.MaxPageSize) : _configuration.DefaultPageSize;
+        var page = body.Page > 0 ? body.Page : 1;
+        var pageSize = body.PageSize > 0 ? Math.Min(body.PageSize, _configuration.MaxPageSize) : _configuration.DefaultPageSize;
 
-            _logger.LogDebug("Getting characters by realm: {RealmId} - Page: {Page}, PageSize: {PageSize}",
-                body.RealmId, page, pageSize);
+        _logger.LogDebug("Getting characters by realm: {RealmId} - Page: {Page}, PageSize: {PageSize}",
+            body.RealmId, page, pageSize);
 
-            return await GetCharactersByRealmInternalAsync(
-                body.RealmId.ToString(),
-                body.Status,
-                body.SpeciesId,
-                page,
-                pageSize,
-                cancellationToken);
-        }
+        return await GetCharactersByRealmInternalAsync(
+            body.RealmId.ToString(),
+            body.Status,
+            body.SpeciesId,
+            page,
+            pageSize,
+            cancellationToken);
     }
 
     /// <summary>
@@ -434,95 +422,93 @@ public partial class CharacterService : ICharacterService
         TransferCharacterToRealmRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogDebug("Transferring character {CharacterId} to realm {TargetRealmId}",
+            body.CharacterId, body.TargetRealmId);
+
+        // Validate target realm exists and is active
+        var (targetRealmExists, targetRealmIsActive) = await ValidateRealmAsync(body.TargetRealmId, cancellationToken);
+        if (!targetRealmExists)
         {
-            _logger.LogDebug("Transferring character {CharacterId} to realm {TargetRealmId}",
-                body.CharacterId, body.TargetRealmId);
-
-            // Validate target realm exists and is active
-            var (targetRealmExists, targetRealmIsActive) = await ValidateRealmAsync(body.TargetRealmId, cancellationToken);
-            if (!targetRealmExists)
-            {
-                _logger.LogWarning("Cannot transfer character: target realm not found: {TargetRealmId}", body.TargetRealmId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            if (!targetRealmIsActive)
-            {
-                _logger.LogWarning("Cannot transfer character: target realm is deprecated: {TargetRealmId}", body.TargetRealmId);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Acquire distributed lock for character modification (per IMPLEMENTATION TENETS)
-            var lockOwner = $"transfer-character-{Guid.NewGuid():N}";
-            await using var lockResponse = await _lockProvider.LockAsync(
-                StateStoreDefinitions.CharacterLock,
-                body.CharacterId.ToString(),
-                lockOwner,
-                _configuration.LockTimeoutSeconds,
-                cancellationToken);
-
-            if (!lockResponse.Success)
-            {
-                _logger.LogWarning("Failed to acquire lock for character transfer {CharacterId}", body.CharacterId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Find existing character
-            var character = await FindCharacterByIdAsync(body.CharacterId.ToString(), cancellationToken);
-
-            if (character == null)
-            {
-                _logger.LogWarning("Character not found for transfer: {CharacterId}", body.CharacterId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Check if already in target realm
-            if (character.RealmId == body.TargetRealmId)
-            {
-                _logger.LogWarning("Character {CharacterId} is already in realm {RealmId}", body.CharacterId, body.TargetRealmId);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            var previousRealmId = character.RealmId;
-
-            // Delete old character data (keyed by old realm)
-            var oldCharacterKey = BuildCharacterKey(previousRealmId.ToString(), character.CharacterId.ToString());
-            await _stateStoreFactory.GetStore<CharacterModel>(StateStoreDefinitions.Character)
-                .DeleteAsync(oldCharacterKey, cancellationToken);
-
-            // Remove from old realm index
-            await RemoveCharacterFromRealmIndexAsync(previousRealmId.ToString(), character.CharacterId.ToString(), cancellationToken);
-
-            // Update character with new realm
-            character.RealmId = body.TargetRealmId;
-            character.UpdatedAt = DateTimeOffset.UtcNow;
-
-            // Save character with new realm key
-            var newCharacterKey = BuildCharacterKey(body.TargetRealmId.ToString(), character.CharacterId.ToString());
-            await _stateStoreFactory.GetStore<CharacterModel>(StateStoreDefinitions.Character)
-                .SaveAsync(newCharacterKey, character, cancellationToken: cancellationToken);
-
-            // Add to new realm index (this also updates global index)
-            await AddCharacterToRealmIndexAsync(body.TargetRealmId.ToString(), character.CharacterId.ToString(), cancellationToken);
-
-            _logger.LogInformation("Character {CharacterId} transferred from realm {PreviousRealmId} to realm {TargetRealmId}",
-                body.CharacterId, previousRealmId, body.TargetRealmId);
-
-            // Publish realm left event for previous realm
-            await PublishCharacterRealmLeftEventAsync(
-                body.CharacterId,
-                previousRealmId,
-                "transfer");
-
-            // Publish realm joined event for new realm
-            await PublishCharacterRealmJoinedEventAsync(body.CharacterId, body.TargetRealmId, previousRealmId);
-
-            // Publish character updated event
-            await PublishCharacterUpdatedEventAsync(character, new List<string> { "realmId" });
-
-            var response = MapToCharacterResponse(character);
-            return (StatusCodes.OK, response);
+            _logger.LogWarning("Cannot transfer character: target realm not found: {TargetRealmId}", body.TargetRealmId);
+            return (StatusCodes.NotFound, null);
         }
+
+        if (!targetRealmIsActive)
+        {
+            _logger.LogWarning("Cannot transfer character: target realm is deprecated: {TargetRealmId}", body.TargetRealmId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Acquire distributed lock for character modification (per IMPLEMENTATION TENETS)
+        var lockOwner = $"transfer-character-{Guid.NewGuid():N}";
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.CharacterLock,
+            body.CharacterId.ToString(),
+            lockOwner,
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Failed to acquire lock for character transfer {CharacterId}", body.CharacterId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Find existing character
+        var character = await FindCharacterByIdAsync(body.CharacterId.ToString(), cancellationToken);
+
+        if (character == null)
+        {
+            _logger.LogWarning("Character not found for transfer: {CharacterId}", body.CharacterId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Check if already in target realm
+        if (character.RealmId == body.TargetRealmId)
+        {
+            _logger.LogWarning("Character {CharacterId} is already in realm {RealmId}", body.CharacterId, body.TargetRealmId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        var previousRealmId = character.RealmId;
+
+        // Delete old character data (keyed by old realm)
+        var oldCharacterKey = BuildCharacterKey(previousRealmId.ToString(), character.CharacterId.ToString());
+        await _stateStoreFactory.GetStore<CharacterModel>(StateStoreDefinitions.Character)
+            .DeleteAsync(oldCharacterKey, cancellationToken);
+
+        // Remove from old realm index
+        await RemoveCharacterFromRealmIndexAsync(previousRealmId.ToString(), character.CharacterId.ToString(), cancellationToken);
+
+        // Update character with new realm
+        character.RealmId = body.TargetRealmId;
+        character.UpdatedAt = DateTimeOffset.UtcNow;
+
+        // Save character with new realm key
+        var newCharacterKey = BuildCharacterKey(body.TargetRealmId.ToString(), character.CharacterId.ToString());
+        await _stateStoreFactory.GetStore<CharacterModel>(StateStoreDefinitions.Character)
+            .SaveAsync(newCharacterKey, character, cancellationToken: cancellationToken);
+
+        // Add to new realm index (this also updates global index)
+        await AddCharacterToRealmIndexAsync(body.TargetRealmId.ToString(), character.CharacterId.ToString(), cancellationToken);
+
+        _logger.LogInformation("Character {CharacterId} transferred from realm {PreviousRealmId} to realm {TargetRealmId}",
+            body.CharacterId, previousRealmId, body.TargetRealmId);
+
+        // Publish realm left event for previous realm
+        await PublishCharacterRealmLeftEventAsync(
+            body.CharacterId,
+            previousRealmId,
+            "transfer");
+
+        // Publish realm joined event for new realm
+        await PublishCharacterRealmJoinedEventAsync(body.CharacterId, body.TargetRealmId, previousRealmId);
+
+        // Publish character updated event
+        await PublishCharacterUpdatedEventAsync(character, new List<string> { "realmId" });
+
+        var response = MapToCharacterResponse(character);
+        return (StatusCodes.OK, response);
     }
 
     #endregion
@@ -540,51 +526,49 @@ public partial class CharacterService : ICharacterService
         GetEnrichedCharacterRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogDebug("Getting enriched character: {CharacterId}", body.CharacterId);
+
+        // Get base character data
+        var character = await FindCharacterByIdAsync(body.CharacterId.ToString(), cancellationToken);
+
+        if (character == null)
         {
-            _logger.LogDebug("Getting enriched character: {CharacterId}", body.CharacterId);
-
-            // Get base character data
-            var character = await FindCharacterByIdAsync(body.CharacterId.ToString(), cancellationToken);
-
-            if (character == null)
-            {
-                _logger.LogWarning("Character not found: {CharacterId}", body.CharacterId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            var response = new EnrichedCharacterResponse
-            {
-                CharacterId = character.CharacterId,
-                Name = character.Name,
-                RealmId = character.RealmId,
-                SpeciesId = character.SpeciesId,
-                BirthDate = character.BirthDate,
-                DeathDate = character.DeathDate,
-                Status = character.Status,
-                CreatedAt = character.CreatedAt,
-                UpdatedAt = character.UpdatedAt
-            };
-
-            // NOTE: Personality, CombatPreferences, and Backstory are NOT included.
-            // Per SERVICE_HIERARCHY, Character (L2) cannot depend on CharacterPersonality or
-            // CharacterHistory (L4). Callers needing this data should call those services directly.
-            if (body.IncludePersonality || body.IncludeCombatPreferences || body.IncludeBackstory)
-            {
-                _logger.LogDebug(
-                    "Enrichment flags for personality/combat/backstory were set for character {CharacterId}, " +
-                    "but these are not included per SERVICE_HIERARCHY (L2 cannot depend on L4). " +
-                    "Callers should aggregate from L4 services directly.",
-                    body.CharacterId);
-            }
-
-            // Fetch family tree if requested (uses Relationship service - L2, allowed)
-            if (body.IncludeFamilyTree)
-            {
-                response.FamilyTree = await BuildFamilyTreeAsync(body.CharacterId, cancellationToken);
-            }
-
-            return (StatusCodes.OK, response);
+            _logger.LogWarning("Character not found: {CharacterId}", body.CharacterId);
+            return (StatusCodes.NotFound, null);
         }
+
+        var response = new EnrichedCharacterResponse
+        {
+            CharacterId = character.CharacterId,
+            Name = character.Name,
+            RealmId = character.RealmId,
+            SpeciesId = character.SpeciesId,
+            BirthDate = character.BirthDate,
+            DeathDate = character.DeathDate,
+            Status = character.Status,
+            CreatedAt = character.CreatedAt,
+            UpdatedAt = character.UpdatedAt
+        };
+
+        // NOTE: Personality, CombatPreferences, and Backstory are NOT included.
+        // Per SERVICE_HIERARCHY, Character (L2) cannot depend on CharacterPersonality or
+        // CharacterHistory (L4). Callers needing this data should call those services directly.
+        if (body.IncludePersonality || body.IncludeCombatPreferences || body.IncludeBackstory)
+        {
+            _logger.LogDebug(
+                "Enrichment flags for personality/combat/backstory were set for character {CharacterId}, " +
+                "but these are not included per SERVICE_HIERARCHY (L2 cannot depend on L4). " +
+                "Callers should aggregate from L4 services directly.",
+                body.CharacterId);
+        }
+
+        // Fetch family tree if requested (uses Relationship service - L2, allowed)
+        if (body.IncludeFamilyTree)
+        {
+            response.FamilyTree = await BuildFamilyTreeAsync(body.CharacterId, cancellationToken);
+        }
+
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -598,88 +582,86 @@ public partial class CharacterService : ICharacterService
         CompressCharacterRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogDebug("Compressing character: {CharacterId}", body.CharacterId);
+
+        // Acquire distributed lock for character compression (per IMPLEMENTATION TENETS)
+        var lockOwner = $"compress-character-{Guid.NewGuid():N}";
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.CharacterLock,
+            body.CharacterId.ToString(),
+            lockOwner,
+            _configuration.LockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
         {
-            _logger.LogDebug("Compressing character: {CharacterId}", body.CharacterId);
-
-            // Acquire distributed lock for character compression (per IMPLEMENTATION TENETS)
-            var lockOwner = $"compress-character-{Guid.NewGuid():N}";
-            await using var lockResponse = await _lockProvider.LockAsync(
-                StateStoreDefinitions.CharacterLock,
-                body.CharacterId.ToString(),
-                lockOwner,
-                _configuration.LockTimeoutSeconds,
-                cancellationToken);
-
-            if (!lockResponse.Success)
-            {
-                _logger.LogWarning("Failed to acquire lock for character compression {CharacterId}", body.CharacterId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Get character
-            var character = await FindCharacterByIdAsync(body.CharacterId.ToString(), cancellationToken);
-
-            if (character == null)
-            {
-                _logger.LogWarning("Character not found for compression: {CharacterId}", body.CharacterId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Must be dead to compress
-            if (character.Status != CharacterStatus.Dead || !character.DeathDate.HasValue)
-            {
-                _logger.LogWarning("Cannot compress alive character: {CharacterId}", body.CharacterId);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // NOTE: Per SERVICE_HIERARCHY, we cannot call CharacterPersonality or CharacterHistory (L4).
-            // Personality summary and backstory/history summaries are NOT included.
-            // L4 services should subscribe to character.compressed event to handle their own cleanup.
-            string? familySummary = await GenerateFamilySummaryAsync(body.CharacterId, cancellationToken);
-
-            var archive = new CharacterArchive
-            {
-                CharacterId = body.CharacterId,
-                Name = character.Name,
-                RealmId = character.RealmId,
-                SpeciesId = character.SpeciesId,
-                BirthDate = character.BirthDate,
-                DeathDate = character.DeathDate.Value,
-                CompressedAt = DateTimeOffset.UtcNow,
-                PersonalitySummary = null, // L4 data not available per SERVICE_HIERARCHY
-                KeyBackstoryPoints = new List<string>(), // L4 data not available per SERVICE_HIERARCHY
-                MajorLifeEvents = new List<string>(), // L4 data not available per SERVICE_HIERARCHY
-                FamilySummary = familySummary // From Relationships (L2), allowed
-            };
-
-            // Store archive
-            var archiveKey = $"{ARCHIVE_KEY_PREFIX}{body.CharacterId}";
-            await _stateStoreFactory.GetStore<CharacterArchiveModel>(StateStoreDefinitions.Character)
-                .SaveAsync(archiveKey, MapToArchiveModel(archive), cancellationToken: cancellationToken);
-
-            // NOTE: deleteSourceData flag cannot delete L4 service data per SERVICE_HIERARCHY.
-            // L4 services should subscribe to character.compressed event to handle their own cleanup.
-            if (body.DeleteSourceData)
-            {
-                _logger.LogDebug(
-                    "DeleteSourceData=true for character {CharacterId}, but Character (L2) cannot call " +
-                    "CharacterPersonality or CharacterHistory (L4) to delete their data per SERVICE_HIERARCHY. " +
-                    "L4 services should subscribe to character.compressed event.",
-                    body.CharacterId);
-            }
-
-            // Publish compression event - L4 services can subscribe to clean up their data
-            await _messageBus.TryPublishAsync(CHARACTER_COMPRESSED_TOPIC, new CharacterCompressedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                CharacterId = body.CharacterId,
-                DeletedSourceData = body.DeleteSourceData
-            });
-
-            _logger.LogInformation("Character compressed: {CharacterId}", body.CharacterId);
-            return (StatusCodes.OK, archive);
+            _logger.LogWarning("Failed to acquire lock for character compression {CharacterId}", body.CharacterId);
+            return (StatusCodes.Conflict, null);
         }
+
+        // Get character
+        var character = await FindCharacterByIdAsync(body.CharacterId.ToString(), cancellationToken);
+
+        if (character == null)
+        {
+            _logger.LogWarning("Character not found for compression: {CharacterId}", body.CharacterId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Must be dead to compress
+        if (character.Status != CharacterStatus.Dead || !character.DeathDate.HasValue)
+        {
+            _logger.LogWarning("Cannot compress alive character: {CharacterId}", body.CharacterId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // NOTE: Per SERVICE_HIERARCHY, we cannot call CharacterPersonality or CharacterHistory (L4).
+        // Personality summary and backstory/history summaries are NOT included.
+        // L4 services should subscribe to character.compressed event to handle their own cleanup.
+        string? familySummary = await GenerateFamilySummaryAsync(body.CharacterId, cancellationToken);
+
+        var archive = new CharacterArchive
+        {
+            CharacterId = body.CharacterId,
+            Name = character.Name,
+            RealmId = character.RealmId,
+            SpeciesId = character.SpeciesId,
+            BirthDate = character.BirthDate,
+            DeathDate = character.DeathDate.Value,
+            CompressedAt = DateTimeOffset.UtcNow,
+            PersonalitySummary = null, // L4 data not available per SERVICE_HIERARCHY
+            KeyBackstoryPoints = new List<string>(), // L4 data not available per SERVICE_HIERARCHY
+            MajorLifeEvents = new List<string>(), // L4 data not available per SERVICE_HIERARCHY
+            FamilySummary = familySummary // From Relationships (L2), allowed
+        };
+
+        // Store archive
+        var archiveKey = $"{ARCHIVE_KEY_PREFIX}{body.CharacterId}";
+        await _stateStoreFactory.GetStore<CharacterArchiveModel>(StateStoreDefinitions.Character)
+            .SaveAsync(archiveKey, MapToArchiveModel(archive), cancellationToken: cancellationToken);
+
+        // NOTE: deleteSourceData flag cannot delete L4 service data per SERVICE_HIERARCHY.
+        // L4 services should subscribe to character.compressed event to handle their own cleanup.
+        if (body.DeleteSourceData)
+        {
+            _logger.LogDebug(
+                "DeleteSourceData=true for character {CharacterId}, but Character (L2) cannot call " +
+                "CharacterPersonality or CharacterHistory (L4) to delete their data per SERVICE_HIERARCHY. " +
+                "L4 services should subscribe to character.compressed event.",
+                body.CharacterId);
+        }
+
+        // Publish compression event - L4 services can subscribe to clean up their data
+        await _messageBus.TryPublishAsync(CHARACTER_COMPRESSED_TOPIC, new CharacterCompressedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            CharacterId = body.CharacterId,
+            DeletedSourceData = body.DeleteSourceData
+        });
+
+        _logger.LogInformation("Character compressed: {CharacterId}", body.CharacterId);
+        return (StatusCodes.OK, archive);
     }
 
     /// <summary>
@@ -689,22 +671,20 @@ public partial class CharacterService : ICharacterService
         GetCharacterArchiveRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogDebug("Getting archive for character: {CharacterId}", body.CharacterId);
+
+        var archiveKey = $"{ARCHIVE_KEY_PREFIX}{body.CharacterId}";
+        var archiveModel = await _stateStoreFactory.GetStore<CharacterArchiveModel>(StateStoreDefinitions.Character)
+            .GetAsync(archiveKey, cancellationToken);
+
+        if (archiveModel == null)
         {
-            _logger.LogDebug("Getting archive for character: {CharacterId}", body.CharacterId);
-
-            var archiveKey = $"{ARCHIVE_KEY_PREFIX}{body.CharacterId}";
-            var archiveModel = await _stateStoreFactory.GetStore<CharacterArchiveModel>(StateStoreDefinitions.Character)
-                .GetAsync(archiveKey, cancellationToken);
-
-            if (archiveModel == null)
-            {
-                _logger.LogDebug("No archive found for character {CharacterId}", body.CharacterId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            var archive = MapFromArchiveModel(archiveModel);
-            return (StatusCodes.OK, archive);
+            _logger.LogDebug("No archive found for character {CharacterId}", body.CharacterId);
+            return (StatusCodes.NotFound, null);
         }
+
+        var archive = MapFromArchiveModel(archiveModel);
+        return (StatusCodes.OK, archive);
     }
 
     /// <summary>
@@ -718,51 +698,49 @@ public partial class CharacterService : ICharacterService
         GetCompressDataRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogDebug("Getting compress data for character: {CharacterId}", body.CharacterId);
+
+        // Find character
+        var character = await FindCharacterByIdAsync(body.CharacterId.ToString(), cancellationToken);
+
+        if (character == null)
         {
-            _logger.LogDebug("Getting compress data for character: {CharacterId}", body.CharacterId);
-
-            // Find character
-            var character = await FindCharacterByIdAsync(body.CharacterId.ToString(), cancellationToken);
-
-            if (character == null)
-            {
-                _logger.LogWarning("Character not found for compression: {CharacterId}", body.CharacterId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Only dead characters can be compressed
-            if (character.Status != CharacterStatus.Dead || !character.DeathDate.HasValue)
-            {
-                _logger.LogWarning("Cannot get compress data for alive character: {CharacterId}", body.CharacterId);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Generate family summary (uses Relationship service - L2, allowed)
-            var familySummary = await GenerateFamilySummaryAsync(body.CharacterId, cancellationToken);
-
-            var compressData = new CharacterBaseArchive
-            {
-                // ResourceArchiveBase fields
-                ResourceId = character.CharacterId,
-                ResourceType = "character",
-                ArchivedAt = DateTimeOffset.UtcNow,
-                SchemaVersion = 1,
-                // Service-specific fields
-                CharacterId = character.CharacterId,
-                Name = character.Name,
-                RealmId = character.RealmId,
-                SpeciesId = character.SpeciesId,
-                BirthDate = character.BirthDate,
-                DeathDate = character.DeathDate.Value,
-                Status = character.Status,
-                FamilySummary = familySummary,
-                CreatedAt = character.CreatedAt,
-                UpdatedAt = character.UpdatedAt
-            };
-
-            _logger.LogDebug("Generated compress data for character: {CharacterId}", body.CharacterId);
-            return (StatusCodes.OK, compressData);
+            _logger.LogWarning("Character not found for compression: {CharacterId}", body.CharacterId);
+            return (StatusCodes.NotFound, null);
         }
+
+        // Only dead characters can be compressed
+        if (character.Status != CharacterStatus.Dead || !character.DeathDate.HasValue)
+        {
+            _logger.LogWarning("Cannot get compress data for alive character: {CharacterId}", body.CharacterId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Generate family summary (uses Relationship service - L2, allowed)
+        var familySummary = await GenerateFamilySummaryAsync(body.CharacterId, cancellationToken);
+
+        var compressData = new CharacterBaseArchive
+        {
+            // ResourceArchiveBase fields
+            ResourceId = character.CharacterId,
+            ResourceType = "character",
+            ArchivedAt = DateTimeOffset.UtcNow,
+            SchemaVersion = 1,
+            // Service-specific fields
+            CharacterId = character.CharacterId,
+            Name = character.Name,
+            RealmId = character.RealmId,
+            SpeciesId = character.SpeciesId,
+            BirthDate = character.BirthDate,
+            DeathDate = character.DeathDate.Value,
+            Status = character.Status,
+            FamilySummary = familySummary,
+            CreatedAt = character.CreatedAt,
+            UpdatedAt = character.UpdatedAt
+        };
+
+        _logger.LogDebug("Generated compress data for character: {CharacterId}", body.CharacterId);
+        return (StatusCodes.OK, compressData);
     }
 
     /// <summary>
@@ -777,191 +755,189 @@ public partial class CharacterService : ICharacterService
         CheckReferencesRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogDebug("Checking references for character: {CharacterId}", body.CharacterId);
+
+        // Check if character exists
+        var character = await FindCharacterByIdAsync(body.CharacterId.ToString(), cancellationToken);
+        if (character == null)
         {
-            _logger.LogDebug("Checking references for character: {CharacterId}", body.CharacterId);
+            return (StatusCodes.NotFound, null);
+        }
 
-            // Check if character exists
-            var character = await FindCharacterByIdAsync(body.CharacterId.ToString(), cancellationToken);
-            if (character == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
+        // Check if compressed
+        var archiveKey = $"{ARCHIVE_KEY_PREFIX}{body.CharacterId}";
+        var archiveModel = await _stateStoreFactory.GetStore<CharacterArchiveModel>(StateStoreDefinitions.Character)
+            .GetAsync(archiveKey, cancellationToken);
+        var isCompressed = archiveModel != null;
 
-            // Check if compressed
-            var archiveKey = $"{ARCHIVE_KEY_PREFIX}{body.CharacterId}";
-            var archiveModel = await _stateStoreFactory.GetStore<CharacterArchiveModel>(StateStoreDefinitions.Character)
-                .GetAsync(archiveKey, cancellationToken);
-            var isCompressed = archiveModel != null;
+        // Count references from same-layer or lower services only (per SERVICE_HIERARCHY)
+        var referenceTypes = new List<string>();
+        var referenceCount = 0;
 
-            // Count references from same-layer or lower services only (per SERVICE_HIERARCHY)
-            var referenceTypes = new List<string>();
-            var referenceCount = 0;
-
-            // Check relationships (L2 - allowed)
-            try
-            {
-                // Query for relationships where this character is entity1 or entity2
-                var relResult = await _relationshipClient.ListRelationshipsByEntityAsync(
-                    new ListRelationshipsByEntityRequest
-                    {
-                        EntityId = body.CharacterId,
-                        EntityType = EntityType.Character
-                    },
-                    cancellationToken);
-
-                if (relResult != null && relResult.Relationships.Count > 0)
+        // Check relationships (L2 - allowed)
+        try
+        {
+            // Query for relationships where this character is entity1 or entity2
+            var relResult = await _relationshipClient.ListRelationshipsByEntityAsync(
+                new ListRelationshipsByEntityRequest
                 {
-                    referenceCount += relResult.TotalCount;
+                    EntityId = body.CharacterId,
+                    EntityType = EntityType.Character
+                },
+                cancellationToken);
 
-                    // Track that relationships exist (detailed categorization would require
-                    // additional calls to RelationshipType service for type codes)
-                    if (!referenceTypes.Contains(REFERENCE_TYPE_RELATIONSHIP))
-                        referenceTypes.Add(REFERENCE_TYPE_RELATIONSHIP);
-                }
-            }
-            catch (ApiException ex) when (ex.StatusCode == 404)
+            if (relResult != null && relResult.Relationships.Count > 0)
             {
-                _logger.LogDebug("No relationships found for character {CharacterId}", body.CharacterId);
+                referenceCount += relResult.TotalCount;
+
+                // Track that relationships exist (detailed categorization would require
+                // additional calls to RelationshipType service for type codes)
+                if (!referenceTypes.Contains(REFERENCE_TYPE_RELATIONSHIP))
+                    referenceTypes.Add(REFERENCE_TYPE_RELATIONSHIP);
             }
+        }
+        catch (ApiException ex) when (ex.StatusCode == 404)
+        {
+            _logger.LogDebug("No relationships found for character {CharacterId}", body.CharacterId);
+        }
 
-            // Check L4 references via lib-resource (L1 - allowed)
-            // L4 services (Actor, CharacterEncounter, etc.) register their references with lib-resource
-            // via event-driven registration. We query lib-resource to get those reference counts.
-            try
-            {
-                var resourceCheck = await _resourceClient.CheckReferencesAsync(
-                    new Resource.CheckReferencesRequest
-                    {
-                        ResourceType = "character",
-                        ResourceId = body.CharacterId
-                    }, cancellationToken);
-
-                if (resourceCheck != null && resourceCheck.RefCount > 0)
+        // Check L4 references via lib-resource (L1 - allowed)
+        // L4 services (Actor, CharacterEncounter, etc.) register their references with lib-resource
+        // via event-driven registration. We query lib-resource to get those reference counts.
+        try
+        {
+            var resourceCheck = await _resourceClient.CheckReferencesAsync(
+                new Resource.CheckReferencesRequest
                 {
-                    referenceCount += resourceCheck.RefCount;
+                    ResourceType = "character",
+                    ResourceId = body.CharacterId
+                }, cancellationToken);
 
-                    // Add source types from lib-resource response to reference types list
-                    if (resourceCheck.Sources != null)
+            if (resourceCheck != null && resourceCheck.RefCount > 0)
+            {
+                referenceCount += resourceCheck.RefCount;
+
+                // Add source types from lib-resource response to reference types list
+                if (resourceCheck.Sources != null)
+                {
+                    foreach (var source in resourceCheck.Sources)
                     {
-                        foreach (var source in resourceCheck.Sources)
+                        // Normalize source type to uppercase for consistency with L2 constants
+                        var normalizedType = source.SourceType.ToUpperInvariant();
+                        if (!referenceTypes.Contains(normalizedType))
                         {
-                            // Normalize source type to uppercase for consistency with L2 constants
-                            var normalizedType = source.SourceType.ToUpperInvariant();
-                            if (!referenceTypes.Contains(normalizedType))
-                            {
-                                referenceTypes.Add(normalizedType);
-                            }
+                            referenceTypes.Add(normalizedType);
                         }
                     }
                 }
             }
-            catch (ApiException ex) when (ex.StatusCode == 404)
-            {
-                // No references registered in lib-resource - this is normal
-                _logger.LogDebug("No lib-resource references found for character {CharacterId}", body.CharacterId);
-            }
-            catch (ApiException ex)
-            {
-                // Graceful degradation: lib-resource unavailable means L4 references may be missing,
-                // but we still return L2 reference info (relationships, contracts). No error event
-                // emitted because this is a read-only advisory check, not a fail-closed mutation --
-                // contrast with the delete flow which MUST fail if lib-resource is unavailable.
-                _logger.LogWarning(ex, "lib-resource unavailable when checking references for character {CharacterId}, L4 references may be missing", body.CharacterId);
-            }
-
-            // Check contracts where character is a party (L1 - allowed)
-            try
-            {
-                var contractResult = await _contractClient.QueryContractInstancesAsync(
-                    new QueryContractInstancesRequest
-                    {
-                        PartyEntityId = body.CharacterId,
-                        PartyEntityType = EntityType.Character,
-                        Cursor = null,
-                        PageSize = 1 // Only need to know if any exist
-                    },
-                    cancellationToken);
-
-                if (contractResult != null && contractResult.Contracts.Count > 0)
-                {
-                    // With cursor-based pagination, we don't have total count.
-                    // Indicate at least one reference exists; exact count requires full enumeration.
-                    referenceCount += contractResult.HasMore ? 2 : contractResult.Contracts.Count;
-                    if (!referenceTypes.Contains(REFERENCE_TYPE_CONTRACT))
-                        referenceTypes.Add(REFERENCE_TYPE_CONTRACT);
-                }
-            }
-            catch (ApiException ex) when (ex.StatusCode == 404)
-            {
-                _logger.LogDebug("No contracts found for character {CharacterId}", body.CharacterId);
-            }
-
-            // Get/update reference tracking data with optimistic concurrency
-            var refCountKey = $"{REF_COUNT_KEY_PREFIX}{body.CharacterId}";
-            var refCountStore = _stateStoreFactory.GetStore<RefCountData>(StateStoreDefinitions.Character);
-            var (initialData, initialEtag) = await refCountStore.GetWithETagAsync(refCountKey, cancellationToken);
-            var refData = initialData ?? new RefCountData { CharacterId = body.CharacterId };
-
-            const int maxRetries = 3;
-            for (var retry = 0; retry < maxRetries; retry++)
-            {
-                if (retry > 0)
-                {
-                    // Re-fetch on retry
-                    var (storedData, newEtag) = await refCountStore.GetWithETagAsync(refCountKey, cancellationToken);
-                    refData = storedData ?? new RefCountData { CharacterId = body.CharacterId };
-                    initialEtag = newEtag;
-                }
-
-                // Track when refCount first hit zero
-                bool needsSave = false;
-                if (referenceCount == 0 && refData.ZeroRefSinceUnix == null)
-                {
-                    refData.ZeroRefSinceUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                    needsSave = true;
-                }
-                else if (referenceCount > 0 && refData.ZeroRefSinceUnix != null)
-                {
-                    refData.ZeroRefSinceUnix = null;
-                    needsSave = true;
-                }
-
-                if (!needsSave)
-                {
-                    break; // No changes needed
-                }
-
-                var savedEtag = await refCountStore.TrySaveAsync(refCountKey, refData, initialEtag ?? string.Empty, cancellationToken);
-                if (savedEtag != null)
-                {
-                    break; // Successfully saved
-                }
-
-                if (retry == maxRetries - 1)
-                {
-                    _logger.LogWarning("RefCount update retry exhausted for character {CharacterId}", body.CharacterId);
-                }
-            }
-
-            // Determine cleanup eligibility - grace period from configuration in days, converted to seconds
-            var cleanupGracePeriodSeconds = _configuration.CleanupGracePeriodDays * 24 * 60 * 60;
-            var isEligibleForCleanup = isCompressed && referenceCount == 0 && refData.ZeroRefSinceUnix != null &&
-                (DateTimeOffset.UtcNow.ToUnixTimeSeconds() - refData.ZeroRefSinceUnix.Value) >= cleanupGracePeriodSeconds;
-
-            var response = new CharacterRefCount
-            {
-                CharacterId = body.CharacterId,
-                ReferenceCount = referenceCount,
-                ReferenceTypes = referenceTypes,
-                IsCompressed = isCompressed,
-                IsEligibleForCleanup = isEligibleForCleanup,
-                ZeroRefSince = refData.ZeroRefSinceUnix.HasValue
-                    ? DateTimeOffset.FromUnixTimeSeconds(refData.ZeroRefSinceUnix.Value)
-                    : null
-            };
-
-            return (StatusCodes.OK, response);
         }
+        catch (ApiException ex) when (ex.StatusCode == 404)
+        {
+            // No references registered in lib-resource - this is normal
+            _logger.LogDebug("No lib-resource references found for character {CharacterId}", body.CharacterId);
+        }
+        catch (ApiException ex)
+        {
+            // Graceful degradation: lib-resource unavailable means L4 references may be missing,
+            // but we still return L2 reference info (relationships, contracts). No error event
+            // emitted because this is a read-only advisory check, not a fail-closed mutation --
+            // contrast with the delete flow which MUST fail if lib-resource is unavailable.
+            _logger.LogWarning(ex, "lib-resource unavailable when checking references for character {CharacterId}, L4 references may be missing", body.CharacterId);
+        }
+
+        // Check contracts where character is a party (L1 - allowed)
+        try
+        {
+            var contractResult = await _contractClient.QueryContractInstancesAsync(
+                new QueryContractInstancesRequest
+                {
+                    PartyEntityId = body.CharacterId,
+                    PartyEntityType = EntityType.Character,
+                    Cursor = null,
+                    PageSize = 1 // Only need to know if any exist
+                },
+                cancellationToken);
+
+            if (contractResult != null && contractResult.Contracts.Count > 0)
+            {
+                // With cursor-based pagination, we don't have total count.
+                // Indicate at least one reference exists; exact count requires full enumeration.
+                referenceCount += contractResult.HasMore ? 2 : contractResult.Contracts.Count;
+                if (!referenceTypes.Contains(REFERENCE_TYPE_CONTRACT))
+                    referenceTypes.Add(REFERENCE_TYPE_CONTRACT);
+            }
+        }
+        catch (ApiException ex) when (ex.StatusCode == 404)
+        {
+            _logger.LogDebug("No contracts found for character {CharacterId}", body.CharacterId);
+        }
+
+        // Get/update reference tracking data with optimistic concurrency
+        var refCountKey = $"{REF_COUNT_KEY_PREFIX}{body.CharacterId}";
+        var refCountStore = _stateStoreFactory.GetStore<RefCountData>(StateStoreDefinitions.Character);
+        var (initialData, initialEtag) = await refCountStore.GetWithETagAsync(refCountKey, cancellationToken);
+        var refData = initialData ?? new RefCountData { CharacterId = body.CharacterId };
+
+        const int maxRetries = 3;
+        for (var retry = 0; retry < maxRetries; retry++)
+        {
+            if (retry > 0)
+            {
+                // Re-fetch on retry
+                var (storedData, newEtag) = await refCountStore.GetWithETagAsync(refCountKey, cancellationToken);
+                refData = storedData ?? new RefCountData { CharacterId = body.CharacterId };
+                initialEtag = newEtag;
+            }
+
+            // Track when refCount first hit zero
+            bool needsSave = false;
+            if (referenceCount == 0 && refData.ZeroRefSinceUnix == null)
+            {
+                refData.ZeroRefSinceUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                needsSave = true;
+            }
+            else if (referenceCount > 0 && refData.ZeroRefSinceUnix != null)
+            {
+                refData.ZeroRefSinceUnix = null;
+                needsSave = true;
+            }
+
+            if (!needsSave)
+            {
+                break; // No changes needed
+            }
+
+            var savedEtag = await refCountStore.TrySaveAsync(refCountKey, refData, initialEtag ?? string.Empty, cancellationToken);
+            if (savedEtag != null)
+            {
+                break; // Successfully saved
+            }
+
+            if (retry == maxRetries - 1)
+            {
+                _logger.LogWarning("RefCount update retry exhausted for character {CharacterId}", body.CharacterId);
+            }
+        }
+
+        // Determine cleanup eligibility - grace period from configuration in days, converted to seconds
+        var cleanupGracePeriodSeconds = _configuration.CleanupGracePeriodDays * 24 * 60 * 60;
+        var isEligibleForCleanup = isCompressed && referenceCount == 0 && refData.ZeroRefSinceUnix != null &&
+            (DateTimeOffset.UtcNow.ToUnixTimeSeconds() - refData.ZeroRefSinceUnix.Value) >= cleanupGracePeriodSeconds;
+
+        var response = new CharacterRefCount
+        {
+            CharacterId = body.CharacterId,
+            ReferenceCount = referenceCount,
+            ReferenceTypes = referenceTypes,
+            IsCompressed = isCompressed,
+            IsEligibleForCleanup = isEligibleForCleanup,
+            ZeroRefSince = refData.ZeroRefSinceUnix.HasValue
+                ? DateTimeOffset.FromUnixTimeSeconds(refData.ZeroRefSinceUnix.Value)
+                : null
+        };
+
+        return (StatusCodes.OK, response);
     }
 
     #endregion

@@ -150,139 +150,137 @@ public partial class ConnectService : IConnectService, IDisposable
         InternalProxyRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogInformation("Processing internal proxy request to {TargetService}/{Method} {Endpoint}",
+            body.TargetService, body.Method, body.TargetEndpoint);
+
+        // Validate session has access to this API via connection state capability mappings
+        // Capabilities are pushed via SessionCapabilitiesEvent from Permission service
+        // and stored in ConnectionState.ServiceMappings (the active source of truth)
+        // Key format: "serviceName:/path" (no HTTP method in key - all WebSocket endpoints are POST)
+        var endpointKey = $"{body.TargetService}:{body.TargetEndpoint}";
+        var connection = _connectionManager.GetConnection(body.SessionId.ToString());
+
+        if (connection == null)
         {
-            _logger.LogInformation("Processing internal proxy request to {TargetService}/{Method} {Endpoint}",
-                body.TargetService, body.Method, body.TargetEndpoint);
+            _logger.LogWarning("Session {SessionId} not found for internal proxy request to {Service}/{Method}",
+                body.SessionId, body.TargetService, body.Method);
+            return (StatusCodes.NotFound, null);
+        }
 
-            // Validate session has access to this API via connection state capability mappings
-            // Capabilities are pushed via SessionCapabilitiesEvent from Permission service
-            // and stored in ConnectionState.ServiceMappings (the active source of truth)
-            // Key format: "serviceName:/path" (no HTTP method in key - all WebSocket endpoints are POST)
-            var endpointKey = $"{body.TargetService}:{body.TargetEndpoint}";
-            var connection = _connectionManager.GetConnection(body.SessionId.ToString());
+        var hasAccess = connection.ConnectionState.HasServiceMapping(endpointKey);
 
-            if (connection == null)
+        if (!hasAccess)
+        {
+            _logger.LogWarning("Session {SessionId} denied access to {Service}/{Method} - not in capability manifest",
+                body.SessionId, body.TargetService, body.Method);
+            return (StatusCodes.Forbidden, null);
+        }
+
+        // Build the full URL path with path parameters
+        var endpoint = body.TargetEndpoint;
+        if (body.PathParameters != null)
+        {
+            foreach (var param in body.PathParameters)
             {
-                _logger.LogWarning("Session {SessionId} not found for internal proxy request to {Service}/{Method}",
-                    body.SessionId, body.TargetService, body.Method);
-                return (StatusCodes.NotFound, null);
+                endpoint = endpoint.Replace($"{{{param.Key}}}", param.Value);
             }
+        }
 
-            var hasAccess = connection.ConnectionState.HasServiceMapping(endpointKey);
+        // Add query parameters
+        if (body.QueryParameters != null && body.QueryParameters.Count > 0)
+        {
+            var queryString = string.Join("&",
+                body.QueryParameters.Select(kv => $"{kv.Key}={Uri.EscapeDataString(kv.Value)}"));
+            endpoint = $"{endpoint}?{queryString}";
+        }
 
-            if (!hasAccess)
+        // Use ServiceAppMappingResolver for dynamic app-id resolution
+        // This enables distributed deployment where services can run on different nodes
+        var appId = _appMappingResolver.GetAppIdForService(body.TargetService);
+
+        _logger.LogDebug("Routing request to service {Service} via app-id {AppId}",
+            body.TargetService, appId);
+
+        // Create HTTP request
+        var httpMethod = body.Method switch
+        {
+            InternalProxyRequestMethod.GET => HttpMethod.Get,
+            InternalProxyRequestMethod.POST => HttpMethod.Post,
+            InternalProxyRequestMethod.PUT => HttpMethod.Put,
+            InternalProxyRequestMethod.DELETE => HttpMethod.Delete,
+            InternalProxyRequestMethod.PATCH => HttpMethod.Patch,
+            _ => HttpMethod.Get
+        };
+
+        var startTime = DateTime.UtcNow;
+
+        try
+        {
+            // Route through Bannou service invocation
+            HttpResponseMessage httpResponse;
+
+            if (body.Method == InternalProxyRequestMethod.GET ||
+                body.Method == InternalProxyRequestMethod.DELETE)
             {
-                _logger.LogWarning("Session {SessionId} denied access to {Service}/{Method} - not in capability manifest",
-                    body.SessionId, body.TargetService, body.Method);
-                return (StatusCodes.Forbidden, null);
+                // For GET/DELETE, no body
+                var request = _meshClient.CreateInvokeMethodRequest(httpMethod, appId, endpoint);
+                httpResponse = await _meshClient.InvokeMethodWithResponseAsync(request, cancellationToken);
             }
-
-            // Build the full URL path with path parameters
-            var endpoint = body.TargetEndpoint;
-            if (body.PathParameters != null)
+            else
             {
-                foreach (var param in body.PathParameters)
+                // For POST/PUT/PATCH, include body
+                var jsonBody = body.Body != null ? BannouJson.Serialize(body.Body) : null;
+
+                var content = jsonBody != null ?
+                    new StringContent(jsonBody, Encoding.UTF8, "application/json") : null;
+                var request = _meshClient.CreateInvokeMethodRequest(httpMethod, appId, endpoint);
+                if (content != null)
                 {
-                    endpoint = endpoint.Replace($"{{{param.Key}}}", param.Value);
+                    request.Content = content;
                 }
+                httpResponse = await _meshClient.InvokeMethodWithResponseAsync(request, cancellationToken);
             }
 
-            // Add query parameters
-            if (body.QueryParameters != null && body.QueryParameters.Count > 0)
+            // Read response
+            var responseContent = await httpResponse.Content.ReadAsStringAsync(cancellationToken);
+
+            // Convert headers
+            var responseHeaders = new Dictionary<string, ICollection<string>>();
+            foreach (var header in httpResponse.Headers)
             {
-                var queryString = string.Join("&",
-                    body.QueryParameters.Select(kv => $"{kv.Key}={Uri.EscapeDataString(kv.Value)}"));
-                endpoint = $"{endpoint}?{queryString}";
+                responseHeaders[header.Key] = header.Value.ToList();
+            }
+            foreach (var header in httpResponse.Content.Headers)
+            {
+                responseHeaders[header.Key] = header.Value.ToList();
             }
 
-            // Use ServiceAppMappingResolver for dynamic app-id resolution
-            // This enables distributed deployment where services can run on different nodes
-            var appId = _appMappingResolver.GetAppIdForService(body.TargetService);
+            var executionTime = (int)(DateTime.UtcNow - startTime).TotalMilliseconds;
 
-            _logger.LogDebug("Routing request to service {Service} via app-id {AppId}",
-                body.TargetService, appId);
-
-            // Create HTTP request
-            var httpMethod = body.Method switch
+            var response = new InternalProxyResponse
             {
-                InternalProxyRequestMethod.GET => HttpMethod.Get,
-                InternalProxyRequestMethod.POST => HttpMethod.Post,
-                InternalProxyRequestMethod.PUT => HttpMethod.Put,
-                InternalProxyRequestMethod.DELETE => HttpMethod.Delete,
-                InternalProxyRequestMethod.PATCH => HttpMethod.Patch,
-                _ => HttpMethod.Get
+                StatusCode = (int)httpResponse.StatusCode,
+                Response = responseContent,
+                Headers = responseHeaders,
+                ExecutionTime = executionTime
             };
 
-            var startTime = DateTime.UtcNow;
+            return (StatusCodes.OK, response);
+        }
+        catch (Exception meshEx)
+        {
+            _logger.LogError(meshEx, "Bannou service invocation failed for {Service}/{Endpoint}",
+                body.TargetService, endpoint);
+            await PublishErrorEventAsync("ProxyInternalRequest", meshEx.GetType().Name, meshEx.Message, dependency: body.TargetService, details: new { Endpoint = endpoint });
 
-            try
+            var errorResponse = new InternalProxyResponse
             {
-                // Route through Bannou service invocation
-                HttpResponseMessage httpResponse;
+                StatusCode = 503,
+                Error = $"Service invocation failed: {meshEx.Message}",
+                ExecutionTime = (int)(DateTime.UtcNow - startTime).TotalMilliseconds
+            };
 
-                if (body.Method == InternalProxyRequestMethod.GET ||
-                    body.Method == InternalProxyRequestMethod.DELETE)
-                {
-                    // For GET/DELETE, no body
-                    var request = _meshClient.CreateInvokeMethodRequest(httpMethod, appId, endpoint);
-                    httpResponse = await _meshClient.InvokeMethodWithResponseAsync(request, cancellationToken);
-                }
-                else
-                {
-                    // For POST/PUT/PATCH, include body
-                    var jsonBody = body.Body != null ? BannouJson.Serialize(body.Body) : null;
-
-                    var content = jsonBody != null ?
-                        new StringContent(jsonBody, Encoding.UTF8, "application/json") : null;
-                    var request = _meshClient.CreateInvokeMethodRequest(httpMethod, appId, endpoint);
-                    if (content != null)
-                    {
-                        request.Content = content;
-                    }
-                    httpResponse = await _meshClient.InvokeMethodWithResponseAsync(request, cancellationToken);
-                }
-
-                // Read response
-                var responseContent = await httpResponse.Content.ReadAsStringAsync(cancellationToken);
-
-                // Convert headers
-                var responseHeaders = new Dictionary<string, ICollection<string>>();
-                foreach (var header in httpResponse.Headers)
-                {
-                    responseHeaders[header.Key] = header.Value.ToList();
-                }
-                foreach (var header in httpResponse.Content.Headers)
-                {
-                    responseHeaders[header.Key] = header.Value.ToList();
-                }
-
-                var executionTime = (int)(DateTime.UtcNow - startTime).TotalMilliseconds;
-
-                var response = new InternalProxyResponse
-                {
-                    StatusCode = (int)httpResponse.StatusCode,
-                    Response = responseContent,
-                    Headers = responseHeaders,
-                    ExecutionTime = executionTime
-                };
-
-                return (StatusCodes.OK, response);
-            }
-            catch (Exception meshEx)
-            {
-                _logger.LogError(meshEx, "Bannou service invocation failed for {Service}/{Endpoint}",
-                    body.TargetService, endpoint);
-                await PublishErrorEventAsync("ProxyInternalRequest", meshEx.GetType().Name, meshEx.Message, dependency: body.TargetService, details: new { Endpoint = endpoint });
-
-                var errorResponse = new InternalProxyResponse
-                {
-                    StatusCode = 503,
-                    Error = $"Service invocation failed: {meshEx.Message}",
-                    ExecutionTime = (int)(DateTime.UtcNow - startTime).TotalMilliseconds
-                };
-
-                return (StatusCodes.ServiceUnavailable, errorResponse);
-            }
+            return (StatusCodes.ServiceUnavailable, errorResponse);
         }
     }
 
@@ -452,58 +450,56 @@ public partial class ConnectService : IConnectService, IDisposable
         CancellationToken cancellationToken = default)
     {
         await Task.CompletedTask; // Satisfy async requirement for sync method
+        _logger.LogDebug("GetClientCapabilitiesAsync called for session {SessionId} with filter: {Filter}",
+            body.SessionId, body.ServiceFilter ?? "(none)");
+
+        // Look up the connection by session ID
+        var connection = _connectionManager.GetConnection(body.SessionId.ToString());
+        if (connection == null)
         {
-            _logger.LogDebug("GetClientCapabilitiesAsync called for session {SessionId} with filter: {Filter}",
-                body.SessionId, body.ServiceFilter ?? "(none)");
-
-            // Look up the connection by session ID
-            var connection = _connectionManager.GetConnection(body.SessionId.ToString());
-            if (connection == null)
-            {
-                _logger.LogWarning("No active WebSocket connection found for session {SessionId}", body.SessionId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            var connectionState = connection.ConnectionState;
-
-            // Build capabilities using helper
-            var apiEntries = _manifestBuilder.BuildApiList(connectionState.ServiceMappings, body.ServiceFilter);
-            var capabilities = apiEntries.Select(api => new ClientCapability
-            {
-                Guid = api.ServiceGuid,
-                Service = api.ServiceName,
-                Endpoint = api.Path,
-                Method = ClientCapabilityMethod.POST
-            }).ToList();
-
-            // Build shortcuts using helper, removing expired/invalid ones
-            var shortcutEntries = _manifestBuilder.BuildShortcutList(
-                connectionState.GetAllShortcuts(),
-                expiredGuid => connectionState.RemoveShortcut(expiredGuid));
-
-            var shortcuts = shortcutEntries.Select(s => new ClientShortcut
-            {
-                Guid = s.RouteGuid,
-                TargetService = s.TargetService,
-                TargetEndpoint = s.TargetEndpoint,
-                Name = s.Name,
-                Description = s.Description
-            }).ToList();
-
-            var response = new ClientCapabilitiesResponse
-            {
-                SessionId = body.SessionId,
-                Capabilities = capabilities,
-                Shortcuts = shortcuts.Count > 0 ? shortcuts : null,
-                Version = 1,
-                GeneratedAt = DateTimeOffset.UtcNow
-            };
-
-            _logger.LogInformation("Returning {CapabilityCount} capabilities and {ShortcutCount} shortcuts for session {SessionId}",
-                capabilities.Count, shortcuts.Count, body.SessionId);
-
-            return (StatusCodes.OK, response);
+            _logger.LogWarning("No active WebSocket connection found for session {SessionId}", body.SessionId);
+            return (StatusCodes.NotFound, null);
         }
+
+        var connectionState = connection.ConnectionState;
+
+        // Build capabilities using helper
+        var apiEntries = _manifestBuilder.BuildApiList(connectionState.ServiceMappings, body.ServiceFilter);
+        var capabilities = apiEntries.Select(api => new ClientCapability
+        {
+            Guid = api.ServiceGuid,
+            Service = api.ServiceName,
+            Endpoint = api.Path,
+            Method = ClientCapabilityMethod.POST
+        }).ToList();
+
+        // Build shortcuts using helper, removing expired/invalid ones
+        var shortcutEntries = _manifestBuilder.BuildShortcutList(
+            connectionState.GetAllShortcuts(),
+            expiredGuid => connectionState.RemoveShortcut(expiredGuid));
+
+        var shortcuts = shortcutEntries.Select(s => new ClientShortcut
+        {
+            Guid = s.RouteGuid,
+            TargetService = s.TargetService,
+            TargetEndpoint = s.TargetEndpoint,
+            Name = s.Name,
+            Description = s.Description
+        }).ToList();
+
+        var response = new ClientCapabilitiesResponse
+        {
+            SessionId = body.SessionId,
+            Capabilities = capabilities,
+            Shortcuts = shortcuts.Count > 0 ? shortcuts : null,
+            Version = 1,
+            GeneratedAt = DateTimeOffset.UtcNow
+        };
+
+        _logger.LogInformation("Returning {CapabilityCount} capabilities and {ShortcutCount} shortcuts for session {SessionId}",
+            capabilities.Count, shortcuts.Count, body.SessionId);
+
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -514,24 +510,22 @@ public partial class ConnectService : IConnectService, IDisposable
         GetAccountSessionsRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogDebug("GetAccountSessionsAsync called for account {AccountId}", body.AccountId);
+
+        var sessions = await _sessionManager.GetSessionsForAccountAsync(body.AccountId);
+
+        var response = new GetAccountSessionsResponse
         {
-            _logger.LogDebug("GetAccountSessionsAsync called for account {AccountId}", body.AccountId);
+            AccountId = body.AccountId,
+            SessionIds = sessions.ToList(),
+            Count = sessions.Count,
+            RetrievedAt = DateTimeOffset.UtcNow
+        };
 
-            var sessions = await _sessionManager.GetSessionsForAccountAsync(body.AccountId);
+        _logger.LogInformation("Returning {Count} sessions for account {AccountId}",
+            sessions.Count, body.AccountId);
 
-            var response = new GetAccountSessionsResponse
-            {
-                AccountId = body.AccountId,
-                SessionIds = sessions.ToList(),
-                Count = sessions.Count,
-                RetrievedAt = DateTimeOffset.UtcNow
-            };
-
-            _logger.LogInformation("Returning {Count} sessions for account {AccountId}",
-                sessions.Count, body.AccountId);
-
-            return (StatusCodes.OK, response);
-        }
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -546,128 +540,126 @@ public partial class ConnectService : IConnectService, IDisposable
         string? serviceTokenHeader,
         CancellationToken cancellationToken)
     {
+        // Internal mode authentication - bypass JWT validation
+        if (_connectionMode == ConnectionMode.Internal)
         {
-            // Internal mode authentication - bypass JWT validation
-            if (_connectionMode == ConnectionMode.Internal)
+            if (_internalAuthMode == InternalAuthMode.NetworkTrust)
             {
-                if (_internalAuthMode == InternalAuthMode.NetworkTrust)
-                {
-                    // Network trust: Accept connection without authentication
-                    var sessionId = Guid.NewGuid().ToString();
-                    _logger.LogInformation("Internal mode (network-trust): Creating session {SessionId}", sessionId);
-                    return (sessionId, null, new List<string> { "internal" }, null, false);
-                }
-
-                if (_internalAuthMode == InternalAuthMode.ServiceToken)
-                {
-                    // Service token: Validate X-Service-Token header
-                    if (string.IsNullOrEmpty(serviceTokenHeader))
-                    {
-                        _logger.LogWarning("Internal mode requires X-Service-Token header");
-                        return (null, null, null, null, false);
-                    }
-
-                    if (serviceTokenHeader != _internalServiceToken)
-                    {
-                        _logger.LogWarning("Invalid X-Service-Token provided");
-                        return (null, null, null, null, false);
-                    }
-
-                    // Valid service token - create session
-                    var sessionId = Guid.NewGuid().ToString();
-                    _logger.LogInformation("Internal mode (service-token): Creating session {SessionId}", sessionId);
-                    return (sessionId, null, new List<string> { "internal" }, null, false);
-                }
+                // Network trust: Accept connection without authentication
+                var sessionId = Guid.NewGuid().ToString();
+                _logger.LogInformation("Internal mode (network-trust): Creating session {SessionId}", sessionId);
+                return (sessionId, null, new List<string> { "internal" }, null, false);
             }
 
-            // External/Relayed mode: Require JWT authentication
-            _logger.LogDebug("JWT validation starting, AuthorizationLength: {Length}, HasBearerPrefix: {IsBearer}",
-                authorization?.Length ?? 0, authorization?.StartsWith("Bearer ") ?? false);
-
-            if (string.IsNullOrEmpty(authorization))
+            if (_internalAuthMode == InternalAuthMode.ServiceToken)
             {
-                _logger.LogWarning("Authorization header missing or empty");
-                return (null, null, null, null, false);
-            }
-
-            // Handle "Bearer <token>" format
-            if (authorization.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
-            {
-                var token = authorization.Substring(7);
-
-                _logger.LogDebug("Validating JWT token, TokenLength: {TokenLength}", token.Length);
-
-                // Use auth service to validate token with header-based authorization
-                // Cast to concrete type to access fluent WithAuthorization method
-                var authClient = (AuthClient)_authClient;
-                var validationResponse = await authClient
-                    .WithAuthorization(token)
-                    .ValidateTokenAsync(cancellationToken);
-
-                if (validationResponse == null)
+                // Service token: Validate X-Service-Token header
+                if (string.IsNullOrEmpty(serviceTokenHeader))
                 {
-                    _logger.LogError("Auth service returned null validation response");
-                    await PublishErrorEventAsync("ValidateJWT", "null_response", "Auth service returned null validation response", dependency: "auth");
+                    _logger.LogWarning("Internal mode requires X-Service-Token header");
                     return (null, null, null, null, false);
                 }
 
-                _logger.LogDebug("Token validation result - Valid: {Valid}, SessionKey: {SessionKey}, AccountId: {AccountId}, RolesCount: {RolesCount}, AuthorizationsCount: {AuthorizationsCount}",
-                    validationResponse.Valid,
-                    validationResponse.SessionKey,
-                    validationResponse.AccountId,
-                    validationResponse.Roles?.Count ?? 0,
-                    validationResponse.Authorizations?.Count ?? 0);
-
-                // Defensive: guard against corrupt Redis data (SessionKey should always be populated on valid sessions)
-                if (validationResponse.Valid && validationResponse.SessionKey != Guid.Empty)
+                if (serviceTokenHeader != _internalServiceToken)
                 {
-                    _logger.LogDebug("JWT validated successfully, SessionKey: {SessionKey}", validationResponse.SessionKey);
-                    // Return session key, account ID, roles, and authorizations for capability initialization
-                    // This is a new connection (Bearer token), not a reconnection
-                    return (validationResponse.SessionKey.ToString(), validationResponse.AccountId, validationResponse.Roles, validationResponse.Authorizations, false);
-                }
-                else
-                {
-                    _logger.LogWarning("JWT validation failed, Valid: {Valid}, SessionKey: {SessionKey}",
-                        validationResponse.Valid, validationResponse.SessionKey);
-                }
-            }
-            // Handle "Reconnect <token>" format for session reconnection
-            else if (authorization.StartsWith("Reconnect ", StringComparison.OrdinalIgnoreCase))
-            {
-                var reconnectionToken = authorization.Substring("Reconnect ".Length).Trim();
-
-                if (string.IsNullOrEmpty(reconnectionToken))
-                {
-                    _logger.LogWarning("Empty reconnection token provided");
+                    _logger.LogWarning("Invalid X-Service-Token provided");
                     return (null, null, null, null, false);
                 }
 
-                // Use Redis session manager to validate reconnection token
-                var sessionId = await _sessionManager.ValidateReconnectionTokenAsync(reconnectionToken);
-
-                if (!string.IsNullOrEmpty(sessionId))
-                {
-                    // Restore the session from reconnection state
-                    var restoredState = await _sessionManager.RestoreSessionFromReconnectionAsync(sessionId, reconnectionToken);
-
-                    if (restoredState != null)
-                    {
-                        _logger.LogInformation("Session {SessionId} reconnected successfully", sessionId);
-                        // Return stored roles and authorizations from reconnection state
-                        // AccountId is now Guid? type, no parsing needed
-                        // Mark as reconnection so services can re-publish shortcuts
-                        return (sessionId, restoredState.AccountId, restoredState.UserRoles, restoredState.Authorizations, true);
-                    }
-                }
-
-                _logger.LogWarning("Invalid or expired reconnection token");
-                return (null, null, null, null, false);
+                // Valid service token - create session
+                var sessionId = Guid.NewGuid().ToString();
+                _logger.LogInformation("Internal mode (service-token): Creating session {SessionId}", sessionId);
+                return (sessionId, null, new List<string> { "internal" }, null, false);
             }
+        }
 
-            _logger.LogWarning("Authorization format not recognized (expected 'Bearer' or 'Reconnect' prefix)");
+        // External/Relayed mode: Require JWT authentication
+        _logger.LogDebug("JWT validation starting, AuthorizationLength: {Length}, HasBearerPrefix: {IsBearer}",
+            authorization?.Length ?? 0, authorization?.StartsWith("Bearer ") ?? false);
+
+        if (string.IsNullOrEmpty(authorization))
+        {
+            _logger.LogWarning("Authorization header missing or empty");
             return (null, null, null, null, false);
         }
+
+        // Handle "Bearer <token>" format
+        if (authorization.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+        {
+            var token = authorization.Substring(7);
+
+            _logger.LogDebug("Validating JWT token, TokenLength: {TokenLength}", token.Length);
+
+            // Use auth service to validate token with header-based authorization
+            // Cast to concrete type to access fluent WithAuthorization method
+            var authClient = (AuthClient)_authClient;
+            var validationResponse = await authClient
+                .WithAuthorization(token)
+                .ValidateTokenAsync(cancellationToken);
+
+            if (validationResponse == null)
+            {
+                _logger.LogError("Auth service returned null validation response");
+                await PublishErrorEventAsync("ValidateJWT", "null_response", "Auth service returned null validation response", dependency: "auth");
+                return (null, null, null, null, false);
+            }
+
+            _logger.LogDebug("Token validation result - Valid: {Valid}, SessionKey: {SessionKey}, AccountId: {AccountId}, RolesCount: {RolesCount}, AuthorizationsCount: {AuthorizationsCount}",
+                validationResponse.Valid,
+                validationResponse.SessionKey,
+                validationResponse.AccountId,
+                validationResponse.Roles?.Count ?? 0,
+                validationResponse.Authorizations?.Count ?? 0);
+
+            // Defensive: guard against corrupt Redis data (SessionKey should always be populated on valid sessions)
+            if (validationResponse.Valid && validationResponse.SessionKey != Guid.Empty)
+            {
+                _logger.LogDebug("JWT validated successfully, SessionKey: {SessionKey}", validationResponse.SessionKey);
+                // Return session key, account ID, roles, and authorizations for capability initialization
+                // This is a new connection (Bearer token), not a reconnection
+                return (validationResponse.SessionKey.ToString(), validationResponse.AccountId, validationResponse.Roles, validationResponse.Authorizations, false);
+            }
+            else
+            {
+                _logger.LogWarning("JWT validation failed, Valid: {Valid}, SessionKey: {SessionKey}",
+                    validationResponse.Valid, validationResponse.SessionKey);
+            }
+        }
+        // Handle "Reconnect <token>" format for session reconnection
+        else if (authorization.StartsWith("Reconnect ", StringComparison.OrdinalIgnoreCase))
+        {
+            var reconnectionToken = authorization.Substring("Reconnect ".Length).Trim();
+
+            if (string.IsNullOrEmpty(reconnectionToken))
+            {
+                _logger.LogWarning("Empty reconnection token provided");
+                return (null, null, null, null, false);
+            }
+
+            // Use Redis session manager to validate reconnection token
+            var sessionId = await _sessionManager.ValidateReconnectionTokenAsync(reconnectionToken);
+
+            if (!string.IsNullOrEmpty(sessionId))
+            {
+                // Restore the session from reconnection state
+                var restoredState = await _sessionManager.RestoreSessionFromReconnectionAsync(sessionId, reconnectionToken);
+
+                if (restoredState != null)
+                {
+                    _logger.LogInformation("Session {SessionId} reconnected successfully", sessionId);
+                    // Return stored roles and authorizations from reconnection state
+                    // AccountId is now Guid? type, no parsing needed
+                    // Mark as reconnection so services can re-publish shortcuts
+                    return (sessionId, restoredState.AccountId, restoredState.UserRoles, restoredState.Authorizations, true);
+                }
+            }
+
+            _logger.LogWarning("Invalid or expired reconnection token");
+            return (null, null, null, null, false);
+        }
+
+        _logger.LogWarning("Authorization format not recognized (expected 'Bearer' or 'Reconnect' prefix)");
+        return (null, null, null, null, false);
     }
 
     /// <summary>
@@ -2676,42 +2668,40 @@ public partial class ConnectService : IConnectService, IDisposable
     public async Task DisconnectSessionAsync(string sessionId, string reason, CancellationToken cancellationToken = default)
     {
         WebSocketConnection? connection = null;
+        connection = _connectionManager.GetConnection(sessionId);
+        if (connection == null)
         {
-            connection = _connectionManager.GetConnection(sessionId);
-            if (connection == null)
-            {
-                _logger.LogDebug("Session {SessionId} not found for disconnection (may already be disconnected)", sessionId);
-                // Still clean up Redis in case session exists there
-                await _sessionManager.RemoveSessionAsync(sessionId);
-                return;
-            }
-
-            // Mark as forced disconnect - no reconnection allowed
-            connection.Metadata["forced_disconnect"] = true;
-
-            if (connection.WebSocket.State == System.Net.WebSockets.WebSocketState.Open)
-            {
-                // Send close message with reason
-                await connection.WebSocket.CloseAsync(
-                    System.Net.WebSockets.WebSocketCloseStatus.NormalClosure,
-                    $"Session invalidated: {reason}",
-                    cancellationToken);
-
-                _logger.LogInformation("Force disconnected session {SessionId} due to: {Reason}", sessionId, reason);
-            }
-            else
-            {
-                _logger.LogDebug("Session {SessionId} WebSocket not in Open state ({State}), skipping close",
-                    sessionId, connection.WebSocket.State);
-            }
-
-            // Remove from connection manager - use instance-matching to ensure we only
-            // remove the connection we fetched, not a potential replacement
-            _connectionManager.RemoveConnectionIfMatch(sessionId, connection.WebSocket);
-
-            // Clean up Redis session data (forced disconnect = no reconnection)
+            _logger.LogDebug("Session {SessionId} not found for disconnection (may already be disconnected)", sessionId);
+            // Still clean up Redis in case session exists there
             await _sessionManager.RemoveSessionAsync(sessionId);
+            return;
         }
+
+        // Mark as forced disconnect - no reconnection allowed
+        connection.Metadata["forced_disconnect"] = true;
+
+        if (connection.WebSocket.State == System.Net.WebSockets.WebSocketState.Open)
+        {
+            // Send close message with reason
+            await connection.WebSocket.CloseAsync(
+                System.Net.WebSockets.WebSocketCloseStatus.NormalClosure,
+                $"Session invalidated: {reason}",
+                cancellationToken);
+
+            _logger.LogInformation("Force disconnected session {SessionId} due to: {Reason}", sessionId, reason);
+        }
+        else
+        {
+            _logger.LogDebug("Session {SessionId} WebSocket not in Open state ({State}), skipping close",
+                sessionId, connection.WebSocket.State);
+        }
+
+        // Remove from connection manager - use instance-matching to ensure we only
+        // remove the connection we fetched, not a potential replacement
+        _connectionManager.RemoveConnectionIfMatch(sessionId, connection.WebSocket);
+
+        // Clean up Redis session data (forced disconnect = no reconnection)
+        await _sessionManager.RemoveSessionAsync(sessionId);
     }
 
     #endregion

@@ -489,111 +489,109 @@ public partial class AccountService : IAccountService
         UpdateAccountRequest body,
         CancellationToken cancellationToken = default)
     {
+        var accountId = body.AccountId;
+        _logger.LogInformation("Updating account: {AccountId}", accountId);
+
+        // Get existing account with ETag for optimistic concurrency
+        var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
+        var accountKey = $"{ACCOUNT_KEY_PREFIX}{accountId}";
+        var (account, etag) = await accountStore.GetWithETagAsync(accountKey, cancellationToken);
+
+        if (account == null || account.DeletedAt.HasValue)
         {
-            var accountId = body.AccountId;
-            _logger.LogInformation("Updating account: {AccountId}", accountId);
-
-            // Get existing account with ETag for optimistic concurrency
-            var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
-            var accountKey = $"{ACCOUNT_KEY_PREFIX}{accountId}";
-            var (account, etag) = await accountStore.GetWithETagAsync(accountKey, cancellationToken);
-
-            if (account == null || account.DeletedAt.HasValue)
-            {
-                _logger.LogWarning("Account not found for update: {AccountId}", accountId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Track changes for event publishing
-            var changedFields = new List<string>();
-
-            // Update fields if provided
-            if (body.DisplayName != null && body.DisplayName != account.DisplayName)
-            {
-                changedFields.Add("displayName");
-                account.DisplayName = body.DisplayName;
-            }
-
-            // Handle roles update if provided
-            if (body.Roles != null)
-            {
-                var newRoles = body.Roles.ToList();
-
-                // Apply anonymous role auto-management if configured (per IMPLEMENTATION TENETS)
-                if (_configuration.AutoManageAnonymousRole)
-                {
-                    if (newRoles.Any(r => r != "anonymous"))
-                    {
-                        newRoles.Remove("anonymous");
-                    }
-
-                    if (newRoles.Count == 0)
-                    {
-                        newRoles.Add("anonymous");
-                        _logger.LogDebug("Auto-added 'anonymous' role to account {AccountId} to prevent zero roles", body.AccountId);
-                    }
-                }
-
-                if (!new HashSet<string>(account.Roles).SetEquals(newRoles))
-                {
-                    changedFields.Add("roles");
-                    account.Roles = newRoles;
-                }
-            }
-
-            // Handle metadata update if provided
-            if (body.Metadata != null)
-            {
-                var newMetadata = ConvertToMetadataDictionary(body.Metadata);
-                if (newMetadata != null)
-                {
-                    var currentMetadata = account.Metadata ?? new Dictionary<string, object>();
-                    if (!MetadataEquals(currentMetadata, newMetadata))
-                    {
-                        changedFields.Add("metadata");
-                        account.Metadata = newMetadata;
-                    }
-                }
-            }
-
-            account.UpdatedAt = DateTimeOffset.UtcNow;
-
-            // Save updated account with optimistic concurrency check
-            var newEtag = await accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken);
-            if (newEtag == null)
-            {
-                _logger.LogWarning("Concurrent modification detected for account {AccountId}", accountId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            _logger.LogInformation("Account updated: {AccountId}", accountId);
-
-            // Publish account updated event if there were changes
-            if (changedFields.Count > 0)
-            {
-                await PublishAccountUpdatedEventAsync(account, changedFields, cancellationToken);
-            }
-
-            // Get auth methods for the account
-            var authMethods = await GetAuthMethodsForAccountAsync(accountId.ToString(), cancellationToken);
-
-            var response = new AccountResponse
-            {
-                AccountId = account.AccountId,
-                Email = account.Email,
-                DisplayName = account.DisplayName,
-                EmailVerified = account.IsVerified,
-                CreatedAt = account.CreatedAt,
-                UpdatedAt = account.UpdatedAt,
-                Roles = account.Roles, // Return stored roles
-                MfaEnabled = account.MfaEnabled,
-                MfaSecret = account.MfaSecret,
-                MfaRecoveryCodes = account.MfaRecoveryCodes,
-                AuthMethods = authMethods
-            };
-
-            return (StatusCodes.OK, response);
+            _logger.LogWarning("Account not found for update: {AccountId}", accountId);
+            return (StatusCodes.NotFound, null);
         }
+
+        // Track changes for event publishing
+        var changedFields = new List<string>();
+
+        // Update fields if provided
+        if (body.DisplayName != null && body.DisplayName != account.DisplayName)
+        {
+            changedFields.Add("displayName");
+            account.DisplayName = body.DisplayName;
+        }
+
+        // Handle roles update if provided
+        if (body.Roles != null)
+        {
+            var newRoles = body.Roles.ToList();
+
+            // Apply anonymous role auto-management if configured (per IMPLEMENTATION TENETS)
+            if (_configuration.AutoManageAnonymousRole)
+            {
+                if (newRoles.Any(r => r != "anonymous"))
+                {
+                    newRoles.Remove("anonymous");
+                }
+
+                if (newRoles.Count == 0)
+                {
+                    newRoles.Add("anonymous");
+                    _logger.LogDebug("Auto-added 'anonymous' role to account {AccountId} to prevent zero roles", body.AccountId);
+                }
+            }
+
+            if (!new HashSet<string>(account.Roles).SetEquals(newRoles))
+            {
+                changedFields.Add("roles");
+                account.Roles = newRoles;
+            }
+        }
+
+        // Handle metadata update if provided
+        if (body.Metadata != null)
+        {
+            var newMetadata = ConvertToMetadataDictionary(body.Metadata);
+            if (newMetadata != null)
+            {
+                var currentMetadata = account.Metadata ?? new Dictionary<string, object>();
+                if (!MetadataEquals(currentMetadata, newMetadata))
+                {
+                    changedFields.Add("metadata");
+                    account.Metadata = newMetadata;
+                }
+            }
+        }
+
+        account.UpdatedAt = DateTimeOffset.UtcNow;
+
+        // Save updated account with optimistic concurrency check
+        var newEtag = await accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken);
+        if (newEtag == null)
+        {
+            _logger.LogWarning("Concurrent modification detected for account {AccountId}", accountId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        _logger.LogInformation("Account updated: {AccountId}", accountId);
+
+        // Publish account updated event if there were changes
+        if (changedFields.Count > 0)
+        {
+            await PublishAccountUpdatedEventAsync(account, changedFields, cancellationToken);
+        }
+
+        // Get auth methods for the account
+        var authMethods = await GetAuthMethodsForAccountAsync(accountId.ToString(), cancellationToken);
+
+        var response = new AccountResponse
+        {
+            AccountId = account.AccountId,
+            Email = account.Email,
+            DisplayName = account.DisplayName,
+            EmailVerified = account.IsVerified,
+            CreatedAt = account.CreatedAt,
+            UpdatedAt = account.UpdatedAt,
+            Roles = account.Roles, // Return stored roles
+            MfaEnabled = account.MfaEnabled,
+            MfaSecret = account.MfaSecret,
+            MfaRecoveryCodes = account.MfaRecoveryCodes,
+            AuthMethods = authMethods
+        };
+
+        return (StatusCodes.OK, response);
     }
 
     /// <inheritdoc/>
@@ -601,62 +599,60 @@ public partial class AccountService : IAccountService
         GetAccountByEmailRequest body,
         CancellationToken cancellationToken = default)
     {
+        var email = body.Email;
+        _logger.LogInformation("Retrieving account by email: {Email}", email);
+
+        // Get the account ID from email index
+        var emailIndexStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Account);
+        var accountId = await emailIndexStore.GetAsync(
+            $"{EMAIL_INDEX_KEY_PREFIX}{email.ToLowerInvariant()}",
+            cancellationToken);
+
+        if (string.IsNullOrEmpty(accountId))
         {
-            var email = body.Email;
-            _logger.LogInformation("Retrieving account by email: {Email}", email);
-
-            // Get the account ID from email index
-            var emailIndexStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Account);
-            var accountId = await emailIndexStore.GetAsync(
-                $"{EMAIL_INDEX_KEY_PREFIX}{email.ToLowerInvariant()}",
-                cancellationToken);
-
-            if (string.IsNullOrEmpty(accountId))
-            {
-                _logger.LogWarning("No account found for email: {Email}", email);
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Get the full account data
-            var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
-            var account = await accountStore.GetAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", cancellationToken);
-
-            if (account == null)
-            {
-                _logger.LogWarning("Account data not found for ID: {AccountId} (from email: {Email})", accountId, email);
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Check if account is soft-deleted
-            if (account.DeletedAt.HasValue)
-            {
-                _logger.LogWarning("Account is deleted for email: {Email}, AccountId: {AccountId}", email, accountId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Get auth methods for the account
-            var authMethods = await GetAuthMethodsForAccountAsync(accountId, cancellationToken);
-
-            // Convert to response model
-            var response = new AccountResponse
-            {
-                AccountId = account.AccountId,
-                Email = account.Email,
-                DisplayName = account.DisplayName,
-                PasswordHash = account.PasswordHash, // Include password hash for auth service validation
-                EmailVerified = account.IsVerified,
-                CreatedAt = account.CreatedAt,
-                UpdatedAt = account.UpdatedAt,
-                Roles = account.Roles, // Return stored roles
-                MfaEnabled = account.MfaEnabled,
-                MfaSecret = account.MfaSecret,
-                MfaRecoveryCodes = account.MfaRecoveryCodes,
-                AuthMethods = authMethods
-            };
-
-            _logger.LogInformation("Account retrieved for email: {Email}, AccountId: {AccountId}", email, accountId);
-            return (StatusCodes.OK, response);
+            _logger.LogWarning("No account found for email: {Email}", email);
+            return (StatusCodes.NotFound, null);
         }
+
+        // Get the full account data
+        var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
+        var account = await accountStore.GetAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", cancellationToken);
+
+        if (account == null)
+        {
+            _logger.LogWarning("Account data not found for ID: {AccountId} (from email: {Email})", accountId, email);
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Check if account is soft-deleted
+        if (account.DeletedAt.HasValue)
+        {
+            _logger.LogWarning("Account is deleted for email: {Email}, AccountId: {AccountId}", email, accountId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Get auth methods for the account
+        var authMethods = await GetAuthMethodsForAccountAsync(accountId, cancellationToken);
+
+        // Convert to response model
+        var response = new AccountResponse
+        {
+            AccountId = account.AccountId,
+            Email = account.Email,
+            DisplayName = account.DisplayName,
+            PasswordHash = account.PasswordHash, // Include password hash for auth service validation
+            EmailVerified = account.IsVerified,
+            CreatedAt = account.CreatedAt,
+            UpdatedAt = account.UpdatedAt,
+            Roles = account.Roles, // Return stored roles
+            MfaEnabled = account.MfaEnabled,
+            MfaSecret = account.MfaSecret,
+            MfaRecoveryCodes = account.MfaRecoveryCodes,
+            AuthMethods = authMethods
+        };
+
+        _logger.LogInformation("Account retrieved for email: {Email}, AccountId: {AccountId}", email, accountId);
+        return (StatusCodes.OK, response);
     }
 
     /// <inheritdoc/>
@@ -664,29 +660,27 @@ public partial class AccountService : IAccountService
         GetAuthMethodsRequest body,
         CancellationToken cancellationToken = default)
     {
+        var accountId = body.AccountId;
+        _logger.LogInformation("Getting auth methods for account: {AccountId}", accountId);
+
+        // Verify account exists
+        var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
+        var account = await accountStore.GetAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", cancellationToken);
+
+        if (account == null || account.DeletedAt.HasValue)
         {
-            var accountId = body.AccountId;
-            _logger.LogInformation("Getting auth methods for account: {AccountId}", accountId);
-
-            // Verify account exists
-            var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
-            var account = await accountStore.GetAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", cancellationToken);
-
-            if (account == null || account.DeletedAt.HasValue)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Get auth methods for the account
-            var authMethods = await GetAuthMethodsForAccountAsync(accountId.ToString(), cancellationToken);
-
-            var response = new AuthMethodsResponse
-            {
-                AuthMethods = authMethods
-            };
-
-            return (StatusCodes.OK, response);
+            return (StatusCodes.NotFound, null);
         }
+
+        // Get auth methods for the account
+        var authMethods = await GetAuthMethodsForAccountAsync(accountId.ToString(), cancellationToken);
+
+        var response = new AuthMethodsResponse
+        {
+            AuthMethods = authMethods
+        };
+
+        return (StatusCodes.OK, response);
     }
 
     /// <inheritdoc/>
@@ -694,103 +688,101 @@ public partial class AccountService : IAccountService
         AddAuthMethodRequest body,
         CancellationToken cancellationToken = default)
     {
+        var accountId = body.AccountId;
+        _logger.LogInformation("Adding auth method for account: {AccountId}, provider: {Provider}", accountId, body.Provider);
+
+        // Verify account exists
+        var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
+        var account = await accountStore.GetAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", cancellationToken);
+
+        if (account == null || account.DeletedAt.HasValue)
         {
-            var accountId = body.AccountId;
-            _logger.LogInformation("Adding auth method for account: {AccountId}, provider: {Provider}", accountId, body.Provider);
-
-            // Verify account exists
-            var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
-            var account = await accountStore.GetAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", cancellationToken);
-
-            if (account == null || account.DeletedAt.HasValue)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Get existing auth methods with ETag for optimistic concurrency
-            var authMethodsKey = $"{AUTH_METHODS_KEY_PREFIX}{accountId}";
-            var authMethodsStore = _stateStoreFactory.GetStore<List<AuthMethodInfo>>(StateStoreDefinitions.Account);
-            var (authMethods, authMethodsEtag) = await authMethodsStore.GetWithETagAsync(authMethodsKey, cancellationToken);
-            authMethods ??= new List<AuthMethodInfo>();
-
-            // Validate ExternalId - required for OAuth linking and provider index
-            if (string.IsNullOrEmpty(body.ExternalId))
-            {
-                _logger.LogWarning("OAuth link attempt with empty ExternalId for account {AccountId}, provider {Provider}",
-                    accountId, body.Provider);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Check if this provider is already linked on this account
-            var mappedProvider = MapOAuthProviderToAuthProvider(body.Provider);
-            var existingMethod = authMethods.FirstOrDefault(m =>
-                m.Provider == mappedProvider && m.ExternalId == body.ExternalId);
-
-            if (existingMethod != null)
-            {
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Check if another account already owns this provider:externalId combination
-            var providerIndexKey = $"{PROVIDER_INDEX_KEY_PREFIX}{body.Provider}:{body.ExternalId}";
-            var providerIndexStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Account);
-            var existingOwner = await providerIndexStore.GetAsync(providerIndexKey, cancellationToken);
-            if (!string.IsNullOrEmpty(existingOwner) && existingOwner != accountId.ToString())
-            {
-                // Check if the owning account is still active (not soft-deleted)
-                var ownerAccount = await accountStore.GetAsync(
-                    $"{ACCOUNT_KEY_PREFIX}{existingOwner}", cancellationToken);
-                if (ownerAccount != null && !ownerAccount.DeletedAt.HasValue)
-                {
-                    _logger.LogWarning("Provider {Provider}:{ExternalId} already linked to active account {ExistingOwner}",
-                        body.Provider, body.ExternalId, existingOwner);
-                    return (StatusCodes.Conflict, null);
-                }
-                // Owner deleted — orphaned index, safe to overwrite
-                _logger.LogInformation("Overwriting orphaned provider index {Provider}:{ExternalId} (former owner {ExistingOwner} is deleted)",
-                    body.Provider, body.ExternalId, existingOwner);
-            }
-
-            // Create new auth method
-            var methodId = Guid.NewGuid();
-            var linkedAt = DateTimeOffset.UtcNow;
-            var newMethod = new AuthMethodInfo
-            {
-                MethodId = methodId,
-                Provider = MapOAuthProviderToAuthProvider(body.Provider),
-                ExternalId = body.ExternalId,
-                LinkedAt = linkedAt
-            };
-
-            authMethods.Add(newMethod);
-
-            // Save updated auth methods with optimistic concurrency
-            var savedEtag = await authMethodsStore.TrySaveAsync(authMethodsKey, authMethods, authMethodsEtag ?? string.Empty, cancellationToken);
-            if (savedEtag == null)
-            {
-                _logger.LogWarning("Concurrent modification of auth methods for account {AccountId}", accountId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Create/update provider index for lookup
-            await providerIndexStore.SaveAsync(providerIndexKey, accountId.ToString());
-
-            _logger.LogInformation("Auth method added for account: {AccountId}, methodId: {MethodId}, provider: {Provider}",
-                accountId, methodId, body.Provider);
-
-            // Publish account updated event
-            await PublishAccountUpdatedEventAsync(account, new[] { "authMethods" }, cancellationToken);
-
-            var response = new AuthMethodResponse
-            {
-                MethodId = methodId,
-                Provider = body.Provider,
-                ExternalId = body.ExternalId, // Already validated non-empty above
-                LinkedAt = linkedAt
-            };
-
-            return (StatusCodes.OK, response);
+            return (StatusCodes.NotFound, null);
         }
+
+        // Get existing auth methods with ETag for optimistic concurrency
+        var authMethodsKey = $"{AUTH_METHODS_KEY_PREFIX}{accountId}";
+        var authMethodsStore = _stateStoreFactory.GetStore<List<AuthMethodInfo>>(StateStoreDefinitions.Account);
+        var (authMethods, authMethodsEtag) = await authMethodsStore.GetWithETagAsync(authMethodsKey, cancellationToken);
+        authMethods ??= new List<AuthMethodInfo>();
+
+        // Validate ExternalId - required for OAuth linking and provider index
+        if (string.IsNullOrEmpty(body.ExternalId))
+        {
+            _logger.LogWarning("OAuth link attempt with empty ExternalId for account {AccountId}, provider {Provider}",
+                accountId, body.Provider);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Check if this provider is already linked on this account
+        var mappedProvider = MapOAuthProviderToAuthProvider(body.Provider);
+        var existingMethod = authMethods.FirstOrDefault(m =>
+            m.Provider == mappedProvider && m.ExternalId == body.ExternalId);
+
+        if (existingMethod != null)
+        {
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Check if another account already owns this provider:externalId combination
+        var providerIndexKey = $"{PROVIDER_INDEX_KEY_PREFIX}{body.Provider}:{body.ExternalId}";
+        var providerIndexStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Account);
+        var existingOwner = await providerIndexStore.GetAsync(providerIndexKey, cancellationToken);
+        if (!string.IsNullOrEmpty(existingOwner) && existingOwner != accountId.ToString())
+        {
+            // Check if the owning account is still active (not soft-deleted)
+            var ownerAccount = await accountStore.GetAsync(
+                $"{ACCOUNT_KEY_PREFIX}{existingOwner}", cancellationToken);
+            if (ownerAccount != null && !ownerAccount.DeletedAt.HasValue)
+            {
+                _logger.LogWarning("Provider {Provider}:{ExternalId} already linked to active account {ExistingOwner}",
+                    body.Provider, body.ExternalId, existingOwner);
+                return (StatusCodes.Conflict, null);
+            }
+            // Owner deleted — orphaned index, safe to overwrite
+            _logger.LogInformation("Overwriting orphaned provider index {Provider}:{ExternalId} (former owner {ExistingOwner} is deleted)",
+                body.Provider, body.ExternalId, existingOwner);
+        }
+
+        // Create new auth method
+        var methodId = Guid.NewGuid();
+        var linkedAt = DateTimeOffset.UtcNow;
+        var newMethod = new AuthMethodInfo
+        {
+            MethodId = methodId,
+            Provider = MapOAuthProviderToAuthProvider(body.Provider),
+            ExternalId = body.ExternalId,
+            LinkedAt = linkedAt
+        };
+
+        authMethods.Add(newMethod);
+
+        // Save updated auth methods with optimistic concurrency
+        var savedEtag = await authMethodsStore.TrySaveAsync(authMethodsKey, authMethods, authMethodsEtag ?? string.Empty, cancellationToken);
+        if (savedEtag == null)
+        {
+            _logger.LogWarning("Concurrent modification of auth methods for account {AccountId}", accountId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Create/update provider index for lookup
+        await providerIndexStore.SaveAsync(providerIndexKey, accountId.ToString());
+
+        _logger.LogInformation("Auth method added for account: {AccountId}, methodId: {MethodId}, provider: {Provider}",
+            accountId, methodId, body.Provider);
+
+        // Publish account updated event
+        await PublishAccountUpdatedEventAsync(account, new[] { "authMethods" }, cancellationToken);
+
+        var response = new AuthMethodResponse
+        {
+            MethodId = methodId,
+            Provider = body.Provider,
+            ExternalId = body.ExternalId, // Already validated non-empty above
+            LinkedAt = linkedAt
+        };
+
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -813,62 +805,60 @@ public partial class AccountService : IAccountService
         GetAccountByProviderRequest body,
         CancellationToken cancellationToken = default)
     {
+        var provider = body.Provider;
+        var externalId = body.ExternalId;
+        _logger.LogInformation("Getting account by provider: {Provider}, externalId: {ExternalId}", provider, externalId);
+
+        // Build the provider index key
+        var providerIndexKey = $"{PROVIDER_INDEX_KEY_PREFIX}{provider}:{externalId}";
+
+        // Get the account ID from provider index
+        var providerIndexStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Account);
+        var accountId = await providerIndexStore.GetAsync(providerIndexKey, cancellationToken);
+
+        if (string.IsNullOrEmpty(accountId))
         {
-            var provider = body.Provider;
-            var externalId = body.ExternalId;
-            _logger.LogInformation("Getting account by provider: {Provider}, externalId: {ExternalId}", provider, externalId);
-
-            // Build the provider index key
-            var providerIndexKey = $"{PROVIDER_INDEX_KEY_PREFIX}{provider}:{externalId}";
-
-            // Get the account ID from provider index
-            var providerIndexStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Account);
-            var accountId = await providerIndexStore.GetAsync(providerIndexKey, cancellationToken);
-
-            if (string.IsNullOrEmpty(accountId))
-            {
-                _logger.LogWarning("No account found for provider: {Provider}, externalId: {ExternalId}", provider, externalId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Get the full account data
-            var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
-            var account = await accountStore.GetAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", cancellationToken);
-
-            if (account == null)
-            {
-                _logger.LogWarning("Account data not found for ID: {AccountId} (from provider: {Provider})", accountId, provider);
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Check if account is soft-deleted
-            if (account.DeletedAt.HasValue)
-            {
-                _logger.LogWarning("Account is deleted for provider: {Provider}, externalId: {ExternalId}", provider, externalId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Get auth methods for the account
-            var authMethods = await GetAuthMethodsForAccountAsync(accountId, cancellationToken);
-
-            var response = new AccountResponse
-            {
-                AccountId = account.AccountId,
-                Email = account.Email,
-                DisplayName = account.DisplayName,
-                EmailVerified = account.IsVerified,
-                CreatedAt = account.CreatedAt,
-                UpdatedAt = account.UpdatedAt,
-                Roles = account.Roles,
-                MfaEnabled = account.MfaEnabled,
-                MfaSecret = account.MfaSecret,
-                MfaRecoveryCodes = account.MfaRecoveryCodes,
-                AuthMethods = authMethods
-            };
-
-            _logger.LogInformation("Account retrieved for provider: {Provider}, externalId: {ExternalId}", provider, externalId);
-            return (StatusCodes.OK, response);
+            _logger.LogWarning("No account found for provider: {Provider}, externalId: {ExternalId}", provider, externalId);
+            return (StatusCodes.NotFound, null);
         }
+
+        // Get the full account data
+        var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
+        var account = await accountStore.GetAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", cancellationToken);
+
+        if (account == null)
+        {
+            _logger.LogWarning("Account data not found for ID: {AccountId} (from provider: {Provider})", accountId, provider);
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Check if account is soft-deleted
+        if (account.DeletedAt.HasValue)
+        {
+            _logger.LogWarning("Account is deleted for provider: {Provider}, externalId: {ExternalId}", provider, externalId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Get auth methods for the account
+        var authMethods = await GetAuthMethodsForAccountAsync(accountId, cancellationToken);
+
+        var response = new AccountResponse
+        {
+            AccountId = account.AccountId,
+            Email = account.Email,
+            DisplayName = account.DisplayName,
+            EmailVerified = account.IsVerified,
+            CreatedAt = account.CreatedAt,
+            UpdatedAt = account.UpdatedAt,
+            Roles = account.Roles,
+            MfaEnabled = account.MfaEnabled,
+            MfaSecret = account.MfaSecret,
+            MfaRecoveryCodes = account.MfaRecoveryCodes,
+            AuthMethods = authMethods
+        };
+
+        _logger.LogInformation("Account retrieved for provider: {Provider}, externalId: {ExternalId}", provider, externalId);
+        return (StatusCodes.OK, response);
     }
 
     /// <summary>
@@ -897,84 +887,51 @@ public partial class AccountService : IAccountService
         UpdateProfileRequest body,
         CancellationToken cancellationToken = default)
     {
+        var accountId = body.AccountId;
+        _logger.LogInformation("Updating profile for account: {AccountId}", accountId);
+
+        // Get existing account with ETag for optimistic concurrency
+        var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
+        var accountKey = $"{ACCOUNT_KEY_PREFIX}{accountId}";
+        var (account, etag) = await accountStore.GetWithETagAsync(accountKey, cancellationToken);
+
+        if (account == null || account.DeletedAt.HasValue)
         {
-            var accountId = body.AccountId;
-            _logger.LogInformation("Updating profile for account: {AccountId}", accountId);
+            _logger.LogWarning("Account not found for profile update: {AccountId}", accountId);
+            return (StatusCodes.NotFound, null);
+        }
 
-            // Get existing account with ETag for optimistic concurrency
-            var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
-            var accountKey = $"{ACCOUNT_KEY_PREFIX}{accountId}";
-            var (account, etag) = await accountStore.GetWithETagAsync(accountKey, cancellationToken);
+        // Track changed fields for event publication
+        var changedFields = new List<string>();
 
-            if (account == null || account.DeletedAt.HasValue)
+        // Update profile fields
+        if (body.DisplayName != null && body.DisplayName != account.DisplayName)
+        {
+            account.DisplayName = body.DisplayName;
+            changedFields.Add("display_name");
+        }
+
+        // Handle metadata update if provided
+        if (body.Metadata != null)
+        {
+            var newMetadata = ConvertToMetadataDictionary(body.Metadata);
+            if (newMetadata != null)
             {
-                _logger.LogWarning("Account not found for profile update: {AccountId}", accountId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Track changed fields for event publication
-            var changedFields = new List<string>();
-
-            // Update profile fields
-            if (body.DisplayName != null && body.DisplayName != account.DisplayName)
-            {
-                account.DisplayName = body.DisplayName;
-                changedFields.Add("display_name");
-            }
-
-            // Handle metadata update if provided
-            if (body.Metadata != null)
-            {
-                var newMetadata = ConvertToMetadataDictionary(body.Metadata);
-                if (newMetadata != null)
+                // If existing metadata is null or differs from new metadata, update
+                var hasChanged = account.Metadata == null || !MetadataEquals(account.Metadata, newMetadata);
+                if (hasChanged)
                 {
-                    // If existing metadata is null or differs from new metadata, update
-                    var hasChanged = account.Metadata == null || !MetadataEquals(account.Metadata, newMetadata);
-                    if (hasChanged)
-                    {
-                        account.Metadata = newMetadata;
-                        changedFields.Add("metadata");
-                    }
+                    account.Metadata = newMetadata;
+                    changedFields.Add("metadata");
                 }
             }
+        }
 
-            // If nothing changed, return early without saving or publishing
-            if (changedFields.Count == 0)
-            {
-                var authMethodsNoChange = await GetAuthMethodsForAccountAsync(accountId.ToString(), cancellationToken);
-                return (StatusCodes.OK, new AccountResponse
-                {
-                    AccountId = account.AccountId,
-                    Email = account.Email,
-                    DisplayName = account.DisplayName,
-                    EmailVerified = account.IsVerified,
-                    CreatedAt = account.CreatedAt,
-                    UpdatedAt = account.UpdatedAt,
-                    Roles = account.Roles,
-                    MfaEnabled = account.MfaEnabled,
-                    MfaSecret = account.MfaSecret,
-                    MfaRecoveryCodes = account.MfaRecoveryCodes,
-                    AuthMethods = authMethodsNoChange
-                });
-            }
-
-            account.UpdatedAt = DateTimeOffset.UtcNow;
-
-            // Save with optimistic concurrency check
-            var newEtag = await accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken);
-            if (newEtag == null)
-            {
-                _logger.LogWarning("Concurrent modification detected for account profile {AccountId}", accountId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Publish account updated event (T5: Event-Driven Architecture)
-            await PublishAccountUpdatedEventAsync(account, changedFields, cancellationToken);
-
-            // Get auth methods for the account
-            var authMethods = await GetAuthMethodsForAccountAsync(accountId.ToString(), cancellationToken);
-
-            var response = new AccountResponse
+        // If nothing changed, return early without saving or publishing
+        if (changedFields.Count == 0)
+        {
+            var authMethodsNoChange = await GetAuthMethodsForAccountAsync(accountId.ToString(), cancellationToken);
+            return (StatusCodes.OK, new AccountResponse
             {
                 AccountId = account.AccountId,
                 Email = account.Email,
@@ -982,15 +939,46 @@ public partial class AccountService : IAccountService
                 EmailVerified = account.IsVerified,
                 CreatedAt = account.CreatedAt,
                 UpdatedAt = account.UpdatedAt,
-                Roles = account.Roles, // Return stored roles
+                Roles = account.Roles,
                 MfaEnabled = account.MfaEnabled,
                 MfaSecret = account.MfaSecret,
                 MfaRecoveryCodes = account.MfaRecoveryCodes,
-                AuthMethods = authMethods
-            };
-
-            return (StatusCodes.OK, response);
+                AuthMethods = authMethodsNoChange
+            });
         }
+
+        account.UpdatedAt = DateTimeOffset.UtcNow;
+
+        // Save with optimistic concurrency check
+        var newEtag = await accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken);
+        if (newEtag == null)
+        {
+            _logger.LogWarning("Concurrent modification detected for account profile {AccountId}", accountId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Publish account updated event (T5: Event-Driven Architecture)
+        await PublishAccountUpdatedEventAsync(account, changedFields, cancellationToken);
+
+        // Get auth methods for the account
+        var authMethods = await GetAuthMethodsForAccountAsync(accountId.ToString(), cancellationToken);
+
+        var response = new AccountResponse
+        {
+            AccountId = account.AccountId,
+            Email = account.Email,
+            DisplayName = account.DisplayName,
+            EmailVerified = account.IsVerified,
+            CreatedAt = account.CreatedAt,
+            UpdatedAt = account.UpdatedAt,
+            Roles = account.Roles, // Return stored roles
+            MfaEnabled = account.MfaEnabled,
+            MfaSecret = account.MfaSecret,
+            MfaRecoveryCodes = account.MfaRecoveryCodes,
+            AuthMethods = authMethods
+        };
+
+        return (StatusCodes.OK, response);
     }
 
     /// <inheritdoc/>
@@ -998,61 +986,59 @@ public partial class AccountService : IAccountService
         DeleteAccountRequest body,
         CancellationToken cancellationToken = default)
     {
+        var accountId = body.AccountId;
+        _logger.LogInformation("Deleting account: {AccountId}", accountId);
+
+        // Get existing account with ETag for optimistic concurrency
+        var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
+        var accountKey = $"{ACCOUNT_KEY_PREFIX}{accountId}";
+        var (account, etag) = await accountStore.GetWithETagAsync(accountKey, cancellationToken);
+
+        if (account == null)
         {
-            var accountId = body.AccountId;
-            _logger.LogInformation("Deleting account: {AccountId}", accountId);
-
-            // Get existing account with ETag for optimistic concurrency
-            var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
-            var accountKey = $"{ACCOUNT_KEY_PREFIX}{accountId}";
-            var (account, etag) = await accountStore.GetWithETagAsync(accountKey, cancellationToken);
-
-            if (account == null)
-            {
-                _logger.LogWarning("Account not found for deletion: {AccountId}", accountId);
-                return StatusCodes.NotFound;
-            }
-
-            // Soft delete by setting DeletedAt timestamp
-            account.DeletedAt = DateTimeOffset.UtcNow;
-
-            // Save the soft-deleted account with optimistic concurrency check
-            var newEtag = await accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken);
-            if (newEtag == null)
-            {
-                _logger.LogWarning("Concurrent modification detected for account deletion {AccountId}", accountId);
-                return StatusCodes.Conflict;
-            }
-
-            // Remove email index (only if account has email)
-            if (!string.IsNullOrEmpty(account.Email))
-            {
-                var emailIndexStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Account);
-                await emailIndexStore.DeleteAsync($"{EMAIL_INDEX_KEY_PREFIX}{account.Email.ToLowerInvariant()}", cancellationToken);
-            }
-
-            // Remove provider index entries to prevent orphaned lookups
-            var authMethodsKey = $"{AUTH_METHODS_KEY_PREFIX}{accountId}";
-            var authMethodsStore = _stateStoreFactory.GetStore<List<AuthMethodInfo>>(StateStoreDefinitions.Account);
-            var authMethods = await authMethodsStore.GetAsync(authMethodsKey, cancellationToken);
-            if (authMethods != null)
-            {
-                var providerIndexStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Account);
-                foreach (var method in authMethods)
-                {
-                    var providerIndexKey = $"{PROVIDER_INDEX_KEY_PREFIX}{method.Provider}:{method.ExternalId}";
-                    await providerIndexStore.DeleteAsync(providerIndexKey, cancellationToken);
-                }
-                await authMethodsStore.DeleteAsync(authMethodsKey, cancellationToken);
-            }
-
-            _logger.LogInformation("Account deleted: {AccountId}", accountId);
-
-            // Publish account deleted event
-            await PublishAccountDeletedEventAsync(account, "User requested deletion", cancellationToken);
-
-            return StatusCodes.OK;
+            _logger.LogWarning("Account not found for deletion: {AccountId}", accountId);
+            return StatusCodes.NotFound;
         }
+
+        // Soft delete by setting DeletedAt timestamp
+        account.DeletedAt = DateTimeOffset.UtcNow;
+
+        // Save the soft-deleted account with optimistic concurrency check
+        var newEtag = await accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken);
+        if (newEtag == null)
+        {
+            _logger.LogWarning("Concurrent modification detected for account deletion {AccountId}", accountId);
+            return StatusCodes.Conflict;
+        }
+
+        // Remove email index (only if account has email)
+        if (!string.IsNullOrEmpty(account.Email))
+        {
+            var emailIndexStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Account);
+            await emailIndexStore.DeleteAsync($"{EMAIL_INDEX_KEY_PREFIX}{account.Email.ToLowerInvariant()}", cancellationToken);
+        }
+
+        // Remove provider index entries to prevent orphaned lookups
+        var authMethodsKey = $"{AUTH_METHODS_KEY_PREFIX}{accountId}";
+        var authMethodsStore = _stateStoreFactory.GetStore<List<AuthMethodInfo>>(StateStoreDefinitions.Account);
+        var authMethods = await authMethodsStore.GetAsync(authMethodsKey, cancellationToken);
+        if (authMethods != null)
+        {
+            var providerIndexStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Account);
+            foreach (var method in authMethods)
+            {
+                var providerIndexKey = $"{PROVIDER_INDEX_KEY_PREFIX}{method.Provider}:{method.ExternalId}";
+                await providerIndexStore.DeleteAsync(providerIndexKey, cancellationToken);
+            }
+            await authMethodsStore.DeleteAsync(authMethodsKey, cancellationToken);
+        }
+
+        _logger.LogInformation("Account deleted: {AccountId}", accountId);
+
+        // Publish account deleted event
+        await PublishAccountDeletedEventAsync(account, "User requested deletion", cancellationToken);
+
+        return StatusCodes.OK;
     }
 
     /// <inheritdoc/>
@@ -1060,69 +1046,67 @@ public partial class AccountService : IAccountService
         RemoveAuthMethodRequest body,
         CancellationToken cancellationToken = default)
     {
+        var accountId = body.AccountId;
+        var methodId = body.MethodId;
+        _logger.LogInformation("Removing auth method {MethodId} for account: {AccountId}", methodId, accountId);
+
+        // Verify account exists
+        var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
+        var account = await accountStore.GetAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", cancellationToken);
+
+        if (account == null || account.DeletedAt.HasValue)
         {
-            var accountId = body.AccountId;
-            var methodId = body.MethodId;
-            _logger.LogInformation("Removing auth method {MethodId} for account: {AccountId}", methodId, accountId);
-
-            // Verify account exists
-            var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
-            var account = await accountStore.GetAsync($"{ACCOUNT_KEY_PREFIX}{accountId}", cancellationToken);
-
-            if (account == null || account.DeletedAt.HasValue)
-            {
-                return StatusCodes.NotFound;
-            }
-
-            // Get existing auth methods with ETag for optimistic concurrency
-            var authMethodsKey = $"{AUTH_METHODS_KEY_PREFIX}{accountId}";
-            var authMethodsStore = _stateStoreFactory.GetStore<List<AuthMethodInfo>>(StateStoreDefinitions.Account);
-            var (authMethods, authEtag) = await authMethodsStore.GetWithETagAsync(authMethodsKey, cancellationToken);
-            authMethods ??= new List<AuthMethodInfo>();
-
-            // Find the auth method to remove
-            var methodToRemove = authMethods.FirstOrDefault(m => m.MethodId == methodId);
-            if (methodToRemove == null)
-            {
-                return StatusCodes.NotFound;
-            }
-
-            // Safety check: prevent orphaning the account (no way to authenticate)
-            // Account can authenticate if it has: (1) a password, OR (2) at least one OAuth method
-            var hasPassword = !string.IsNullOrEmpty(account.PasswordHash);
-            var remainingAuthMethods = authMethods.Count - 1;
-
-            if (!hasPassword && remainingAuthMethods == 0)
-            {
-                _logger.LogWarning(
-                    "Rejecting auth method removal for account {AccountId}: would orphan account (no password, last OAuth method)",
-                    accountId);
-                return StatusCodes.BadRequest;
-            }
-
-            // Remove the auth method
-            authMethods.Remove(methodToRemove);
-
-            // Save updated auth methods with optimistic concurrency check
-            var newAuthEtag = await authMethodsStore.TrySaveAsync(authMethodsKey, authMethods, authEtag ?? string.Empty, cancellationToken);
-            if (newAuthEtag == null)
-            {
-                _logger.LogWarning("Concurrent modification detected for auth methods on account {AccountId}", accountId);
-                return StatusCodes.Conflict;
-            }
-
-            // Remove provider index
-            var providerIndexKey = $"{PROVIDER_INDEX_KEY_PREFIX}{methodToRemove.Provider}:{methodToRemove.ExternalId}";
-            var providerIndexStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Account);
-            await providerIndexStore.DeleteAsync(providerIndexKey, cancellationToken);
-
-            _logger.LogInformation("Auth method removed for account: {AccountId}, methodId: {MethodId}",
-                accountId, methodId);
-
-            await PublishAccountUpdatedEventAsync(account, new[] { "authMethods" }, cancellationToken);
-
-            return StatusCodes.OK;
+            return StatusCodes.NotFound;
         }
+
+        // Get existing auth methods with ETag for optimistic concurrency
+        var authMethodsKey = $"{AUTH_METHODS_KEY_PREFIX}{accountId}";
+        var authMethodsStore = _stateStoreFactory.GetStore<List<AuthMethodInfo>>(StateStoreDefinitions.Account);
+        var (authMethods, authEtag) = await authMethodsStore.GetWithETagAsync(authMethodsKey, cancellationToken);
+        authMethods ??= new List<AuthMethodInfo>();
+
+        // Find the auth method to remove
+        var methodToRemove = authMethods.FirstOrDefault(m => m.MethodId == methodId);
+        if (methodToRemove == null)
+        {
+            return StatusCodes.NotFound;
+        }
+
+        // Safety check: prevent orphaning the account (no way to authenticate)
+        // Account can authenticate if it has: (1) a password, OR (2) at least one OAuth method
+        var hasPassword = !string.IsNullOrEmpty(account.PasswordHash);
+        var remainingAuthMethods = authMethods.Count - 1;
+
+        if (!hasPassword && remainingAuthMethods == 0)
+        {
+            _logger.LogWarning(
+                "Rejecting auth method removal for account {AccountId}: would orphan account (no password, last OAuth method)",
+                accountId);
+            return StatusCodes.BadRequest;
+        }
+
+        // Remove the auth method
+        authMethods.Remove(methodToRemove);
+
+        // Save updated auth methods with optimistic concurrency check
+        var newAuthEtag = await authMethodsStore.TrySaveAsync(authMethodsKey, authMethods, authEtag ?? string.Empty, cancellationToken);
+        if (newAuthEtag == null)
+        {
+            _logger.LogWarning("Concurrent modification detected for auth methods on account {AccountId}", accountId);
+            return StatusCodes.Conflict;
+        }
+
+        // Remove provider index
+        var providerIndexKey = $"{PROVIDER_INDEX_KEY_PREFIX}{methodToRemove.Provider}:{methodToRemove.ExternalId}";
+        var providerIndexStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Account);
+        await providerIndexStore.DeleteAsync(providerIndexKey, cancellationToken);
+
+        _logger.LogInformation("Auth method removed for account: {AccountId}, methodId: {MethodId}",
+            accountId, methodId);
+
+        await PublishAccountUpdatedEventAsync(account, new[] { "authMethods" }, cancellationToken);
+
+        return StatusCodes.OK;
     }
 
     /// <inheritdoc/>
@@ -1130,38 +1114,36 @@ public partial class AccountService : IAccountService
         UpdatePasswordRequest body,
         CancellationToken cancellationToken = default)
     {
+        var accountId = body.AccountId;
+        _logger.LogInformation("Updating password hash for account: {AccountId}", accountId);
+
+        // Get existing account with ETag for optimistic concurrency
+        var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
+        var accountKey = $"{ACCOUNT_KEY_PREFIX}{accountId}";
+        var (account, etag) = await accountStore.GetWithETagAsync(accountKey, cancellationToken);
+
+        if (account == null || account.DeletedAt.HasValue)
         {
-            var accountId = body.AccountId;
-            _logger.LogInformation("Updating password hash for account: {AccountId}", accountId);
-
-            // Get existing account with ETag for optimistic concurrency
-            var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
-            var accountKey = $"{ACCOUNT_KEY_PREFIX}{accountId}";
-            var (account, etag) = await accountStore.GetWithETagAsync(accountKey, cancellationToken);
-
-            if (account == null || account.DeletedAt.HasValue)
-            {
-                _logger.LogWarning("Account not found for password update: {AccountId}", accountId);
-                return StatusCodes.NotFound;
-            }
-
-            // Update password hash (should already be hashed by Auth service)
-            account.PasswordHash = body.PasswordHash;
-            account.UpdatedAt = DateTimeOffset.UtcNow;
-
-            // Save updated account with optimistic concurrency check
-            var newEtag = await accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken);
-            if (newEtag == null)
-            {
-                _logger.LogWarning("Concurrent modification detected for password update on account {AccountId}", accountId);
-                return StatusCodes.Conflict;
-            }
-
-            _logger.LogInformation("Password hash updated for account: {AccountId}", accountId);
-            await PublishAccountUpdatedEventAsync(account, new[] { "passwordHash" }, cancellationToken);
-
-            return StatusCodes.OK;
+            _logger.LogWarning("Account not found for password update: {AccountId}", accountId);
+            return StatusCodes.NotFound;
         }
+
+        // Update password hash (should already be hashed by Auth service)
+        account.PasswordHash = body.PasswordHash;
+        account.UpdatedAt = DateTimeOffset.UtcNow;
+
+        // Save updated account with optimistic concurrency check
+        var newEtag = await accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken);
+        if (newEtag == null)
+        {
+            _logger.LogWarning("Concurrent modification detected for password update on account {AccountId}", accountId);
+            return StatusCodes.Conflict;
+        }
+
+        _logger.LogInformation("Password hash updated for account: {AccountId}", accountId);
+        await PublishAccountUpdatedEventAsync(account, new[] { "passwordHash" }, cancellationToken);
+
+        return StatusCodes.OK;
     }
 
     /// <inheritdoc/>
@@ -1169,37 +1151,35 @@ public partial class AccountService : IAccountService
         UpdateMfaRequest body,
         CancellationToken cancellationToken = default)
     {
+        var accountId = body.AccountId;
+        _logger.LogInformation("Updating MFA settings for account {AccountId}, enabled: {MfaEnabled}", accountId, body.MfaEnabled);
+
+        var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
+        var accountKey = $"{ACCOUNT_KEY_PREFIX}{accountId}";
+        var (account, etag) = await accountStore.GetWithETagAsync(accountKey, cancellationToken);
+
+        if (account == null || account.DeletedAt.HasValue)
         {
-            var accountId = body.AccountId;
-            _logger.LogInformation("Updating MFA settings for account {AccountId}, enabled: {MfaEnabled}", accountId, body.MfaEnabled);
-
-            var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
-            var accountKey = $"{ACCOUNT_KEY_PREFIX}{accountId}";
-            var (account, etag) = await accountStore.GetWithETagAsync(accountKey, cancellationToken);
-
-            if (account == null || account.DeletedAt.HasValue)
-            {
-                _logger.LogWarning("Account not found for MFA update: {AccountId}", accountId);
-                return StatusCodes.NotFound;
-            }
-
-            account.MfaEnabled = body.MfaEnabled;
-            account.MfaSecret = body.MfaSecret;
-            account.MfaRecoveryCodes = body.MfaRecoveryCodes?.ToList();
-            account.UpdatedAt = DateTimeOffset.UtcNow;
-
-            var newEtag = await accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken);
-            if (newEtag == null)
-            {
-                _logger.LogWarning("Concurrent modification detected for MFA update on account {AccountId}", accountId);
-                return StatusCodes.Conflict;
-            }
-
-            _logger.LogInformation("MFA settings updated for account {AccountId}, enabled: {MfaEnabled}", accountId, body.MfaEnabled);
-            await PublishAccountUpdatedEventAsync(account, new[] { "mfaEnabled", "mfaSecret", "mfaRecoveryCodes" }, cancellationToken);
-
-            return StatusCodes.OK;
+            _logger.LogWarning("Account not found for MFA update: {AccountId}", accountId);
+            return StatusCodes.NotFound;
         }
+
+        account.MfaEnabled = body.MfaEnabled;
+        account.MfaSecret = body.MfaSecret;
+        account.MfaRecoveryCodes = body.MfaRecoveryCodes?.ToList();
+        account.UpdatedAt = DateTimeOffset.UtcNow;
+
+        var newEtag = await accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken);
+        if (newEtag == null)
+        {
+            _logger.LogWarning("Concurrent modification detected for MFA update on account {AccountId}", accountId);
+            return StatusCodes.Conflict;
+        }
+
+        _logger.LogInformation("MFA settings updated for account {AccountId}, enabled: {MfaEnabled}", accountId, body.MfaEnabled);
+        await PublishAccountUpdatedEventAsync(account, new[] { "mfaEnabled", "mfaSecret", "mfaRecoveryCodes" }, cancellationToken);
+
+        return StatusCodes.OK;
     }
 
     /// <inheritdoc/>
@@ -1207,40 +1187,38 @@ public partial class AccountService : IAccountService
         UpdateVerificationRequest body,
         CancellationToken cancellationToken = default)
     {
+        var accountId = body.AccountId;
+        _logger.LogInformation("Updating verification status for account: {AccountId}, Verified: {Verified}",
+            accountId, body.EmailVerified);
+
+        // Get existing account with ETag for optimistic concurrency
+        var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
+        var accountKey = $"{ACCOUNT_KEY_PREFIX}{accountId}";
+        var (account, etag) = await accountStore.GetWithETagAsync(accountKey, cancellationToken);
+
+        if (account == null || account.DeletedAt.HasValue)
         {
-            var accountId = body.AccountId;
-            _logger.LogInformation("Updating verification status for account: {AccountId}, Verified: {Verified}",
-                accountId, body.EmailVerified);
-
-            // Get existing account with ETag for optimistic concurrency
-            var accountStore = _stateStoreFactory.GetStore<AccountModel>(StateStoreDefinitions.Account);
-            var accountKey = $"{ACCOUNT_KEY_PREFIX}{accountId}";
-            var (account, etag) = await accountStore.GetWithETagAsync(accountKey, cancellationToken);
-
-            if (account == null || account.DeletedAt.HasValue)
-            {
-                _logger.LogWarning("Account not found for verification update: {AccountId}", accountId);
-                return StatusCodes.NotFound;
-            }
-
-            // Update verification status
-            account.IsVerified = body.EmailVerified;
-            account.UpdatedAt = DateTimeOffset.UtcNow;
-
-            // Save updated account with optimistic concurrency check
-            var newEtag = await accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken);
-            if (newEtag == null)
-            {
-                _logger.LogWarning("Concurrent modification detected for verification update on account {AccountId}", accountId);
-                return StatusCodes.Conflict;
-            }
-
-            _logger.LogInformation("Verification status updated for account: {AccountId} -> {Verified}",
-                accountId, body.EmailVerified);
-
-            await PublishAccountUpdatedEventAsync(account, new[] { "isVerified" }, cancellationToken);
-            return StatusCodes.OK;
+            _logger.LogWarning("Account not found for verification update: {AccountId}", accountId);
+            return StatusCodes.NotFound;
         }
+
+        // Update verification status
+        account.IsVerified = body.EmailVerified;
+        account.UpdatedAt = DateTimeOffset.UtcNow;
+
+        // Save updated account with optimistic concurrency check
+        var newEtag = await accountStore.TrySaveAsync(accountKey, account, etag ?? string.Empty, cancellationToken);
+        if (newEtag == null)
+        {
+            _logger.LogWarning("Concurrent modification detected for verification update on account {AccountId}", accountId);
+            return StatusCodes.Conflict;
+        }
+
+        _logger.LogInformation("Verification status updated for account: {AccountId} -> {Verified}",
+            accountId, body.EmailVerified);
+
+        await PublishAccountUpdatedEventAsync(account, new[] { "isVerified" }, cancellationToken);
+        return StatusCodes.OK;
     }
 
     /// <inheritdoc/>

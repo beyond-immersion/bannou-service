@@ -105,115 +105,113 @@ public partial class ItemService : IItemService
         CreateItemTemplateRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogDebug("Creating item template with code {Code} for game {GameId}", body.Code, body.GameId);
+
+        var templateStore = _stateStoreFactory.GetStore<ItemTemplateModel>(StateStoreDefinitions.ItemTemplateStore);
+        var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.ItemTemplateStore);
+
+        // Check code uniqueness within game using atomic claim
+        var codeKey = $"{TPL_CODE_INDEX}{body.GameId}:{body.Code}";
+        var (existingId, codeEtag) = await stringStore.GetWithETagAsync(codeKey, cancellationToken);
+        if (!string.IsNullOrEmpty(existingId))
         {
-            _logger.LogDebug("Creating item template with code {Code} for game {GameId}", body.Code, body.GameId);
-
-            var templateStore = _stateStoreFactory.GetStore<ItemTemplateModel>(StateStoreDefinitions.ItemTemplateStore);
-            var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.ItemTemplateStore);
-
-            // Check code uniqueness within game using atomic claim
-            var codeKey = $"{TPL_CODE_INDEX}{body.GameId}:{body.Code}";
-            var (existingId, codeEtag) = await stringStore.GetWithETagAsync(codeKey, cancellationToken);
-            if (!string.IsNullOrEmpty(existingId))
-            {
-                _logger.LogWarning("Item template code already exists: {Code} for game {GameId}", body.Code, body.GameId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            var templateId = Guid.NewGuid();
-            var now = DateTimeOffset.UtcNow;
-
-            var model = new ItemTemplateModel
-            {
-                TemplateId = templateId,
-                Code = body.Code,
-                GameId = body.GameId,
-                Name = body.Name,
-                Description = body.Description,
-                Category = body.Category,
-                Subcategory = body.Subcategory,
-                Tags = body.Tags?.ToList() ?? new List<string>(),
-                Rarity = body.Rarity ?? _defaultRarity,
-                QuantityModel = body.QuantityModel,
-                MaxStackSize = body.MaxStackSize > 0 ? body.MaxStackSize : _configuration.DefaultMaxStackSize,
-                UnitOfMeasure = body.UnitOfMeasure,
-                WeightPrecision = body.WeightPrecision ?? _defaultWeightPrecision,
-                Weight = body.Weight,
-                Volume = body.Volume,
-                GridWidth = body.GridWidth,
-                GridHeight = body.GridHeight,
-                CanRotate = body.CanRotate,
-                BaseValue = body.BaseValue,
-                Tradeable = body.Tradeable,
-                Destroyable = body.Destroyable,
-                SoulboundType = body.SoulboundType ?? _defaultSoulboundType,
-                HasDurability = body.HasDurability,
-                MaxDurability = body.MaxDurability,
-                Scope = body.Scope,
-                AvailableRealms = body.AvailableRealms?.ToList(),
-                Stats = body.Stats is not null ? BannouJson.Serialize(body.Stats) : null,
-                Effects = body.Effects is not null ? BannouJson.Serialize(body.Effects) : null,
-                Requirements = body.Requirements is not null ? BannouJson.Serialize(body.Requirements) : null,
-                Display = body.Display is not null ? BannouJson.Serialize(body.Display) : null,
-                Metadata = body.Metadata is not null ? BannouJson.Serialize(body.Metadata) : null,
-                UseBehaviorContractTemplateId = body.UseBehaviorContractTemplateId,
-                CanUseBehaviorContractTemplateId = body.CanUseBehaviorContractTemplateId,
-                OnUseFailedBehaviorContractTemplateId = body.OnUseFailedBehaviorContractTemplateId,
-                ItemUseBehavior = body.ItemUseBehavior ?? ItemUseBehavior.DestroyOnSuccess,
-                CanUseBehavior = body.CanUseBehavior ?? CanUseBehavior.Block,
-                IsActive = true,
-                IsDeprecated = false,
-                CreatedAt = now,
-                UpdatedAt = now
-            };
-
-            // Claim the code index key atomically (prevents TOCTOU race on code uniqueness)
-            var claimResult = await stringStore.TrySaveAsync(codeKey, templateId.ToString(), codeEtag ?? string.Empty, cancellationToken);
-            if (claimResult == null)
-            {
-                _logger.LogWarning("Item template code claimed concurrently: {Code} for game {GameId}", body.Code, body.GameId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Save template
-            await templateStore.SaveAsync($"{TPL_PREFIX}{templateId}", model, cancellationToken: cancellationToken);
-            await AddToListAsync(StateStoreDefinitions.ItemTemplateStore, $"{TPL_GAME_INDEX}{body.GameId}", templateId.ToString(), cancellationToken);
-            await AddToListAsync(StateStoreDefinitions.ItemTemplateStore, ALL_TEMPLATES_KEY, templateId.ToString(), cancellationToken);
-
-            // Populate cache
-            await PopulateTemplateCacheAsync(templateId.ToString(), model, cancellationToken);
-
-            // Publish lifecycle event
-            await _messageBus.TryPublishAsync("item-template.created", new ItemTemplateCreatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = now,
-                TemplateId = templateId,
-                Code = model.Code,
-                GameId = model.GameId,
-                Name = model.Name,
-                Description = model.Description,
-                Category = model.Category,
-                Rarity = model.Rarity,
-                QuantityModel = model.QuantityModel,
-                MaxStackSize = model.MaxStackSize,
-                Scope = model.Scope,
-                SoulboundType = model.SoulboundType,
-                Tradeable = model.Tradeable,
-                Destroyable = model.Destroyable,
-                HasDurability = model.HasDurability,
-                MaxDurability = model.MaxDurability,
-                IsActive = model.IsActive,
-                IsDeprecated = model.IsDeprecated,
-                DeprecatedAt = model.DeprecatedAt,
-                MigrationTargetId = model.MigrationTargetId,
-                CreatedAt = now,
-                UpdatedAt = model.UpdatedAt
-            }, cancellationToken);
-
-            _logger.LogDebug("Created item template {TemplateId} code={Code}", templateId, body.Code);
-            return (StatusCodes.OK, MapTemplateToResponse(model));
+            _logger.LogWarning("Item template code already exists: {Code} for game {GameId}", body.Code, body.GameId);
+            return (StatusCodes.Conflict, null);
         }
+
+        var templateId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+
+        var model = new ItemTemplateModel
+        {
+            TemplateId = templateId,
+            Code = body.Code,
+            GameId = body.GameId,
+            Name = body.Name,
+            Description = body.Description,
+            Category = body.Category,
+            Subcategory = body.Subcategory,
+            Tags = body.Tags?.ToList() ?? new List<string>(),
+            Rarity = body.Rarity ?? _defaultRarity,
+            QuantityModel = body.QuantityModel,
+            MaxStackSize = body.MaxStackSize > 0 ? body.MaxStackSize : _configuration.DefaultMaxStackSize,
+            UnitOfMeasure = body.UnitOfMeasure,
+            WeightPrecision = body.WeightPrecision ?? _defaultWeightPrecision,
+            Weight = body.Weight,
+            Volume = body.Volume,
+            GridWidth = body.GridWidth,
+            GridHeight = body.GridHeight,
+            CanRotate = body.CanRotate,
+            BaseValue = body.BaseValue,
+            Tradeable = body.Tradeable,
+            Destroyable = body.Destroyable,
+            SoulboundType = body.SoulboundType ?? _defaultSoulboundType,
+            HasDurability = body.HasDurability,
+            MaxDurability = body.MaxDurability,
+            Scope = body.Scope,
+            AvailableRealms = body.AvailableRealms?.ToList(),
+            Stats = body.Stats is not null ? BannouJson.Serialize(body.Stats) : null,
+            Effects = body.Effects is not null ? BannouJson.Serialize(body.Effects) : null,
+            Requirements = body.Requirements is not null ? BannouJson.Serialize(body.Requirements) : null,
+            Display = body.Display is not null ? BannouJson.Serialize(body.Display) : null,
+            Metadata = body.Metadata is not null ? BannouJson.Serialize(body.Metadata) : null,
+            UseBehaviorContractTemplateId = body.UseBehaviorContractTemplateId,
+            CanUseBehaviorContractTemplateId = body.CanUseBehaviorContractTemplateId,
+            OnUseFailedBehaviorContractTemplateId = body.OnUseFailedBehaviorContractTemplateId,
+            ItemUseBehavior = body.ItemUseBehavior ?? ItemUseBehavior.DestroyOnSuccess,
+            CanUseBehavior = body.CanUseBehavior ?? CanUseBehavior.Block,
+            IsActive = true,
+            IsDeprecated = false,
+            CreatedAt = now,
+            UpdatedAt = now
+        };
+
+        // Claim the code index key atomically (prevents TOCTOU race on code uniqueness)
+        var claimResult = await stringStore.TrySaveAsync(codeKey, templateId.ToString(), codeEtag ?? string.Empty, cancellationToken);
+        if (claimResult == null)
+        {
+            _logger.LogWarning("Item template code claimed concurrently: {Code} for game {GameId}", body.Code, body.GameId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Save template
+        await templateStore.SaveAsync($"{TPL_PREFIX}{templateId}", model, cancellationToken: cancellationToken);
+        await AddToListAsync(StateStoreDefinitions.ItemTemplateStore, $"{TPL_GAME_INDEX}{body.GameId}", templateId.ToString(), cancellationToken);
+        await AddToListAsync(StateStoreDefinitions.ItemTemplateStore, ALL_TEMPLATES_KEY, templateId.ToString(), cancellationToken);
+
+        // Populate cache
+        await PopulateTemplateCacheAsync(templateId.ToString(), model, cancellationToken);
+
+        // Publish lifecycle event
+        await _messageBus.TryPublishAsync("item-template.created", new ItemTemplateCreatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            TemplateId = templateId,
+            Code = model.Code,
+            GameId = model.GameId,
+            Name = model.Name,
+            Description = model.Description,
+            Category = model.Category,
+            Rarity = model.Rarity,
+            QuantityModel = model.QuantityModel,
+            MaxStackSize = model.MaxStackSize,
+            Scope = model.Scope,
+            SoulboundType = model.SoulboundType,
+            Tradeable = model.Tradeable,
+            Destroyable = model.Destroyable,
+            HasDurability = model.HasDurability,
+            MaxDurability = model.MaxDurability,
+            IsActive = model.IsActive,
+            IsDeprecated = model.IsDeprecated,
+            DeprecatedAt = model.DeprecatedAt,
+            MigrationTargetId = model.MigrationTargetId,
+            CreatedAt = now,
+            UpdatedAt = model.UpdatedAt
+        }, cancellationToken);
+
+        _logger.LogDebug("Created item template {TemplateId} code={Code}", templateId, body.Code);
+        return (StatusCodes.OK, MapTemplateToResponse(model));
     }
 
     /// <inheritdoc/>
@@ -221,14 +219,12 @@ public partial class ItemService : IItemService
         GetItemTemplateRequest body,
         CancellationToken cancellationToken = default)
     {
+        var model = await ResolveTemplateAsync(body.TemplateId?.ToString(), body.Code, body.GameId, cancellationToken);
+        if (model is null)
         {
-            var model = await ResolveTemplateAsync(body.TemplateId?.ToString(), body.Code, body.GameId, cancellationToken);
-            if (model is null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-            return (StatusCodes.OK, MapTemplateToResponse(model));
+            return (StatusCodes.NotFound, null);
         }
+        return (StatusCodes.OK, MapTemplateToResponse(model));
     }
 
     /// <inheritdoc/>
@@ -236,53 +232,51 @@ public partial class ItemService : IItemService
         ListItemTemplatesRequest body,
         CancellationToken cancellationToken = default)
     {
+        var templateStore = _stateStoreFactory.GetStore<ItemTemplateModel>(StateStoreDefinitions.ItemTemplateStore);
+        var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.ItemTemplateStore);
+
+        // Get templates for game
+        string listKey = !string.IsNullOrEmpty(body.GameId)
+            ? $"{TPL_GAME_INDEX}{body.GameId}"
+            : ALL_TEMPLATES_KEY;
+
+        var idsJson = await stringStore.GetAsync(listKey, cancellationToken);
+        var ids = string.IsNullOrEmpty(idsJson)
+            ? new List<string>()
+            : BannouJson.Deserialize<List<string>>(idsJson) ?? new List<string>();
+
+        var templates = new List<ItemTemplateResponse>();
+        foreach (var id in ids)
         {
-            var templateStore = _stateStoreFactory.GetStore<ItemTemplateModel>(StateStoreDefinitions.ItemTemplateStore);
-            var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.ItemTemplateStore);
+            var model = await GetTemplateWithCacheAsync(id, cancellationToken);
+            if (model is null) continue;
 
-            // Get templates for game
-            string listKey = !string.IsNullOrEmpty(body.GameId)
-                ? $"{TPL_GAME_INDEX}{body.GameId}"
-                : ALL_TEMPLATES_KEY;
+            // Apply filters
+            if (!body.IncludeInactive && !model.IsActive) continue;
+            if (!body.IncludeDeprecated && model.IsDeprecated) continue;
+            if (body.Category != default && model.Category != body.Category) continue;
+            if (!string.IsNullOrEmpty(body.Subcategory) && model.Subcategory != body.Subcategory) continue;
+            if (body.Rarity != default && model.Rarity != body.Rarity) continue;
+            if (body.Scope != default && model.Scope != body.Scope) continue;
+            if (body.RealmId.HasValue && model.AvailableRealms is not null &&
+                !model.AvailableRealms.Contains(body.RealmId.Value)) continue;
+            if (body.Tags is not null && body.Tags.Count > 0 &&
+                !body.Tags.All(t => model.Tags.Contains(t))) continue;
+            if (!string.IsNullOrEmpty(body.Search) &&
+                !model.Name.Contains(body.Search, StringComparison.OrdinalIgnoreCase) &&
+                (model.Description is null || !model.Description.Contains(body.Search, StringComparison.OrdinalIgnoreCase))) continue;
 
-            var idsJson = await stringStore.GetAsync(listKey, cancellationToken);
-            var ids = string.IsNullOrEmpty(idsJson)
-                ? new List<string>()
-                : BannouJson.Deserialize<List<string>>(idsJson) ?? new List<string>();
-
-            var templates = new List<ItemTemplateResponse>();
-            foreach (var id in ids)
-            {
-                var model = await GetTemplateWithCacheAsync(id, cancellationToken);
-                if (model is null) continue;
-
-                // Apply filters
-                if (!body.IncludeInactive && !model.IsActive) continue;
-                if (!body.IncludeDeprecated && model.IsDeprecated) continue;
-                if (body.Category != default && model.Category != body.Category) continue;
-                if (!string.IsNullOrEmpty(body.Subcategory) && model.Subcategory != body.Subcategory) continue;
-                if (body.Rarity != default && model.Rarity != body.Rarity) continue;
-                if (body.Scope != default && model.Scope != body.Scope) continue;
-                if (body.RealmId.HasValue && model.AvailableRealms is not null &&
-                    !model.AvailableRealms.Contains(body.RealmId.Value)) continue;
-                if (body.Tags is not null && body.Tags.Count > 0 &&
-                    !body.Tags.All(t => model.Tags.Contains(t))) continue;
-                if (!string.IsNullOrEmpty(body.Search) &&
-                    !model.Name.Contains(body.Search, StringComparison.OrdinalIgnoreCase) &&
-                    (model.Description is null || !model.Description.Contains(body.Search, StringComparison.OrdinalIgnoreCase))) continue;
-
-                templates.Add(MapTemplateToResponse(model));
-            }
-
-            var totalCount = templates.Count;
-            var paged = templates.Skip(body.Offset).Take(body.Limit).ToList();
-
-            return (StatusCodes.OK, new ListItemTemplatesResponse
-            {
-                Templates = paged,
-                TotalCount = totalCount
-            });
+            templates.Add(MapTemplateToResponse(model));
         }
+
+        var totalCount = templates.Count;
+        var paged = templates.Skip(body.Offset).Take(body.Limit).ToList();
+
+        return (StatusCodes.OK, new ListItemTemplatesResponse
+        {
+            Templates = paged,
+            TotalCount = totalCount
+        });
     }
 
     /// <inheritdoc/>
@@ -290,83 +284,81 @@ public partial class ItemService : IItemService
         UpdateItemTemplateRequest body,
         CancellationToken cancellationToken = default)
     {
+        var templateStore = _stateStoreFactory.GetStore<ItemTemplateModel>(StateStoreDefinitions.ItemTemplateStore);
+        var model = await templateStore.GetAsync($"{TPL_PREFIX}{body.TemplateId}", cancellationToken);
+
+        if (model is null)
         {
-            var templateStore = _stateStoreFactory.GetStore<ItemTemplateModel>(StateStoreDefinitions.ItemTemplateStore);
-            var model = await templateStore.GetAsync($"{TPL_PREFIX}{body.TemplateId}", cancellationToken);
-
-            if (model is null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            var now = DateTimeOffset.UtcNow;
-
-            // Update mutable fields
-            if (!string.IsNullOrEmpty(body.Name)) model.Name = body.Name;
-            if (body.Description is not null) model.Description = body.Description;
-            if (body.Subcategory is not null) model.Subcategory = body.Subcategory;
-            if (body.Tags is not null) model.Tags = body.Tags.ToList();
-            if (body.Rarity != default) model.Rarity = body.Rarity;
-            if (body.Weight.HasValue) model.Weight = body.Weight;
-            if (body.Volume.HasValue) model.Volume = body.Volume;
-            if (body.GridWidth.HasValue) model.GridWidth = body.GridWidth;
-            if (body.GridHeight.HasValue) model.GridHeight = body.GridHeight;
-            if (body.CanRotate.HasValue) model.CanRotate = body.CanRotate;
-            if (body.BaseValue.HasValue) model.BaseValue = body.BaseValue;
-            if (body.Tradeable.HasValue) model.Tradeable = body.Tradeable.Value;
-            if (body.Destroyable.HasValue) model.Destroyable = body.Destroyable.Value;
-            if (body.MaxDurability.HasValue) model.MaxDurability = body.MaxDurability;
-            if (body.AvailableRealms is not null) model.AvailableRealms = body.AvailableRealms.ToList();
-            if (body.Stats is not null) model.Stats = BannouJson.Serialize(body.Stats);
-            if (body.Effects is not null) model.Effects = BannouJson.Serialize(body.Effects);
-            if (body.Requirements is not null) model.Requirements = BannouJson.Serialize(body.Requirements);
-            if (body.Display is not null) model.Display = BannouJson.Serialize(body.Display);
-            if (body.Metadata is not null) model.Metadata = BannouJson.Serialize(body.Metadata);
-            // Contract template IDs: null in request means "don't change", explicit value updates it
-            // To clear, caller must pass the null GUID explicitly via a separate endpoint or admin action
-            if (body.UseBehaviorContractTemplateId.HasValue) model.UseBehaviorContractTemplateId = body.UseBehaviorContractTemplateId;
-            if (body.CanUseBehaviorContractTemplateId.HasValue) model.CanUseBehaviorContractTemplateId = body.CanUseBehaviorContractTemplateId;
-            if (body.OnUseFailedBehaviorContractTemplateId.HasValue) model.OnUseFailedBehaviorContractTemplateId = body.OnUseFailedBehaviorContractTemplateId;
-            if (body.ItemUseBehavior.HasValue) model.ItemUseBehavior = body.ItemUseBehavior.Value;
-            if (body.CanUseBehavior.HasValue) model.CanUseBehavior = body.CanUseBehavior.Value;
-            if (body.IsActive.HasValue) model.IsActive = body.IsActive.Value;
-            model.UpdatedAt = now;
-
-            await templateStore.SaveAsync($"{TPL_PREFIX}{body.TemplateId}", model, cancellationToken: cancellationToken);
-
-            // Invalidate cache after write
-            await InvalidateTemplateCacheAsync(body.TemplateId.ToString(), cancellationToken);
-
-            await _messageBus.TryPublishAsync("item-template.updated", new ItemTemplateUpdatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = now,
-                TemplateId = body.TemplateId,
-                Code = model.Code,
-                GameId = model.GameId,
-                Name = model.Name,
-                Description = model.Description,
-                Category = model.Category,
-                Rarity = model.Rarity,
-                QuantityModel = model.QuantityModel,
-                MaxStackSize = model.MaxStackSize,
-                Scope = model.Scope,
-                SoulboundType = model.SoulboundType,
-                Tradeable = model.Tradeable,
-                Destroyable = model.Destroyable,
-                HasDurability = model.HasDurability,
-                MaxDurability = model.MaxDurability,
-                IsActive = model.IsActive,
-                IsDeprecated = model.IsDeprecated,
-                DeprecatedAt = model.DeprecatedAt,
-                MigrationTargetId = model.MigrationTargetId,
-                CreatedAt = model.CreatedAt,
-                UpdatedAt = now
-            }, cancellationToken);
-
-            _logger.LogDebug("Updated item template {TemplateId}", body.TemplateId);
-            return (StatusCodes.OK, MapTemplateToResponse(model));
+            return (StatusCodes.NotFound, null);
         }
+
+        var now = DateTimeOffset.UtcNow;
+
+        // Update mutable fields
+        if (!string.IsNullOrEmpty(body.Name)) model.Name = body.Name;
+        if (body.Description is not null) model.Description = body.Description;
+        if (body.Subcategory is not null) model.Subcategory = body.Subcategory;
+        if (body.Tags is not null) model.Tags = body.Tags.ToList();
+        if (body.Rarity != default) model.Rarity = body.Rarity;
+        if (body.Weight.HasValue) model.Weight = body.Weight;
+        if (body.Volume.HasValue) model.Volume = body.Volume;
+        if (body.GridWidth.HasValue) model.GridWidth = body.GridWidth;
+        if (body.GridHeight.HasValue) model.GridHeight = body.GridHeight;
+        if (body.CanRotate.HasValue) model.CanRotate = body.CanRotate;
+        if (body.BaseValue.HasValue) model.BaseValue = body.BaseValue;
+        if (body.Tradeable.HasValue) model.Tradeable = body.Tradeable.Value;
+        if (body.Destroyable.HasValue) model.Destroyable = body.Destroyable.Value;
+        if (body.MaxDurability.HasValue) model.MaxDurability = body.MaxDurability;
+        if (body.AvailableRealms is not null) model.AvailableRealms = body.AvailableRealms.ToList();
+        if (body.Stats is not null) model.Stats = BannouJson.Serialize(body.Stats);
+        if (body.Effects is not null) model.Effects = BannouJson.Serialize(body.Effects);
+        if (body.Requirements is not null) model.Requirements = BannouJson.Serialize(body.Requirements);
+        if (body.Display is not null) model.Display = BannouJson.Serialize(body.Display);
+        if (body.Metadata is not null) model.Metadata = BannouJson.Serialize(body.Metadata);
+        // Contract template IDs: null in request means "don't change", explicit value updates it
+        // To clear, caller must pass the null GUID explicitly via a separate endpoint or admin action
+        if (body.UseBehaviorContractTemplateId.HasValue) model.UseBehaviorContractTemplateId = body.UseBehaviorContractTemplateId;
+        if (body.CanUseBehaviorContractTemplateId.HasValue) model.CanUseBehaviorContractTemplateId = body.CanUseBehaviorContractTemplateId;
+        if (body.OnUseFailedBehaviorContractTemplateId.HasValue) model.OnUseFailedBehaviorContractTemplateId = body.OnUseFailedBehaviorContractTemplateId;
+        if (body.ItemUseBehavior.HasValue) model.ItemUseBehavior = body.ItemUseBehavior.Value;
+        if (body.CanUseBehavior.HasValue) model.CanUseBehavior = body.CanUseBehavior.Value;
+        if (body.IsActive.HasValue) model.IsActive = body.IsActive.Value;
+        model.UpdatedAt = now;
+
+        await templateStore.SaveAsync($"{TPL_PREFIX}{body.TemplateId}", model, cancellationToken: cancellationToken);
+
+        // Invalidate cache after write
+        await InvalidateTemplateCacheAsync(body.TemplateId.ToString(), cancellationToken);
+
+        await _messageBus.TryPublishAsync("item-template.updated", new ItemTemplateUpdatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            TemplateId = body.TemplateId,
+            Code = model.Code,
+            GameId = model.GameId,
+            Name = model.Name,
+            Description = model.Description,
+            Category = model.Category,
+            Rarity = model.Rarity,
+            QuantityModel = model.QuantityModel,
+            MaxStackSize = model.MaxStackSize,
+            Scope = model.Scope,
+            SoulboundType = model.SoulboundType,
+            Tradeable = model.Tradeable,
+            Destroyable = model.Destroyable,
+            HasDurability = model.HasDurability,
+            MaxDurability = model.MaxDurability,
+            IsActive = model.IsActive,
+            IsDeprecated = model.IsDeprecated,
+            DeprecatedAt = model.DeprecatedAt,
+            MigrationTargetId = model.MigrationTargetId,
+            CreatedAt = model.CreatedAt,
+            UpdatedAt = now
+        }, cancellationToken);
+
+        _logger.LogDebug("Updated item template {TemplateId}", body.TemplateId);
+        return (StatusCodes.OK, MapTemplateToResponse(model));
     }
 
     /// <inheritdoc/>
@@ -374,46 +366,44 @@ public partial class ItemService : IItemService
         DeprecateItemTemplateRequest body,
         CancellationToken cancellationToken = default)
     {
+        var templateStore = _stateStoreFactory.GetStore<ItemTemplateModel>(StateStoreDefinitions.ItemTemplateStore);
+        var model = await templateStore.GetAsync($"{TPL_PREFIX}{body.TemplateId}", cancellationToken);
+
+        if (model is null)
         {
-            var templateStore = _stateStoreFactory.GetStore<ItemTemplateModel>(StateStoreDefinitions.ItemTemplateStore);
-            var model = await templateStore.GetAsync($"{TPL_PREFIX}{body.TemplateId}", cancellationToken);
-
-            if (model is null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            var now = DateTimeOffset.UtcNow;
-            model.IsDeprecated = true;
-            model.DeprecatedAt = now;
-            model.MigrationTargetId = body.MigrationTargetId;
-            model.UpdatedAt = now;
-
-            await templateStore.SaveAsync($"{TPL_PREFIX}{body.TemplateId}", model, cancellationToken: cancellationToken);
-
-            // Invalidate cache after write
-            await InvalidateTemplateCacheAsync(body.TemplateId.ToString(), cancellationToken);
-
-            await _messageBus.TryPublishAsync("item-template.deprecated", new ItemTemplateDeprecatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = now,
-                TemplateId = body.TemplateId,
-                Code = model.Code,
-                GameId = model.GameId,
-                Name = model.Name,
-                Category = model.Category,
-                Rarity = model.Rarity,
-                QuantityModel = model.QuantityModel,
-                Scope = model.Scope,
-                IsActive = model.IsActive,
-                CreatedAt = model.CreatedAt,
-                UpdatedAt = now
-            }, cancellationToken);
-
-            _logger.LogDebug("Deprecated item template {TemplateId}", body.TemplateId);
-            return (StatusCodes.OK, MapTemplateToResponse(model));
+            return (StatusCodes.NotFound, null);
         }
+
+        var now = DateTimeOffset.UtcNow;
+        model.IsDeprecated = true;
+        model.DeprecatedAt = now;
+        model.MigrationTargetId = body.MigrationTargetId;
+        model.UpdatedAt = now;
+
+        await templateStore.SaveAsync($"{TPL_PREFIX}{body.TemplateId}", model, cancellationToken: cancellationToken);
+
+        // Invalidate cache after write
+        await InvalidateTemplateCacheAsync(body.TemplateId.ToString(), cancellationToken);
+
+        await _messageBus.TryPublishAsync("item-template.deprecated", new ItemTemplateDeprecatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            TemplateId = body.TemplateId,
+            Code = model.Code,
+            GameId = model.GameId,
+            Name = model.Name,
+            Category = model.Category,
+            Rarity = model.Rarity,
+            QuantityModel = model.QuantityModel,
+            Scope = model.Scope,
+            IsActive = model.IsActive,
+            CreatedAt = model.CreatedAt,
+            UpdatedAt = now
+        }, cancellationToken);
+
+        _logger.LogDebug("Deprecated item template {TemplateId}", body.TemplateId);
+        return (StatusCodes.OK, MapTemplateToResponse(model));
     }
 
     #endregion
@@ -425,102 +415,100 @@ public partial class ItemService : IItemService
         CreateItemInstanceRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogDebug("Creating item instance for template {TemplateId} in container {ContainerId}",
+            body.TemplateId, body.ContainerId);
+
+        // Get template (uses cache)
+        var template = await GetTemplateWithCacheAsync(body.TemplateId.ToString(), cancellationToken);
+        if (template is null)
         {
-            _logger.LogDebug("Creating item instance for template {TemplateId} in container {ContainerId}",
-                body.TemplateId, body.ContainerId);
-
-            // Get template (uses cache)
-            var template = await GetTemplateWithCacheAsync(body.TemplateId.ToString(), cancellationToken);
-            if (template is null)
-            {
-                _logger.LogWarning("Template not found: {TemplateId}", body.TemplateId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            if (!template.IsActive)
-            {
-                _logger.LogWarning("Template is not active: {TemplateId}", body.TemplateId);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            var instanceStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore);
-            var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.ItemInstanceStore);
-
-            var instanceId = Guid.NewGuid();
-            var now = DateTimeOffset.UtcNow;
-
-            // Validate quantity based on quantity model
-            var quantity = body.Quantity;
-            if (template.QuantityModel == QuantityModel.Unique)
-            {
-                quantity = 1;
-            }
-            else if (template.QuantityModel == QuantityModel.Discrete)
-            {
-                quantity = Math.Floor(quantity);
-                if (quantity > template.MaxStackSize)
-                {
-                    quantity = template.MaxStackSize;
-                }
-            }
-
-            var model = new ItemInstanceModel
-            {
-                InstanceId = instanceId,
-                TemplateId = body.TemplateId,
-                ContainerId = body.ContainerId,
-                RealmId = body.RealmId,
-                Quantity = quantity,
-                SlotIndex = body.SlotIndex,
-                SlotX = body.SlotX,
-                SlotY = body.SlotY,
-                Rotated = body.Rotated,
-                CurrentDurability = body.CurrentDurability ?? template.MaxDurability,
-                CustomStats = body.CustomStats is not null ? BannouJson.Serialize(body.CustomStats) : null,
-                CustomName = body.CustomName,
-                InstanceMetadata = body.InstanceMetadata is not null ? BannouJson.Serialize(body.InstanceMetadata) : null,
-                OriginType = body.OriginType,
-                OriginId = body.OriginId,
-                ContractInstanceId = body.ContractInstanceId,
-                // Default to lifecycle if contractInstanceId is provided but bindingType is not
-                ContractBindingType = body.ContractBindingType
-                    ?? (body.ContractInstanceId.HasValue ? ContractBindingType.Lifecycle : ContractBindingType.None),
-                CreatedAt = now
-            };
-
-            await instanceStore.SaveAsync($"{INST_PREFIX}{instanceId}", model, cancellationToken: cancellationToken);
-            await AddToListAsync(StateStoreDefinitions.ItemInstanceStore, $"{INST_CONTAINER_INDEX}{body.ContainerId}", instanceId.ToString(), cancellationToken);
-            await AddToListAsync(StateStoreDefinitions.ItemInstanceStore, $"{INST_TEMPLATE_INDEX}{body.TemplateId}", instanceId.ToString(), cancellationToken);
-
-            // Populate instance cache
-            await PopulateInstanceCacheAsync(instanceId.ToString(), model, cancellationToken);
-
-            await _messageBus.TryPublishAsync("item-instance.created", new ItemInstanceCreatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = now,
-                InstanceId = instanceId,
-                TemplateId = body.TemplateId,
-                ContainerId = body.ContainerId,
-                RealmId = body.RealmId,
-                Quantity = quantity,
-                SlotIndex = model.SlotIndex,
-                SlotX = model.SlotX,
-                SlotY = model.SlotY,
-                Rotated = model.Rotated,
-                CurrentDurability = model.CurrentDurability,
-                BoundToId = model.BoundToId,
-                BoundAt = model.BoundAt,
-                CustomName = model.CustomName,
-                OriginType = body.OriginType,
-                OriginId = model.OriginId,
-                CreatedAt = now,
-                ModifiedAt = model.ModifiedAt
-            }, cancellationToken);
-
-            _logger.LogDebug("Created item instance {InstanceId}", instanceId);
-            return (StatusCodes.OK, MapInstanceToResponse(model));
+            _logger.LogWarning("Template not found: {TemplateId}", body.TemplateId);
+            return (StatusCodes.NotFound, null);
         }
+
+        if (!template.IsActive)
+        {
+            _logger.LogWarning("Template is not active: {TemplateId}", body.TemplateId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        var instanceStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore);
+        var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.ItemInstanceStore);
+
+        var instanceId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+
+        // Validate quantity based on quantity model
+        var quantity = body.Quantity;
+        if (template.QuantityModel == QuantityModel.Unique)
+        {
+            quantity = 1;
+        }
+        else if (template.QuantityModel == QuantityModel.Discrete)
+        {
+            quantity = Math.Floor(quantity);
+            if (quantity > template.MaxStackSize)
+            {
+                quantity = template.MaxStackSize;
+            }
+        }
+
+        var model = new ItemInstanceModel
+        {
+            InstanceId = instanceId,
+            TemplateId = body.TemplateId,
+            ContainerId = body.ContainerId,
+            RealmId = body.RealmId,
+            Quantity = quantity,
+            SlotIndex = body.SlotIndex,
+            SlotX = body.SlotX,
+            SlotY = body.SlotY,
+            Rotated = body.Rotated,
+            CurrentDurability = body.CurrentDurability ?? template.MaxDurability,
+            CustomStats = body.CustomStats is not null ? BannouJson.Serialize(body.CustomStats) : null,
+            CustomName = body.CustomName,
+            InstanceMetadata = body.InstanceMetadata is not null ? BannouJson.Serialize(body.InstanceMetadata) : null,
+            OriginType = body.OriginType,
+            OriginId = body.OriginId,
+            ContractInstanceId = body.ContractInstanceId,
+            // Default to lifecycle if contractInstanceId is provided but bindingType is not
+            ContractBindingType = body.ContractBindingType
+                ?? (body.ContractInstanceId.HasValue ? ContractBindingType.Lifecycle : ContractBindingType.None),
+            CreatedAt = now
+        };
+
+        await instanceStore.SaveAsync($"{INST_PREFIX}{instanceId}", model, cancellationToken: cancellationToken);
+        await AddToListAsync(StateStoreDefinitions.ItemInstanceStore, $"{INST_CONTAINER_INDEX}{body.ContainerId}", instanceId.ToString(), cancellationToken);
+        await AddToListAsync(StateStoreDefinitions.ItemInstanceStore, $"{INST_TEMPLATE_INDEX}{body.TemplateId}", instanceId.ToString(), cancellationToken);
+
+        // Populate instance cache
+        await PopulateInstanceCacheAsync(instanceId.ToString(), model, cancellationToken);
+
+        await _messageBus.TryPublishAsync("item-instance.created", new ItemInstanceCreatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            InstanceId = instanceId,
+            TemplateId = body.TemplateId,
+            ContainerId = body.ContainerId,
+            RealmId = body.RealmId,
+            Quantity = quantity,
+            SlotIndex = model.SlotIndex,
+            SlotX = model.SlotX,
+            SlotY = model.SlotY,
+            Rotated = model.Rotated,
+            CurrentDurability = model.CurrentDurability,
+            BoundToId = model.BoundToId,
+            BoundAt = model.BoundAt,
+            CustomName = model.CustomName,
+            OriginType = body.OriginType,
+            OriginId = model.OriginId,
+            CreatedAt = now,
+            ModifiedAt = model.ModifiedAt
+        }, cancellationToken);
+
+        _logger.LogDebug("Created item instance {InstanceId}", instanceId);
+        return (StatusCodes.OK, MapInstanceToResponse(model));
     }
 
     /// <inheritdoc/>
@@ -528,16 +516,14 @@ public partial class ItemService : IItemService
         GetItemInstanceRequest body,
         CancellationToken cancellationToken = default)
     {
+        var model = await GetInstanceWithCacheAsync(body.InstanceId.ToString(), cancellationToken);
+
+        if (model is null)
         {
-            var model = await GetInstanceWithCacheAsync(body.InstanceId.ToString(), cancellationToken);
-
-            if (model is null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            return (StatusCodes.OK, MapInstanceToResponse(model));
+            return (StatusCodes.NotFound, null);
         }
+
+        return (StatusCodes.OK, MapInstanceToResponse(model));
     }
 
     /// <inheritdoc/>
@@ -545,16 +531,14 @@ public partial class ItemService : IItemService
         ModifyItemInstanceRequest body,
         CancellationToken cancellationToken = default)
     {
+        // Container changes require a lock to prevent race conditions on index updates
+        if (body.NewContainerId.HasValue)
         {
-            // Container changes require a lock to prevent race conditions on index updates
-            if (body.NewContainerId.HasValue)
-            {
-                return await ModifyItemInstanceWithLockAsync(body, cancellationToken);
-            }
-
-            // Non-container changes don't need locking
-            return await ModifyItemInstanceInternalAsync(body, cancellationToken);
+            return await ModifyItemInstanceWithLockAsync(body, cancellationToken);
         }
+
+        // Non-container changes don't need locking
+        return await ModifyItemInstanceInternalAsync(body, cancellationToken);
     }
 
     /// <summary>
@@ -677,62 +661,60 @@ public partial class ItemService : IItemService
         BindItemInstanceRequest body,
         CancellationToken cancellationToken = default)
     {
+        var instanceStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore);
+        var model = await instanceStore.GetAsync($"{INST_PREFIX}{body.InstanceId}", cancellationToken);
+
+        if (model is null)
         {
-            var instanceStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore);
-            var model = await instanceStore.GetAsync($"{INST_PREFIX}{body.InstanceId}", cancellationToken);
-
-            if (model is null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            if (model.BoundToId is not null)
-            {
-                if (!_configuration.BindingAllowAdminOverride)
-                {
-                    _logger.LogWarning("Item {InstanceId} is already bound to {BoundToId}", body.InstanceId, model.BoundToId);
-                    return (StatusCodes.Conflict, null);
-                }
-                _logger.LogDebug("Admin override: rebinding item {InstanceId} from {OldBound} to {NewBound}",
-                    body.InstanceId, model.BoundToId, body.CharacterId);
-            }
-
-            var now = DateTimeOffset.UtcNow;
-            model.BoundToId = body.CharacterId;
-            model.BoundAt = now;
-            model.ModifiedAt = now;
-
-            await instanceStore.SaveAsync($"{INST_PREFIX}{body.InstanceId}", model, cancellationToken: cancellationToken);
-
-            // Invalidate cache after write
-            await InvalidateInstanceCacheAsync(body.InstanceId.ToString(), cancellationToken);
-
-            // Get template for event enrichment (uses cache)
-            var template = await GetTemplateWithCacheAsync(model.TemplateId.ToString(), cancellationToken);
-
-            if (template is null)
-            {
-                _logger.LogWarning("Template {TemplateId} not found when binding instance {InstanceId}, possible data inconsistency",
-                    model.TemplateId, body.InstanceId);
-            }
-
-            var templateCode = template?.Code ?? $"missing:{model.TemplateId}";
-
-            await _messageBus.TryPublishAsync("item-instance.bound", new ItemInstanceBoundEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = now,
-                InstanceId = body.InstanceId,
-                TemplateId = model.TemplateId,
-                TemplateCode = templateCode,
-                RealmId = model.RealmId,
-                CharacterId = body.CharacterId,
-                BindType = body.BindType
-            }, cancellationToken);
-
-            _logger.LogDebug("Bound item {InstanceId} to character {CharacterId}", body.InstanceId, body.CharacterId);
-            return (StatusCodes.OK, MapInstanceToResponse(model));
+            return (StatusCodes.NotFound, null);
         }
+
+        if (model.BoundToId is not null)
+        {
+            if (!_configuration.BindingAllowAdminOverride)
+            {
+                _logger.LogWarning("Item {InstanceId} is already bound to {BoundToId}", body.InstanceId, model.BoundToId);
+                return (StatusCodes.Conflict, null);
+            }
+            _logger.LogDebug("Admin override: rebinding item {InstanceId} from {OldBound} to {NewBound}",
+                body.InstanceId, model.BoundToId, body.CharacterId);
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        model.BoundToId = body.CharacterId;
+        model.BoundAt = now;
+        model.ModifiedAt = now;
+
+        await instanceStore.SaveAsync($"{INST_PREFIX}{body.InstanceId}", model, cancellationToken: cancellationToken);
+
+        // Invalidate cache after write
+        await InvalidateInstanceCacheAsync(body.InstanceId.ToString(), cancellationToken);
+
+        // Get template for event enrichment (uses cache)
+        var template = await GetTemplateWithCacheAsync(model.TemplateId.ToString(), cancellationToken);
+
+        if (template is null)
+        {
+            _logger.LogWarning("Template {TemplateId} not found when binding instance {InstanceId}, possible data inconsistency",
+                model.TemplateId, body.InstanceId);
+        }
+
+        var templateCode = template?.Code ?? $"missing:{model.TemplateId}";
+
+        await _messageBus.TryPublishAsync("item-instance.bound", new ItemInstanceBoundEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            InstanceId = body.InstanceId,
+            TemplateId = model.TemplateId,
+            TemplateCode = templateCode,
+            RealmId = model.RealmId,
+            CharacterId = body.CharacterId,
+            BindType = body.BindType
+        }, cancellationToken);
+
+        _logger.LogDebug("Bound item {InstanceId} to character {CharacterId}", body.InstanceId, body.CharacterId);
+        return (StatusCodes.OK, MapInstanceToResponse(model));
     }
 
     /// <inheritdoc/>
@@ -740,61 +722,59 @@ public partial class ItemService : IItemService
         UnbindItemInstanceRequest body,
         CancellationToken cancellationToken = default)
     {
+        var instanceStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore);
+        var model = await instanceStore.GetAsync($"{INST_PREFIX}{body.InstanceId}", cancellationToken);
+
+        if (model is null)
         {
-            var instanceStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore);
-            var model = await instanceStore.GetAsync($"{INST_PREFIX}{body.InstanceId}", cancellationToken);
-
-            if (model is null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            if (model.BoundToId is null)
-            {
-                _logger.LogWarning("Item {InstanceId} is not bound", body.InstanceId);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            var previousCharacterId = model.BoundToId.Value;
-            var now = DateTimeOffset.UtcNow;
-
-            // Clear binding
-            model.BoundToId = null;
-            model.BoundAt = null;
-            model.ModifiedAt = now;
-
-            await instanceStore.SaveAsync($"{INST_PREFIX}{body.InstanceId}", model, cancellationToken: cancellationToken);
-
-            // Invalidate cache after write
-            await InvalidateInstanceCacheAsync(body.InstanceId.ToString(), cancellationToken);
-
-            // Get template for event enrichment (uses cache)
-            var template = await GetTemplateWithCacheAsync(model.TemplateId.ToString(), cancellationToken);
-
-            if (template is null)
-            {
-                _logger.LogWarning("Template {TemplateId} not found when unbinding instance {InstanceId}, possible data inconsistency",
-                    model.TemplateId, body.InstanceId);
-            }
-
-            var templateCode = template?.Code ?? $"missing:{model.TemplateId}";
-
-            await _messageBus.TryPublishAsync("item-instance.unbound", new ItemInstanceUnboundEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = now,
-                InstanceId = body.InstanceId,
-                TemplateId = model.TemplateId,
-                TemplateCode = templateCode,
-                RealmId = model.RealmId,
-                PreviousCharacterId = previousCharacterId,
-                Reason = body.Reason
-            }, cancellationToken);
-
-            _logger.LogDebug("Unbound item {InstanceId} from character {CharacterId} reason={Reason}",
-                body.InstanceId, previousCharacterId, body.Reason);
-            return (StatusCodes.OK, MapInstanceToResponse(model));
+            return (StatusCodes.NotFound, null);
         }
+
+        if (model.BoundToId is null)
+        {
+            _logger.LogWarning("Item {InstanceId} is not bound", body.InstanceId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        var previousCharacterId = model.BoundToId.Value;
+        var now = DateTimeOffset.UtcNow;
+
+        // Clear binding
+        model.BoundToId = null;
+        model.BoundAt = null;
+        model.ModifiedAt = now;
+
+        await instanceStore.SaveAsync($"{INST_PREFIX}{body.InstanceId}", model, cancellationToken: cancellationToken);
+
+        // Invalidate cache after write
+        await InvalidateInstanceCacheAsync(body.InstanceId.ToString(), cancellationToken);
+
+        // Get template for event enrichment (uses cache)
+        var template = await GetTemplateWithCacheAsync(model.TemplateId.ToString(), cancellationToken);
+
+        if (template is null)
+        {
+            _logger.LogWarning("Template {TemplateId} not found when unbinding instance {InstanceId}, possible data inconsistency",
+                model.TemplateId, body.InstanceId);
+        }
+
+        var templateCode = template?.Code ?? $"missing:{model.TemplateId}";
+
+        await _messageBus.TryPublishAsync("item-instance.unbound", new ItemInstanceUnboundEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            InstanceId = body.InstanceId,
+            TemplateId = model.TemplateId,
+            TemplateCode = templateCode,
+            RealmId = model.RealmId,
+            PreviousCharacterId = previousCharacterId,
+            Reason = body.Reason
+        }, cancellationToken);
+
+        _logger.LogDebug("Unbound item {InstanceId} from character {CharacterId} reason={Reason}",
+            body.InstanceId, previousCharacterId, body.Reason);
+        return (StatusCodes.OK, MapInstanceToResponse(model));
     }
 
     /// <inheritdoc/>
@@ -802,57 +782,55 @@ public partial class ItemService : IItemService
         DestroyItemInstanceRequest body,
         CancellationToken cancellationToken = default)
     {
+        var instanceStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore);
+        var model = await instanceStore.GetAsync($"{INST_PREFIX}{body.InstanceId}", cancellationToken);
+
+        if (model is null)
         {
-            var instanceStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore);
-            var model = await instanceStore.GetAsync($"{INST_PREFIX}{body.InstanceId}", cancellationToken);
-
-            if (model is null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Get template to check destroyable (uses cache)
-            var template = await GetTemplateWithCacheAsync(model.TemplateId.ToString(), cancellationToken);
-            if (template is not null && !template.Destroyable && body.Reason != "admin")
-            {
-                _logger.LogWarning("Item {InstanceId} is not destroyable", body.InstanceId);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            var now = DateTimeOffset.UtcNow;
-
-            // Remove from indexes
-            await RemoveFromListAsync(StateStoreDefinitions.ItemInstanceStore, $"{INST_CONTAINER_INDEX}{model.ContainerId}", body.InstanceId.ToString(), cancellationToken);
-            await RemoveFromListAsync(StateStoreDefinitions.ItemInstanceStore, $"{INST_TEMPLATE_INDEX}{model.TemplateId}", body.InstanceId.ToString(), cancellationToken);
-
-            // Delete instance
-            await instanceStore.DeleteAsync($"{INST_PREFIX}{body.InstanceId}", cancellationToken);
-
-            // Invalidate cache after delete
-            await InvalidateInstanceCacheAsync(body.InstanceId.ToString(), cancellationToken);
-
-            await _messageBus.TryPublishAsync("item-instance.destroyed", new ItemInstanceDestroyedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = now,
-                InstanceId = body.InstanceId,
-                TemplateId = model.TemplateId,
-                ContainerId = model.ContainerId,
-                RealmId = model.RealmId,
-                Quantity = model.Quantity,
-                OriginType = model.OriginType,
-                CreatedAt = model.CreatedAt,
-                ModifiedAt = now
-            }, cancellationToken);
-
-            _logger.LogDebug("Destroyed item instance {InstanceId} reason={Reason}", body.InstanceId, body.Reason);
-            return (StatusCodes.OK, new DestroyItemInstanceResponse
-            {
-                Destroyed = true,
-                InstanceId = body.InstanceId,
-                TemplateId = model.TemplateId
-            });
+            return (StatusCodes.NotFound, null);
         }
+
+        // Get template to check destroyable (uses cache)
+        var template = await GetTemplateWithCacheAsync(model.TemplateId.ToString(), cancellationToken);
+        if (template is not null && !template.Destroyable && body.Reason != "admin")
+        {
+            _logger.LogWarning("Item {InstanceId} is not destroyable", body.InstanceId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        var now = DateTimeOffset.UtcNow;
+
+        // Remove from indexes
+        await RemoveFromListAsync(StateStoreDefinitions.ItemInstanceStore, $"{INST_CONTAINER_INDEX}{model.ContainerId}", body.InstanceId.ToString(), cancellationToken);
+        await RemoveFromListAsync(StateStoreDefinitions.ItemInstanceStore, $"{INST_TEMPLATE_INDEX}{model.TemplateId}", body.InstanceId.ToString(), cancellationToken);
+
+        // Delete instance
+        await instanceStore.DeleteAsync($"{INST_PREFIX}{body.InstanceId}", cancellationToken);
+
+        // Invalidate cache after delete
+        await InvalidateInstanceCacheAsync(body.InstanceId.ToString(), cancellationToken);
+
+        await _messageBus.TryPublishAsync("item-instance.destroyed", new ItemInstanceDestroyedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            InstanceId = body.InstanceId,
+            TemplateId = model.TemplateId,
+            ContainerId = model.ContainerId,
+            RealmId = model.RealmId,
+            Quantity = model.Quantity,
+            OriginType = model.OriginType,
+            CreatedAt = model.CreatedAt,
+            ModifiedAt = now
+        }, cancellationToken);
+
+        _logger.LogDebug("Destroyed item instance {InstanceId} reason={Reason}", body.InstanceId, body.Reason);
+        return (StatusCodes.OK, new DestroyItemInstanceResponse
+        {
+            Destroyed = true,
+            InstanceId = body.InstanceId,
+            TemplateId = model.TemplateId
+        });
     }
 
     #endregion
@@ -864,48 +842,266 @@ public partial class ItemService : IItemService
         UseItemRequest body,
         CancellationToken cancellationToken = default)
     {
+        _logger.LogDebug(
+            "Using item instance {InstanceId} by user {UserId} ({UserType})",
+            body.InstanceId, body.UserId, body.UserType);
+
+        // 1. Load instance
+        var instance = await GetInstanceWithCacheAsync(body.InstanceId.ToString(), cancellationToken);
+        if (instance is null)
+        {
+            _logger.LogDebug("Item instance {InstanceId} not found", body.InstanceId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        // 2. Load template (uses cache)
+        var template = await GetTemplateWithCacheAsync(instance.TemplateId.ToString(), cancellationToken);
+        if (template is null)
+        {
+            _logger.LogWarning(
+                "Template {TemplateId} not found for instance {InstanceId}, possible data inconsistency",
+                instance.TemplateId, body.InstanceId);
+            return (StatusCodes.InternalServerError, null);
+        }
+
+        // 3. Check if item use is disabled
+        if (template.ItemUseBehavior == ItemUseBehavior.Disabled)
         {
             _logger.LogDebug(
-                "Using item instance {InstanceId} by user {UserId} ({UserType})",
-                body.InstanceId, body.UserId, body.UserType);
+                "Item template {TemplateId} ({Code}) has use behavior disabled",
+                template.TemplateId, template.Code);
+            return (StatusCodes.BadRequest, null);
+        }
 
-            // 1. Load instance
-            var instance = await GetInstanceWithCacheAsync(body.InstanceId.ToString(), cancellationToken);
-            if (instance is null)
+        // 4. Validate template has behavior contract
+        if (!template.UseBehaviorContractTemplateId.HasValue)
+        {
+            _logger.LogDebug(
+                "Item template {TemplateId} ({Code}) has no behavior contract",
+                template.TemplateId, template.Code);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // 5. Execute CanUse validation if configured
+        if (template.CanUseBehaviorContractTemplateId.HasValue &&
+            template.CanUseBehavior != CanUseBehavior.Disabled)
+        {
+            var (validationPassed, validationFailureReason) = await ExecuteCanUseValidationAsync(
+                template.CanUseBehaviorContractTemplateId.Value,
+                body.UserId,
+                body.UserType,
+                body.InstanceId,
+                template.TemplateId,
+                body.Context,
+                cancellationToken);
+
+            if (!validationPassed)
             {
-                _logger.LogDebug("Item instance {InstanceId} not found", body.InstanceId);
-                return (StatusCodes.NotFound, null);
+                if (template.CanUseBehavior == CanUseBehavior.Block)
+                {
+                    _logger.LogDebug(
+                        "CanUse validation blocked for item {InstanceId}: {Reason}",
+                        body.InstanceId, validationFailureReason);
+                    return (StatusCodes.BadRequest, null);
+                }
+                else // warn_and_proceed
+                {
+                    _logger.LogWarning(
+                        "CanUse validation failed but proceeding for item {InstanceId}: {Reason}",
+                        body.InstanceId, validationFailureReason);
+                }
+            }
+        }
+
+        // 6. Create contract instance with user + system parties
+        var systemPartyId = GetOrComputeSystemPartyId(template.GameId);
+        var contractInstanceId = await CreateItemUseContractInstanceAsync(
+            template.UseBehaviorContractTemplateId.Value,
+            body.UserId,
+            body.UserType,
+            systemPartyId,
+            body.InstanceId,
+            template.TemplateId,
+            body.Context,
+            cancellationToken);
+
+        if (!contractInstanceId.HasValue)
+        {
+            _logger.LogWarning(
+                "Failed to create contract instance for item use: template={TemplateId}, user={UserId}",
+                template.UseBehaviorContractTemplateId.Value, body.UserId);
+
+            await RecordUseFailureAsync(
+                body.InstanceId,
+                template.TemplateId,
+                template.Code,
+                body.UserId,
+                body.UserType,
+                "Failed to create contract instance",
+                cancellationToken);
+
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // 7. Complete the "use" milestone (triggers prebound APIs)
+        var milestoneSuccess = await CompleteUseMilestoneAsync(
+            contractInstanceId.Value,
+            cancellationToken);
+
+        if (!milestoneSuccess)
+        {
+            _logger.LogWarning(
+                "Use milestone failed for item {InstanceId}, contract {ContractId}",
+                body.InstanceId, contractInstanceId.Value);
+
+            // Execute OnUseFailed handler if configured
+            if (template.OnUseFailedBehaviorContractTemplateId.HasValue)
+            {
+                await ExecuteOnUseFailedHandlerAsync(
+                    template.OnUseFailedBehaviorContractTemplateId.Value,
+                    body.UserId,
+                    body.UserType,
+                    body.InstanceId,
+                    template.TemplateId,
+                    "Contract use milestone failed",
+                    body.Context,
+                    cancellationToken);
             }
 
-            // 2. Load template (uses cache)
-            var template = await GetTemplateWithCacheAsync(instance.TemplateId.ToString(), cancellationToken);
-            if (template is null)
+            await RecordUseFailureAsync(
+                body.InstanceId,
+                template.TemplateId,
+                template.Code,
+                body.UserId,
+                body.UserType,
+                "Contract use milestone failed",
+                cancellationToken);
+
+            // Check if item should be consumed on failure (DESTROY_ALWAYS)
+            if (template.ItemUseBehavior == ItemUseBehavior.DestroyAlways)
             {
-                _logger.LogWarning(
-                    "Template {TemplateId} not found for instance {InstanceId}, possible data inconsistency",
-                    instance.TemplateId, body.InstanceId);
-                return (StatusCodes.InternalServerError, null);
+                await ConsumeItemAsync(
+                    body.InstanceId,
+                    instance,
+                    template,
+                    cancellationToken);
             }
 
-            // 3. Check if item use is disabled
-            if (template.ItemUseBehavior == ItemUseBehavior.Disabled)
-            {
-                _logger.LogDebug(
-                    "Item template {TemplateId} ({Code}) has use behavior disabled",
-                    template.TemplateId, template.Code);
-                return (StatusCodes.BadRequest, null);
-            }
+            return (StatusCodes.BadRequest, null);
+        }
 
-            // 4. Validate template has behavior contract
-            if (!template.UseBehaviorContractTemplateId.HasValue)
-            {
-                _logger.LogDebug(
-                    "Item template {TemplateId} ({Code}) has no behavior contract",
-                    template.TemplateId, template.Code);
-                return (StatusCodes.BadRequest, null);
-            }
+        // 8. Consume item on success (per itemUseBehavior: DESTROY_ON_SUCCESS or DESTROY_ALWAYS)
+        var (consumed, remainingQuantity) = await ConsumeItemAsync(
+            body.InstanceId,
+            instance,
+            template,
+            cancellationToken);
 
-            // 5. Execute CanUse validation if configured
+        // 9. Record success for batched event publishing
+        await RecordUseSuccessAsync(
+            body.InstanceId,
+            template.TemplateId,
+            template.Code,
+            body.UserId,
+            body.UserType,
+            body.TargetId,
+            body.TargetType,
+            consumed,
+            contractInstanceId.Value,
+            cancellationToken);
+
+        _logger.LogDebug(
+            "Item {InstanceId} used successfully, consumed={Consumed}, remaining={Remaining}",
+            body.InstanceId, consumed, remainingQuantity);
+
+        return (StatusCodes.OK, new UseItemResponse
+        {
+            Success = true,
+            InstanceId = body.InstanceId,
+            TemplateId = template.TemplateId,
+            ContractInstanceId = contractInstanceId.Value,
+            Consumed = consumed,
+            RemainingQuantity = remainingQuantity
+        });
+    }
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, UseItemStepResponse?)> UseItemStepAsync(
+        UseItemStepRequest body,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug(
+            "UseItemStep: instance={InstanceId}, user={UserId}, milestone={MilestoneCode}",
+            body.InstanceId, body.UserId, body.MilestoneCode);
+
+        // 1. Load instance (read is safe without lock)
+        var instance = await GetInstanceWithCacheAsync(body.InstanceId.ToString(), cancellationToken);
+        if (instance is null)
+        {
+            _logger.LogDebug("Item instance {InstanceId} not found", body.InstanceId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        // 2. Load template
+        var template = await GetTemplateWithCacheAsync(instance.TemplateId.ToString(), cancellationToken);
+        if (template is null)
+        {
+            _logger.LogWarning(
+                "Template {TemplateId} not found for instance {InstanceId}",
+                instance.TemplateId, body.InstanceId);
+            return (StatusCodes.InternalServerError, null);
+        }
+
+        // 3. Check if item use is disabled
+        if (template.ItemUseBehavior == ItemUseBehavior.Disabled)
+        {
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // 4. Validate template has behavior contract
+        if (!template.UseBehaviorContractTemplateId.HasValue)
+        {
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // 5. Acquire distributed lock for this instance
+        var lockKey = $"item-use-step:{body.InstanceId}";
+        var lockOwner = $"use-step-{Guid.NewGuid():N}";
+
+        await using var lockHandle = await _lockProvider.LockAsync(
+            StateStoreDefinitions.ItemLock,
+            lockKey,
+            lockOwner,
+            _configuration.UseStepLockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockHandle.Success)
+        {
+            _logger.LogWarning(
+                "Failed to acquire lock for UseItemStep on {InstanceId}",
+                body.InstanceId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // 6. Re-read instance inside lock to get current state
+        var instanceStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore);
+        var (currentInstance, etag) = await instanceStore.GetWithETagAsync(
+            $"{INST_PREFIX}{body.InstanceId}",
+            cancellationToken);
+
+        if (currentInstance is null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        Guid contractInstanceId;
+        var isFirstStep = !currentInstance.ContractInstanceId.HasValue;
+
+        if (isFirstStep)
+        {
+            // 7a. First step: Execute CanUse validation and create contract
+
+            // Execute CanUse validation if configured
             if (template.CanUseBehaviorContractTemplateId.HasValue &&
                 template.CanUseBehavior != CanUseBehavior.Disabled)
             {
@@ -922,9 +1118,6 @@ public partial class ItemService : IItemService
                 {
                     if (template.CanUseBehavior == CanUseBehavior.Block)
                     {
-                        _logger.LogDebug(
-                            "CanUse validation blocked for item {InstanceId}: {Reason}",
-                            body.InstanceId, validationFailureReason);
                         return (StatusCodes.BadRequest, null);
                     }
                     else // warn_and_proceed
@@ -936,9 +1129,9 @@ public partial class ItemService : IItemService
                 }
             }
 
-            // 6. Create contract instance with user + system parties
+            // Create contract instance
             var systemPartyId = GetOrComputeSystemPartyId(template.GameId);
-            var contractInstanceId = await CreateItemUseContractInstanceAsync(
+            var newContractId = await CreateItemUseContractInstanceAsync(
                 template.UseBehaviorContractTemplateId.Value,
                 body.UserId,
                 body.UserType,
@@ -948,361 +1141,76 @@ public partial class ItemService : IItemService
                 body.Context,
                 cancellationToken);
 
-            if (!contractInstanceId.HasValue)
-            {
-                _logger.LogWarning(
-                    "Failed to create contract instance for item use: template={TemplateId}, user={UserId}",
-                    template.UseBehaviorContractTemplateId.Value, body.UserId);
-
-                await RecordUseFailureAsync(
-                    body.InstanceId,
-                    template.TemplateId,
-                    template.Code,
-                    body.UserId,
-                    body.UserType,
-                    "Failed to create contract instance",
-                    cancellationToken);
-
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // 7. Complete the "use" milestone (triggers prebound APIs)
-            var milestoneSuccess = await CompleteUseMilestoneAsync(
-                contractInstanceId.Value,
-                cancellationToken);
-
-            if (!milestoneSuccess)
-            {
-                _logger.LogWarning(
-                    "Use milestone failed for item {InstanceId}, contract {ContractId}",
-                    body.InstanceId, contractInstanceId.Value);
-
-                // Execute OnUseFailed handler if configured
-                if (template.OnUseFailedBehaviorContractTemplateId.HasValue)
-                {
-                    await ExecuteOnUseFailedHandlerAsync(
-                        template.OnUseFailedBehaviorContractTemplateId.Value,
-                        body.UserId,
-                        body.UserType,
-                        body.InstanceId,
-                        template.TemplateId,
-                        "Contract use milestone failed",
-                        body.Context,
-                        cancellationToken);
-                }
-
-                await RecordUseFailureAsync(
-                    body.InstanceId,
-                    template.TemplateId,
-                    template.Code,
-                    body.UserId,
-                    body.UserType,
-                    "Contract use milestone failed",
-                    cancellationToken);
-
-                // Check if item should be consumed on failure (DESTROY_ALWAYS)
-                if (template.ItemUseBehavior == ItemUseBehavior.DestroyAlways)
-                {
-                    await ConsumeItemAsync(
-                        body.InstanceId,
-                        instance,
-                        template,
-                        cancellationToken);
-                }
-
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // 8. Consume item on success (per itemUseBehavior: DESTROY_ON_SUCCESS or DESTROY_ALWAYS)
-            var (consumed, remainingQuantity) = await ConsumeItemAsync(
-                body.InstanceId,
-                instance,
-                template,
-                cancellationToken);
-
-            // 9. Record success for batched event publishing
-            await RecordUseSuccessAsync(
-                body.InstanceId,
-                template.TemplateId,
-                template.Code,
-                body.UserId,
-                body.UserType,
-                body.TargetId,
-                body.TargetType,
-                consumed,
-                contractInstanceId.Value,
-                cancellationToken);
-
-            _logger.LogDebug(
-                "Item {InstanceId} used successfully, consumed={Consumed}, remaining={Remaining}",
-                body.InstanceId, consumed, remainingQuantity);
-
-            return (StatusCodes.OK, new UseItemResponse
-            {
-                Success = true,
-                InstanceId = body.InstanceId,
-                TemplateId = template.TemplateId,
-                ContractInstanceId = contractInstanceId.Value,
-                Consumed = consumed,
-                RemainingQuantity = remainingQuantity
-            });
-        }
-    }
-
-    /// <inheritdoc/>
-    public async Task<(StatusCodes, UseItemStepResponse?)> UseItemStepAsync(
-        UseItemStepRequest body,
-        CancellationToken cancellationToken = default)
-    {
-        {
-            _logger.LogDebug(
-                "UseItemStep: instance={InstanceId}, user={UserId}, milestone={MilestoneCode}",
-                body.InstanceId, body.UserId, body.MilestoneCode);
-
-            // 1. Load instance (read is safe without lock)
-            var instance = await GetInstanceWithCacheAsync(body.InstanceId.ToString(), cancellationToken);
-            if (instance is null)
-            {
-                _logger.LogDebug("Item instance {InstanceId} not found", body.InstanceId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            // 2. Load template
-            var template = await GetTemplateWithCacheAsync(instance.TemplateId.ToString(), cancellationToken);
-            if (template is null)
-            {
-                _logger.LogWarning(
-                    "Template {TemplateId} not found for instance {InstanceId}",
-                    instance.TemplateId, body.InstanceId);
-                return (StatusCodes.InternalServerError, null);
-            }
-
-            // 3. Check if item use is disabled
-            if (template.ItemUseBehavior == ItemUseBehavior.Disabled)
+            if (!newContractId.HasValue)
             {
                 return (StatusCodes.BadRequest, null);
             }
 
-            // 4. Validate template has behavior contract
-            if (!template.UseBehaviorContractTemplateId.HasValue)
-            {
-                return (StatusCodes.BadRequest, null);
-            }
+            contractInstanceId = newContractId.Value;
 
-            // 5. Acquire distributed lock for this instance
-            var lockKey = $"item-use-step:{body.InstanceId}";
-            var lockOwner = $"use-step-{Guid.NewGuid():N}";
+            // Store contract on instance with session binding
+            currentInstance.ContractInstanceId = contractInstanceId;
+            currentInstance.ContractBindingType = ContractBindingType.Session;
+            currentInstance.ModifiedAt = DateTimeOffset.UtcNow;
 
-            await using var lockHandle = await _lockProvider.LockAsync(
-                StateStoreDefinitions.ItemLock,
-                lockKey,
-                lockOwner,
-                _configuration.UseStepLockTimeoutSeconds,
+            // Save updated instance
+            var saveResult = await instanceStore.TrySaveAsync(
+                $"{INST_PREFIX}{body.InstanceId}",
+                currentInstance,
+                etag ?? string.Empty,
                 cancellationToken);
 
-            if (!lockHandle.Success)
+            if (saveResult is null)
             {
                 _logger.LogWarning(
-                    "Failed to acquire lock for UseItemStep on {InstanceId}",
+                    "Optimistic concurrency failure saving contract to instance {InstanceId}",
                     body.InstanceId);
                 return (StatusCodes.Conflict, null);
             }
 
-            // 6. Re-read instance inside lock to get current state
-            var instanceStore = _stateStoreFactory.GetStore<ItemInstanceModel>(StateStoreDefinitions.ItemInstanceStore);
-            var (currentInstance, etag) = await instanceStore.GetWithETagAsync(
-                $"{INST_PREFIX}{body.InstanceId}",
-                cancellationToken);
+            // Invalidate cache
+            await InvalidateInstanceCacheAsync(body.InstanceId.ToString(), cancellationToken);
+        }
+        else
+        {
+            // 7b. Subsequent step: Use existing contract
+            // Note: isFirstStep is false means ContractInstanceId.HasValue is true
+            contractInstanceId = currentInstance.ContractInstanceId
+                ?? throw new InvalidOperationException("ContractInstanceId is null when isFirstStep is false");
+        }
 
-            if (currentInstance is null)
+        // 8. Complete the specified milestone
+        var milestoneResponse = await _contractClient.CompleteMilestoneAsync(
+            new CompleteMilestoneRequest
             {
-                return (StatusCodes.NotFound, null);
-            }
+                ContractId = contractInstanceId,
+                MilestoneCode = body.MilestoneCode,
+                Evidence = body.Evidence
+            },
+            cancellationToken);
 
-            Guid contractInstanceId;
-            var isFirstStep = !currentInstance.ContractInstanceId.HasValue;
+        if (milestoneResponse.Milestone.Status != MilestoneStatus.Completed)
+        {
+            _logger.LogWarning(
+                "Milestone {MilestoneCode} failed for item {InstanceId}, contract {ContractId}",
+                body.MilestoneCode, body.InstanceId, contractInstanceId);
 
-            if (isFirstStep)
+            // Execute OnUseFailed handler if configured
+            if (template.OnUseFailedBehaviorContractTemplateId.HasValue)
             {
-                // 7a. First step: Execute CanUse validation and create contract
-
-                // Execute CanUse validation if configured
-                if (template.CanUseBehaviorContractTemplateId.HasValue &&
-                    template.CanUseBehavior != CanUseBehavior.Disabled)
-                {
-                    var (validationPassed, validationFailureReason) = await ExecuteCanUseValidationAsync(
-                        template.CanUseBehaviorContractTemplateId.Value,
-                        body.UserId,
-                        body.UserType,
-                        body.InstanceId,
-                        template.TemplateId,
-                        body.Context,
-                        cancellationToken);
-
-                    if (!validationPassed)
-                    {
-                        if (template.CanUseBehavior == CanUseBehavior.Block)
-                        {
-                            return (StatusCodes.BadRequest, null);
-                        }
-                        else // warn_and_proceed
-                        {
-                            _logger.LogWarning(
-                                "CanUse validation failed but proceeding for item {InstanceId}: {Reason}",
-                                body.InstanceId, validationFailureReason);
-                        }
-                    }
-                }
-
-                // Create contract instance
-                var systemPartyId = GetOrComputeSystemPartyId(template.GameId);
-                var newContractId = await CreateItemUseContractInstanceAsync(
-                    template.UseBehaviorContractTemplateId.Value,
+                await ExecuteOnUseFailedHandlerAsync(
+                    template.OnUseFailedBehaviorContractTemplateId.Value,
                     body.UserId,
                     body.UserType,
-                    systemPartyId,
                     body.InstanceId,
                     template.TemplateId,
+                    $"Milestone {body.MilestoneCode} failed",
                     body.Context,
                     cancellationToken);
-
-                if (!newContractId.HasValue)
-                {
-                    return (StatusCodes.BadRequest, null);
-                }
-
-                contractInstanceId = newContractId.Value;
-
-                // Store contract on instance with session binding
-                currentInstance.ContractInstanceId = contractInstanceId;
-                currentInstance.ContractBindingType = ContractBindingType.Session;
-                currentInstance.ModifiedAt = DateTimeOffset.UtcNow;
-
-                // Save updated instance
-                var saveResult = await instanceStore.TrySaveAsync(
-                    $"{INST_PREFIX}{body.InstanceId}",
-                    currentInstance,
-                    etag ?? string.Empty,
-                    cancellationToken);
-
-                if (saveResult is null)
-                {
-                    _logger.LogWarning(
-                        "Optimistic concurrency failure saving contract to instance {InstanceId}",
-                        body.InstanceId);
-                    return (StatusCodes.Conflict, null);
-                }
-
-                // Invalidate cache
-                await InvalidateInstanceCacheAsync(body.InstanceId.ToString(), cancellationToken);
-            }
-            else
-            {
-                // 7b. Subsequent step: Use existing contract
-                // Note: isFirstStep is false means ContractInstanceId.HasValue is true
-                contractInstanceId = currentInstance.ContractInstanceId
-                    ?? throw new InvalidOperationException("ContractInstanceId is null when isFirstStep is false");
             }
 
-            // 8. Complete the specified milestone
-            var milestoneResponse = await _contractClient.CompleteMilestoneAsync(
-                new CompleteMilestoneRequest
-                {
-                    ContractId = contractInstanceId,
-                    MilestoneCode = body.MilestoneCode,
-                    Evidence = body.Evidence
-                },
-                cancellationToken);
-
-            if (milestoneResponse.Milestone.Status != MilestoneStatus.Completed)
-            {
-                _logger.LogWarning(
-                    "Milestone {MilestoneCode} failed for item {InstanceId}, contract {ContractId}",
-                    body.MilestoneCode, body.InstanceId, contractInstanceId);
-
-                // Execute OnUseFailed handler if configured
-                if (template.OnUseFailedBehaviorContractTemplateId.HasValue)
-                {
-                    await ExecuteOnUseFailedHandlerAsync(
-                        template.OnUseFailedBehaviorContractTemplateId.Value,
-                        body.UserId,
-                        body.UserType,
-                        body.InstanceId,
-                        template.TemplateId,
-                        $"Milestone {body.MilestoneCode} failed",
-                        body.Context,
-                        cancellationToken);
-                }
-
-                // Publish step failed event
-                await PublishStepFailedEventAsync(
-                    body.InstanceId,
-                    template.TemplateId,
-                    template.Code,
-                    body.UserId,
-                    body.UserType,
-                    contractInstanceId,
-                    body.MilestoneCode,
-                    $"Milestone completion failed",
-                    cancellationToken);
-
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // 9. Query remaining milestones from contract
-            var remainingMilestones = await GetRemainingMilestonesAsync(contractInstanceId, cancellationToken);
-            var isComplete = remainingMilestones.Count == 0;
-            var consumed = false;
-
-            // 10. If all required milestones complete, handle consumption and cleanup
-            if (isComplete)
-            {
-                // Consume item per itemUseBehavior
-                if (template.ItemUseBehavior != ItemUseBehavior.Disabled)
-                {
-                    // Re-fetch the instance for consumption (it may have been modified)
-                    var freshInstance = await GetInstanceWithCacheAsync(body.InstanceId.ToString(), cancellationToken);
-                    if (freshInstance is not null)
-                    {
-                        (consumed, _) = await ConsumeItemAsync(
-                            body.InstanceId,
-                            freshInstance,
-                            template,
-                            cancellationToken);
-                    }
-                }
-
-                // Clear session binding (only if session type)
-                if (currentInstance.ContractBindingType == ContractBindingType.Session)
-                {
-                    currentInstance.ContractInstanceId = null;
-                    currentInstance.ContractBindingType = ContractBindingType.None;
-                    currentInstance.ModifiedAt = DateTimeOffset.UtcNow;
-
-                    // Re-fetch etag for optimistic concurrency
-                    var (latestInstance, latestEtag) = await instanceStore.GetWithETagAsync(
-                        $"{INST_PREFIX}{body.InstanceId}",
-                        cancellationToken);
-
-                    if (latestInstance is not null)
-                    {
-                        latestInstance.ContractInstanceId = null;
-                        latestInstance.ContractBindingType = ContractBindingType.None;
-                        latestInstance.ModifiedAt = DateTimeOffset.UtcNow;
-
-                        await instanceStore.TrySaveAsync(
-                            $"{INST_PREFIX}{body.InstanceId}",
-                            latestInstance,
-                            latestEtag ?? string.Empty,
-                            cancellationToken);
-
-                        await InvalidateInstanceCacheAsync(body.InstanceId.ToString(), cancellationToken);
-                    }
-                }
-            }
-
-            // 11. Publish step completed event
-            await PublishStepCompletedEventAsync(
+            // Publish step failed event
+            await PublishStepFailedEventAsync(
                 body.InstanceId,
                 template.TemplateId,
                 template.Code,
@@ -1310,26 +1218,92 @@ public partial class ItemService : IItemService
                 body.UserType,
                 contractInstanceId,
                 body.MilestoneCode,
-                isComplete ? null : remainingMilestones,
-                isComplete,
-                consumed,
+                $"Milestone completion failed",
                 cancellationToken);
 
-            _logger.LogDebug(
-                "UseItemStep completed: instance={InstanceId}, milestone={MilestoneCode}, isComplete={IsComplete}, consumed={Consumed}",
-                body.InstanceId, body.MilestoneCode, isComplete, consumed);
-
-            return (StatusCodes.OK, new UseItemStepResponse
-            {
-                Success = true,
-                InstanceId = body.InstanceId,
-                ContractInstanceId = contractInstanceId,
-                CompletedMilestone = body.MilestoneCode,
-                RemainingMilestones = isComplete ? null : remainingMilestones,
-                IsComplete = isComplete,
-                Consumed = consumed
-            });
+            return (StatusCodes.BadRequest, null);
         }
+
+        // 9. Query remaining milestones from contract
+        var remainingMilestones = await GetRemainingMilestonesAsync(contractInstanceId, cancellationToken);
+        var isComplete = remainingMilestones.Count == 0;
+        var consumed = false;
+
+        // 10. If all required milestones complete, handle consumption and cleanup
+        if (isComplete)
+        {
+            // Consume item per itemUseBehavior
+            if (template.ItemUseBehavior != ItemUseBehavior.Disabled)
+            {
+                // Re-fetch the instance for consumption (it may have been modified)
+                var freshInstance = await GetInstanceWithCacheAsync(body.InstanceId.ToString(), cancellationToken);
+                if (freshInstance is not null)
+                {
+                    (consumed, _) = await ConsumeItemAsync(
+                        body.InstanceId,
+                        freshInstance,
+                        template,
+                        cancellationToken);
+                }
+            }
+
+            // Clear session binding (only if session type)
+            if (currentInstance.ContractBindingType == ContractBindingType.Session)
+            {
+                currentInstance.ContractInstanceId = null;
+                currentInstance.ContractBindingType = ContractBindingType.None;
+                currentInstance.ModifiedAt = DateTimeOffset.UtcNow;
+
+                // Re-fetch etag for optimistic concurrency
+                var (latestInstance, latestEtag) = await instanceStore.GetWithETagAsync(
+                    $"{INST_PREFIX}{body.InstanceId}",
+                    cancellationToken);
+
+                if (latestInstance is not null)
+                {
+                    latestInstance.ContractInstanceId = null;
+                    latestInstance.ContractBindingType = ContractBindingType.None;
+                    latestInstance.ModifiedAt = DateTimeOffset.UtcNow;
+
+                    await instanceStore.TrySaveAsync(
+                        $"{INST_PREFIX}{body.InstanceId}",
+                        latestInstance,
+                        latestEtag ?? string.Empty,
+                        cancellationToken);
+
+                    await InvalidateInstanceCacheAsync(body.InstanceId.ToString(), cancellationToken);
+                }
+            }
+        }
+
+        // 11. Publish step completed event
+        await PublishStepCompletedEventAsync(
+            body.InstanceId,
+            template.TemplateId,
+            template.Code,
+            body.UserId,
+            body.UserType,
+            contractInstanceId,
+            body.MilestoneCode,
+            isComplete ? null : remainingMilestones,
+            isComplete,
+            consumed,
+            cancellationToken);
+
+        _logger.LogDebug(
+            "UseItemStep completed: instance={InstanceId}, milestone={MilestoneCode}, isComplete={IsComplete}, consumed={Consumed}",
+            body.InstanceId, body.MilestoneCode, isComplete, consumed);
+
+        return (StatusCodes.OK, new UseItemStepResponse
+        {
+            Success = true,
+            InstanceId = body.InstanceId,
+            ContractInstanceId = contractInstanceId,
+            CompletedMilestone = body.MilestoneCode,
+            RemainingMilestones = isComplete ? null : remainingMilestones,
+            IsComplete = isComplete,
+            Consumed = consumed
+        });
     }
 
     /// <summary>
@@ -2032,39 +2006,37 @@ public partial class ItemService : IItemService
         ListItemsByContainerRequest body,
         CancellationToken cancellationToken = default)
     {
+        var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.ItemInstanceStore);
+
+        var idsJson = await stringStore.GetAsync($"{INST_CONTAINER_INDEX}{body.ContainerId}", cancellationToken);
+        var ids = string.IsNullOrEmpty(idsJson)
+            ? new List<string>()
+            : BannouJson.Deserialize<List<string>>(idsJson) ?? new List<string>();
+
+        var actualCount = ids.Count;
+        var effectiveLimit = _configuration.MaxInstancesPerQuery;
+        var wasTruncated = actualCount > effectiveLimit;
+        var idsToFetch = wasTruncated ? ids.Take(effectiveLimit).ToList() : ids;
+
+        // Load all instances in bulk (cache + persistent store)
+        var modelsById = await GetInstancesBulkWithCacheAsync(idsToFetch, cancellationToken);
+
+        // Map to responses, preserving order from the index
+        var items = new List<ItemInstanceResponse>();
+        foreach (var id in idsToFetch)
         {
-            var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.ItemInstanceStore);
-
-            var idsJson = await stringStore.GetAsync($"{INST_CONTAINER_INDEX}{body.ContainerId}", cancellationToken);
-            var ids = string.IsNullOrEmpty(idsJson)
-                ? new List<string>()
-                : BannouJson.Deserialize<List<string>>(idsJson) ?? new List<string>();
-
-            var actualCount = ids.Count;
-            var effectiveLimit = _configuration.MaxInstancesPerQuery;
-            var wasTruncated = actualCount > effectiveLimit;
-            var idsToFetch = wasTruncated ? ids.Take(effectiveLimit).ToList() : ids;
-
-            // Load all instances in bulk (cache + persistent store)
-            var modelsById = await GetInstancesBulkWithCacheAsync(idsToFetch, cancellationToken);
-
-            // Map to responses, preserving order from the index
-            var items = new List<ItemInstanceResponse>();
-            foreach (var id in idsToFetch)
+            if (modelsById.TryGetValue(id, out var model))
             {
-                if (modelsById.TryGetValue(id, out var model))
-                {
-                    items.Add(MapInstanceToResponse(model));
-                }
+                items.Add(MapInstanceToResponse(model));
             }
-
-            return (StatusCodes.OK, new ListItemsResponse
-            {
-                Items = items,
-                TotalCount = actualCount,
-                WasTruncated = wasTruncated
-            });
         }
+
+        return (StatusCodes.OK, new ListItemsResponse
+        {
+            Items = items,
+            TotalCount = actualCount,
+            WasTruncated = wasTruncated
+        });
     }
 
     /// <inheritdoc/>
@@ -2072,39 +2044,37 @@ public partial class ItemService : IItemService
         ListItemsByTemplateRequest body,
         CancellationToken cancellationToken = default)
     {
+        var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.ItemInstanceStore);
+
+        var idsJson = await stringStore.GetAsync($"{INST_TEMPLATE_INDEX}{body.TemplateId}", cancellationToken);
+        var ids = string.IsNullOrEmpty(idsJson)
+            ? new List<string>()
+            : BannouJson.Deserialize<List<string>>(idsJson) ?? new List<string>();
+
+        // Load all instances in bulk (cache + persistent store)
+        var modelsById = await GetInstancesBulkWithCacheAsync(ids, cancellationToken);
+
+        // Filter and map to responses
+        var items = new List<ItemInstanceResponse>();
+        foreach (var id in ids)
         {
-            var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.ItemInstanceStore);
+            if (!modelsById.TryGetValue(id, out var model)) continue;
 
-            var idsJson = await stringStore.GetAsync($"{INST_TEMPLATE_INDEX}{body.TemplateId}", cancellationToken);
-            var ids = string.IsNullOrEmpty(idsJson)
-                ? new List<string>()
-                : BannouJson.Deserialize<List<string>>(idsJson) ?? new List<string>();
+            // Apply realm filter
+            if (body.RealmId.HasValue && model.RealmId != body.RealmId.Value) continue;
 
-            // Load all instances in bulk (cache + persistent store)
-            var modelsById = await GetInstancesBulkWithCacheAsync(ids, cancellationToken);
-
-            // Filter and map to responses
-            var items = new List<ItemInstanceResponse>();
-            foreach (var id in ids)
-            {
-                if (!modelsById.TryGetValue(id, out var model)) continue;
-
-                // Apply realm filter
-                if (body.RealmId.HasValue && model.RealmId != body.RealmId.Value) continue;
-
-                items.Add(MapInstanceToResponse(model));
-            }
-
-            var effectiveLimit = Math.Min(body.Limit, _configuration.MaxInstancesPerQuery);
-            var totalCount = items.Count;
-            var paged = items.Skip(body.Offset).Take(effectiveLimit).ToList();
-
-            return (StatusCodes.OK, new ListItemsResponse
-            {
-                Items = paged,
-                TotalCount = totalCount
-            });
+            items.Add(MapInstanceToResponse(model));
         }
+
+        var effectiveLimit = Math.Min(body.Limit, _configuration.MaxInstancesPerQuery);
+        var totalCount = items.Count;
+        var paged = items.Skip(body.Offset).Take(effectiveLimit).ToList();
+
+        return (StatusCodes.OK, new ListItemsResponse
+        {
+            Items = paged,
+            TotalCount = totalCount
+        });
     }
 
     /// <inheritdoc/>
@@ -2112,36 +2082,34 @@ public partial class ItemService : IItemService
         BatchGetItemInstancesRequest body,
         CancellationToken cancellationToken = default)
     {
+        // Convert GUIDs to string IDs for bulk lookup
+        var instanceIdStrings = body.InstanceIds.Select(id => id.ToString()).ToList();
+
+        // Load all instances in bulk (cache + persistent store)
+        var modelsById = await GetInstancesBulkWithCacheAsync(instanceIdStrings, cancellationToken);
+
+        // Build results, tracking not found items
+        var items = new List<ItemInstanceResponse>();
+        var notFound = new List<Guid>();
+
+        foreach (var instanceId in body.InstanceIds)
         {
-            // Convert GUIDs to string IDs for bulk lookup
-            var instanceIdStrings = body.InstanceIds.Select(id => id.ToString()).ToList();
-
-            // Load all instances in bulk (cache + persistent store)
-            var modelsById = await GetInstancesBulkWithCacheAsync(instanceIdStrings, cancellationToken);
-
-            // Build results, tracking not found items
-            var items = new List<ItemInstanceResponse>();
-            var notFound = new List<Guid>();
-
-            foreach (var instanceId in body.InstanceIds)
+            var idStr = instanceId.ToString();
+            if (modelsById.TryGetValue(idStr, out var model))
             {
-                var idStr = instanceId.ToString();
-                if (modelsById.TryGetValue(idStr, out var model))
-                {
-                    items.Add(MapInstanceToResponse(model));
-                }
-                else
-                {
-                    notFound.Add(instanceId);
-                }
+                items.Add(MapInstanceToResponse(model));
             }
-
-            return (StatusCodes.OK, new BatchGetItemInstancesResponse
+            else
             {
-                Items = items,
-                NotFound = notFound
-            });
+                notFound.Add(instanceId);
+            }
         }
+
+        return (StatusCodes.OK, new BatchGetItemInstancesResponse
+        {
+            Items = items,
+            NotFound = notFound
+        });
     }
 
     #endregion

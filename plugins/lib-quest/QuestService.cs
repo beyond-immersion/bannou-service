@@ -177,88 +177,86 @@ public partial class QuestService : IQuestService
         CreateQuestDefinitionRequest body,
         CancellationToken cancellationToken)
     {
+        _logger.LogDebug("Creating quest definition with code {Code}", body.Code);
+
+        // Validate code format (uppercase, underscores)
+        var normalizedCode = body.Code.ToUpperInvariant();
+        if (string.IsNullOrWhiteSpace(normalizedCode))
         {
-            _logger.LogDebug("Creating quest definition with code {Code}", body.Code);
-
-            // Validate code format (uppercase, underscores)
-            var normalizedCode = body.Code.ToUpperInvariant();
-            if (string.IsNullOrWhiteSpace(normalizedCode))
-            {
-                _logger.LogWarning("Quest code cannot be empty");
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Check for duplicate code
-            var existingByCode = await DefinitionStore.QueryAsync(
-                d => d.Code == normalizedCode,
-                cancellationToken: cancellationToken);
-            if (existingByCode.Count > 0)
-            {
-                _logger.LogWarning("Quest definition with code {Code} already exists", normalizedCode);
-                return (StatusCodes.Conflict, null);
-            }
-
-            var definitionId = Guid.NewGuid();
-            var now = DateTimeOffset.UtcNow;
-
-            // Build contract template via IContractClient
-            var templateRequest = BuildContractTemplateRequest(body, definitionId, normalizedCode);
-            ContractTemplateResponse templateResponse;
-            try
-            {
-                templateResponse = await _contractClient.CreateContractTemplateAsync(
-                    templateRequest,
-                    cancellationToken);
-            }
-            catch (ApiException ex) when (ex.StatusCode == 409)
-            {
-                // Template with same code already exists - this is expected for repeated quest creation
-                _logger.LogWarning("Contract template with code quest_{Code} already exists", normalizedCode.ToLowerInvariant());
-                return (StatusCodes.Conflict, null);
-            }
-
-            if (templateResponse == null)
-            {
-                _logger.LogWarning("Failed to create contract template for quest {Code}: null response",
-                    normalizedCode);
-                return (StatusCodes.ServiceUnavailable, null);
-            }
-
-            // Build quest definition model
-            var definition = new QuestDefinitionModel
-            {
-                DefinitionId = definitionId,
-                ContractTemplateId = templateResponse.TemplateId,
-                Code = normalizedCode,
-                Name = body.Name,
-                Description = body.Description,
-                Category = body.Category,
-                Difficulty = body.Difficulty,
-                LevelRequirement = body.LevelRequirement,
-                Repeatable = body.Repeatable,
-                CooldownSeconds = body.CooldownSeconds,
-                DeadlineSeconds = body.DeadlineSeconds,
-                MaxQuestors = body.MaxQuestors,
-                Objectives = MapObjectiveDefinitions(body.Objectives),
-                Prerequisites = MapPrerequisiteDefinitions(body.Prerequisites),
-                Rewards = MapRewardDefinitions(body.Rewards),
-                Tags = body.Tags,
-                QuestGiverCharacterId = body.QuestGiverCharacterId,
-                GameServiceId = body.GameServiceId,
-                Deprecated = false,
-                CreatedAt = now
-            };
-
-            // Save to state store
-            var definitionKey = BuildDefinitionKey(definitionId);
-            await DefinitionStore.SaveAsync(definitionKey, definition, cancellationToken: cancellationToken);
-
-            _logger.LogInformation("Quest definition created: {DefinitionId} with code {Code}",
-                definitionId, normalizedCode);
-
-            var response = MapToDefinitionResponse(definition);
-            return (StatusCodes.OK, response);
+            _logger.LogWarning("Quest code cannot be empty");
+            return (StatusCodes.BadRequest, null);
         }
+
+        // Check for duplicate code
+        var existingByCode = await DefinitionStore.QueryAsync(
+            d => d.Code == normalizedCode,
+            cancellationToken: cancellationToken);
+        if (existingByCode.Count > 0)
+        {
+            _logger.LogWarning("Quest definition with code {Code} already exists", normalizedCode);
+            return (StatusCodes.Conflict, null);
+        }
+
+        var definitionId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+
+        // Build contract template via IContractClient
+        var templateRequest = BuildContractTemplateRequest(body, definitionId, normalizedCode);
+        ContractTemplateResponse templateResponse;
+        try
+        {
+            templateResponse = await _contractClient.CreateContractTemplateAsync(
+                templateRequest,
+                cancellationToken);
+        }
+        catch (ApiException ex) when (ex.StatusCode == 409)
+        {
+            // Template with same code already exists - this is expected for repeated quest creation
+            _logger.LogWarning("Contract template with code quest_{Code} already exists", normalizedCode.ToLowerInvariant());
+            return (StatusCodes.Conflict, null);
+        }
+
+        if (templateResponse == null)
+        {
+            _logger.LogWarning("Failed to create contract template for quest {Code}: null response",
+                normalizedCode);
+            return (StatusCodes.ServiceUnavailable, null);
+        }
+
+        // Build quest definition model
+        var definition = new QuestDefinitionModel
+        {
+            DefinitionId = definitionId,
+            ContractTemplateId = templateResponse.TemplateId,
+            Code = normalizedCode,
+            Name = body.Name,
+            Description = body.Description,
+            Category = body.Category,
+            Difficulty = body.Difficulty,
+            LevelRequirement = body.LevelRequirement,
+            Repeatable = body.Repeatable,
+            CooldownSeconds = body.CooldownSeconds,
+            DeadlineSeconds = body.DeadlineSeconds,
+            MaxQuestors = body.MaxQuestors,
+            Objectives = MapObjectiveDefinitions(body.Objectives),
+            Prerequisites = MapPrerequisiteDefinitions(body.Prerequisites),
+            Rewards = MapRewardDefinitions(body.Rewards),
+            Tags = body.Tags,
+            QuestGiverCharacterId = body.QuestGiverCharacterId,
+            GameServiceId = body.GameServiceId,
+            Deprecated = false,
+            CreatedAt = now
+        };
+
+        // Save to state store
+        var definitionKey = BuildDefinitionKey(definitionId);
+        await DefinitionStore.SaveAsync(definitionKey, definition, cancellationToken: cancellationToken);
+
+        _logger.LogInformation("Quest definition created: {DefinitionId} with code {Code}",
+            definitionId, normalizedCode);
+
+        var response = MapToDefinitionResponse(definition);
+        return (StatusCodes.OK, response);
     }
 
     /// <inheritdoc/>
@@ -266,56 +264,54 @@ public partial class QuestService : IQuestService
         GetQuestDefinitionRequest body,
         CancellationToken cancellationToken)
     {
+        QuestDefinitionModel? definition = null;
+
+        // Try cache first if getting by ID
+        if (body.DefinitionId.HasValue)
         {
-            QuestDefinitionModel? definition = null;
-
-            // Try cache first if getting by ID
-            if (body.DefinitionId.HasValue)
-            {
-                var cacheKey = BuildDefinitionKey(body.DefinitionId.Value);
-                definition = await DefinitionCache.GetAsync(cacheKey, cancellationToken);
-
-                if (definition == null)
-                {
-                    // Cache miss - query from MySQL
-                    var results = await DefinitionStore.QueryAsync(
-                        d => d.DefinitionId == body.DefinitionId.Value,
-                        cancellationToken: cancellationToken);
-                    definition = results.FirstOrDefault();
-
-                    // Populate cache if found
-                    if (definition != null)
-                    {
-                        await DefinitionCache.SaveAsync(
-                            cacheKey,
-                            definition,
-                            new StateOptions { Ttl = _configuration.DefinitionCacheTtlSeconds },
-                            cancellationToken);
-                    }
-                }
-            }
-            else if (!string.IsNullOrWhiteSpace(body.Code))
-            {
-                var normalizedCode = body.Code.ToUpperInvariant();
-                var results = await DefinitionStore.QueryAsync(
-                    d => d.Code == normalizedCode,
-                    cancellationToken: cancellationToken);
-                definition = results.FirstOrDefault();
-            }
-            else
-            {
-                _logger.LogWarning("GetQuestDefinition requires either definitionId or code");
-                return (StatusCodes.BadRequest, null);
-            }
+            var cacheKey = BuildDefinitionKey(body.DefinitionId.Value);
+            definition = await DefinitionCache.GetAsync(cacheKey, cancellationToken);
 
             if (definition == null)
             {
-                return (StatusCodes.NotFound, null);
-            }
+                // Cache miss - query from MySQL
+                var results = await DefinitionStore.QueryAsync(
+                    d => d.DefinitionId == body.DefinitionId.Value,
+                    cancellationToken: cancellationToken);
+                definition = results.FirstOrDefault();
 
-            var response = MapToDefinitionResponse(definition);
-            return (StatusCodes.OK, response);
+                // Populate cache if found
+                if (definition != null)
+                {
+                    await DefinitionCache.SaveAsync(
+                        cacheKey,
+                        definition,
+                        new StateOptions { Ttl = _configuration.DefinitionCacheTtlSeconds },
+                        cancellationToken);
+                }
+            }
         }
+        else if (!string.IsNullOrWhiteSpace(body.Code))
+        {
+            var normalizedCode = body.Code.ToUpperInvariant();
+            var results = await DefinitionStore.QueryAsync(
+                d => d.Code == normalizedCode,
+                cancellationToken: cancellationToken);
+            definition = results.FirstOrDefault();
+        }
+        else
+        {
+            _logger.LogWarning("GetQuestDefinition requires either definitionId or code");
+            return (StatusCodes.BadRequest, null);
+        }
+
+        if (definition == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        var response = MapToDefinitionResponse(definition);
+        return (StatusCodes.OK, response);
     }
 
     /// <inheritdoc/>
@@ -323,34 +319,32 @@ public partial class QuestService : IQuestService
         ListQuestDefinitionsRequest body,
         CancellationToken cancellationToken)
     {
+        var results = await DefinitionStore.QueryAsync(
+            d => (body.GameServiceId == null || d.GameServiceId == body.GameServiceId) &&
+                (body.Category == null || d.Category == body.Category) &&
+                (body.Difficulty == null || d.Difficulty == body.Difficulty) &&
+                (body.IncludeDeprecated == true || !d.Deprecated),
+            cancellationToken: cancellationToken);
+
+        // Filter by tags if specified
+        if (body.Tags != null && body.Tags.Count > 0)
         {
-            var results = await DefinitionStore.QueryAsync(
-                d => (body.GameServiceId == null || d.GameServiceId == body.GameServiceId) &&
-                    (body.Category == null || d.Category == body.Category) &&
-                    (body.Difficulty == null || d.Difficulty == body.Difficulty) &&
-                    (body.IncludeDeprecated == true || !d.Deprecated),
-                cancellationToken: cancellationToken);
-
-            // Filter by tags if specified
-            if (body.Tags != null && body.Tags.Count > 0)
-            {
-                results = results.Where(d =>
-                    d.Tags != null && d.Tags.Any(t => body.Tags.Contains(t))).ToList();
-            }
-
-            var total = results.Count;
-
-            // Apply pagination (Offset and Limit have schema defaults of 0 and 50)
-            var paged = results.Skip(body.Offset).Take(body.Limit).ToList();
-
-            var response = new ListQuestDefinitionsResponse
-            {
-                Definitions = paged.Select(MapToDefinitionResponse).ToList(),
-                Total = total
-            };
-
-            return (StatusCodes.OK, response);
+            results = results.Where(d =>
+                d.Tags != null && d.Tags.Any(t => body.Tags.Contains(t))).ToList();
         }
+
+        var total = results.Count;
+
+        // Apply pagination (Offset and Limit have schema defaults of 0 and 50)
+        var paged = results.Skip(body.Offset).Take(body.Limit).ToList();
+
+        var response = new ListQuestDefinitionsResponse
+        {
+            Definitions = paged.Select(MapToDefinitionResponse).ToList(),
+            Total = total
+        };
+
+        return (StatusCodes.OK, response);
     }
 
     /// <inheritdoc/>
@@ -358,56 +352,54 @@ public partial class QuestService : IQuestService
         UpdateQuestDefinitionRequest body,
         CancellationToken cancellationToken)
     {
+        var definitionKey = BuildDefinitionKey(body.DefinitionId);
+
+        for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
-            var definitionKey = BuildDefinitionKey(body.DefinitionId);
+            var (definition, etag) = await DefinitionStore.GetWithETagAsync(
+                definitionKey,
+                cancellationToken);
 
-            for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
+            if (definition == null)
             {
-                var (definition, etag) = await DefinitionStore.GetWithETagAsync(
-                    definitionKey,
-                    cancellationToken);
-
-                if (definition == null)
-                {
-                    return (StatusCodes.NotFound, null);
-                }
-
-                // Update mutable fields only
-                if (!string.IsNullOrWhiteSpace(body.Name))
-                    definition.Name = body.Name;
-                if (body.Description != null)
-                    definition.Description = body.Description;
-                if (body.Category.HasValue)
-                    definition.Category = body.Category.Value;
-                if (body.Difficulty.HasValue)
-                    definition.Difficulty = body.Difficulty.Value;
-                if (body.Tags != null)
-                    definition.Tags = body.Tags.ToList();
-
-                var saveResult = await DefinitionStore.TrySaveAsync(
-                    definitionKey,
-                    definition,
-                    etag ?? string.Empty,
-                    cancellationToken: cancellationToken);
-
-                if (saveResult == null)
-                {
-                    _logger.LogDebug("Concurrent modification updating quest definition {DefinitionId}, retrying (attempt {Attempt})",
-                        body.DefinitionId, attempt + 1);
-                    continue;
-                }
-
-                // Invalidate cache
-                await DefinitionCache.DeleteAsync(definitionKey, cancellationToken);
-
-                _logger.LogInformation("Quest definition updated: {DefinitionId}", body.DefinitionId);
-                return (StatusCodes.OK, MapToDefinitionResponse(definition));
+                return (StatusCodes.NotFound, null);
             }
 
-            _logger.LogWarning("Failed to update quest definition {DefinitionId} after {MaxRetries} attempts",
-                body.DefinitionId, _configuration.MaxConcurrencyRetries);
-            return (StatusCodes.Conflict, null);
+            // Update mutable fields only
+            if (!string.IsNullOrWhiteSpace(body.Name))
+                definition.Name = body.Name;
+            if (body.Description != null)
+                definition.Description = body.Description;
+            if (body.Category.HasValue)
+                definition.Category = body.Category.Value;
+            if (body.Difficulty.HasValue)
+                definition.Difficulty = body.Difficulty.Value;
+            if (body.Tags != null)
+                definition.Tags = body.Tags.ToList();
+
+            var saveResult = await DefinitionStore.TrySaveAsync(
+                definitionKey,
+                definition,
+                etag ?? string.Empty,
+                cancellationToken: cancellationToken);
+
+            if (saveResult == null)
+            {
+                _logger.LogDebug("Concurrent modification updating quest definition {DefinitionId}, retrying (attempt {Attempt})",
+                    body.DefinitionId, attempt + 1);
+                continue;
+            }
+
+            // Invalidate cache
+            await DefinitionCache.DeleteAsync(definitionKey, cancellationToken);
+
+            _logger.LogInformation("Quest definition updated: {DefinitionId}", body.DefinitionId);
+            return (StatusCodes.OK, MapToDefinitionResponse(definition));
         }
+
+        _logger.LogWarning("Failed to update quest definition {DefinitionId} after {MaxRetries} attempts",
+            body.DefinitionId, _configuration.MaxConcurrencyRetries);
+        return (StatusCodes.Conflict, null);
     }
 
     /// <inheritdoc/>
@@ -415,52 +407,50 @@ public partial class QuestService : IQuestService
         DeprecateQuestDefinitionRequest body,
         CancellationToken cancellationToken)
     {
+        var definitionKey = BuildDefinitionKey(body.DefinitionId);
+
+        for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
-            var definitionKey = BuildDefinitionKey(body.DefinitionId);
+            var (definition, etag) = await DefinitionStore.GetWithETagAsync(
+                definitionKey,
+                cancellationToken);
 
-            for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
+            if (definition == null)
             {
-                var (definition, etag) = await DefinitionStore.GetWithETagAsync(
-                    definitionKey,
-                    cancellationToken);
+                return (StatusCodes.NotFound, null);
+            }
 
-                if (definition == null)
-                {
-                    return (StatusCodes.NotFound, null);
-                }
-
-                if (definition.Deprecated)
-                {
-                    // Already deprecated - idempotent success
-                    return (StatusCodes.OK, MapToDefinitionResponse(definition));
-                }
-
-                definition.Deprecated = true;
-
-                var saveResult = await DefinitionStore.TrySaveAsync(
-                    definitionKey,
-                    definition,
-                    etag ?? string.Empty,
-                    cancellationToken: cancellationToken);
-
-                if (saveResult == null)
-                {
-                    _logger.LogDebug("Concurrent modification deprecating quest definition {DefinitionId}, retrying (attempt {Attempt})",
-                        body.DefinitionId, attempt + 1);
-                    continue;
-                }
-
-                // Invalidate cache
-                await DefinitionCache.DeleteAsync(definitionKey, cancellationToken);
-
-                _logger.LogInformation("Quest definition deprecated: {DefinitionId}", body.DefinitionId);
+            if (definition.Deprecated)
+            {
+                // Already deprecated - idempotent success
                 return (StatusCodes.OK, MapToDefinitionResponse(definition));
             }
 
-            _logger.LogWarning("Failed to deprecate quest definition {DefinitionId} after {MaxRetries} attempts",
-                body.DefinitionId, _configuration.MaxConcurrencyRetries);
-            return (StatusCodes.Conflict, null);
+            definition.Deprecated = true;
+
+            var saveResult = await DefinitionStore.TrySaveAsync(
+                definitionKey,
+                definition,
+                etag ?? string.Empty,
+                cancellationToken: cancellationToken);
+
+            if (saveResult == null)
+            {
+                _logger.LogDebug("Concurrent modification deprecating quest definition {DefinitionId}, retrying (attempt {Attempt})",
+                    body.DefinitionId, attempt + 1);
+                continue;
+            }
+
+            // Invalidate cache
+            await DefinitionCache.DeleteAsync(definitionKey, cancellationToken);
+
+            _logger.LogInformation("Quest definition deprecated: {DefinitionId}", body.DefinitionId);
+            return (StatusCodes.OK, MapToDefinitionResponse(definition));
         }
+
+        _logger.LogWarning("Failed to deprecate quest definition {DefinitionId} after {MaxRetries} attempts",
+            body.DefinitionId, _configuration.MaxConcurrencyRetries);
+        return (StatusCodes.Conflict, null);
     }
 
     #endregion
@@ -472,128 +462,127 @@ public partial class QuestService : IQuestService
         AcceptQuestRequest body,
         CancellationToken cancellationToken)
     {
+        _logger.LogDebug("Accepting quest for character {CharacterId}", body.QuestorCharacterId);
+
+        // Get quest definition
+        QuestDefinitionModel? definition = null;
+        if (body.DefinitionId.HasValue)
         {
-            _logger.LogDebug("Accepting quest for character {CharacterId}", body.QuestorCharacterId);
+            definition = await GetDefinitionModelAsync(body.DefinitionId.Value, cancellationToken);
+        }
+        else if (!string.IsNullOrWhiteSpace(body.Code))
+        {
+            var normalizedCode = body.Code.ToUpperInvariant();
+            var results = await DefinitionStore.QueryAsync(
+                d => d.Code == normalizedCode,
+                cancellationToken: cancellationToken);
+            definition = results.FirstOrDefault();
+        }
 
-            // Get quest definition
-            QuestDefinitionModel? definition = null;
-            if (body.DefinitionId.HasValue)
-            {
-                definition = await GetDefinitionModelAsync(body.DefinitionId.Value, cancellationToken);
-            }
-            else if (!string.IsNullOrWhiteSpace(body.Code))
-            {
-                var normalizedCode = body.Code.ToUpperInvariant();
-                var results = await DefinitionStore.QueryAsync(
-                    d => d.Code == normalizedCode,
-                    cancellationToken: cancellationToken);
-                definition = results.FirstOrDefault();
-            }
+        if (definition == null)
+        {
+            _logger.LogWarning("Quest definition not found");
+            return (StatusCodes.NotFound, null);
+        }
 
-            if (definition == null)
-            {
-                _logger.LogWarning("Quest definition not found");
-                return (StatusCodes.NotFound, null);
-            }
+        // Check deprecated
+        if (definition.Deprecated)
+        {
+            _logger.LogWarning("Cannot accept deprecated quest {Code}", definition.Code);
+            return (StatusCodes.BadRequest, null);
+        }
 
-            // Check deprecated
-            if (definition.Deprecated)
-            {
-                _logger.LogWarning("Cannot accept deprecated quest {Code}", definition.Code);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Validate character exists
-            try
-            {
-                await _characterClient.GetCharacterAsync(
-                    new GetCharacterRequest { CharacterId = body.QuestorCharacterId },
-                    cancellationToken);
-            }
-            catch (ApiException)
-            {
-                _logger.LogWarning("Character not found: {CharacterId}", body.QuestorCharacterId);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Acquire distributed lock for character's quest operations
-            var lockKey = BuildLockKey($"char:{body.QuestorCharacterId}");
-            await using var lockResponse = await _lockProvider.LockAsync(
-                StateStoreDefinitions.QuestIdempotency,
-                lockKey,
-                Guid.NewGuid().ToString(),
-                _configuration.LockExpirySeconds,
+        // Validate character exists
+        try
+        {
+            await _characterClient.GetCharacterAsync(
+                new GetCharacterRequest { CharacterId = body.QuestorCharacterId },
                 cancellationToken);
+        }
+        catch (ApiException)
+        {
+            _logger.LogWarning("Character not found: {CharacterId}", body.QuestorCharacterId);
+            return (StatusCodes.BadRequest, null);
+        }
 
-            if (!lockResponse.Success)
+        // Acquire distributed lock for character's quest operations
+        var lockKey = BuildLockKey($"char:{body.QuestorCharacterId}");
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.QuestIdempotency,
+            lockKey,
+            Guid.NewGuid().ToString(),
+            _configuration.LockExpirySeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Failed to acquire lock for character {CharacterId}", body.QuestorCharacterId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Check max active quests
+        var characterIndexKey = BuildCharacterIndexKey(body.QuestorCharacterId);
+        var characterIndex = await CharacterIndex.GetAsync(characterIndexKey, cancellationToken);
+        var activeCount = characterIndex?.ActiveQuestIds?.Count ?? 0;
+
+        if (activeCount >= _configuration.MaxActiveQuestsPerCharacter)
+        {
+            _logger.LogWarning("Character {CharacterId} already has maximum active quests ({Max})",
+                body.QuestorCharacterId, _configuration.MaxActiveQuestsPerCharacter);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Check cooldown for repeatable quests
+        if (definition.Repeatable && definition.CooldownSeconds.HasValue)
+        {
+            var cooldownKey = BuildCooldownKey(body.QuestorCharacterId, definition.Code);
+            var cooldown = await CooldownStore.GetAsync(cooldownKey, cancellationToken);
+            if (cooldown != null && cooldown.ExpiresAt > DateTimeOffset.UtcNow)
             {
-                _logger.LogWarning("Failed to acquire lock for character {CharacterId}", body.QuestorCharacterId);
+                _logger.LogWarning("Quest {Code} is on cooldown for character {CharacterId} until {ExpiresAt}",
+                    definition.Code, body.QuestorCharacterId, cooldown.ExpiresAt);
                 return (StatusCodes.Conflict, null);
             }
+        }
 
-            // Check max active quests
-            var characterIndexKey = BuildCharacterIndexKey(body.QuestorCharacterId);
-            var characterIndex = await CharacterIndex.GetAsync(characterIndexKey, cancellationToken);
-            var activeCount = characterIndex?.ActiveQuestIds?.Count ?? 0;
-
-            if (activeCount >= _configuration.MaxActiveQuestsPerCharacter)
+        // Check if already has active instance of this quest
+        if (characterIndex?.ActiveQuestIds != null)
+        {
+            foreach (var activeQuestId in characterIndex.ActiveQuestIds)
             {
-                _logger.LogWarning("Character {CharacterId} already has maximum active quests ({Max})",
-                    body.QuestorCharacterId, _configuration.MaxActiveQuestsPerCharacter);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            // Check cooldown for repeatable quests
-            if (definition.Repeatable && definition.CooldownSeconds.HasValue)
-            {
-                var cooldownKey = BuildCooldownKey(body.QuestorCharacterId, definition.Code);
-                var cooldown = await CooldownStore.GetAsync(cooldownKey, cancellationToken);
-                if (cooldown != null && cooldown.ExpiresAt > DateTimeOffset.UtcNow)
+                var activeInstance = await InstanceStore.QueryAsync(
+                    i => i.QuestInstanceId == activeQuestId && i.DefinitionId == definition.DefinitionId,
+                    cancellationToken: cancellationToken);
+                if (activeInstance.Any())
                 {
-                    _logger.LogWarning("Quest {Code} is on cooldown for character {CharacterId} until {ExpiresAt}",
-                        definition.Code, body.QuestorCharacterId, cooldown.ExpiresAt);
+                    _logger.LogWarning("Character {CharacterId} already has active instance of quest {Code}",
+                        body.QuestorCharacterId, definition.Code);
                     return (StatusCodes.Conflict, null);
                 }
             }
+        }
 
-            // Check if already has active instance of this quest
-            if (characterIndex?.ActiveQuestIds != null)
-            {
-                foreach (var activeQuestId in characterIndex.ActiveQuestIds)
-                {
-                    var activeInstance = await InstanceStore.QueryAsync(
-                        i => i.QuestInstanceId == activeQuestId && i.DefinitionId == definition.DefinitionId,
-                        cancellationToken: cancellationToken);
-                    if (activeInstance.Any())
-                    {
-                        _logger.LogWarning("Character {CharacterId} already has active instance of quest {Code}",
-                            body.QuestorCharacterId, definition.Code);
-                        return (StatusCodes.Conflict, null);
-                    }
-                }
-            }
+        // Check prerequisites
+        var completedCodes = characterIndex?.CompletedQuestCodes ?? new List<string>();
+        var failedPrerequisites = await CheckPrerequisitesAsync(
+            definition, body.QuestorCharacterId, completedCodes, cancellationToken);
 
-            // Check prerequisites
-            var completedCodes = characterIndex?.CompletedQuestCodes ?? new List<string>();
-            var failedPrerequisites = await CheckPrerequisitesAsync(
-                definition, body.QuestorCharacterId, completedCodes, cancellationToken);
+        if (failedPrerequisites.Count > 0)
+        {
+            _logger.LogInformation(
+                "Character {CharacterId} failed {Count} prerequisites for quest {QuestCode}",
+                body.QuestorCharacterId, failedPrerequisites.Count, definition.Code);
+            // Return BadRequest - caller should check the error response for details
+            // Note: The current API design returns null for errors. A future enhancement
+            // could return AcceptQuestErrorResponse with the failedPrerequisites list.
+            return (StatusCodes.BadRequest, null);
+        }
 
-            if (failedPrerequisites.Count > 0)
-            {
-                _logger.LogInformation(
-                    "Character {CharacterId} failed {Count} prerequisites for quest {QuestCode}",
-                    body.QuestorCharacterId, failedPrerequisites.Count, definition.Code);
-                // Return BadRequest - caller should check the error response for details
-                // Note: The current API design returns null for errors. A future enhancement
-                // could return AcceptQuestErrorResponse with the failedPrerequisites list.
-                return (StatusCodes.BadRequest, null);
-            }
+        var now = DateTimeOffset.UtcNow;
+        var questInstanceId = Guid.NewGuid();
 
-            var now = DateTimeOffset.UtcNow;
-            var questInstanceId = Guid.NewGuid();
-
-            // Build contract parties - questor plus optional quest giver
-            var parties = new List<ContractPartyInput>
+        // Build contract parties - questor plus optional quest giver
+        var parties = new List<ContractPartyInput>
             {
                 new()
                 {
@@ -603,184 +592,183 @@ public partial class QuestService : IQuestService
                 }
             };
 
-            // Add quest giver as a party (can be a specific NPC or system placeholder)
-            var questGiverId = body.QuestGiverCharacterId ?? definition.QuestGiverCharacterId ?? Guid.Empty;
-            if (questGiverId != Guid.Empty)
+        // Add quest giver as a party (can be a specific NPC or system placeholder)
+        var questGiverId = body.QuestGiverCharacterId ?? definition.QuestGiverCharacterId ?? Guid.Empty;
+        if (questGiverId != Guid.Empty)
+        {
+            parties.Add(new ContractPartyInput
             {
-                parties.Add(new ContractPartyInput
-                {
-                    EntityId = questGiverId,
-                    EntityType = EntityType.Character,
-                    Role = "quest_giver"
-                });
-            }
-            else
+                EntityId = questGiverId,
+                EntityType = EntityType.Character,
+                Role = "quest_giver"
+            });
+        }
+        else
+        {
+            // Use a system placeholder for quests without specific quest givers
+            parties.Add(new ContractPartyInput
             {
-                // Use a system placeholder for quests without specific quest givers
-                parties.Add(new ContractPartyInput
-                {
-                    EntityId = definition.GameServiceId, // Use game service as system party
-                    EntityType = EntityType.System,
-                    Role = "quest_giver"
-                });
-            }
+                EntityId = definition.GameServiceId, // Use game service as system party
+                EntityType = EntityType.System,
+                Role = "quest_giver"
+            });
+        }
 
-            // Create contract instance
-            var contractRequest = new CreateContractInstanceRequest
-            {
-                TemplateId = definition.ContractTemplateId,
-                Parties = parties
-            };
+        // Create contract instance
+        var contractRequest = new CreateContractInstanceRequest
+        {
+            TemplateId = definition.ContractTemplateId,
+            Parties = parties
+        };
 
-            ContractInstanceResponse contractResponse;
+        ContractInstanceResponse contractResponse;
+        try
+        {
+            contractResponse = await _contractClient.CreateContractInstanceAsync(
+                contractRequest,
+                cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Failed to create contract instance for quest {Code}", definition.Code);
+            return (StatusCodes.ServiceUnavailable, null);
+        }
+
+        if (contractResponse == null)
+        {
+            _logger.LogWarning("Failed to create contract instance for quest {Code}: null response",
+                definition.Code);
+            return (StatusCodes.ServiceUnavailable, null);
+        }
+
+        // Auto-consent for questor
+        var consentRequest = new ConsentToContractRequest
+        {
+            ContractId = contractResponse.ContractId,
+            PartyEntityId = body.QuestorCharacterId,
+            PartyEntityType = EntityType.Character
+        };
+
+        try
+        {
+            await _contractClient.ConsentToContractAsync(consentRequest, cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Failed to record consent for quest {Code}", definition.Code);
+            // Contract was created but consent failed - may need cleanup
+            return (StatusCodes.ServiceUnavailable, null);
+        }
+
+        // Resolve and set template values for reward prebound APIs
+        var templateValues = await ResolveTemplateValuesAsync(
+            body.QuestorCharacterId,
+            definition,
+            cancellationToken);
+
+        if (templateValues.Count > 0)
+        {
             try
             {
-                contractResponse = await _contractClient.CreateContractInstanceAsync(
-                    contractRequest,
+                var setValuesRequest = new SetTemplateValuesRequest
+                {
+                    ContractInstanceId = contractResponse.ContractId,
+                    TemplateValues = templateValues
+                };
+                await _contractClient.SetContractTemplateValuesAsync(setValuesRequest, cancellationToken);
+                _logger.LogDebug(
+                    "Set {Count} template values for quest {Code} contract {ContractId}",
+                    templateValues.Count, definition.Code, contractResponse.ContractId);
+            }
+            catch (ApiException ex)
+            {
+                // Template values are needed for rewards - this is a critical failure
+                _logger.LogWarning(ex,
+                    "Failed to set template values for quest {Code}, rewards may fail",
+                    definition.Code);
+                // Continue anyway - quest is already accepted, rewards will fail gracefully
+            }
+        }
+
+        // Create quest instance
+        var questInstance = new QuestInstanceModel
+        {
+            QuestInstanceId = questInstanceId,
+            DefinitionId = definition.DefinitionId,
+            ContractInstanceId = contractResponse.ContractId,
+            Code = definition.Code,
+            Name = definition.Name,
+            Status = QuestStatus.ACTIVE,
+            QuestorCharacterIds = new List<Guid> { body.QuestorCharacterId },
+            QuestGiverCharacterId = body.QuestGiverCharacterId,
+            AcceptedAt = now,
+            Deadline = definition.DeadlineSeconds.HasValue
+                ? now.AddSeconds(definition.DeadlineSeconds.Value)
+                : null,
+            GameServiceId = definition.GameServiceId
+        };
+
+        var instanceKey = BuildInstanceKey(questInstanceId);
+        await InstanceStore.SaveAsync(instanceKey, questInstance, cancellationToken: cancellationToken);
+
+        // Initialize objective progress
+        if (definition.Objectives != null)
+        {
+            foreach (var objective in definition.Objectives)
+            {
+                var progressKey = BuildProgressKey(questInstanceId, objective.Code);
+                var progress = new ObjectiveProgressModel
+                {
+                    QuestInstanceId = questInstanceId,
+                    ObjectiveCode = objective.Code,
+                    Name = objective.Name,
+                    Description = objective.Description,
+                    ObjectiveType = objective.ObjectiveType,
+                    CurrentCount = 0,
+                    RequiredCount = objective.RequiredCount,
+                    IsComplete = false,
+                    Hidden = objective.Hidden,
+                    RevealBehavior = objective.RevealBehavior,
+                    Optional = objective.Optional
+                };
+                await ProgressStore.SaveAsync(
+                    progressKey,
+                    progress,
+                    new StateOptions { Ttl = _configuration.ProgressCacheTtlSeconds },
                     cancellationToken);
             }
-            catch (ApiException ex)
-            {
-                _logger.LogWarning(ex, "Failed to create contract instance for quest {Code}", definition.Code);
-                return (StatusCodes.ServiceUnavailable, null);
-            }
-
-            if (contractResponse == null)
-            {
-                _logger.LogWarning("Failed to create contract instance for quest {Code}: null response",
-                    definition.Code);
-                return (StatusCodes.ServiceUnavailable, null);
-            }
-
-            // Auto-consent for questor
-            var consentRequest = new ConsentToContractRequest
-            {
-                ContractId = contractResponse.ContractId,
-                PartyEntityId = body.QuestorCharacterId,
-                PartyEntityType = EntityType.Character
-            };
-
-            try
-            {
-                await _contractClient.ConsentToContractAsync(consentRequest, cancellationToken);
-            }
-            catch (ApiException ex)
-            {
-                _logger.LogWarning(ex, "Failed to record consent for quest {Code}", definition.Code);
-                // Contract was created but consent failed - may need cleanup
-                return (StatusCodes.ServiceUnavailable, null);
-            }
-
-            // Resolve and set template values for reward prebound APIs
-            var templateValues = await ResolveTemplateValuesAsync(
-                body.QuestorCharacterId,
-                definition,
-                cancellationToken);
-
-            if (templateValues.Count > 0)
-            {
-                try
-                {
-                    var setValuesRequest = new SetTemplateValuesRequest
-                    {
-                        ContractInstanceId = contractResponse.ContractId,
-                        TemplateValues = templateValues
-                    };
-                    await _contractClient.SetContractTemplateValuesAsync(setValuesRequest, cancellationToken);
-                    _logger.LogDebug(
-                        "Set {Count} template values for quest {Code} contract {ContractId}",
-                        templateValues.Count, definition.Code, contractResponse.ContractId);
-                }
-                catch (ApiException ex)
-                {
-                    // Template values are needed for rewards - this is a critical failure
-                    _logger.LogWarning(ex,
-                        "Failed to set template values for quest {Code}, rewards may fail",
-                        definition.Code);
-                    // Continue anyway - quest is already accepted, rewards will fail gracefully
-                }
-            }
-
-            // Create quest instance
-            var questInstance = new QuestInstanceModel
-            {
-                QuestInstanceId = questInstanceId,
-                DefinitionId = definition.DefinitionId,
-                ContractInstanceId = contractResponse.ContractId,
-                Code = definition.Code,
-                Name = definition.Name,
-                Status = QuestStatus.ACTIVE,
-                QuestorCharacterIds = new List<Guid> { body.QuestorCharacterId },
-                QuestGiverCharacterId = body.QuestGiverCharacterId,
-                AcceptedAt = now,
-                Deadline = definition.DeadlineSeconds.HasValue
-                    ? now.AddSeconds(definition.DeadlineSeconds.Value)
-                    : null,
-                GameServiceId = definition.GameServiceId
-            };
-
-            var instanceKey = BuildInstanceKey(questInstanceId);
-            await InstanceStore.SaveAsync(instanceKey, questInstance, cancellationToken: cancellationToken);
-
-            // Initialize objective progress
-            if (definition.Objectives != null)
-            {
-                foreach (var objective in definition.Objectives)
-                {
-                    var progressKey = BuildProgressKey(questInstanceId, objective.Code);
-                    var progress = new ObjectiveProgressModel
-                    {
-                        QuestInstanceId = questInstanceId,
-                        ObjectiveCode = objective.Code,
-                        Name = objective.Name,
-                        Description = objective.Description,
-                        ObjectiveType = objective.ObjectiveType,
-                        CurrentCount = 0,
-                        RequiredCount = objective.RequiredCount,
-                        IsComplete = false,
-                        Hidden = objective.Hidden,
-                        RevealBehavior = objective.RevealBehavior,
-                        Optional = objective.Optional
-                    };
-                    await ProgressStore.SaveAsync(
-                        progressKey,
-                        progress,
-                        new StateOptions { Ttl = _configuration.ProgressCacheTtlSeconds },
-                        cancellationToken);
-                }
-            }
-
-            // Update character index
-            characterIndex ??= new CharacterQuestIndex
-            {
-                CharacterId = body.QuestorCharacterId,
-                ActiveQuestIds = new List<Guid>(),
-                CompletedQuestCodes = new List<string>()
-            };
-            characterIndex.ActiveQuestIds ??= new List<Guid>();
-            characterIndex.ActiveQuestIds.Add(questInstanceId);
-
-            await CharacterIndex.SaveAsync(characterIndexKey, characterIndex, cancellationToken: cancellationToken);
-
-            // Publish quest accepted event
-            var acceptedEvent = new QuestAcceptedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = now,
-                QuestInstanceId = questInstanceId,
-                DefinitionId = definition.DefinitionId,
-                QuestCode = definition.Code,
-                QuestorCharacterIds = new List<Guid> { body.QuestorCharacterId },
-                GameServiceId = definition.GameServiceId
-            };
-            await _messageBus.TryPublishAsync(QuestTopics.QuestAccepted, acceptedEvent, cancellationToken: cancellationToken);
-
-            _logger.LogInformation("Quest accepted: {QuestInstanceId} ({Code}) by character {CharacterId}",
-                questInstanceId, definition.Code, body.QuestorCharacterId);
-
-            var response = await MapToInstanceResponseAsync(questInstance, definition, cancellationToken);
-            return (StatusCodes.OK, response);
         }
+
+        // Update character index
+        characterIndex ??= new CharacterQuestIndex
+        {
+            CharacterId = body.QuestorCharacterId,
+            ActiveQuestIds = new List<Guid>(),
+            CompletedQuestCodes = new List<string>()
+        };
+        characterIndex.ActiveQuestIds ??= new List<Guid>();
+        characterIndex.ActiveQuestIds.Add(questInstanceId);
+
+        await CharacterIndex.SaveAsync(characterIndexKey, characterIndex, cancellationToken: cancellationToken);
+
+        // Publish quest accepted event
+        var acceptedEvent = new QuestAcceptedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            QuestInstanceId = questInstanceId,
+            DefinitionId = definition.DefinitionId,
+            QuestCode = definition.Code,
+            QuestorCharacterIds = new List<Guid> { body.QuestorCharacterId },
+            GameServiceId = definition.GameServiceId
+        };
+        await _messageBus.TryPublishAsync(QuestTopics.QuestAccepted, acceptedEvent, cancellationToken: cancellationToken);
+
+        _logger.LogInformation("Quest accepted: {QuestInstanceId} ({Code}) by character {CharacterId}",
+            questInstanceId, definition.Code, body.QuestorCharacterId);
+
+        var response = await MapToInstanceResponseAsync(questInstance, definition, cancellationToken);
+        return (StatusCodes.OK, response);
     }
 
     /// <inheritdoc/>
@@ -788,95 +776,93 @@ public partial class QuestService : IQuestService
         AbandonQuestRequest body,
         CancellationToken cancellationToken)
     {
+        var instanceKey = BuildInstanceKey(body.QuestInstanceId);
+
+        for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
         {
-            var instanceKey = BuildInstanceKey(body.QuestInstanceId);
+            var (instance, etag) = await InstanceStore.GetWithETagAsync(instanceKey, cancellationToken);
 
-            for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
+            if (instance == null)
             {
-                var (instance, etag) = await InstanceStore.GetWithETagAsync(instanceKey, cancellationToken);
-
-                if (instance == null)
-                {
-                    return (StatusCodes.NotFound, null);
-                }
-
-                if (instance.Status != QuestStatus.ACTIVE)
-                {
-                    _logger.LogWarning("Cannot abandon quest {QuestInstanceId} in status {Status}",
-                        body.QuestInstanceId, instance.Status);
-                    return (StatusCodes.Conflict, null);
-                }
-
-                if (!instance.QuestorCharacterIds.Contains(body.QuestorCharacterId))
-                {
-                    _logger.LogWarning("Character {CharacterId} is not a questor on quest {QuestInstanceId}",
-                        body.QuestorCharacterId, body.QuestInstanceId);
-                    return (StatusCodes.BadRequest, null);
-                }
-
-                var now = DateTimeOffset.UtcNow;
-                instance.Status = QuestStatus.ABANDONED;
-                instance.CompletedAt = now;
-
-                var saveResult = await InstanceStore.TrySaveAsync(instanceKey, instance, etag ?? string.Empty, cancellationToken: cancellationToken);
-                if (saveResult == null)
-                {
-                    _logger.LogDebug("Concurrent modification abandoning quest {QuestInstanceId}, retrying (attempt {Attempt})",
-                        body.QuestInstanceId, attempt + 1);
-                    continue;
-                }
-
-                // Terminate underlying contract
-                var terminateRequest = new TerminateContractInstanceRequest
-                {
-                    ContractId = instance.ContractInstanceId,
-                    RequestingEntityId = body.QuestorCharacterId,
-                    RequestingEntityType = EntityType.Character,
-                    Reason = "Quest abandoned by player"
-                };
-                try
-                {
-                    await _contractClient.TerminateContractInstanceAsync(terminateRequest, cancellationToken);
-                }
-                catch (ApiException ex)
-                {
-                    // Log but don't fail - contract termination is best effort
-                    _logger.LogWarning(ex, "Failed to terminate contract for abandoned quest {QuestInstanceId}",
-                        body.QuestInstanceId);
-                }
-
-                // Update character index
-                var characterIndexKey = BuildCharacterIndexKey(body.QuestorCharacterId);
-                var characterIndex = await CharacterIndex.GetAsync(characterIndexKey, cancellationToken);
-                if (characterIndex?.ActiveQuestIds != null)
-                {
-                    characterIndex.ActiveQuestIds.Remove(body.QuestInstanceId);
-                    await CharacterIndex.SaveAsync(characterIndexKey, characterIndex, cancellationToken: cancellationToken);
-                }
-
-                // Publish abandoned event
-                var abandonedEvent = new QuestAbandonedEvent
-                {
-                    EventId = Guid.NewGuid(),
-                    Timestamp = now,
-                    QuestInstanceId = body.QuestInstanceId,
-                    QuestCode = instance.Code,
-                    AbandoningCharacterId = body.QuestorCharacterId
-                };
-                await _messageBus.TryPublishAsync(QuestTopics.QuestAbandoned, abandonedEvent, cancellationToken: cancellationToken);
-
-                _logger.LogInformation("Quest abandoned: {QuestInstanceId} by character {CharacterId}",
-                    body.QuestInstanceId, body.QuestorCharacterId);
-
-                var definition = await GetDefinitionModelAsync(instance.DefinitionId, cancellationToken);
-                var response = await MapToInstanceResponseAsync(instance, definition, cancellationToken);
-                return (StatusCodes.OK, response);
+                return (StatusCodes.NotFound, null);
             }
 
-            _logger.LogWarning("Failed to abandon quest {QuestInstanceId} after {MaxRetries} attempts",
-                body.QuestInstanceId, _configuration.MaxConcurrencyRetries);
-            return (StatusCodes.Conflict, null);
+            if (instance.Status != QuestStatus.ACTIVE)
+            {
+                _logger.LogWarning("Cannot abandon quest {QuestInstanceId} in status {Status}",
+                    body.QuestInstanceId, instance.Status);
+                return (StatusCodes.Conflict, null);
+            }
+
+            if (!instance.QuestorCharacterIds.Contains(body.QuestorCharacterId))
+            {
+                _logger.LogWarning("Character {CharacterId} is not a questor on quest {QuestInstanceId}",
+                    body.QuestorCharacterId, body.QuestInstanceId);
+                return (StatusCodes.BadRequest, null);
+            }
+
+            var now = DateTimeOffset.UtcNow;
+            instance.Status = QuestStatus.ABANDONED;
+            instance.CompletedAt = now;
+
+            var saveResult = await InstanceStore.TrySaveAsync(instanceKey, instance, etag ?? string.Empty, cancellationToken: cancellationToken);
+            if (saveResult == null)
+            {
+                _logger.LogDebug("Concurrent modification abandoning quest {QuestInstanceId}, retrying (attempt {Attempt})",
+                    body.QuestInstanceId, attempt + 1);
+                continue;
+            }
+
+            // Terminate underlying contract
+            var terminateRequest = new TerminateContractInstanceRequest
+            {
+                ContractId = instance.ContractInstanceId,
+                RequestingEntityId = body.QuestorCharacterId,
+                RequestingEntityType = EntityType.Character,
+                Reason = "Quest abandoned by player"
+            };
+            try
+            {
+                await _contractClient.TerminateContractInstanceAsync(terminateRequest, cancellationToken);
+            }
+            catch (ApiException ex)
+            {
+                // Log but don't fail - contract termination is best effort
+                _logger.LogWarning(ex, "Failed to terminate contract for abandoned quest {QuestInstanceId}",
+                    body.QuestInstanceId);
+            }
+
+            // Update character index
+            var characterIndexKey = BuildCharacterIndexKey(body.QuestorCharacterId);
+            var characterIndex = await CharacterIndex.GetAsync(characterIndexKey, cancellationToken);
+            if (characterIndex?.ActiveQuestIds != null)
+            {
+                characterIndex.ActiveQuestIds.Remove(body.QuestInstanceId);
+                await CharacterIndex.SaveAsync(characterIndexKey, characterIndex, cancellationToken: cancellationToken);
+            }
+
+            // Publish abandoned event
+            var abandonedEvent = new QuestAbandonedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                QuestInstanceId = body.QuestInstanceId,
+                QuestCode = instance.Code,
+                AbandoningCharacterId = body.QuestorCharacterId
+            };
+            await _messageBus.TryPublishAsync(QuestTopics.QuestAbandoned, abandonedEvent, cancellationToken: cancellationToken);
+
+            _logger.LogInformation("Quest abandoned: {QuestInstanceId} by character {CharacterId}",
+                body.QuestInstanceId, body.QuestorCharacterId);
+
+            var definition = await GetDefinitionModelAsync(instance.DefinitionId, cancellationToken);
+            var response = await MapToInstanceResponseAsync(instance, definition, cancellationToken);
+            return (StatusCodes.OK, response);
         }
+
+        _logger.LogWarning("Failed to abandon quest {QuestInstanceId} after {MaxRetries} attempts",
+            body.QuestInstanceId, _configuration.MaxConcurrencyRetries);
+        return (StatusCodes.Conflict, null);
     }
 
     /// <inheritdoc/>
@@ -884,19 +870,17 @@ public partial class QuestService : IQuestService
         GetQuestRequest body,
         CancellationToken cancellationToken)
     {
+        var instanceKey = BuildInstanceKey(body.QuestInstanceId);
+        var instance = await InstanceStore.GetAsync(instanceKey, cancellationToken);
+
+        if (instance == null)
         {
-            var instanceKey = BuildInstanceKey(body.QuestInstanceId);
-            var instance = await InstanceStore.GetAsync(instanceKey, cancellationToken);
-
-            if (instance == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            var definition = await GetDefinitionModelAsync(instance.DefinitionId, cancellationToken);
-            var response = await MapToInstanceResponseAsync(instance, definition, cancellationToken);
-            return (StatusCodes.OK, response);
+            return (StatusCodes.NotFound, null);
         }
+
+        var definition = await GetDefinitionModelAsync(instance.DefinitionId, cancellationToken);
+        var response = await MapToInstanceResponseAsync(instance, definition, cancellationToken);
+        return (StatusCodes.OK, response);
     }
 
     /// <inheritdoc/>
@@ -904,38 +888,36 @@ public partial class QuestService : IQuestService
         ListQuestsRequest body,
         CancellationToken cancellationToken)
     {
+        var results = await InstanceStore.QueryAsync(
+            i => i.QuestorCharacterIds.Contains(body.CharacterId),
+            cancellationToken: cancellationToken);
+
+        // Filter by statuses if specified
+        if (body.Statuses != null && body.Statuses.Count > 0)
         {
-            var results = await InstanceStore.QueryAsync(
-                i => i.QuestorCharacterIds.Contains(body.CharacterId),
-                cancellationToken: cancellationToken);
-
-            // Filter by statuses if specified
-            if (body.Statuses != null && body.Statuses.Count > 0)
-            {
-                results = results.Where(i => body.Statuses.Contains(i.Status)).ToList();
-            }
-
-            var total = results.Count;
-
-            // Apply pagination (Offset and Limit have schema defaults of 0 and 50)
-            var paged = results.Skip(body.Offset).Take(body.Limit).ToList();
-
-            var responseQuests = new List<QuestInstanceResponse>();
-            foreach (var instance in paged)
-            {
-                var definition = await GetDefinitionModelAsync(instance.DefinitionId, cancellationToken);
-                var instanceResponse = await MapToInstanceResponseAsync(instance, definition, cancellationToken);
-                responseQuests.Add(instanceResponse);
-            }
-
-            var response = new ListQuestsResponse
-            {
-                Quests = responseQuests,
-                Total = total
-            };
-
-            return (StatusCodes.OK, response);
+            results = results.Where(i => body.Statuses.Contains(i.Status)).ToList();
         }
+
+        var total = results.Count;
+
+        // Apply pagination (Offset and Limit have schema defaults of 0 and 50)
+        var paged = results.Skip(body.Offset).Take(body.Limit).ToList();
+
+        var responseQuests = new List<QuestInstanceResponse>();
+        foreach (var instance in paged)
+        {
+            var definition = await GetDefinitionModelAsync(instance.DefinitionId, cancellationToken);
+            var instanceResponse = await MapToInstanceResponseAsync(instance, definition, cancellationToken);
+            responseQuests.Add(instanceResponse);
+        }
+
+        var response = new ListQuestsResponse
+        {
+            Quests = responseQuests,
+            Total = total
+        };
+
+        return (StatusCodes.OK, response);
     }
 
     /// <inheritdoc/>
@@ -943,67 +925,65 @@ public partial class QuestService : IQuestService
         ListAvailableQuestsRequest body,
         CancellationToken cancellationToken)
     {
+        // Get all non-deprecated definitions
+        var definitions = await DefinitionStore.QueryAsync(
+            d => !d.Deprecated &&
+                (body.GameServiceId == null || d.GameServiceId == body.GameServiceId) &&
+                (body.QuestGiverCharacterId == null || d.QuestGiverCharacterId == body.QuestGiverCharacterId),
+            cancellationToken: cancellationToken);
+
+        // Get character's quest state
+        var characterIndexKey = BuildCharacterIndexKey(body.CharacterId);
+        var characterIndex = await CharacterIndex.GetAsync(characterIndexKey, cancellationToken);
+        var activeQuestIds = characterIndex?.ActiveQuestIds ?? new List<Guid>();
+        var completedCodes = characterIndex?.CompletedQuestCodes ?? new List<string>();
+
+        // Get active quest definition IDs
+        var activeDefinitionIds = new HashSet<Guid>();
+        foreach (var activeQuestId in activeQuestIds)
         {
-            // Get all non-deprecated definitions
-            var definitions = await DefinitionStore.QueryAsync(
-                d => !d.Deprecated &&
-                    (body.GameServiceId == null || d.GameServiceId == body.GameServiceId) &&
-                    (body.QuestGiverCharacterId == null || d.QuestGiverCharacterId == body.QuestGiverCharacterId),
-                cancellationToken: cancellationToken);
-
-            // Get character's quest state
-            var characterIndexKey = BuildCharacterIndexKey(body.CharacterId);
-            var characterIndex = await CharacterIndex.GetAsync(characterIndexKey, cancellationToken);
-            var activeQuestIds = characterIndex?.ActiveQuestIds ?? new List<Guid>();
-            var completedCodes = characterIndex?.CompletedQuestCodes ?? new List<string>();
-
-            // Get active quest definition IDs
-            var activeDefinitionIds = new HashSet<Guid>();
-            foreach (var activeQuestId in activeQuestIds)
+            var instanceKey = BuildInstanceKey(activeQuestId);
+            var instance = await InstanceStore.GetAsync(instanceKey, cancellationToken);
+            if (instance != null)
             {
-                var instanceKey = BuildInstanceKey(activeQuestId);
-                var instance = await InstanceStore.GetAsync(instanceKey, cancellationToken);
-                if (instance != null)
-                {
-                    activeDefinitionIds.Add(instance.DefinitionId);
-                }
+                activeDefinitionIds.Add(instance.DefinitionId);
             }
-
-            var available = new List<QuestDefinitionResponse>();
-            foreach (var definition in definitions)
-            {
-                // Skip if already active
-                if (activeDefinitionIds.Contains(definition.DefinitionId))
-                    continue;
-
-                // Skip if non-repeatable and already completed
-                if (!definition.Repeatable && completedCodes.Contains(definition.Code))
-                    continue;
-
-                // Check cooldown for repeatable quests
-                if (definition.Repeatable && definition.CooldownSeconds.HasValue)
-                {
-                    var cooldownKey = BuildCooldownKey(body.CharacterId, definition.Code);
-                    var cooldown = await CooldownStore.GetAsync(cooldownKey, cancellationToken);
-                    if (cooldown != null && cooldown.ExpiresAt > DateTimeOffset.UtcNow)
-                        continue;
-                }
-
-                // Check prerequisites
-                var failedPrereqs = await CheckPrerequisitesAsync(definition, body.CharacterId, completedCodes, cancellationToken);
-                if (failedPrereqs.Count > 0)
-                    continue;
-
-                available.Add(MapToDefinitionResponse(definition));
-            }
-
-            var response = new ListAvailableQuestsResponse
-            {
-                Available = available
-            };
-
-            return (StatusCodes.OK, response);
         }
+
+        var available = new List<QuestDefinitionResponse>();
+        foreach (var definition in definitions)
+        {
+            // Skip if already active
+            if (activeDefinitionIds.Contains(definition.DefinitionId))
+                continue;
+
+            // Skip if non-repeatable and already completed
+            if (!definition.Repeatable && completedCodes.Contains(definition.Code))
+                continue;
+
+            // Check cooldown for repeatable quests
+            if (definition.Repeatable && definition.CooldownSeconds.HasValue)
+            {
+                var cooldownKey = BuildCooldownKey(body.CharacterId, definition.Code);
+                var cooldown = await CooldownStore.GetAsync(cooldownKey, cancellationToken);
+                if (cooldown != null && cooldown.ExpiresAt > DateTimeOffset.UtcNow)
+                    continue;
+            }
+
+            // Check prerequisites
+            var failedPrereqs = await CheckPrerequisitesAsync(definition, body.CharacterId, completedCodes, cancellationToken);
+            if (failedPrereqs.Count > 0)
+                continue;
+
+            available.Add(MapToDefinitionResponse(definition));
+        }
+
+        var response = new ListAvailableQuestsResponse
+        {
+            Available = available
+        };
+
+        return (StatusCodes.OK, response);
     }
 
     /// <inheritdoc/>
@@ -1011,88 +991,86 @@ public partial class QuestService : IQuestService
         GetQuestLogRequest body,
         CancellationToken cancellationToken)
     {
+        var characterIndexKey = BuildCharacterIndexKey(body.CharacterId);
+        var characterIndex = await CharacterIndex.GetAsync(characterIndexKey, cancellationToken);
+
+        var activeQuests = new List<QuestLogEntry>();
+        var completedCount = characterIndex?.CompletedQuestCodes?.Count ?? 0;
+        var failedCount = 0;
+
+        if (characterIndex?.ActiveQuestIds != null)
         {
-            var characterIndexKey = BuildCharacterIndexKey(body.CharacterId);
-            var characterIndex = await CharacterIndex.GetAsync(characterIndexKey, cancellationToken);
-
-            var activeQuests = new List<QuestLogEntry>();
-            var completedCount = characterIndex?.CompletedQuestCodes?.Count ?? 0;
-            var failedCount = 0;
-
-            if (characterIndex?.ActiveQuestIds != null)
+            foreach (var questId in characterIndex.ActiveQuestIds)
             {
-                foreach (var questId in characterIndex.ActiveQuestIds)
+                var instanceKey = BuildInstanceKey(questId);
+                var instance = await InstanceStore.GetAsync(instanceKey, cancellationToken);
+                if (instance == null) continue;
+
+                var definition = await GetDefinitionModelAsync(instance.DefinitionId, cancellationToken);
+
+                // Load internal progress models for visibility filtering
+                var internalProgressList = new List<ObjectiveProgressModel>();
+                if (definition?.Objectives != null)
                 {
-                    var instanceKey = BuildInstanceKey(questId);
-                    var instance = await InstanceStore.GetAsync(instanceKey, cancellationToken);
-                    if (instance == null) continue;
-
-                    var definition = await GetDefinitionModelAsync(instance.DefinitionId, cancellationToken);
-
-                    // Load internal progress models for visibility filtering
-                    var internalProgressList = new List<ObjectiveProgressModel>();
-                    if (definition?.Objectives != null)
+                    foreach (var objDef in definition.Objectives)
                     {
-                        foreach (var objDef in definition.Objectives)
+                        var progressKey = BuildProgressKey(questId, objDef.Code);
+                        var progress = await ProgressStore.GetAsync(progressKey, cancellationToken);
+                        if (progress != null)
                         {
-                            var progressKey = BuildProgressKey(questId, objDef.Code);
-                            var progress = await ProgressStore.GetAsync(progressKey, cancellationToken);
-                            if (progress != null)
-                            {
-                                internalProgressList.Add(progress);
-                            }
+                            internalProgressList.Add(progress);
                         }
                     }
-
-                    // Calculate overall progress from required objectives
-                    var requiredObjectives = internalProgressList.Where(p => !p.Optional).ToList();
-                    var overallProgress = requiredObjectives.Count > 0
-                        ? requiredObjectives.Average(p => p.RequiredCount > 0
-                            ? (float)p.CurrentCount / p.RequiredCount * 100
-                            : 100f)
-                        : 100.0f;
-
-                    // Filter visible objectives using internal model's RevealBehavior
-                    var visibleProgressModels = internalProgressList.Where(p =>
-                        !p.Hidden ||
-                        p.RevealBehavior == ObjectiveRevealBehavior.ALWAYS ||
-                        (p.RevealBehavior == ObjectiveRevealBehavior.ON_PROGRESS && p.CurrentCount > 0) ||
-                        (p.RevealBehavior == ObjectiveRevealBehavior.ON_COMPLETE && p.IsComplete)
-                    ).ToList();
-
-                    // Map filtered internal models to response type
-                    var visibleObjectives = visibleProgressModels.Select(MapToObjectiveProgress).ToList();
-
-                    activeQuests.Add(new QuestLogEntry
-                    {
-                        QuestInstanceId = instance.QuestInstanceId,
-                        Code = instance.Code,
-                        Name = instance.Name,
-                        Category = definition?.Category ?? QuestCategory.SIDE,
-                        Status = instance.Status,
-                        OverallProgress = overallProgress,
-                        VisibleObjectives = visibleObjectives,
-                        Deadline = instance.Deadline,
-                        AcceptedAt = instance.AcceptedAt
-                    });
                 }
+
+                // Calculate overall progress from required objectives
+                var requiredObjectives = internalProgressList.Where(p => !p.Optional).ToList();
+                var overallProgress = requiredObjectives.Count > 0
+                    ? requiredObjectives.Average(p => p.RequiredCount > 0
+                        ? (float)p.CurrentCount / p.RequiredCount * 100
+                        : 100f)
+                    : 100.0f;
+
+                // Filter visible objectives using internal model's RevealBehavior
+                var visibleProgressModels = internalProgressList.Where(p =>
+                    !p.Hidden ||
+                    p.RevealBehavior == ObjectiveRevealBehavior.ALWAYS ||
+                    (p.RevealBehavior == ObjectiveRevealBehavior.ON_PROGRESS && p.CurrentCount > 0) ||
+                    (p.RevealBehavior == ObjectiveRevealBehavior.ON_COMPLETE && p.IsComplete)
+                ).ToList();
+
+                // Map filtered internal models to response type
+                var visibleObjectives = visibleProgressModels.Select(MapToObjectiveProgress).ToList();
+
+                activeQuests.Add(new QuestLogEntry
+                {
+                    QuestInstanceId = instance.QuestInstanceId,
+                    Code = instance.Code,
+                    Name = instance.Name,
+                    Category = definition?.Category ?? QuestCategory.SIDE,
+                    Status = instance.Status,
+                    OverallProgress = overallProgress,
+                    VisibleObjectives = visibleObjectives,
+                    Deadline = instance.Deadline,
+                    AcceptedAt = instance.AcceptedAt
+                });
             }
-
-            // Count failed quests
-            var allInstances = await InstanceStore.QueryAsync(
-                i => i.QuestorCharacterIds.Contains(body.CharacterId) && i.Status == QuestStatus.FAILED,
-                cancellationToken: cancellationToken);
-            failedCount = allInstances.Count;
-
-            var response = new QuestLogResponse
-            {
-                ActiveQuests = activeQuests,
-                CompletedCount = completedCount,
-                FailedCount = failedCount
-            };
-
-            return (StatusCodes.OK, response);
         }
+
+        // Count failed quests
+        var allInstances = await InstanceStore.QueryAsync(
+            i => i.QuestorCharacterIds.Contains(body.CharacterId) && i.Status == QuestStatus.FAILED,
+            cancellationToken: cancellationToken);
+        failedCount = allInstances.Count;
+
+        var response = new QuestLogResponse
+        {
+            ActiveQuests = activeQuests,
+            CompletedCount = completedCount,
+            FailedCount = failedCount
+        };
+
+        return (StatusCodes.OK, response);
     }
 
     #endregion
@@ -1104,165 +1082,37 @@ public partial class QuestService : IQuestService
         ReportProgressRequest body,
         CancellationToken cancellationToken)
     {
+        var instanceKey = BuildInstanceKey(body.QuestInstanceId);
+        var instance = await InstanceStore.GetAsync(instanceKey, cancellationToken);
+
+        if (instance == null)
         {
-            var instanceKey = BuildInstanceKey(body.QuestInstanceId);
-            var instance = await InstanceStore.GetAsync(instanceKey, cancellationToken);
-
-            if (instance == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            if (instance.Status != QuestStatus.ACTIVE)
-            {
-                _logger.LogWarning("Cannot report progress on quest {QuestInstanceId} in status {Status}",
-                    body.QuestInstanceId, instance.Status);
-                return (StatusCodes.BadRequest, null);
-            }
-
-            var progressKey = BuildProgressKey(body.QuestInstanceId, body.ObjectiveCode);
-
-            for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
-            {
-                var (progress, etag) = await ProgressStore.GetWithETagAsync(progressKey, cancellationToken);
-
-                if (progress == null)
-                {
-                    _logger.LogWarning("Objective {ObjectiveCode} not found on quest {QuestInstanceId}",
-                        body.ObjectiveCode, body.QuestInstanceId);
-                    return (StatusCodes.NotFound, null);
-                }
-
-                if (progress.IsComplete)
-                {
-                    // Already complete - return current state
-                    return (StatusCodes.OK, new ObjectiveProgressResponse
-                    {
-                        QuestInstanceId = body.QuestInstanceId,
-                        Objective = MapToObjectiveProgress(progress),
-                        MilestoneCompleted = false
-                    });
-                }
-
-                // Check for duplicate entity tracking if TrackedEntityId is provided
-                // This prevents counting the same kill/collect multiple times
-                if (body.TrackedEntityId.HasValue)
-                {
-                    progress.TrackedEntityIds ??= new HashSet<Guid>();
-                    if (progress.TrackedEntityIds.Contains(body.TrackedEntityId.Value))
-                    {
-                        _logger.LogDebug("Entity {EntityId} already tracked for objective {ObjectiveCode} on quest {QuestInstanceId}",
-                            body.TrackedEntityId.Value, body.ObjectiveCode, body.QuestInstanceId);
-                        // Return current state without incrementing - idempotent behavior
-                        return (StatusCodes.OK, new ObjectiveProgressResponse
-                        {
-                            QuestInstanceId = body.QuestInstanceId,
-                            Objective = MapToObjectiveProgress(progress),
-                            MilestoneCompleted = false
-                        });
-                    }
-                    // Add entity to tracked set
-                    progress.TrackedEntityIds.Add(body.TrackedEntityId.Value);
-                }
-
-                var previousCount = progress.CurrentCount;
-                progress.CurrentCount = Math.Min(
-                    progress.CurrentCount + body.IncrementBy,
-                    progress.RequiredCount);
-
-                var wasComplete = progress.IsComplete;
-                progress.IsComplete = progress.CurrentCount >= progress.RequiredCount;
-
-                var saveResult = await ProgressStore.TrySaveAsync(
-                    progressKey,
-                    progress,
-                    etag ?? string.Empty,
-                    cancellationToken);
-
-                if (saveResult == null)
-                {
-                    _logger.LogDebug("Concurrent modification reporting progress on {ObjectiveCode}, retrying (attempt {Attempt})",
-                        body.ObjectiveCode, attempt + 1);
-                    continue;
-                }
-
-                var milestoneCompleted = !wasComplete && progress.IsComplete;
-
-                // Publish progress event
-                var progressEvent = new QuestObjectiveProgressedEvent
-                {
-                    EventId = Guid.NewGuid(),
-                    Timestamp = DateTimeOffset.UtcNow,
-                    QuestInstanceId = body.QuestInstanceId,
-                    QuestCode = instance.Code,
-                    ObjectiveCode = body.ObjectiveCode,
-                    CurrentCount = progress.CurrentCount,
-                    RequiredCount = progress.RequiredCount,
-                    IsComplete = progress.IsComplete
-                };
-                await _messageBus.TryPublishAsync(QuestTopics.QuestObjectiveProgressed, progressEvent, cancellationToken: cancellationToken);
-
-                // If milestone completed, notify Contract service
-                if (milestoneCompleted)
-                {
-                    var milestoneRequest = new CompleteMilestoneRequest
-                    {
-                        ContractId = instance.ContractInstanceId,
-                        MilestoneCode = body.ObjectiveCode
-                    };
-                    try
-                    {
-                        await _contractClient.CompleteMilestoneAsync(milestoneRequest, cancellationToken);
-                    }
-                    catch (ApiException ex)
-                    {
-                        _logger.LogWarning(ex, "Failed to complete milestone {MilestoneCode} on contract {ContractId}",
-                            body.ObjectiveCode, instance.ContractInstanceId);
-                        // Continue - milestone completion is eventually consistent via events
-                    }
-                }
-
-                _logger.LogDebug("Objective progress updated: {QuestInstanceId}/{ObjectiveCode} = {Current}/{Required}",
-                    body.QuestInstanceId, body.ObjectiveCode, progress.CurrentCount, progress.RequiredCount);
-
-                return (StatusCodes.OK, new ObjectiveProgressResponse
-                {
-                    QuestInstanceId = body.QuestInstanceId,
-                    Objective = MapToObjectiveProgress(progress),
-                    MilestoneCompleted = milestoneCompleted
-                });
-            }
-
-            _logger.LogWarning("Failed to update objective progress after {MaxRetries} attempts",
-                _configuration.MaxConcurrencyRetries);
-            return (StatusCodes.Conflict, null);
+            return (StatusCodes.NotFound, null);
         }
-    }
 
-    /// <inheritdoc/>
-    public async Task<(StatusCodes, ObjectiveProgressResponse?)> ForceCompleteObjectiveAsync(
-        ForceCompleteObjectiveRequest body,
-        CancellationToken cancellationToken)
-    {
+        if (instance.Status != QuestStatus.ACTIVE)
         {
-            var instanceKey = BuildInstanceKey(body.QuestInstanceId);
-            var instance = await InstanceStore.GetAsync(instanceKey, cancellationToken);
+            _logger.LogWarning("Cannot report progress on quest {QuestInstanceId} in status {Status}",
+                body.QuestInstanceId, instance.Status);
+            return (StatusCodes.BadRequest, null);
+        }
 
-            if (instance == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
+        var progressKey = BuildProgressKey(body.QuestInstanceId, body.ObjectiveCode);
 
-            var progressKey = BuildProgressKey(body.QuestInstanceId, body.ObjectiveCode);
+        for (var attempt = 0; attempt < _configuration.MaxConcurrencyRetries; attempt++)
+        {
             var (progress, etag) = await ProgressStore.GetWithETagAsync(progressKey, cancellationToken);
 
             if (progress == null)
             {
+                _logger.LogWarning("Objective {ObjectiveCode} not found on quest {QuestInstanceId}",
+                    body.ObjectiveCode, body.QuestInstanceId);
                 return (StatusCodes.NotFound, null);
             }
 
             if (progress.IsComplete)
             {
+                // Already complete - return current state
                 return (StatusCodes.OK, new ObjectiveProgressResponse
                 {
                     QuestInstanceId = body.QuestInstanceId,
@@ -1271,66 +1121,123 @@ public partial class QuestService : IQuestService
                 });
             }
 
-            progress.CurrentCount = progress.RequiredCount;
-            progress.IsComplete = true;
+            // Check for duplicate entity tracking if TrackedEntityId is provided
+            // This prevents counting the same kill/collect multiple times
+            if (body.TrackedEntityId.HasValue)
+            {
+                progress.TrackedEntityIds ??= new HashSet<Guid>();
+                if (progress.TrackedEntityIds.Contains(body.TrackedEntityId.Value))
+                {
+                    _logger.LogDebug("Entity {EntityId} already tracked for objective {ObjectiveCode} on quest {QuestInstanceId}",
+                        body.TrackedEntityId.Value, body.ObjectiveCode, body.QuestInstanceId);
+                    // Return current state without incrementing - idempotent behavior
+                    return (StatusCodes.OK, new ObjectiveProgressResponse
+                    {
+                        QuestInstanceId = body.QuestInstanceId,
+                        Objective = MapToObjectiveProgress(progress),
+                        MilestoneCompleted = false
+                    });
+                }
+                // Add entity to tracked set
+                progress.TrackedEntityIds.Add(body.TrackedEntityId.Value);
+            }
 
-            await ProgressStore.SaveAsync(
+            var previousCount = progress.CurrentCount;
+            progress.CurrentCount = Math.Min(
+                progress.CurrentCount + body.IncrementBy,
+                progress.RequiredCount);
+
+            var wasComplete = progress.IsComplete;
+            progress.IsComplete = progress.CurrentCount >= progress.RequiredCount;
+
+            var saveResult = await ProgressStore.TrySaveAsync(
                 progressKey,
                 progress,
-                new StateOptions { Ttl = _configuration.ProgressCacheTtlSeconds },
+                etag ?? string.Empty,
                 cancellationToken);
 
-            // Notify Contract service
-            var milestoneRequest = new CompleteMilestoneRequest
+            if (saveResult == null)
             {
-                ContractId = instance.ContractInstanceId,
-                MilestoneCode = body.ObjectiveCode
-            };
-            try
-            {
-                await _contractClient.CompleteMilestoneAsync(milestoneRequest, cancellationToken);
-            }
-            catch (ApiException ex)
-            {
-                _logger.LogWarning(ex, "Failed to complete milestone {MilestoneCode} on contract {ContractId}",
-                    body.ObjectiveCode, instance.ContractInstanceId);
-                // Continue - milestone completion is eventually consistent via events
+                _logger.LogDebug("Concurrent modification reporting progress on {ObjectiveCode}, retrying (attempt {Attempt})",
+                    body.ObjectiveCode, attempt + 1);
+                continue;
             }
 
-            _logger.LogInformation("Objective force completed: {QuestInstanceId}/{ObjectiveCode}",
-                body.QuestInstanceId, body.ObjectiveCode);
+            var milestoneCompleted = !wasComplete && progress.IsComplete;
+
+            // Publish progress event
+            var progressEvent = new QuestObjectiveProgressedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                QuestInstanceId = body.QuestInstanceId,
+                QuestCode = instance.Code,
+                ObjectiveCode = body.ObjectiveCode,
+                CurrentCount = progress.CurrentCount,
+                RequiredCount = progress.RequiredCount,
+                IsComplete = progress.IsComplete
+            };
+            await _messageBus.TryPublishAsync(QuestTopics.QuestObjectiveProgressed, progressEvent, cancellationToken: cancellationToken);
+
+            // If milestone completed, notify Contract service
+            if (milestoneCompleted)
+            {
+                var milestoneRequest = new CompleteMilestoneRequest
+                {
+                    ContractId = instance.ContractInstanceId,
+                    MilestoneCode = body.ObjectiveCode
+                };
+                try
+                {
+                    await _contractClient.CompleteMilestoneAsync(milestoneRequest, cancellationToken);
+                }
+                catch (ApiException ex)
+                {
+                    _logger.LogWarning(ex, "Failed to complete milestone {MilestoneCode} on contract {ContractId}",
+                        body.ObjectiveCode, instance.ContractInstanceId);
+                    // Continue - milestone completion is eventually consistent via events
+                }
+            }
+
+            _logger.LogDebug("Objective progress updated: {QuestInstanceId}/{ObjectiveCode} = {Current}/{Required}",
+                body.QuestInstanceId, body.ObjectiveCode, progress.CurrentCount, progress.RequiredCount);
 
             return (StatusCodes.OK, new ObjectiveProgressResponse
             {
                 QuestInstanceId = body.QuestInstanceId,
                 Objective = MapToObjectiveProgress(progress),
-                MilestoneCompleted = true
+                MilestoneCompleted = milestoneCompleted
             });
         }
+
+        _logger.LogWarning("Failed to update objective progress after {MaxRetries} attempts",
+            _configuration.MaxConcurrencyRetries);
+        return (StatusCodes.Conflict, null);
     }
 
     /// <inheritdoc/>
-    public async Task<(StatusCodes, ObjectiveProgressResponse?)> GetObjectiveProgressAsync(
-        GetObjectiveProgressRequest body,
+    public async Task<(StatusCodes, ObjectiveProgressResponse?)> ForceCompleteObjectiveAsync(
+        ForceCompleteObjectiveRequest body,
         CancellationToken cancellationToken)
     {
+        var instanceKey = BuildInstanceKey(body.QuestInstanceId);
+        var instance = await InstanceStore.GetAsync(instanceKey, cancellationToken);
+
+        if (instance == null)
         {
-            var instanceKey = BuildInstanceKey(body.QuestInstanceId);
-            var instance = await InstanceStore.GetAsync(instanceKey, cancellationToken);
+            return (StatusCodes.NotFound, null);
+        }
 
-            if (instance == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
+        var progressKey = BuildProgressKey(body.QuestInstanceId, body.ObjectiveCode);
+        var (progress, etag) = await ProgressStore.GetWithETagAsync(progressKey, cancellationToken);
 
-            var progressKey = BuildProgressKey(body.QuestInstanceId, body.ObjectiveCode);
-            var progress = await ProgressStore.GetAsync(progressKey, cancellationToken);
+        if (progress == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
 
-            if (progress == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
+        if (progress.IsComplete)
+        {
             return (StatusCodes.OK, new ObjectiveProgressResponse
             {
                 QuestInstanceId = body.QuestInstanceId,
@@ -1338,6 +1245,71 @@ public partial class QuestService : IQuestService
                 MilestoneCompleted = false
             });
         }
+
+        progress.CurrentCount = progress.RequiredCount;
+        progress.IsComplete = true;
+
+        await ProgressStore.SaveAsync(
+            progressKey,
+            progress,
+            new StateOptions { Ttl = _configuration.ProgressCacheTtlSeconds },
+            cancellationToken);
+
+        // Notify Contract service
+        var milestoneRequest = new CompleteMilestoneRequest
+        {
+            ContractId = instance.ContractInstanceId,
+            MilestoneCode = body.ObjectiveCode
+        };
+        try
+        {
+            await _contractClient.CompleteMilestoneAsync(milestoneRequest, cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Failed to complete milestone {MilestoneCode} on contract {ContractId}",
+                body.ObjectiveCode, instance.ContractInstanceId);
+            // Continue - milestone completion is eventually consistent via events
+        }
+
+        _logger.LogInformation("Objective force completed: {QuestInstanceId}/{ObjectiveCode}",
+            body.QuestInstanceId, body.ObjectiveCode);
+
+        return (StatusCodes.OK, new ObjectiveProgressResponse
+        {
+            QuestInstanceId = body.QuestInstanceId,
+            Objective = MapToObjectiveProgress(progress),
+            MilestoneCompleted = true
+        });
+    }
+
+    /// <inheritdoc/>
+    public async Task<(StatusCodes, ObjectiveProgressResponse?)> GetObjectiveProgressAsync(
+        GetObjectiveProgressRequest body,
+        CancellationToken cancellationToken)
+    {
+        var instanceKey = BuildInstanceKey(body.QuestInstanceId);
+        var instance = await InstanceStore.GetAsync(instanceKey, cancellationToken);
+
+        if (instance == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        var progressKey = BuildProgressKey(body.QuestInstanceId, body.ObjectiveCode);
+        var progress = await ProgressStore.GetAsync(progressKey, cancellationToken);
+
+        if (progress == null)
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        return (StatusCodes.OK, new ObjectiveProgressResponse
+        {
+            QuestInstanceId = body.QuestInstanceId,
+            Objective = MapToObjectiveProgress(progress),
+            MilestoneCompleted = false
+        });
     }
 
     #endregion
@@ -1349,27 +1321,25 @@ public partial class QuestService : IQuestService
         MilestoneCompletedCallback body,
         CancellationToken cancellationToken)
     {
+        // Find quest instance by contract ID
+        var instances = await InstanceStore.QueryAsync(
+            i => i.ContractInstanceId == body.ContractInstanceId,
+            cancellationToken: cancellationToken);
+
+        var instance = instances.FirstOrDefault();
+        if (instance == null)
         {
-            // Find quest instance by contract ID
-            var instances = await InstanceStore.QueryAsync(
-                i => i.ContractInstanceId == body.ContractInstanceId,
-                cancellationToken: cancellationToken);
-
-            var instance = instances.FirstOrDefault();
-            if (instance == null)
-            {
-                _logger.LogDebug("No quest instance found for contract {ContractInstanceId}", body.ContractInstanceId);
-                return StatusCodes.OK; // Not an error - contract may not be quest-related
-            }
-
-            _logger.LogDebug("Milestone {MilestoneCode} completed for quest {QuestInstanceId}",
-                body.MilestoneCode, instance.QuestInstanceId);
-
-            // The objective should already be marked complete via ReportObjectiveProgress
-            // This callback is for any additional post-milestone processing
-
-            return StatusCodes.OK;
+            _logger.LogDebug("No quest instance found for contract {ContractInstanceId}", body.ContractInstanceId);
+            return StatusCodes.OK; // Not an error - contract may not be quest-related
         }
+
+        _logger.LogDebug("Milestone {MilestoneCode} completed for quest {QuestInstanceId}",
+            body.MilestoneCode, instance.QuestInstanceId);
+
+        // The objective should already be marked complete via ReportObjectiveProgress
+        // This callback is for any additional post-milestone processing
+
+        return StatusCodes.OK;
     }
 
     /// <inheritdoc/>
@@ -1377,23 +1347,21 @@ public partial class QuestService : IQuestService
         QuestCompletedCallback body,
         CancellationToken cancellationToken)
     {
+        // Find quest instance by contract ID
+        var instances = await InstanceStore.QueryAsync(
+            i => i.ContractInstanceId == body.ContractInstanceId,
+            cancellationToken: cancellationToken);
+
+        var instance = instances.FirstOrDefault();
+        if (instance == null)
         {
-            // Find quest instance by contract ID
-            var instances = await InstanceStore.QueryAsync(
-                i => i.ContractInstanceId == body.ContractInstanceId,
-                cancellationToken: cancellationToken);
-
-            var instance = instances.FirstOrDefault();
-            if (instance == null)
-            {
-                _logger.LogDebug("No quest instance found for contract {ContractInstanceId}", body.ContractInstanceId);
-                return StatusCodes.OK;
-            }
-
-            await CompleteQuestAsync(instance, cancellationToken);
-
+            _logger.LogDebug("No quest instance found for contract {ContractInstanceId}", body.ContractInstanceId);
             return StatusCodes.OK;
         }
+
+        await CompleteQuestAsync(instance, cancellationToken);
+
+        return StatusCodes.OK;
     }
 
     #endregion

@@ -178,60 +178,58 @@ public partial class AnalyticsService : IAnalyticsService
     {
         _logger.LogDebug("Ingesting batch of {Count} analytics events", body.Events.Count);
 
+        var accepted = 0;
+        var rejected = 0;
+        var errors = new List<string>();
+
+        foreach (var evt in body.Events)
         {
-            var accepted = 0;
-            var rejected = 0;
-            var errors = new List<string>();
-
-            foreach (var evt in body.Events)
+            try
             {
-                try
+                var bufferedEvent = new BufferedAnalyticsEvent
                 {
-                    var bufferedEvent = new BufferedAnalyticsEvent
-                    {
-                        EventId = Guid.NewGuid(),
-                        GameServiceId = evt.GameServiceId,
-                        EntityId = evt.EntityId,
-                        EntityType = evt.EntityType,
-                        EventType = evt.EventType,
-                        Timestamp = evt.Timestamp,
-                        Value = evt.Value,
-                        Metadata = MetadataHelper.ConvertToDictionary(evt.Metadata)
-                    };
+                    EventId = Guid.NewGuid(),
+                    GameServiceId = evt.GameServiceId,
+                    EntityId = evt.EntityId,
+                    EntityType = evt.EntityType,
+                    EventType = evt.EventType,
+                    Timestamp = evt.Timestamp,
+                    Value = evt.Value,
+                    Metadata = MetadataHelper.ConvertToDictionary(evt.Metadata)
+                };
 
-                    var buffered = await BufferAnalyticsEventAsync(
-                        bufferedEvent,
-                        cancellationToken,
-                        flushAfterEnqueue: false);
-                    if (buffered)
-                    {
-                        accepted++;
-                    }
-                    else
-                    {
-                        rejected++;
-                        errors.Add($"Event for {evt.EntityType}:{evt.EntityId} failed to buffer");
-                    }
+                var buffered = await BufferAnalyticsEventAsync(
+                    bufferedEvent,
+                    cancellationToken,
+                    flushAfterEnqueue: false);
+                if (buffered)
+                {
+                    accepted++;
                 }
-                catch (Exception ex)
+                else
                 {
                     rejected++;
-                    errors.Add($"Event for {evt.EntityType}:{evt.EntityId} failed: {ex.Message}");
+                    errors.Add($"Event for {evt.EntityType}:{evt.EntityId} failed to buffer");
                 }
             }
-
-            if (accepted > 0)
+            catch (Exception ex)
             {
-                await FlushBufferedEventsIfNeededAsync(cancellationToken);
+                rejected++;
+                errors.Add($"Event for {evt.EntityType}:{evt.EntityId} failed: {ex.Message}");
             }
-
-            return (StatusCodes.OK, new IngestEventBatchResponse
-            {
-                Accepted = accepted,
-                Rejected = rejected,
-                Errors = errors.Count > 0 ? errors : null
-            });
         }
+
+        if (accepted > 0)
+        {
+            await FlushBufferedEventsIfNeededAsync(cancellationToken);
+        }
+
+        return (StatusCodes.OK, new IngestEventBatchResponse
+        {
+            Accepted = accepted,
+            Rejected = rejected,
+            Errors = errors.Count > 0 ? errors : null
+        });
     }
 
     /// <summary>
@@ -402,43 +400,41 @@ public partial class AnalyticsService : IAnalyticsService
         _logger.LogInformation("Getting skill rating for {EntityType}:{EntityId}, type {RatingType}",
             body.EntityType, body.EntityId, body.RatingType);
 
+        var ratingStore = _stateStoreFactory.GetStore<SkillRatingData>(StateStoreDefinitions.AnalyticsRating);
+        var ratingKey = GetRatingKey(body.GameServiceId, body.RatingType, body.EntityType, body.EntityId);
+
+        var rating = await ratingStore.GetAsync(ratingKey, cancellationToken);
+        if (rating == null)
         {
-            var ratingStore = _stateStoreFactory.GetStore<SkillRatingData>(StateStoreDefinitions.AnalyticsRating);
-            var ratingKey = GetRatingKey(body.GameServiceId, body.RatingType, body.EntityType, body.EntityId);
+            var defaultRating = _configuration.Glicko2DefaultRating;
+            var defaultDeviation = _configuration.Glicko2DefaultDeviation;
+            var defaultVolatility = _configuration.Glicko2DefaultVolatility;
 
-            var rating = await ratingStore.GetAsync(ratingKey, cancellationToken);
-            if (rating == null)
-            {
-                var defaultRating = _configuration.Glicko2DefaultRating;
-                var defaultDeviation = _configuration.Glicko2DefaultDeviation;
-                var defaultVolatility = _configuration.Glicko2DefaultVolatility;
-
-                // Return default rating for new players
-                return (StatusCodes.OK, new SkillRatingResponse
-                {
-                    EntityId = body.EntityId,
-                    EntityType = body.EntityType,
-                    RatingType = body.RatingType,
-                    Rating = defaultRating,
-                    RatingDeviation = defaultDeviation,
-                    Volatility = defaultVolatility,
-                    MatchesPlayed = 0,
-                    LastMatchAt = null
-                });
-            }
-
+            // Return default rating for new players
             return (StatusCodes.OK, new SkillRatingResponse
             {
-                EntityId = rating.EntityId,
-                EntityType = rating.EntityType,
-                RatingType = rating.RatingType,
-                Rating = rating.Rating,
-                RatingDeviation = rating.RatingDeviation,
-                Volatility = rating.Volatility,
-                MatchesPlayed = rating.MatchesPlayed,
-                LastMatchAt = rating.LastMatchAt
+                EntityId = body.EntityId,
+                EntityType = body.EntityType,
+                RatingType = body.RatingType,
+                Rating = defaultRating,
+                RatingDeviation = defaultDeviation,
+                Volatility = defaultVolatility,
+                MatchesPlayed = 0,
+                LastMatchAt = null
             });
         }
+
+        return (StatusCodes.OK, new SkillRatingResponse
+        {
+            EntityId = rating.EntityId,
+            EntityType = rating.EntityType,
+            RatingType = rating.RatingType,
+            Rating = rating.Rating,
+            RatingDeviation = rating.RatingDeviation,
+            Volatility = rating.Volatility,
+            MatchesPlayed = rating.MatchesPlayed,
+            LastMatchAt = rating.LastMatchAt
+        });
     }
 
     /// <summary>
@@ -450,136 +446,134 @@ public partial class AnalyticsService : IAnalyticsService
         _logger.LogInformation("Updating skill ratings for match {MatchId} with {Count} participants",
             body.MatchId, body.Results.Count);
 
+        if (body.Results.Count < 2)
         {
-            if (body.Results.Count < 2)
+            return (StatusCodes.BadRequest, null);
+        }
+
+        var ratingStore = _stateStoreFactory.GetStore<SkillRatingData>(StateStoreDefinitions.AnalyticsRating);
+        var now = DateTimeOffset.UtcNow;
+
+        // Acquire distributed lock to serialize rating updates for this game+type combination
+        var lockResourceId = $"rating-update:{body.GameServiceId}:{body.RatingType}";
+        await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.AnalyticsRating,
+            lockResourceId,
+            Guid.NewGuid().ToString(),
+            _configuration.RatingUpdateLockExpirySeconds,
+            cancellationToken);
+
+        if (!lockResponse.Success)
+        {
+            _logger.LogWarning("Failed to acquire rating update lock for {ResourceId} during match {MatchId}",
+                lockResourceId, body.MatchId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Load all current ratings (no ETags needed - lock provides exclusivity)
+        var currentRatings = new Dictionary<string, SkillRatingData>();
+        foreach (var result in body.Results)
+        {
+            var key = GetRatingKey(body.GameServiceId, body.RatingType, result.EntityType, result.EntityId);
+            var rating = await ratingStore.GetAsync(key, cancellationToken);
+            currentRatings[key] = rating ?? new SkillRatingData
             {
-                return (StatusCodes.BadRequest, null);
-            }
+                EntityId = result.EntityId,
+                EntityType = result.EntityType,
+                RatingType = body.RatingType,
+                GameServiceId = body.GameServiceId,
+                Rating = _configuration.Glicko2DefaultRating,
+                RatingDeviation = _configuration.Glicko2DefaultDeviation,
+                Volatility = _configuration.Glicko2DefaultVolatility,
+                MatchesPlayed = 0
+            };
+        }
 
-            var ratingStore = _stateStoreFactory.GetStore<SkillRatingData>(StateStoreDefinitions.AnalyticsRating);
-            var now = DateTimeOffset.UtcNow;
+        // Snapshot pre-match ratings for opponent lookups (prevents mutation bug)
+        var originalRatings = currentRatings.ToDictionary(
+            kvp => kvp.Key,
+            kvp => (Rating: kvp.Value.Rating, RD: kvp.Value.RatingDeviation, Volatility: kvp.Value.Volatility));
 
-            // Acquire distributed lock to serialize rating updates for this game+type combination
-            var lockResourceId = $"rating-update:{body.GameServiceId}:{body.RatingType}";
-            await using var lockResponse = await _lockProvider.LockAsync(
-                StateStoreDefinitions.AnalyticsRating,
-                lockResourceId,
-                Guid.NewGuid().ToString(),
-                _configuration.RatingUpdateLockExpirySeconds,
-                cancellationToken);
+        // Calculate ALL new ratings using pre-match snapshots for opponent lookups
+        var calculatedResults = new List<(string Key, MatchResult Result, double NewRating, double NewRD, double NewVolatility, double PreviousRating)>();
+        foreach (var result in body.Results)
+        {
+            var key = GetRatingKey(body.GameServiceId, body.RatingType, result.EntityType, result.EntityId);
+            var playerRating = currentRatings[key];
+            var previousRating = playerRating.Rating;
 
-            if (!lockResponse.Success)
+            // Calculate opponents' combined effect using pairwise outcomes and ORIGINAL ratings
+            var opponents = body.Results.Where(r => r.EntityId != result.EntityId).ToList();
+            var opponentData = opponents.Select(o =>
             {
-                _logger.LogWarning("Failed to acquire rating update lock for {ResourceId} during match {MatchId}",
-                    lockResourceId, body.MatchId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Load all current ratings (no ETags needed - lock provides exclusivity)
-            var currentRatings = new Dictionary<string, SkillRatingData>();
-            foreach (var result in body.Results)
-            {
-                var key = GetRatingKey(body.GameServiceId, body.RatingType, result.EntityType, result.EntityId);
-                var rating = await ratingStore.GetAsync(key, cancellationToken);
-                currentRatings[key] = rating ?? new SkillRatingData
+                var oppKey = GetRatingKey(body.GameServiceId, body.RatingType, o.EntityType, o.EntityId);
+                var oppOriginal = originalRatings[oppKey];
+                var opponentSnapshot = new SkillRatingData
                 {
-                    EntityId = result.EntityId,
-                    EntityType = result.EntityType,
-                    RatingType = body.RatingType,
-                    GameServiceId = body.GameServiceId,
-                    Rating = _configuration.Glicko2DefaultRating,
-                    RatingDeviation = _configuration.Glicko2DefaultDeviation,
-                    Volatility = _configuration.Glicko2DefaultVolatility,
-                    MatchesPlayed = 0
+                    Rating = oppOriginal.Rating,
+                    RatingDeviation = oppOriginal.RD,
+                    Volatility = oppOriginal.Volatility
                 };
-            }
+                var pairwiseOutcome = result.Outcome > o.Outcome ? 1.0
+                    : result.Outcome < o.Outcome ? 0.0
+                    : 0.5;
+                return (opponentSnapshot, pairwiseOutcome);
+            }).ToList();
 
-            // Snapshot pre-match ratings for opponent lookups (prevents mutation bug)
-            var originalRatings = currentRatings.ToDictionary(
-                kvp => kvp.Key,
-                kvp => (Rating: kvp.Value.Rating, RD: kvp.Value.RatingDeviation, Volatility: kvp.Value.Volatility));
+            var (newRating, newRD, newVolatility) = CalculateGlicko2Update(playerRating, opponentData);
+            calculatedResults.Add((key, result, newRating, newRD, newVolatility, previousRating));
+        }
 
-            // Calculate ALL new ratings using pre-match snapshots for opponent lookups
-            var calculatedResults = new List<(string Key, MatchResult Result, double NewRating, double NewRD, double NewVolatility, double PreviousRating)>();
-            foreach (var result in body.Results)
+        // Apply all calculated values and save (all-or-nothing under lock)
+        var updatedRatings = new List<SkillRatingChange>();
+        foreach (var (key, result, newRating, newRD, newVolatility, previousRating) in calculatedResults)
+        {
+            var playerRating = currentRatings[key];
+            playerRating.Rating = newRating;
+            playerRating.RatingDeviation = newRD;
+            playerRating.Volatility = newVolatility;
+            playerRating.MatchesPlayed++;
+            playerRating.LastMatchAt = now;
+
+            await ratingStore.SaveAsync(key, playerRating, cancellationToken: cancellationToken);
+
+            var ratingChange = newRating - previousRating;
+            updatedRatings.Add(new SkillRatingChange
             {
-                var key = GetRatingKey(body.GameServiceId, body.RatingType, result.EntityType, result.EntityId);
-                var playerRating = currentRatings[key];
-                var previousRating = playerRating.Rating;
-
-                // Calculate opponents' combined effect using pairwise outcomes and ORIGINAL ratings
-                var opponents = body.Results.Where(r => r.EntityId != result.EntityId).ToList();
-                var opponentData = opponents.Select(o =>
-                {
-                    var oppKey = GetRatingKey(body.GameServiceId, body.RatingType, o.EntityType, o.EntityId);
-                    var oppOriginal = originalRatings[oppKey];
-                    var opponentSnapshot = new SkillRatingData
-                    {
-                        Rating = oppOriginal.Rating,
-                        RatingDeviation = oppOriginal.RD,
-                        Volatility = oppOriginal.Volatility
-                    };
-                    var pairwiseOutcome = result.Outcome > o.Outcome ? 1.0
-                        : result.Outcome < o.Outcome ? 0.0
-                        : 0.5;
-                    return (opponentSnapshot, pairwiseOutcome);
-                }).ToList();
-
-                var (newRating, newRD, newVolatility) = CalculateGlicko2Update(playerRating, opponentData);
-                calculatedResults.Add((key, result, newRating, newRD, newVolatility, previousRating));
-            }
-
-            // Apply all calculated values and save (all-or-nothing under lock)
-            var updatedRatings = new List<SkillRatingChange>();
-            foreach (var (key, result, newRating, newRD, newVolatility, previousRating) in calculatedResults)
-            {
-                var playerRating = currentRatings[key];
-                playerRating.Rating = newRating;
-                playerRating.RatingDeviation = newRD;
-                playerRating.Volatility = newVolatility;
-                playerRating.MatchesPlayed++;
-                playerRating.LastMatchAt = now;
-
-                await ratingStore.SaveAsync(key, playerRating, cancellationToken: cancellationToken);
-
-                var ratingChange = newRating - previousRating;
-                updatedRatings.Add(new SkillRatingChange
-                {
-                    EntityId = result.EntityId,
-                    EntityType = result.EntityType,
-                    PreviousRating = previousRating,
-                    NewRating = newRating,
-                    RatingChange = ratingChange
-                });
-            }
-
-            // Publish all events after all saves complete
-            foreach (var (key, result, newRating, newRD, newVolatility, previousRating) in calculatedResults)
-            {
-                var ratingChange = newRating - previousRating;
-                var ratingEvent = new AnalyticsRatingUpdatedEvent
-                {
-                    EventId = Guid.NewGuid(),
-                    Timestamp = now,
-                    GameServiceId = body.GameServiceId,
-                    EntityId = result.EntityId,
-                    EntityType = result.EntityType,
-                    RatingType = body.RatingType,
-                    PreviousRating = previousRating,
-                    NewRating = newRating,
-                    RatingChange = ratingChange,
-                    NewRatingDeviation = newRD,
-                    MatchId = body.MatchId
-                };
-                await _messageBus.TryPublishAsync("analytics.rating.updated", ratingEvent, cancellationToken: cancellationToken);
-            }
-
-            return (StatusCodes.OK, new UpdateSkillRatingResponse
-            {
-                MatchId = body.MatchId,
-                UpdatedRatings = updatedRatings
+                EntityId = result.EntityId,
+                EntityType = result.EntityType,
+                PreviousRating = previousRating,
+                NewRating = newRating,
+                RatingChange = ratingChange
             });
         }
+
+        // Publish all events after all saves complete
+        foreach (var (key, result, newRating, newRD, newVolatility, previousRating) in calculatedResults)
+        {
+            var ratingChange = newRating - previousRating;
+            var ratingEvent = new AnalyticsRatingUpdatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                GameServiceId = body.GameServiceId,
+                EntityId = result.EntityId,
+                EntityType = result.EntityType,
+                RatingType = body.RatingType,
+                PreviousRating = previousRating,
+                NewRating = newRating,
+                RatingChange = ratingChange,
+                NewRatingDeviation = newRD,
+                MatchId = body.MatchId
+            };
+            await _messageBus.TryPublishAsync("analytics.rating.updated", ratingEvent, cancellationToken: cancellationToken);
+        }
+
+        return (StatusCodes.OK, new UpdateSkillRatingResponse
+        {
+            MatchId = body.MatchId,
+            UpdatedRatings = updatedRatings
+        });
     }
 
     /// <summary>
@@ -591,26 +585,24 @@ public partial class AnalyticsService : IAnalyticsService
         _logger.LogInformation("Recording controller {Action} event: account {AccountId} -> {EntityType}:{EntityId}",
             body.Action, body.AccountId, body.TargetEntityType, body.TargetEntityId);
 
+        var controllerStore = _stateStoreFactory.GetStore<ControllerHistoryData>(StateStoreDefinitions.AnalyticsHistoryData);
+        var eventId = Guid.NewGuid();
+        var key = GetControllerKey(body.GameServiceId, body.AccountId, body.Timestamp);
+
+        var historyEvent = new ControllerHistoryData
         {
-            var controllerStore = _stateStoreFactory.GetStore<ControllerHistoryData>(StateStoreDefinitions.AnalyticsHistoryData);
-            var eventId = Guid.NewGuid();
-            var key = GetControllerKey(body.GameServiceId, body.AccountId, body.Timestamp);
+            EventId = eventId,
+            GameServiceId = body.GameServiceId,
+            AccountId = body.AccountId,
+            TargetEntityId = body.TargetEntityId,
+            TargetEntityType = body.TargetEntityType,
+            Action = body.Action,
+            Timestamp = body.Timestamp,
+            SessionId = body.SessionId
+        };
 
-            var historyEvent = new ControllerHistoryData
-            {
-                EventId = eventId,
-                GameServiceId = body.GameServiceId,
-                AccountId = body.AccountId,
-                TargetEntityId = body.TargetEntityId,
-                TargetEntityType = body.TargetEntityType,
-                Action = body.Action,
-                Timestamp = body.Timestamp,
-                SessionId = body.SessionId
-            };
-
-            await controllerStore.SaveAsync(key, historyEvent, options: null, cancellationToken);
-            return StatusCodes.OK;
-        }
+        await controllerStore.SaveAsync(key, historyEvent, options: null, cancellationToken);
+        return StatusCodes.OK;
     }
 
     /// <summary>
@@ -737,23 +729,22 @@ public partial class AnalyticsService : IAnalyticsService
         _logger.LogInformation("Cleaning up controller history (dryRun={DryRun}, olderThanDays={OlderThanDays}, gameServiceId={GameServiceId})",
             body.DryRun, body.OlderThanDays, body.GameServiceId);
 
+        var retentionDays = body.OlderThanDays ?? _configuration.ControllerHistoryRetentionDays;
+        if (retentionDays <= 0)
         {
-            var retentionDays = body.OlderThanDays ?? _configuration.ControllerHistoryRetentionDays;
-            if (retentionDays <= 0)
+            _logger.LogInformation("Controller history cleanup skipped: retention days is 0 (indefinite retention)");
+            return (StatusCodes.OK, new CleanupControllerHistoryResponse
             {
-                _logger.LogInformation("Controller history cleanup skipped: retention days is 0 (indefinite retention)");
-                return (StatusCodes.OK, new CleanupControllerHistoryResponse
-                {
-                    RecordsDeleted = 0,
-                    DryRun = body.DryRun
-                });
-            }
+                RecordsDeleted = 0,
+                DryRun = body.DryRun
+            });
+        }
 
-            var cutoffTime = DateTimeOffset.UtcNow.AddDays(-retentionDays);
-            var historyStore = _stateStoreFactory.GetJsonQueryableStore<ControllerHistoryData>(
-                StateStoreDefinitions.AnalyticsHistoryData);
+        var cutoffTime = DateTimeOffset.UtcNow.AddDays(-retentionDays);
+        var historyStore = _stateStoreFactory.GetJsonQueryableStore<ControllerHistoryData>(
+            StateStoreDefinitions.AnalyticsHistoryData);
 
-            var conditions = new List<QueryCondition>
+        var conditions = new List<QueryCondition>
             {
                 new QueryCondition
                 {
@@ -763,58 +754,57 @@ public partial class AnalyticsService : IAnalyticsService
                 }
             };
 
-            if (body.GameServiceId.HasValue)
+        if (body.GameServiceId.HasValue)
+        {
+            conditions.Add(new QueryCondition
             {
-                conditions.Add(new QueryCondition
-                {
-                    Path = "$.GameServiceId",
-                    Operator = QueryOperator.Equals,
-                    Value = body.GameServiceId.Value.ToString()
-                });
-            }
-
-            if (body.DryRun)
-            {
-                var count = await historyStore.JsonCountAsync(conditions, cancellationToken);
-                _logger.LogInformation("Controller history cleanup dry run: {Count} records would be deleted", count);
-                return (StatusCodes.OK, new CleanupControllerHistoryResponse
-                {
-                    RecordsDeleted = count,
-                    DryRun = true
-                });
-            }
-
-            var batchSize = _configuration.ControllerHistoryCleanupBatchSize;
-            var totalDeleted = 0L;
-            var regularStore = _stateStoreFactory.GetStore<ControllerHistoryData>(
-                StateStoreDefinitions.AnalyticsHistoryData);
-
-            // Delete in batches to avoid overwhelming the database (per IMPLEMENTATION TENETS: use configuration)
-            while (totalDeleted < batchSize)
-            {
-                var batchLimit = Math.Min(_configuration.ControllerHistoryCleanupSubBatchSize, (int)(batchSize - totalDeleted));
-                var batch = await historyStore.JsonQueryPagedAsync(
-                    conditions, 0, batchLimit, null, cancellationToken);
-
-                if (batch.Items.Count == 0)
-                {
-                    break;
-                }
-
-                foreach (var item in batch.Items)
-                {
-                    await regularStore.DeleteAsync(item.Key, cancellationToken);
-                    totalDeleted++;
-                }
-            }
-
-            _logger.LogInformation("Controller history cleanup completed: {DeletedCount} records deleted", totalDeleted);
-            return (StatusCodes.OK, new CleanupControllerHistoryResponse
-            {
-                RecordsDeleted = totalDeleted,
-                DryRun = false
+                Path = "$.GameServiceId",
+                Operator = QueryOperator.Equals,
+                Value = body.GameServiceId.Value.ToString()
             });
         }
+
+        if (body.DryRun)
+        {
+            var count = await historyStore.JsonCountAsync(conditions, cancellationToken);
+            _logger.LogInformation("Controller history cleanup dry run: {Count} records would be deleted", count);
+            return (StatusCodes.OK, new CleanupControllerHistoryResponse
+            {
+                RecordsDeleted = count,
+                DryRun = true
+            });
+        }
+
+        var batchSize = _configuration.ControllerHistoryCleanupBatchSize;
+        var totalDeleted = 0L;
+        var regularStore = _stateStoreFactory.GetStore<ControllerHistoryData>(
+            StateStoreDefinitions.AnalyticsHistoryData);
+
+        // Delete in batches to avoid overwhelming the database (per IMPLEMENTATION TENETS: use configuration)
+        while (totalDeleted < batchSize)
+        {
+            var batchLimit = Math.Min(_configuration.ControllerHistoryCleanupSubBatchSize, (int)(batchSize - totalDeleted));
+            var batch = await historyStore.JsonQueryPagedAsync(
+                conditions, 0, batchLimit, null, cancellationToken);
+
+            if (batch.Items.Count == 0)
+            {
+                break;
+            }
+
+            foreach (var item in batch.Items)
+            {
+                await regularStore.DeleteAsync(item.Key, cancellationToken);
+                totalDeleted++;
+            }
+        }
+
+        _logger.LogInformation("Controller history cleanup completed: {DeletedCount} records deleted", totalDeleted);
+        return (StatusCodes.OK, new CleanupControllerHistoryResponse
+        {
+            RecordsDeleted = totalDeleted,
+            DryRun = false
+        });
     }
 
     #region Glicko-2 Algorithm Implementation
