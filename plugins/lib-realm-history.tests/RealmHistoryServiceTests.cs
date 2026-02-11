@@ -2,6 +2,7 @@ using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.History;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.RealmHistory;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.TestUtilities;
@@ -26,6 +27,7 @@ public class RealmHistoryServiceTests
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
+    private readonly Mock<IResourceClient> _mockResourceClient;
 
     private const string STATE_STORE = "realm-history-statestore";
 
@@ -41,6 +43,7 @@ public class RealmHistoryServiceTests
         _mockMessageBus = new Mock<IMessageBus>();
         _mockEventConsumer = new Mock<IEventConsumer>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
+        _mockResourceClient = new Mock<IResourceClient>();
 
         // Default: lock provider succeeds
         var successLock = new Mock<ILockResponse>();
@@ -74,7 +77,8 @@ public class RealmHistoryServiceTests
             _mockLogger.Object,
             _configuration,
             _mockEventConsumer.Object,
-            _mockLockProvider.Object);
+            _mockLockProvider.Object,
+            _mockResourceClient.Object);
     }
 
     private void SetupJsonQueryPagedAsync(

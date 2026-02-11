@@ -7,6 +7,7 @@ using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Mesh;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Providers;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
@@ -50,6 +51,7 @@ public partial class ActorService : IActorService
     private readonly IBehaviorDocumentLoader _behaviorLoader;
     private readonly IActorPoolManager _poolManager;
     private readonly IMeshInvocationClient _meshClient;
+    private readonly IResourceClient _resourceClient;
 
     // State store names use StateStoreDefinitions constants per IMPLEMENTATION TENETS
     private const string ALL_TEMPLATES_KEY = "_all_template_ids";
@@ -71,6 +73,7 @@ public partial class ActorService : IActorService
     /// <param name="behaviorLoader">Behavior document loader for hot-reload invalidation.</param>
     /// <param name="poolManager">Pool manager for distributed actor routing.</param>
     /// <param name="meshClient">Mesh client for invoking methods on remote nodes.</param>
+    /// <param name="resourceClient">Resource client for reference tracking (L1 hard dependency).</param>
     public ActorService(
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
@@ -81,7 +84,8 @@ public partial class ActorService : IActorService
         IEventConsumer eventConsumer,
         IBehaviorDocumentLoader behaviorLoader,
         IActorPoolManager poolManager,
-        IMeshInvocationClient meshClient)
+        IMeshInvocationClient meshClient,
+        IResourceClient resourceClient)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
@@ -93,6 +97,7 @@ public partial class ActorService : IActorService
         _behaviorLoader = behaviorLoader;
         _poolManager = poolManager;
         _meshClient = meshClient;
+        _resourceClient = resourceClient;
 
         // Register event handlers via partial class (ActorServiceEvents.cs)
         RegisterEventConsumers(_eventConsumer);

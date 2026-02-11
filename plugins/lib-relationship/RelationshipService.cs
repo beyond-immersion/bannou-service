@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -23,6 +24,7 @@ public partial class RelationshipService : IRelationshipService
     private readonly ILogger<RelationshipService> _logger;
     private readonly RelationshipServiceConfiguration _configuration;
     private readonly IDistributedLockProvider _lockProvider;
+    private readonly IResourceClient _resourceClient;
 
     // Relationship instance key prefixes (relationship-statestore)
     private const string RELATIONSHIP_KEY_PREFIX = "rel:";
@@ -45,19 +47,22 @@ public partial class RelationshipService : IRelationshipService
     /// <param name="configuration">Service configuration.</param>
     /// <param name="lockProvider">Distributed lock provider for index and uniqueness protection.</param>
     /// <param name="eventConsumer">Event consumer for registering event handlers.</param>
+    /// <param name="resourceClient">Resource client for reference tracking (L1 hard dependency).</param>
     public RelationshipService(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
         ILogger<RelationshipService> logger,
         RelationshipServiceConfiguration configuration,
         IDistributedLockProvider lockProvider,
-        IEventConsumer eventConsumer)
+        IEventConsumer eventConsumer,
+        IResourceClient resourceClient)
     {
         _stateStoreFactory = stateStoreFactory;
         _messageBus = messageBus;
         _logger = logger;
         _configuration = configuration;
         _lockProvider = lockProvider;
+        _resourceClient = resourceClient;
 
         // Register event handlers via partial class (RelationshipServiceEvents.cs)
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);

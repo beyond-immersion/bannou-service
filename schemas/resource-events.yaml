@@ -3,11 +3,11 @@ info:
   title: Resource Lifecycle Events
   description: |
     Event models for Resource service RabbitMQ pub/sub.
-    Handles reference registration/unregistration and cleanup coordination.
+    Handles cleanup coordination, grace period, compression, and snapshot events.
 
-    **Key Design Principle**: Higher-layer services (L3/L4) publish reference
-    events when they create/delete references to foundational resources (L2).
-    This service (L1) consumes those events and maintains reference counts.
+    **Note**: Reference registration/unregistration is handled via direct API calls
+    (IResourceClient.RegisterReferenceAsync/UnregisterReferenceAsync), not events.
+    Higher-layer services call the Resource API directly for reliable reference tracking.
 
     **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
     1. Read docs/reference/SCHEMA-RULES.md
@@ -15,14 +15,6 @@ info:
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
-  x-event-subscriptions:
-    # Reference events - published by higher-layer services when they create/delete references
-    - topic: resource.reference.registered
-      event: ResourceReferenceRegisteredEvent
-      handler: HandleReferenceRegistered
-    - topic: resource.reference.unregistered
-      event: ResourceReferenceUnregisteredEvent
-      handler: HandleReferenceUnregistered
   x-event-publications:
     # Cleanup failure event for monitoring
     - topic: resource.cleanup.callback-failed
@@ -51,74 +43,6 @@ paths: {}  # Events don't have HTTP paths
 
 components:
   schemas:
-    # =========================================================================
-    # Events this service SUBSCRIBES to
-    # =========================================================================
-
-    ResourceReferenceRegisteredEvent:
-      type: object
-      additionalProperties: false
-      description: |
-        Published by higher-layer services when they create a reference to a
-        foundational resource. For example, when ActorService creates an actor
-        that references a character, it publishes this event.
-      required:
-      - resourceType
-      - resourceId
-      - sourceType
-      - sourceId
-      - timestamp
-      properties:
-        resourceType:
-          type: string
-          description: Type of resource being referenced (opaque identifier, e.g., "character")
-        resourceId:
-          type: string
-          format: uuid
-          description: ID of the resource being referenced
-        sourceType:
-          type: string
-          description: Type of entity holding the reference (opaque identifier, e.g., "actor")
-        sourceId:
-          type: string
-          description: ID of the entity holding the reference (opaque string, supports non-Guid IDs)
-        timestamp:
-          type: string
-          format: date-time
-          description: When the reference was registered
-
-    ResourceReferenceUnregisteredEvent:
-      type: object
-      additionalProperties: false
-      description: |
-        Published by higher-layer services when they delete a reference to a
-        foundational resource. For example, when ActorService deletes an actor,
-        it publishes this event to release the character reference.
-      required:
-      - resourceType
-      - resourceId
-      - sourceType
-      - sourceId
-      - timestamp
-      properties:
-        resourceType:
-          type: string
-          description: Type of resource being dereferenced (opaque identifier)
-        resourceId:
-          type: string
-          format: uuid
-          description: ID of the resource being dereferenced
-        sourceType:
-          type: string
-          description: Type of entity releasing the reference (opaque identifier)
-        sourceId:
-          type: string
-          description: ID of the entity releasing the reference (opaque string, supports non-Guid IDs)
-        timestamp:
-          type: string
-          format: date-time
-          description: When the reference was unregistered
-
     # =========================================================================
     # Events this service PUBLISHES
     # =========================================================================

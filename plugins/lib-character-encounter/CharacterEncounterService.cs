@@ -5,6 +5,7 @@ using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.CharacterEncounter.Caching;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -33,6 +34,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     private readonly CharacterEncounterServiceConfiguration _configuration;
     private readonly ICharacterClient _characterClient;
     private readonly IEncounterDataCache _encounterDataCache;
+    private readonly IResourceClient _resourceClient;
 
     // Key prefixes for different data types
     private const string ENCOUNTER_KEY_PREFIX = "enc-";
@@ -73,7 +75,8 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         ILogger<CharacterEncounterService> logger,
         CharacterEncounterServiceConfiguration configuration,
         ICharacterClient characterClient,
-        IEncounterDataCache encounterDataCache)
+        IEncounterDataCache encounterDataCache,
+        IResourceClient resourceClient)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
@@ -81,6 +84,7 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         _configuration = configuration;
         _characterClient = characterClient;
         _encounterDataCache = encounterDataCache;
+        _resourceClient = resourceClient;
     }
 
     // ============================================================================

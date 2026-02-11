@@ -9,6 +9,7 @@ using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.Inventory;
 using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
@@ -60,6 +61,7 @@ public partial class LicenseService : ILicenseService
     private readonly ICurrencyClient _currencyClient;
     private readonly IGameServiceClient _gameServiceClient;
     private readonly IDistributedLockProvider _lockProvider;
+    private readonly IResourceClient _resourceClient;
 
     #region State Store Accessors
 
@@ -158,6 +160,7 @@ public partial class LicenseService : ILicenseService
     /// <param name="currencyClient">Currency client for LP balance checks (L2 hard dependency).</param>
     /// <param name="gameServiceClient">Game service client for validation (L2 hard dependency).</param>
     /// <param name="lockProvider">Distributed lock provider (L0 hard dependency).</param>
+    /// <param name="resourceClient">Resource client for reference tracking (L1 hard dependency).</param>
     public LicenseService(
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
@@ -169,7 +172,8 @@ public partial class LicenseService : ILicenseService
         IItemClient itemClient,
         ICurrencyClient currencyClient,
         IGameServiceClient gameServiceClient,
-        IDistributedLockProvider lockProvider)
+        IDistributedLockProvider lockProvider,
+        IResourceClient resourceClient)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
@@ -182,6 +186,7 @@ public partial class LicenseService : ILicenseService
         _currencyClient = currencyClient;
         _gameServiceClient = gameServiceClient;
         _lockProvider = lockProvider;
+        _resourceClient = resourceClient;
     }
 
     #region Adjacency Helper

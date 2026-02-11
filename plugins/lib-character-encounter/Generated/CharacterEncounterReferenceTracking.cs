@@ -7,8 +7,6 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
-using BeyondImmersion.BannouService.Events;
-using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Resource;
 
 namespace BeyondImmersion.BannouService.CharacterEncounter;
@@ -33,21 +31,18 @@ public partial class CharacterEncounterService
     /// <param name="characterEncounterId">The ID of the character-encounter entity holding the reference.</param>
     /// <param name="characterId">The ID of the character resource being referenced.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>True if the event was published successfully.</returns>
-    protected async Task<bool> RegisterCharacterReferenceAsync(
+    protected async Task RegisterCharacterReferenceAsync(
         string characterEncounterId,
         Guid characterId,
         CancellationToken cancellationToken = default)
     {
-        return await _messageBus.TryPublishAsync(
-            "resource.reference.registered",
-            new ResourceReferenceRegisteredEvent
+        await _resourceClient.RegisterReferenceAsync(
+            new RegisterReferenceRequest
             {
                 ResourceType = "character",
                 ResourceId = characterId,
                 SourceType = "character-encounter",
-                SourceId = characterEncounterId,
-                Timestamp = DateTimeOffset.UtcNow
+                SourceId = characterEncounterId
             },
             cancellationToken);
     }
@@ -59,21 +54,18 @@ public partial class CharacterEncounterService
     /// <param name="characterEncounterId">The ID of the character-encounter entity releasing the reference.</param>
     /// <param name="characterId">The ID of the character resource being dereferenced.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>True if the event was published successfully.</returns>
-    protected async Task<bool> UnregisterCharacterReferenceAsync(
+    protected async Task UnregisterCharacterReferenceAsync(
         string characterEncounterId,
         Guid characterId,
         CancellationToken cancellationToken = default)
     {
-        return await _messageBus.TryPublishAsync(
-            "resource.reference.unregistered",
-            new ResourceReferenceUnregisteredEvent
+        await _resourceClient.UnregisterReferenceAsync(
+            new UnregisterReferenceRequest
             {
                 ResourceType = "character",
                 ResourceId = characterId,
                 SourceType = "character-encounter",
-                SourceId = characterEncounterId,
-                Timestamp = DateTimeOffset.UtcNow
+                SourceId = characterEncounterId
             },
             cancellationToken);
     }

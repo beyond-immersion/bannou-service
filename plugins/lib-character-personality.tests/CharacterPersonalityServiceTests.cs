@@ -28,6 +28,7 @@ public class CharacterPersonalityServiceTests
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly Mock<IPersonalityDataCache> _mockPersonalityCache;
+    private readonly Mock<IResourceClient> _mockResourceClient;
 
     // Capture lists for verifying published events
     private readonly List<(string Topic, object Event)> _publishedEvents = new();
@@ -42,6 +43,7 @@ public class CharacterPersonalityServiceTests
         _mockMessageBus = new Mock<IMessageBus>();
         _mockEventConsumer = new Mock<IEventConsumer>();
         _mockPersonalityCache = new Mock<IPersonalityDataCache>();
+        _mockResourceClient = new Mock<IResourceClient>();
 
         // Setup state store factory to return typed stores
         _mockStateStoreFactory.Setup(f => f.GetStore<PersonalityData>(It.IsAny<string>()))
@@ -106,7 +108,8 @@ public class CharacterPersonalityServiceTests
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             _mockEventConsumer.Object,
-            _mockPersonalityCache.Object);
+            _mockPersonalityCache.Object,
+            _mockResourceClient.Object);
     }
 
     /// <summary>
@@ -1283,7 +1286,7 @@ public class CharacterPersonalityServiceTests
     #region Resource Reference Tracking Tests
 
     [Fact]
-    public async Task SetPersonalityAsync_NewPersonality_PublishesReferenceRegisteredEvent()
+    public async Task SetPersonalityAsync_NewPersonality_RegistersCharacterReference()
     {
         // Arrange
         var characterId = Guid.NewGuid();
@@ -1292,17 +1295,16 @@ public class CharacterPersonalityServiceTests
             .Setup(s => s.GetAsync($"personality-{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((PersonalityData?)null);
 
-        ResourceReferenceRegisteredEvent? capturedEvent = null;
-        _mockMessageBus
-            .Setup(m => m.TryPublishAsync(
-                It.Is<string>(t => t == "resource.reference.registered"),
-                It.IsAny<ResourceReferenceRegisteredEvent>(),
+        RegisterReferenceRequest? capturedRequest = null;
+        _mockResourceClient
+            .Setup(m => m.RegisterReferenceAsync(
+                It.IsAny<RegisterReferenceRequest>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, ResourceReferenceRegisteredEvent, CancellationToken>((_, evt, _) =>
+            .Callback<RegisterReferenceRequest, CancellationToken>((req, _) =>
             {
-                capturedEvent = evt;
+                capturedRequest = req;
             })
-            .ReturnsAsync(true);
+            .ReturnsAsync(new RegisterReferenceResponse());
 
         var service = CreateService();
         var request = new SetPersonalityRequest
@@ -1319,15 +1321,15 @@ public class CharacterPersonalityServiceTests
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
-        Assert.NotNull(capturedEvent);
-        Assert.Equal("character", capturedEvent.ResourceType);
-        Assert.Equal("character-personality", capturedEvent.SourceType);
-        Assert.Equal(characterId, capturedEvent.ResourceId);
-        Assert.Equal(characterId.ToString(), capturedEvent.SourceId);
+        Assert.NotNull(capturedRequest);
+        Assert.Equal("character", capturedRequest.ResourceType);
+        Assert.Equal("character-personality", capturedRequest.SourceType);
+        Assert.Equal(characterId, capturedRequest.ResourceId);
+        Assert.Equal(characterId.ToString(), capturedRequest.SourceId);
     }
 
     [Fact]
-    public async Task SetPersonalityAsync_ExistingPersonality_DoesNotPublishReferenceEvent()
+    public async Task SetPersonalityAsync_ExistingPersonality_DoesNotRegisterReference()
     {
         // Arrange
         var characterId = Guid.NewGuid();
@@ -1336,18 +1338,6 @@ public class CharacterPersonalityServiceTests
         _mockPersonalityStore
             .Setup(s => s.GetAsync($"personality-{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingData);
-
-        var referenceEventPublished = false;
-        _mockMessageBus
-            .Setup(m => m.TryPublishAsync(
-                It.Is<string>(t => t == "resource.reference.registered"),
-                It.IsAny<ResourceReferenceRegisteredEvent>(),
-                It.IsAny<CancellationToken>()))
-            .Callback<string, ResourceReferenceRegisteredEvent, CancellationToken>((_, _, _) =>
-            {
-                referenceEventPublished = true;
-            })
-            .ReturnsAsync(true);
 
         var service = CreateService();
         var request = new SetPersonalityRequest
@@ -1364,11 +1354,14 @@ public class CharacterPersonalityServiceTests
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
-        Assert.False(referenceEventPublished, "Should not publish reference event for existing personality update");
+        _mockResourceClient.Verify(
+            m => m.RegisterReferenceAsync(It.IsAny<RegisterReferenceRequest>(), It.IsAny<CancellationToken>()),
+            Times.Never,
+            "Should not call RegisterReferenceAsync for existing personality update");
     }
 
     [Fact]
-    public async Task DeletePersonalityAsync_PublishesReferenceUnregisteredEvent()
+    public async Task DeletePersonalityAsync_UnregistersCharacterReference()
     {
         // Arrange
         var characterId = Guid.NewGuid();
@@ -1378,17 +1371,16 @@ public class CharacterPersonalityServiceTests
             .Setup(s => s.GetAsync($"personality-{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingData);
 
-        ResourceReferenceUnregisteredEvent? capturedEvent = null;
-        _mockMessageBus
-            .Setup(m => m.TryPublishAsync(
-                It.Is<string>(t => t == "resource.reference.unregistered"),
-                It.IsAny<ResourceReferenceUnregisteredEvent>(),
+        UnregisterReferenceRequest? capturedRequest = null;
+        _mockResourceClient
+            .Setup(m => m.UnregisterReferenceAsync(
+                It.IsAny<UnregisterReferenceRequest>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, ResourceReferenceUnregisteredEvent, CancellationToken>((_, evt, _) =>
+            .Callback<UnregisterReferenceRequest, CancellationToken>((req, _) =>
             {
-                capturedEvent = evt;
+                capturedRequest = req;
             })
-            .ReturnsAsync(true);
+            .ReturnsAsync(new UnregisterReferenceResponse());
 
         var service = CreateService();
         var request = new DeletePersonalityRequest { CharacterId = characterId };
@@ -1398,15 +1390,15 @@ public class CharacterPersonalityServiceTests
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
-        Assert.NotNull(capturedEvent);
-        Assert.Equal("character", capturedEvent.ResourceType);
-        Assert.Equal("character-personality", capturedEvent.SourceType);
-        Assert.Equal(characterId, capturedEvent.ResourceId);
-        Assert.Equal(characterId.ToString(), capturedEvent.SourceId);
+        Assert.NotNull(capturedRequest);
+        Assert.Equal("character", capturedRequest.ResourceType);
+        Assert.Equal("character-personality", capturedRequest.SourceType);
+        Assert.Equal(characterId, capturedRequest.ResourceId);
+        Assert.Equal(characterId.ToString(), capturedRequest.SourceId);
     }
 
     [Fact]
-    public async Task SetCombatPreferencesAsync_NewPreferences_PublishesReferenceRegisteredEvent()
+    public async Task SetCombatPreferencesAsync_NewPreferences_RegistersCharacterReference()
     {
         // Arrange
         var characterId = Guid.NewGuid();
@@ -1415,17 +1407,16 @@ public class CharacterPersonalityServiceTests
             .Setup(s => s.GetAsync($"combat-{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync((CombatPreferencesData?)null);
 
-        ResourceReferenceRegisteredEvent? capturedEvent = null;
-        _mockMessageBus
-            .Setup(m => m.TryPublishAsync(
-                It.Is<string>(t => t == "resource.reference.registered"),
-                It.IsAny<ResourceReferenceRegisteredEvent>(),
+        RegisterReferenceRequest? capturedRequest = null;
+        _mockResourceClient
+            .Setup(m => m.RegisterReferenceAsync(
+                It.IsAny<RegisterReferenceRequest>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, ResourceReferenceRegisteredEvent, CancellationToken>((_, evt, _) =>
+            .Callback<RegisterReferenceRequest, CancellationToken>((req, _) =>
             {
-                capturedEvent = evt;
+                capturedRequest = req;
             })
-            .ReturnsAsync(true);
+            .ReturnsAsync(new RegisterReferenceResponse());
 
         var service = CreateService();
         var request = new SetCombatPreferencesRequest
@@ -1447,15 +1438,15 @@ public class CharacterPersonalityServiceTests
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
-        Assert.NotNull(capturedEvent);
-        Assert.Equal("character", capturedEvent.ResourceType);
-        Assert.Equal("character-personality", capturedEvent.SourceType);
-        Assert.Equal(characterId, capturedEvent.ResourceId);
-        Assert.Equal($"combat-{characterId}", capturedEvent.SourceId);
+        Assert.NotNull(capturedRequest);
+        Assert.Equal("character", capturedRequest.ResourceType);
+        Assert.Equal("character-personality", capturedRequest.SourceType);
+        Assert.Equal(characterId, capturedRequest.ResourceId);
+        Assert.Equal($"combat-{characterId}", capturedRequest.SourceId);
     }
 
     [Fact]
-    public async Task SetCombatPreferencesAsync_ExistingPreferences_DoesNotPublishReferenceEvent()
+    public async Task SetCombatPreferencesAsync_ExistingPreferences_DoesNotRegisterReference()
     {
         // Arrange
         var characterId = Guid.NewGuid();
@@ -1464,18 +1455,6 @@ public class CharacterPersonalityServiceTests
         _mockCombatStore
             .Setup(s => s.GetAsync($"combat-{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingData);
-
-        var referenceEventPublished = false;
-        _mockMessageBus
-            .Setup(m => m.TryPublishAsync(
-                It.Is<string>(t => t == "resource.reference.registered"),
-                It.IsAny<ResourceReferenceRegisteredEvent>(),
-                It.IsAny<CancellationToken>()))
-            .Callback<string, ResourceReferenceRegisteredEvent, CancellationToken>((_, _, _) =>
-            {
-                referenceEventPublished = true;
-            })
-            .ReturnsAsync(true);
 
         var service = CreateService();
         var request = new SetCombatPreferencesRequest
@@ -1497,11 +1476,14 @@ public class CharacterPersonalityServiceTests
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
-        Assert.False(referenceEventPublished, "Should not publish reference event for existing combat preferences update");
+        _mockResourceClient.Verify(
+            m => m.RegisterReferenceAsync(It.IsAny<RegisterReferenceRequest>(), It.IsAny<CancellationToken>()),
+            Times.Never,
+            "Should not call RegisterReferenceAsync for existing combat preferences update");
     }
 
     [Fact]
-    public async Task DeleteCombatPreferencesAsync_PublishesReferenceUnregisteredEvent()
+    public async Task DeleteCombatPreferencesAsync_UnregistersCharacterReference()
     {
         // Arrange
         var characterId = Guid.NewGuid();
@@ -1511,17 +1493,16 @@ public class CharacterPersonalityServiceTests
             .Setup(s => s.GetAsync($"combat-{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingData);
 
-        ResourceReferenceUnregisteredEvent? capturedEvent = null;
-        _mockMessageBus
-            .Setup(m => m.TryPublishAsync(
-                It.Is<string>(t => t == "resource.reference.unregistered"),
-                It.IsAny<ResourceReferenceUnregisteredEvent>(),
+        UnregisterReferenceRequest? capturedRequest = null;
+        _mockResourceClient
+            .Setup(m => m.UnregisterReferenceAsync(
+                It.IsAny<UnregisterReferenceRequest>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, ResourceReferenceUnregisteredEvent, CancellationToken>((_, evt, _) =>
+            .Callback<UnregisterReferenceRequest, CancellationToken>((req, _) =>
             {
-                capturedEvent = evt;
+                capturedRequest = req;
             })
-            .ReturnsAsync(true);
+            .ReturnsAsync(new UnregisterReferenceResponse());
 
         var service = CreateService();
         var request = new DeleteCombatPreferencesRequest { CharacterId = characterId };
@@ -1531,11 +1512,11 @@ public class CharacterPersonalityServiceTests
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
-        Assert.NotNull(capturedEvent);
-        Assert.Equal("character", capturedEvent.ResourceType);
-        Assert.Equal("character-personality", capturedEvent.SourceType);
-        Assert.Equal(characterId, capturedEvent.ResourceId);
-        Assert.Equal($"combat-{characterId}", capturedEvent.SourceId);
+        Assert.NotNull(capturedRequest);
+        Assert.Equal("character", capturedRequest.ResourceType);
+        Assert.Equal("character-personality", capturedRequest.SourceType);
+        Assert.Equal(characterId, capturedRequest.ResourceId);
+        Assert.Equal($"combat-{characterId}", capturedRequest.SourceId);
     }
 
     #endregion
@@ -1916,7 +1897,7 @@ public class CharacterPersonalityServiceTests
     }
 
     [Fact]
-    public async Task RestoreFromArchiveAsync_PublishesReferenceRegisteredEvents()
+    public async Task RestoreFromArchiveAsync_WithBothData_RegistersCharacterReferences()
     {
         // Arrange
         var characterId = Guid.NewGuid();
@@ -1960,17 +1941,16 @@ public class CharacterPersonalityServiceTests
 
         var compressedData = CompressArchiveData(archiveData);
 
-        var capturedReferenceEvents = new List<ResourceReferenceRegisteredEvent>();
-        _mockMessageBus
-            .Setup(m => m.TryPublishAsync(
-                It.Is<string>(t => t == "resource.reference.registered"),
-                It.IsAny<ResourceReferenceRegisteredEvent>(),
+        var capturedRequests = new List<RegisterReferenceRequest>();
+        _mockResourceClient
+            .Setup(m => m.RegisterReferenceAsync(
+                It.IsAny<RegisterReferenceRequest>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, ResourceReferenceRegisteredEvent, CancellationToken>((_, evt, _) =>
+            .Callback<RegisterReferenceRequest, CancellationToken>((req, _) =>
             {
-                capturedReferenceEvents.Add(evt);
+                capturedRequests.Add(req);
             })
-            .ReturnsAsync(true);
+            .ReturnsAsync(new RegisterReferenceResponse());
 
         var service = CreateService();
         var request = new RestoreFromArchiveRequest
@@ -1986,13 +1966,13 @@ public class CharacterPersonalityServiceTests
         Assert.Equal(StatusCodes.OK, status);
         Assert.True(response?.Success);
 
-        // Verify two reference events were published (one for personality, one for combat)
-        Assert.Equal(2, capturedReferenceEvents.Count);
-        Assert.All(capturedReferenceEvents, evt =>
+        // Verify two reference registrations were made (one for personality, one for combat)
+        Assert.Equal(2, capturedRequests.Count);
+        Assert.All(capturedRequests, req =>
         {
-            Assert.Equal("character", evt.ResourceType);
-            Assert.Equal("character-personality", evt.SourceType);
-            Assert.Equal(characterId, evt.ResourceId);
+            Assert.Equal("character", req.ResourceType);
+            Assert.Equal("character-personality", req.SourceType);
+            Assert.Equal(characterId, req.ResourceId);
         });
     }
 

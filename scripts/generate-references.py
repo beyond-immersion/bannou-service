@@ -18,8 +18,8 @@
 Generate resource reference tracking code from x-references schema declarations.
 
 This script reads x-references definitions from OpenAPI API schemas and generates
-C# partial classes with helper methods for publishing reference events and
-registering cleanup callbacks.
+C# partial classes with helper methods for calling the Resource service API directly
+(RegisterReferenceAsync/UnregisterReferenceAsync) and registering cleanup callbacks.
 
 Architecture:
 - {service}-api.yaml: Contains x-references declarations (consumer services L3/L4)
@@ -27,7 +27,7 @@ Architecture:
 - plugins/lib-{service}/Generated/{Service}ReferenceTracking.cs: Generated code
 
 Generated Code:
-- Helper methods: Register{Target}ReferenceAsync(), Unregister{Target}ReferenceAsync()
+- Helper methods: Register{Target}ReferenceAsync(), Unregister{Target}ReferenceAsync() (call IResourceClient API directly)
 - Cleanup callback registration method: RegisterResourceCleanupCallbacksAsync()
 
 Usage:
@@ -152,8 +152,6 @@ def generate_reference_tracking_code(
         "",
         "using BeyondImmersion.Bannou.Core;",
         "using BeyondImmersion.BannouService;",
-        "using BeyondImmersion.BannouService.Events;",
-        "using BeyondImmersion.BannouService.Messaging;",
         "using BeyondImmersion.BannouService.Resource;",
         "",
         f"namespace BeyondImmersion.BannouService.{service_pascal};",
@@ -187,21 +185,18 @@ def generate_reference_tracking_code(
         lines.append(f"    /// <param name=\"{source_camel}Id\">The ID of the {ref.source_type} entity holding the reference.</param>")
         lines.append(f"    /// <param name=\"{target_camel}Id\">The ID of the {ref.target} resource being referenced.</param>")
         lines.append("    /// <param name=\"cancellationToken\">Cancellation token.</param>")
-        lines.append("    /// <returns>True if the event was published successfully.</returns>")
-        lines.append(f"    protected async Task<bool> Register{target_pascal}ReferenceAsync(")
+        lines.append(f"    protected async Task Register{target_pascal}ReferenceAsync(")
         lines.append(f"        string {source_camel}Id,")
         lines.append(f"        Guid {target_camel}Id,")
         lines.append("        CancellationToken cancellationToken = default)")
         lines.append("    {")
-        lines.append("        return await _messageBus.TryPublishAsync(")
-        lines.append("            \"resource.reference.registered\",")
-        lines.append("            new ResourceReferenceRegisteredEvent")
+        lines.append("        await _resourceClient.RegisterReferenceAsync(")
+        lines.append("            new RegisterReferenceRequest")
         lines.append("            {")
         lines.append(f"                ResourceType = \"{ref.target}\",")
         lines.append(f"                ResourceId = {target_camel}Id,")
         lines.append(f"                SourceType = \"{ref.source_type}\",")
-        lines.append(f"                SourceId = {source_camel}Id,")
-        lines.append("                Timestamp = DateTimeOffset.UtcNow")
+        lines.append(f"                SourceId = {source_camel}Id")
         lines.append("            },")
         lines.append("            cancellationToken);")
         lines.append("    }")
@@ -215,21 +210,18 @@ def generate_reference_tracking_code(
         lines.append(f"    /// <param name=\"{source_camel}Id\">The ID of the {ref.source_type} entity releasing the reference.</param>")
         lines.append(f"    /// <param name=\"{target_camel}Id\">The ID of the {ref.target} resource being dereferenced.</param>")
         lines.append("    /// <param name=\"cancellationToken\">Cancellation token.</param>")
-        lines.append("    /// <returns>True if the event was published successfully.</returns>")
-        lines.append(f"    protected async Task<bool> Unregister{target_pascal}ReferenceAsync(")
+        lines.append(f"    protected async Task Unregister{target_pascal}ReferenceAsync(")
         lines.append(f"        string {source_camel}Id,")
         lines.append(f"        Guid {target_camel}Id,")
         lines.append("        CancellationToken cancellationToken = default)")
         lines.append("    {")
-        lines.append("        return await _messageBus.TryPublishAsync(")
-        lines.append("            \"resource.reference.unregistered\",")
-        lines.append("            new ResourceReferenceUnregisteredEvent")
+        lines.append("        await _resourceClient.UnregisterReferenceAsync(")
+        lines.append("            new UnregisterReferenceRequest")
         lines.append("            {")
         lines.append(f"                ResourceType = \"{ref.target}\",")
         lines.append(f"                ResourceId = {target_camel}Id,")
         lines.append(f"                SourceType = \"{ref.source_type}\",")
-        lines.append(f"                SourceId = {source_camel}Id,")
-        lines.append("                Timestamp = DateTimeOffset.UtcNow")
+        lines.append(f"                SourceId = {source_camel}Id")
         lines.append("            },")
         lines.append("            cancellationToken);")
         lines.append("    }")

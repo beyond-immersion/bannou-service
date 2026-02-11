@@ -112,10 +112,6 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<ContractFulfilledEvent>("contract.fulfilled");
         EventSubscriptionRegistry.Register<ContractTerminatedEvent>("contract.terminated");
 
-        // From resource-events.yaml
-        EventSubscriptionRegistry.Register<ResourceReferenceRegisteredEvent>("resource.reference.registered");
-        EventSubscriptionRegistry.Register<ResourceReferenceUnregisteredEvent>("resource.reference.unregistered");
-
         // From seed-events.yaml
         EventSubscriptionRegistry.Register<SeedGrowthContributedEvent>("seed.growth.contributed");
     }

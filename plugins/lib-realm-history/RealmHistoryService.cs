@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.History;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,6 +29,7 @@ public partial class RealmHistoryService : IRealmHistoryService
     private readonly RealmHistoryServiceConfiguration _configuration;
     private readonly IDualIndexHelper<RealmParticipationData> _participationHelper;
     private readonly IBackstoryStorageHelper<RealmLoreData, RealmLoreElementData> _loreHelper;
+    private readonly IResourceClient _resourceClient;
 
     private const string PARTICIPATION_KEY_PREFIX = "realm-participation-";
     private const string PARTICIPATION_BY_EVENT_KEY_PREFIX = "realm-participation-event-";
@@ -51,12 +53,14 @@ public partial class RealmHistoryService : IRealmHistoryService
         ILogger<RealmHistoryService> logger,
         RealmHistoryServiceConfiguration configuration,
         IEventConsumer eventConsumer,
-        IDistributedLockProvider lockProvider)
+        IDistributedLockProvider lockProvider,
+        IResourceClient resourceClient)
     {
         _messageBus = messageBus;
         _logger = logger;
         _stateStoreFactory = stateStoreFactory;
         _configuration = configuration;
+        _resourceClient = resourceClient;
 
         // Initialize participation helper using shared dual-index infrastructure
         _participationHelper = new DualIndexHelper<RealmParticipationData>(

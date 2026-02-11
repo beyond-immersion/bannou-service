@@ -28,6 +28,7 @@ public class CharacterHistoryServiceTests
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
+    private readonly Mock<IResourceClient> _mockResourceClient;
 
     private const string STATE_STORE = "character-history-statestore";
 
@@ -42,6 +43,7 @@ public class CharacterHistoryServiceTests
         _mockMessageBus = new Mock<IMessageBus>();
         _mockEventConsumer = new Mock<IEventConsumer>();
         _mockLockProvider = new Mock<IDistributedLockProvider>();
+        _mockResourceClient = new Mock<IResourceClient>();
 
         // Default: lock provider succeeds
         var successLock = new Mock<ILockResponse>();
@@ -75,7 +77,8 @@ public class CharacterHistoryServiceTests
             _mockLogger.Object,
             _mockEventConsumer.Object,
             configuration ?? new CharacterHistoryServiceConfiguration(),
-            _mockLockProvider.Object);
+            _mockLockProvider.Object,
+            _mockResourceClient.Object);
     }
 
     #region Constructor Validation
@@ -835,10 +838,10 @@ public class CharacterHistoryServiceTests
 
     #endregion
 
-    #region Resource Reference Tracking Tests
+    #region Resource Reference Registration Tests
 
     [Fact]
-    public async Task RecordParticipationAsync_PublishesReferenceRegisteredEvent()
+    public async Task RecordParticipationAsync_RegistersCharacterReference()
     {
         // Arrange
         var service = CreateService();
@@ -850,17 +853,13 @@ public class CharacterHistoryServiceTests
         SetupEmptyEventIndex(eventId);
         SetupParticipationSave();
 
-        ResourceReferenceRegisteredEvent? capturedEvent = null;
-        _mockMessageBus
-            .Setup(m => m.TryPublishAsync(
-                It.Is<string>(t => t == "resource.reference.registered"),
-                It.IsAny<ResourceReferenceRegisteredEvent>(),
+        RegisterReferenceRequest? capturedRequest = null;
+        _mockResourceClient
+            .Setup(m => m.RegisterReferenceAsync(
+                It.IsAny<RegisterReferenceRequest>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, ResourceReferenceRegisteredEvent, CancellationToken>((_, evt, _) =>
-            {
-                capturedEvent = evt;
-            })
-            .ReturnsAsync(true);
+            .Callback<RegisterReferenceRequest, CancellationToken>((req, _) => capturedRequest = req)
+            .ReturnsAsync(new RegisterReferenceResponse());
 
         var request = new RecordParticipationRequest
         {
@@ -878,15 +877,15 @@ public class CharacterHistoryServiceTests
         // Assert
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.NotNull(capturedEvent);
-        Assert.Equal("character", capturedEvent.ResourceType);
-        Assert.Equal("character-history", capturedEvent.SourceType);
-        Assert.Equal(characterId, capturedEvent.ResourceId);
-        Assert.Equal(response.ParticipationId.ToString(), capturedEvent.SourceId);
+        Assert.NotNull(capturedRequest);
+        Assert.Equal("character", capturedRequest.ResourceType);
+        Assert.Equal("character-history", capturedRequest.SourceType);
+        Assert.Equal(characterId, capturedRequest.ResourceId);
+        Assert.Equal(response.ParticipationId.ToString(), capturedRequest.SourceId);
     }
 
     [Fact]
-    public async Task SetBackstoryAsync_NewBackstory_PublishesReferenceRegisteredEvent()
+    public async Task SetBackstoryAsync_NewBackstory_RegistersCharacterReference()
     {
         // Arrange
         var service = CreateService();
@@ -898,17 +897,13 @@ public class CharacterHistoryServiceTests
         _mockBackstoryStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<BackstoryData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
-        ResourceReferenceRegisteredEvent? capturedEvent = null;
-        _mockMessageBus
-            .Setup(m => m.TryPublishAsync(
-                It.Is<string>(t => t == "resource.reference.registered"),
-                It.IsAny<ResourceReferenceRegisteredEvent>(),
+        RegisterReferenceRequest? capturedRequest = null;
+        _mockResourceClient
+            .Setup(m => m.RegisterReferenceAsync(
+                It.IsAny<RegisterReferenceRequest>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, ResourceReferenceRegisteredEvent, CancellationToken>((_, evt, _) =>
-            {
-                capturedEvent = evt;
-            })
-            .ReturnsAsync(true);
+            .Callback<RegisterReferenceRequest, CancellationToken>((req, _) => capturedRequest = req)
+            .ReturnsAsync(new RegisterReferenceResponse());
 
         var request = new SetBackstoryRequest
         {
@@ -924,15 +919,15 @@ public class CharacterHistoryServiceTests
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
-        Assert.NotNull(capturedEvent);
-        Assert.Equal("character", capturedEvent.ResourceType);
-        Assert.Equal("character-history", capturedEvent.SourceType);
-        Assert.Equal(characterId, capturedEvent.ResourceId);
-        Assert.Equal($"backstory-{characterId}", capturedEvent.SourceId);
+        Assert.NotNull(capturedRequest);
+        Assert.Equal("character", capturedRequest.ResourceType);
+        Assert.Equal("character-history", capturedRequest.SourceType);
+        Assert.Equal(characterId, capturedRequest.ResourceId);
+        Assert.Equal($"backstory-{characterId}", capturedRequest.SourceId);
     }
 
     [Fact]
-    public async Task SetBackstoryAsync_ExistingBackstory_DoesNotPublishReferenceEvent()
+    public async Task SetBackstoryAsync_ExistingBackstory_DoesNotRegisterReference()
     {
         // Arrange
         var service = CreateService();
@@ -950,18 +945,6 @@ public class CharacterHistoryServiceTests
         _mockBackstoryStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<BackstoryData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("etag-1");
 
-        var referenceEventPublished = false;
-        _mockMessageBus
-            .Setup(m => m.TryPublishAsync(
-                It.Is<string>(t => t == "resource.reference.registered"),
-                It.IsAny<ResourceReferenceRegisteredEvent>(),
-                It.IsAny<CancellationToken>()))
-            .Callback<string, ResourceReferenceRegisteredEvent, CancellationToken>((_, _, _) =>
-            {
-                referenceEventPublished = true;
-            })
-            .ReturnsAsync(true);
-
         var request = new SetBackstoryRequest
         {
             CharacterId = characterId,
@@ -976,11 +959,14 @@ public class CharacterHistoryServiceTests
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
-        Assert.False(referenceEventPublished, "Should not publish reference event for existing backstory update");
+        _mockResourceClient.Verify(
+            m => m.RegisterReferenceAsync(It.IsAny<RegisterReferenceRequest>(), It.IsAny<CancellationToken>()),
+            Times.Never,
+            "Should not call RegisterReferenceAsync for existing backstory update");
     }
 
     [Fact]
-    public async Task DeleteBackstoryAsync_PublishesReferenceUnregisteredEvent()
+    public async Task DeleteBackstoryAsync_UnregistersCharacterReference()
     {
         // Arrange
         var service = CreateService();
@@ -998,17 +984,13 @@ public class CharacterHistoryServiceTests
         _mockBackstoryStore.Setup(s => s.DeleteAsync($"backstory-{characterId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
-        ResourceReferenceUnregisteredEvent? capturedEvent = null;
-        _mockMessageBus
-            .Setup(m => m.TryPublishAsync(
-                It.Is<string>(t => t == "resource.reference.unregistered"),
-                It.IsAny<ResourceReferenceUnregisteredEvent>(),
+        UnregisterReferenceRequest? capturedRequest = null;
+        _mockResourceClient
+            .Setup(m => m.UnregisterReferenceAsync(
+                It.IsAny<UnregisterReferenceRequest>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, ResourceReferenceUnregisteredEvent, CancellationToken>((_, evt, _) =>
-            {
-                capturedEvent = evt;
-            })
-            .ReturnsAsync(true);
+            .Callback<UnregisterReferenceRequest, CancellationToken>((req, _) => capturedRequest = req)
+            .ReturnsAsync(new UnregisterReferenceResponse());
 
         var request = new DeleteBackstoryRequest { CharacterId = characterId };
 
@@ -1017,11 +999,11 @@ public class CharacterHistoryServiceTests
 
         // Assert
         Assert.Equal(StatusCodes.OK, status);
-        Assert.NotNull(capturedEvent);
-        Assert.Equal("character", capturedEvent.ResourceType);
-        Assert.Equal("character-history", capturedEvent.SourceType);
-        Assert.Equal(characterId, capturedEvent.ResourceId);
-        Assert.Equal($"backstory-{characterId}", capturedEvent.SourceId);
+        Assert.NotNull(capturedRequest);
+        Assert.Equal("character", capturedRequest.ResourceType);
+        Assert.Equal("character-history", capturedRequest.SourceType);
+        Assert.Equal(characterId, capturedRequest.ResourceId);
+        Assert.Equal($"backstory-{characterId}", capturedRequest.SourceId);
     }
 
     #endregion

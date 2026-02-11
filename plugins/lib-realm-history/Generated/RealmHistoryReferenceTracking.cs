@@ -7,8 +7,6 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
-using BeyondImmersion.BannouService.Events;
-using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Resource;
 
 namespace BeyondImmersion.BannouService.RealmHistory;
@@ -33,21 +31,18 @@ public partial class RealmHistoryService
     /// <param name="realmHistoryId">The ID of the realm-history entity holding the reference.</param>
     /// <param name="realmId">The ID of the realm resource being referenced.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>True if the event was published successfully.</returns>
-    protected async Task<bool> RegisterRealmReferenceAsync(
+    protected async Task RegisterRealmReferenceAsync(
         string realmHistoryId,
         Guid realmId,
         CancellationToken cancellationToken = default)
     {
-        return await _messageBus.TryPublishAsync(
-            "resource.reference.registered",
-            new ResourceReferenceRegisteredEvent
+        await _resourceClient.RegisterReferenceAsync(
+            new RegisterReferenceRequest
             {
                 ResourceType = "realm",
                 ResourceId = realmId,
                 SourceType = "realm-history",
-                SourceId = realmHistoryId,
-                Timestamp = DateTimeOffset.UtcNow
+                SourceId = realmHistoryId
             },
             cancellationToken);
     }
@@ -59,21 +54,18 @@ public partial class RealmHistoryService
     /// <param name="realmHistoryId">The ID of the realm-history entity releasing the reference.</param>
     /// <param name="realmId">The ID of the realm resource being dereferenced.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>True if the event was published successfully.</returns>
-    protected async Task<bool> UnregisterRealmReferenceAsync(
+    protected async Task UnregisterRealmReferenceAsync(
         string realmHistoryId,
         Guid realmId,
         CancellationToken cancellationToken = default)
     {
-        return await _messageBus.TryPublishAsync(
-            "resource.reference.unregistered",
-            new ResourceReferenceUnregisteredEvent
+        await _resourceClient.UnregisterReferenceAsync(
+            new UnregisterReferenceRequest
             {
                 ResourceType = "realm",
                 ResourceId = realmId,
                 SourceType = "realm-history",
-                SourceId = realmHistoryId,
-                Timestamp = DateTimeOffset.UtcNow
+                SourceId = realmHistoryId
             },
             cancellationToken);
     }

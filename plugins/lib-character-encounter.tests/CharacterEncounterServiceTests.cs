@@ -36,6 +36,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
     private readonly Mock<ILogger<CharacterEncounterService>> _mockLogger;
     private readonly Mock<ICharacterClient> _mockCharacterClient;
     private readonly Mock<IEncounterDataCache> _mockEncounterDataCache;
+    private readonly Mock<IResourceClient> _mockResourceClient;
 
     private const string STATE_STORE = "character-encounter-statestore";
 
@@ -56,6 +57,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         _mockLogger = new Mock<ILogger<CharacterEncounterService>>();
         _mockCharacterClient = new Mock<ICharacterClient>();
         _mockEncounterDataCache = new Mock<IEncounterDataCache>();
+        _mockResourceClient = new Mock<IResourceClient>();
 
         // Setup default factory returns
         _mockStateStoreFactory
@@ -130,7 +132,8 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
             _mockLogger.Object,
             Configuration,
             _mockCharacterClient.Object,
-            _mockEncounterDataCache.Object);
+            _mockEncounterDataCache.Object,
+            _mockResourceClient.Object);
     }
 
     /// <summary>
@@ -1720,7 +1723,7 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
     #region Resource Reference Tracking Tests
 
     [Fact]
-    public async Task RecordEncounterAsync_PublishesReferenceRegisteredEventForEachParticipant()
+    public async Task RecordEncounterAsync_RegistersCharacterReferenceForEachParticipant()
     {
         // Arrange
         var service = CreateService();
@@ -1732,17 +1735,16 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         SetupEmptyIndexes();
         SetupDefaultSaves();
 
-        var capturedReferenceEvents = new List<ResourceReferenceRegisteredEvent>();
-        _mockMessageBus
-            .Setup(m => m.TryPublishAsync(
-                It.Is<string>(t => t == "resource.reference.registered"),
-                It.IsAny<ResourceReferenceRegisteredEvent>(),
+        var capturedRequests = new List<RegisterReferenceRequest>();
+        _mockResourceClient
+            .Setup(m => m.RegisterReferenceAsync(
+                It.IsAny<RegisterReferenceRequest>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, ResourceReferenceRegisteredEvent, CancellationToken>((_, evt, _) =>
+            .Callback<RegisterReferenceRequest, CancellationToken>((req, _) =>
             {
-                capturedReferenceEvents.Add(evt);
+                capturedRequests.Add(req);
             })
-            .ReturnsAsync(true);
+            .ReturnsAsync(new RegisterReferenceResponse());
 
         var request = new RecordEncounterRequest
         {
@@ -1760,26 +1762,26 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         Assert.NotNull(response);
 
         // Should have registered a reference for each participant (3 participants)
-        Assert.Equal(3, capturedReferenceEvents.Count);
+        Assert.Equal(3, capturedRequests.Count);
 
-        // All events should have the same encounter ID as source
+        // All requests should have the same encounter ID as source
         var encounterId = response.Encounter.EncounterId.ToString();
-        Assert.All(capturedReferenceEvents, evt =>
+        Assert.All(capturedRequests, req =>
         {
-            Assert.Equal("character", evt.ResourceType);
-            Assert.Equal("character-encounter", evt.SourceType);
-            Assert.Equal(encounterId, evt.SourceId);
+            Assert.Equal("character", req.ResourceType);
+            Assert.Equal("character-encounter", req.SourceType);
+            Assert.Equal(encounterId, req.SourceId);
         });
 
         // Each participant should have a reference registered
-        var referencedCharacterIds = capturedReferenceEvents.Select(e => e.ResourceId).ToHashSet();
+        var referencedCharacterIds = capturedRequests.Select(r => r.ResourceId).ToHashSet();
         Assert.Contains(charA, referencedCharacterIds);
         Assert.Contains(charB, referencedCharacterIds);
         Assert.Contains(charC, referencedCharacterIds);
     }
 
     [Fact]
-    public async Task DeleteEncounterAsync_PublishesReferenceUnregisteredEventForEachParticipant()
+    public async Task DeleteEncounterAsync_UnregistersCharacterReferenceForEachParticipant()
     {
         // Arrange
         var service = CreateService();
@@ -1814,17 +1816,16 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
             .ReturnsAsync(new GlobalCharacterIndexData { CharacterIds = new List<Guid> { charA, charB } });
         _mockGlobalIndexStore.Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<GlobalCharacterIndexData>(), It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>())).ReturnsAsync("etag-1");
 
-        var capturedUnregisterEvents = new List<ResourceReferenceUnregisteredEvent>();
-        _mockMessageBus
-            .Setup(m => m.TryPublishAsync(
-                It.Is<string>(t => t == "resource.reference.unregistered"),
-                It.IsAny<ResourceReferenceUnregisteredEvent>(),
+        var capturedRequests = new List<UnregisterReferenceRequest>();
+        _mockResourceClient
+            .Setup(m => m.UnregisterReferenceAsync(
+                It.IsAny<UnregisterReferenceRequest>(),
                 It.IsAny<CancellationToken>()))
-            .Callback<string, ResourceReferenceUnregisteredEvent, CancellationToken>((_, evt, _) =>
+            .Callback<UnregisterReferenceRequest, CancellationToken>((req, _) =>
             {
-                capturedUnregisterEvents.Add(evt);
+                capturedRequests.Add(req);
             })
-            .ReturnsAsync(true);
+            .ReturnsAsync(new UnregisterReferenceResponse());
 
         // Act
         var (status, _) = await service.DeleteEncounterAsync(
@@ -1834,18 +1835,18 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         Assert.Equal(StatusCodes.OK, status);
 
         // Should have unregistered a reference for each participant (2 participants)
-        Assert.Equal(2, capturedUnregisterEvents.Count);
+        Assert.Equal(2, capturedRequests.Count);
 
-        // All events should have the encounter ID as source
-        Assert.All(capturedUnregisterEvents, evt =>
+        // All requests should have the encounter ID as source
+        Assert.All(capturedRequests, req =>
         {
-            Assert.Equal("character", evt.ResourceType);
-            Assert.Equal("character-encounter", evt.SourceType);
-            Assert.Equal(encounterId.ToString(), evt.SourceId);
+            Assert.Equal("character", req.ResourceType);
+            Assert.Equal("character-encounter", req.SourceType);
+            Assert.Equal(encounterId.ToString(), req.SourceId);
         });
 
         // Each participant should have their reference unregistered
-        var unregisteredCharacterIds = capturedUnregisterEvents.Select(e => e.ResourceId).ToHashSet();
+        var unregisteredCharacterIds = capturedRequests.Select(r => r.ResourceId).ToHashSet();
         Assert.Contains(charA, unregisteredCharacterIds);
         Assert.Contains(charB, unregisteredCharacterIds);
     }

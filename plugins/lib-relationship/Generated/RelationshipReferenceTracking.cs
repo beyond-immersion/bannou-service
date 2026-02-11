@@ -7,8 +7,6 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
-using BeyondImmersion.BannouService.Events;
-using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Resource;
 
 namespace BeyondImmersion.BannouService.Relationship;
@@ -33,21 +31,18 @@ public partial class RelationshipService
     /// <param name="relationshipId">The ID of the relationship entity holding the reference.</param>
     /// <param name="characterId">The ID of the character resource being referenced.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>True if the event was published successfully.</returns>
-    protected async Task<bool> RegisterCharacterReferenceAsync(
+    protected async Task RegisterCharacterReferenceAsync(
         string relationshipId,
         Guid characterId,
         CancellationToken cancellationToken = default)
     {
-        return await _messageBus.TryPublishAsync(
-            "resource.reference.registered",
-            new ResourceReferenceRegisteredEvent
+        await _resourceClient.RegisterReferenceAsync(
+            new RegisterReferenceRequest
             {
                 ResourceType = "character",
                 ResourceId = characterId,
                 SourceType = "relationship",
-                SourceId = relationshipId,
-                Timestamp = DateTimeOffset.UtcNow
+                SourceId = relationshipId
             },
             cancellationToken);
     }
@@ -59,21 +54,18 @@ public partial class RelationshipService
     /// <param name="relationshipId">The ID of the relationship entity releasing the reference.</param>
     /// <param name="characterId">The ID of the character resource being dereferenced.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>True if the event was published successfully.</returns>
-    protected async Task<bool> UnregisterCharacterReferenceAsync(
+    protected async Task UnregisterCharacterReferenceAsync(
         string relationshipId,
         Guid characterId,
         CancellationToken cancellationToken = default)
     {
-        return await _messageBus.TryPublishAsync(
-            "resource.reference.unregistered",
-            new ResourceReferenceUnregisteredEvent
+        await _resourceClient.UnregisterReferenceAsync(
+            new UnregisterReferenceRequest
             {
                 ResourceType = "character",
                 ResourceId = characterId,
                 SourceType = "relationship",
-                SourceId = relationshipId,
-                Timestamp = DateTimeOffset.UtcNow
+                SourceId = relationshipId
             },
             cancellationToken);
     }
@@ -85,21 +77,18 @@ public partial class RelationshipService
     /// <param name="relationshipId">The ID of the relationship entity holding the reference.</param>
     /// <param name="realmId">The ID of the realm resource being referenced.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>True if the event was published successfully.</returns>
-    protected async Task<bool> RegisterRealmReferenceAsync(
+    protected async Task RegisterRealmReferenceAsync(
         string relationshipId,
         Guid realmId,
         CancellationToken cancellationToken = default)
     {
-        return await _messageBus.TryPublishAsync(
-            "resource.reference.registered",
-            new ResourceReferenceRegisteredEvent
+        await _resourceClient.RegisterReferenceAsync(
+            new RegisterReferenceRequest
             {
                 ResourceType = "realm",
                 ResourceId = realmId,
                 SourceType = "relationship",
-                SourceId = relationshipId,
-                Timestamp = DateTimeOffset.UtcNow
+                SourceId = relationshipId
             },
             cancellationToken);
     }
@@ -111,21 +100,18 @@ public partial class RelationshipService
     /// <param name="relationshipId">The ID of the relationship entity releasing the reference.</param>
     /// <param name="realmId">The ID of the realm resource being dereferenced.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>True if the event was published successfully.</returns>
-    protected async Task<bool> UnregisterRealmReferenceAsync(
+    protected async Task UnregisterRealmReferenceAsync(
         string relationshipId,
         Guid realmId,
         CancellationToken cancellationToken = default)
     {
-        return await _messageBus.TryPublishAsync(
-            "resource.reference.unregistered",
-            new ResourceReferenceUnregisteredEvent
+        await _resourceClient.UnregisterReferenceAsync(
+            new UnregisterReferenceRequest
             {
                 ResourceType = "realm",
                 ResourceId = realmId,
                 SourceType = "relationship",
-                SourceId = relationshipId,
-                Timestamp = DateTimeOffset.UtcNow
+                SourceId = relationshipId
             },
             cancellationToken);
     }

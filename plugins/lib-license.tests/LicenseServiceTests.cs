@@ -9,6 +9,7 @@ using BeyondImmersion.BannouService.Inventory;
 using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.License;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Testing;
@@ -40,6 +41,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
     private readonly Mock<IItemClient> _mockItemClient;
     private readonly Mock<ICurrencyClient> _mockCurrencyClient;
     private readonly Mock<IGameServiceClient> _mockGameServiceClient;
+    private readonly Mock<IResourceClient> _mockResourceClient;
 
     // Lock response mock
     private readonly Mock<ILockResponse> _mockLockResponse;
@@ -75,6 +77,7 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         _mockItemClient = new Mock<IItemClient>();
         _mockCurrencyClient = new Mock<ICurrencyClient>();
         _mockGameServiceClient = new Mock<IGameServiceClient>();
+        _mockResourceClient = new Mock<IResourceClient>();
 
         // Wire up state store factory
         _mockStateStoreFactory
@@ -137,6 +140,14 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
             .Setup(m => m.TryPublishAsync(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<PublishOptions?>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
+        // Default resource client behavior
+        _mockResourceClient
+            .Setup(m => m.RegisterReferenceAsync(It.IsAny<RegisterReferenceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new RegisterReferenceResponse());
+        _mockResourceClient
+            .Setup(m => m.UnregisterReferenceAsync(It.IsAny<UnregisterReferenceRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new UnregisterReferenceResponse());
+
         // Default lock behavior (success)
         _mockLockResponse = new Mock<ILockResponse>();
         _mockLockResponse.Setup(l => l.Success).Returns(true);
@@ -159,7 +170,8 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
         _mockItemClient.Object,
         _mockCurrencyClient.Object,
         _mockGameServiceClient.Object,
-        _mockLockProvider.Object);
+        _mockLockProvider.Object,
+        _mockResourceClient.Object);
 
     private static BoardTemplateModel CreateTestTemplate(
         Guid? boardTemplateId = null,
@@ -2537,8 +2549,8 @@ public class LicenseServiceTests : ServiceTestBase<LicenseServiceConfiguration>
             Times.Once);
 
         // Verify character reference registered
-        _mockMessageBus.Verify(
-            m => m.TryPublishAsync("resource.reference.registered", It.IsAny<ResourceReferenceRegisteredEvent>(), It.IsAny<CancellationToken>()),
+        _mockResourceClient.Verify(
+            m => m.RegisterReferenceAsync(It.IsAny<RegisterReferenceRequest>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 

@@ -7,8 +7,6 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
-using BeyondImmersion.BannouService.Events;
-using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Resource;
 
 namespace BeyondImmersion.BannouService.Actor;
@@ -33,21 +31,18 @@ public partial class ActorService
     /// <param name="actorId">The ID of the actor entity holding the reference.</param>
     /// <param name="characterId">The ID of the character resource being referenced.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>True if the event was published successfully.</returns>
-    protected async Task<bool> RegisterCharacterReferenceAsync(
+    protected async Task RegisterCharacterReferenceAsync(
         string actorId,
         Guid characterId,
         CancellationToken cancellationToken = default)
     {
-        return await _messageBus.TryPublishAsync(
-            "resource.reference.registered",
-            new ResourceReferenceRegisteredEvent
+        await _resourceClient.RegisterReferenceAsync(
+            new RegisterReferenceRequest
             {
                 ResourceType = "character",
                 ResourceId = characterId,
                 SourceType = "actor",
-                SourceId = actorId,
-                Timestamp = DateTimeOffset.UtcNow
+                SourceId = actorId
             },
             cancellationToken);
     }
@@ -59,21 +54,18 @@ public partial class ActorService
     /// <param name="actorId">The ID of the actor entity releasing the reference.</param>
     /// <param name="characterId">The ID of the character resource being dereferenced.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>True if the event was published successfully.</returns>
-    protected async Task<bool> UnregisterCharacterReferenceAsync(
+    protected async Task UnregisterCharacterReferenceAsync(
         string actorId,
         Guid characterId,
         CancellationToken cancellationToken = default)
     {
-        return await _messageBus.TryPublishAsync(
-            "resource.reference.unregistered",
-            new ResourceReferenceUnregisteredEvent
+        await _resourceClient.UnregisterReferenceAsync(
+            new UnregisterReferenceRequest
             {
                 ResourceType = "character",
                 ResourceId = characterId,
                 SourceType = "actor",
-                SourceId = actorId,
-                Timestamp = DateTimeOffset.UtcNow
+                SourceId = actorId
             },
             cancellationToken);
     }

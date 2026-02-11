@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Relationship;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Testing;
@@ -40,6 +41,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
     private readonly Mock<IDistributedLockProvider> _mockLockProvider;
     private readonly Mock<ILogger<RelationshipService>> _mockLogger;
     private readonly Mock<IEventConsumer> _mockEventConsumer;
+    private readonly Mock<IResourceClient> _mockResourceClient;
 
     public RelationshipTypeTests()
     {
@@ -54,6 +56,7 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
         _mockLockProvider = new Mock<IDistributedLockProvider>();
         _mockLogger = new Mock<ILogger<RelationshipService>>();
         _mockEventConsumer = new Mock<IEventConsumer>();
+        _mockResourceClient = new Mock<IResourceClient>();
 
         // Setup factory for relationship-type-statestore
         _mockStateStoreFactory.Setup(f => f.GetStore<RelationshipTypeModel>(RT_STATE_STORE)).Returns(_mockRtModelStore.Object);
@@ -86,7 +89,8 @@ public class RelationshipTypeTests : ServiceTestBase<RelationshipServiceConfigur
             _mockLogger.Object,
             Configuration,
             _mockLockProvider.Object,
-            _mockEventConsumer.Object);
+            _mockEventConsumer.Object,
+            _mockResourceClient.Object);
     }
 
     #region GetRelationshipType Tests

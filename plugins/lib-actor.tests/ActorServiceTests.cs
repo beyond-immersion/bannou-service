@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService.Actor.Runtime;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Providers;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.TestUtilities;
@@ -27,6 +28,7 @@ public class ActorServiceTests
     private readonly Mock<IBehaviorDocumentLoader> _mockBehaviorLoader;
     private readonly Mock<IActorPoolManager> _mockPoolManager;
     private readonly Mock<IMeshInvocationClient> _mockMeshClient;
+    private readonly Mock<IResourceClient> _mockResourceClient;
     private readonly Mock<IStateStore<ActorTemplateData>> _mockTemplateStore;
     private readonly Mock<IStateStore<List<string>>> _mockIndexStore;
 
@@ -48,6 +50,7 @@ public class ActorServiceTests
         _mockBehaviorLoader = new Mock<IBehaviorDocumentLoader>();
         _mockPoolManager = new Mock<IActorPoolManager>();
         _mockMeshClient = new Mock<IMeshInvocationClient>();
+        _mockResourceClient = new Mock<IResourceClient>();
         _mockTemplateStore = new Mock<IStateStore<ActorTemplateData>>();
         _mockIndexStore = new Mock<IStateStore<List<string>>>();
 
@@ -72,7 +75,8 @@ public class ActorServiceTests
             _mockEventConsumer.Object,
             _mockBehaviorLoader.Object,
             _mockPoolManager.Object,
-            _mockMeshClient.Object);
+            _mockMeshClient.Object,
+            _mockResourceClient.Object);
     }
 
     #region Constructor Tests

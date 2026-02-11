@@ -26,6 +26,7 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IMessageBus _messageBus;
     private readonly IPersonalityDataCache _personalityCache;
+    private readonly IResourceClient _resourceClient;
 
     private const string PERSONALITY_KEY_PREFIX = "personality-";
     private const string COMBAT_KEY_PREFIX = "combat-";
@@ -50,13 +51,15 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
         IEventConsumer eventConsumer,
-        IPersonalityDataCache personalityCache)
+        IPersonalityDataCache personalityCache,
+        IResourceClient resourceClient)
     {
         _logger = logger;
         _configuration = configuration;
         _stateStoreFactory = stateStoreFactory;
         _messageBus = messageBus;
         _personalityCache = personalityCache;
+        _resourceClient = resourceClient;
 
         ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
