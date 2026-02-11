@@ -147,4 +147,38 @@ public class VoiceServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int SipCredentialExpirationHours { get; set; } = 24;
 
+    /// <summary>
+    /// Seconds of missed heartbeats before participant is evicted
+    /// Environment variable: VOICE_PARTICIPANT_HEARTBEAT_TIMEOUT_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 600)]
+    public int ParticipantHeartbeatTimeoutSeconds { get; set; } = 60;
+
+    /// <summary>
+    /// How often the background worker checks for stale participants
+    /// Environment variable: VOICE_PARTICIPANT_EVICTION_CHECK_INTERVAL_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 5, Maximum = 120)]
+    public int ParticipantEvictionCheckIntervalSeconds { get; set; } = 15;
+
+    /// <summary>
+    /// Seconds to wait for all participants to respond before auto-declining
+    /// Environment variable: VOICE_BROADCAST_CONSENT_TIMEOUT_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 120)]
+    public int BroadcastConsentTimeoutSeconds { get; set; } = 30;
+
+    /// <summary>
+    /// If true, joining a non-existent room auto-creates it with autoCleanup enabled
+    /// Environment variable: VOICE_AD_HOC_ROOMS_ENABLED
+    /// </summary>
+    public bool AdHocRoomsEnabled { get; set; } = false;
+
+    /// <summary>
+    /// Seconds an empty autoCleanup room persists before auto-deletion
+    /// Environment variable: VOICE_EMPTY_ROOM_GRACE_PERIOD_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 0, Maximum = 3600)]
+    public int EmptyRoomGracePeriodSeconds { get; set; } = 300;
+
 }

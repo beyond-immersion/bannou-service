@@ -22,6 +22,21 @@
 
 #nullable enable
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Voice;
 
@@ -32,12 +47,11 @@ public interface IVoiceController : BeyondImmersion.BannouService.Controllers.IB
 {
 
     /// <summary>
-    /// Create voice room for a game session
+    /// Create a new voice room
     /// </summary>
 
     /// <remarks>
-    /// Creates a new voice room associated with a game session.
-    /// <br/>Called by GameSession service when creating a session with voice enabled.
+    /// Creates a new voice room associated with a session. Any service can call this.
     /// <br/>Returns room ID and initial configuration.
     /// </remarks>
 
@@ -51,7 +65,6 @@ public interface IVoiceController : BeyondImmersion.BannouService.Controllers.IB
 
     /// <remarks>
     /// Retrieves current state of a voice room including participant list.
-    /// <br/>Called by GameSession service to check room status.
     /// </remarks>
 
     /// <returns>Voice room retrieved successfully</returns>
@@ -63,8 +76,8 @@ public interface IVoiceController : BeyondImmersion.BannouService.Controllers.IB
     /// </summary>
 
     /// <remarks>
-    /// Registers a participant's SIP endpoint with the voice room.
-    /// <br/>Called by GameSession service when a player joins a session.
+    /// Registers a participant in the voice room. If AdHocRoomsEnabled and room
+    /// <br/>doesn't exist, auto-creates it.
     /// <br/>Returns connection info and current peer list for P2P mode,
     /// <br/>or RTP server details for scaled mode.
     /// </remarks>
@@ -78,8 +91,7 @@ public interface IVoiceController : BeyondImmersion.BannouService.Controllers.IB
     /// </summary>
 
     /// <remarks>
-    /// Removes a participant from the voice room and notifies other peers.
-    /// <br/>Called by GameSession service when a player leaves a session.
+    /// Removes a participant from the voice room.
     /// </remarks>
 
     /// <returns>Successfully left voice room</returns>
@@ -92,7 +104,6 @@ public interface IVoiceController : BeyondImmersion.BannouService.Controllers.IB
 
     /// <remarks>
     /// Deletes a voice room and notifies all participants.
-    /// <br/>Called by GameSession service when a session is deleted.
     /// </remarks>
 
     /// <returns>Voice room deleted successfully</returns>
@@ -129,6 +140,55 @@ public interface IVoiceController : BeyondImmersion.BannouService.Controllers.IB
     /// <returns>SDP answer processed, peer notified</returns>
 
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> AnswerPeerAsync(AnswerPeerRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Request broadcast consent from all room participants
+    /// </summary>
+
+    /// <remarks>
+    /// Initiates the broadcast consent flow. All current room participants receive a VoiceBroadcastConsentRequestEvent. Broadcasting only starts after all participants consent. If ANY participant declines, the broadcast request is denied.
+    /// <br/>This endpoint is the ONLY way to initiate voice room broadcasting. lib-stream subscribes to the resulting approval/decline events.
+    /// </remarks>
+
+    /// <returns>Consent request sent to all participants</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BroadcastConsentStatus>> RequestBroadcastConsentAsync(BroadcastConsentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Respond to a broadcast consent request
+    /// </summary>
+
+    /// <remarks>
+    /// Called by each participant to consent or decline broadcasting. When all participants consent, lib-voice publishes voice.room.broadcast.approved. If any participant declines, lib-voice publishes voice.room.broadcast.declined.
+    /// </remarks>
+
+    /// <returns>Consent response recorded</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BroadcastConsentStatus>> RespondBroadcastConsentAsync(BroadcastConsentResponse body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Stop broadcasting from a voice room
+    /// </summary>
+
+    /// <remarks>
+    /// Any participant can stop an active broadcast at any time. This is equivalent to revoking consent. Publishes voice.room.broadcast.stopped with reason ConsentRevoked.
+    /// </remarks>
+
+    /// <returns>Broadcast stopped</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> StopBroadcastAsync(StopBroadcastConsentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
+    /// Get broadcast status for a voice room
+    /// </summary>
+
+    /// <remarks>
+    /// Returns the current broadcast state: whether consent is pending, active, or inactive.
+    /// </remarks>
+
+    /// <returns>Broadcast status</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BroadcastConsentStatus>> GetBroadcastStatusAsync(BroadcastStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
@@ -180,11 +240,10 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     }
 
     /// <summary>
-    /// Create voice room for a game session
+    /// Create a new voice room
     /// </summary>
     /// <remarks>
-    /// Creates a new voice room associated with a game session.
-    /// <br/>Called by GameSession service when creating a session with voice enabled.
+    /// Creates a new voice room associated with a session. Any service can call this.
     /// <br/>Returns room ID and initial configuration.
     /// </remarks>
     /// <returns>Voice room created successfully</returns>
@@ -227,7 +286,6 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// </summary>
     /// <remarks>
     /// Retrieves current state of a voice room including participant list.
-    /// <br/>Called by GameSession service to check room status.
     /// </remarks>
     /// <returns>Voice room retrieved successfully</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("voice/room/get")]
@@ -268,8 +326,8 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// Join voice room and register SIP endpoint
     /// </summary>
     /// <remarks>
-    /// Registers a participant's SIP endpoint with the voice room.
-    /// <br/>Called by GameSession service when a player joins a session.
+    /// Registers a participant in the voice room. If AdHocRoomsEnabled and room
+    /// <br/>doesn't exist, auto-creates it.
     /// <br/>Returns connection info and current peer list for P2P mode,
     /// <br/>or RTP server details for scaled mode.
     /// </remarks>
@@ -312,8 +370,7 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// Leave voice room
     /// </summary>
     /// <remarks>
-    /// Removes a participant from the voice room and notifies other peers.
-    /// <br/>Called by GameSession service when a player leaves a session.
+    /// Removes a participant from the voice room.
     /// </remarks>
     /// <returns>Successfully left voice room</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("voice/room/leave")]
@@ -355,7 +412,6 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
     /// </summary>
     /// <remarks>
     /// Deletes a voice room and notifies all participants.
-    /// <br/>Called by GameSession service when a session is deleted.
     /// </remarks>
     /// <returns>Voice room deleted successfully</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("voice/room/delete")]
@@ -475,6 +531,171 @@ public partial class VoiceController : Microsoft.AspNetCore.Mvc.ControllerBase
                 "unexpected_exception",
                 ex_.Message,
                 endpoint: "post:voice/peer/answer",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Request broadcast consent from all room participants
+    /// </summary>
+    /// <remarks>
+    /// Initiates the broadcast consent flow. All current room participants receive a VoiceBroadcastConsentRequestEvent. Broadcasting only starts after all participants consent. If ANY participant declines, the broadcast request is denied.
+    /// <br/>This endpoint is the ONLY way to initiate voice room broadcasting. lib-stream subscribes to the resulting approval/decline events.
+    /// </remarks>
+    /// <returns>Consent request sent to all participants</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("voice/room/broadcast/request")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BroadcastConsentStatus>> RequestBroadcastConsent([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BroadcastConsentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        try
+        {
+
+            var (statusCode, result) = await _implementation.RequestBroadcastConsentAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<VoiceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:voice/room/broadcast/request");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<VoiceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:voice/room/broadcast/request");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "voice",
+                "RequestBroadcastConsent",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:voice/room/broadcast/request",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Respond to a broadcast consent request
+    /// </summary>
+    /// <remarks>
+    /// Called by each participant to consent or decline broadcasting. When all participants consent, lib-voice publishes voice.room.broadcast.approved. If any participant declines, lib-voice publishes voice.room.broadcast.declined.
+    /// </remarks>
+    /// <returns>Consent response recorded</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("voice/room/broadcast/consent")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BroadcastConsentStatus>> RespondBroadcastConsent([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BroadcastConsentResponse body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        try
+        {
+
+            var (statusCode, result) = await _implementation.RespondBroadcastConsentAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<VoiceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:voice/room/broadcast/consent");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<VoiceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:voice/room/broadcast/consent");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "voice",
+                "RespondBroadcastConsent",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:voice/room/broadcast/consent",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Stop broadcasting from a voice room
+    /// </summary>
+    /// <remarks>
+    /// Any participant can stop an active broadcast at any time. This is equivalent to revoking consent. Publishes voice.room.broadcast.stopped with reason ConsentRevoked.
+    /// </remarks>
+    /// <returns>Broadcast stopped</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("voice/room/broadcast/stop")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.IActionResult> StopBroadcast([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] StopBroadcastConsentRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        try
+        {
+
+            var statusCode = await _implementation.StopBroadcastAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<VoiceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:voice/room/broadcast/stop");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<VoiceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:voice/room/broadcast/stop");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "voice",
+                "StopBroadcast",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:voice/room/broadcast/stop",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Get broadcast status for a voice room
+    /// </summary>
+    /// <remarks>
+    /// Returns the current broadcast state: whether consent is pending, active, or inactive.
+    /// </remarks>
+    /// <returns>Broadcast status</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("voice/room/broadcast/status")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<BroadcastConsentStatus>> GetBroadcastStatus([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] BroadcastStatusRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        try
+        {
+
+            var (statusCode, result) = await _implementation.GetBroadcastStatusAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<VoiceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:voice/room/broadcast/status");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<VoiceController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:voice/room/broadcast/status");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "voice",
+                "GetBroadcastStatus",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:voice/room/broadcast/status",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
             return StatusCode(500);

@@ -25,6 +25,21 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Voice;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Voice;
 
@@ -71,14 +86,78 @@ public enum VoiceCodec
 #pragma warning restore CS1591
 
 /// <summary>
-/// Request to create a voice room for a game session
+/// Current state of broadcast consent for a room. Inactive: No broadcast request pending. Pending: Consent request sent, awaiting all responses. Approved: All participants consented. Voice treats this as terminal.
+/// <br/>
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum BroadcastConsentState
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Inactive")]
+    Inactive = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Pending")]
+    Pending = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Approved")]
+    Approved = 2,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Reason a voice room was deleted
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum VoiceRoomDeletedReason
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Manual")]
+    Manual = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Empty")]
+    Empty = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Error")]
+    Error = 2,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Reason broadcasting was stopped
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum VoiceBroadcastStoppedReason
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"ConsentRevoked")]
+    ConsentRevoked = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"RoomClosed")]
+    RoomClosed = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Manual")]
+    Manual = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Error")]
+    Error = 3,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Request to create a voice room
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class CreateVoiceRoomRequest
 {
 
     /// <summary>
-    /// Game session ID this voice room is associated with
+    /// Session ID this voice room is associated with
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -105,6 +184,18 @@ public partial class CreateVoiceRoomRequest
     [System.Text.Json.Serialization.JsonPropertyName("codec")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public VoiceCodec Codec { get; set; } = default!;
+
+    /// <summary>
+    /// If true, room auto-deletes when empty after grace period
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("autoCleanup")]
+    public bool AutoCleanup { get; set; } = false;
+
+    /// <summary>
+    /// Optional room password for access control
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("password")]
+    public string? Password { get; set; } = default!;
 
 }
 
@@ -163,6 +254,12 @@ public partial class JoinVoiceRoomRequest
     [System.ComponentModel.DataAnnotations.StringLength(50)]
     public string DisplayName { get; set; } = default!;
 
+    /// <summary>
+    /// Room password (required if room is password-protected)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("password")]
+    public string? Password { get; set; } = default!;
+
 }
 
 /// <summary>
@@ -206,7 +303,7 @@ public partial class DeleteVoiceRoomRequest
     public System.Guid RoomId { get; set; } = default!;
 
     /// <summary>
-    /// Reason for deletion (e.g., "session_ended")
+    /// Reason for deletion
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("reason")]
     public string Reason { get; set; } = default!;
@@ -288,6 +385,100 @@ public partial class AnswerPeerRequest
 }
 
 /// <summary>
+/// Request to initiate broadcast consent for a voice room
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BroadcastConsentRequest
+{
+
+    /// <summary>
+    /// Voice room to broadcast
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("roomId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RoomId { get; set; } = default!;
+
+    /// <summary>
+    /// Session ID of the participant requesting broadcast (server can derive from auth context)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("requestingSessionId")]
+    public System.Guid? RequestingSessionId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Response to a broadcast consent request from a participant
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BroadcastConsentResponse
+{
+
+    /// <summary>
+    /// Voice room ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("roomId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RoomId { get; set; } = default!;
+
+    /// <summary>
+    /// Session ID of the responding participant
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid SessionId { get; set; } = default!;
+
+    /// <summary>
+    /// True if participant consents to broadcasting
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("consented")]
+    public bool Consented { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to stop broadcasting from a voice room
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class StopBroadcastConsentRequest
+{
+
+    /// <summary>
+    /// Voice room ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("roomId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RoomId { get; set; } = default!;
+
+    /// <summary>
+    /// Session ID of the participant stopping the broadcast
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
+    public System.Guid? SessionId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to get broadcast consent status for a voice room
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BroadcastStatusRequest
+{
+
+    /// <summary>
+    /// Voice room ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("roomId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RoomId { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Voice room details
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -303,7 +494,7 @@ public partial class VoiceRoomResponse
     public System.Guid RoomId { get; set; } = default!;
 
     /// <summary>
-    /// Associated game session ID
+    /// Associated session ID
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -357,6 +548,31 @@ public partial class VoiceRoomResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("rtpServerUri")]
     public string? RtpServerUri { get; set; } = default!;
+
+    /// <summary>
+    /// Whether the room auto-deletes when empty
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("autoCleanup")]
+    public bool AutoCleanup { get; set; } = default!;
+
+    /// <summary>
+    /// Whether the room requires a password to join
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isPasswordProtected")]
+    public bool IsPasswordProtected { get; set; } = default!;
+
+    /// <summary>
+    /// Whether the room is currently broadcasting (Approved state)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isBroadcasting")]
+    public bool IsBroadcasting { get; set; } = default!;
+
+    /// <summary>
+    /// Current broadcast consent state
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("broadcastState")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public BroadcastConsentState BroadcastState { get; set; } = default!;
 
 }
 
@@ -414,6 +630,66 @@ public partial class JoinVoiceRoomResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("tierUpgradePending")]
     public bool TierUpgradePending { get; set; } = false;
+
+    /// <summary>
+    /// Whether the room is currently broadcasting (Approved state)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isBroadcasting")]
+    public bool IsBroadcasting { get; set; } = default!;
+
+    /// <summary>
+    /// Current broadcast consent state
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("broadcastState")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public BroadcastConsentState BroadcastState { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Current broadcast consent status for a voice room
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BroadcastConsentStatus
+{
+
+    /// <summary>
+    /// Voice room ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("roomId")]
+    public System.Guid RoomId { get; set; } = default!;
+
+    /// <summary>
+    /// Current broadcast consent state
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("state")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public BroadcastConsentState State { get; set; } = default!;
+
+    /// <summary>
+    /// Who initiated the broadcast request (null if inactive)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("requestedBySessionId")]
+    public System.Guid? RequestedBySessionId { get; set; } = default!;
+
+    /// <summary>
+    /// Sessions that have consented so far
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("consentedSessionIds")]
+    public System.Collections.Generic.ICollection<System.Guid> ConsentedSessionIds { get; set; } = default!;
+
+    /// <summary>
+    /// Sessions that haven't responded yet
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("pendingSessionIds")]
+    public System.Collections.Generic.ICollection<System.Guid> PendingSessionIds { get; set; } = default!;
+
+    /// <summary>
+    /// RTP audio endpoint for the room's mixed audio output. Only populated when room is in scaled tier. Provided to lib-stream so it can connect its RTMP output to the voice room's audio.
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("rtpAudioEndpoint")]
+    public string? RtpAudioEndpoint { get; set; } = default!;
 
 }
 

@@ -37,7 +37,7 @@ public static class VoicePermissionRegistration
     /// <summary>
     /// Service version from OpenAPI schema.
     /// </summary>
-    public const string ServiceVersion = "1.1.0";
+    public const string ServiceVersion = "2.0.0";
 
     /// <summary>
     /// Generates the ServiceRegistrationEvent containing all endpoint permissions.
@@ -106,6 +106,66 @@ public static class VoicePermissionRegistration
                 {
                     Role = "user",
                     RequiredStates = new Dictionary<string, string> { {"voice", "ringing"} }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/voice/room/broadcast/request",
+            Method = ServiceEndpointMethod.POST,
+            Description = "requestBroadcastConsent",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> { {"voice", "in_room"} }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/voice/room/broadcast/consent",
+            Method = ServiceEndpointMethod.POST,
+            Description = "respondBroadcastConsent",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> { {"voice", "consent_pending"} }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/voice/room/broadcast/stop",
+            Method = ServiceEndpointMethod.POST,
+            Description = "stopBroadcast",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> { {"voice", "in_room"} }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/voice/room/broadcast/status",
+            Method = ServiceEndpointMethod.POST,
+            Description = "getBroadcastStatus",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> { {"voice", "in_room"} }
                 },
             }
         });

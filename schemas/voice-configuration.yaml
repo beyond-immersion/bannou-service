@@ -113,3 +113,42 @@ x-service-configuration:
       description: Hours until SIP credentials expire (clients should re-authenticate before expiration)
       env: VOICE_SIP_CREDENTIAL_EXPIRATION_HOURS
       default: 24
+
+    # Participant TTL enforcement
+    ParticipantHeartbeatTimeoutSeconds:
+      type: integer
+      description: Seconds of missed heartbeats before participant is evicted
+      env: VOICE_PARTICIPANT_HEARTBEAT_TIMEOUT_SECONDS
+      default: 60
+      minimum: 10
+      maximum: 600
+    ParticipantEvictionCheckIntervalSeconds:
+      type: integer
+      description: How often the background worker checks for stale participants
+      env: VOICE_PARTICIPANT_EVICTION_CHECK_INTERVAL_SECONDS
+      default: 15
+      minimum: 5
+      maximum: 120
+
+    # Broadcast consent
+    BroadcastConsentTimeoutSeconds:
+      type: integer
+      description: Seconds to wait for all participants to respond before auto-declining
+      env: VOICE_BROADCAST_CONSENT_TIMEOUT_SECONDS
+      default: 30
+      minimum: 10
+      maximum: 120
+
+    # Ad-hoc room support
+    AdHocRoomsEnabled:
+      type: boolean
+      description: If true, joining a non-existent room auto-creates it with autoCleanup enabled
+      env: VOICE_AD_HOC_ROOMS_ENABLED
+      default: false
+    EmptyRoomGracePeriodSeconds:
+      type: integer
+      description: Seconds an empty autoCleanup room persists before auto-deletion
+      env: VOICE_EMPTY_ROOM_GRACE_PERIOD_SECONDS
+      default: 300
+      minimum: 0
+      maximum: 3600

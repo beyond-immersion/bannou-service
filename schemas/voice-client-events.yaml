@@ -263,8 +263,83 @@ components:
           description: Voice room ID that was closed
         reason:
           type: string
-          enum: [session_ended, admin_action, error]
+          enum: [manual, empty, error]
           description: Reason the room was closed
+
+    # ============================================
+    # Broadcast Consent Events
+    # ============================================
+
+    VoiceBroadcastConsentRequestEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: >
+        Sent to all room participants when someone requests broadcast consent.
+        Each participant should respond via /voice/room/broadcast/consent.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - roomId
+        - requestedBySessionId
+      properties:
+        eventName:
+          type: string
+          default: "voice.broadcast_consent_request"
+          description: Fixed event type identifier
+        roomId:
+          type: string
+          format: uuid
+          description: Voice room ID
+        requestedBySessionId:
+          type: string
+          format: uuid
+          description: Who initiated the broadcast request
+        requestedByDisplayName:
+          type: string
+          nullable: true
+          description: Display name of requester for UI
+
+    VoiceBroadcastConsentUpdateEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: >
+        Sent to all room participants when the broadcast consent state changes
+        (someone consented, someone declined, broadcast started, broadcast stopped).
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - roomId
+        - state
+      properties:
+        eventName:
+          type: string
+          default: "voice.broadcast_consent_update"
+          description: Fixed event type identifier
+        roomId:
+          type: string
+          format: uuid
+          description: Voice room ID
+        state:
+          $ref: 'voice-api.yaml#/components/schemas/BroadcastConsentState'
+          description: Current broadcast consent state
+        consentedCount:
+          type: integer
+          description: How many participants have consented
+        totalCount:
+          type: integer
+          description: Total participants who need to consent
+        declinedByDisplayName:
+          type: string
+          nullable: true
+          description: If declined, who declined (for UI feedback)
 
     # ============================================
     # Supporting Types
