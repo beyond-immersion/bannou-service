@@ -372,41 +372,32 @@ public partial class SubscriptionService : ISubscriptionService
     {
         _logger.LogDebug("Cancelling subscription {SubscriptionId}", body.SubscriptionId);
 
-        try
+        var modelStore = _stateStoreFactory.GetStore<SubscriptionDataModel>(StateStoreName);
+        var model = await modelStore.GetAsync($"{SUBSCRIPTION_KEY_PREFIX}{body.SubscriptionId}", cancellationToken);
+
+        if (model == null)
         {
-            var modelStore = _stateStoreFactory.GetStore<SubscriptionDataModel>(StateStoreName);
-            var model = await modelStore.GetAsync($"{SUBSCRIPTION_KEY_PREFIX}{body.SubscriptionId}", cancellationToken);
-
-            if (model == null)
-            {
-                _logger.LogWarning("Subscription {SubscriptionId} not found", body.SubscriptionId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            var now = DateTimeOffset.UtcNow;
-
-            model.IsActive = false;
-            model.CancelledAtUnix = now.ToUnixTimeSeconds();
-            model.CancellationReason = body.Reason;
-            model.UpdatedAtUnix = now.ToUnixTimeSeconds();
-
-            // Save updated subscription
-            await modelStore.SaveAsync($"{SUBSCRIPTION_KEY_PREFIX}{body.SubscriptionId}", model, cancellationToken: cancellationToken);
-
-            // Publish subscription.updated event
-            await PublishSubscriptionUpdatedEventAsync(model, "cancelled", cancellationToken);
-
-            _logger.LogInformation("Cancelled subscription {SubscriptionId} for account {AccountId}",
-                body.SubscriptionId, model.AccountId);
-
-            return (StatusCodes.OK, MapToSubscriptionInfo(model));
+            _logger.LogWarning("Subscription {SubscriptionId} not found", body.SubscriptionId);
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error cancelling subscription {SubscriptionId}", body.SubscriptionId);
-            await PublishErrorEventAsync("CancelSubscription", ex.GetType().Name, ex.Message, dependency: "state", details: new { body.SubscriptionId });
-            return (StatusCodes.InternalServerError, null);
-        }
+
+        var now = DateTimeOffset.UtcNow;
+
+        model.IsActive = false;
+        model.CancelledAtUnix = now.ToUnixTimeSeconds();
+        model.CancellationReason = body.Reason;
+        model.UpdatedAtUnix = now.ToUnixTimeSeconds();
+
+        // Save updated subscription
+        await modelStore.SaveAsync($"{SUBSCRIPTION_KEY_PREFIX}{body.SubscriptionId}", model, cancellationToken: cancellationToken);
+
+        // Publish subscription.updated event
+        await PublishSubscriptionUpdatedEventAsync(model, "cancelled", cancellationToken);
+
+        _logger.LogInformation("Cancelled subscription {SubscriptionId} for account {AccountId}",
+            body.SubscriptionId, model.AccountId);
+
+        return (StatusCodes.OK, MapToSubscriptionInfo(model));
     }
 
     /// <summary>
@@ -417,63 +408,54 @@ public partial class SubscriptionService : ISubscriptionService
     {
         _logger.LogDebug("Renewing subscription {SubscriptionId}", body.SubscriptionId);
 
-        try
+        var modelStore = _stateStoreFactory.GetStore<SubscriptionDataModel>(StateStoreName);
+        var model = await modelStore.GetAsync($"{SUBSCRIPTION_KEY_PREFIX}{body.SubscriptionId}", cancellationToken);
+
+        if (model == null)
         {
-            var modelStore = _stateStoreFactory.GetStore<SubscriptionDataModel>(StateStoreName);
-            var model = await modelStore.GetAsync($"{SUBSCRIPTION_KEY_PREFIX}{body.SubscriptionId}", cancellationToken);
-
-            if (model == null)
-            {
-                _logger.LogWarning("Subscription {SubscriptionId} not found", body.SubscriptionId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            var now = DateTimeOffset.UtcNow;
-
-            // Calculate new expiration date
-            if (body.NewExpirationDate.HasValue)
-            {
-                model.ExpirationDateUnix = body.NewExpirationDate.Value.ToUnixTimeSeconds();
-            }
-            else if (body.ExtensionDays > 0)
-            {
-                // Extend from current expiration or from now if already expired
-                DateTimeOffset baseDate;
-                if (model.ExpirationDateUnix.HasValue)
-                {
-                    var currentExpiration = DateTimeOffset.FromUnixTimeSeconds(model.ExpirationDateUnix.Value);
-                    baseDate = currentExpiration > now ? currentExpiration : now;
-                }
-                else
-                {
-                    baseDate = now;
-                }
-                model.ExpirationDateUnix = baseDate.AddDays(body.ExtensionDays).ToUnixTimeSeconds();
-            }
-
-            // Reactivate if cancelled
-            model.IsActive = true;
-            model.CancelledAtUnix = null;
-            model.CancellationReason = null;
-            model.UpdatedAtUnix = now.ToUnixTimeSeconds();
-
-            // Save updated subscription
-            await modelStore.SaveAsync($"{SUBSCRIPTION_KEY_PREFIX}{body.SubscriptionId}", model, cancellationToken: cancellationToken);
-
-            // Publish subscription.updated event
-            await PublishSubscriptionUpdatedEventAsync(model, "renewed", cancellationToken);
-
-            _logger.LogInformation("Renewed subscription {SubscriptionId} for account {AccountId}",
-                body.SubscriptionId, model.AccountId);
-
-            return (StatusCodes.OK, MapToSubscriptionInfo(model));
+            _logger.LogWarning("Subscription {SubscriptionId} not found", body.SubscriptionId);
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
+
+        var now = DateTimeOffset.UtcNow;
+
+        // Calculate new expiration date
+        if (body.NewExpirationDate.HasValue)
         {
-            _logger.LogError(ex, "Error renewing subscription {SubscriptionId}", body.SubscriptionId);
-            await PublishErrorEventAsync("RenewSubscription", ex.GetType().Name, ex.Message, dependency: "state", details: new { body.SubscriptionId });
-            return (StatusCodes.InternalServerError, null);
+            model.ExpirationDateUnix = body.NewExpirationDate.Value.ToUnixTimeSeconds();
         }
+        else if (body.ExtensionDays > 0)
+        {
+            // Extend from current expiration or from now if already expired
+            DateTimeOffset baseDate;
+            if (model.ExpirationDateUnix.HasValue)
+            {
+                var currentExpiration = DateTimeOffset.FromUnixTimeSeconds(model.ExpirationDateUnix.Value);
+                baseDate = currentExpiration > now ? currentExpiration : now;
+            }
+            else
+            {
+                baseDate = now;
+            }
+            model.ExpirationDateUnix = baseDate.AddDays(body.ExtensionDays).ToUnixTimeSeconds();
+        }
+
+        // Reactivate if cancelled
+        model.IsActive = true;
+        model.CancelledAtUnix = null;
+        model.CancellationReason = null;
+        model.UpdatedAtUnix = now.ToUnixTimeSeconds();
+
+        // Save updated subscription
+        await modelStore.SaveAsync($"{SUBSCRIPTION_KEY_PREFIX}{body.SubscriptionId}", model, cancellationToken: cancellationToken);
+
+        // Publish subscription.updated event
+        await PublishSubscriptionUpdatedEventAsync(model, "renewed", cancellationToken);
+
+        _logger.LogInformation("Renewed subscription {SubscriptionId} for account {AccountId}",
+            body.SubscriptionId, model.AccountId);
+
+        return (StatusCodes.OK, MapToSubscriptionInfo(model));
     }
 
     #region Public Methods for Background Job
@@ -485,34 +467,25 @@ public partial class SubscriptionService : ISubscriptionService
     {
         _logger.LogDebug("Expiring subscription {SubscriptionId}", subscriptionId);
 
-        try
+        var modelStore = _stateStoreFactory.GetStore<SubscriptionDataModel>(StateStoreName);
+        var model = await modelStore.GetAsync($"{SUBSCRIPTION_KEY_PREFIX}{subscriptionId}", cancellationToken);
+
+        if (model == null || !model.IsActive)
         {
-            var modelStore = _stateStoreFactory.GetStore<SubscriptionDataModel>(StateStoreName);
-            var model = await modelStore.GetAsync($"{SUBSCRIPTION_KEY_PREFIX}{subscriptionId}", cancellationToken);
-
-            if (model == null || !model.IsActive)
-            {
-                return false;
-            }
-
-            model.IsActive = false;
-            model.UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-
-            await modelStore.SaveAsync($"{SUBSCRIPTION_KEY_PREFIX}{subscriptionId}", model, cancellationToken: cancellationToken);
-
-            await PublishSubscriptionUpdatedEventAsync(model, "expired", cancellationToken);
-
-            _logger.LogInformation("Expired subscription {SubscriptionId} for account {AccountId}",
-                subscriptionId, model.AccountId);
-
-            return true;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error expiring subscription {SubscriptionId}", subscriptionId);
-            _ = PublishErrorEventAsync("ExpireSubscription", ex.GetType().Name, ex.Message, dependency: "state", details: new { SubscriptionId = subscriptionId });
             return false;
         }
+
+        model.IsActive = false;
+        model.UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+        await modelStore.SaveAsync($"{SUBSCRIPTION_KEY_PREFIX}{subscriptionId}", model, cancellationToken: cancellationToken);
+
+        await PublishSubscriptionUpdatedEventAsync(model, "expired", cancellationToken);
+
+        _logger.LogInformation("Expired subscription {SubscriptionId} for account {AccountId}",
+            subscriptionId, model.AccountId);
+
+        return true;
     }
 
     #endregion

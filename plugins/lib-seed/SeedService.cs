@@ -553,93 +553,82 @@ public partial class SeedService : ISeedService
         _logger.LogInformation("Registering seed type {SeedTypeCode} for game service {GameServiceId}",
             body.SeedTypeCode, body.GameServiceId);
 
+        // Validate game service exists (L2 hard dependency)
         try
         {
-            // Validate game service exists (L2 hard dependency)
-            try
-            {
-                await _gameServiceClient.GetServiceAsync(
-                    new GetServiceRequest { ServiceId = body.GameServiceId }, cancellationToken);
-            }
-            catch (ApiException ex) when (ex.StatusCode == 404)
-            {
-                _logger.LogWarning("Game service {GameServiceId} not found", body.GameServiceId);
-                return (StatusCodes.NotFound, null);
-            }
-
-            var store = _stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
-            var key = $"type:{body.GameServiceId}:{body.SeedTypeCode}";
-
-            var existing = await store.GetAsync(key, cancellationToken);
-            if (existing != null)
-            {
-                _logger.LogWarning("Seed type {SeedTypeCode} already exists for game service {GameServiceId}",
-                    body.SeedTypeCode, body.GameServiceId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Check max types per game service
-            var queryStore = _stateStoreFactory.GetJsonQueryableStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
-            var conditions = new List<QueryCondition>
-            {
-                new QueryCondition { Path = "$.GameServiceId", Operator = QueryOperator.Equals, Value = body.GameServiceId.ToString() },
-                new QueryCondition { Path = "$.SeedTypeCode", Operator = QueryOperator.Exists, Value = true }
-            };
-            var typeCount = await queryStore.JsonQueryPagedAsync(conditions, 0, 1, null, cancellationToken);
-
-            if (typeCount.TotalCount >= _configuration.MaxSeedTypesPerGameService)
-            {
-                _logger.LogWarning("Game service {GameServiceId} has reached max seed types ({Max})",
-                    body.GameServiceId, _configuration.MaxSeedTypesPerGameService);
-                return (StatusCodes.Conflict, null);
-            }
-
-            var model = new SeedTypeDefinitionModel
-            {
-                SeedTypeCode = body.SeedTypeCode,
-                GameServiceId = body.GameServiceId,
-                DisplayName = body.DisplayName,
-                Description = body.Description,
-                MaxPerOwner = body.MaxPerOwner,
-                AllowedOwnerTypes = body.AllowedOwnerTypes.ToList(),
-                GrowthPhases = body.GrowthPhases.ToList(),
-                BondCardinality = body.BondCardinality,
-                BondPermanent = body.BondPermanent,
-                CapabilityRules = body.CapabilityRules?.ToList(),
-                GrowthDecayEnabled = body.GrowthDecayEnabled,
-                GrowthDecayRatePerDay = body.GrowthDecayRatePerDay,
-                SameOwnerGrowthMultiplier = body.SameOwnerGrowthMultiplier
-            };
-
-            await store.SaveAsync(key, model, cancellationToken: cancellationToken);
-
-            await _messageBus.TryPublishAsync("seed-type.created", new SeedTypeCreatedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                SeedTypeCode = model.SeedTypeCode,
-                GameServiceId = model.GameServiceId,
-                DisplayName = model.DisplayName,
-                Description = model.Description,
-                MaxPerOwner = model.MaxPerOwner,
-                BondCardinality = model.BondCardinality,
-                BondPermanent = model.BondPermanent,
-                SameOwnerGrowthMultiplier = model.SameOwnerGrowthMultiplier,
-                IsDeprecated = model.IsDeprecated,
-                DeprecatedAt = model.DeprecatedAt,
-                DeprecationReason = model.DeprecationReason
-            }, cancellationToken: cancellationToken);
-
-            return (StatusCodes.OK, MapTypeToResponse(model));
+            await _gameServiceClient.GetServiceAsync(
+                new GetServiceRequest { ServiceId = body.GameServiceId }, cancellationToken);
         }
-        catch (Exception ex)
+        catch (ApiException ex) when (ex.StatusCode == 404)
         {
-            _logger.LogError(ex, "Error registering seed type {SeedTypeCode}", body.SeedTypeCode);
-            await _messageBus.TryPublishErrorAsync("seed", "RegisterSeedType", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/type/register", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            _logger.LogWarning("Game service {GameServiceId} not found", body.GameServiceId);
+            return (StatusCodes.NotFound, null);
         }
+
+        var store = _stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
+        var key = $"type:{body.GameServiceId}:{body.SeedTypeCode}";
+
+        var existing = await store.GetAsync(key, cancellationToken);
+        if (existing != null)
+        {
+            _logger.LogWarning("Seed type {SeedTypeCode} already exists for game service {GameServiceId}",
+                body.SeedTypeCode, body.GameServiceId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        // Check max types per game service
+        var queryStore = _stateStoreFactory.GetJsonQueryableStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
+        var conditions = new List<QueryCondition>
+        {
+            new QueryCondition { Path = "$.GameServiceId", Operator = QueryOperator.Equals, Value = body.GameServiceId.ToString() },
+            new QueryCondition { Path = "$.SeedTypeCode", Operator = QueryOperator.Exists, Value = true }
+        };
+        var typeCount = await queryStore.JsonQueryPagedAsync(conditions, 0, 1, null, cancellationToken);
+
+        if (typeCount.TotalCount >= _configuration.MaxSeedTypesPerGameService)
+        {
+            _logger.LogWarning("Game service {GameServiceId} has reached max seed types ({Max})",
+                body.GameServiceId, _configuration.MaxSeedTypesPerGameService);
+            return (StatusCodes.Conflict, null);
+        }
+
+        var model = new SeedTypeDefinitionModel
+        {
+            SeedTypeCode = body.SeedTypeCode,
+            GameServiceId = body.GameServiceId,
+            DisplayName = body.DisplayName,
+            Description = body.Description,
+            MaxPerOwner = body.MaxPerOwner,
+            AllowedOwnerTypes = body.AllowedOwnerTypes.ToList(),
+            GrowthPhases = body.GrowthPhases.ToList(),
+            BondCardinality = body.BondCardinality,
+            BondPermanent = body.BondPermanent,
+            CapabilityRules = body.CapabilityRules?.ToList(),
+            GrowthDecayEnabled = body.GrowthDecayEnabled,
+            GrowthDecayRatePerDay = body.GrowthDecayRatePerDay,
+            SameOwnerGrowthMultiplier = body.SameOwnerGrowthMultiplier
+        };
+
+        await store.SaveAsync(key, model, cancellationToken: cancellationToken);
+
+        await _messageBus.TryPublishAsync("seed-type.created", new SeedTypeCreatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            SeedTypeCode = model.SeedTypeCode,
+            GameServiceId = model.GameServiceId,
+            DisplayName = model.DisplayName,
+            Description = model.Description,
+            MaxPerOwner = model.MaxPerOwner,
+            BondCardinality = model.BondCardinality,
+            BondPermanent = model.BondPermanent,
+            SameOwnerGrowthMultiplier = model.SameOwnerGrowthMultiplier,
+            IsDeprecated = model.IsDeprecated,
+            DeprecatedAt = model.DeprecatedAt,
+            DeprecationReason = model.DeprecationReason
+        }, cancellationToken: cancellationToken);
+
+        return (StatusCodes.OK, MapTypeToResponse(model));
     }
 
     /// <summary>
@@ -647,26 +636,15 @@ public partial class SeedService : ISeedService
     /// </summary>
     public async Task<(StatusCodes, SeedTypeResponse?)> GetSeedTypeAsync(GetSeedTypeRequest body, CancellationToken cancellationToken)
     {
-        try
-        {
-            var store = _stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
-            var seedType = await store.GetAsync($"type:{body.GameServiceId}:{body.SeedTypeCode}", cancellationToken);
+        var store = _stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
+        var seedType = await store.GetAsync($"type:{body.GameServiceId}:{body.SeedTypeCode}", cancellationToken);
 
-            if (seedType == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            return (StatusCodes.OK, MapTypeToResponse(seedType));
-        }
-        catch (Exception ex)
+        if (seedType == null)
         {
-            _logger.LogError(ex, "Error getting seed type {SeedTypeCode}", body.SeedTypeCode);
-            await _messageBus.TryPublishErrorAsync("seed", "GetSeedType", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/type/get", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            return (StatusCodes.NotFound, null);
         }
+
+        return (StatusCodes.OK, MapTypeToResponse(seedType));
     }
 
     /// <summary>
@@ -674,36 +652,25 @@ public partial class SeedService : ISeedService
     /// </summary>
     public async Task<(StatusCodes, ListSeedTypesResponse?)> ListSeedTypesAsync(ListSeedTypesRequest body, CancellationToken cancellationToken)
     {
-        try
+        var store = _stateStoreFactory.GetJsonQueryableStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
+        var conditions = new List<QueryCondition>
         {
-            var store = _stateStoreFactory.GetJsonQueryableStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
-            var conditions = new List<QueryCondition>
-            {
-                new QueryCondition { Path = "$.GameServiceId", Operator = QueryOperator.Equals, Value = body.GameServiceId.ToString() },
-                new QueryCondition { Path = "$.SeedTypeCode", Operator = QueryOperator.Exists, Value = true }
-            };
+            new QueryCondition { Path = "$.GameServiceId", Operator = QueryOperator.Equals, Value = body.GameServiceId.ToString() },
+            new QueryCondition { Path = "$.SeedTypeCode", Operator = QueryOperator.Exists, Value = true }
+        };
 
-            var result = await store.JsonQueryPagedAsync(conditions, 0, _configuration.DefaultQueryPageSize, null, cancellationToken);
-            var items = result.Items.Select(r => r.Value).ToList();
+        var result = await store.JsonQueryPagedAsync(conditions, 0, _configuration.DefaultQueryPageSize, null, cancellationToken);
+        var items = result.Items.Select(r => r.Value).ToList();
 
-            // Filter out deprecated unless explicitly included
-            if (!body.IncludeDeprecated)
-            {
-                items = items.Where(t => !t.IsDeprecated).ToList();
-            }
-
-            var types = items.Select(MapTypeToResponse).ToList();
-
-            return (StatusCodes.OK, new ListSeedTypesResponse { SeedTypes = types });
-        }
-        catch (Exception ex)
+        // Filter out deprecated unless explicitly included
+        if (!body.IncludeDeprecated)
         {
-            _logger.LogError(ex, "Error listing seed types for game service {GameServiceId}", body.GameServiceId);
-            await _messageBus.TryPublishErrorAsync("seed", "ListSeedTypes", "unexpected_exception", ex.Message,
-                dependency: null, endpoint: "post:/seed/type/list", details: null, stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            items = items.Where(t => !t.IsDeprecated).ToList();
         }
+
+        var types = items.Select(MapTypeToResponse).ToList();
+
+        return (StatusCodes.OK, new ListSeedTypesResponse { SeedTypes = types });
     }
 
     /// <summary>

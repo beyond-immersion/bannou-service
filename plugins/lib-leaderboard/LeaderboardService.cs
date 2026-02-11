@@ -712,91 +712,73 @@ public partial class LeaderboardService : ILeaderboardService
     {
         _logger.LogDebug("Creating new season for {LeaderboardId}", body.LeaderboardId);
 
-        try
+        var definitionStore = _stateStoreFactory.GetCacheableStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
+        var defKey = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
+        var (definition, defEtag) = await definitionStore.GetWithETagAsync(defKey, cancellationToken);
+
+        if (definition == null)
         {
-            var definitionStore = _stateStoreFactory.GetCacheableStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
-            var defKey = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
-            var (definition, defEtag) = await definitionStore.GetWithETagAsync(defKey, cancellationToken);
+            return (StatusCodes.NotFound, null);
+        }
 
-            if (definition == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
+        if (!definition.IsSeasonal)
+        {
+            return (StatusCodes.BadRequest, null);
+        }
 
-            if (!definition.IsSeasonal)
-            {
-                return (StatusCodes.BadRequest, null);
-            }
+        var now = DateTimeOffset.UtcNow;
+        var newSeasonNumber = (definition.CurrentSeason ?? 0) + 1;
 
-            var now = DateTimeOffset.UtcNow;
-            var newSeasonNumber = (definition.CurrentSeason ?? 0) + 1;
+        var previousSeason = definition.CurrentSeason;
+        // Use per-request archivePrevious flag (defaults to true in schema)
+        if (!body.ArchivePrevious && previousSeason.HasValue)
+        {
+            var rankingStore = _stateStoreFactory.GetCacheableStore<object>(StateStoreDefinitions.LeaderboardRanking);
+            var previousRankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, previousSeason.Value);
+            await rankingStore.SortedSetDeleteAsync(previousRankingKey, cancellationToken);
 
-            var previousSeason = definition.CurrentSeason;
-            // Use per-request archivePrevious flag (defaults to true in schema)
-            if (!body.ArchivePrevious && previousSeason.HasValue)
-            {
-                var rankingStore = _stateStoreFactory.GetCacheableStore<object>(StateStoreDefinitions.LeaderboardRanking);
-                var previousRankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, previousSeason.Value);
-                await rankingStore.SortedSetDeleteAsync(previousRankingKey, cancellationToken);
-
-                await definitionStore.RemoveFromSetAsync(
-                    GetSeasonIndexKey(body.GameServiceId, body.LeaderboardId),
-                    previousSeason.Value,
-                    cancellationToken: cancellationToken);
-            }
-
-            // Update definition with new season using optimistic concurrency
-            definition.CurrentSeason = newSeasonNumber;
-            // defEtag is non-null at this point; coalesce satisfies compiler nullable analysis
-            var newDefEtag = await definitionStore.TrySaveAsync(defKey, definition, defEtag ?? string.Empty, cancellationToken);
-            if (newDefEtag == null)
-            {
-                _logger.LogWarning("Concurrent modification detected for leaderboard {LeaderboardId} season creation", body.LeaderboardId);
-                return (StatusCodes.Conflict, null);
-            }
-            await definitionStore.AddToSetAsync(
+            await definitionStore.RemoveFromSetAsync(
                 GetSeasonIndexKey(body.GameServiceId, body.LeaderboardId),
-                newSeasonNumber,
+                previousSeason.Value,
                 cancellationToken: cancellationToken);
-
-            // Publish season started event
-            var seasonEvent = new LeaderboardSeasonStartedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = now,
-                GameServiceId = body.GameServiceId,
-                LeaderboardId = body.LeaderboardId,
-                SeasonNumber = newSeasonNumber,
-                PreviousSeasonNumber = newSeasonNumber - 1
-            };
-            await _messageBus.TryPublishAsync("leaderboard.season.started", seasonEvent, cancellationToken: cancellationToken);
-
-            return (StatusCodes.OK, new SeasonResponse
-            {
-                LeaderboardId = body.LeaderboardId,
-                SeasonNumber = newSeasonNumber,
-                SeasonName = body.SeasonName,
-                StartedAt = now,
-                EndedAt = null,
-                IsActive = true,
-                EntryCount = 0
-            });
         }
-        catch (Exception ex)
+
+        // Update definition with new season using optimistic concurrency
+        definition.CurrentSeason = newSeasonNumber;
+        // defEtag is non-null at this point; coalesce satisfies compiler nullable analysis
+        var newDefEtag = await definitionStore.TrySaveAsync(defKey, definition, defEtag ?? string.Empty, cancellationToken);
+        if (newDefEtag == null)
         {
-            _logger.LogError(ex, "Error creating season");
-            await _messageBus.TryPublishErrorAsync(
-                "leaderboard",
-                "CreateSeason",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/leaderboard/season/create",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            _logger.LogWarning("Concurrent modification detected for leaderboard {LeaderboardId} season creation", body.LeaderboardId);
+            return (StatusCodes.Conflict, null);
         }
+        await definitionStore.AddToSetAsync(
+            GetSeasonIndexKey(body.GameServiceId, body.LeaderboardId),
+            newSeasonNumber,
+            cancellationToken: cancellationToken);
+
+        // Publish season started event
+        var seasonEvent = new LeaderboardSeasonStartedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            GameServiceId = body.GameServiceId,
+            LeaderboardId = body.LeaderboardId,
+            SeasonNumber = newSeasonNumber,
+            PreviousSeasonNumber = newSeasonNumber - 1
+        };
+        await _messageBus.TryPublishAsync("leaderboard.season.started", seasonEvent, cancellationToken: cancellationToken);
+
+        return (StatusCodes.OK, new SeasonResponse
+        {
+            LeaderboardId = body.LeaderboardId,
+            SeasonNumber = newSeasonNumber,
+            SeasonName = body.SeasonName,
+            StartedAt = now,
+            EndedAt = null,
+            IsActive = true,
+            EntryCount = 0
+        });
     }
 
     /// <summary>
@@ -807,62 +789,44 @@ public partial class LeaderboardService : ILeaderboardService
     {
         _logger.LogDebug("Getting season info for {LeaderboardId}", body.LeaderboardId);
 
-        try
+        var definitionStore = _stateStoreFactory.GetCacheableStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
+        var defKey = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
+        var definition = await definitionStore.GetAsync(defKey, cancellationToken);
+
+        if (definition == null)
         {
-            var definitionStore = _stateStoreFactory.GetCacheableStore<LeaderboardDefinitionData>(StateStoreDefinitions.LeaderboardDefinition);
-            var defKey = GetDefinitionKey(body.GameServiceId, body.LeaderboardId);
-            var definition = await definitionStore.GetAsync(defKey, cancellationToken);
-
-            if (definition == null)
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            if (!definition.IsSeasonal)
-            {
-                return (StatusCodes.BadRequest, null);
-            }
-
-            var seasonNumber = body.SeasonNumber ?? definition.CurrentSeason ?? 1;
-            var isActive = seasonNumber == definition.CurrentSeason;
-
-            var seasonIndexKey = GetSeasonIndexKey(body.GameServiceId, body.LeaderboardId);
-            var seasons = await definitionStore.GetSetAsync<int>(seasonIndexKey, cancellationToken);
-            if (seasons.Count > 0 && !seasons.Contains(seasonNumber))
-            {
-                return (StatusCodes.NotFound, null);
-            }
-
-            // Get entry count for the season
-            var rankingStore = _stateStoreFactory.GetCacheableStore<object>(StateStoreDefinitions.LeaderboardRanking);
-            var rankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, seasonNumber);
-            var entryCount = await rankingStore.SortedSetCountAsync(rankingKey, cancellationToken);
-
-            return (StatusCodes.OK, new SeasonResponse
-            {
-                LeaderboardId = body.LeaderboardId,
-                SeasonNumber = seasonNumber,
-                StartedAt = definition.CreatedAt, // Simplified - would need actual season start tracking
-                EndedAt = isActive ? null : DateTimeOffset.UtcNow, // Simplified
-                IsActive = isActive,
-                EntryCount = entryCount
-            });
+            return (StatusCodes.NotFound, null);
         }
-        catch (Exception ex)
+
+        if (!definition.IsSeasonal)
         {
-            _logger.LogError(ex, "Error getting season");
-            await _messageBus.TryPublishErrorAsync(
-                "leaderboard",
-                "GetSeason",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/leaderboard/season/get",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            return (StatusCodes.BadRequest, null);
         }
+
+        var seasonNumber = body.SeasonNumber ?? definition.CurrentSeason ?? 1;
+        var isActive = seasonNumber == definition.CurrentSeason;
+
+        var seasonIndexKey = GetSeasonIndexKey(body.GameServiceId, body.LeaderboardId);
+        var seasons = await definitionStore.GetSetAsync<int>(seasonIndexKey, cancellationToken);
+        if (seasons.Count > 0 && !seasons.Contains(seasonNumber))
+        {
+            return (StatusCodes.NotFound, null);
+        }
+
+        // Get entry count for the season
+        var rankingStore = _stateStoreFactory.GetCacheableStore<object>(StateStoreDefinitions.LeaderboardRanking);
+        var rankingKey = GetRankingKey(body.GameServiceId, body.LeaderboardId, seasonNumber);
+        var entryCount = await rankingStore.SortedSetCountAsync(rankingKey, cancellationToken);
+
+        return (StatusCodes.OK, new SeasonResponse
+        {
+            LeaderboardId = body.LeaderboardId,
+            SeasonNumber = seasonNumber,
+            StartedAt = definition.CreatedAt, // Simplified - would need actual season start tracking
+            EndedAt = isActive ? null : DateTimeOffset.UtcNow, // Simplified
+            IsActive = isActive,
+            EntryCount = entryCount
+        });
     }
 
     #region Helper Methods

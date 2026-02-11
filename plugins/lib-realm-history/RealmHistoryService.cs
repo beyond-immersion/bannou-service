@@ -123,74 +123,56 @@ public partial class RealmHistoryService : IRealmHistoryService
         _logger.LogDebug("Recording participation for realm {RealmId} in event {EventId}",
             body.RealmId, body.EventId);
 
-        try
+        var participationId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+
+        var participationData = new RealmParticipationData
         {
-            var participationId = Guid.NewGuid();
-            var now = DateTimeOffset.UtcNow;
+            ParticipationId = participationId,
+            RealmId = body.RealmId,
+            EventId = body.EventId,
+            EventName = body.EventName,
+            EventCategory = body.EventCategory,
+            Role = body.Role,
+            EventDateUnix = body.EventDate.ToUnixTimeSeconds(),
+            Impact = body.Impact,
+            Metadata = body.Metadata,
+            CreatedAtUnix = now.ToUnixTimeSeconds()
+        };
 
-            var participationData = new RealmParticipationData
-            {
-                ParticipationId = participationId,
-                RealmId = body.RealmId,
-                EventId = body.EventId,
-                EventName = body.EventName,
-                EventCategory = body.EventCategory,
-                Role = body.Role,
-                EventDateUnix = body.EventDate.ToUnixTimeSeconds(),
-                Impact = body.Impact,
-                Metadata = body.Metadata,
-                CreatedAtUnix = now.ToUnixTimeSeconds()
-            };
+        // Use helper to store record and update both indices
+        // Acquires distributed lock on primary key per IMPLEMENTATION TENETS
+        var addResult = await _participationHelper.AddRecordAsync(
+            participationData,
+            participationId.ToString(),
+            body.RealmId.ToString(),
+            body.EventId.ToString(),
+            cancellationToken);
 
-            // Use helper to store record and update both indices
-            // Acquires distributed lock on primary key per IMPLEMENTATION TENETS
-            var addResult = await _participationHelper.AddRecordAsync(
-                participationData,
-                participationId.ToString(),
-                body.RealmId.ToString(),
-                body.EventId.ToString(),
-                cancellationToken);
-
-            if (!addResult.LockAcquired)
-            {
-                _logger.LogWarning("Failed to acquire lock for realm {RealmId} participation recording", body.RealmId);
-                return (StatusCodes.Conflict, null);
-            }
-
-            // Publish typed event per FOUNDATION TENETS
-            await _messageBus.TryPublishAsync(PARTICIPATION_RECORDED_TOPIC, new RealmParticipationRecordedEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = now,
-                RealmId = body.RealmId,
-                HistoricalEventId = body.EventId,
-                ParticipationId = participationId,
-                Role = body.Role
-            }, cancellationToken: cancellationToken);
-
-            // Register realm reference with lib-resource for cleanup coordination
-            await RegisterRealmReferenceAsync(participationId.ToString(), body.RealmId, cancellationToken);
-
-            _logger.LogDebug("Recorded participation {ParticipationId} for realm {RealmId}",
-                participationId, body.RealmId);
-
-            return (StatusCodes.OK, MapToRealmHistoricalParticipation(participationData));
-        }
-        catch (Exception ex)
+        if (!addResult.LockAcquired)
         {
-            _logger.LogError(ex, "Error recording participation for realm {RealmId}", body.RealmId);
-            await _messageBus.TryPublishErrorAsync(
-                "realm-history",
-                "RecordRealmParticipation",
-                "unexpected_exception",
-                ex.Message,
-                dependency: "state",
-                endpoint: "post:/realm-history/record-participation",
-                details: new { body.RealmId, body.EventId },
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, null);
+            _logger.LogWarning("Failed to acquire lock for realm {RealmId} participation recording", body.RealmId);
+            return (StatusCodes.Conflict, null);
         }
+
+        // Publish typed event per FOUNDATION TENETS
+        await _messageBus.TryPublishAsync(PARTICIPATION_RECORDED_TOPIC, new RealmParticipationRecordedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = now,
+            RealmId = body.RealmId,
+            HistoricalEventId = body.EventId,
+            ParticipationId = participationId,
+            Role = body.Role
+        }, cancellationToken: cancellationToken);
+
+        // Register realm reference with lib-resource for cleanup coordination
+        await RegisterRealmReferenceAsync(participationId.ToString(), body.RealmId, cancellationToken);
+
+        _logger.LogDebug("Recorded participation {ParticipationId} for realm {RealmId}",
+            participationId, body.RealmId);
+
+        return (StatusCodes.OK, MapToRealmHistoricalParticipation(participationData));
     }
 
     /// <summary>
