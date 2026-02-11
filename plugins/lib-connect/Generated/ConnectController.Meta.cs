@@ -588,6 +588,140 @@ public partial class ConnectController
 
     #endregion
 
+    #region Meta Endpoints for GetEndpointMeta
+
+    private static readonly string _GetEndpointMeta_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetEndpointMetaRequest",
+    "$defs": {
+        "GetEndpointMetaRequest": {
+            "type": "object",
+            "description": "Request to proxy a meta endpoint call with permission validation",
+            "additionalProperties": false,
+            "required": [
+                "path"
+            ],
+            "properties": {
+                "path": {
+                    "type": "string",
+                    "description": "Full meta endpoint path including meta type suffix (e.g., \"/account/get/meta/info\" or \"/character/create/meta/request-schema\"). Connect parses the service name, base endpoint, and meta type from this path."
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetEndpointMeta_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/GetEndpointMetaResponse",
+    "$defs": {
+        "GetEndpointMetaResponse": {
+            "type": "object",
+            "description": "Meta endpoint response mirroring the internal MetaResponse structure",
+            "additionalProperties": false,
+            "required": [
+                "metaType",
+                "serviceName",
+                "method",
+                "path",
+                "data",
+                "generatedAt",
+                "schemaVersion"
+            ],
+            "properties": {
+                "metaType": {
+                    "type": "string",
+                    "description": "Type of metadata returned (endpoint-info, request-schema, response-schema, full-schema)"
+                },
+                "serviceName": {
+                    "type": "string",
+                    "description": "Service name that owns this endpoint (e.g., \"Account\")"
+                },
+                "method": {
+                    "type": "string",
+                    "description": "HTTP method for the endpoint (e.g., \"POST\")"
+                },
+                "path": {
+                    "type": "string",
+                    "description": "Endpoint path (e.g., \"/account/get\")"
+                },
+                "data": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "Metadata payload whose structure varies by metaType (endpoint-info returns summary/tags/operationId, request-schema and response-schema return JSON Schema objects, full-schema returns all three combined)"
+                },
+                "generatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When this response was generated (UTC)"
+                },
+                "schemaVersion": {
+                    "type": "string",
+                    "description": "Schema version (assembly version) for cache invalidation"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _GetEndpointMeta_Info = """
+{
+    "summary": "Permission-gated proxy for endpoint metadata",
+    "description": "Accepts a full meta endpoint path (e.g., \"/account/get/meta/info\"),\nvalidates the caller's JWT, looks up their active WebSocket session\nvia the JWT's sessionKey, checks the session's capability mappings\nfor the underlying endpoint, and proxies the internal meta GET\nrequest if authorized. Returns the meta endpoint response directly.\ n\nRequires an active WebSocket connection -- the session's compiled\ncapability mappings in Connect's in-memory connection state are the\npermission source, exactly as for WebSocket meta requests.\n",
+    "tags": [
+        "Meta Proxy"
+    ],
+    "deprecated": false,
+    "operationId": "GetEndpointMeta"
+}
+""";
+
+    /// <summary>Returns endpoint information for GetEndpointMeta</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/connect/get-endpoint-meta/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetEndpointMeta_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Connect",
+            "POST",
+            "/connect/get-endpoint-meta",
+            _GetEndpointMeta_Info));
+
+    /// <summary>Returns request schema for GetEndpointMeta</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/connect/get-endpoint-meta/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetEndpointMeta_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Connect",
+            "POST",
+            "/connect/get-endpoint-meta",
+            "request-schema",
+            _GetEndpointMeta_RequestSchema));
+
+    /// <summary>Returns response schema for GetEndpointMeta</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/connect/get-endpoint-meta/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetEndpointMeta_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Connect",
+            "POST",
+            "/connect/get-endpoint-meta",
+            "response-schema",
+            _GetEndpointMeta_ResponseSchema));
+
+    /// <summary>Returns full schema for GetEndpointMeta</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/connect/get-endpoint-meta/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetEndpointMeta_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Connect",
+            "POST",
+            "/connect/get-endpoint-meta",
+            _GetEndpointMeta_Info,
+            _GetEndpointMeta_RequestSchema,
+            _GetEndpointMeta_ResponseSchema));
+
+    #endregion
+
     #region Meta Endpoints for GetAccountSessions
 
     private static readonly string _GetAccountSessions_RequestSchema = """

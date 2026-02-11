@@ -23,7 +23,7 @@ This document provides a compact reference of all Bannou services.
 | [Chat](#chat) | 1.0.0 | 28 | Typed message channel service (L1 AppFoundation) providing u... |
 | [Collection](#collection) | 1.0.0 | 20 | Universal content unlock and archive system for collectible ... |
 | [Common](#common) | 1.0.0 | 0 | Shared type definitions used across multiple Bannou services... |
-| [Connect](#connect) | 2.0.0 | 5 | Real-time communication and WebSocket connection management ... |
+| [Connect](#connect) | 2.0.0 | 6 | Real-time communication and WebSocket connection management ... |
 | [Contract](#contract) | 1.0.0 | 30 | Binding agreements between entities with milestone-based pro... |
 | [Currency](#currency) | 1.0.0 | 32 | Multi-currency management service for game economies. |
 | [Documentation](#documentation) | 1.0.0 | 27 | Knowledge base API for AI agents to query documentation.
@@ -461,7 +461,7 @@ Public-facing website service (L3 AppFeatures) for browser-based access to news,
 ## Summary
 
 - **Total services**: 49
-- **Total endpoints**: 723
+- **Total endpoints**: 724
 
 ---
 

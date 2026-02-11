@@ -22,7 +22,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Character Personality Service API](#character-personality) | `client.CharacterPersonality` | 12 | Machine-readable personality traits for NPC behavior decisio... |
 | [Chat Service API](#chat) | `client.Chat` | 28 | Typed message channel service (L1 AppFoundation) providing u... |
 | [Collection Service API](#collection) | `client.Collection` | 20 | Universal content unlock and archive system for collectible ... |
-| [Bannou Connect API](#connect) | `client.Connect` | 4 | Real-time communication and WebSocket connection management ... |
+| [Bannou Connect API](#connect) | `client.Connect` | 5 | Real-time communication and WebSocket connection management ... |
 | [Contract Service API](#contract) | `client.Contract` | 30 | Binding agreements between entities with milestone-based pro... |
 | [Currency Service API](#currency) | `client.Currency` | 32 | Multi-currency management service for game economies. |
 | [Bannou Documentation API](#documentation) | `client.Documentation` | 25 | Knowledge base API for AI agents to query documentation. Des... |
@@ -657,6 +657,12 @@ Real-time communication and WebSocket connection management for Bannou services.
 | Method | Request | Response | Summary |
 |--------|---------|----------|---------|
 | `ProxyinternalrequestAsync` | `InternalProxyRequest` | `InternalProxyResponse` | Internal API proxy for stateless requests |
+
+### Meta Proxy
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetEndpointmetaAsync` | `GetEndpointMetaRequest` | `GetEndpointMetaResponse` | Permission-gated proxy for endpoint metadata |
 
 ### Session Management
 
@@ -2112,7 +2118,7 @@ Public-facing website service for registration, information, and account managem
 ## Summary
 
 - **Total services**: 48
-- **Total methods**: 717
+- **Total methods**: 718
 
 ---
 

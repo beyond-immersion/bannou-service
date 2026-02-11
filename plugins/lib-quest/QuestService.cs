@@ -180,84 +180,84 @@ public partial class QuestService : IQuestService
         {
             _logger.LogDebug("Creating quest definition with code {Code}", body.Code);
 
-        // Validate code format (uppercase, underscores)
-        var normalizedCode = body.Code.ToUpperInvariant();
-        if (string.IsNullOrWhiteSpace(normalizedCode))
-        {
-            _logger.LogWarning("Quest code cannot be empty");
-            return (StatusCodes.BadRequest, null);
-        }
+            // Validate code format (uppercase, underscores)
+            var normalizedCode = body.Code.ToUpperInvariant();
+            if (string.IsNullOrWhiteSpace(normalizedCode))
+            {
+                _logger.LogWarning("Quest code cannot be empty");
+                return (StatusCodes.BadRequest, null);
+            }
 
-        // Check for duplicate code
-        var existingByCode = await DefinitionStore.QueryAsync(
-            d => d.Code == normalizedCode,
-            cancellationToken: cancellationToken);
-        if (existingByCode.Count > 0)
-        {
-            _logger.LogWarning("Quest definition with code {Code} already exists", normalizedCode);
-            return (StatusCodes.Conflict, null);
-        }
+            // Check for duplicate code
+            var existingByCode = await DefinitionStore.QueryAsync(
+                d => d.Code == normalizedCode,
+                cancellationToken: cancellationToken);
+            if (existingByCode.Count > 0)
+            {
+                _logger.LogWarning("Quest definition with code {Code} already exists", normalizedCode);
+                return (StatusCodes.Conflict, null);
+            }
 
-        var definitionId = Guid.NewGuid();
-        var now = DateTimeOffset.UtcNow;
+            var definitionId = Guid.NewGuid();
+            var now = DateTimeOffset.UtcNow;
 
-        // Build contract template via IContractClient
-        var templateRequest = BuildContractTemplateRequest(body, definitionId, normalizedCode);
-        ContractTemplateResponse templateResponse;
-        try
-        {
-            templateResponse = await _contractClient.CreateContractTemplateAsync(
-                templateRequest,
-                cancellationToken);
-        }
-        catch (ApiException ex) when (ex.StatusCode == 409)
-        {
-            // Template with same code already exists - this is expected for repeated quest creation
-            _logger.LogWarning("Contract template with code quest_{Code} already exists", normalizedCode.ToLowerInvariant());
-            return (StatusCodes.Conflict, null);
-        }
+            // Build contract template via IContractClient
+            var templateRequest = BuildContractTemplateRequest(body, definitionId, normalizedCode);
+            ContractTemplateResponse templateResponse;
+            try
+            {
+                templateResponse = await _contractClient.CreateContractTemplateAsync(
+                    templateRequest,
+                    cancellationToken);
+            }
+            catch (ApiException ex) when (ex.StatusCode == 409)
+            {
+                // Template with same code already exists - this is expected for repeated quest creation
+                _logger.LogWarning("Contract template with code quest_{Code} already exists", normalizedCode.ToLowerInvariant());
+                return (StatusCodes.Conflict, null);
+            }
 
-        if (templateResponse == null)
-        {
-            _logger.LogWarning("Failed to create contract template for quest {Code}: null response",
-                normalizedCode);
-            return (StatusCodes.ServiceUnavailable, null);
-        }
+            if (templateResponse == null)
+            {
+                _logger.LogWarning("Failed to create contract template for quest {Code}: null response",
+                    normalizedCode);
+                return (StatusCodes.ServiceUnavailable, null);
+            }
 
-        // Build quest definition model
-        var definition = new QuestDefinitionModel
-        {
-            DefinitionId = definitionId,
-            ContractTemplateId = templateResponse.TemplateId,
-            Code = normalizedCode,
-            Name = body.Name,
-            Description = body.Description,
-            Category = body.Category,
-            Difficulty = body.Difficulty,
-            LevelRequirement = body.LevelRequirement,
-            Repeatable = body.Repeatable,
-            CooldownSeconds = body.CooldownSeconds,
-            DeadlineSeconds = body.DeadlineSeconds,
-            MaxQuestors = body.MaxQuestors,
-            Objectives = MapObjectiveDefinitions(body.Objectives),
-            Prerequisites = MapPrerequisiteDefinitions(body.Prerequisites),
-            Rewards = MapRewardDefinitions(body.Rewards),
-            Tags = body.Tags,
-            QuestGiverCharacterId = body.QuestGiverCharacterId,
-            GameServiceId = body.GameServiceId,
-            Deprecated = false,
-            CreatedAt = now
-        };
+            // Build quest definition model
+            var definition = new QuestDefinitionModel
+            {
+                DefinitionId = definitionId,
+                ContractTemplateId = templateResponse.TemplateId,
+                Code = normalizedCode,
+                Name = body.Name,
+                Description = body.Description,
+                Category = body.Category,
+                Difficulty = body.Difficulty,
+                LevelRequirement = body.LevelRequirement,
+                Repeatable = body.Repeatable,
+                CooldownSeconds = body.CooldownSeconds,
+                DeadlineSeconds = body.DeadlineSeconds,
+                MaxQuestors = body.MaxQuestors,
+                Objectives = MapObjectiveDefinitions(body.Objectives),
+                Prerequisites = MapPrerequisiteDefinitions(body.Prerequisites),
+                Rewards = MapRewardDefinitions(body.Rewards),
+                Tags = body.Tags,
+                QuestGiverCharacterId = body.QuestGiverCharacterId,
+                GameServiceId = body.GameServiceId,
+                Deprecated = false,
+                CreatedAt = now
+            };
 
-        // Save to state store
-        var definitionKey = BuildDefinitionKey(definitionId);
-        await DefinitionStore.SaveAsync(definitionKey, definition, cancellationToken: cancellationToken);
+            // Save to state store
+            var definitionKey = BuildDefinitionKey(definitionId);
+            await DefinitionStore.SaveAsync(definitionKey, definition, cancellationToken: cancellationToken);
 
-        _logger.LogInformation("Quest definition created: {DefinitionId} with code {Code}",
-            definitionId, normalizedCode);
+            _logger.LogInformation("Quest definition created: {DefinitionId} with code {Code}",
+                definitionId, normalizedCode);
 
-        var response = MapToDefinitionResponse(definition);
-        return (StatusCodes.OK, response);
+            var response = MapToDefinitionResponse(definition);
+            return (StatusCodes.OK, response);
         }
     }
 
