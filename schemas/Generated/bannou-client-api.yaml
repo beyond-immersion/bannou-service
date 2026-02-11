@@ -3407,16 +3407,16 @@ paths:
                 $ref: '#/components/schemas/CompletionStatsResponse'
         '404':
           description: Collection not found
-  /collection/music/select-for-area:
+  /collection/content/select-for-area:
     post:
-      operationId: selectTrackForArea
+      operationId: selectContentForArea
       tags:
-      - Music
-      summary: Select a track for an area based on unlocked library
+      - Content
+      summary: Select content for an area based on unlocked library
       description: |
-        Select a music track for an area based on the owner's unlocked music library
+        Select a content entry for an area based on the owner's unlocked collection
         and area theme configuration. Uses weighted random selection based on theme overlap.
-        Falls back to the area's default track if no matches are found.
+        Falls back to the area's default entry if no matches are found.
       x-permissions:
       - role: user
         states: {}
@@ -3425,25 +3425,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SelectTrackForAreaRequest'
+              $ref: '#/components/schemas/SelectContentForAreaRequest'
       responses:
         '200':
-          description: Track selected successfully
+          description: Content selected successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MusicTrackSelectionResponse'
+                $ref: '#/components/schemas/ContentSelectionResponse'
         '404':
-          description: Area config not found or no music library collection 
-            exists
-  /collection/music/area-config/set:
+          description: Area config not found or no matching collection exists
+  /collection/content/area-config/set:
     post:
-      operationId: setAreaMusicConfig
+      operationId: setAreaContentConfig
       tags:
-      - Music
+      - Content
       summary: Set area-to-theme mapping
-      description: Create or update an area music configuration that maps an 
-        area code to themes and a default track.
+      description: Create or update an area content configuration that maps an 
+        area code to themes and a default entry.
       x-permissions:
       - role: developer
         states: {}
@@ -3452,23 +3451,23 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SetAreaMusicConfigRequest'
+              $ref: '#/components/schemas/SetAreaContentConfigRequest'
       responses:
         '200':
-          description: Area music config saved successfully
+          description: Area content config saved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AreaMusicConfigResponse'
+                $ref: '#/components/schemas/AreaContentConfigResponse'
         '404':
-          description: Game service or default track template not found
-  /collection/music/area-config/get:
+          description: Game service or default entry template not found
+  /collection/content/area-config/get:
     post:
-      operationId: getAreaMusicConfig
+      operationId: getAreaContentConfig
       tags:
-      - Music
-      summary: Get area music config
-      description: Get the music configuration for a specific area and game 
+      - Content
+      summary: Get area content config
+      description: Get the content configuration for a specific area and game 
         service.
       x-permissions:
       - role: user
@@ -3478,23 +3477,23 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/GetAreaMusicConfigRequest'
+              $ref: '#/components/schemas/GetAreaContentConfigRequest'
       responses:
         '200':
-          description: Area music config retrieved successfully
+          description: Area content config retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AreaMusicConfigResponse'
+                $ref: '#/components/schemas/AreaContentConfigResponse'
         '404':
-          description: Area music config not found
-  /collection/music/area-config/list:
+          description: Area content config not found
+  /collection/content/area-config/list:
     post:
-      operationId: listAreaMusicConfigs
+      operationId: listAreaContentConfigs
       tags:
-      - Music
+      - Content
       summary: List area configs for a game service
-      description: List all area music configurations for a game service.
+      description: List all area content configurations for a game service.
       x-permissions:
       - role: developer
         states: {}
@@ -3503,14 +3502,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ListAreaMusicConfigsRequest'
+              $ref: '#/components/schemas/ListAreaContentConfigsRequest'
       responses:
         '200':
-          description: Area music configs retrieved successfully
+          description: Area content configs retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ListAreaMusicConfigsResponse'
+                $ref: '#/components/schemas/ListAreaContentConfigsResponse'
   /collection/discovery/advance:
     post:
       operationId: advanceDiscovery
@@ -13331,16 +13330,17 @@ components:
           type: string
           format: uuid
           description: The seed to archive.
-    AreaMusicConfigResponse:
+    AreaContentConfigResponse:
       type: object
-      description: Area music configuration
+      description: Area content configuration
       additionalProperties: false
       required:
       - areaConfigId
       - areaCode
       - gameServiceId
+      - collectionType
       - themes
-      - defaultTrackCode
+      - defaultEntryCode
       - createdAt
       properties:
         areaConfigId:
@@ -13354,14 +13354,17 @@ components:
           type: string
           format: uuid
           description: Game service this area config belongs to
+        collectionType:
+          $ref: '#/components/schemas/CollectionType'
+          description: Type of collection this config applies to
         themes:
           type: array
           items:
             type: string
           description: Theme tags for this area
-        defaultTrackCode:
+        defaultEntryCode:
           type: string
-          description: Default track code
+          description: Default entry code
         createdAt:
           type: string
           format: date-time
@@ -17015,6 +17018,56 @@ components:
           type: boolean
           default: true
           description: Delete intermediate delta versions after collapse
+    CollectionDomainMapping:
+      type: object
+      description: >
+        Maps a tag prefix on a collection entry to a growth domain and amount.
+        When an entry is unlocked, its tags are matched against tagPrefix. Matching
+        tags determine the growth domain (tagPrefix becomes the domain path) and
+        the growth amount to record.
+      required:
+      - tagPrefix
+      - baseAmount
+      properties:
+        tagPrefix:
+          type: string
+          description: >
+            Tag prefix to match against entry tags. An entry tag "combat.melee.sword"
+            matches prefix "combat" and "combat.melee". The full matching tag becomes
+            the growth domain path.
+        baseAmount:
+          type: number
+          format: float
+          description: Base growth amount to record when a tag matches this 
+            prefix.
+        discoveryBonusPerLevel:
+          type: number
+          format: float
+          nullable: true
+          description: >
+            Additional growth amount per discovery level of the entry.
+            Total growth = baseAmount + (discoveryLevel * discoveryBonusPerLevel).
+            Null or 0 means no discovery bonus.
+    CollectionGrowthMapping:
+      type: object
+      description: >
+        Maps a collection type to growth domain mappings. When a collection entry
+        is unlocked, Seed uses these mappings to determine which growth domains
+        receive growth and how much. Matched by collection type code.
+      required:
+      - collectionType
+      - domainMappings
+      properties:
+        collectionType:
+          type: string
+          description: Collection type code to match against (e.g., "bestiary", 
+            "music_library").
+        domainMappings:
+          type: array
+          items:
+            $ref: '#/components/schemas/CollectionDomainMapping'
+          minItems: 1
+          description: Mappings from entry tag prefixes to growth domains.
     CollectionResponse:
       type: object
       description: Collection instance with summary
@@ -17061,22 +17114,11 @@ components:
     CollectionType:
       type: string
       description: |
-        Type of collection content.
-        - voice_gallery: Voice recordings and dialogue clips
-        - scene_archive: Cutscenes and cinematics
-        - ending_gallery: Game endings and conclusions
-        - music_library: Music tracks for dynamic playback
-        - bestiary: Monster and creature encyclopedia
-        - recipe_book: Crafting recipes and formulas
-        - custom: User-defined collection type
-      enum:
-      - voice_gallery
-      - scene_archive
-      - ending_gallery
-      - music_library
-      - bestiary
-      - recipe_book
-      - custom
+        Opaque string code identifying the type of collection content.
+        Collection types are game-defined and extensible — new types can be
+        registered without schema changes. Common conventions include
+        voice_gallery, scene_archive, music_library, bestiary, recipe_book,
+        but any string code is valid.
     CombatPreferences:
       type: object
       description: |
@@ -18292,6 +18334,44 @@ components:
           items:
             $ref: '#/components/schemas/ContainerItem'
           description: Items in container
+    ContentSelectionResponse:
+      type: object
+      description: Selected content entry for an area
+      additionalProperties: false
+      required:
+      - entryCode
+      - displayName
+      - matchedThemes
+      properties:
+        entryCode:
+          type: string
+          description: Code of the selected entry
+        displayName:
+          type: string
+          description: Display name of the selected entry
+        category:
+          type: string
+          nullable: true
+          description: Category of the selected entry
+        assetId:
+          type: string
+          nullable: true
+          description: Primary asset identifier for the entry
+        thumbnailAssetId:
+          type: string
+          nullable: true
+          description: Thumbnail asset identifier for the entry
+        themes:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Theme tags of the selected entry
+        matchedThemes:
+          type: array
+          items:
+            type: string
+          description: Themes that matched the area configuration
     ContextSchemaData:
       type: object
       description: Schema defining required context variables for behavior 
@@ -19456,8 +19536,8 @@ components:
           nullable: true
           items:
             type: string
-          description: Theme tags for music entries (e.g., battle, peaceful, 
-            forest)
+          description: Theme tags for content selection matching (e.g., battle, 
+            peaceful, forest)
         duration:
           type: string
           nullable: true
@@ -19466,12 +19546,12 @@ components:
         loopPoint:
           type: string
           nullable: true
-          description: Loop point for music entries (ISO 8601 duration or 
+          description: Loop point for seamless playback (ISO 8601 duration or 
             timestamp)
         composer:
           type: string
           nullable: true
-          description: Composer or creator name for music entries
+          description: Composer or creator name
     CreateEscrowPartyInput:
       type: object
       description: Input for defining a party in escrow creation
@@ -24450,13 +24530,14 @@ components:
           $ref: '#/components/schemas/ResourceArchive'
           nullable: true
           description: The archive data (null if not found)
-    GetAreaMusicConfigRequest:
+    GetAreaContentConfigRequest:
       type: object
-      description: Request to get an area music config
+      description: Request to get an area content config
       additionalProperties: false
       required:
       - areaCode
       - gameServiceId
+      - collectionType
       properties:
         areaCode:
           type: string
@@ -24465,6 +24546,9 @@ components:
           type: string
           format: uuid
           description: Game service scope
+        collectionType:
+          $ref: '#/components/schemas/CollectionType'
+          description: Type of collection
     GetAssetRequest:
       description: Request to retrieve asset metadata and download URL
       type: object
@@ -28326,20 +28410,24 @@ components:
         total:
           type: integer
           description: Total number of archives
-    ListAreaMusicConfigsRequest:
+    ListAreaContentConfigsRequest:
       type: object
-      description: Request to list area music configs for a game service
+      description: Request to list area content configs for a game service
       additionalProperties: false
       required:
       - gameServiceId
+      - collectionType
       properties:
         gameServiceId:
           type: string
           format: uuid
           description: Game service to list area configs for
-    ListAreaMusicConfigsResponse:
+        collectionType:
+          $ref: '#/components/schemas/CollectionType'
+          description: Type of collection to list configs for
+    ListAreaContentConfigsResponse:
       type: object
-      description: List of area music configurations
+      description: List of area content configurations
       additionalProperties: false
       required:
       - configs
@@ -28347,8 +28435,8 @@ components:
         configs:
           type: array
           items:
-            $ref: '#/components/schemas/AreaMusicConfigResponse'
-          description: Area music configurations for this game service
+            $ref: '#/components/schemas/AreaContentConfigResponse'
+          description: Area content configurations for this game service
     ListAvailableQuestsRequest:
       type: object
       description: Request to list quests available for a character to accept
@@ -31649,48 +31737,6 @@ components:
           description: Pre-signed URLs for each part of the multipart upload
           items:
             $ref: '#/components/schemas/PartUploadInfo'
-    MusicTrackSelectionResponse:
-      type: object
-      description: Selected music track for an area
-      additionalProperties: false
-      required:
-      - trackCode
-      - displayName
-      - matchedThemes
-      properties:
-        trackCode:
-          type: string
-          description: Code of the selected track
-        displayName:
-          type: string
-          description: Display name of the selected track
-        composer:
-          type: string
-          nullable: true
-          description: Composer of the selected track
-        assetId:
-          type: string
-          nullable: true
-          description: Asset identifier for the track audio
-        duration:
-          type: string
-          nullable: true
-          description: Duration of the track
-        loopPoint:
-          type: string
-          nullable: true
-          description: Loop point for seamless playback
-        themes:
-          type: array
-          nullable: true
-          items:
-            type: string
-          description: Theme tags of the selected track
-        matchedThemes:
-          type: array
-          items:
-            type: string
-          description: Themes that matched the area configuration
     MutationType:
       type: string
       enum:
@@ -35355,6 +35401,16 @@ components:
           description: Fraction of growth applied to other seeds of the same 
             type owned by the same entity. 0.0 = no sharing (default), 1.0 = 
             full mirror.
+        collectionGrowthMappings:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/CollectionGrowthMapping'
+          description: >
+            Mappings from collection types to growth domains. When a collection entry
+            is unlocked for an entity that owns seeds of this type, the entry's tags
+            are matched against these mappings to determine growth contributions.
+            Null means this seed type does not respond to collection unlocks.
     RelatedDepth:
       type: string
       enum:
@@ -37863,6 +37919,13 @@ components:
           format: float
           description: Fraction of growth applied to other seeds of the same 
             type owned by the same entity.
+        collectionGrowthMappings:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/CollectionGrowthMapping'
+          description: Collection-to-growth-domain mappings for this seed type. 
+            Null if this type does not respond to collection unlocks.
         isDeprecated:
           type: boolean
           description: Whether this seed type is deprecated and cannot be used 
@@ -37876,20 +37939,22 @@ components:
           type: string
           nullable: true
           description: Optional reason for deprecation.
-    SelectTrackForAreaRequest:
+    SelectContentForAreaRequest:
       type: object
-      description: Request to select a music track for an area
+      description: Request to select content for an area based on unlocked 
+        collection
       additionalProperties: false
       required:
       - ownerId
       - ownerType
       - gameServiceId
+      - collectionType
       - areaCode
       properties:
         ownerId:
           type: string
           format: uuid
-          description: Entity whose music library to search
+          description: Entity whose collection to search
         ownerType:
           type: string
           description: Entity type discriminator
@@ -37897,9 +37962,12 @@ components:
           type: string
           format: uuid
           description: Game service scope
+        collectionType:
+          $ref: '#/components/schemas/CollectionType'
+          description: Type of collection to select content from
         areaCode:
           type: string
-          description: Area code to select music for
+          description: Area code to select content for
     SendMessageBatchRequest:
       type: object
       additionalProperties: false
@@ -38143,33 +38211,38 @@ components:
           items:
             $ref: '#/components/schemas/SessionInfo'
           description: List of active sessions for the account
-    SetAreaMusicConfigRequest:
+    SetAreaContentConfigRequest:
       type: object
-      description: Request to create or update an area music configuration
+      description: Request to create or update an area content configuration
       additionalProperties: false
       required:
       - areaCode
       - gameServiceId
+      - collectionType
       - themes
-      - defaultTrackCode
+      - defaultEntryCode
       properties:
         areaCode:
           type: string
-          description: Area code to configure (unique per game service)
+          description: Area code to configure (unique per game service and 
+            collection type)
         gameServiceId:
           type: string
           format: uuid
           description: Game service this area config belongs to
+        collectionType:
+          $ref: '#/components/schemas/CollectionType'
+          description: Type of collection this area config applies to
         themes:
           type: array
           items:
             type: string
           minItems: 1
-          description: Theme tags for this area (matched against music entry 
-            themes)
-        defaultTrackCode:
+          description: Theme tags for this area (matched against collection 
+            entry themes)
+        defaultEntryCode:
           type: string
-          description: Default track code to use when no matches are found
+          description: Default entry code to use when no matches are found
     SetTemplateValuesRequest:
       type: object
       description: Request to set template values on a contract
@@ -41483,6 +41556,14 @@ components:
           maximum: 1.0
           description: Updated fraction of growth applied to other seeds of the 
             same type owned by the same entity.
+        collectionGrowthMappings:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/CollectionGrowthMapping'
+          description: >
+            Updated collection growth mappings. Null means no change,
+            empty array removes all mappings.
     UpdateVerificationRequest:
       type: object
       description: Request to update email verification status

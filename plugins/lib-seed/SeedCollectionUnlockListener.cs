@@ -60,9 +60,9 @@ public class SeedCollectionUnlockListener : ICollectionUnlockListener
         var seedStore = _stateStoreFactory.GetQueryableStore<SeedModel>(StateStoreDefinitions.Seed);
         var ownerSeeds = await seedStore.QueryAsync(
             s => s.OwnerId == notification.OwnerId
-                 && s.OwnerType == notification.OwnerType
-                 && s.GameServiceId == notification.GameServiceId
-                 && s.Status == SeedStatus.Active,
+                && s.OwnerType == notification.OwnerType
+                && s.GameServiceId == notification.GameServiceId
+                && s.Status == SeedStatus.Active,
             ct);
 
         if (ownerSeeds.Count == 0)

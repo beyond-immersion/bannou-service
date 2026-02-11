@@ -937,7 +937,7 @@ Every system—from tutorials teaching a new player to factions waging economic 
 - [GOAP Guide](../guides/GOAP.md) - GOAP planning details
 - [Actor System](../guides/ACTOR_SYSTEM.md) - Actor execution model
 - [Music System](../guides/MUSIC_SYSTEM.md) - Music GOAP patterns
-- [Regional Watchers](./REGIONAL_WATCHERS_BEHAVIOR.md) - God/watcher pattern
+- [#383](https://github.com/beyond-immersion/bannou-service/issues/383) - Watcher-Actor integration (regional watcher pattern)
 - [THE_DREAM Vision](~/repos/arcadia-kb/THE_DREAM.md) - Core vision document
 
 ---

@@ -2,7 +2,7 @@
 
 > **Status**: Planning
 > **Priority**: High
-> **Related**: `docs/planning/COMPRESSION-GAMEPLAY-PATTERNS.md`, `docs/planning/COMPRESSION-CHARTS.md`, `docs/planning/REGIONAL_WATCHERS_BEHAVIOR.md`, `docs/planning/COMPOSER-LAYER.md`, `docs/plugins/RESOURCE.md`
+> **Related**: `docs/planning/COMPRESSION-GAMEPLAY-PATTERNS.md`, `docs/planning/COMPRESSION-CHARTS.md`, `docs/planning/COMPOSER-LAYER.md`, `docs/plugins/RESOURCE.md`, [#383](https://github.com/beyond-immersion/bannou-service/issues/383), [#385](https://github.com/beyond-immersion/bannou-service/issues/385)
 > **SDK Precedent**: `sdks/music-storyteller/`, `sdks/music-theory/`, `docs/plugins/MUSIC.md`
 > **Services**: Proposed `lib-storyline` (or `lib-seed`), depends on `lib-resource`, `lib-character`, `lib-realm`, `lib-scene`, `lib-quest`, `lib-actor` clients as needed
 >
@@ -985,7 +985,7 @@ public sealed class Storyteller
 
 ## Regional Watcher Integration Pattern
 
-Based on `REGIONAL_WATCHERS_BEHAVIOR.md`, here's how gods use the composer:
+Here's how regional watcher gods use the composer (see [#383](https://github.com/beyond-immersion/bannou-service/issues/383) for watcher-actor integration, [#385](https://github.com/beyond-immersion/bannou-service/issues/385) for full pipeline):
 
 ```yaml
 # Regional Watcher behavior for God of Vengeance
@@ -1399,7 +1399,8 @@ The storyline composer doesn't invent stories. It discovers the stories that alr
 - `docs/plugins/ACTOR.md` - Actor deep dive (data access pattern selection)
 - `docs/reference/SERVICE-HIERARCHY.md` - Variable Provider Factory pattern
 - `docs/planning/COMPRESSION-GAMEPLAY-PATTERNS.md` - Archive structure as narrative seeds
-- `docs/planning/REGIONAL_WATCHERS_BEHAVIOR.md` - God actor patterns
+- [#383](https://github.com/beyond-immersion/bannou-service/issues/383) - Watcher-Actor integration
+- [#385](https://github.com/beyond-immersion/bannou-service/issues/385) - Archive-to-Storyline feedback pipeline
 - `docs/plugins/RESOURCE.md` - Compression infrastructure
 - `docs/plugins/MUSIC.md` - SDK layering precedent
 - `sdks/music-storyteller/` - Reference implementation for GOAP

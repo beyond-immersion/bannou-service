@@ -297,21 +297,21 @@ public sealed class CollectionProxy
     }
 
     /// <summary>
-    /// Select a track for an area based on unlocked library
+    /// Select content for an area based on unlocked library
     /// </summary>
     /// <param name="request">The request payload.</param>
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>ApiResponse containing MusicTrackSelectionResponse on success.</returns>
-    public Task<ApiResponse<MusicTrackSelectionResponse>> SelectTrackForAreaAsync(
-        SelectTrackForAreaRequest request,
+    /// <returns>ApiResponse containing ContentSelectionResponse on success.</returns>
+    public Task<ApiResponse<ContentSelectionResponse>> SelectContentForAreaAsync(
+        SelectContentForAreaRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
         CancellationToken cancellationToken = default)
     {
-        return _client.InvokeAsync<SelectTrackForAreaRequest, MusicTrackSelectionResponse>(
-            "/collection/music/select-for-area", request, channel, timeout, cancellationToken);
+        return _client.InvokeAsync<SelectContentForAreaRequest, ContentSelectionResponse>(
+            "/collection/content/select-for-area", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -321,33 +321,33 @@ public sealed class CollectionProxy
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>ApiResponse containing AreaMusicConfigResponse on success.</returns>
-    public Task<ApiResponse<AreaMusicConfigResponse>> SetAreaMusicConfigAsync(
-        SetAreaMusicConfigRequest request,
+    /// <returns>ApiResponse containing AreaContentConfigResponse on success.</returns>
+    public Task<ApiResponse<AreaContentConfigResponse>> SetAreaContentConfigAsync(
+        SetAreaContentConfigRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
         CancellationToken cancellationToken = default)
     {
-        return _client.InvokeAsync<SetAreaMusicConfigRequest, AreaMusicConfigResponse>(
-            "/collection/music/area-config/set", request, channel, timeout, cancellationToken);
+        return _client.InvokeAsync<SetAreaContentConfigRequest, AreaContentConfigResponse>(
+            "/collection/content/area-config/set", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
-    /// Get area music config
+    /// Get area content config
     /// </summary>
     /// <param name="request">The request payload.</param>
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>ApiResponse containing AreaMusicConfigResponse on success.</returns>
-    public Task<ApiResponse<AreaMusicConfigResponse>> GetAreaMusicConfigAsync(
-        GetAreaMusicConfigRequest request,
+    /// <returns>ApiResponse containing AreaContentConfigResponse on success.</returns>
+    public Task<ApiResponse<AreaContentConfigResponse>> GetAreaContentConfigAsync(
+        GetAreaContentConfigRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
         CancellationToken cancellationToken = default)
     {
-        return _client.InvokeAsync<GetAreaMusicConfigRequest, AreaMusicConfigResponse>(
-            "/collection/music/area-config/get", request, channel, timeout, cancellationToken);
+        return _client.InvokeAsync<GetAreaContentConfigRequest, AreaContentConfigResponse>(
+            "/collection/content/area-config/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -357,15 +357,15 @@ public sealed class CollectionProxy
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>ApiResponse containing ListAreaMusicConfigsResponse on success.</returns>
-    public Task<ApiResponse<ListAreaMusicConfigsResponse>> ListAreaMusicConfigsAsync(
-        ListAreaMusicConfigsRequest request,
+    /// <returns>ApiResponse containing ListAreaContentConfigsResponse on success.</returns>
+    public Task<ApiResponse<ListAreaContentConfigsResponse>> ListAreaContentConfigsAsync(
+        ListAreaContentConfigsRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
         CancellationToken cancellationToken = default)
     {
-        return _client.InvokeAsync<ListAreaMusicConfigsRequest, ListAreaMusicConfigsResponse>(
-            "/collection/music/area-config/list", request, channel, timeout, cancellationToken);
+        return _client.InvokeAsync<ListAreaContentConfigsRequest, ListAreaContentConfigsResponse>(
+            "/collection/content/area-config/list", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>

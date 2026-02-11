@@ -5,9 +5,11 @@ info:
   description: |
     Universal content unlock and archive system for collectible content.
 
-    lib-collection manages "experience, unlock, access" patterns for voice galleries,
-    scene archives, music libraries, bestiaries, recipe books, and more. Content
-    unlocks on first experience and becomes available for replay or rotation.
+    lib-collection (L2 GameFoundation) manages "experience, unlock, access" patterns
+    for voice galleries, scene archives, bestiaries, recipe books, and any custom
+    collection type. Content unlocks on first experience and becomes available for
+    replay or rotation. Collection types are opaque string codes — new types can be
+    added without schema changes.
 
     Follows the "items in inventories" pattern: entry templates define what can be
     collected, collection instances create inventory containers per owner, and
@@ -20,8 +22,8 @@ info:
     "character") — NOT enums, per SCHEMA-RULES.md guidance on not enumerating
     entity types from other layers. Owner validation is caller-responsibility.
 
-    **Key Feature**: Dynamic music selection based on unlocked tracks and area themes
-    (weighted random from library).
+    **Key Feature**: Dynamic content selection based on unlocked entries and area
+    theme configurations (weighted random from library).
 
     **POST-Only API Pattern**: This API uses POST for all operations to support
     zero-copy WebSocket routing. Path parameters are passed in request bodies.
@@ -31,7 +33,7 @@ info:
     2. State which section applies to your change
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
-x-service-layer: GameFeatures
+x-service-layer: GameFoundation
 servers:
 - url: http://localhost:5012
   description: Bannou service endpoint (internal only)
@@ -101,28 +103,25 @@ paths:
         description\": \"Progressive discovery levels for bestiary-style entries\"\n                },\n                \"\
         themes\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                 \
         \   \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
-        : \"Theme tags for music entries (e.g., battle, peaceful, forest)\"\n                },\n                \"duration\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Duration of the content (ISO 8601 duration or human-readable)\"\n                },\n                \"loopPoint\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Loop point for music entries (ISO 8601 duration or timestamp)\"\n                },\n                \"composer\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Composer or creator name for music entries\"\n                }\n            }\n        },\n        \"CollectionType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Type of collection content.\\n- voice_gallery:
-        Voice recordings and dialogue clips\\n- scene_archive: Cutscenes and cinematics\\n- ending_gallery: Game endings and
-        conclusions\\n- music_library: Music tracks for dynamic playback\\n- bestiary: Monster and creature encyclopedia\\
-        n- recipe_book: Crafting recipes and formulas\\n- custom: User-defined collection type\\n\",\n            \"enum\"\
-        : [\n                \"voice_gallery\",\n                \"scene_archive\",\n                \"ending_gallery\",\n\
-        \                \"music_library\",\n                \"bestiary\",\n                \"recipe_book\",\n           \
-        \     \"custom\"\n            ]\n        },\n        \"DiscoveryLevel\": {\n            \"type\": \"object\",\n  \
-        \          \"description\": \"A discovery level defining what information is revealed at this level\",\n         \
-        \   \"additionalProperties\": false,\n            \"required\": [\n                \"level\",\n                \"\
-        reveals\"\n            ],\n            \"properties\": {\n                \"level\": {\n                    \"type\"\
-        : \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Discovery level number
-        (zero-indexed)\"\n                },\n                \"reveals\": {\n                    \"type\": \"array\",\n \
-        \                   \"items\": {\n                        \"type\": \"string\"\n                    },\n         \
-        \           \"description\": \"List of field or information keys revealed at this level\"\n                }\n   \
-        \         }\n        }\n    }\n}"
+        : \"Theme tags for content selection matching (e.g., battle, peaceful, forest)\"\n                },\n           \
+        \     \"duration\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n      \
+        \              \"description\": \"Duration of the content (ISO 8601 duration or human-readable)\"\n              \
+        \  },\n                \"loopPoint\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Loop point for seamless playback (ISO 8601 duration or timestamp)\"\
+        \n                },\n                \"composer\": {\n                    \"type\": \"string\",\n               \
+        \     \"nullable\": true,\n                    \"description\": \"Composer or creator name\"\n                }\n\
+        \            }\n        },\n        \"CollectionType\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Opaque string code identifying the type of collection content.\\nCollection types are game-defined and extensible
+        \\u2014 new types can be\\nregistered without schema changes. Common conventions include\\nvoice_gallery, scene_archive,
+        music_library, bestiary, recipe_book,\\nbut any string code is valid.\\n\"\n        },\n        \"DiscoveryLevel\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"A discovery level defining what information
+        is revealed at this level\",\n            \"additionalProperties\": false,\n            \"required\": [\n        \
+        \        \"level\",\n                \"reveals\"\n            ],\n            \"properties\": {\n                \"\
+        level\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"\
+        description\": \"Discovery level number (zero-indexed)\"\n                },\n                \"reveals\": {\n   \
+        \                 \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
+        \n                    },\n                    \"description\": \"List of field or information keys revealed at this
+        level\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EntryTemplateResponse\"\
         ,\n    \"$defs\": {\n        \"EntryTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Entry template with all fields\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
@@ -167,13 +166,10 @@ paths:
         template was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
         description\": \"When this entry template was last updated\"\n                }\n            }\n        },\n     \
-        \   \"CollectionType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of collection content.\\
-        n- voice_gallery: Voice recordings and dialogue clips\\n- scene_archive: Cutscenes and cinematics\\n- ending_gallery:
-        Game endings and conclusions\\n- music_library: Music tracks for dynamic playback\\n- bestiary: Monster and creature
-        encyclopedia\\n- recipe_book: Crafting recipes and formulas\\n- custom: User-defined collection type\\n\",\n     \
-        \       \"enum\": [\n                \"voice_gallery\",\n                \"scene_archive\",\n                \"ending_gallery\"\
-        ,\n                \"music_library\",\n                \"bestiary\",\n                \"recipe_book\",\n         \
-        \       \"custom\"\n            ]\n        },\n        \"DiscoveryLevel\": {\n            \"type\": \"object\",\n\
+        \   \"CollectionType\": {\n            \"type\": \"string\",\n            \"description\": \"Opaque string code identifying
+        the type of collection content.\\nCollection types are game-defined and extensible \\u2014 new types can be\\nregistered
+        without schema changes. Common conventions include\\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\\
+        nbut any string code is valid.\\n\"\n        },\n        \"DiscoveryLevel\": {\n            \"type\": \"object\",\n\
         \            \"description\": \"A discovery level defining what information is revealed at this level\",\n       \
         \     \"additionalProperties\": false,\n            \"required\": [\n                \"level\",\n                \"\
         reveals\"\n            ],\n            \"properties\": {\n                \"level\": {\n                    \"type\"\
@@ -261,13 +257,10 @@ paths:
         template was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
         description\": \"When this entry template was last updated\"\n                }\n            }\n        },\n     \
-        \   \"CollectionType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of collection content.\\
-        n- voice_gallery: Voice recordings and dialogue clips\\n- scene_archive: Cutscenes and cinematics\\n- ending_gallery:
-        Game endings and conclusions\\n- music_library: Music tracks for dynamic playback\\n- bestiary: Monster and creature
-        encyclopedia\\n- recipe_book: Crafting recipes and formulas\\n- custom: User-defined collection type\\n\",\n     \
-        \       \"enum\": [\n                \"voice_gallery\",\n                \"scene_archive\",\n                \"ending_gallery\"\
-        ,\n                \"music_library\",\n                \"bestiary\",\n                \"recipe_book\",\n         \
-        \       \"custom\"\n            ]\n        },\n        \"DiscoveryLevel\": {\n            \"type\": \"object\",\n\
+        \   \"CollectionType\": {\n            \"type\": \"string\",\n            \"description\": \"Opaque string code identifying
+        the type of collection content.\\nCollection types are game-defined and extensible \\u2014 new types can be\\nregistered
+        without schema changes. Common conventions include\\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\\
+        nbut any string code is valid.\\n\"\n        },\n        \"DiscoveryLevel\": {\n            \"type\": \"object\",\n\
         \            \"description\": \"A discovery level defining what information is revealed at this level\",\n       \
         \     \"additionalProperties\": false,\n            \"required\": [\n                \"level\",\n                \"\
         reveals\"\n            ],\n            \"properties\": {\n                \"level\": {\n                    \"type\"\
@@ -317,13 +310,9 @@ paths:
         \                    \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"nullable\": true,\n\
         \                    \"description\": \"Number of items per page (uses service default if not specified)\"\n     \
         \           }\n            }\n        },\n        \"CollectionType\": {\n            \"type\": \"string\",\n     \
-        \       \"description\": \"Type of collection content.\\n- voice_gallery: Voice recordings and dialogue clips\\n-
-        scene_archive: Cutscenes and cinematics\\n- ending_gallery: Game endings and conclusions\\n- music_library: Music
-        tracks for dynamic playback\\n- bestiary: Monster and creature encyclopedia\\n- recipe_book: Crafting recipes and
-        formulas\\n- custom: User-defined collection type\\n\",\n            \"enum\": [\n                \"voice_gallery\"\
-        ,\n                \"scene_archive\",\n                \"ending_gallery\",\n                \"music_library\",\n \
-        \               \"bestiary\",\n                \"recipe_book\",\n                \"custom\"\n            ]\n     \
-        \   }\n    }\n}"
+        \       \"description\": \"Opaque string code identifying the type of collection content.\\nCollection types are game-defined
+        and extensible \\u2014 new types can be\\nregistered without schema changes. Common conventions include\\nvoice_gallery,
+        scene_archive, music_library, bestiary, recipe_book,\\nbut any string code is valid.\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListEntryTemplatesResponse\"\
         ,\n    \"$defs\": {\n        \"ListEntryTemplatesResponse\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Paginated list of entry templates\",\n            \"additionalProperties\": false,\n            \"\
@@ -378,13 +367,10 @@ paths:
         \                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
         ,\n                    \"nullable\": true,\n                    \"description\": \"When this entry template was last
         updated\"\n                }\n            }\n        },\n        \"CollectionType\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"Type of collection content.\\n- voice_gallery: Voice recordings and dialogue clips\\
-        n- scene_archive: Cutscenes and cinematics\\n- ending_gallery: Game endings and conclusions\\n- music_library: Music
-        tracks for dynamic playback\\n- bestiary: Monster and creature encyclopedia\\n- recipe_book: Crafting recipes and
-        formulas\\n- custom: User-defined collection type\\n\",\n            \"enum\": [\n                \"voice_gallery\"\
-        ,\n                \"scene_archive\",\n                \"ending_gallery\",\n                \"music_library\",\n \
-        \               \"bestiary\",\n                \"recipe_book\",\n                \"custom\"\n            ]\n     \
-        \   },\n        \"DiscoveryLevel\": {\n            \"type\": \"object\",\n            \"description\": \"A discovery
+        ,\n            \"description\": \"Opaque string code identifying the type of collection content.\\nCollection types
+        are game-defined and extensible \\u2014 new types can be\\nregistered without schema changes. Common conventions include\\
+        nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\\nbut any string code is valid.\\n\"\n      \
+        \  },\n        \"DiscoveryLevel\": {\n            \"type\": \"object\",\n            \"description\": \"A discovery
         level defining what information is revealed at this level\",\n            \"additionalProperties\": false,\n     \
         \       \"required\": [\n                \"level\",\n                \"reveals\"\n            ],\n            \"properties\"\
         : {\n                \"level\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n\
@@ -503,13 +489,10 @@ paths:
         template was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
         description\": \"When this entry template was last updated\"\n                }\n            }\n        },\n     \
-        \   \"CollectionType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of collection content.\\
-        n- voice_gallery: Voice recordings and dialogue clips\\n- scene_archive: Cutscenes and cinematics\\n- ending_gallery:
-        Game endings and conclusions\\n- music_library: Music tracks for dynamic playback\\n- bestiary: Monster and creature
-        encyclopedia\\n- recipe_book: Crafting recipes and formulas\\n- custom: User-defined collection type\\n\",\n     \
-        \       \"enum\": [\n                \"voice_gallery\",\n                \"scene_archive\",\n                \"ending_gallery\"\
-        ,\n                \"music_library\",\n                \"bestiary\",\n                \"recipe_book\",\n         \
-        \       \"custom\"\n            ]\n        },\n        \"DiscoveryLevel\": {\n            \"type\": \"object\",\n\
+        \   \"CollectionType\": {\n            \"type\": \"string\",\n            \"description\": \"Opaque string code identifying
+        the type of collection content.\\nCollection types are game-defined and extensible \\u2014 new types can be\\nregistered
+        without schema changes. Common conventions include\\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\\
+        nbut any string code is valid.\\n\"\n        },\n        \"DiscoveryLevel\": {\n            \"type\": \"object\",\n\
         \            \"description\": \"A discovery level defining what information is revealed at this level\",\n       \
         \     \"additionalProperties\": false,\n            \"required\": [\n                \"level\",\n                \"\
         reveals\"\n            ],\n            \"properties\": {\n                \"level\": {\n                    \"type\"\
@@ -597,13 +580,10 @@ paths:
         template was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
         description\": \"When this entry template was last updated\"\n                }\n            }\n        },\n     \
-        \   \"CollectionType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of collection content.\\
-        n- voice_gallery: Voice recordings and dialogue clips\\n- scene_archive: Cutscenes and cinematics\\n- ending_gallery:
-        Game endings and conclusions\\n- music_library: Music tracks for dynamic playback\\n- bestiary: Monster and creature
-        encyclopedia\\n- recipe_book: Crafting recipes and formulas\\n- custom: User-defined collection type\\n\",\n     \
-        \       \"enum\": [\n                \"voice_gallery\",\n                \"scene_archive\",\n                \"ending_gallery\"\
-        ,\n                \"music_library\",\n                \"bestiary\",\n                \"recipe_book\",\n         \
-        \       \"custom\"\n            ]\n        },\n        \"DiscoveryLevel\": {\n            \"type\": \"object\",\n\
+        \   \"CollectionType\": {\n            \"type\": \"string\",\n            \"description\": \"Opaque string code identifying
+        the type of collection content.\\nCollection types are game-defined and extensible \\u2014 new types can be\\nregistered
+        without schema changes. Common conventions include\\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\\
+        nbut any string code is valid.\\n\"\n        },\n        \"DiscoveryLevel\": {\n            \"type\": \"object\",\n\
         \            \"description\": \"A discovery level defining what information is revealed at this level\",\n       \
         \     \"additionalProperties\": false,\n            \"required\": [\n                \"level\",\n                \"\
         reveals\"\n            ],\n            \"properties\": {\n                \"level\": {\n                    \"type\"\
@@ -679,29 +659,26 @@ paths:
         $ref\": \"#/$defs/DiscoveryLevel\"\n                    },\n                    \"description\": \"Progressive discovery
         levels for bestiary-style entries\"\n                },\n                \"themes\": {\n                    \"type\"\
         : \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n                        \"\
-        type\": \"string\"\n                    },\n                    \"description\": \"Theme tags for music entries (e.g.,
-        battle, peaceful, forest)\"\n                },\n                \"duration\": {\n                    \"type\": \"\
-        string\",\n                    \"nullable\": true,\n                    \"description\": \"Duration of the content
-        (ISO 8601 duration or human-readable)\"\n                },\n                \"loopPoint\": {\n                  \
-        \  \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Loop point
-        for music entries (ISO 8601 duration or timestamp)\"\n                },\n                \"composer\": {\n      \
-        \              \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Composer or creator name for music entries\"\n                }\n            }\n        },\n        \"CollectionType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Type of collection content.\\n- voice_gallery:
-        Voice recordings and dialogue clips\\n- scene_archive: Cutscenes and cinematics\\n- ending_gallery: Game endings and
-        conclusions\\n- music_library: Music tracks for dynamic playback\\n- bestiary: Monster and creature encyclopedia\\
-        n- recipe_book: Crafting recipes and formulas\\n- custom: User-defined collection type\\n\",\n            \"enum\"\
-        : [\n                \"voice_gallery\",\n                \"scene_archive\",\n                \"ending_gallery\",\n\
-        \                \"music_library\",\n                \"bestiary\",\n                \"recipe_book\",\n           \
-        \     \"custom\"\n            ]\n        },\n        \"DiscoveryLevel\": {\n            \"type\": \"object\",\n  \
-        \          \"description\": \"A discovery level defining what information is revealed at this level\",\n         \
-        \   \"additionalProperties\": false,\n            \"required\": [\n                \"level\",\n                \"\
-        reveals\"\n            ],\n            \"properties\": {\n                \"level\": {\n                    \"type\"\
-        : \"integer\",\n                    \"minimum\": 0,\n                    \"description\": \"Discovery level number
-        (zero-indexed)\"\n                },\n                \"reveals\": {\n                    \"type\": \"array\",\n \
-        \                   \"items\": {\n                        \"type\": \"string\"\n                    },\n         \
-        \           \"description\": \"List of field or information keys revealed at this level\"\n                }\n   \
-        \         }\n        }\n    }\n}"
+        type\": \"string\"\n                    },\n                    \"description\": \"Theme tags for content selection
+        matching (e.g., battle, peaceful, forest)\"\n                },\n                \"duration\": {\n               \
+        \     \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Duration
+        of the content (ISO 8601 duration or human-readable)\"\n                },\n                \"loopPoint\": {\n   \
+        \                 \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Loop point for seamless playback (ISO 8601 duration or timestamp)\"\n                },\n                \"composer\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Composer or creator name\"\n                }\n            }\n        },\n        \"CollectionType\": {\n    \
+        \        \"type\": \"string\",\n            \"description\": \"Opaque string code identifying the type of collection
+        content.\\nCollection types are game-defined and extensible \\u2014 new types can be\\nregistered without schema changes.
+        Common conventions include\\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\\nbut any string
+        code is valid.\\n\"\n        },\n        \"DiscoveryLevel\": {\n            \"type\": \"object\",\n            \"\
+        description\": \"A discovery level defining what information is revealed at this level\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"level\",\n                \"reveals\"\n            ],\n \
+        \           \"properties\": {\n                \"level\": {\n                    \"type\": \"integer\",\n        \
+        \            \"minimum\": 0,\n                    \"description\": \"Discovery level number (zero-indexed)\"\n   \
+        \             },\n                \"reveals\": {\n                    \"type\": \"array\",\n                    \"\
+        items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
+        : \"List of field or information keys revealed at this level\"\n                }\n            }\n        }\n    }\n\
+        }"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SeedEntryTemplatesResponse\"\
         ,\n    \"$defs\": {\n        \"SeedEntryTemplatesResponse\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Result of bulk seed operation\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -756,13 +733,10 @@ paths:
         ,\n                    \"description\": \"Type of collection to create\"\n                },\n                \"gameServiceId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Game service this collection is scoped to\"\n                }\n            }\n        },\n     \
-        \   \"CollectionType\": {\n            \"type\": \"string\",\n            \"description\": \"Type of collection content.\\
-        n- voice_gallery: Voice recordings and dialogue clips\\n- scene_archive: Cutscenes and cinematics\\n- ending_gallery:
-        Game endings and conclusions\\n- music_library: Music tracks for dynamic playback\\n- bestiary: Monster and creature
-        encyclopedia\\n- recipe_book: Crafting recipes and formulas\\n- custom: User-defined collection type\\n\",\n     \
-        \       \"enum\": [\n                \"voice_gallery\",\n                \"scene_archive\",\n                \"ending_gallery\"\
-        ,\n                \"music_library\",\n                \"bestiary\",\n                \"recipe_book\",\n         \
-        \       \"custom\"\n            ]\n        }\n    }\n}"
+        \   \"CollectionType\": {\n            \"type\": \"string\",\n            \"description\": \"Opaque string code identifying
+        the type of collection content.\\nCollection types are game-defined and extensible \\u2014 new types can be\\nregistered
+        without schema changes. Common conventions include\\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\\
+        nbut any string code is valid.\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CollectionResponse\"\
         ,\n    \"$defs\": {\n        \"CollectionResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Collection instance with summary\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
@@ -784,13 +758,10 @@ paths:
         collection\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n  \
         \                  \"format\": \"date-time\",\n                    \"description\": \"When this collection was created\"\
         \n                }\n            }\n        },\n        \"CollectionType\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"Type of collection content.\\n- voice_gallery: Voice recordings and dialogue clips\\
-        n- scene_archive: Cutscenes and cinematics\\n- ending_gallery: Game endings and conclusions\\n- music_library: Music
-        tracks for dynamic playback\\n- bestiary: Monster and creature encyclopedia\\n- recipe_book: Crafting recipes and
-        formulas\\n- custom: User-defined collection type\\n\",\n            \"enum\": [\n                \"voice_gallery\"\
-        ,\n                \"scene_archive\",\n                \"ending_gallery\",\n                \"music_library\",\n \
-        \               \"bestiary\",\n                \"recipe_book\",\n                \"custom\"\n            ]\n     \
-        \   }\n    }\n}"
+        \            \"description\": \"Opaque string code identifying the type of collection content.\\nCollection types
+        are game-defined and extensible \\u2014 new types can be\\nregistered without schema changes. Common conventions include\\
+        nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\\nbut any string code is valid.\\n\"\n      \
+        \  }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a collection for an owner\",\n    \"description\": \"Create a collection
         instance for an owner entity. One collection per type\\nper game service per owner (ownerId + ownerType). Creates
         an inventory\\ncontainer (unlimited type) to hold unlocked entry items.\\n\",\n    \"tags\": [\n        \"Collection\"\
@@ -847,13 +818,10 @@ paths:
         collection\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n  \
         \                  \"format\": \"date-time\",\n                    \"description\": \"When this collection was created\"\
         \n                }\n            }\n        },\n        \"CollectionType\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"Type of collection content.\\n- voice_gallery: Voice recordings and dialogue clips\\
-        n- scene_archive: Cutscenes and cinematics\\n- ending_gallery: Game endings and conclusions\\n- music_library: Music
-        tracks for dynamic playback\\n- bestiary: Monster and creature encyclopedia\\n- recipe_book: Crafting recipes and
-        formulas\\n- custom: User-defined collection type\\n\",\n            \"enum\": [\n                \"voice_gallery\"\
-        ,\n                \"scene_archive\",\n                \"ending_gallery\",\n                \"music_library\",\n \
-        \               \"bestiary\",\n                \"recipe_book\",\n                \"custom\"\n            ]\n     \
-        \   }\n    }\n}"
+        \            \"description\": \"Opaque string code identifying the type of collection content.\\nCollection types
+        are game-defined and extensible \\u2014 new types can be\\nregistered without schema changes. Common conventions include\\
+        nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\\nbut any string code is valid.\\n\"\n      \
+        \  }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get a collection with unlocked entry summary\",\n    \"description\": \"\
         Retrieves a collection instance with its unlocked entry count.\",\n    \"tags\": [\n        \"Collection\"\n    ],\n\
         \    \"deprecated\": false,\n    \"operationId\": \"getCollection\"\n}"
@@ -916,13 +884,10 @@ paths:
         in this collection\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"date-time\",\n                    \"description\": \"When this collection was
         created\"\n                }\n            }\n        },\n        \"CollectionType\": {\n            \"type\": \"string\"\
-        ,\n            \"description\": \"Type of collection content.\\n- voice_gallery: Voice recordings and dialogue clips\\
-        n- scene_archive: Cutscenes and cinematics\\n- ending_gallery: Game endings and conclusions\\n- music_library: Music
-        tracks for dynamic playback\\n- bestiary: Monster and creature encyclopedia\\n- recipe_book: Crafting recipes and
-        formulas\\n- custom: User-defined collection type\\n\",\n            \"enum\": [\n                \"voice_gallery\"\
-        ,\n                \"scene_archive\",\n                \"ending_gallery\",\n                \"music_library\",\n \
-        \               \"bestiary\",\n                \"recipe_book\",\n                \"custom\"\n            ]\n     \
-        \   }\n    }\n}"
+        ,\n            \"description\": \"Opaque string code identifying the type of collection content.\\nCollection types
+        are game-defined and extensible \\u2014 new types can be\\nregistered without schema changes. Common conventions include\\
+        nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\\nbut any string code is valid.\\n\"\n      \
+        \  }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List all collections for an owner\",\n    \"description\": \"List all collection
         instances for an owner entity, with optional game service filter.\",\n    \"tags\": [\n        \"Collection\"\n  \
         \  ],\n    \"deprecated\": false,\n    \"operationId\": \"listCollections\"\n}"
@@ -978,13 +943,10 @@ paths:
         collection\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n  \
         \                  \"format\": \"date-time\",\n                    \"description\": \"When this collection was created\"\
         \n                }\n            }\n        },\n        \"CollectionType\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"Type of collection content.\\n- voice_gallery: Voice recordings and dialogue clips\\
-        n- scene_archive: Cutscenes and cinematics\\n- ending_gallery: Game endings and conclusions\\n- music_library: Music
-        tracks for dynamic playback\\n- bestiary: Monster and creature encyclopedia\\n- recipe_book: Crafting recipes and
-        formulas\\n- custom: User-defined collection type\\n\",\n            \"enum\": [\n                \"voice_gallery\"\
-        ,\n                \"scene_archive\",\n                \"ending_gallery\",\n                \"music_library\",\n \
-        \               \"bestiary\",\n                \"recipe_book\",\n                \"custom\"\n            ]\n     \
-        \   }\n    }\n}"
+        \            \"description\": \"Opaque string code identifying the type of collection content.\\nCollection types
+        are game-defined and extensible \\u2014 new types can be\\nregistered without schema changes. Common conventions include\\
+        nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\\nbut any string code is valid.\\n\"\n      \
+        \  }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Delete a collection and its inventory container\",\n    \"description\"\
         : \"Delete a collection instance, destroying its inventory container and all contained entry items.\",\n    \"tags\"\
         : [\n        \"Collection\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"deleteCollection\"\n}"
@@ -1035,13 +997,10 @@ paths:
         grant into\"\n                },\n                \"metadata\": {\n                    \"$ref\": \"#/$defs/EntryMetadata\"\
         ,\n                    \"description\": \"Optional initial metadata for the unlocked entry\"\n                }\n\
         \            }\n        },\n        \"CollectionType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Type of collection content.\\n- voice_gallery: Voice recordings and dialogue clips\\n- scene_archive: Cutscenes
-        and cinematics\\n- ending_gallery: Game endings and conclusions\\n- music_library: Music tracks for dynamic playback\\
-        n- bestiary: Monster and creature encyclopedia\\n- recipe_book: Crafting recipes and formulas\\n- custom: User-defined
-        collection type\\n\",\n            \"enum\": [\n                \"voice_gallery\",\n                \"scene_archive\"\
-        ,\n                \"ending_gallery\",\n                \"music_library\",\n                \"bestiary\",\n      \
-        \          \"recipe_book\",\n                \"custom\"\n            ]\n        },\n        \"EntryMetadata\": {\n\
-        \            \"type\": \"object\",\n            \"description\": \"Metadata for an unlocked entry instance tracking
+        : \"Opaque string code identifying the type of collection content.\\nCollection types are game-defined and extensible
+        \\u2014 new types can be\\nregistered without schema changes. Common conventions include\\nvoice_gallery, scene_archive,
+        music_library, bestiary, recipe_book,\\nbut any string code is valid.\\n\"\n        },\n        \"EntryMetadata\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Metadata for an unlocked entry instance tracking
         usage and discovery state\",\n            \"additionalProperties\": false,\n            \"properties\": {\n      \
         \          \"unlockedIn\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
         \                    \"description\": \"Context where the entry was unlocked (e.g., location code)\"\n           \
@@ -1120,13 +1079,10 @@ paths:
         : \"Entry template code to check\"\n                },\n                \"collectionType\": {\n                  \
         \  \"$ref\": \"#/$defs/CollectionType\",\n                    \"description\": \"Type of collection to check\"\n \
         \               }\n            }\n        },\n        \"CollectionType\": {\n            \"type\": \"string\",\n \
-        \           \"description\": \"Type of collection content.\\n- voice_gallery: Voice recordings and dialogue clips\\
-        n- scene_archive: Cutscenes and cinematics\\n- ending_gallery: Game endings and conclusions\\n- music_library: Music
-        tracks for dynamic playback\\n- bestiary: Monster and creature encyclopedia\\n- recipe_book: Crafting recipes and
-        formulas\\n- custom: User-defined collection type\\n\",\n            \"enum\": [\n                \"voice_gallery\"\
-        ,\n                \"scene_archive\",\n                \"ending_gallery\",\n                \"music_library\",\n \
-        \               \"bestiary\",\n                \"recipe_book\",\n                \"custom\"\n            ]\n     \
-        \   }\n    }\n}"
+        \           \"description\": \"Opaque string code identifying the type of collection content.\\nCollection types are
+        game-defined and extensible \\u2014 new types can be\\nregistered without schema changes. Common conventions include\\
+        nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\\nbut any string code is valid.\\n\"\n      \
+        \  }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/HasEntryResponse\"\
         ,\n    \"$defs\": {\n        \"HasEntryResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Result of entry ownership check\",\n            \"additionalProperties\": false,\n            \"required\": [\n\
@@ -1355,13 +1311,10 @@ paths:
         ,\n                    \"description\": \"Game service scope\"\n                },\n                \"collectionType\"\
         : {\n                    \"$ref\": \"#/$defs/CollectionType\",\n                    \"description\": \"Type of collection
         to get stats for\"\n                }\n            }\n        },\n        \"CollectionType\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"Type of collection content.\\n- voice_gallery: Voice recordings and
-        dialogue clips\\n- scene_archive: Cutscenes and cinematics\\n- ending_gallery: Game endings and conclusions\\n- music_library:
-        Music tracks for dynamic playback\\n- bestiary: Monster and creature encyclopedia\\n- recipe_book: Crafting recipes
-        and formulas\\n- custom: User-defined collection type\\n\",\n            \"enum\": [\n                \"voice_gallery\"\
-        ,\n                \"scene_archive\",\n                \"ending_gallery\",\n                \"music_library\",\n \
-        \               \"bestiary\",\n                \"recipe_book\",\n                \"custom\"\n            ]\n     \
-        \   }\n    }\n}"
+        : \"string\",\n            \"description\": \"Opaque string code identifying the type of collection content.\\nCollection
+        types are game-defined and extensible \\u2014 new types can be\\nregistered without schema changes. Common conventions
+        include\\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\\nbut any string code is valid.\\n\"\
+        \n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CompletionStatsResponse\"\
         ,\n    \"$defs\": {\n        \"CompletionStatsResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Completion statistics for a collection\",\n            \"additionalProperties\": false,\n            \"required\"\
@@ -1377,35 +1330,32 @@ paths:
         \  \"type\": \"object\",\n                    \"nullable\": true,\n                    \"additionalProperties\": {\n\
         \                        \"$ref\": \"#/$defs/CategoryStats\"\n                    },\n                    \"description\"\
         : \"Completion breakdown by category\"\n                }\n            }\n        },\n        \"CollectionType\":
-        {\n            \"type\": \"string\",\n            \"description\": \"Type of collection content.\\n- voice_gallery:
-        Voice recordings and dialogue clips\\n- scene_archive: Cutscenes and cinematics\\n- ending_gallery: Game endings and
-        conclusions\\n- music_library: Music tracks for dynamic playback\\n- bestiary: Monster and creature encyclopedia\\
-        n- recipe_book: Crafting recipes and formulas\\n- custom: User-defined collection type\\n\",\n            \"enum\"\
-        : [\n                \"voice_gallery\",\n                \"scene_archive\",\n                \"ending_gallery\",\n\
-        \                \"music_library\",\n                \"bestiary\",\n                \"recipe_book\",\n           \
-        \     \"custom\"\n            ]\n        },\n        \"CategoryStats\": {\n            \"type\": \"object\",\n   \
-        \         \"description\": \"Completion statistics for a single category\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"total\",\n                \"unlocked\",\n               \
-        \ \"percentage\"\n            ],\n            \"properties\": {\n                \"total\": {\n                  \
-        \  \"type\": \"integer\",\n                    \"description\": \"Total entries in this category\"\n             \
-        \   },\n                \"unlocked\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Unlocked entries in this category\"\n                },\n                \"percentage\": {\n                 \
-        \   \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"Completion
-        percentage for this category\"\n                }\n            }\n        }\n    }\n}"
+        {\n            \"type\": \"string\",\n            \"description\": \"Opaque string code identifying the type of collection
+        content.\\nCollection types are game-defined and extensible \\u2014 new types can be\\nregistered without schema changes.
+        Common conventions include\\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\\nbut any string
+        code is valid.\\n\"\n        },\n        \"CategoryStats\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Completion statistics for a single category\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"total\",\n                \"unlocked\",\n                \"percentage\"\n            ],\n \
+        \           \"properties\": {\n                \"total\": {\n                    \"type\": \"integer\",\n        \
+        \            \"description\": \"Total entries in this category\"\n                },\n                \"unlocked\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Unlocked entries in this category\"\
+        \n                },\n                \"percentage\": {\n                    \"type\": \"number\",\n             \
+        \       \"format\": \"double\",\n                    \"description\": \"Completion percentage for this category\"\n\
+        \                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get completion statistics per collection type\",\n    \"description\":
         \"Get completion statistics for a collection including total entries, unlocked count, percentage, and breakdown by
         category.\",\n    \"tags\": [\n        \"Entry\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getCompletionStats\"\
         \n}"
-  /collection/music/select-for-area:
+  /collection/content/select-for-area:
     post:
-      operationId: selectTrackForArea
+      operationId: selectContentForArea
       tags:
-      - Music
-      summary: Select a track for an area based on unlocked library
+      - Content
+      summary: Select content for an area based on unlocked library
       description: |
-        Select a music track for an area based on the owner's unlocked music library
+        Select a content entry for an area based on the owner's unlocked collection
         and area theme configuration. Uses weighted random selection based on theme overlap.
-        Falls back to the area's default track if no matches are found.
+        Falls back to the area's default entry if no matches are found.
       x-permissions:
       - role: user
         states: {}
@@ -1414,61 +1364,65 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SelectTrackForAreaRequest'
+              $ref: '#/components/schemas/SelectContentForAreaRequest'
       responses:
         '200':
-          description: Track selected successfully
+          description: Content selected successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MusicTrackSelectionResponse'
+                $ref: '#/components/schemas/ContentSelectionResponse'
         '404':
-          description: Area config not found or no music library collection exists
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SelectTrackForAreaRequest\"\
-        ,\n    \"$defs\": {\n        \"SelectTrackForAreaRequest\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Request to select a music track for an area\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"ownerId\",\n                \"ownerType\",\n                \"gameServiceId\",\n          \
-        \      \"areaCode\"\n            ],\n            \"properties\": {\n                \"ownerId\": {\n             \
-        \       \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"\
-        Entity whose music library to search\"\n                },\n                \"ownerType\": {\n                   \
-        \ \"type\": \"string\",\n                    \"description\": \"Entity type discriminator\"\n                },\n\
-        \                \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\":
-        \"uuid\",\n                    \"description\": \"Game service scope\"\n                },\n                \"areaCode\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Area code to select music for\"\
+          description: Area config not found or no matching collection exists
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SelectContentForAreaRequest\"\
+        ,\n    \"$defs\": {\n        \"SelectContentForAreaRequest\": {\n            \"type\": \"object\",\n            \"\
+        description\": \"Request to select content for an area based on unlocked collection\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"ownerId\",\n                \"ownerType\",\n            \
+        \    \"gameServiceId\",\n                \"collectionType\",\n                \"areaCode\"\n            ],\n     \
+        \       \"properties\": {\n                \"ownerId\": {\n                    \"type\": \"string\",\n           \
+        \         \"format\": \"uuid\",\n                    \"description\": \"Entity whose collection to search\"\n    \
+        \            },\n                \"ownerType\": {\n                    \"type\": \"string\",\n                   \
+        \ \"description\": \"Entity type discriminator\"\n                },\n                \"gameServiceId\": {\n     \
+        \               \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Game service scope\"\n                },\n                \"collectionType\": {\n                    \"$ref\"\
+        : \"#/$defs/CollectionType\",\n                    \"description\": \"Type of collection to select content from\"\n\
+        \                },\n                \"areaCode\": {\n                    \"type\": \"string\",\n                \
+        \    \"description\": \"Area code to select content for\"\n                }\n            }\n        },\n        \"\
+        CollectionType\": {\n            \"type\": \"string\",\n            \"description\": \"Opaque string code identifying
+        the type of collection content.\\nCollection types are game-defined and extensible \\u2014 new types can be\\nregistered
+        without schema changes. Common conventions include\\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\\
+        nbut any string code is valid.\\n\"\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ContentSelectionResponse\"\
+        ,\n    \"$defs\": {\n        \"ContentSelectionResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Selected content entry for an area\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"entryCode\",\n                \"displayName\",\n                \"matchedThemes\"\n       \
+        \     ],\n            \"properties\": {\n                \"entryCode\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Code of the selected entry\"\n                },\n                \"displayName\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Display name of the selected
+        entry\"\n                },\n                \"category\": {\n                    \"type\": \"string\",\n        \
+        \            \"nullable\": true,\n                    \"description\": \"Category of the selected entry\"\n      \
+        \          },\n                \"assetId\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Primary asset identifier for the entry\"\n                },\n   \
+        \             \"thumbnailAssetId\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Thumbnail asset identifier for the entry\"\n                },\n \
+        \               \"themes\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n\
+        \                    \"items\": {\n                        \"type\": \"string\"\n                    },\n        \
+        \            \"description\": \"Theme tags of the selected entry\"\n                },\n                \"matchedThemes\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"description\": \"Themes that matched the area configuration\"\
         \n                }\n            }\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/MusicTrackSelectionResponse\"\
-        ,\n    \"$defs\": {\n        \"MusicTrackSelectionResponse\": {\n            \"type\": \"object\",\n            \"\
-        description\": \"Selected music track for an area\",\n            \"additionalProperties\": false,\n            \"\
-        required\": [\n                \"trackCode\",\n                \"displayName\",\n                \"matchedThemes\"\
-        \n            ],\n            \"properties\": {\n                \"trackCode\": {\n                    \"type\": \"\
-        string\",\n                    \"description\": \"Code of the selected track\"\n                },\n             \
-        \   \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\": \"Display
-        name of the selected track\"\n                },\n                \"composer\": {\n                    \"type\": \"\
-        string\",\n                    \"nullable\": true,\n                    \"description\": \"Composer of the selected
-        track\"\n                },\n                \"assetId\": {\n                    \"type\": \"string\",\n         \
-        \           \"nullable\": true,\n                    \"description\": \"Asset identifier for the track audio\"\n \
-        \               },\n                \"duration\": {\n                    \"type\": \"string\",\n                 \
-        \   \"nullable\": true,\n                    \"description\": \"Duration of the track\"\n                },\n    \
-        \            \"loopPoint\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Loop point for seamless playback\"\n                },\n                \"\
-        themes\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                 \
-        \   \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
-        : \"Theme tags of the selected track\"\n                },\n                \"matchedThemes\": {\n               \
-        \     \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n     \
-        \               },\n                    \"description\": \"Themes that matched the area configuration\"\n        \
-        \        }\n            }\n        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Select a track for an area based on unlocked library\",\n    \"description\"\
-        : \"Select a music track for an area based on the owner's unlocked music library\\nand area theme configuration. Uses
-        weighted random selection based on theme overlap.\\nFalls back to the area's default track if no matches are found.\\\
-        n\",\n    \"tags\": [\n        \"Music\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"selectTrackForArea\"\
+      x-endpoint-info-json: "{\n    \"summary\": \"Select content for an area based on unlocked library\",\n    \"description\"\
+        : \"Select a content entry for an area based on the owner's unlocked collection\\nand area theme configuration. Uses
+        weighted random selection based on theme overlap.\\nFalls back to the area's default entry if no matches are found.\\\
+        n\",\n    \"tags\": [\n        \"Content\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"selectContentForArea\"\
         \n}"
-  /collection/music/area-config/set:
+  /collection/content/area-config/set:
     post:
-      operationId: setAreaMusicConfig
+      operationId: setAreaContentConfig
       tags:
-      - Music
+      - Content
       summary: Set area-to-theme mapping
-      description: Create or update an area music configuration that maps an area code to themes and a default track.
+      description: Create or update an area content configuration that maps an area code to themes and a default entry.
       x-permissions:
       - role: developer
         states: {}
@@ -1477,59 +1431,71 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SetAreaMusicConfigRequest'
+              $ref: '#/components/schemas/SetAreaContentConfigRequest'
       responses:
         '200':
-          description: Area music config saved successfully
+          description: Area content config saved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AreaMusicConfigResponse'
+                $ref: '#/components/schemas/AreaContentConfigResponse'
         '404':
-          description: Game service or default track template not found
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SetAreaMusicConfigRequest\"\
-        ,\n    \"$defs\": {\n        \"SetAreaMusicConfigRequest\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Request to create or update an area music configuration\",\n            \"additionalProperties\": false,\n   \
-        \         \"required\": [\n                \"areaCode\",\n                \"gameServiceId\",\n                \"themes\"\
-        ,\n                \"defaultTrackCode\"\n            ],\n            \"properties\": {\n                \"areaCode\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Area code to configure (unique
-        per game service)\"\n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Game service this area config
-        belongs to\"\n                },\n                \"themes\": {\n                    \"type\": \"array\",\n      \
-        \              \"items\": {\n                        \"type\": \"string\"\n                    },\n              \
-        \      \"minItems\": 1,\n                    \"description\": \"Theme tags for this area (matched against music entry
-        themes)\"\n                },\n                \"defaultTrackCode\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Default track code to use when no matches are found\"\n                }\n\
-        \            }\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AreaMusicConfigResponse\"\
-        ,\n    \"$defs\": {\n        \"AreaMusicConfigResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Area music configuration\",\n            \"additionalProperties\": false,\n            \"required\": [\n     \
-        \           \"areaConfigId\",\n                \"areaCode\",\n                \"gameServiceId\",\n               \
-        \ \"themes\",\n                \"defaultTrackCode\",\n                \"createdAt\"\n            ],\n            \"\
-        properties\": {\n                \"areaConfigId\": {\n                    \"type\": \"string\",\n                \
-        \    \"format\": \"uuid\",\n                    \"description\": \"Unique area config identifier\"\n             \
-        \   },\n                \"areaCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Area code\"\n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Game service this area config
-        belongs to\"\n                },\n                \"themes\": {\n                    \"type\": \"array\",\n      \
-        \              \"items\": {\n                        \"type\": \"string\"\n                    },\n              \
-        \      \"description\": \"Theme tags for this area\"\n                },\n                \"defaultTrackCode\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"Default track code\"\n        \
-        \        },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"description\": \"When this area config was created\"\n                },\n\
-        \                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"When this area config was last
-        updated\"\n                }\n            }\n        }\n    }\n}"
+          description: Game service or default entry template not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SetAreaContentConfigRequest\"\
+        ,\n    \"$defs\": {\n        \"SetAreaContentConfigRequest\": {\n            \"type\": \"object\",\n            \"\
+        description\": \"Request to create or update an area content configuration\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"areaCode\",\n                \"gameServiceId\",\n       \
+        \         \"collectionType\",\n                \"themes\",\n                \"defaultEntryCode\"\n            ],\n\
+        \            \"properties\": {\n                \"areaCode\": {\n                    \"type\": \"string\",\n     \
+        \               \"description\": \"Area code to configure (unique per game service and collection type)\"\n      \
+        \          },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n                 \
+        \   \"format\": \"uuid\",\n                    \"description\": \"Game service this area config belongs to\"\n   \
+        \             },\n                \"collectionType\": {\n                    \"$ref\": \"#/$defs/CollectionType\"\
+        ,\n                    \"description\": \"Type of collection this area config applies to\"\n                },\n \
+        \               \"themes\": {\n                    \"type\": \"array\",\n                    \"items\": {\n      \
+        \                  \"type\": \"string\"\n                    },\n                    \"minItems\": 1,\n          \
+        \          \"description\": \"Theme tags for this area (matched against collection entry themes)\"\n             \
+        \   },\n                \"defaultEntryCode\": {\n                    \"type\": \"string\",\n                    \"\
+        description\": \"Default entry code to use when no matches are found\"\n                }\n            }\n       \
+        \ },\n        \"CollectionType\": {\n            \"type\": \"string\",\n            \"description\": \"Opaque string
+        code identifying the type of collection content.\\nCollection types are game-defined and extensible \\u2014 new types
+        can be\\nregistered without schema changes. Common conventions include\\nvoice_gallery, scene_archive, music_library,
+        bestiary, recipe_book,\\nbut any string code is valid.\\n\"\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AreaContentConfigResponse\"\
+        ,\n    \"$defs\": {\n        \"AreaContentConfigResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Area content configuration\",\n            \"additionalProperties\": false,\n            \"required\": [\n   \
+        \             \"areaConfigId\",\n                \"areaCode\",\n                \"gameServiceId\",\n             \
+        \   \"collectionType\",\n                \"themes\",\n                \"defaultEntryCode\",\n                \"createdAt\"\
+        \n            ],\n            \"properties\": {\n                \"areaConfigId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique area config
+        identifier\"\n                },\n                \"areaCode\": {\n                    \"type\": \"string\",\n   \
+        \                 \"description\": \"Area code\"\n                },\n                \"gameServiceId\": {\n     \
+        \               \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Game service this area config belongs to\"\n                },\n                \"collectionType\": {\n      \
+        \              \"$ref\": \"#/$defs/CollectionType\",\n                    \"description\": \"Type of collection this
+        config applies to\"\n                },\n                \"themes\": {\n                    \"type\": \"array\",\n\
+        \                    \"items\": {\n                        \"type\": \"string\"\n                    },\n        \
+        \            \"description\": \"Theme tags for this area\"\n                },\n                \"defaultEntryCode\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Default entry code\"\n    \
+        \            },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                   \
+        \ \"format\": \"date-time\",\n                    \"description\": \"When this area config was created\"\n       \
+        \         },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When this
+        area config was last updated\"\n                }\n            }\n        },\n        \"CollectionType\": {\n    \
+        \        \"type\": \"string\",\n            \"description\": \"Opaque string code identifying the type of collection
+        content.\\nCollection types are game-defined and extensible \\u2014 new types can be\\nregistered without schema changes.
+        Common conventions include\\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\\nbut any string
+        code is valid.\\n\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Set area-to-theme mapping\",\n    \"description\": \"Create or update an
-        area music configuration that maps an area code to themes and a default track.\",\n    \"tags\": [\n        \"Music\"\
-        \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"setAreaMusicConfig\"\n}"
-  /collection/music/area-config/get:
+        area content configuration that maps an area code to themes and a default entry.\",\n    \"tags\": [\n        \"Content\"\
+        \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"setAreaContentConfig\"\n}"
+  /collection/content/area-config/get:
     post:
-      operationId: getAreaMusicConfig
+      operationId: getAreaContentConfig
       tags:
-      - Music
-      summary: Get area music config
-      description: Get the music configuration for a specific area and game service.
+      - Content
+      summary: Get area content config
+      description: Get the content configuration for a specific area and game service.
       x-permissions:
       - role: user
         states: {}
@@ -1538,53 +1504,64 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/GetAreaMusicConfigRequest'
+              $ref: '#/components/schemas/GetAreaContentConfigRequest'
       responses:
         '200':
-          description: Area music config retrieved successfully
+          description: Area content config retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AreaMusicConfigResponse'
+                $ref: '#/components/schemas/AreaContentConfigResponse'
         '404':
-          description: Area music config not found
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetAreaMusicConfigRequest\"\
-        ,\n    \"$defs\": {\n        \"GetAreaMusicConfigRequest\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Request to get an area music config\",\n            \"additionalProperties\": false,\n            \"required\"\
-        : [\n                \"areaCode\",\n                \"gameServiceId\"\n            ],\n            \"properties\"\
-        : {\n                \"areaCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Area code to look up\"\n                },\n                \"gameServiceId\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Game service scope\"\
-        \n                }\n            }\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AreaMusicConfigResponse\"\
-        ,\n    \"$defs\": {\n        \"AreaMusicConfigResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Area music configuration\",\n            \"additionalProperties\": false,\n            \"required\": [\n     \
-        \           \"areaConfigId\",\n                \"areaCode\",\n                \"gameServiceId\",\n               \
-        \ \"themes\",\n                \"defaultTrackCode\",\n                \"createdAt\"\n            ],\n            \"\
-        properties\": {\n                \"areaConfigId\": {\n                    \"type\": \"string\",\n                \
-        \    \"format\": \"uuid\",\n                    \"description\": \"Unique area config identifier\"\n             \
-        \   },\n                \"areaCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Area code\"\n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Game service this area config
-        belongs to\"\n                },\n                \"themes\": {\n                    \"type\": \"array\",\n      \
-        \              \"items\": {\n                        \"type\": \"string\"\n                    },\n              \
-        \      \"description\": \"Theme tags for this area\"\n                },\n                \"defaultTrackCode\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"Default track code\"\n        \
-        \        },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
-        : \"date-time\",\n                    \"description\": \"When this area config was created\"\n                },\n\
-        \                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"When this area config was last
-        updated\"\n                }\n            }\n        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Get area music config\",\n    \"description\": \"Get the music configuration
-        for a specific area and game service.\",\n    \"tags\": [\n        \"Music\"\n    ],\n    \"deprecated\": false,\n\
-        \    \"operationId\": \"getAreaMusicConfig\"\n}"
-  /collection/music/area-config/list:
+          description: Area content config not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetAreaContentConfigRequest\"\
+        ,\n    \"$defs\": {\n        \"GetAreaContentConfigRequest\": {\n            \"type\": \"object\",\n            \"\
+        description\": \"Request to get an area content config\",\n            \"additionalProperties\": false,\n        \
+        \    \"required\": [\n                \"areaCode\",\n                \"gameServiceId\",\n                \"collectionType\"\
+        \n            ],\n            \"properties\": {\n                \"areaCode\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Area code to look up\"\n                },\n                \"gameServiceId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Game service scope\"\n                },\n                \"collectionType\": {\n               \
+        \     \"$ref\": \"#/$defs/CollectionType\",\n                    \"description\": \"Type of collection\"\n       \
+        \         }\n            }\n        },\n        \"CollectionType\": {\n            \"type\": \"string\",\n       \
+        \     \"description\": \"Opaque string code identifying the type of collection content.\\nCollection types are game-defined
+        and extensible \\u2014 new types can be\\nregistered without schema changes. Common conventions include\\nvoice_gallery,
+        scene_archive, music_library, bestiary, recipe_book,\\nbut any string code is valid.\\n\"\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AreaContentConfigResponse\"\
+        ,\n    \"$defs\": {\n        \"AreaContentConfigResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Area content configuration\",\n            \"additionalProperties\": false,\n            \"required\": [\n   \
+        \             \"areaConfigId\",\n                \"areaCode\",\n                \"gameServiceId\",\n             \
+        \   \"collectionType\",\n                \"themes\",\n                \"defaultEntryCode\",\n                \"createdAt\"\
+        \n            ],\n            \"properties\": {\n                \"areaConfigId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique area config
+        identifier\"\n                },\n                \"areaCode\": {\n                    \"type\": \"string\",\n   \
+        \                 \"description\": \"Area code\"\n                },\n                \"gameServiceId\": {\n     \
+        \               \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Game service this area config belongs to\"\n                },\n                \"collectionType\": {\n      \
+        \              \"$ref\": \"#/$defs/CollectionType\",\n                    \"description\": \"Type of collection this
+        config applies to\"\n                },\n                \"themes\": {\n                    \"type\": \"array\",\n\
+        \                    \"items\": {\n                        \"type\": \"string\"\n                    },\n        \
+        \            \"description\": \"Theme tags for this area\"\n                },\n                \"defaultEntryCode\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Default entry code\"\n    \
+        \            },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                   \
+        \ \"format\": \"date-time\",\n                    \"description\": \"When this area config was created\"\n       \
+        \         },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When this
+        area config was last updated\"\n                }\n            }\n        },\n        \"CollectionType\": {\n    \
+        \        \"type\": \"string\",\n            \"description\": \"Opaque string code identifying the type of collection
+        content.\\nCollection types are game-defined and extensible \\u2014 new types can be\\nregistered without schema changes.
+        Common conventions include\\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\\nbut any string
+        code is valid.\\n\"\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get area content config\",\n    \"description\": \"Get the content configuration
+        for a specific area and game service.\",\n    \"tags\": [\n        \"Content\"\n    ],\n    \"deprecated\": false,\n\
+        \    \"operationId\": \"getAreaContentConfig\"\n}"
+  /collection/content/area-config/list:
     post:
-      operationId: listAreaMusicConfigs
+      operationId: listAreaContentConfigs
       tags:
-      - Music
+      - Content
       summary: List area configs for a game service
-      description: List all area music configurations for a game service.
+      description: List all area content configurations for a game service.
       x-permissions:
       - role: developer
         states: {}
@@ -1593,48 +1570,60 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ListAreaMusicConfigsRequest'
+              $ref: '#/components/schemas/ListAreaContentConfigsRequest'
       responses:
         '200':
-          description: Area music configs retrieved successfully
+          description: Area content configs retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ListAreaMusicConfigsResponse'
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListAreaMusicConfigsRequest\"\
-        ,\n    \"$defs\": {\n        \"ListAreaMusicConfigsRequest\": {\n            \"type\": \"object\",\n            \"\
-        description\": \"Request to list area music configs for a game service\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"gameServiceId\"\n            ],\n            \"properties\": {\n \
-        \               \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        uuid\",\n                    \"description\": \"Game service to list area configs for\"\n                }\n     \
-        \       }\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListAreaMusicConfigsResponse\"\
-        ,\n    \"$defs\": {\n        \"ListAreaMusicConfigsResponse\": {\n            \"type\": \"object\",\n            \"\
-        description\": \"List of area music configurations\",\n            \"additionalProperties\": false,\n            \"\
-        required\": [\n                \"configs\"\n            ],\n            \"properties\": {\n                \"configs\"\
-        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/AreaMusicConfigResponse\"\n                    },\n                    \"description\": \"Area music configurations
-        for this game service\"\n                }\n            }\n        },\n        \"AreaMusicConfigResponse\": {\n  \
-        \          \"type\": \"object\",\n            \"description\": \"Area music configuration\",\n            \"additionalProperties\"\
-        : false,\n            \"required\": [\n                \"areaConfigId\",\n                \"areaCode\",\n        \
-        \        \"gameServiceId\",\n                \"themes\",\n                \"defaultTrackCode\",\n                \"\
-        createdAt\"\n            ],\n            \"properties\": {\n                \"areaConfigId\": {\n                \
-        \    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique
-        area config identifier\"\n                },\n                \"areaCode\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Area code\"\n                },\n                \"gameServiceId\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Game service this area config belongs to\"\n                },\n                \"themes\": {\n              \
-        \      \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n    \
-        \                },\n                    \"description\": \"Theme tags for this area\"\n                },\n     \
-        \           \"defaultTrackCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Default track code\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"When this area config was
-        created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n     \
-        \               \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"When this area config was last updated\"\n                }\n            }\n        }\n    }\n}"
+                $ref: '#/components/schemas/ListAreaContentConfigsResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListAreaContentConfigsRequest\"\
+        ,\n    \"$defs\": {\n        \"ListAreaContentConfigsRequest\": {\n            \"type\": \"object\",\n           \
+        \ \"description\": \"Request to list area content configs for a game service\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"gameServiceId\",\n                \"collectionType\"\n  \
+        \          ],\n            \"properties\": {\n                \"gameServiceId\": {\n                    \"type\":
+        \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Game service to list
+        area configs for\"\n                },\n                \"collectionType\": {\n                    \"$ref\": \"#/$defs/CollectionType\"\
+        ,\n                    \"description\": \"Type of collection to list configs for\"\n                }\n          \
+        \  }\n        },\n        \"CollectionType\": {\n            \"type\": \"string\",\n            \"description\": \"\
+        Opaque string code identifying the type of collection content.\\nCollection types are game-defined and extensible
+        \\u2014 new types can be\\nregistered without schema changes. Common conventions include\\nvoice_gallery, scene_archive,
+        music_library, bestiary, recipe_book,\\nbut any string code is valid.\\n\"\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListAreaContentConfigsResponse\"\
+        ,\n    \"$defs\": {\n        \"ListAreaContentConfigsResponse\": {\n            \"type\": \"object\",\n          \
+        \  \"description\": \"List of area content configurations\",\n            \"additionalProperties\": false,\n     \
+        \       \"required\": [\n                \"configs\"\n            ],\n            \"properties\": {\n            \
+        \    \"configs\": {\n                    \"type\": \"array\",\n                    \"items\": {\n                \
+        \        \"$ref\": \"#/$defs/AreaContentConfigResponse\"\n                    },\n                    \"description\"\
+        : \"Area content configurations for this game service\"\n                }\n            }\n        },\n        \"\
+        AreaContentConfigResponse\": {\n            \"type\": \"object\",\n            \"description\": \"Area content configuration\"\
+        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"areaConfigId\",\n\
+        \                \"areaCode\",\n                \"gameServiceId\",\n                \"collectionType\",\n        \
+        \        \"themes\",\n                \"defaultEntryCode\",\n                \"createdAt\"\n            ],\n     \
+        \       \"properties\": {\n                \"areaConfigId\": {\n                    \"type\": \"string\",\n      \
+        \              \"format\": \"uuid\",\n                    \"description\": \"Unique area config identifier\"\n   \
+        \             },\n                \"areaCode\": {\n                    \"type\": \"string\",\n                   \
+        \ \"description\": \"Area code\"\n                },\n                \"gameServiceId\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Game service
+        this area config belongs to\"\n                },\n                \"collectionType\": {\n                    \"$ref\"\
+        : \"#/$defs/CollectionType\",\n                    \"description\": \"Type of collection this config applies to\"\n\
+        \                },\n                \"themes\": {\n                    \"type\": \"array\",\n                   \
+        \ \"items\": {\n                        \"type\": \"string\"\n                    },\n                    \"description\"\
+        : \"Theme tags for this area\"\n                },\n                \"defaultEntryCode\": {\n                    \"\
+        type\": \"string\",\n                    \"description\": \"Default entry code\"\n                },\n           \
+        \     \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"When this area config was created\"\n                },\n                \"\
+        updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
+        \              \"nullable\": true,\n                    \"description\": \"When this area config was last updated\"\
+        \n                }\n            }\n        },\n        \"CollectionType\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"Opaque string code identifying the type of collection content.\\nCollection types
+        are game-defined and extensible \\u2014 new types can be\\nregistered without schema changes. Common conventions include\\
+        nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\\nbut any string code is valid.\\n\"\n      \
+        \  }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List area configs for a game service\",\n    \"description\": \"List all
-        area music configurations for a game service.\",\n    \"tags\": [\n        \"Music\"\n    ],\n    \"deprecated\":
-        false,\n    \"operationId\": \"listAreaMusicConfigs\"\n}"
+        area content configurations for a game service.\",\n    \"tags\": [\n        \"Content\"\n    ],\n    \"deprecated\"\
+        : false,\n    \"operationId\": \"listAreaContentConfigs\"\n}"
   /collection/discovery/advance:
     post:
       operationId: advanceDiscovery
@@ -1694,22 +1683,11 @@ components:
     CollectionType:
       type: string
       description: |
-        Type of collection content.
-        - voice_gallery: Voice recordings and dialogue clips
-        - scene_archive: Cutscenes and cinematics
-        - ending_gallery: Game endings and conclusions
-        - music_library: Music tracks for dynamic playback
-        - bestiary: Monster and creature encyclopedia
-        - recipe_book: Crafting recipes and formulas
-        - custom: User-defined collection type
-      enum:
-      - voice_gallery
-      - scene_archive
-      - ending_gallery
-      - music_library
-      - bestiary
-      - recipe_book
-      - custom
+        Opaque string code identifying the type of collection content.
+        Collection types are game-defined and extensible — new types can be
+        registered without schema changes. Common conventions include
+        voice_gallery, scene_archive, music_library, bestiary, recipe_book,
+        but any string code is valid.
     GrantFailureReason:
       type: string
       description: |
@@ -1847,7 +1825,7 @@ components:
           nullable: true
           items:
             type: string
-          description: Theme tags for music entries (e.g., battle, peaceful, forest)
+          description: Theme tags for content selection matching (e.g., battle, peaceful, forest)
         duration:
           type: string
           nullable: true
@@ -1855,11 +1833,11 @@ components:
         loopPoint:
           type: string
           nullable: true
-          description: Loop point for music entries (ISO 8601 duration or timestamp)
+          description: Loop point for seamless playback (ISO 8601 duration or timestamp)
         composer:
           type: string
           nullable: true
-          description: Composer or creator name for music entries
+          description: Composer or creator name
     GetEntryTemplateRequest:
       type: object
       description: Request to get an entry template by ID
@@ -2545,20 +2523,21 @@ components:
           type: number
           format: double
           description: Completion percentage for this category
-    SelectTrackForAreaRequest:
+    SelectContentForAreaRequest:
       type: object
-      description: Request to select a music track for an area
+      description: Request to select content for an area based on unlocked collection
       additionalProperties: false
       required:
       - ownerId
       - ownerType
       - gameServiceId
+      - collectionType
       - areaCode
       properties:
         ownerId:
           type: string
           format: uuid
-          description: Entity whose music library to search
+          description: Entity whose collection to search
         ownerType:
           type: string
           description: Entity type discriminator
@@ -2566,84 +2545,88 @@ components:
           type: string
           format: uuid
           description: Game service scope
+        collectionType:
+          $ref: '#/components/schemas/CollectionType'
+          description: Type of collection to select content from
         areaCode:
           type: string
-          description: Area code to select music for
-    MusicTrackSelectionResponse:
+          description: Area code to select content for
+    ContentSelectionResponse:
       type: object
-      description: Selected music track for an area
+      description: Selected content entry for an area
       additionalProperties: false
       required:
-      - trackCode
+      - entryCode
       - displayName
       - matchedThemes
       properties:
-        trackCode:
+        entryCode:
           type: string
-          description: Code of the selected track
+          description: Code of the selected entry
         displayName:
           type: string
-          description: Display name of the selected track
-        composer:
+          description: Display name of the selected entry
+        category:
           type: string
           nullable: true
-          description: Composer of the selected track
+          description: Category of the selected entry
         assetId:
           type: string
           nullable: true
-          description: Asset identifier for the track audio
-        duration:
+          description: Primary asset identifier for the entry
+        thumbnailAssetId:
           type: string
           nullable: true
-          description: Duration of the track
-        loopPoint:
-          type: string
-          nullable: true
-          description: Loop point for seamless playback
+          description: Thumbnail asset identifier for the entry
         themes:
           type: array
           nullable: true
           items:
             type: string
-          description: Theme tags of the selected track
+          description: Theme tags of the selected entry
         matchedThemes:
           type: array
           items:
             type: string
           description: Themes that matched the area configuration
-    SetAreaMusicConfigRequest:
+    SetAreaContentConfigRequest:
       type: object
-      description: Request to create or update an area music configuration
+      description: Request to create or update an area content configuration
       additionalProperties: false
       required:
       - areaCode
       - gameServiceId
+      - collectionType
       - themes
-      - defaultTrackCode
+      - defaultEntryCode
       properties:
         areaCode:
           type: string
-          description: Area code to configure (unique per game service)
+          description: Area code to configure (unique per game service and collection type)
         gameServiceId:
           type: string
           format: uuid
           description: Game service this area config belongs to
+        collectionType:
+          $ref: '#/components/schemas/CollectionType'
+          description: Type of collection this area config applies to
         themes:
           type: array
           items:
             type: string
           minItems: 1
-          description: Theme tags for this area (matched against music entry themes)
-        defaultTrackCode:
+          description: Theme tags for this area (matched against collection entry themes)
+        defaultEntryCode:
           type: string
-          description: Default track code to use when no matches are found
-    GetAreaMusicConfigRequest:
+          description: Default entry code to use when no matches are found
+    GetAreaContentConfigRequest:
       type: object
-      description: Request to get an area music config
+      description: Request to get an area content config
       additionalProperties: false
       required:
       - areaCode
       - gameServiceId
+      - collectionType
       properties:
         areaCode:
           type: string
@@ -2652,27 +2635,35 @@ components:
           type: string
           format: uuid
           description: Game service scope
-    ListAreaMusicConfigsRequest:
+        collectionType:
+          $ref: '#/components/schemas/CollectionType'
+          description: Type of collection
+    ListAreaContentConfigsRequest:
       type: object
-      description: Request to list area music configs for a game service
+      description: Request to list area content configs for a game service
       additionalProperties: false
       required:
       - gameServiceId
+      - collectionType
       properties:
         gameServiceId:
           type: string
           format: uuid
           description: Game service to list area configs for
-    AreaMusicConfigResponse:
+        collectionType:
+          $ref: '#/components/schemas/CollectionType'
+          description: Type of collection to list configs for
+    AreaContentConfigResponse:
       type: object
-      description: Area music configuration
+      description: Area content configuration
       additionalProperties: false
       required:
       - areaConfigId
       - areaCode
       - gameServiceId
+      - collectionType
       - themes
-      - defaultTrackCode
+      - defaultEntryCode
       - createdAt
       properties:
         areaConfigId:
@@ -2686,14 +2677,17 @@ components:
           type: string
           format: uuid
           description: Game service this area config belongs to
+        collectionType:
+          $ref: '#/components/schemas/CollectionType'
+          description: Type of collection this config applies to
         themes:
           type: array
           items:
             type: string
           description: Theme tags for this area
-        defaultTrackCode:
+        defaultEntryCode:
           type: string
-          description: Default track code
+          description: Default entry code
         createdAt:
           type: string
           format: date-time
@@ -2703,9 +2697,9 @@ components:
           format: date-time
           nullable: true
           description: When this area config was last updated
-    ListAreaMusicConfigsResponse:
+    ListAreaContentConfigsResponse:
       type: object
-      description: List of area music configurations
+      description: List of area content configurations
       additionalProperties: false
       required:
       - configs
@@ -2713,8 +2707,8 @@ components:
         configs:
           type: array
           items:
-            $ref: '#/components/schemas/AreaMusicConfigResponse'
-          description: Area music configurations for this game service
+            $ref: '#/components/schemas/AreaContentConfigResponse'
+          description: Area content configurations for this game service
     AdvanceDiscoveryRequest:
       type: object
       description: Request to advance the discovery level of an unlocked entry

@@ -104,7 +104,7 @@ public partial class CollectionController
                     "items": {
                         "type": "string"
                     },
-                    "description": "Theme tags for music entries (e.g., battle, peaceful, forest)"
+                    "description": "Theme tags for content selection matching (e.g., battle, peaceful, forest)"
                 },
                 "duration": {
                     "type": "string",
@@ -114,27 +114,18 @@ public partial class CollectionController
                 "loopPoint": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Loop point for music entries (ISO 8601 duration or timestamp)"
+                    "description": "Loop point for seamless playback (ISO 8601 duration or timestamp)"
                 },
                 "composer": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Composer or creator name for music entries"
+                    "description": "Composer or creator name"
                 }
             }
         },
         "CollectionType": {
             "type": "string",
-            "description": "Type of collection content.\n- voice_gallery: Voice recordings and dialogue clips\n- scene_archive: Cutscenes and cinematics\n- ending_gallery: Game endings and conclusions\n- music_library: Music tracks for dynamic playback\n- bestiary: Monster and creature encyclopedia\ n- recipe_book: Crafting recipes and formulas\n- custom: User-defined collection type\n",
-            "enum": [
-                "voice_gallery",
-                "scene_archive",
-                "ending_gallery",
-                "music_library",
-                "bestiary",
-                "recipe_book",
-                "custom"
-            ]
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
         },
         "DiscoveryLevel": {
             "type": "object",
@@ -288,16 +279,7 @@ public partial class CollectionController
         },
         "CollectionType": {
             "type": "string",
-            "description": "Type of collection content.\ n- voice_gallery: Voice recordings and dialogue clips\n- scene_archive: Cutscenes and cinematics\n- ending_gallery: Game endings and conclusions\n- music_library: Music tracks for dynamic playback\n- bestiary: Monster and creature encyclopedia\n- recipe_book: Crafting recipes and formulas\n- custom: User-defined collection type\n",
-            "enum": [
-                "voice_gallery",
-                "scene_archive",
-                "ending_gallery",
-                "music_library",
-                "bestiary",
-                "recipe_book",
-                "custom"
-            ]
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\ nbut any string code is valid.\n"
         },
         "DiscoveryLevel": {
             "type": "object",
@@ -531,16 +513,7 @@ public partial class CollectionController
         },
         "CollectionType": {
             "type": "string",
-            "description": "Type of collection content.\ n- voice_gallery: Voice recordings and dialogue clips\n- scene_archive: Cutscenes and cinematics\n- ending_gallery: Game endings and conclusions\n- music_library: Music tracks for dynamic playback\n- bestiary: Monster and creature encyclopedia\n- recipe_book: Crafting recipes and formulas\n- custom: User-defined collection type\n",
-            "enum": [
-                "voice_gallery",
-                "scene_archive",
-                "ending_gallery",
-                "music_library",
-                "bestiary",
-                "recipe_book",
-                "custom"
-            ]
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\ nbut any string code is valid.\n"
         },
         "DiscoveryLevel": {
             "type": "object",
@@ -669,16 +642,7 @@ public partial class CollectionController
         },
         "CollectionType": {
             "type": "string",
-            "description": "Type of collection content.\n- voice_gallery: Voice recordings and dialogue clips\n- scene_archive: Cutscenes and cinematics\n- ending_gallery: Game endings and conclusions\n- music_library: Music tracks for dynamic playback\n- bestiary: Monster and creature encyclopedia\n- recipe_book: Crafting recipes and formulas\n- custom: User-defined collection type\n",
-            "enum": [
-                "voice_gallery",
-                "scene_archive",
-                "ending_gallery",
-                "music_library",
-                "bestiary",
-                "recipe_book",
-                "custom"
-            ]
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
         }
     }
 }
@@ -836,16 +800,7 @@ public partial class CollectionController
         },
         "CollectionType": {
             "type": "string",
-            "description": "Type of collection content.\n- voice_gallery: Voice recordings and dialogue clips\ n- scene_archive: Cutscenes and cinematics\n- ending_gallery: Game endings and conclusions\n- music_library: Music tracks for dynamic playback\n- bestiary: Monster and creature encyclopedia\n- recipe_book: Crafting recipes and formulas\n- custom: User-defined collection type\n",
-            "enum": [
-                "voice_gallery",
-                "scene_archive",
-                "ending_gallery",
-                "music_library",
-                "bestiary",
-                "recipe_book",
-                "custom"
-            ]
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\ nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
         },
         "DiscoveryLevel": {
             "type": "object",
@@ -1171,16 +1126,7 @@ public partial class CollectionController
         },
         "CollectionType": {
             "type": "string",
-            "description": "Type of collection content.\ n- voice_gallery: Voice recordings and dialogue clips\n- scene_archive: Cutscenes and cinematics\n- ending_gallery: Game endings and conclusions\n- music_library: Music tracks for dynamic playback\n- bestiary: Monster and creature encyclopedia\n- recipe_book: Crafting recipes and formulas\n- custom: User-defined collection type\n",
-            "enum": [
-                "voice_gallery",
-                "scene_archive",
-                "ending_gallery",
-                "music_library",
-                "bestiary",
-                "recipe_book",
-                "custom"
-            ]
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\ nbut any string code is valid.\n"
         },
         "DiscoveryLevel": {
             "type": "object",
@@ -1414,16 +1360,7 @@ public partial class CollectionController
         },
         "CollectionType": {
             "type": "string",
-            "description": "Type of collection content.\ n- voice_gallery: Voice recordings and dialogue clips\n- scene_archive: Cutscenes and cinematics\n- ending_gallery: Game endings and conclusions\n- music_library: Music tracks for dynamic playback\n- bestiary: Monster and creature encyclopedia\n- recipe_book: Crafting recipes and formulas\n- custom: User-defined collection type\n",
-            "enum": [
-                "voice_gallery",
-                "scene_archive",
-                "ending_gallery",
-                "music_library",
-                "bestiary",
-                "recipe_book",
-                "custom"
-            ]
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\ nbut any string code is valid.\n"
         },
         "DiscoveryLevel": {
             "type": "object",
@@ -1612,7 +1549,7 @@ public partial class CollectionController
                     "items": {
                         "type": "string"
                     },
-                    "description": "Theme tags for music entries (e.g., battle, peaceful, forest)"
+                    "description": "Theme tags for content selection matching (e.g., battle, peaceful, forest)"
                 },
                 "duration": {
                     "type": "string",
@@ -1622,27 +1559,18 @@ public partial class CollectionController
                 "loopPoint": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Loop point for music entries (ISO 8601 duration or timestamp)"
+                    "description": "Loop point for seamless playback (ISO 8601 duration or timestamp)"
                 },
                 "composer": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Composer or creator name for music entries"
+                    "description": "Composer or creator name"
                 }
             }
         },
         "CollectionType": {
             "type": "string",
-            "description": "Type of collection content.\n- voice_gallery: Voice recordings and dialogue clips\n- scene_archive: Cutscenes and cinematics\n- ending_gallery: Game endings and conclusions\n- music_library: Music tracks for dynamic playback\n- bestiary: Monster and creature encyclopedia\ n- recipe_book: Crafting recipes and formulas\n- custom: User-defined collection type\n",
-            "enum": [
-                "voice_gallery",
-                "scene_archive",
-                "ending_gallery",
-                "music_library",
-                "bestiary",
-                "recipe_book",
-                "custom"
-            ]
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
         },
         "DiscoveryLevel": {
             "type": "object",
@@ -1793,16 +1721,7 @@ public partial class CollectionController
         },
         "CollectionType": {
             "type": "string",
-            "description": "Type of collection content.\ n- voice_gallery: Voice recordings and dialogue clips\n- scene_archive: Cutscenes and cinematics\n- ending_gallery: Game endings and conclusions\n- music_library: Music tracks for dynamic playback\n- bestiary: Monster and creature encyclopedia\n- recipe_book: Crafting recipes and formulas\n- custom: User-defined collection type\n",
-            "enum": [
-                "voice_gallery",
-                "scene_archive",
-                "ending_gallery",
-                "music_library",
-                "bestiary",
-                "recipe_book",
-                "custom"
-            ]
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\ nbut any string code is valid.\n"
         }
     }
 }
@@ -1869,16 +1788,7 @@ public partial class CollectionController
         },
         "CollectionType": {
             "type": "string",
-            "description": "Type of collection content.\n- voice_gallery: Voice recordings and dialogue clips\ n- scene_archive: Cutscenes and cinematics\n- ending_gallery: Game endings and conclusions\n- music_library: Music tracks for dynamic playback\n- bestiary: Monster and creature encyclopedia\n- recipe_book: Crafting recipes and formulas\n- custom: User-defined collection type\n",
-            "enum": [
-                "voice_gallery",
-                "scene_archive",
-                "ending_gallery",
-                "music_library",
-                "bestiary",
-                "recipe_book",
-                "custom"
-            ]
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\ nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
         }
     }
 }
@@ -2025,16 +1935,7 @@ public partial class CollectionController
         },
         "CollectionType": {
             "type": "string",
-            "description": "Type of collection content.\n- voice_gallery: Voice recordings and dialogue clips\ n- scene_archive: Cutscenes and cinematics\n- ending_gallery: Game endings and conclusions\n- music_library: Music tracks for dynamic playback\n- bestiary: Monster and creature encyclopedia\n- recipe_book: Crafting recipes and formulas\n- custom: User-defined collection type\n",
-            "enum": [
-                "voice_gallery",
-                "scene_archive",
-                "ending_gallery",
-                "music_library",
-                "bestiary",
-                "recipe_book",
-                "custom"
-            ]
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\ nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
         }
     }
 }
@@ -2209,16 +2110,7 @@ public partial class CollectionController
         },
         "CollectionType": {
             "type": "string",
-            "description": "Type of collection content.\n- voice_gallery: Voice recordings and dialogue clips\ n- scene_archive: Cutscenes and cinematics\n- ending_gallery: Game endings and conclusions\n- music_library: Music tracks for dynamic playback\n- bestiary: Monster and creature encyclopedia\n- recipe_book: Crafting recipes and formulas\n- custom: User-defined collection type\n",
-            "enum": [
-                "voice_gallery",
-                "scene_archive",
-                "ending_gallery",
-                "music_library",
-                "bestiary",
-                "recipe_book",
-                "custom"
-            ]
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\ nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
         }
     }
 }
@@ -2365,16 +2257,7 @@ public partial class CollectionController
         },
         "CollectionType": {
             "type": "string",
-            "description": "Type of collection content.\n- voice_gallery: Voice recordings and dialogue clips\ n- scene_archive: Cutscenes and cinematics\n- ending_gallery: Game endings and conclusions\n- music_library: Music tracks for dynamic playback\n- bestiary: Monster and creature encyclopedia\n- recipe_book: Crafting recipes and formulas\n- custom: User-defined collection type\n",
-            "enum": [
-                "voice_gallery",
-                "scene_archive",
-                "ending_gallery",
-                "music_library",
-                "bestiary",
-                "recipe_book",
-                "custom"
-            ]
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\ nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
         }
     }
 }
@@ -2483,16 +2366,7 @@ public partial class CollectionController
         },
         "CollectionType": {
             "type": "string",
-            "description": "Type of collection content.\n- voice_gallery: Voice recordings and dialogue clips\n- scene_archive: Cutscenes and cinematics\n- ending_gallery: Game endings and conclusions\n- music_library: Music tracks for dynamic playback\ n- bestiary: Monster and creature encyclopedia\n- recipe_book: Crafting recipes and formulas\n- custom: User-defined collection type\n",
-            "enum": [
-                "voice_gallery",
-                "scene_archive",
-                "ending_gallery",
-                "music_library",
-                "bestiary",
-                "recipe_book",
-                "custom"
-            ]
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
         },
         "EntryMetadata": {
             "type": "object",
@@ -2698,16 +2572,7 @@ public partial class CollectionController
         },
         "CollectionType": {
             "type": "string",
-            "description": "Type of collection content.\n- voice_gallery: Voice recordings and dialogue clips\ n- scene_archive: Cutscenes and cinematics\n- ending_gallery: Game endings and conclusions\n- music_library: Music tracks for dynamic playback\n- bestiary: Monster and creature encyclopedia\n- recipe_book: Crafting recipes and formulas\n- custom: User-defined collection type\n",
-            "enum": [
-                "voice_gallery",
-                "scene_archive",
-                "ending_gallery",
-                "music_library",
-                "bestiary",
-                "recipe_book",
-                "custom"
-            ]
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\ nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
         }
     }
 }
@@ -3303,16 +3168,7 @@ public partial class CollectionController
         },
         "CollectionType": {
             "type": "string",
-            "description": "Type of collection content.\n- voice_gallery: Voice recordings and dialogue clips\n- scene_archive: Cutscenes and cinematics\n- ending_gallery: Game endings and conclusions\n- music_library: Music tracks for dynamic playback\n- bestiary: Monster and creature encyclopedia\n- recipe_book: Crafting recipes and formulas\n- custom: User-defined collection type\n",
-            "enum": [
-                "voice_gallery",
-                "scene_archive",
-                "ending_gallery",
-                "music_library",
-                "bestiary",
-                "recipe_book",
-                "custom"
-            ]
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
         }
     }
 }
@@ -3363,16 +3219,7 @@ public partial class CollectionController
         },
         "CollectionType": {
             "type": "string",
-            "description": "Type of collection content.\n- voice_gallery: Voice recordings and dialogue clips\n- scene_archive: Cutscenes and cinematics\n- ending_gallery: Game endings and conclusions\n- music_library: Music tracks for dynamic playback\n- bestiary: Monster and creature encyclopedia\ n- recipe_book: Crafting recipes and formulas\n- custom: User-defined collection type\n",
-            "enum": [
-                "voice_gallery",
-                "scene_archive",
-                "ending_gallery",
-                "music_library",
-                "bestiary",
-                "recipe_book",
-                "custom"
-            ]
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
         },
         "CategoryStats": {
             "type": "object",
@@ -3457,28 +3304,29 @@ public partial class CollectionController
 
     #endregion
 
-    #region Meta Endpoints for SelectTrackForArea
+    #region Meta Endpoints for SelectContentForArea
 
-    private static readonly string _SelectTrackForArea_RequestSchema = """
+    private static readonly string _SelectContentForArea_RequestSchema = """
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/SelectTrackForAreaRequest",
+    "$ref": "#/$defs/SelectContentForAreaRequest",
     "$defs": {
-        "SelectTrackForAreaRequest": {
+        "SelectContentForAreaRequest": {
             "type": "object",
-            "description": "Request to select a music track for an area",
+            "description": "Request to select content for an area based on unlocked collection",
             "additionalProperties": false,
             "required": [
                 "ownerId",
                 "ownerType",
                 "gameServiceId",
+                "collectionType",
                 "areaCode"
             ],
             "properties": {
                 "ownerId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Entity whose music library to search"
+                    "description": "Entity whose collection to search"
                 },
                 "ownerType": {
                     "type": "string",
@@ -3489,58 +3337,61 @@ public partial class CollectionController
                     "format": "uuid",
                     "description": "Game service scope"
                 },
+                "collectionType": {
+                    "$ref": "#/$defs/CollectionType",
+                    "description": "Type of collection to select content from"
+                },
                 "areaCode": {
                     "type": "string",
-                    "description": "Area code to select music for"
+                    "description": "Area code to select content for"
                 }
             }
+        },
+        "CollectionType": {
+            "type": "string",
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\ nbut any string code is valid.\n"
         }
     }
 }
 """;
 
-    private static readonly string _SelectTrackForArea_ResponseSchema = """
+    private static readonly string _SelectContentForArea_ResponseSchema = """
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/MusicTrackSelectionResponse",
+    "$ref": "#/$defs/ContentSelectionResponse",
     "$defs": {
-        "MusicTrackSelectionResponse": {
+        "ContentSelectionResponse": {
             "type": "object",
-            "description": "Selected music track for an area",
+            "description": "Selected content entry for an area",
             "additionalProperties": false,
             "required": [
-                "trackCode",
+                "entryCode",
                 "displayName",
                 "matchedThemes"
             ],
             "properties": {
-                "trackCode": {
+                "entryCode": {
                     "type": "string",
-                    "description": "Code of the selected track"
+                    "description": "Code of the selected entry"
                 },
                 "displayName": {
                     "type": "string",
-                    "description": "Display name of the selected track"
+                    "description": "Display name of the selected entry"
                 },
-                "composer": {
+                "category": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Composer of the selected track"
+                    "description": "Category of the selected entry"
                 },
                 "assetId": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Asset identifier for the track audio"
+                    "description": "Primary asset identifier for the entry"
                 },
-                "duration": {
+                "thumbnailAssetId": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Duration of the track"
-                },
-                "loopPoint": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "Loop point for seamless playback"
+                    "description": "Thumbnail asset identifier for the entry"
                 },
                 "themes": {
                     "type": "array",
@@ -3548,7 +3399,7 @@ public partial class CollectionController
                     "items": {
                         "type": "string"
                     },
-                    "description": "Theme tags of the selected track"
+                    "description": "Theme tags of the selected entry"
                 },
                 "matchedThemes": {
                     "type": "array",
@@ -3563,86 +3414,91 @@ public partial class CollectionController
 }
 """;
 
-    private static readonly string _SelectTrackForArea_Info = """
+    private static readonly string _SelectContentForArea_Info = """
 {
-    "summary": "Select a track for an area based on unlocked library",
-    "description": "Select a music track for an area based on the owner's unlocked music library\nand area theme configuration. Uses weighted random selection based on theme overlap.\nFalls back to the area's default track if no matches are found.\n",
+    "summary": "Select content for an area based on unlocked library",
+    "description": "Select a content entry for an area based on the owner's unlocked collection\nand area theme configuration. Uses weighted random selection based on theme overlap.\nFalls back to the area's default entry if no matches are found.\n",
     "tags": [
-        "Music"
+        "Content"
     ],
     "deprecated": false,
-    "operationId": "selectTrackForArea"
+    "operationId": "selectContentForArea"
 }
 """;
 
-    /// <summary>Returns endpoint information for SelectTrackForArea</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/music/select-for-area/meta/info")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SelectTrackForArea_MetaInfo()
+    /// <summary>Returns endpoint information for SelectContentForArea</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/content/select-for-area/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SelectContentForArea_MetaInfo()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
             "Collection",
             "POST",
-            "/collection/music/select-for-area",
-            _SelectTrackForArea_Info));
+            "/collection/content/select-for-area",
+            _SelectContentForArea_Info));
 
-    /// <summary>Returns request schema for SelectTrackForArea</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/music/select-for-area/meta/request-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SelectTrackForArea_MetaRequestSchema()
+    /// <summary>Returns request schema for SelectContentForArea</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/content/select-for-area/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SelectContentForArea_MetaRequestSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
             "Collection",
             "POST",
-            "/collection/music/select-for-area",
+            "/collection/content/select-for-area",
             "request-schema",
-            _SelectTrackForArea_RequestSchema));
+            _SelectContentForArea_RequestSchema));
 
-    /// <summary>Returns response schema for SelectTrackForArea</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/music/select-for-area/meta/response-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SelectTrackForArea_MetaResponseSchema()
+    /// <summary>Returns response schema for SelectContentForArea</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/content/select-for-area/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SelectContentForArea_MetaResponseSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
             "Collection",
             "POST",
-            "/collection/music/select-for-area",
+            "/collection/content/select-for-area",
             "response-schema",
-            _SelectTrackForArea_ResponseSchema));
+            _SelectContentForArea_ResponseSchema));
 
-    /// <summary>Returns full schema for SelectTrackForArea</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/music/select-for-area/meta/schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SelectTrackForArea_MetaFullSchema()
+    /// <summary>Returns full schema for SelectContentForArea</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/content/select-for-area/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SelectContentForArea_MetaFullSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
             "Collection",
             "POST",
-            "/collection/music/select-for-area",
-            _SelectTrackForArea_Info,
-            _SelectTrackForArea_RequestSchema,
-            _SelectTrackForArea_ResponseSchema));
+            "/collection/content/select-for-area",
+            _SelectContentForArea_Info,
+            _SelectContentForArea_RequestSchema,
+            _SelectContentForArea_ResponseSchema));
 
     #endregion
 
-    #region Meta Endpoints for SetAreaMusicConfig
+    #region Meta Endpoints for SetAreaContentConfig
 
-    private static readonly string _SetAreaMusicConfig_RequestSchema = """
+    private static readonly string _SetAreaContentConfig_RequestSchema = """
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/SetAreaMusicConfigRequest",
+    "$ref": "#/$defs/SetAreaContentConfigRequest",
     "$defs": {
-        "SetAreaMusicConfigRequest": {
+        "SetAreaContentConfigRequest": {
             "type": "object",
-            "description": "Request to create or update an area music configuration",
+            "description": "Request to create or update an area content configuration",
             "additionalProperties": false,
             "required": [
                 "areaCode",
                 "gameServiceId",
+                "collectionType",
                 "themes",
-                "defaultTrackCode"
+                "defaultEntryCode"
             ],
             "properties": {
                 "areaCode": {
                     "type": "string",
-                    "description": "Area code to configure (unique per game service)"
+                    "description": "Area code to configure (unique per game service and collection type)"
                 },
                 "gameServiceId": {
                     "type": "string",
                     "format": "uuid",
                     "description": "Game service this area config belongs to"
+                },
+                "collectionType": {
+                    "$ref": "#/$defs/CollectionType",
+                    "description": "Type of collection this area config applies to"
                 },
                 "themes": {
                     "type": "array",
@@ -3650,33 +3506,38 @@ public partial class CollectionController
                         "type": "string"
                     },
                     "minItems": 1,
-                    "description": "Theme tags for this area (matched against music entry themes)"
+                    "description": "Theme tags for this area (matched against collection entry themes)"
                 },
-                "defaultTrackCode": {
+                "defaultEntryCode": {
                     "type": "string",
-                    "description": "Default track code to use when no matches are found"
+                    "description": "Default entry code to use when no matches are found"
                 }
             }
+        },
+        "CollectionType": {
+            "type": "string",
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
         }
     }
 }
 """;
 
-    private static readonly string _SetAreaMusicConfig_ResponseSchema = """
+    private static readonly string _SetAreaContentConfig_ResponseSchema = """
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/AreaMusicConfigResponse",
+    "$ref": "#/$defs/AreaContentConfigResponse",
     "$defs": {
-        "AreaMusicConfigResponse": {
+        "AreaContentConfigResponse": {
             "type": "object",
-            "description": "Area music configuration",
+            "description": "Area content configuration",
             "additionalProperties": false,
             "required": [
                 "areaConfigId",
                 "areaCode",
                 "gameServiceId",
+                "collectionType",
                 "themes",
-                "defaultTrackCode",
+                "defaultEntryCode",
                 "createdAt"
             ],
             "properties": {
@@ -3694,6 +3555,10 @@ public partial class CollectionController
                     "format": "uuid",
                     "description": "Game service this area config belongs to"
                 },
+                "collectionType": {
+                    "$ref": "#/$defs/CollectionType",
+                    "description": "Type of collection this config applies to"
+                },
                 "themes": {
                     "type": "array",
                     "items": {
@@ -3701,9 +3566,9 @@ public partial class CollectionController
                     },
                     "description": "Theme tags for this area"
                 },
-                "defaultTrackCode": {
+                "defaultEntryCode": {
                     "type": "string",
-                    "description": "Default track code"
+                    "description": "Default entry code"
                 },
                 "createdAt": {
                     "type": "string",
@@ -3717,79 +3582,84 @@ public partial class CollectionController
                     "description": "When this area config was last updated"
                 }
             }
+        },
+        "CollectionType": {
+            "type": "string",
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
         }
     }
 }
 """;
 
-    private static readonly string _SetAreaMusicConfig_Info = """
+    private static readonly string _SetAreaContentConfig_Info = """
 {
     "summary": "Set area-to-theme mapping",
-    "description": "Create or update an area music configuration that maps an area code to themes and a default track.",
+    "description": "Create or update an area content configuration that maps an area code to themes and a default entry.",
     "tags": [
-        "Music"
+        "Content"
     ],
     "deprecated": false,
-    "operationId": "setAreaMusicConfig"
+    "operationId": "setAreaContentConfig"
 }
 """;
 
-    /// <summary>Returns endpoint information for SetAreaMusicConfig</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/music/area-config/set/meta/info")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SetAreaMusicConfig_MetaInfo()
+    /// <summary>Returns endpoint information for SetAreaContentConfig</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/content/area-config/set/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SetAreaContentConfig_MetaInfo()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
             "Collection",
             "POST",
-            "/collection/music/area-config/set",
-            _SetAreaMusicConfig_Info));
+            "/collection/content/area-config/set",
+            _SetAreaContentConfig_Info));
 
-    /// <summary>Returns request schema for SetAreaMusicConfig</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/music/area-config/set/meta/request-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SetAreaMusicConfig_MetaRequestSchema()
+    /// <summary>Returns request schema for SetAreaContentConfig</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/content/area-config/set/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SetAreaContentConfig_MetaRequestSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
             "Collection",
             "POST",
-            "/collection/music/area-config/set",
+            "/collection/content/area-config/set",
             "request-schema",
-            _SetAreaMusicConfig_RequestSchema));
+            _SetAreaContentConfig_RequestSchema));
 
-    /// <summary>Returns response schema for SetAreaMusicConfig</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/music/area-config/set/meta/response-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SetAreaMusicConfig_MetaResponseSchema()
+    /// <summary>Returns response schema for SetAreaContentConfig</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/content/area-config/set/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SetAreaContentConfig_MetaResponseSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
             "Collection",
             "POST",
-            "/collection/music/area-config/set",
+            "/collection/content/area-config/set",
             "response-schema",
-            _SetAreaMusicConfig_ResponseSchema));
+            _SetAreaContentConfig_ResponseSchema));
 
-    /// <summary>Returns full schema for SetAreaMusicConfig</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/music/area-config/set/meta/schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SetAreaMusicConfig_MetaFullSchema()
+    /// <summary>Returns full schema for SetAreaContentConfig</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/content/area-config/set/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> SetAreaContentConfig_MetaFullSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
             "Collection",
             "POST",
-            "/collection/music/area-config/set",
-            _SetAreaMusicConfig_Info,
-            _SetAreaMusicConfig_RequestSchema,
-            _SetAreaMusicConfig_ResponseSchema));
+            "/collection/content/area-config/set",
+            _SetAreaContentConfig_Info,
+            _SetAreaContentConfig_RequestSchema,
+            _SetAreaContentConfig_ResponseSchema));
 
     #endregion
 
-    #region Meta Endpoints for GetAreaMusicConfig
+    #region Meta Endpoints for GetAreaContentConfig
 
-    private static readonly string _GetAreaMusicConfig_RequestSchema = """
+    private static readonly string _GetAreaContentConfig_RequestSchema = """
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/GetAreaMusicConfigRequest",
+    "$ref": "#/$defs/GetAreaContentConfigRequest",
     "$defs": {
-        "GetAreaMusicConfigRequest": {
+        "GetAreaContentConfigRequest": {
             "type": "object",
-            "description": "Request to get an area music config",
+            "description": "Request to get an area content config",
             "additionalProperties": false,
             "required": [
                 "areaCode",
-                "gameServiceId"
+                "gameServiceId",
+                "collectionType"
             ],
             "properties": {
                 "areaCode": {
@@ -3800,28 +3670,37 @@ public partial class CollectionController
                     "type": "string",
                     "format": "uuid",
                     "description": "Game service scope"
+                },
+                "collectionType": {
+                    "$ref": "#/$defs/CollectionType",
+                    "description": "Type of collection"
                 }
             }
+        },
+        "CollectionType": {
+            "type": "string",
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
         }
     }
 }
 """;
 
-    private static readonly string _GetAreaMusicConfig_ResponseSchema = """
+    private static readonly string _GetAreaContentConfig_ResponseSchema = """
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/AreaMusicConfigResponse",
+    "$ref": "#/$defs/AreaContentConfigResponse",
     "$defs": {
-        "AreaMusicConfigResponse": {
+        "AreaContentConfigResponse": {
             "type": "object",
-            "description": "Area music configuration",
+            "description": "Area content configuration",
             "additionalProperties": false,
             "required": [
                 "areaConfigId",
                 "areaCode",
                 "gameServiceId",
+                "collectionType",
                 "themes",
-                "defaultTrackCode",
+                "defaultEntryCode",
                 "createdAt"
             ],
             "properties": {
@@ -3839,6 +3718,10 @@ public partial class CollectionController
                     "format": "uuid",
                     "description": "Game service this area config belongs to"
                 },
+                "collectionType": {
+                    "$ref": "#/$defs/CollectionType",
+                    "description": "Type of collection this config applies to"
+                },
                 "themes": {
                     "type": "array",
                     "items": {
@@ -3846,9 +3729,9 @@ public partial class CollectionController
                     },
                     "description": "Theme tags for this area"
                 },
-                "defaultTrackCode": {
+                "defaultEntryCode": {
                     "type": "string",
-                    "description": "Default track code"
+                    "description": "Default entry code"
                 },
                 "createdAt": {
                     "type": "string",
@@ -3862,99 +3745,112 @@ public partial class CollectionController
                     "description": "When this area config was last updated"
                 }
             }
+        },
+        "CollectionType": {
+            "type": "string",
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
         }
     }
 }
 """;
 
-    private static readonly string _GetAreaMusicConfig_Info = """
+    private static readonly string _GetAreaContentConfig_Info = """
 {
-    "summary": "Get area music config",
-    "description": "Get the music configuration for a specific area and game service.",
+    "summary": "Get area content config",
+    "description": "Get the content configuration for a specific area and game service.",
     "tags": [
-        "Music"
+        "Content"
     ],
     "deprecated": false,
-    "operationId": "getAreaMusicConfig"
+    "operationId": "getAreaContentConfig"
 }
 """;
 
-    /// <summary>Returns endpoint information for GetAreaMusicConfig</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/music/area-config/get/meta/info")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAreaMusicConfig_MetaInfo()
+    /// <summary>Returns endpoint information for GetAreaContentConfig</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/content/area-config/get/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAreaContentConfig_MetaInfo()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
             "Collection",
             "POST",
-            "/collection/music/area-config/get",
-            _GetAreaMusicConfig_Info));
+            "/collection/content/area-config/get",
+            _GetAreaContentConfig_Info));
 
-    /// <summary>Returns request schema for GetAreaMusicConfig</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/music/area-config/get/meta/request-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAreaMusicConfig_MetaRequestSchema()
+    /// <summary>Returns request schema for GetAreaContentConfig</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/content/area-config/get/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAreaContentConfig_MetaRequestSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
             "Collection",
             "POST",
-            "/collection/music/area-config/get",
+            "/collection/content/area-config/get",
             "request-schema",
-            _GetAreaMusicConfig_RequestSchema));
+            _GetAreaContentConfig_RequestSchema));
 
-    /// <summary>Returns response schema for GetAreaMusicConfig</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/music/area-config/get/meta/response-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAreaMusicConfig_MetaResponseSchema()
+    /// <summary>Returns response schema for GetAreaContentConfig</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/content/area-config/get/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAreaContentConfig_MetaResponseSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
             "Collection",
             "POST",
-            "/collection/music/area-config/get",
+            "/collection/content/area-config/get",
             "response-schema",
-            _GetAreaMusicConfig_ResponseSchema));
+            _GetAreaContentConfig_ResponseSchema));
 
-    /// <summary>Returns full schema for GetAreaMusicConfig</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/music/area-config/get/meta/schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAreaMusicConfig_MetaFullSchema()
+    /// <summary>Returns full schema for GetAreaContentConfig</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/content/area-config/get/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetAreaContentConfig_MetaFullSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
             "Collection",
             "POST",
-            "/collection/music/area-config/get",
-            _GetAreaMusicConfig_Info,
-            _GetAreaMusicConfig_RequestSchema,
-            _GetAreaMusicConfig_ResponseSchema));
+            "/collection/content/area-config/get",
+            _GetAreaContentConfig_Info,
+            _GetAreaContentConfig_RequestSchema,
+            _GetAreaContentConfig_ResponseSchema));
 
     #endregion
 
-    #region Meta Endpoints for ListAreaMusicConfigs
+    #region Meta Endpoints for ListAreaContentConfigs
 
-    private static readonly string _ListAreaMusicConfigs_RequestSchema = """
+    private static readonly string _ListAreaContentConfigs_RequestSchema = """
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/ListAreaMusicConfigsRequest",
+    "$ref": "#/$defs/ListAreaContentConfigsRequest",
     "$defs": {
-        "ListAreaMusicConfigsRequest": {
+        "ListAreaContentConfigsRequest": {
             "type": "object",
-            "description": "Request to list area music configs for a game service",
+            "description": "Request to list area content configs for a game service",
             "additionalProperties": false,
             "required": [
-                "gameServiceId"
+                "gameServiceId",
+                "collectionType"
             ],
             "properties": {
                 "gameServiceId": {
                     "type": "string",
                     "format": "uuid",
                     "description": "Game service to list area configs for"
+                },
+                "collectionType": {
+                    "$ref": "#/$defs/CollectionType",
+                    "description": "Type of collection to list configs for"
                 }
             }
+        },
+        "CollectionType": {
+            "type": "string",
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
         }
     }
 }
 """;
 
-    private static readonly string _ListAreaMusicConfigs_ResponseSchema = """
+    private static readonly string _ListAreaContentConfigs_ResponseSchema = """
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/ListAreaMusicConfigsResponse",
+    "$ref": "#/$defs/ListAreaContentConfigsResponse",
     "$defs": {
-        "ListAreaMusicConfigsResponse": {
+        "ListAreaContentConfigsResponse": {
             "type": "object",
-            "description": "List of area music configurations",
+            "description": "List of area content configurations",
             "additionalProperties": false,
             "required": [
                 "configs"
@@ -3963,22 +3859,23 @@ public partial class CollectionController
                 "configs": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/$defs/AreaMusicConfigResponse"
+                        "$ref": "#/$defs/AreaContentConfigResponse"
                     },
-                    "description": "Area music configurations for this game service"
+                    "description": "Area content configurations for this game service"
                 }
             }
         },
-        "AreaMusicConfigResponse": {
+        "AreaContentConfigResponse": {
             "type": "object",
-            "description": "Area music configuration",
+            "description": "Area content configuration",
             "additionalProperties": false,
             "required": [
                 "areaConfigId",
                 "areaCode",
                 "gameServiceId",
+                "collectionType",
                 "themes",
-                "defaultTrackCode",
+                "defaultEntryCode",
                 "createdAt"
             ],
             "properties": {
@@ -3996,6 +3893,10 @@ public partial class CollectionController
                     "format": "uuid",
                     "description": "Game service this area config belongs to"
                 },
+                "collectionType": {
+                    "$ref": "#/$defs/CollectionType",
+                    "description": "Type of collection this config applies to"
+                },
                 "themes": {
                     "type": "array",
                     "items": {
@@ -4003,9 +3904,9 @@ public partial class CollectionController
                     },
                     "description": "Theme tags for this area"
                 },
-                "defaultTrackCode": {
+                "defaultEntryCode": {
                     "type": "string",
-                    "description": "Default track code"
+                    "description": "Default entry code"
                 },
                 "createdAt": {
                     "type": "string",
@@ -4019,62 +3920,66 @@ public partial class CollectionController
                     "description": "When this area config was last updated"
                 }
             }
+        },
+        "CollectionType": {
+            "type": "string",
+            "description": "Opaque string code identifying the type of collection content.\nCollection types are game-defined and extensible \u2014 new types can be\nregistered without schema changes. Common conventions include\ nvoice_gallery, scene_archive, music_library, bestiary, recipe_book,\nbut any string code is valid.\n"
         }
     }
 }
 """;
 
-    private static readonly string _ListAreaMusicConfigs_Info = """
+    private static readonly string _ListAreaContentConfigs_Info = """
 {
     "summary": "List area configs for a game service",
-    "description": "List all area music configurations for a game service.",
+    "description": "List all area content configurations for a game service.",
     "tags": [
-        "Music"
+        "Content"
     ],
     "deprecated": false,
-    "operationId": "listAreaMusicConfigs"
+    "operationId": "listAreaContentConfigs"
 }
 """;
 
-    /// <summary>Returns endpoint information for ListAreaMusicConfigs</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/music/area-config/list/meta/info")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListAreaMusicConfigs_MetaInfo()
+    /// <summary>Returns endpoint information for ListAreaContentConfigs</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/content/area-config/list/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListAreaContentConfigs_MetaInfo()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
             "Collection",
             "POST",
-            "/collection/music/area-config/list",
-            _ListAreaMusicConfigs_Info));
+            "/collection/content/area-config/list",
+            _ListAreaContentConfigs_Info));
 
-    /// <summary>Returns request schema for ListAreaMusicConfigs</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/music/area-config/list/meta/request-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListAreaMusicConfigs_MetaRequestSchema()
+    /// <summary>Returns request schema for ListAreaContentConfigs</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/content/area-config/list/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListAreaContentConfigs_MetaRequestSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
             "Collection",
             "POST",
-            "/collection/music/area-config/list",
+            "/collection/content/area-config/list",
             "request-schema",
-            _ListAreaMusicConfigs_RequestSchema));
+            _ListAreaContentConfigs_RequestSchema));
 
-    /// <summary>Returns response schema for ListAreaMusicConfigs</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/music/area-config/list/meta/response-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListAreaMusicConfigs_MetaResponseSchema()
+    /// <summary>Returns response schema for ListAreaContentConfigs</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/content/area-config/list/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListAreaContentConfigs_MetaResponseSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
             "Collection",
             "POST",
-            "/collection/music/area-config/list",
+            "/collection/content/area-config/list",
             "response-schema",
-            _ListAreaMusicConfigs_ResponseSchema));
+            _ListAreaContentConfigs_ResponseSchema));
 
-    /// <summary>Returns full schema for ListAreaMusicConfigs</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/music/area-config/list/meta/schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListAreaMusicConfigs_MetaFullSchema()
+    /// <summary>Returns full schema for ListAreaContentConfigs</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/collection/content/area-config/list/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> ListAreaContentConfigs_MetaFullSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
             "Collection",
             "POST",
-            "/collection/music/area-config/list",
-            _ListAreaMusicConfigs_Info,
-            _ListAreaMusicConfigs_RequestSchema,
-            _ListAreaMusicConfigs_ResponseSchema));
+            "/collection/content/area-config/list",
+            _ListAreaContentConfigs_Info,
+            _ListAreaContentConfigs_RequestSchema,
+            _ListAreaContentConfigs_ResponseSchema));
 
     #endregion
 

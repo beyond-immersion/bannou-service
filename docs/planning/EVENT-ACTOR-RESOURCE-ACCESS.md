@@ -6,7 +6,7 @@
 > **Last Updated**: 2026-02-07
 > **Related Documents**:
 > - `~/.claude/plans/variable-providers-storyline-quest.md` - Variable Providers plan
-> - `docs/planning/REGIONAL_WATCHERS_BEHAVIOR.md` - Regional Watchers (Gods) design
+> - [#383](https://github.com/beyond-immersion/bannou-service/issues/383) - Watcher-Actor integration
 > - `docs/plugins/ACTOR.md` - Actor deep dive (data access pattern selection)
 > - `docs/reference/SERVICE-HIERARCHY.md` - Variable Provider Factory pattern
 > - `docs/plugins/RESOURCE.md` - Resource plugin deep dive
@@ -47,7 +47,7 @@ The Variable Providers plan establishes that:
    condition: "${candidate_snapshot.storyline_participation.active_count} == 0"
    ```
 
-### From `REGIONAL_WATCHERS_BEHAVIOR.md`
+### From Regional Watcher Design (see [#383](https://github.com/beyond-immersion/bannou-service/issues/383))
 
 Regional Watchers (Gods) are long-running Event Brain actors that:
 
@@ -1200,7 +1200,7 @@ Issue #148 tracks extending GOAP WorldState with external service data (currency
 
 ### Architecture References
 - [Variable Providers Plan](~/.claude/plans/variable-providers-storyline-quest.md)
-- [Regional Watchers Design](REGIONAL_WATCHERS_BEHAVIOR.md)
+- [#383](https://github.com/beyond-immersion/bannou-service/issues/383) - Watcher-Actor integration
 - [Actor Deep Dive](../plugins/ACTOR.md) - Data access pattern selection
 - [SERVICE-HIERARCHY.md](../reference/SERVICE-HIERARCHY.md) - Variable Provider Factory pattern
 - [Resource Plugin Deep Dive](../plugins/RESOURCE.md)

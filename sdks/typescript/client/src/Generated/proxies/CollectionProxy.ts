@@ -303,21 +303,21 @@ export class CollectionProxy {
   }
 
   /**
-   * Select a track for an area based on unlocked library
+   * Select content for an area based on unlocked library
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async selectTrackForAreaAsync(
-    request: Schemas['SelectTrackForAreaRequest'],
+  async selectContentForAreaAsync(
+    request: Schemas['SelectContentForAreaRequest'],
     channel: number = 0,
     timeout?: number
-  ): Promise<ApiResponse<Schemas['MusicTrackSelectionResponse']>> {
+  ): Promise<ApiResponse<Schemas['ContentSelectionResponse']>> {
     return this.client.invokeAsync<
-      Schemas['SelectTrackForAreaRequest'],
-      Schemas['MusicTrackSelectionResponse']
-    >('/collection/music/select-for-area', request, channel, timeout);
+      Schemas['SelectContentForAreaRequest'],
+      Schemas['ContentSelectionResponse']
+    >('/collection/content/select-for-area', request, channel, timeout);
   }
 
   /**
@@ -327,33 +327,33 @@ export class CollectionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async setAreaMusicConfigAsync(
-    request: Schemas['SetAreaMusicConfigRequest'],
+  async setAreaContentConfigAsync(
+    request: Schemas['SetAreaContentConfigRequest'],
     channel: number = 0,
     timeout?: number
-  ): Promise<ApiResponse<Schemas['AreaMusicConfigResponse']>> {
+  ): Promise<ApiResponse<Schemas['AreaContentConfigResponse']>> {
     return this.client.invokeAsync<
-      Schemas['SetAreaMusicConfigRequest'],
-      Schemas['AreaMusicConfigResponse']
-    >('/collection/music/area-config/set', request, channel, timeout);
+      Schemas['SetAreaContentConfigRequest'],
+      Schemas['AreaContentConfigResponse']
+    >('/collection/content/area-config/set', request, channel, timeout);
   }
 
   /**
-   * Get area music config
+   * Get area content config
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getAreaMusicConfigAsync(
-    request: Schemas['GetAreaMusicConfigRequest'],
+  async getAreaContentConfigAsync(
+    request: Schemas['GetAreaContentConfigRequest'],
     channel: number = 0,
     timeout?: number
-  ): Promise<ApiResponse<Schemas['AreaMusicConfigResponse']>> {
+  ): Promise<ApiResponse<Schemas['AreaContentConfigResponse']>> {
     return this.client.invokeAsync<
-      Schemas['GetAreaMusicConfigRequest'],
-      Schemas['AreaMusicConfigResponse']
-    >('/collection/music/area-config/get', request, channel, timeout);
+      Schemas['GetAreaContentConfigRequest'],
+      Schemas['AreaContentConfigResponse']
+    >('/collection/content/area-config/get', request, channel, timeout);
   }
 
   /**
@@ -363,15 +363,15 @@ export class CollectionProxy {
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async listAreaMusicConfigsAsync(
-    request: Schemas['ListAreaMusicConfigsRequest'],
+  async listAreaContentConfigsAsync(
+    request: Schemas['ListAreaContentConfigsRequest'],
     channel: number = 0,
     timeout?: number
-  ): Promise<ApiResponse<Schemas['ListAreaMusicConfigsResponse']>> {
+  ): Promise<ApiResponse<Schemas['ListAreaContentConfigsResponse']>> {
     return this.client.invokeAsync<
-      Schemas['ListAreaMusicConfigsRequest'],
-      Schemas['ListAreaMusicConfigsResponse']
-    >('/collection/music/area-config/list', request, channel, timeout);
+      Schemas['ListAreaContentConfigsRequest'],
+      Schemas['ListAreaContentConfigsResponse']
+    >('/collection/content/area-config/list', request, channel, timeout);
   }
 
   /**

@@ -2066,6 +2066,14 @@ public partial class SeedController
                     "maximum": 1.0,
                     "default": 0.0,
                     "description": "Fraction of growth applied to other seeds of the same type owned by the same entity. 0.0 = no sharing (default), 1.0 = full mirror."
+                },
+                "collectionGrowthMappings": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/CollectionGrowthMapping"
+                    },
+                    "description": "Mappings from collection types to growth domains. When a collection entry is unlocked for an entity that owns seeds of this type, the entry's tags are matched against these mappings to determine growth contributions. Null means this seed type does not respond to collection unlocks.\n"
                 }
             }
         },
@@ -2119,6 +2127,53 @@ public partial class SeedController
                 "fidelityFormula": {
                     "type": "string",
                     "description": "How domain depth maps to fidelity (0.0-1.0). Values: \"linear\", \"logarithmic\", \"step\". Consumers may define additional formulas.\n"
+                }
+            }
+        },
+        "CollectionGrowthMapping": {
+            "type": "object",
+            "description": "Maps a collection type to growth domain mappings. When a collection entry is unlocked, Seed uses these mappings to determine which growth domains receive growth and how much. Matched by collection type code.\n",
+            "required": [
+                "collectionType",
+                "domainMappings"
+            ],
+            "properties": {
+                "collectionType": {
+                    "type": "string",
+                    "description": "Collection type code to match against (e.g., \"bestiary\", \"music_library\")."
+                },
+                "domainMappings": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/CollectionDomainMapping"
+                    },
+                    "minItems": 1,
+                    "description": "Mappings from entry tag prefixes to growth domains."
+                }
+            }
+        },
+        "CollectionDomainMapping": {
+            "type": "object",
+            "description": "Maps a tag prefix on a collection entry to a growth domain and amount. When an entry is unlocked, its tags are matched against tagPrefix. Matching tags determine the growth domain (tagPrefix becomes the domain path) and the growth amount to record.\n",
+            "required": [
+                "tagPrefix",
+                "baseAmount"
+            ],
+            "properties": {
+                "tagPrefix": {
+                    "type": "string",
+                    "description": "Tag prefix to match against entry tags. An entry tag \"combat.melee.sword\" matches prefix \"combat\" and \"combat.melee\". The full matching tag becomes the growth domain path.\n"
+                },
+                "baseAmount": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Base growth amount to record when a tag matches this prefix."
+                },
+                "discoveryBonusPerLevel": {
+                    "type": "number",
+                    "format": "float",
+                    "nullable": true,
+                    "description": "Additional growth amount per discovery level of the entry. Total growth = baseAmount + (discoveryLevel * discoveryBonusPerLevel). Null or 0 means no discovery bonus.\n"
                 }
             }
         }
@@ -2214,6 +2269,14 @@ public partial class SeedController
                     "format": "float",
                     "description": "Fraction of growth applied to other seeds of the same type owned by the same entity."
                 },
+                "collectionGrowthMappings": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/CollectionGrowthMapping"
+                    },
+                    "description": "Collection-to-growth-domain mappings for this seed type. Null if this type does not respond to collection unlocks."
+                },
                 "isDeprecated": {
                     "type": "boolean",
                     "description": "Whether this seed type is deprecated and cannot be used for new seeds."
@@ -2281,6 +2344,53 @@ public partial class SeedController
                 "fidelityFormula": {
                     "type": "string",
                     "description": "How domain depth maps to fidelity (0.0-1.0). Values: \"linear\", \"logarithmic\", \"step\". Consumers may define additional formulas.\n"
+                }
+            }
+        },
+        "CollectionGrowthMapping": {
+            "type": "object",
+            "description": "Maps a collection type to growth domain mappings. When a collection entry is unlocked, Seed uses these mappings to determine which growth domains receive growth and how much. Matched by collection type code.\n",
+            "required": [
+                "collectionType",
+                "domainMappings"
+            ],
+            "properties": {
+                "collectionType": {
+                    "type": "string",
+                    "description": "Collection type code to match against (e.g., \"bestiary\", \"music_library\")."
+                },
+                "domainMappings": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/CollectionDomainMapping"
+                    },
+                    "minItems": 1,
+                    "description": "Mappings from entry tag prefixes to growth domains."
+                }
+            }
+        },
+        "CollectionDomainMapping": {
+            "type": "object",
+            "description": "Maps a tag prefix on a collection entry to a growth domain and amount. When an entry is unlocked, its tags are matched against tagPrefix. Matching tags determine the growth domain (tagPrefix becomes the domain path) and the growth amount to record.\n",
+            "required": [
+                "tagPrefix",
+                "baseAmount"
+            ],
+            "properties": {
+                "tagPrefix": {
+                    "type": "string",
+                    "description": "Tag prefix to match against entry tags. An entry tag \"combat.melee.sword\" matches prefix \"combat\" and \"combat.melee\". The full matching tag becomes the growth domain path.\n"
+                },
+                "baseAmount": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Base growth amount to record when a tag matches this prefix."
+                },
+                "discoveryBonusPerLevel": {
+                    "type": "number",
+                    "format": "float",
+                    "nullable": true,
+                    "description": "Additional growth amount per discovery level of the entry. Total growth = baseAmount + (discoveryLevel * discoveryBonusPerLevel). Null or 0 means no discovery bonus.\n"
                 }
             }
         }
@@ -2458,6 +2568,14 @@ public partial class SeedController
                     "format": "float",
                     "description": "Fraction of growth applied to other seeds of the same type owned by the same entity."
                 },
+                "collectionGrowthMappings": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/CollectionGrowthMapping"
+                    },
+                    "description": "Collection-to-growth-domain mappings for this seed type. Null if this type does not respond to collection unlocks."
+                },
                 "isDeprecated": {
                     "type": "boolean",
                     "description": "Whether this seed type is deprecated and cannot be used for new seeds."
@@ -2525,6 +2643,53 @@ public partial class SeedController
                 "fidelityFormula": {
                     "type": "string",
                     "description": "How domain depth maps to fidelity (0.0-1.0). Values: \"linear\", \"logarithmic\", \"step\". Consumers may define additional formulas.\n"
+                }
+            }
+        },
+        "CollectionGrowthMapping": {
+            "type": "object",
+            "description": "Maps a collection type to growth domain mappings. When a collection entry is unlocked, Seed uses these mappings to determine which growth domains receive growth and how much. Matched by collection type code.\n",
+            "required": [
+                "collectionType",
+                "domainMappings"
+            ],
+            "properties": {
+                "collectionType": {
+                    "type": "string",
+                    "description": "Collection type code to match against (e.g., \"bestiary\", \"music_library\")."
+                },
+                "domainMappings": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/CollectionDomainMapping"
+                    },
+                    "minItems": 1,
+                    "description": "Mappings from entry tag prefixes to growth domains."
+                }
+            }
+        },
+        "CollectionDomainMapping": {
+            "type": "object",
+            "description": "Maps a tag prefix on a collection entry to a growth domain and amount. When an entry is unlocked, its tags are matched against tagPrefix. Matching tags determine the growth domain (tagPrefix becomes the domain path) and the growth amount to record.\n",
+            "required": [
+                "tagPrefix",
+                "baseAmount"
+            ],
+            "properties": {
+                "tagPrefix": {
+                    "type": "string",
+                    "description": "Tag prefix to match against entry tags. An entry tag \"combat.melee.sword\" matches prefix \"combat\" and \"combat.melee\". The full matching tag becomes the growth domain path.\n"
+                },
+                "baseAmount": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Base growth amount to record when a tag matches this prefix."
+                },
+                "discoveryBonusPerLevel": {
+                    "type": "number",
+                    "format": "float",
+                    "nullable": true,
+                    "description": "Additional growth amount per discovery level of the entry. Total growth = baseAmount + (discoveryLevel * discoveryBonusPerLevel). Null or 0 means no discovery bonus.\n"
                 }
             }
         }
@@ -2718,6 +2883,14 @@ public partial class SeedController
                     "format": "float",
                     "description": "Fraction of growth applied to other seeds of the same type owned by the same entity."
                 },
+                "collectionGrowthMappings": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/CollectionGrowthMapping"
+                    },
+                    "description": "Collection-to-growth-domain mappings for this seed type. Null if this type does not respond to collection unlocks."
+                },
                 "isDeprecated": {
                     "type": "boolean",
                     "description": "Whether this seed type is deprecated and cannot be used for new seeds."
@@ -2785,6 +2958,53 @@ public partial class SeedController
                 "fidelityFormula": {
                     "type": "string",
                     "description": "How domain depth maps to fidelity (0.0-1.0). Values: \"linear\", \"logarithmic\", \"step\". Consumers may define additional formulas.\n"
+                }
+            }
+        },
+        "CollectionGrowthMapping": {
+            "type": "object",
+            "description": "Maps a collection type to growth domain mappings. When a collection entry is unlocked, Seed uses these mappings to determine which growth domains receive growth and how much. Matched by collection type code.\n",
+            "required": [
+                "collectionType",
+                "domainMappings"
+            ],
+            "properties": {
+                "collectionType": {
+                    "type": "string",
+                    "description": "Collection type code to match against (e.g., \"bestiary\", \"music_library\")."
+                },
+                "domainMappings": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/CollectionDomainMapping"
+                    },
+                    "minItems": 1,
+                    "description": "Mappings from entry tag prefixes to growth domains."
+                }
+            }
+        },
+        "CollectionDomainMapping": {
+            "type": "object",
+            "description": "Maps a tag prefix on a collection entry to a growth domain and amount. When an entry is unlocked, its tags are matched against tagPrefix. Matching tags determine the growth domain (tagPrefix becomes the domain path) and the growth amount to record.\n",
+            "required": [
+                "tagPrefix",
+                "baseAmount"
+            ],
+            "properties": {
+                "tagPrefix": {
+                    "type": "string",
+                    "description": "Tag prefix to match against entry tags. An entry tag \"combat.melee.sword\" matches prefix \"combat\" and \"combat.melee\". The full matching tag becomes the growth domain path.\n"
+                },
+                "baseAmount": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Base growth amount to record when a tag matches this prefix."
+                },
+                "discoveryBonusPerLevel": {
+                    "type": "number",
+                    "format": "float",
+                    "nullable": true,
+                    "description": "Additional growth amount per discovery level of the entry. Total growth = baseAmount + (discoveryLevel * discoveryBonusPerLevel). Null or 0 means no discovery bonus.\n"
                 }
             }
         }
@@ -2917,6 +3137,14 @@ public partial class SeedController
                     "minimum": 0.0,
                     "maximum": 1.0,
                     "description": "Updated fraction of growth applied to other seeds of the same type owned by the same entity."
+                },
+                "collectionGrowthMappings": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/CollectionGrowthMapping"
+                    },
+                    "description": "Updated collection growth mappings. Null means no change, empty array removes all mappings.\n"
                 }
             }
         },
@@ -2970,6 +3198,53 @@ public partial class SeedController
                 "fidelityFormula": {
                     "type": "string",
                     "description": "How domain depth maps to fidelity (0.0-1.0). Values: \"linear\", \"logarithmic\", \"step\". Consumers may define additional formulas.\n"
+                }
+            }
+        },
+        "CollectionGrowthMapping": {
+            "type": "object",
+            "description": "Maps a collection type to growth domain mappings. When a collection entry is unlocked, Seed uses these mappings to determine which growth domains receive growth and how much. Matched by collection type code.\n",
+            "required": [
+                "collectionType",
+                "domainMappings"
+            ],
+            "properties": {
+                "collectionType": {
+                    "type": "string",
+                    "description": "Collection type code to match against (e.g., \"bestiary\", \"music_library\")."
+                },
+                "domainMappings": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/CollectionDomainMapping"
+                    },
+                    "minItems": 1,
+                    "description": "Mappings from entry tag prefixes to growth domains."
+                }
+            }
+        },
+        "CollectionDomainMapping": {
+            "type": "object",
+            "description": "Maps a tag prefix on a collection entry to a growth domain and amount. When an entry is unlocked, its tags are matched against tagPrefix. Matching tags determine the growth domain (tagPrefix becomes the domain path) and the growth amount to record.\n",
+            "required": [
+                "tagPrefix",
+                "baseAmount"
+            ],
+            "properties": {
+                "tagPrefix": {
+                    "type": "string",
+                    "description": "Tag prefix to match against entry tags. An entry tag \"combat.melee.sword\" matches prefix \"combat\" and \"combat.melee\". The full matching tag becomes the growth domain path.\n"
+                },
+                "baseAmount": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Base growth amount to record when a tag matches this prefix."
+                },
+                "discoveryBonusPerLevel": {
+                    "type": "number",
+                    "format": "float",
+                    "nullable": true,
+                    "description": "Additional growth amount per discovery level of the entry. Total growth = baseAmount + (discoveryLevel * discoveryBonusPerLevel). Null or 0 means no discovery bonus.\n"
                 }
             }
         }
@@ -3065,6 +3340,14 @@ public partial class SeedController
                     "format": "float",
                     "description": "Fraction of growth applied to other seeds of the same type owned by the same entity."
                 },
+                "collectionGrowthMappings": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/CollectionGrowthMapping"
+                    },
+                    "description": "Collection-to-growth-domain mappings for this seed type. Null if this type does not respond to collection unlocks."
+                },
                 "isDeprecated": {
                     "type": "boolean",
                     "description": "Whether this seed type is deprecated and cannot be used for new seeds."
@@ -3132,6 +3415,53 @@ public partial class SeedController
                 "fidelityFormula": {
                     "type": "string",
                     "description": "How domain depth maps to fidelity (0.0-1.0). Values: \"linear\", \"logarithmic\", \"step\". Consumers may define additional formulas.\n"
+                }
+            }
+        },
+        "CollectionGrowthMapping": {
+            "type": "object",
+            "description": "Maps a collection type to growth domain mappings. When a collection entry is unlocked, Seed uses these mappings to determine which growth domains receive growth and how much. Matched by collection type code.\n",
+            "required": [
+                "collectionType",
+                "domainMappings"
+            ],
+            "properties": {
+                "collectionType": {
+                    "type": "string",
+                    "description": "Collection type code to match against (e.g., \"bestiary\", \"music_library\")."
+                },
+                "domainMappings": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/CollectionDomainMapping"
+                    },
+                    "minItems": 1,
+                    "description": "Mappings from entry tag prefixes to growth domains."
+                }
+            }
+        },
+        "CollectionDomainMapping": {
+            "type": "object",
+            "description": "Maps a tag prefix on a collection entry to a growth domain and amount. When an entry is unlocked, its tags are matched against tagPrefix. Matching tags determine the growth domain (tagPrefix becomes the domain path) and the growth amount to record.\n",
+            "required": [
+                "tagPrefix",
+                "baseAmount"
+            ],
+            "properties": {
+                "tagPrefix": {
+                    "type": "string",
+                    "description": "Tag prefix to match against entry tags. An entry tag \"combat.melee.sword\" matches prefix \"combat\" and \"combat.melee\". The full matching tag becomes the growth domain path.\n"
+                },
+                "baseAmount": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Base growth amount to record when a tag matches this prefix."
+                },
+                "discoveryBonusPerLevel": {
+                    "type": "number",
+                    "format": "float",
+                    "nullable": true,
+                    "description": "Additional growth amount per discovery level of the entry. Total growth = baseAmount + (discoveryLevel * discoveryBonusPerLevel). Null or 0 means no discovery bonus.\n"
                 }
             }
         }
@@ -3316,6 +3646,14 @@ public partial class SeedController
                     "format": "float",
                     "description": "Fraction of growth applied to other seeds of the same type owned by the same entity."
                 },
+                "collectionGrowthMappings": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/CollectionGrowthMapping"
+                    },
+                    "description": "Collection-to-growth-domain mappings for this seed type. Null if this type does not respond to collection unlocks."
+                },
                 "isDeprecated": {
                     "type": "boolean",
                     "description": "Whether this seed type is deprecated and cannot be used for new seeds."
@@ -3383,6 +3721,53 @@ public partial class SeedController
                 "fidelityFormula": {
                     "type": "string",
                     "description": "How domain depth maps to fidelity (0.0-1.0). Values: \"linear\", \"logarithmic\", \"step\". Consumers may define additional formulas.\n"
+                }
+            }
+        },
+        "CollectionGrowthMapping": {
+            "type": "object",
+            "description": "Maps a collection type to growth domain mappings. When a collection entry is unlocked, Seed uses these mappings to determine which growth domains receive growth and how much. Matched by collection type code.\n",
+            "required": [
+                "collectionType",
+                "domainMappings"
+            ],
+            "properties": {
+                "collectionType": {
+                    "type": "string",
+                    "description": "Collection type code to match against (e.g., \"bestiary\", \"music_library\")."
+                },
+                "domainMappings": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/CollectionDomainMapping"
+                    },
+                    "minItems": 1,
+                    "description": "Mappings from entry tag prefixes to growth domains."
+                }
+            }
+        },
+        "CollectionDomainMapping": {
+            "type": "object",
+            "description": "Maps a tag prefix on a collection entry to a growth domain and amount. When an entry is unlocked, its tags are matched against tagPrefix. Matching tags determine the growth domain (tagPrefix becomes the domain path) and the growth amount to record.\n",
+            "required": [
+                "tagPrefix",
+                "baseAmount"
+            ],
+            "properties": {
+                "tagPrefix": {
+                    "type": "string",
+                    "description": "Tag prefix to match against entry tags. An entry tag \"combat.melee.sword\" matches prefix \"combat\" and \"combat.melee\". The full matching tag becomes the growth domain path.\n"
+                },
+                "baseAmount": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Base growth amount to record when a tag matches this prefix."
+                },
+                "discoveryBonusPerLevel": {
+                    "type": "number",
+                    "format": "float",
+                    "nullable": true,
+                    "description": "Additional growth amount per discovery level of the entry. Total growth = baseAmount + (discoveryLevel * discoveryBonusPerLevel). Null or 0 means no discovery bonus.\n"
                 }
             }
         }
@@ -3561,6 +3946,14 @@ public partial class SeedController
                     "format": "float",
                     "description": "Fraction of growth applied to other seeds of the same type owned by the same entity."
                 },
+                "collectionGrowthMappings": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/CollectionGrowthMapping"
+                    },
+                    "description": "Collection-to-growth-domain mappings for this seed type. Null if this type does not respond to collection unlocks."
+                },
                 "isDeprecated": {
                     "type": "boolean",
                     "description": "Whether this seed type is deprecated and cannot be used for new seeds."
@@ -3628,6 +4021,53 @@ public partial class SeedController
                 "fidelityFormula": {
                     "type": "string",
                     "description": "How domain depth maps to fidelity (0.0-1.0). Values: \"linear\", \"logarithmic\", \"step\". Consumers may define additional formulas.\n"
+                }
+            }
+        },
+        "CollectionGrowthMapping": {
+            "type": "object",
+            "description": "Maps a collection type to growth domain mappings. When a collection entry is unlocked, Seed uses these mappings to determine which growth domains receive growth and how much. Matched by collection type code.\n",
+            "required": [
+                "collectionType",
+                "domainMappings"
+            ],
+            "properties": {
+                "collectionType": {
+                    "type": "string",
+                    "description": "Collection type code to match against (e.g., \"bestiary\", \"music_library\")."
+                },
+                "domainMappings": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/CollectionDomainMapping"
+                    },
+                    "minItems": 1,
+                    "description": "Mappings from entry tag prefixes to growth domains."
+                }
+            }
+        },
+        "CollectionDomainMapping": {
+            "type": "object",
+            "description": "Maps a tag prefix on a collection entry to a growth domain and amount. When an entry is unlocked, its tags are matched against tagPrefix. Matching tags determine the growth domain (tagPrefix becomes the domain path) and the growth amount to record.\n",
+            "required": [
+                "tagPrefix",
+                "baseAmount"
+            ],
+            "properties": {
+                "tagPrefix": {
+                    "type": "string",
+                    "description": "Tag prefix to match against entry tags. An entry tag \"combat.melee.sword\" matches prefix \"combat\" and \"combat.melee\". The full matching tag becomes the growth domain path.\n"
+                },
+                "baseAmount": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Base growth amount to record when a tag matches this prefix."
+                },
+                "discoveryBonusPerLevel": {
+                    "type": "number",
+                    "format": "float",
+                    "nullable": true,
+                    "description": "Additional growth amount per discovery level of the entry. Total growth = baseAmount + (discoveryLevel * discoveryBonusPerLevel). Null or 0 means no discovery bonus.\n"
                 }
             }
         }

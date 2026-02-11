@@ -40,7 +40,7 @@ CORRECT MENTAL MODEL:
 - Behaviors are game-specific content; the plugin is reusable infrastructure
 - This keeps the plugin simple and behaviors expressive
 
-See [Regional Watchers Behavior](REGIONAL_WATCHERS_BEHAVIOR.md) for the active orchestration patterns.
+See [Puppetmaster deep dive](../plugins/PUPPETMASTER.md) and [#383](https://github.com/beyond-immersion/bannou-service/issues/383) for watcher-actor orchestration patterns.
 
 ### Recommendation: Merge into Storyline Plugin
 

@@ -2638,7 +2638,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/collection/music/select-for-area': {
+  '/collection/content/select-for-area': {
     parameters: {
       query?: never;
       header?: never;
@@ -2648,19 +2648,19 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Select a track for an area based on unlocked library
-     * @description Select a music track for an area based on the owner's unlocked music library
+     * Select content for an area based on unlocked library
+     * @description Select a content entry for an area based on the owner's unlocked collection
      *     and area theme configuration. Uses weighted random selection based on theme overlap.
-     *     Falls back to the area's default track if no matches are found.
+     *     Falls back to the area's default entry if no matches are found.
      */
-    post: operations['selectTrackForArea'];
+    post: operations['selectContentForArea'];
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
     trace?: never;
   };
-  '/collection/music/area-config/set': {
+  '/collection/content/area-config/set': {
     parameters: {
       query?: never;
       header?: never;
@@ -2671,16 +2671,16 @@ export interface paths {
     put?: never;
     /**
      * Set area-to-theme mapping
-     * @description Create or update an area music configuration that maps an area code to themes and a default track.
+     * @description Create or update an area content configuration that maps an area code to themes and a default entry.
      */
-    post: operations['setAreaMusicConfig'];
+    post: operations['setAreaContentConfig'];
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
     trace?: never;
   };
-  '/collection/music/area-config/get': {
+  '/collection/content/area-config/get': {
     parameters: {
       query?: never;
       header?: never;
@@ -2690,17 +2690,17 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Get area music config
-     * @description Get the music configuration for a specific area and game service.
+     * Get area content config
+     * @description Get the content configuration for a specific area and game service.
      */
-    post: operations['getAreaMusicConfig'];
+    post: operations['getAreaContentConfig'];
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
     trace?: never;
   };
-  '/collection/music/area-config/list': {
+  '/collection/content/area-config/list': {
     parameters: {
       query?: never;
       header?: never;
@@ -2711,9 +2711,9 @@ export interface paths {
     put?: never;
     /**
      * List area configs for a game service
-     * @description List all area music configurations for a game service.
+     * @description List all area content configurations for a game service.
      */
-    post: operations['listAreaMusicConfigs'];
+    post: operations['listAreaContentConfigs'];
     delete?: never;
     options?: never;
     head?: never;
@@ -10275,8 +10275,8 @@ export interface components {
        */
       seedId: string;
     };
-    /** @description Area music configuration */
-    AreaMusicConfigResponse: {
+    /** @description Area content configuration */
+    AreaContentConfigResponse: {
       /**
        * Format: uuid
        * @description Unique area config identifier
@@ -10289,10 +10289,12 @@ export interface components {
        * @description Game service this area config belongs to
        */
       gameServiceId: string;
+      /** @description Type of collection this config applies to */
+      collectionType: components['schemas']['CollectionType'];
       /** @description Theme tags for this area */
       themes: string[];
-      /** @description Default track code */
-      defaultTrackCode: string;
+      /** @description Default entry code */
+      defaultEntryCode: string;
       /**
        * Format: date-time
        * @description When this area config was created
@@ -12711,6 +12713,28 @@ export interface components {
        */
       deleteIntermediates: boolean;
     };
+    /** @description Maps a tag prefix on a collection entry to a growth domain and amount. When an entry is unlocked, its tags are matched against tagPrefix. Matching tags determine the growth domain (tagPrefix becomes the domain path) and the growth amount to record. */
+    CollectionDomainMapping: {
+      /** @description Tag prefix to match against entry tags. An entry tag "combat.melee.sword" matches prefix "combat" and "combat.melee". The full matching tag becomes the growth domain path. */
+      tagPrefix: string;
+      /**
+       * Format: float
+       * @description Base growth amount to record when a tag matches this prefix.
+       */
+      baseAmount: number;
+      /**
+       * Format: float
+       * @description Additional growth amount per discovery level of the entry. Total growth = baseAmount + (discoveryLevel * discoveryBonusPerLevel). Null or 0 means no discovery bonus.
+       */
+      discoveryBonusPerLevel?: number | null;
+    };
+    /** @description Maps a collection type to growth domain mappings. When a collection entry is unlocked, Seed uses these mappings to determine which growth domains receive growth and how much. Matched by collection type code. */
+    CollectionGrowthMapping: {
+      /** @description Collection type code to match against (e.g., "bestiary", "music_library"). */
+      collectionType: string;
+      /** @description Mappings from entry tag prefixes to growth domains. */
+      domainMappings: components['schemas']['CollectionDomainMapping'][];
+    };
     /** @description Collection instance with summary */
     CollectionResponse: {
       /**
@@ -12746,24 +12770,13 @@ export interface components {
       createdAt: string;
     };
     /**
-     * @description Type of collection content.
-     *     - voice_gallery: Voice recordings and dialogue clips
-     *     - scene_archive: Cutscenes and cinematics
-     *     - ending_gallery: Game endings and conclusions
-     *     - music_library: Music tracks for dynamic playback
-     *     - bestiary: Monster and creature encyclopedia
-     *     - recipe_book: Crafting recipes and formulas
-     *     - custom: User-defined collection type
-     * @enum {string}
+     * @description Opaque string code identifying the type of collection content.
+     *     Collection types are game-defined and extensible — new types can be
+     *     registered without schema changes. Common conventions include
+     *     voice_gallery, scene_archive, music_library, bestiary, recipe_book,
+     *     but any string code is valid.
      */
-    CollectionType:
-      | 'voice_gallery'
-      | 'scene_archive'
-      | 'ending_gallery'
-      | 'music_library'
-      | 'bestiary'
-      | 'recipe_book'
-      | 'custom';
+    CollectionType: string;
     /**
      * @description Combat behavior preferences that influence tactical decisions.
      *     These values affect GOAP action selection, retreat conditions,
@@ -13534,6 +13547,23 @@ export interface components {
       /** @description Items in container */
       items: components['schemas']['ContainerItem'][];
     };
+    /** @description Selected content entry for an area */
+    ContentSelectionResponse: {
+      /** @description Code of the selected entry */
+      entryCode: string;
+      /** @description Display name of the selected entry */
+      displayName: string;
+      /** @description Category of the selected entry */
+      category?: string | null;
+      /** @description Primary asset identifier for the entry */
+      assetId?: string | null;
+      /** @description Thumbnail asset identifier for the entry */
+      thumbnailAssetId?: string | null;
+      /** @description Theme tags of the selected entry */
+      themes?: string[] | null;
+      /** @description Themes that matched the area configuration */
+      matchedThemes: string[];
+    };
     /** @description Schema defining required context variables for behavior execution */
     ContextSchemaData: {
       [key: string]: unknown;
@@ -14278,13 +14308,13 @@ export interface components {
       itemTemplateId: string;
       /** @description Progressive discovery levels for bestiary-style entries */
       discoveryLevels?: components['schemas']['DiscoveryLevel'][] | null;
-      /** @description Theme tags for music entries (e.g., battle, peaceful, forest) */
+      /** @description Theme tags for content selection matching (e.g., battle, peaceful, forest) */
       themes?: string[] | null;
       /** @description Duration of the content (ISO 8601 duration or human-readable) */
       duration?: string | null;
-      /** @description Loop point for music entries (ISO 8601 duration or timestamp) */
+      /** @description Loop point for seamless playback (ISO 8601 duration or timestamp) */
       loopPoint?: string | null;
-      /** @description Composer or creator name for music entries */
+      /** @description Composer or creator name */
       composer?: string | null;
     };
     /** @description Input for defining a party in escrow creation */
@@ -17600,8 +17630,8 @@ export interface components {
       /** @description The archive data (null if not found) */
       archive?: components['schemas']['ResourceArchive'];
     };
-    /** @description Request to get an area music config */
-    GetAreaMusicConfigRequest: {
+    /** @description Request to get an area content config */
+    GetAreaContentConfigRequest: {
       /** @description Area code to look up */
       areaCode: string;
       /**
@@ -17609,6 +17639,8 @@ export interface components {
        * @description Game service scope
        */
       gameServiceId: string;
+      /** @description Type of collection */
+      collectionType: components['schemas']['CollectionType'];
     };
     /** @description Request to retrieve asset metadata and download URL */
     GetAssetRequest: {
@@ -20296,18 +20328,20 @@ export interface components {
       /** @description Total number of archives */
       total: number;
     };
-    /** @description Request to list area music configs for a game service */
-    ListAreaMusicConfigsRequest: {
+    /** @description Request to list area content configs for a game service */
+    ListAreaContentConfigsRequest: {
       /**
        * Format: uuid
        * @description Game service to list area configs for
        */
       gameServiceId: string;
+      /** @description Type of collection to list configs for */
+      collectionType: components['schemas']['CollectionType'];
     };
-    /** @description List of area music configurations */
-    ListAreaMusicConfigsResponse: {
-      /** @description Area music configurations for this game service */
-      configs: components['schemas']['AreaMusicConfigResponse'][];
+    /** @description List of area content configurations */
+    ListAreaContentConfigsResponse: {
+      /** @description Area content configurations for this game service */
+      configs: components['schemas']['AreaContentConfigResponse'][];
     };
     /** @description Request to list quests available for a character to accept */
     ListAvailableQuestsRequest: {
@@ -22461,25 +22495,6 @@ export interface components {
       maxParts?: number;
       /** @description Pre-signed URLs for each part of the multipart upload */
       uploadUrls?: components['schemas']['PartUploadInfo'][] | null;
-    };
-    /** @description Selected music track for an area */
-    MusicTrackSelectionResponse: {
-      /** @description Code of the selected track */
-      trackCode: string;
-      /** @description Display name of the selected track */
-      displayName: string;
-      /** @description Composer of the selected track */
-      composer?: string | null;
-      /** @description Asset identifier for the track audio */
-      assetId?: string | null;
-      /** @description Duration of the track */
-      duration?: string | null;
-      /** @description Loop point for seamless playback */
-      loopPoint?: string | null;
-      /** @description Theme tags of the selected track */
-      themes?: string[] | null;
-      /** @description Themes that matched the area configuration */
-      matchedThemes: string[];
     };
     /**
      * @description Types of state mutations a scenario can apply.
@@ -24827,6 +24842,8 @@ export interface components {
        * @default 0
        */
       sameOwnerGrowthMultiplier: number;
+      /** @description Mappings from collection types to growth domains. When a collection entry is unlocked for an entity that owns seeds of this type, the entry's tags are matched against these mappings to determine growth contributions. Null means this seed type does not respond to collection unlocks. */
+      collectionGrowthMappings?: components['schemas']['CollectionGrowthMapping'][] | null;
     };
     /**
      * @description How deep to traverse related document links:
@@ -26481,6 +26498,8 @@ export interface components {
        * @description Fraction of growth applied to other seeds of the same type owned by the same entity.
        */
       sameOwnerGrowthMultiplier?: number;
+      /** @description Collection-to-growth-domain mappings for this seed type. Null if this type does not respond to collection unlocks. */
+      collectionGrowthMappings?: components['schemas']['CollectionGrowthMapping'][] | null;
       /** @description Whether this seed type is deprecated and cannot be used for new seeds. */
       isDeprecated: boolean;
       /**
@@ -26491,11 +26510,11 @@ export interface components {
       /** @description Optional reason for deprecation. */
       deprecationReason?: string | null;
     };
-    /** @description Request to select a music track for an area */
-    SelectTrackForAreaRequest: {
+    /** @description Request to select content for an area based on unlocked collection */
+    SelectContentForAreaRequest: {
       /**
        * Format: uuid
-       * @description Entity whose music library to search
+       * @description Entity whose collection to search
        */
       ownerId: string;
       /** @description Entity type discriminator */
@@ -26505,7 +26524,9 @@ export interface components {
        * @description Game service scope
        */
       gameServiceId: string;
-      /** @description Area code to select music for */
+      /** @description Type of collection to select content from */
+      collectionType: components['schemas']['CollectionType'];
+      /** @description Area code to select content for */
       areaCode: string;
     };
     /** @description Request to send multiple messages to a room atomically */
@@ -26668,19 +26689,21 @@ export interface components {
       /** @description List of active sessions for the account */
       sessions: components['schemas']['SessionInfo'][];
     };
-    /** @description Request to create or update an area music configuration */
-    SetAreaMusicConfigRequest: {
-      /** @description Area code to configure (unique per game service) */
+    /** @description Request to create or update an area content configuration */
+    SetAreaContentConfigRequest: {
+      /** @description Area code to configure (unique per game service and collection type) */
       areaCode: string;
       /**
        * Format: uuid
        * @description Game service this area config belongs to
        */
       gameServiceId: string;
-      /** @description Theme tags for this area (matched against music entry themes) */
+      /** @description Type of collection this area config applies to */
+      collectionType: components['schemas']['CollectionType'];
+      /** @description Theme tags for this area (matched against collection entry themes) */
       themes: string[];
-      /** @description Default track code to use when no matches are found */
-      defaultTrackCode: string;
+      /** @description Default entry code to use when no matches are found */
+      defaultEntryCode: string;
     };
     /** @description Request to set template values on a contract */
     SetTemplateValuesRequest: {
@@ -28740,6 +28763,8 @@ export interface components {
        * @description Updated fraction of growth applied to other seeds of the same type owned by the same entity.
        */
       sameOwnerGrowthMultiplier?: number | null;
+      /** @description Updated collection growth mappings. Null means no change, empty array removes all mappings. */
+      collectionGrowthMappings?: components['schemas']['CollectionGrowthMapping'][] | null;
     };
     /** @description Request to update email verification status */
     UpdateVerificationRequest: {
@@ -33266,7 +33291,7 @@ export interface operations {
       };
     };
   };
-  selectTrackForArea: {
+  selectContentForArea: {
     parameters: {
       query?: never;
       header?: never;
@@ -33275,20 +33300,20 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['SelectTrackForAreaRequest'];
+        'application/json': components['schemas']['SelectContentForAreaRequest'];
       };
     };
     responses: {
-      /** @description Track selected successfully */
+      /** @description Content selected successfully */
       200: {
         headers: {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['MusicTrackSelectionResponse'];
+          'application/json': components['schemas']['ContentSelectionResponse'];
         };
       };
-      /** @description Area config not found or no music library collection exists */
+      /** @description Area config not found or no matching collection exists */
       404: {
         headers: {
           [name: string]: unknown;
@@ -33297,7 +33322,7 @@ export interface operations {
       };
     };
   };
-  setAreaMusicConfig: {
+  setAreaContentConfig: {
     parameters: {
       query?: never;
       header?: never;
@@ -33306,20 +33331,20 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['SetAreaMusicConfigRequest'];
+        'application/json': components['schemas']['SetAreaContentConfigRequest'];
       };
     };
     responses: {
-      /** @description Area music config saved successfully */
+      /** @description Area content config saved successfully */
       200: {
         headers: {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['AreaMusicConfigResponse'];
+          'application/json': components['schemas']['AreaContentConfigResponse'];
         };
       };
-      /** @description Game service or default track template not found */
+      /** @description Game service or default entry template not found */
       404: {
         headers: {
           [name: string]: unknown;
@@ -33328,7 +33353,7 @@ export interface operations {
       };
     };
   };
-  getAreaMusicConfig: {
+  getAreaContentConfig: {
     parameters: {
       query?: never;
       header?: never;
@@ -33337,20 +33362,20 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['GetAreaMusicConfigRequest'];
+        'application/json': components['schemas']['GetAreaContentConfigRequest'];
       };
     };
     responses: {
-      /** @description Area music config retrieved successfully */
+      /** @description Area content config retrieved successfully */
       200: {
         headers: {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['AreaMusicConfigResponse'];
+          'application/json': components['schemas']['AreaContentConfigResponse'];
         };
       };
-      /** @description Area music config not found */
+      /** @description Area content config not found */
       404: {
         headers: {
           [name: string]: unknown;
@@ -33359,7 +33384,7 @@ export interface operations {
       };
     };
   };
-  listAreaMusicConfigs: {
+  listAreaContentConfigs: {
     parameters: {
       query?: never;
       header?: never;
@@ -33368,17 +33393,17 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['ListAreaMusicConfigsRequest'];
+        'application/json': components['schemas']['ListAreaContentConfigsRequest'];
       };
     };
     responses: {
-      /** @description Area music configs retrieved successfully */
+      /** @description Area content configs retrieved successfully */
       200: {
         headers: {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['ListAreaMusicConfigsResponse'];
+          'application/json': components['schemas']['ListAreaContentConfigsResponse'];
         };
       };
     };

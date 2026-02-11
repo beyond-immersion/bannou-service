@@ -803,28 +803,55 @@ paths:
         : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
         minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"default\": 0.0,\n                  \
         \  \"description\": \"Fraction of growth applied to other seeds of the same type owned by the same entity. 0.0 = no
-        sharing (default), 1.0 = full mirror.\"\n                }\n            }\n        },\n        \"GrowthPhaseDefinition\"\
-        : {\n            \"type\": \"object\",\n            \"description\": \"Defines a growth phase with its threshold.\"\
-        ,\n            \"required\": [\n                \"phaseCode\",\n                \"displayName\",\n               \
-        \ \"minTotalGrowth\"\n            ],\n            \"properties\": {\n                \"phaseCode\": {\n          \
-        \          \"type\": \"string\",\n                    \"description\": \"Machine-readable phase identifier (e.g.,
-        \\\"nascent\\\", \\\"awakening\\\").\"\n                },\n                \"displayName\": {\n                 \
-        \   \"type\": \"string\",\n                    \"description\": \"Human-readable phase label.\"\n                },\n\
-        \                \"minTotalGrowth\": {\n                    \"type\": \"number\",\n                    \"format\"\
-        : \"float\",\n                    \"description\": \"Minimum total growth to enter this phase.\"\n               \
-        \ }\n            }\n        },\n        \"CapabilityRule\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Maps a growth domain to a capability with unlock threshold and fidelity formula.\",\n            \"required\"\
-        : [\n                \"capabilityCode\",\n                \"domain\",\n                \"unlockThreshold\",\n    \
-        \            \"fidelityFormula\"\n            ],\n            \"properties\": {\n                \"capabilityCode\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Unique capability identifier
-        (e.g., \\\"combat.stance\\\").\"\n                },\n                \"domain\": {\n                    \"type\"\
-        : \"string\",\n                    \"description\": \"Which growth domain this capability maps to.\"\n           \
-        \     },\n                \"unlockThreshold\": {\n                    \"type\": \"number\",\n                    \"\
-        format\": \"float\",\n                    \"description\": \"Minimum domain depth to unlock this capability.\"\n \
-        \               },\n                \"fidelityFormula\": {\n                    \"type\": \"string\",\n          \
-        \          \"description\": \"How domain depth maps to fidelity (0.0-1.0). Values: \\\"linear\\\", \\\"logarithmic\\\
-        \", \\\"step\\\". Consumers may define additional formulas.\\n\"\n                }\n            }\n        }\n  \
-        \  }\n}"
+        sharing (default), 1.0 = full mirror.\"\n                },\n                \"collectionGrowthMappings\": {\n   \
+        \                 \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n\
+        \                        \"$ref\": \"#/$defs/CollectionGrowthMapping\"\n                    },\n                 \
+        \   \"description\": \"Mappings from collection types to growth domains. When a collection entry is unlocked for an
+        entity that owns seeds of this type, the entry's tags are matched against these mappings to determine growth contributions.
+        Null means this seed type does not respond to collection unlocks.\\n\"\n                }\n            }\n       \
+        \ },\n        \"GrowthPhaseDefinition\": {\n            \"type\": \"object\",\n            \"description\": \"Defines
+        a growth phase with its threshold.\",\n            \"required\": [\n                \"phaseCode\",\n             \
+        \   \"displayName\",\n                \"minTotalGrowth\"\n            ],\n            \"properties\": {\n        \
+        \        \"phaseCode\": {\n                    \"type\": \"string\",\n                    \"description\": \"Machine-readable
+        phase identifier (e.g., \\\"nascent\\\", \\\"awakening\\\").\"\n                },\n                \"displayName\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable phase label.\"\
+        \n                },\n                \"minTotalGrowth\": {\n                    \"type\": \"number\",\n         \
+        \           \"format\": \"float\",\n                    \"description\": \"Minimum total growth to enter this phase.\"\
+        \n                }\n            }\n        },\n        \"CapabilityRule\": {\n            \"type\": \"object\",\n\
+        \            \"description\": \"Maps a growth domain to a capability with unlock threshold and fidelity formula.\"\
+        ,\n            \"required\": [\n                \"capabilityCode\",\n                \"domain\",\n               \
+        \ \"unlockThreshold\",\n                \"fidelityFormula\"\n            ],\n            \"properties\": {\n     \
+        \           \"capabilityCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Unique capability identifier (e.g., \\\"combat.stance\\\").\"\n                },\n                \"domain\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Which growth domain this capability
+        maps to.\"\n                },\n                \"unlockThreshold\": {\n                    \"type\": \"number\",\n\
+        \                    \"format\": \"float\",\n                    \"description\": \"Minimum domain depth to unlock
+        this capability.\"\n                },\n                \"fidelityFormula\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"How domain depth maps to fidelity (0.0-1.0). Values: \\\"linear\\\", \\\"\
+        logarithmic\\\", \\\"step\\\". Consumers may define additional formulas.\\n\"\n                }\n            }\n\
+        \        },\n        \"CollectionGrowthMapping\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Maps a collection type to growth domain mappings. When a collection entry is unlocked, Seed uses these mappings
+        to determine which growth domains receive growth and how much. Matched by collection type code.\\n\",\n          \
+        \  \"required\": [\n                \"collectionType\",\n                \"domainMappings\"\n            ],\n    \
+        \        \"properties\": {\n                \"collectionType\": {\n                    \"type\": \"string\",\n   \
+        \                 \"description\": \"Collection type code to match against (e.g., \\\"bestiary\\\", \\\"music_library\\\
+        \").\"\n                },\n                \"domainMappings\": {\n                    \"type\": \"array\",\n    \
+        \                \"items\": {\n                        \"$ref\": \"#/$defs/CollectionDomainMapping\"\n           \
+        \         },\n                    \"minItems\": 1,\n                    \"description\": \"Mappings from entry tag
+        prefixes to growth domains.\"\n                }\n            }\n        },\n        \"CollectionDomainMapping\":
+        {\n            \"type\": \"object\",\n            \"description\": \"Maps a tag prefix on a collection entry to a
+        growth domain and amount. When an entry is unlocked, its tags are matched against tagPrefix. Matching tags determine
+        the growth domain (tagPrefix becomes the domain path) and the growth amount to record.\\n\",\n            \"required\"\
+        : [\n                \"tagPrefix\",\n                \"baseAmount\"\n            ],\n            \"properties\": {\n\
+        \                \"tagPrefix\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Tag prefix to match against entry tags. An entry tag \\\"combat.melee.sword\\\" matches prefix \\\"combat\\\"\
+        \ and \\\"combat.melee\\\". The full matching tag becomes the growth domain path.\\n\"\n                },\n     \
+        \           \"baseAmount\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\"\
+        ,\n                    \"description\": \"Base growth amount to record when a tag matches this prefix.\"\n       \
+        \         },\n                \"discoveryBonusPerLevel\": {\n                    \"type\": \"number\",\n         \
+        \           \"format\": \"float\",\n                    \"nullable\": true,\n                    \"description\":
+        \"Additional growth amount per discovery level of the entry. Total growth = baseAmount + (discoveryLevel * discoveryBonusPerLevel).
+        Null or 0 means no discovery bonus.\\n\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SeedTypeResponse\"\
         ,\n    \"$defs\": {\n        \"SeedTypeResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Full seed type definition response.\",\n            \"required\": [\n                \"seedTypeCode\",\n     \
@@ -857,34 +884,60 @@ paths:
         \       \"description\": \"Daily decay rate for unused domains of this seed type. Null means using global config.\"\
         \n                },\n                \"sameOwnerGrowthMultiplier\": {\n                    \"type\": \"number\",\n\
         \                    \"format\": \"float\",\n                    \"description\": \"Fraction of growth applied to
-        other seeds of the same type owned by the same entity.\"\n                },\n                \"isDeprecated\": {\n\
-        \                    \"type\": \"boolean\",\n                    \"description\": \"Whether this seed type is deprecated
-        and cannot be used for new seeds.\"\n                },\n                \"deprecatedAt\": {\n                   \
-        \ \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Timestamp when this seed type was deprecated.\"\n                },\n    \
-        \            \"deprecationReason\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Optional reason for deprecation.\"\n                }\n          \
-        \  }\n        },\n        \"GrowthPhaseDefinition\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Defines a growth phase with its threshold.\",\n            \"required\": [\n                \"phaseCode\",\n \
-        \               \"displayName\",\n                \"minTotalGrowth\"\n            ],\n            \"properties\":
-        {\n                \"phaseCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Machine-readable phase identifier (e.g., \\\"nascent\\\", \\\"awakening\\\").\"\n                },\n        \
-        \        \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable
-        phase label.\"\n                },\n                \"minTotalGrowth\": {\n                    \"type\": \"number\"\
-        ,\n                    \"format\": \"float\",\n                    \"description\": \"Minimum total growth to enter
-        this phase.\"\n                }\n            }\n        },\n        \"CapabilityRule\": {\n            \"type\":
-        \"object\",\n            \"description\": \"Maps a growth domain to a capability with unlock threshold and fidelity
-        formula.\",\n            \"required\": [\n                \"capabilityCode\",\n                \"domain\",\n     \
-        \           \"unlockThreshold\",\n                \"fidelityFormula\"\n            ],\n            \"properties\"\
-        : {\n                \"capabilityCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Unique capability identifier (e.g., \\\"combat.stance\\\").\"\n                },\n                \"domain\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Which growth domain this capability
-        maps to.\"\n                },\n                \"unlockThreshold\": {\n                    \"type\": \"number\",\n\
-        \                    \"format\": \"float\",\n                    \"description\": \"Minimum domain depth to unlock
-        this capability.\"\n                },\n                \"fidelityFormula\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"How domain depth maps to fidelity (0.0-1.0). Values: \\\"linear\\\", \\\"\
-        logarithmic\\\", \\\"step\\\". Consumers may define additional formulas.\\n\"\n                }\n            }\n\
-        \        }\n    }\n}"
+        other seeds of the same type owned by the same entity.\"\n                },\n                \"collectionGrowthMappings\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
+        : {\n                        \"$ref\": \"#/$defs/CollectionGrowthMapping\"\n                    },\n             \
+        \       \"description\": \"Collection-to-growth-domain mappings for this seed type. Null if this type does not respond
+        to collection unlocks.\"\n                },\n                \"isDeprecated\": {\n                    \"type\": \"\
+        boolean\",\n                    \"description\": \"Whether this seed type is deprecated and cannot be used for new
+        seeds.\"\n                },\n                \"deprecatedAt\": {\n                    \"type\": \"string\",\n   \
+        \                 \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Timestamp when this seed type was deprecated.\"\n                },\n                \"deprecationReason\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Optional reason for deprecation.\"\n                }\n            }\n        },\n        \"GrowthPhaseDefinition\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Defines a growth phase with its threshold.\"\
+        ,\n            \"required\": [\n                \"phaseCode\",\n                \"displayName\",\n               \
+        \ \"minTotalGrowth\"\n            ],\n            \"properties\": {\n                \"phaseCode\": {\n          \
+        \          \"type\": \"string\",\n                    \"description\": \"Machine-readable phase identifier (e.g.,
+        \\\"nascent\\\", \\\"awakening\\\").\"\n                },\n                \"displayName\": {\n                 \
+        \   \"type\": \"string\",\n                    \"description\": \"Human-readable phase label.\"\n                },\n\
+        \                \"minTotalGrowth\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"float\",\n                    \"description\": \"Minimum total growth to enter this phase.\"\n               \
+        \ }\n            }\n        },\n        \"CapabilityRule\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Maps a growth domain to a capability with unlock threshold and fidelity formula.\",\n            \"required\"\
+        : [\n                \"capabilityCode\",\n                \"domain\",\n                \"unlockThreshold\",\n    \
+        \            \"fidelityFormula\"\n            ],\n            \"properties\": {\n                \"capabilityCode\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Unique capability identifier
+        (e.g., \\\"combat.stance\\\").\"\n                },\n                \"domain\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Which growth domain this capability maps to.\"\n           \
+        \     },\n                \"unlockThreshold\": {\n                    \"type\": \"number\",\n                    \"\
+        format\": \"float\",\n                    \"description\": \"Minimum domain depth to unlock this capability.\"\n \
+        \               },\n                \"fidelityFormula\": {\n                    \"type\": \"string\",\n          \
+        \          \"description\": \"How domain depth maps to fidelity (0.0-1.0). Values: \\\"linear\\\", \\\"logarithmic\\\
+        \", \\\"step\\\". Consumers may define additional formulas.\\n\"\n                }\n            }\n        },\n \
+        \       \"CollectionGrowthMapping\": {\n            \"type\": \"object\",\n            \"description\": \"Maps a collection
+        type to growth domain mappings. When a collection entry is unlocked, Seed uses these mappings to determine which growth
+        domains receive growth and how much. Matched by collection type code.\\n\",\n            \"required\": [\n       \
+        \         \"collectionType\",\n                \"domainMappings\"\n            ],\n            \"properties\": {\n\
+        \                \"collectionType\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Collection type code to match against (e.g., \\\"bestiary\\\", \\\"music_library\\\").\"\n                },\n\
+        \                \"domainMappings\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"$ref\": \"#/$defs/CollectionDomainMapping\"\n                    },\n                 \
+        \   \"minItems\": 1,\n                    \"description\": \"Mappings from entry tag prefixes to growth domains.\"\
+        \n                }\n            }\n        },\n        \"CollectionDomainMapping\": {\n            \"type\": \"object\"\
+        ,\n            \"description\": \"Maps a tag prefix on a collection entry to a growth domain and amount. When an entry
+        is unlocked, its tags are matched against tagPrefix. Matching tags determine the growth domain (tagPrefix becomes
+        the domain path) and the growth amount to record.\\n\",\n            \"required\": [\n                \"tagPrefix\"\
+        ,\n                \"baseAmount\"\n            ],\n            \"properties\": {\n                \"tagPrefix\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Tag prefix to match against entry
+        tags. An entry tag \\\"combat.melee.sword\\\" matches prefix \\\"combat\\\" and \\\"combat.melee\\\". The full matching
+        tag becomes the growth domain path.\\n\"\n                },\n                \"baseAmount\": {\n                \
+        \    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\": \"Base
+        growth amount to record when a tag matches this prefix.\"\n                },\n                \"discoveryBonusPerLevel\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Additional growth amount per discovery level of the entry.
+        Total growth = baseAmount + (discoveryLevel * discoveryBonusPerLevel). Null or 0 means no discovery bonus.\\n\"\n\
+        \                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Register a new seed type definition\",\n    \"description\": \"Registers
         a seed type with its growth phase definitions, capability rules, bond cardinality, and owner type restrictions. Seed
         types are scoped to game services.\\n\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"RegisterSeedType\"\
@@ -949,34 +1002,60 @@ paths:
         \       \"description\": \"Daily decay rate for unused domains of this seed type. Null means using global config.\"\
         \n                },\n                \"sameOwnerGrowthMultiplier\": {\n                    \"type\": \"number\",\n\
         \                    \"format\": \"float\",\n                    \"description\": \"Fraction of growth applied to
-        other seeds of the same type owned by the same entity.\"\n                },\n                \"isDeprecated\": {\n\
-        \                    \"type\": \"boolean\",\n                    \"description\": \"Whether this seed type is deprecated
-        and cannot be used for new seeds.\"\n                },\n                \"deprecatedAt\": {\n                   \
-        \ \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Timestamp when this seed type was deprecated.\"\n                },\n    \
-        \            \"deprecationReason\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Optional reason for deprecation.\"\n                }\n          \
-        \  }\n        },\n        \"GrowthPhaseDefinition\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Defines a growth phase with its threshold.\",\n            \"required\": [\n                \"phaseCode\",\n \
-        \               \"displayName\",\n                \"minTotalGrowth\"\n            ],\n            \"properties\":
-        {\n                \"phaseCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Machine-readable phase identifier (e.g., \\\"nascent\\\", \\\"awakening\\\").\"\n                },\n        \
-        \        \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable
-        phase label.\"\n                },\n                \"minTotalGrowth\": {\n                    \"type\": \"number\"\
-        ,\n                    \"format\": \"float\",\n                    \"description\": \"Minimum total growth to enter
-        this phase.\"\n                }\n            }\n        },\n        \"CapabilityRule\": {\n            \"type\":
-        \"object\",\n            \"description\": \"Maps a growth domain to a capability with unlock threshold and fidelity
-        formula.\",\n            \"required\": [\n                \"capabilityCode\",\n                \"domain\",\n     \
-        \           \"unlockThreshold\",\n                \"fidelityFormula\"\n            ],\n            \"properties\"\
-        : {\n                \"capabilityCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Unique capability identifier (e.g., \\\"combat.stance\\\").\"\n                },\n                \"domain\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Which growth domain this capability
-        maps to.\"\n                },\n                \"unlockThreshold\": {\n                    \"type\": \"number\",\n\
-        \                    \"format\": \"float\",\n                    \"description\": \"Minimum domain depth to unlock
-        this capability.\"\n                },\n                \"fidelityFormula\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"How domain depth maps to fidelity (0.0-1.0). Values: \\\"linear\\\", \\\"\
-        logarithmic\\\", \\\"step\\\". Consumers may define additional formulas.\\n\"\n                }\n            }\n\
-        \        }\n    }\n}"
+        other seeds of the same type owned by the same entity.\"\n                },\n                \"collectionGrowthMappings\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
+        : {\n                        \"$ref\": \"#/$defs/CollectionGrowthMapping\"\n                    },\n             \
+        \       \"description\": \"Collection-to-growth-domain mappings for this seed type. Null if this type does not respond
+        to collection unlocks.\"\n                },\n                \"isDeprecated\": {\n                    \"type\": \"\
+        boolean\",\n                    \"description\": \"Whether this seed type is deprecated and cannot be used for new
+        seeds.\"\n                },\n                \"deprecatedAt\": {\n                    \"type\": \"string\",\n   \
+        \                 \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Timestamp when this seed type was deprecated.\"\n                },\n                \"deprecationReason\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Optional reason for deprecation.\"\n                }\n            }\n        },\n        \"GrowthPhaseDefinition\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Defines a growth phase with its threshold.\"\
+        ,\n            \"required\": [\n                \"phaseCode\",\n                \"displayName\",\n               \
+        \ \"minTotalGrowth\"\n            ],\n            \"properties\": {\n                \"phaseCode\": {\n          \
+        \          \"type\": \"string\",\n                    \"description\": \"Machine-readable phase identifier (e.g.,
+        \\\"nascent\\\", \\\"awakening\\\").\"\n                },\n                \"displayName\": {\n                 \
+        \   \"type\": \"string\",\n                    \"description\": \"Human-readable phase label.\"\n                },\n\
+        \                \"minTotalGrowth\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"float\",\n                    \"description\": \"Minimum total growth to enter this phase.\"\n               \
+        \ }\n            }\n        },\n        \"CapabilityRule\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Maps a growth domain to a capability with unlock threshold and fidelity formula.\",\n            \"required\"\
+        : [\n                \"capabilityCode\",\n                \"domain\",\n                \"unlockThreshold\",\n    \
+        \            \"fidelityFormula\"\n            ],\n            \"properties\": {\n                \"capabilityCode\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Unique capability identifier
+        (e.g., \\\"combat.stance\\\").\"\n                },\n                \"domain\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Which growth domain this capability maps to.\"\n           \
+        \     },\n                \"unlockThreshold\": {\n                    \"type\": \"number\",\n                    \"\
+        format\": \"float\",\n                    \"description\": \"Minimum domain depth to unlock this capability.\"\n \
+        \               },\n                \"fidelityFormula\": {\n                    \"type\": \"string\",\n          \
+        \          \"description\": \"How domain depth maps to fidelity (0.0-1.0). Values: \\\"linear\\\", \\\"logarithmic\\\
+        \", \\\"step\\\". Consumers may define additional formulas.\\n\"\n                }\n            }\n        },\n \
+        \       \"CollectionGrowthMapping\": {\n            \"type\": \"object\",\n            \"description\": \"Maps a collection
+        type to growth domain mappings. When a collection entry is unlocked, Seed uses these mappings to determine which growth
+        domains receive growth and how much. Matched by collection type code.\\n\",\n            \"required\": [\n       \
+        \         \"collectionType\",\n                \"domainMappings\"\n            ],\n            \"properties\": {\n\
+        \                \"collectionType\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Collection type code to match against (e.g., \\\"bestiary\\\", \\\"music_library\\\").\"\n                },\n\
+        \                \"domainMappings\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"$ref\": \"#/$defs/CollectionDomainMapping\"\n                    },\n                 \
+        \   \"minItems\": 1,\n                    \"description\": \"Mappings from entry tag prefixes to growth domains.\"\
+        \n                }\n            }\n        },\n        \"CollectionDomainMapping\": {\n            \"type\": \"object\"\
+        ,\n            \"description\": \"Maps a tag prefix on a collection entry to a growth domain and amount. When an entry
+        is unlocked, its tags are matched against tagPrefix. Matching tags determine the growth domain (tagPrefix becomes
+        the domain path) and the growth amount to record.\\n\",\n            \"required\": [\n                \"tagPrefix\"\
+        ,\n                \"baseAmount\"\n            ],\n            \"properties\": {\n                \"tagPrefix\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Tag prefix to match against entry
+        tags. An entry tag \\\"combat.melee.sword\\\" matches prefix \\\"combat\\\" and \\\"combat.melee\\\". The full matching
+        tag becomes the growth domain path.\\n\"\n                },\n                \"baseAmount\": {\n                \
+        \    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\": \"Base
+        growth amount to record when a tag matches this prefix.\"\n                },\n                \"discoveryBonusPerLevel\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Additional growth amount per discovery level of the entry.
+        Total growth = baseAmount + (discoveryLevel * discoveryBonusPerLevel). Null or 0 means no discovery bonus.\\n\"\n\
+        \                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get seed type definition\",\n    \"description\": \"Returns the full seed
         type definition including phases and capability rules.\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\"\
         : \"GetSeedType\"\n}"
@@ -1045,12 +1124,16 @@ paths:
         Daily decay rate for unused domains of this seed type. Null means using global config.\"\n                },\n   \
         \             \"sameOwnerGrowthMultiplier\": {\n                    \"type\": \"number\",\n                    \"\
         format\": \"float\",\n                    \"description\": \"Fraction of growth applied to other seeds of the same
-        type owned by the same entity.\"\n                },\n                \"isDeprecated\": {\n                    \"\
-        type\": \"boolean\",\n                    \"description\": \"Whether this seed type is deprecated and cannot be used
-        for new seeds.\"\n                },\n                \"deprecatedAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"Timestamp when this seed type was deprecated.\"\n                },\n                \"deprecationReason\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        type owned by the same entity.\"\n                },\n                \"collectionGrowthMappings\": {\n          \
+        \          \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\": {\n     \
+        \                   \"$ref\": \"#/$defs/CollectionGrowthMapping\"\n                    },\n                    \"\
+        description\": \"Collection-to-growth-domain mappings for this seed type. Null if this type does not respond to collection
+        unlocks.\"\n                },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n\
+        \                    \"description\": \"Whether this seed type is deprecated and cannot be used for new seeds.\"\n\
+        \                },\n                \"deprecatedAt\": {\n                    \"type\": \"string\",\n            \
+        \        \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Timestamp when this seed type was deprecated.\"\n                },\n                \"deprecationReason\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
         : \"Optional reason for deprecation.\"\n                }\n            }\n        },\n        \"GrowthPhaseDefinition\"\
         : {\n            \"type\": \"object\",\n            \"description\": \"Defines a growth phase with its threshold.\"\
         ,\n            \"required\": [\n                \"phaseCode\",\n                \"displayName\",\n               \
@@ -1071,8 +1154,30 @@ paths:
         format\": \"float\",\n                    \"description\": \"Minimum domain depth to unlock this capability.\"\n \
         \               },\n                \"fidelityFormula\": {\n                    \"type\": \"string\",\n          \
         \          \"description\": \"How domain depth maps to fidelity (0.0-1.0). Values: \\\"linear\\\", \\\"logarithmic\\\
-        \", \\\"step\\\". Consumers may define additional formulas.\\n\"\n                }\n            }\n        }\n  \
-        \  }\n}"
+        \", \\\"step\\\". Consumers may define additional formulas.\\n\"\n                }\n            }\n        },\n \
+        \       \"CollectionGrowthMapping\": {\n            \"type\": \"object\",\n            \"description\": \"Maps a collection
+        type to growth domain mappings. When a collection entry is unlocked, Seed uses these mappings to determine which growth
+        domains receive growth and how much. Matched by collection type code.\\n\",\n            \"required\": [\n       \
+        \         \"collectionType\",\n                \"domainMappings\"\n            ],\n            \"properties\": {\n\
+        \                \"collectionType\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Collection type code to match against (e.g., \\\"bestiary\\\", \\\"music_library\\\").\"\n                },\n\
+        \                \"domainMappings\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"$ref\": \"#/$defs/CollectionDomainMapping\"\n                    },\n                 \
+        \   \"minItems\": 1,\n                    \"description\": \"Mappings from entry tag prefixes to growth domains.\"\
+        \n                }\n            }\n        },\n        \"CollectionDomainMapping\": {\n            \"type\": \"object\"\
+        ,\n            \"description\": \"Maps a tag prefix on a collection entry to a growth domain and amount. When an entry
+        is unlocked, its tags are matched against tagPrefix. Matching tags determine the growth domain (tagPrefix becomes
+        the domain path) and the growth amount to record.\\n\",\n            \"required\": [\n                \"tagPrefix\"\
+        ,\n                \"baseAmount\"\n            ],\n            \"properties\": {\n                \"tagPrefix\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Tag prefix to match against entry
+        tags. An entry tag \\\"combat.melee.sword\\\" matches prefix \\\"combat\\\" and \\\"combat.melee\\\". The full matching
+        tag becomes the growth domain path.\\n\"\n                },\n                \"baseAmount\": {\n                \
+        \    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\": \"Base
+        growth amount to record when a tag matches this prefix.\"\n                },\n                \"discoveryBonusPerLevel\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Additional growth amount per discovery level of the entry.
+        Total growth = baseAmount + (discoveryLevel * discoveryBonusPerLevel). Null or 0 means no discovery bonus.\\n\"\n\
+        \                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List registered seed types\",\n    \"description\": \"Returns all seed
         types registered for the specified game service.\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\"\
         : \"ListSeedTypes\"\n}"
@@ -1125,27 +1230,53 @@ paths:
         \           \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"nullable\": true,\n\
         \                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"description\"\
         : \"Updated fraction of growth applied to other seeds of the same type owned by the same entity.\"\n             \
-        \   }\n            }\n        },\n        \"GrowthPhaseDefinition\": {\n            \"type\": \"object\",\n      \
-        \      \"description\": \"Defines a growth phase with its threshold.\",\n            \"required\": [\n           \
-        \     \"phaseCode\",\n                \"displayName\",\n                \"minTotalGrowth\"\n            ],\n     \
-        \       \"properties\": {\n                \"phaseCode\": {\n                    \"type\": \"string\",\n         \
-        \           \"description\": \"Machine-readable phase identifier (e.g., \\\"nascent\\\", \\\"awakening\\\").\"\n \
-        \               },\n                \"displayName\": {\n                    \"type\": \"string\",\n              \
-        \      \"description\": \"Human-readable phase label.\"\n                },\n                \"minTotalGrowth\": {\n\
-        \                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\"\
-        : \"Minimum total growth to enter this phase.\"\n                }\n            }\n        },\n        \"CapabilityRule\"\
-        : {\n            \"type\": \"object\",\n            \"description\": \"Maps a growth domain to a capability with unlock
-        threshold and fidelity formula.\",\n            \"required\": [\n                \"capabilityCode\",\n           \
-        \     \"domain\",\n                \"unlockThreshold\",\n                \"fidelityFormula\"\n            ],\n   \
-        \         \"properties\": {\n                \"capabilityCode\": {\n                    \"type\": \"string\",\n  \
-        \                  \"description\": \"Unique capability identifier (e.g., \\\"combat.stance\\\").\"\n            \
-        \    },\n                \"domain\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Which growth domain this capability maps to.\"\n                },\n                \"unlockThreshold\": {\n \
-        \                   \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\"\
-        : \"Minimum domain depth to unlock this capability.\"\n                },\n                \"fidelityFormula\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"How domain depth maps to fidelity
-        (0.0-1.0). Values: \\\"linear\\\", \\\"logarithmic\\\", \\\"step\\\". Consumers may define additional formulas.\\\
-        n\"\n                }\n            }\n        }\n    }\n}"
+        \   },\n                \"collectionGrowthMappings\": {\n                    \"type\": \"array\",\n              \
+        \      \"nullable\": true,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/CollectionGrowthMapping\"\
+        \n                    },\n                    \"description\": \"Updated collection growth mappings. Null means no
+        change, empty array removes all mappings.\\n\"\n                }\n            }\n        },\n        \"GrowthPhaseDefinition\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Defines a growth phase with its threshold.\"\
+        ,\n            \"required\": [\n                \"phaseCode\",\n                \"displayName\",\n               \
+        \ \"minTotalGrowth\"\n            ],\n            \"properties\": {\n                \"phaseCode\": {\n          \
+        \          \"type\": \"string\",\n                    \"description\": \"Machine-readable phase identifier (e.g.,
+        \\\"nascent\\\", \\\"awakening\\\").\"\n                },\n                \"displayName\": {\n                 \
+        \   \"type\": \"string\",\n                    \"description\": \"Human-readable phase label.\"\n                },\n\
+        \                \"minTotalGrowth\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"float\",\n                    \"description\": \"Minimum total growth to enter this phase.\"\n               \
+        \ }\n            }\n        },\n        \"CapabilityRule\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Maps a growth domain to a capability with unlock threshold and fidelity formula.\",\n            \"required\"\
+        : [\n                \"capabilityCode\",\n                \"domain\",\n                \"unlockThreshold\",\n    \
+        \            \"fidelityFormula\"\n            ],\n            \"properties\": {\n                \"capabilityCode\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Unique capability identifier
+        (e.g., \\\"combat.stance\\\").\"\n                },\n                \"domain\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Which growth domain this capability maps to.\"\n           \
+        \     },\n                \"unlockThreshold\": {\n                    \"type\": \"number\",\n                    \"\
+        format\": \"float\",\n                    \"description\": \"Minimum domain depth to unlock this capability.\"\n \
+        \               },\n                \"fidelityFormula\": {\n                    \"type\": \"string\",\n          \
+        \          \"description\": \"How domain depth maps to fidelity (0.0-1.0). Values: \\\"linear\\\", \\\"logarithmic\\\
+        \", \\\"step\\\". Consumers may define additional formulas.\\n\"\n                }\n            }\n        },\n \
+        \       \"CollectionGrowthMapping\": {\n            \"type\": \"object\",\n            \"description\": \"Maps a collection
+        type to growth domain mappings. When a collection entry is unlocked, Seed uses these mappings to determine which growth
+        domains receive growth and how much. Matched by collection type code.\\n\",\n            \"required\": [\n       \
+        \         \"collectionType\",\n                \"domainMappings\"\n            ],\n            \"properties\": {\n\
+        \                \"collectionType\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Collection type code to match against (e.g., \\\"bestiary\\\", \\\"music_library\\\").\"\n                },\n\
+        \                \"domainMappings\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"$ref\": \"#/$defs/CollectionDomainMapping\"\n                    },\n                 \
+        \   \"minItems\": 1,\n                    \"description\": \"Mappings from entry tag prefixes to growth domains.\"\
+        \n                }\n            }\n        },\n        \"CollectionDomainMapping\": {\n            \"type\": \"object\"\
+        ,\n            \"description\": \"Maps a tag prefix on a collection entry to a growth domain and amount. When an entry
+        is unlocked, its tags are matched against tagPrefix. Matching tags determine the growth domain (tagPrefix becomes
+        the domain path) and the growth amount to record.\\n\",\n            \"required\": [\n                \"tagPrefix\"\
+        ,\n                \"baseAmount\"\n            ],\n            \"properties\": {\n                \"tagPrefix\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Tag prefix to match against entry
+        tags. An entry tag \\\"combat.melee.sword\\\" matches prefix \\\"combat\\\" and \\\"combat.melee\\\". The full matching
+        tag becomes the growth domain path.\\n\"\n                },\n                \"baseAmount\": {\n                \
+        \    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\": \"Base
+        growth amount to record when a tag matches this prefix.\"\n                },\n                \"discoveryBonusPerLevel\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Additional growth amount per discovery level of the entry.
+        Total growth = baseAmount + (discoveryLevel * discoveryBonusPerLevel). Null or 0 means no discovery bonus.\\n\"\n\
+        \                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SeedTypeResponse\"\
         ,\n    \"$defs\": {\n        \"SeedTypeResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Full seed type definition response.\",\n            \"required\": [\n                \"seedTypeCode\",\n     \
@@ -1178,34 +1309,60 @@ paths:
         \       \"description\": \"Daily decay rate for unused domains of this seed type. Null means using global config.\"\
         \n                },\n                \"sameOwnerGrowthMultiplier\": {\n                    \"type\": \"number\",\n\
         \                    \"format\": \"float\",\n                    \"description\": \"Fraction of growth applied to
-        other seeds of the same type owned by the same entity.\"\n                },\n                \"isDeprecated\": {\n\
-        \                    \"type\": \"boolean\",\n                    \"description\": \"Whether this seed type is deprecated
-        and cannot be used for new seeds.\"\n                },\n                \"deprecatedAt\": {\n                   \
-        \ \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Timestamp when this seed type was deprecated.\"\n                },\n    \
-        \            \"deprecationReason\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Optional reason for deprecation.\"\n                }\n          \
-        \  }\n        },\n        \"GrowthPhaseDefinition\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Defines a growth phase with its threshold.\",\n            \"required\": [\n                \"phaseCode\",\n \
-        \               \"displayName\",\n                \"minTotalGrowth\"\n            ],\n            \"properties\":
-        {\n                \"phaseCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Machine-readable phase identifier (e.g., \\\"nascent\\\", \\\"awakening\\\").\"\n                },\n        \
-        \        \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable
-        phase label.\"\n                },\n                \"minTotalGrowth\": {\n                    \"type\": \"number\"\
-        ,\n                    \"format\": \"float\",\n                    \"description\": \"Minimum total growth to enter
-        this phase.\"\n                }\n            }\n        },\n        \"CapabilityRule\": {\n            \"type\":
-        \"object\",\n            \"description\": \"Maps a growth domain to a capability with unlock threshold and fidelity
-        formula.\",\n            \"required\": [\n                \"capabilityCode\",\n                \"domain\",\n     \
-        \           \"unlockThreshold\",\n                \"fidelityFormula\"\n            ],\n            \"properties\"\
-        : {\n                \"capabilityCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Unique capability identifier (e.g., \\\"combat.stance\\\").\"\n                },\n                \"domain\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Which growth domain this capability
-        maps to.\"\n                },\n                \"unlockThreshold\": {\n                    \"type\": \"number\",\n\
-        \                    \"format\": \"float\",\n                    \"description\": \"Minimum domain depth to unlock
-        this capability.\"\n                },\n                \"fidelityFormula\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"How domain depth maps to fidelity (0.0-1.0). Values: \\\"linear\\\", \\\"\
-        logarithmic\\\", \\\"step\\\". Consumers may define additional formulas.\\n\"\n                }\n            }\n\
-        \        }\n    }\n}"
+        other seeds of the same type owned by the same entity.\"\n                },\n                \"collectionGrowthMappings\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
+        : {\n                        \"$ref\": \"#/$defs/CollectionGrowthMapping\"\n                    },\n             \
+        \       \"description\": \"Collection-to-growth-domain mappings for this seed type. Null if this type does not respond
+        to collection unlocks.\"\n                },\n                \"isDeprecated\": {\n                    \"type\": \"\
+        boolean\",\n                    \"description\": \"Whether this seed type is deprecated and cannot be used for new
+        seeds.\"\n                },\n                \"deprecatedAt\": {\n                    \"type\": \"string\",\n   \
+        \                 \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Timestamp when this seed type was deprecated.\"\n                },\n                \"deprecationReason\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Optional reason for deprecation.\"\n                }\n            }\n        },\n        \"GrowthPhaseDefinition\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Defines a growth phase with its threshold.\"\
+        ,\n            \"required\": [\n                \"phaseCode\",\n                \"displayName\",\n               \
+        \ \"minTotalGrowth\"\n            ],\n            \"properties\": {\n                \"phaseCode\": {\n          \
+        \          \"type\": \"string\",\n                    \"description\": \"Machine-readable phase identifier (e.g.,
+        \\\"nascent\\\", \\\"awakening\\\").\"\n                },\n                \"displayName\": {\n                 \
+        \   \"type\": \"string\",\n                    \"description\": \"Human-readable phase label.\"\n                },\n\
+        \                \"minTotalGrowth\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"float\",\n                    \"description\": \"Minimum total growth to enter this phase.\"\n               \
+        \ }\n            }\n        },\n        \"CapabilityRule\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Maps a growth domain to a capability with unlock threshold and fidelity formula.\",\n            \"required\"\
+        : [\n                \"capabilityCode\",\n                \"domain\",\n                \"unlockThreshold\",\n    \
+        \            \"fidelityFormula\"\n            ],\n            \"properties\": {\n                \"capabilityCode\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Unique capability identifier
+        (e.g., \\\"combat.stance\\\").\"\n                },\n                \"domain\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Which growth domain this capability maps to.\"\n           \
+        \     },\n                \"unlockThreshold\": {\n                    \"type\": \"number\",\n                    \"\
+        format\": \"float\",\n                    \"description\": \"Minimum domain depth to unlock this capability.\"\n \
+        \               },\n                \"fidelityFormula\": {\n                    \"type\": \"string\",\n          \
+        \          \"description\": \"How domain depth maps to fidelity (0.0-1.0). Values: \\\"linear\\\", \\\"logarithmic\\\
+        \", \\\"step\\\". Consumers may define additional formulas.\\n\"\n                }\n            }\n        },\n \
+        \       \"CollectionGrowthMapping\": {\n            \"type\": \"object\",\n            \"description\": \"Maps a collection
+        type to growth domain mappings. When a collection entry is unlocked, Seed uses these mappings to determine which growth
+        domains receive growth and how much. Matched by collection type code.\\n\",\n            \"required\": [\n       \
+        \         \"collectionType\",\n                \"domainMappings\"\n            ],\n            \"properties\": {\n\
+        \                \"collectionType\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Collection type code to match against (e.g., \\\"bestiary\\\", \\\"music_library\\\").\"\n                },\n\
+        \                \"domainMappings\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"$ref\": \"#/$defs/CollectionDomainMapping\"\n                    },\n                 \
+        \   \"minItems\": 1,\n                    \"description\": \"Mappings from entry tag prefixes to growth domains.\"\
+        \n                }\n            }\n        },\n        \"CollectionDomainMapping\": {\n            \"type\": \"object\"\
+        ,\n            \"description\": \"Maps a tag prefix on a collection entry to a growth domain and amount. When an entry
+        is unlocked, its tags are matched against tagPrefix. Matching tags determine the growth domain (tagPrefix becomes
+        the domain path) and the growth amount to record.\\n\",\n            \"required\": [\n                \"tagPrefix\"\
+        ,\n                \"baseAmount\"\n            ],\n            \"properties\": {\n                \"tagPrefix\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Tag prefix to match against entry
+        tags. An entry tag \\\"combat.melee.sword\\\" matches prefix \\\"combat\\\" and \\\"combat.melee\\\". The full matching
+        tag becomes the growth domain path.\\n\"\n                },\n                \"baseAmount\": {\n                \
+        \    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\": \"Base
+        growth amount to record when a tag matches this prefix.\"\n                },\n                \"discoveryBonusPerLevel\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Additional growth amount per discovery level of the entry.
+        Total growth = baseAmount + (discoveryLevel * discoveryBonusPerLevel). Null or 0 means no discovery bonus.\\n\"\n\
+        \                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update seed type definition\",\n    \"description\": \"Updates a seed type
         definition. Changes to phase thresholds or capability rules trigger recomputation for all seeds of this type.\\n\"\
         ,\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"UpdateSeedType\"\n}"
@@ -1279,34 +1436,60 @@ paths:
         \       \"description\": \"Daily decay rate for unused domains of this seed type. Null means using global config.\"\
         \n                },\n                \"sameOwnerGrowthMultiplier\": {\n                    \"type\": \"number\",\n\
         \                    \"format\": \"float\",\n                    \"description\": \"Fraction of growth applied to
-        other seeds of the same type owned by the same entity.\"\n                },\n                \"isDeprecated\": {\n\
-        \                    \"type\": \"boolean\",\n                    \"description\": \"Whether this seed type is deprecated
-        and cannot be used for new seeds.\"\n                },\n                \"deprecatedAt\": {\n                   \
-        \ \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Timestamp when this seed type was deprecated.\"\n                },\n    \
-        \            \"deprecationReason\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Optional reason for deprecation.\"\n                }\n          \
-        \  }\n        },\n        \"GrowthPhaseDefinition\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Defines a growth phase with its threshold.\",\n            \"required\": [\n                \"phaseCode\",\n \
-        \               \"displayName\",\n                \"minTotalGrowth\"\n            ],\n            \"properties\":
-        {\n                \"phaseCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Machine-readable phase identifier (e.g., \\\"nascent\\\", \\\"awakening\\\").\"\n                },\n        \
-        \        \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable
-        phase label.\"\n                },\n                \"minTotalGrowth\": {\n                    \"type\": \"number\"\
-        ,\n                    \"format\": \"float\",\n                    \"description\": \"Minimum total growth to enter
-        this phase.\"\n                }\n            }\n        },\n        \"CapabilityRule\": {\n            \"type\":
-        \"object\",\n            \"description\": \"Maps a growth domain to a capability with unlock threshold and fidelity
-        formula.\",\n            \"required\": [\n                \"capabilityCode\",\n                \"domain\",\n     \
-        \           \"unlockThreshold\",\n                \"fidelityFormula\"\n            ],\n            \"properties\"\
-        : {\n                \"capabilityCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Unique capability identifier (e.g., \\\"combat.stance\\\").\"\n                },\n                \"domain\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Which growth domain this capability
-        maps to.\"\n                },\n                \"unlockThreshold\": {\n                    \"type\": \"number\",\n\
-        \                    \"format\": \"float\",\n                    \"description\": \"Minimum domain depth to unlock
-        this capability.\"\n                },\n                \"fidelityFormula\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"How domain depth maps to fidelity (0.0-1.0). Values: \\\"linear\\\", \\\"\
-        logarithmic\\\", \\\"step\\\". Consumers may define additional formulas.\\n\"\n                }\n            }\n\
-        \        }\n    }\n}"
+        other seeds of the same type owned by the same entity.\"\n                },\n                \"collectionGrowthMappings\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
+        : {\n                        \"$ref\": \"#/$defs/CollectionGrowthMapping\"\n                    },\n             \
+        \       \"description\": \"Collection-to-growth-domain mappings for this seed type. Null if this type does not respond
+        to collection unlocks.\"\n                },\n                \"isDeprecated\": {\n                    \"type\": \"\
+        boolean\",\n                    \"description\": \"Whether this seed type is deprecated and cannot be used for new
+        seeds.\"\n                },\n                \"deprecatedAt\": {\n                    \"type\": \"string\",\n   \
+        \                 \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Timestamp when this seed type was deprecated.\"\n                },\n                \"deprecationReason\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Optional reason for deprecation.\"\n                }\n            }\n        },\n        \"GrowthPhaseDefinition\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Defines a growth phase with its threshold.\"\
+        ,\n            \"required\": [\n                \"phaseCode\",\n                \"displayName\",\n               \
+        \ \"minTotalGrowth\"\n            ],\n            \"properties\": {\n                \"phaseCode\": {\n          \
+        \          \"type\": \"string\",\n                    \"description\": \"Machine-readable phase identifier (e.g.,
+        \\\"nascent\\\", \\\"awakening\\\").\"\n                },\n                \"displayName\": {\n                 \
+        \   \"type\": \"string\",\n                    \"description\": \"Human-readable phase label.\"\n                },\n\
+        \                \"minTotalGrowth\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"float\",\n                    \"description\": \"Minimum total growth to enter this phase.\"\n               \
+        \ }\n            }\n        },\n        \"CapabilityRule\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Maps a growth domain to a capability with unlock threshold and fidelity formula.\",\n            \"required\"\
+        : [\n                \"capabilityCode\",\n                \"domain\",\n                \"unlockThreshold\",\n    \
+        \            \"fidelityFormula\"\n            ],\n            \"properties\": {\n                \"capabilityCode\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Unique capability identifier
+        (e.g., \\\"combat.stance\\\").\"\n                },\n                \"domain\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Which growth domain this capability maps to.\"\n           \
+        \     },\n                \"unlockThreshold\": {\n                    \"type\": \"number\",\n                    \"\
+        format\": \"float\",\n                    \"description\": \"Minimum domain depth to unlock this capability.\"\n \
+        \               },\n                \"fidelityFormula\": {\n                    \"type\": \"string\",\n          \
+        \          \"description\": \"How domain depth maps to fidelity (0.0-1.0). Values: \\\"linear\\\", \\\"logarithmic\\\
+        \", \\\"step\\\". Consumers may define additional formulas.\\n\"\n                }\n            }\n        },\n \
+        \       \"CollectionGrowthMapping\": {\n            \"type\": \"object\",\n            \"description\": \"Maps a collection
+        type to growth domain mappings. When a collection entry is unlocked, Seed uses these mappings to determine which growth
+        domains receive growth and how much. Matched by collection type code.\\n\",\n            \"required\": [\n       \
+        \         \"collectionType\",\n                \"domainMappings\"\n            ],\n            \"properties\": {\n\
+        \                \"collectionType\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Collection type code to match against (e.g., \\\"bestiary\\\", \\\"music_library\\\").\"\n                },\n\
+        \                \"domainMappings\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"$ref\": \"#/$defs/CollectionDomainMapping\"\n                    },\n                 \
+        \   \"minItems\": 1,\n                    \"description\": \"Mappings from entry tag prefixes to growth domains.\"\
+        \n                }\n            }\n        },\n        \"CollectionDomainMapping\": {\n            \"type\": \"object\"\
+        ,\n            \"description\": \"Maps a tag prefix on a collection entry to a growth domain and amount. When an entry
+        is unlocked, its tags are matched against tagPrefix. Matching tags determine the growth domain (tagPrefix becomes
+        the domain path) and the growth amount to record.\\n\",\n            \"required\": [\n                \"tagPrefix\"\
+        ,\n                \"baseAmount\"\n            ],\n            \"properties\": {\n                \"tagPrefix\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Tag prefix to match against entry
+        tags. An entry tag \\\"combat.melee.sword\\\" matches prefix \\\"combat\\\" and \\\"combat.melee\\\". The full matching
+        tag becomes the growth domain path.\\n\"\n                },\n                \"baseAmount\": {\n                \
+        \    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\": \"Base
+        growth amount to record when a tag matches this prefix.\"\n                },\n                \"discoveryBonusPerLevel\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Additional growth amount per discovery level of the entry.
+        Total growth = baseAmount + (discoveryLevel * discoveryBonusPerLevel). Null or 0 means no discovery bonus.\\n\"\n\
+        \                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Deprecate a seed type\",\n    \"description\": \"Marks a seed type as deprecated.
         Deprecated seed types cannot be used to create new seeds. Existing seeds of this type remain unaffected. Must be deprecated
         before it can be deleted.\\n\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"DeprecateSeedType\"\
@@ -1378,34 +1561,60 @@ paths:
         \       \"description\": \"Daily decay rate for unused domains of this seed type. Null means using global config.\"\
         \n                },\n                \"sameOwnerGrowthMultiplier\": {\n                    \"type\": \"number\",\n\
         \                    \"format\": \"float\",\n                    \"description\": \"Fraction of growth applied to
-        other seeds of the same type owned by the same entity.\"\n                },\n                \"isDeprecated\": {\n\
-        \                    \"type\": \"boolean\",\n                    \"description\": \"Whether this seed type is deprecated
-        and cannot be used for new seeds.\"\n                },\n                \"deprecatedAt\": {\n                   \
-        \ \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Timestamp when this seed type was deprecated.\"\n                },\n    \
-        \            \"deprecationReason\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Optional reason for deprecation.\"\n                }\n          \
-        \  }\n        },\n        \"GrowthPhaseDefinition\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Defines a growth phase with its threshold.\",\n            \"required\": [\n                \"phaseCode\",\n \
-        \               \"displayName\",\n                \"minTotalGrowth\"\n            ],\n            \"properties\":
-        {\n                \"phaseCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Machine-readable phase identifier (e.g., \\\"nascent\\\", \\\"awakening\\\").\"\n                },\n        \
-        \        \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable
-        phase label.\"\n                },\n                \"minTotalGrowth\": {\n                    \"type\": \"number\"\
-        ,\n                    \"format\": \"float\",\n                    \"description\": \"Minimum total growth to enter
-        this phase.\"\n                }\n            }\n        },\n        \"CapabilityRule\": {\n            \"type\":
-        \"object\",\n            \"description\": \"Maps a growth domain to a capability with unlock threshold and fidelity
-        formula.\",\n            \"required\": [\n                \"capabilityCode\",\n                \"domain\",\n     \
-        \           \"unlockThreshold\",\n                \"fidelityFormula\"\n            ],\n            \"properties\"\
-        : {\n                \"capabilityCode\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Unique capability identifier (e.g., \\\"combat.stance\\\").\"\n                },\n                \"domain\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Which growth domain this capability
-        maps to.\"\n                },\n                \"unlockThreshold\": {\n                    \"type\": \"number\",\n\
-        \                    \"format\": \"float\",\n                    \"description\": \"Minimum domain depth to unlock
-        this capability.\"\n                },\n                \"fidelityFormula\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"How domain depth maps to fidelity (0.0-1.0). Values: \\\"linear\\\", \\\"\
-        logarithmic\\\", \\\"step\\\". Consumers may define additional formulas.\\n\"\n                }\n            }\n\
-        \        }\n    }\n}"
+        other seeds of the same type owned by the same entity.\"\n                },\n                \"collectionGrowthMappings\"\
+        : {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n                    \"items\"\
+        : {\n                        \"$ref\": \"#/$defs/CollectionGrowthMapping\"\n                    },\n             \
+        \       \"description\": \"Collection-to-growth-domain mappings for this seed type. Null if this type does not respond
+        to collection unlocks.\"\n                },\n                \"isDeprecated\": {\n                    \"type\": \"\
+        boolean\",\n                    \"description\": \"Whether this seed type is deprecated and cannot be used for new
+        seeds.\"\n                },\n                \"deprecatedAt\": {\n                    \"type\": \"string\",\n   \
+        \                 \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Timestamp when this seed type was deprecated.\"\n                },\n                \"deprecationReason\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Optional reason for deprecation.\"\n                }\n            }\n        },\n        \"GrowthPhaseDefinition\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Defines a growth phase with its threshold.\"\
+        ,\n            \"required\": [\n                \"phaseCode\",\n                \"displayName\",\n               \
+        \ \"minTotalGrowth\"\n            ],\n            \"properties\": {\n                \"phaseCode\": {\n          \
+        \          \"type\": \"string\",\n                    \"description\": \"Machine-readable phase identifier (e.g.,
+        \\\"nascent\\\", \\\"awakening\\\").\"\n                },\n                \"displayName\": {\n                 \
+        \   \"type\": \"string\",\n                    \"description\": \"Human-readable phase label.\"\n                },\n\
+        \                \"minTotalGrowth\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"float\",\n                    \"description\": \"Minimum total growth to enter this phase.\"\n               \
+        \ }\n            }\n        },\n        \"CapabilityRule\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Maps a growth domain to a capability with unlock threshold and fidelity formula.\",\n            \"required\"\
+        : [\n                \"capabilityCode\",\n                \"domain\",\n                \"unlockThreshold\",\n    \
+        \            \"fidelityFormula\"\n            ],\n            \"properties\": {\n                \"capabilityCode\"\
+        : {\n                    \"type\": \"string\",\n                    \"description\": \"Unique capability identifier
+        (e.g., \\\"combat.stance\\\").\"\n                },\n                \"domain\": {\n                    \"type\"\
+        : \"string\",\n                    \"description\": \"Which growth domain this capability maps to.\"\n           \
+        \     },\n                \"unlockThreshold\": {\n                    \"type\": \"number\",\n                    \"\
+        format\": \"float\",\n                    \"description\": \"Minimum domain depth to unlock this capability.\"\n \
+        \               },\n                \"fidelityFormula\": {\n                    \"type\": \"string\",\n          \
+        \          \"description\": \"How domain depth maps to fidelity (0.0-1.0). Values: \\\"linear\\\", \\\"logarithmic\\\
+        \", \\\"step\\\". Consumers may define additional formulas.\\n\"\n                }\n            }\n        },\n \
+        \       \"CollectionGrowthMapping\": {\n            \"type\": \"object\",\n            \"description\": \"Maps a collection
+        type to growth domain mappings. When a collection entry is unlocked, Seed uses these mappings to determine which growth
+        domains receive growth and how much. Matched by collection type code.\\n\",\n            \"required\": [\n       \
+        \         \"collectionType\",\n                \"domainMappings\"\n            ],\n            \"properties\": {\n\
+        \                \"collectionType\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Collection type code to match against (e.g., \\\"bestiary\\\", \\\"music_library\\\").\"\n                },\n\
+        \                \"domainMappings\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"$ref\": \"#/$defs/CollectionDomainMapping\"\n                    },\n                 \
+        \   \"minItems\": 1,\n                    \"description\": \"Mappings from entry tag prefixes to growth domains.\"\
+        \n                }\n            }\n        },\n        \"CollectionDomainMapping\": {\n            \"type\": \"object\"\
+        ,\n            \"description\": \"Maps a tag prefix on a collection entry to a growth domain and amount. When an entry
+        is unlocked, its tags are matched against tagPrefix. Matching tags determine the growth domain (tagPrefix becomes
+        the domain path) and the growth amount to record.\\n\",\n            \"required\": [\n                \"tagPrefix\"\
+        ,\n                \"baseAmount\"\n            ],\n            \"properties\": {\n                \"tagPrefix\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Tag prefix to match against entry
+        tags. An entry tag \\\"combat.melee.sword\\\" matches prefix \\\"combat\\\" and \\\"combat.melee\\\". The full matching
+        tag becomes the growth domain path.\\n\"\n                },\n                \"baseAmount\": {\n                \
+        \    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\": \"Base
+        growth amount to record when a tag matches this prefix.\"\n                },\n                \"discoveryBonusPerLevel\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Additional growth amount per discovery level of the entry.
+        Total growth = baseAmount + (discoveryLevel * discoveryBonusPerLevel). Null or 0 means no discovery bonus.\\n\"\n\
+        \                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Restore a deprecated seed type\",\n    \"description\": \"Removes deprecated
         status from a seed type, allowing new seeds of this type to be created again.\\n\",\n    \"tags\": [],\n    \"deprecated\"\
         : false,\n    \"operationId\": \"UndeprecateSeedType\"\n}"
@@ -1804,6 +2013,54 @@ components:
           description: >
             How domain depth maps to fidelity (0.0-1.0). Values: "linear",
             "logarithmic", "step". Consumers may define additional formulas.
+    CollectionGrowthMapping:
+      type: object
+      description: >
+        Maps a collection type to growth domain mappings. When a collection entry
+        is unlocked, Seed uses these mappings to determine which growth domains
+        receive growth and how much. Matched by collection type code.
+      required:
+      - collectionType
+      - domainMappings
+      properties:
+        collectionType:
+          type: string
+          description: Collection type code to match against (e.g., "bestiary", "music_library").
+        domainMappings:
+          type: array
+          items:
+            $ref: '#/components/schemas/CollectionDomainMapping'
+          minItems: 1
+          description: Mappings from entry tag prefixes to growth domains.
+    CollectionDomainMapping:
+      type: object
+      description: >
+        Maps a tag prefix on a collection entry to a growth domain and amount.
+        When an entry is unlocked, its tags are matched against tagPrefix. Matching
+        tags determine the growth domain (tagPrefix becomes the domain path) and
+        the growth amount to record.
+      required:
+      - tagPrefix
+      - baseAmount
+      properties:
+        tagPrefix:
+          type: string
+          description: >
+            Tag prefix to match against entry tags. An entry tag "combat.melee.sword"
+            matches prefix "combat" and "combat.melee". The full matching tag becomes
+            the growth domain path.
+        baseAmount:
+          type: number
+          format: float
+          description: Base growth amount to record when a tag matches this prefix.
+        discoveryBonusPerLevel:
+          type: number
+          format: float
+          nullable: true
+          description: >
+            Additional growth amount per discovery level of the entry.
+            Total growth = baseAmount + (discoveryLevel * discoveryBonusPerLevel).
+            Null or 0 means no discovery bonus.
     CreateSeedRequest:
       type: object
       description: Request to create a new seed.
@@ -2112,6 +2369,16 @@ components:
           default: 0.0
           description: Fraction of growth applied to other seeds of the same type owned by the same entity. 0.0 = no 
             sharing (default), 1.0 = full mirror.
+        collectionGrowthMappings:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/CollectionGrowthMapping'
+          description: >
+            Mappings from collection types to growth domains. When a collection entry
+            is unlocked for an entity that owns seeds of this type, the entry's tags
+            are matched against these mappings to determine growth contributions.
+            Null means this seed type does not respond to collection unlocks.
     GetSeedTypeRequest:
       type: object
       description: Request to get a seed type definition.
@@ -2195,6 +2462,14 @@ components:
           minimum: 0.0
           maximum: 1.0
           description: Updated fraction of growth applied to other seeds of the same type owned by the same entity.
+        collectionGrowthMappings:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/CollectionGrowthMapping'
+          description: >
+            Updated collection growth mappings. Null means no change,
+            empty array removes all mappings.
     DeprecateSeedTypeRequest:
       type: object
       description: Request to deprecate a seed type, preventing new seed creation.
@@ -2552,6 +2827,13 @@ components:
           type: number
           format: float
           description: Fraction of growth applied to other seeds of the same type owned by the same entity.
+        collectionGrowthMappings:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/CollectionGrowthMapping'
+          description: Collection-to-growth-domain mappings for this seed type. Null if this type does not respond to 
+            collection unlocks.
         isDeprecated:
           type: boolean
           description: Whether this seed type is deprecated and cannot be used for new seeds.
