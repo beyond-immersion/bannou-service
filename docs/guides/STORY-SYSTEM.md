@@ -403,8 +403,6 @@ flows:
 
 **The key insight**: The watcher's **behavior document** defines the search strategy. Different watchers can use completely different approaches with the same plugin APIs.
 
-The key insight: The watcher's **behavior document** defines the search strategy. Different watchers can use completely different approaches with the same plugin APIs.
-
 **Best for**:
 - Emergent, unpredictable narrative
 - Regional flavor through watcher preferences
@@ -508,97 +506,23 @@ Scenarios apply state mutations and optionally spawn quests via `questHooks`.
 
 ### How Quests Wrap Contracts
 
-Quests are a **thin orchestration layer** over lib-contract, adding game-specific semantics.
+Quest (L2) is a **thin orchestration layer** over lib-contract (L1), mapping game-flavored semantics (objectives, rewards, quest givers) onto Contract infrastructure (milestones, prebound APIs, parties). Quest doesn't reinvent state machines -- Contract handles all the hard FSM/consent logic, while Quest adds player-facing terminology and UI support. Rewards are configured as prebound APIs, not coded.
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                          QUEST (L4)                              │
-│  Thin orchestration over Contract                                │
-│                                                                  │
-│  Quest Definition    = Contract Template + Quest Metadata        │
-│  Active Quest        = Contract Instance                         │
-│  Quest Giver         = Party (employer role)                     │
-│  Questor            = Party (employee role)                      │
-│  Objective          = Milestone                                  │
-│  Objective Progress = Quest-specific tracking                    │
-│  Reward Distribution = Prebound API execution                    │
-│  Quest Failure      = Contract breach                            │
-│  Quest Abandonment  = Contract termination                       │
-└───────────────────────────┬─────────────────────────────────────┘
-                            │ wraps
-                            ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                        CONTRACT (L1)                             │
-│  FSM + consent + milestones + prebound APIs                      │
-│                                                                  │
-│  • State machine for agreement lifecycle                        │
-│  • Milestone tracking and deadlines                             │
-│  • Prebound API execution for rewards:                          │
-│    - serviceName: currency, endpoint: /credit                   │
-│    - serviceName: inventory, endpoint: /add-item                │
-│    - serviceName: character, endpoint: /grant-experience        │
-│  • Consent and breach management                                │
-└───────────────────────────┬─────────────────────────────────────┘
-                            │ triggers
-                            ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                  CURRENCY / INVENTORY (L2)                       │
-│  Execute reward distribution                                     │
-│  Publish transfer completion events                              │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-**Why This Pattern**:
-- Quest doesn't reinvent state machines
-- Contract handles all the hard FSM/consent logic
-- Quest adds player-facing terminology and UI support
-- Rewards are configured, not coded
+For the full quest-contract state mapping and implementation details, see the [Quest Deep Dive](../plugins/QUEST.md).
 
 ### How Regional Watchers Orchestrate Everything
 
-Regional Watchers are the **active agents** that tie all components together. The watcher's **behavior document** is the soul - it defines search strategies, preferences, and decision-making logic.
+Regional Watchers are the **active agents** that tie the narrative components together. For their general architecture (perception, spawning Event Brains, god system), see [Behavior System - Event Brains and Regional Watchers](./BEHAVIOR-SYSTEM.md#6-event-brains-and-regional-watchers). This section covers their **storyline-specific** query patterns.
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                   REGIONAL WATCHER (Actor)                       │
-│  "God of Tragedy" - ACTIVE agent with behavior document         │
-│                                                                  │
-│  ACTIVE RESPONSIBILITIES (defined in behavior):                  │
-│    • Subscribe to events (deaths, relationships, prosperity)    │
-│    • Search for characters via lib-character queries            │
-│    • Score "tragic potential" using MY preferences              │
-│    • Decide which opportunities to pursue                       │
-│    • Track active storylines I'm orchestrating                  │
-└───────────────────────────┬─────────────────────────────────────┘
-                            │ queries (watcher provides the inputs)
-         ┌──────────────────┼──────────────────┐
-         ▼                  ▼                  ▼
-┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
-│ lib-character   │ │ lib-storyline   │ │ lib-resource    │
-│ (searching)     │ │ (PASSIVE)       │ │ (archives)      │
-│                 │ │                 │ │                 │
-│ • Query chars   │ │ • Match scenario│ │ • Get archive   │
-│ • Get backstory │ │ • Test dry-run  │ │ • Snapshot live │
-│ • Get relations │ │ • Trigger       │ │ • Extract data  │
-│                 │ │ • Compose plan  │ │                 │
-└─────────────────┘ └─────────────────┘ └─────────────────┘
-         │                  │                  │
-         └──────────────────┼──────────────────┘
-                            ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                 WATCHER DECISION FLOW (in behavior)              │
-│                                                                  │
-│  1. Receive event OR periodic scan triggers                     │
-│  2. WATCHER searches for characters (lib-character query)       │
-│  3. WATCHER scores candidates using its own preferences         │
-│  4. WATCHER asks plugin: "what scenarios fit THIS character?"   │
-│  5. WATCHER evaluates: test dry-run, check narrative score      │
-│  6. WATCHER decides: trigger or skip based on preferences       │
-│  7. WATCHER tracks: monitor active storylines, advance phases   │
-└─────────────────────────────────────────────────────────────────┘
-```
+When searching for narrative opportunities, watchers query three passive services:
 
-**Key insight**: Plugins are **passive infrastructure**. Watchers are **active agents** whose behavior documents define game-specific search strategies and narrative preferences. We provide **base templates**; games provide **the soul**.
+| Service | Role in Storyline Discovery |
+|---------|---------------------------|
+| **lib-character** | Search for candidates, get backstory and relationships |
+| **lib-storyline** | Match scenarios, test dry-runs, compose plans, trigger |
+| **lib-resource** | Get compressed archives, snapshot living characters |
+
+The watcher's behavior document defines the decision flow: receive event or periodic scan, search for characters, score candidates, ask the storyline plugin what fits, evaluate dry-runs, and decide whether to trigger or skip.
 
 **Event-Triggered Watcher Flow** (ABML - reactive to deaths):
 ```yaml
@@ -1174,8 +1098,6 @@ ScenarioDefinition:
 
 ### Regional Watcher Behaviors
 
-**Key Architecture**: Watchers are **active agents**. They search, score, and decide. Plugins are **passive infrastructure**. They store definitions and answer queries.
-
 **Base Template** (games extend this):
 ```yaml
 # templates/regional-watcher-base.yaml
@@ -1339,101 +1261,36 @@ The SDKs load these schemas as embedded resources at runtime:
 
 ## Implementation Status
 
-### Storyline SDKs (COMPLETE)
+### Completed Components
 
-The narrative theory foundation is **fully implemented** with 22 passing unit tests.
-
-**storyline-theory SDK** (`sdks/storyline-theory/`):
-
-| Component | Status | Description |
-|-----------|--------|-------------|
-| NarrativeState | ✅ Complete | 10 Life Value spectrums from Story Grid |
-| EmotionalArc | ✅ Complete | 6 Reagan arcs with control points and sampled trajectories |
-| ArchiveExtractor | ✅ Complete | Extracts WorldState facts from compressed archives |
-| KernelExtractor | ✅ Complete | Extracts 6 narrative kernel types (Death, HistoricalEvent, Trauma, UnfinishedBusiness, Conflict, DeepBond) |
-| GenreSpectrumMapping | ✅ Complete | 12 genres mapped to primary spectrums |
-| ActantRole | ✅ Complete | Greimas' 6 actant roles for character-agnostic templates |
-
-**storyline-storyteller SDK** (`sdks/storyline-storyteller/`):
-
-| Component | Status | Description |
-|-----------|--------|-------------|
-| StoryAction | ✅ Complete | GOAP actions with preconditions, effects, costs |
-| StoryTemplate | ✅ Complete | 6 arc-based templates with phase navigation |
-| ActionRegistry | ✅ Complete | 46+ actions from `story-actions.yaml` |
-| TemplateRegistry | ✅ Complete | Template loading and validation |
-| StoryGoapPlanner | ✅ Complete | A* search in narrative state space |
-| IntentGenerator | ✅ Complete | Converts plans to spawn/quest intents |
-| StorylineComposer | ✅ Complete | Full composition pipeline |
-
-**YAML Schemas** (`schemas/storyline/`):
-
-| Schema | Status | Contents |
-|--------|--------|----------|
-| `narrative-state.yaml` | ✅ Complete | 10 spectrums, 4-stage poles, genre overrides |
-| `emotional-arcs.yaml` | ✅ Complete | 6 arcs with SDK-implementable control points |
-| `story-grid-genres.yaml` | ✅ Complete | 12 genres, subgenres with `arc_direction` + `compatible_arcs` |
-| `story-actions.yaml` | ✅ Complete | 46+ GOAP actions with obligatory scene coverage |
-| `story-templates.yaml` | ✅ Complete | 6 arc-based templates with STC timing |
-| `propp-functions.yaml` | ✅ Complete | 31 functions (inspiration, not alignment target) |
-| `save-the-cat-beats.yaml` | ✅ Complete | 16 beats with timing guidelines |
-
-### Storyline Plugin (lib-storyline)
-
-| Capability | Status | Notes |
-|------------|--------|-------|
-| `/storyline/compose` | ✅ Implemented | Archive → GOAP plan → cached result |
-| `/storyline/plan/get` | ✅ Implemented | Retrieve cached plans by ID |
-| `/storyline/plan/list` | ✅ Implemented | List plans by realm (sorted set index) |
-| Archive extraction | ✅ Implemented | Full SDK integration |
-| Plan caching | ✅ Implemented | Deterministic IDs, realm-indexed |
-| Confidence scoring | ✅ Implemented | Multi-factor assessment |
-| Risk identification | ✅ Implemented | Warns of potential issues |
-
-### Resource Plugin - Snapshots (COMPLETE)
-
-Live entity snapshots are **fully implemented** in lib-resource, enabling storyline composition from living characters (not just compressed/dead ones).
-
-| Capability | Status | Notes |
-|------------|--------|-------|
-| `/resource/snapshot/execute` | ✅ Implemented | Non-destructive capture with configurable TTL |
-| `/resource/snapshot/get` | ✅ Implemented | Retrieve snapshots before expiry |
-| `resource.snapshot.created` event | ✅ Implemented | Regional Watchers can subscribe |
-| Compression callbacks reuse | ✅ Implemented | Same callbacks as permanent archives |
+| Component | Status | Details |
+|-----------|--------|---------|
+| **Storyline SDKs** (storyline-theory + storyline-storyteller) | ✅ Complete | 22 passing unit tests. Full narrative theory + GOAP composition pipeline. See [Storyline Deep Dive - SDK Architecture](../plugins/STORYLINE.md#sdk-architecture). |
+| **Storyline Plugin** (lib-storyline) | ✅ Complete | `/compose`, `/plan/get`, `/plan/list` endpoints with archive extraction, plan caching, confidence scoring, and risk identification. See [Storyline Deep Dive](../plugins/STORYLINE.md). |
+| **Resource Snapshots** (lib-resource) | ✅ Complete | Live entity snapshots enabling composition from living characters (not just compressed/dead ones). See [Resource Deep Dive](../plugins/RESOURCE.md). |
+| **Quest Plugin** (lib-quest) | ✅ Complete | Thin orchestration over lib-contract with prerequisite validation and reward distribution. See [Quest Deep Dive](../plugins/QUEST.md). |
 
 ### Not Yet Exposed via HTTP API
 
 | Capability | SDK Status | HTTP Status | Notes |
 |------------|------------|-------------|-------|
 | Lazy phase evaluation | ✅ SDK complete | ❌ Not exposed | `ContinuePhase` exists in SDK; HTTP API returns full plan |
-| `/storyline/instantiate` | ✅ SDK complete | ❌ Not exposed | Needs Quest/Scenario plugins |
+| `/storyline/instantiate` | ✅ SDK complete | ❌ Not exposed | Needs scenario definitions |
 | `/storyline/discover` | 📋 SDK planned | ❌ Not exposed | Needs EVENT_ACTOR_RESOURCE_ACCESS patterns |
 
 ### Dependent Systems (Not Yet Built)
 
-These capabilities require other plugins that are not yet implemented:
-
 | Capability | Blocking Dependency | Notes |
 |------------|---------------------|-------|
 | Scenario definitions | lib-storyline extension | Concrete game-world implementations of story templates |
-| Quest spawning via hooks | lib-quest | Thin orchestration layer over lib-contract |
+| Quest spawning via hooks | lib-storyline scenarios | Scenario questHooks trigger quest creation |
 | Regional Watcher archive access | Actor system extension | Typed archive access for Event Brain actors |
-| Entity spawning (`/instantiate`) | lib-quest + scenarios | Creates NPCs, items, locations from storyline plans |
-
-### Quest Plugin (lib-quest) - Planning Stage
-
-| Capability | Status | Notes |
-|------------|--------|-------|
-| Quest definitions | 📋 Planned | Thin wrapper over lib-contract templates |
-| Objective tracking | 📋 Planned | Event-driven via contract milestones |
-| Quest log UI support | 📋 Planned | Player-facing query endpoints |
-| Reward distribution | 📋 Planned | Via lib-contract prebound APIs |
+| Entity spawning (`/instantiate`) | scenarios + quest hooks | Creates NPCs, items, locations from storyline plans |
 
 ### Next Steps
 
 1. **Expose lazy phase evaluation** via HTTP API (SDK already supports it)
 2. **Implement scenario definitions** as data within lib-storyline
-3. **Build lib-quest** as orchestration layer over lib-contract
-4. **Implement EVENT_ACTOR_RESOURCE_ACCESS** for Regional Watcher archive access
+3. **Implement EVENT_ACTOR_RESOURCE_ACCESS** for Regional Watcher archive access
 
 Run `/audit-plugin storyline` to check for implementation gaps.

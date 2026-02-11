@@ -331,7 +331,7 @@ networks:
     driver: bridge
 ```
 
-See [Networking Strategy](../operations/NETWORKING_STRATEGY.md) for details.
+See [Networking Strategy](NETWORKING-STRATEGY.md) for details.
 
 ### Service Discovery
 
@@ -366,8 +366,6 @@ AUTH_JWT_EXPIRATION_MINUTES=60
 # WebSocket
 AUTH_CONNECT_URL=ws://your-domain/connect
 ```
-
-See [Configuration Reference](../reference/CONFIGURATION.md) for the complete list.
 
 ## Health Monitoring
 
@@ -433,5 +431,5 @@ curl http://localhost:5012/connect/health
 ## Next Steps
 
 - [Testing Guide](TESTING.md) - Test your deployment
-- [GitHub Actions](../operations/GITHUB_ACTIONS.md) - CI/CD pipeline
-- [Configuration Reference](../reference/CONFIGURATION.md) - All environment variables
+- [GitHub Actions](GITHUB-ACTIONS.md) - CI/CD pipeline
+- [Configuration Reference](../GENERATED-CONFIGURATION.md) - All environment variables

@@ -611,8 +611,8 @@ This fixes line endings and applies code style rules.
 
 ## Next Steps
 
-- [Testing Guide](TESTING.md) - Detailed testing documentation (MANDATORY reading for test placement decisions)
-- [Deployment Guide](DEPLOYMENT.md) - Deploy your service to production
+- [Testing Guide](../operations/TESTING.md) - Detailed testing documentation (MANDATORY reading for test placement decisions)
+- [Deployment Guide](../operations/DEPLOYMENT.md) - Deploy your service to production
 - [Plugin Deep-Dives](../plugins/) - Comprehensive documentation for all 41 services (see how existing services handle similar patterns)
 - [TENETS Reference](../reference/TENETS.md) - Development rules organized by category (Foundation, Implementation, Quality)
 - [Bannou Design](../BANNOU_DESIGN.md) - Understand the architecture

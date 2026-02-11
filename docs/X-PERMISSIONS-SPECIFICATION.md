@@ -25,7 +25,7 @@ paths:
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| `role` | string | Yes | Role required for access (e.g., `user`, `admin`, `npc`, `anonymous`) |
+| `role` | string | Yes | Role required for access (e.g., `user`, `admin`, `developer`, `anonymous`) |
 | `states` | object | No | Map of service states required. Empty object means no state requirements. |
 
 ### State Requirements
@@ -53,9 +53,8 @@ x-permissions:
 |------|-------------|
 | `anonymous` | Unauthenticated users (pre-login) |
 | `user` | Standard authenticated users |
-| `admin` | Administrative users with elevated privileges |
-| `npc` | AI agent NPCs (server-side entities) |
-| `service` | Service-to-service calls (internal APIs) |
+| `developer` | Developers with elevated privileges |
+| `admin` | Administrators with elevated privileges |
 
 ## Standard States
 
@@ -65,13 +64,6 @@ States are for contextual navigation, **not authentication status**. Authenticat
 - `in_lobby`: User is in a game lobby
 - `in_game`: User is in an active game session
 - `spectating`: User is watching a game as spectator
-
-### Character States (set by character service)
-- `selected`: User has selected a character
-- `in_creation`: User is creating a character
-
-### Realm States (set by realm service)
-- `in_realm`: User is in a specific realm instance
 
 ## Examples
 
@@ -83,8 +75,6 @@ States are for contextual navigation, **not authentication status**. Authenticat
     x-permissions:
       - role: anonymous
         states: {}
-      - role: user
-        states: {}  # Already logged in users can also call login
 ```
 
 ### Authenticated User Endpoint
@@ -94,8 +84,6 @@ States are for contextual navigation, **not authentication status**. Authenticat
   get:
     x-permissions:
       - role: user
-        states: {}
-      - role: admin
         states: {}
 ```
 
@@ -118,18 +106,6 @@ States are for contextual navigation, **not authentication status**. Authenticat
       - role: user
         states:
           game-session: in_game  # Must be in active game
-```
-
-### NPC Endpoint (Server-Side Only)
-
-```yaml
-/npc/behavior/update:
-  post:
-    x-permissions:
-      - role: npc
-        states: {}
-      - role: service
-        states: {}
 ```
 
 ## Generation Output

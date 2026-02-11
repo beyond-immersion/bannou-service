@@ -864,10 +864,3 @@ Before submitting schema changes, verify:
 **x-event-template**: `name` is unique across services. Plugin calls generated `*EventTemplates.RegisterAll()`. No manual `EventTemplate` definitions remain.
 
 **Resource Cleanup Contract (Producer Side)**: When your service is the `target` of `x-references`, your delete flow MUST: inject `IResourceClient`, call `/resource/check` before deletion, call `/resource/cleanup/execute` if references exist, handle cleanup failure (return `Conflict`), only delete after cleanup succeeds. **FORBIDDEN**: Adding event handlers that duplicate cleanup callbacks, deleting without `ExecuteCleanupAsync`, assuming event-based cleanup is equivalent.
-
-```bash
-# Find all x-references targets (services that MUST call ExecuteCleanupAsync)
-grep -h "target:" schemas/*-api.yaml | grep -v "^#" | sort -u
-```
-
-**Final**: Run `scripts/generate-all-services.sh` and verify build passes. Check generated C# for expected attributes and nullability.
