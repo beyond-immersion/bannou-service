@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Seed;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
@@ -90,7 +91,9 @@ public class SeedDecayWorkerServiceTests
             .Setup(p => p.GetService(typeof(IServiceScopeFactory)))
             .Returns(mockScopeFactory.Object);
 
-        return new SeedDecayWorkerService(mockServiceProvider.Object, _mockLogger.Object, _configuration);
+        return new SeedDecayWorkerService(
+            mockServiceProvider.Object, _mockLogger.Object, _configuration,
+            Enumerable.Empty<ISeedEvolutionListener>());
     }
 
     /// <summary>

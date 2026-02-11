@@ -1751,6 +1751,16 @@ public partial class SeedService : ISeedService
             CapabilityCount = capabilities.Count(c => c.Unlocked)
         }, cancellationToken: cancellationToken);
 
+        // Dispatch capability notification to evolution listeners
+        await SeedEvolutionDispatcher.DispatchCapabilitiesChangedAsync(
+            _evolutionListeners, seed.SeedTypeCode,
+            new SeedCapabilityNotification(
+                seed.SeedId, seed.SeedTypeCode, seed.OwnerId, seed.OwnerType,
+                manifest.Version, capabilities.Count(c => c.Unlocked),
+                capabilities.Select(c => new CapabilitySnapshot(
+                    c.CapabilityCode, c.Domain, c.Fidelity, c.Unlocked)).ToList()),
+            _logger, cancellationToken);
+
         return manifest;
     }
 

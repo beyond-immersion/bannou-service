@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,6 +30,7 @@ public class SeedDecayWorkerService : BackgroundService
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<SeedDecayWorkerService> _logger;
     private readonly SeedServiceConfiguration _configuration;
+    private readonly IReadOnlyList<ISeedEvolutionListener> _evolutionListeners;
 
     /// <summary>
     /// Interval between decay worker cycles, from configuration.
@@ -46,14 +48,17 @@ public class SeedDecayWorkerService : BackgroundService
     /// <param name="serviceProvider">Service provider for creating scopes to access scoped services.</param>
     /// <param name="logger">Logger for structured logging.</param>
     /// <param name="configuration">Service configuration with decay settings.</param>
+    /// <param name="evolutionListeners">Registered evolution listeners for phase change notifications.</param>
     public SeedDecayWorkerService(
         IServiceProvider serviceProvider,
         ILogger<SeedDecayWorkerService> logger,
-        SeedServiceConfiguration configuration)
+        SeedServiceConfiguration configuration,
+        IEnumerable<ISeedEvolutionListener> evolutionListeners)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
         _configuration = configuration;
+        _evolutionListeners = evolutionListeners.ToList();
     }
 
     /// <summary>
@@ -351,6 +356,14 @@ public class SeedDecayWorkerService : BackgroundService
                 TotalGrowth = newTotalGrowth,
                 Direction = PhaseChangeDirection.Regressed
             }, cancellationToken: cancellationToken);
+
+            // Dispatch phase regression notification to evolution listeners
+            await SeedEvolutionDispatcher.DispatchPhaseChangedAsync(
+                _evolutionListeners, seed.SeedTypeCode,
+                new SeedPhaseNotification(
+                    seed.SeedId, seed.SeedTypeCode, seed.OwnerId, seed.OwnerType,
+                    previousPhase, seed.GrowthPhase, newTotalGrowth, Progressed: false),
+                _logger, cancellationToken);
         }
 
         // Invalidate capability cache

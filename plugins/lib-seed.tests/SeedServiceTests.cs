@@ -3,6 +3,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Seed;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
@@ -95,14 +96,16 @@ public class SeedServiceTests : ServiceTestBase<SeedServiceConfiguration>
         Configuration.DefaultQueryPageSize = 100;
     }
 
-    private SeedService CreateService() => new SeedService(
+    private SeedService CreateService(
+        IEnumerable<ISeedEvolutionListener>? evolutionListeners = null) => new SeedService(
         _mockMessageBus.Object,
         _mockStateStoreFactory.Object,
         _mockLockProvider.Object,
         _mockLogger.Object,
         Configuration,
         _mockEventConsumer.Object,
-        _mockGameServiceClient.Object);
+        _mockGameServiceClient.Object,
+        evolutionListeners ?? Enumerable.Empty<ISeedEvolutionListener>());
 
     private SeedTypeDefinitionModel CreateTestSeedType(
         string seedTypeCode = "guardian",
