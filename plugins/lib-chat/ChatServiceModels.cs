@@ -210,6 +210,12 @@ internal class ChatRoomModel
     public bool IsArchived { get; set; }
 
     /// <summary>
+    /// Denormalized participant count for efficient queries and responses.
+    /// Updated on join/leave/kick/ban operations.
+    /// </summary>
+    public int ParticipantCount { get; set; }
+
+    /// <summary>
     /// Arbitrary JSON metadata for client rendering hints.
     /// </summary>
     public string? Metadata { get; set; }
@@ -280,6 +286,16 @@ internal class ChatParticipantModel
     /// When the mute expires (null for permanent mute).
     /// </summary>
     public DateTimeOffset? MutedUntil { get; set; }
+
+    /// <summary>
+    /// Number of messages sent in the current rate-limit window.
+    /// </summary>
+    public int MessagesSentThisMinute { get; set; }
+
+    /// <summary>
+    /// Start of the current rate-limit minute window.
+    /// </summary>
+    public DateTimeOffset MinuteWindowStart { get; set; }
 }
 
 /// <summary>

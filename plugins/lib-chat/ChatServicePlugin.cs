@@ -16,8 +16,7 @@ public class ChatServicePlugin : StandardServicePlugin<IChatService>
     {
         Logger?.LogDebug("Configuring service dependencies");
 
-        // Register any chat-specific helper services here
-        // Example: services.AddScoped<IChatMessageValidator, ChatMessageValidator>();
+        services.AddHostedService<IdleRoomCleanupWorker>();
 
         Logger?.LogDebug("Service dependencies configured");
     }

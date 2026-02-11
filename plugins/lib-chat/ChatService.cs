@@ -1,9 +1,18 @@
+using System.Text.RegularExpressions;
+using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.Bannou.Chat.ClientEvents;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.ClientEvents;
+using BeyondImmersion.BannouService.Common;
+using BeyondImmersion.BannouService.Contract;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Permission;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -25,29 +34,35 @@ namespace BeyondImmersion.BannouService.Chat;
 ///   <item><b>Configuration:</b> ALL config properties in ChatServiceConfiguration MUST be wired up. No hardcoded magic numbers for tunables.</item>
 ///   <item><b>Events:</b> ALL meaningful state changes MUST publish typed events, even without current consumers.</item>
 ///   <item><b>Cache Stores:</b> If state-stores.yaml defines cache stores for this service, implement read-through/write-through caching.</item>
-///   <item><b>Concurrency:</b> Use GetWithETagAsync + TrySaveAsync for list/index operations. No non-atomic read-modify-write.</item>
-/// </list>
-/// </para>
-/// <para>
-/// <b>RELATED FILES:</b>
-/// <list type="bullet">
-///   <item>Internal data models: ChatServiceModels.cs (storage models, cache entries, internal DTOs)</item>
-///   <item>Event handlers: ChatServiceEvents.cs (event consumer registration and handlers)</item>
-///   <item>Request/Response models: bannou-service/Generated/Models/ChatModels.cs</item>
-///   <item>Event models: bannou-service/Generated/Events/ChatEventsModels.cs</item>
-///   <item>Lifecycle events: bannou-service/Generated/Events/ChatLifecycleEvents.cs</item>
-///   <item>Configuration: Generated/ChatServiceConfiguration.cs</item>
-///   <item>State stores: bannou-service/Generated/StateStoreDefinitions.cs</item>
+///   <item><b>Concurrency:</b> Use distributed locks for room/type mutations. No non-atomic read-modify-write.</item>
 /// </list>
 /// </para>
 /// </remarks>
 [BannouService("chat", typeof(IChatService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.AppFoundation)]
 public partial class ChatService : IChatService
 {
+    private const string TypeKeyPrefix = "type:";
+    private const string RoomKeyPrefix = "room:";
+    private const string BanKeyPrefix = "ban:";
+    private const int LockExpirySeconds = 15;
+
     private readonly IMessageBus _messageBus;
-    private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly IClientEventPublisher _clientEventPublisher;
+    private readonly IDistributedLockProvider _lockProvider;
     private readonly ILogger<ChatService> _logger;
     private readonly ChatServiceConfiguration _configuration;
+    private readonly IContractClient _contractClient;
+    private readonly IResourceClient _resourceClient;
+    private readonly IPermissionClient _permissionClient;
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    private readonly IJsonQueryableStateStore<ChatRoomTypeModel> _roomTypeStore;
+    private readonly IJsonQueryableStateStore<ChatRoomModel> _roomStore;
+    private readonly IStateStore<ChatRoomModel> _roomCache;
+    private readonly IJsonQueryableStateStore<ChatMessageModel> _messageStore;
+    private readonly IStateStore<ChatMessageModel> _messageBuffer;
+    private readonly IStateStore<List<ChatParticipantModel>> _participantStore;
+    private readonly IJsonQueryableStateStore<ChatBanModel> _banStore;
 
     /// <summary>
     /// Creates a new instance of the Chat service.
@@ -55,1865 +70,2377 @@ public partial class ChatService : IChatService
     public ChatService(
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
+        IClientEventPublisher clientEventPublisher,
+        IDistributedLockProvider lockProvider,
         ILogger<ChatService> logger,
         ChatServiceConfiguration configuration,
-        IEventConsumer eventConsumer)
+        IEventConsumer eventConsumer,
+        IContractClient contractClient,
+        IResourceClient resourceClient,
+        IPermissionClient permissionClient,
+        IHttpContextAccessor httpContextAccessor)
     {
         _messageBus = messageBus;
-        _stateStoreFactory = stateStoreFactory;
+        _clientEventPublisher = clientEventPublisher;
+        _lockProvider = lockProvider;
         _logger = logger;
         _configuration = configuration;
+        _contractClient = contractClient;
+        _resourceClient = resourceClient;
+        _permissionClient = permissionClient;
+        _httpContextAccessor = httpContextAccessor;
 
-        // Register event handlers via partial class (ChatServiceEvents.cs)
+        _roomTypeStore = stateStoreFactory.GetJsonQueryableStore<ChatRoomTypeModel>(StateStoreDefinitions.ChatRoomTypes);
+        _roomStore = stateStoreFactory.GetJsonQueryableStore<ChatRoomModel>(StateStoreDefinitions.ChatRooms);
+        _roomCache = stateStoreFactory.GetStore<ChatRoomModel>(StateStoreDefinitions.ChatRoomsCache);
+        _messageStore = stateStoreFactory.GetJsonQueryableStore<ChatMessageModel>(StateStoreDefinitions.ChatMessages);
+        _messageBuffer = stateStoreFactory.GetStore<ChatMessageModel>(StateStoreDefinitions.ChatMessagesEphemeral);
+        _participantStore = stateStoreFactory.GetStore<List<ChatParticipantModel>>(StateStoreDefinitions.ChatParticipants);
+        _banStore = stateStoreFactory.GetJsonQueryableStore<ChatBanModel>(StateStoreDefinitions.ChatBans);
+
         RegisterEventConsumers(eventConsumer);
     }
 
-    /// <summary>
-    /// Implementation of RegisterRoomType operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, RoomTypeResponse?)> RegisterRoomTypeAsync(RegisterRoomTypeRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing RegisterRoomType operation");
+    // ============================================================================
+    // ROOM TYPE OPERATIONS
+    // ============================================================================
 
+    /// <inheritdoc />
+    public async Task<(StatusCodes, RoomTypeResponse?)> RegisterRoomTypeAsync(
+        RegisterRoomTypeRequest body, CancellationToken cancellationToken)
+    {
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method RegisterRoomType not yet implemented");
+            var typeKey = BuildRoomTypeKey(body.GameServiceId, body.Code);
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
+            // Check uniqueness
+            var existing = await _roomTypeStore.GetAsync(typeKey, cancellationToken);
+            if (existing != null)
+            {
+                _logger.LogWarning("Room type already exists: {Code} for game {GameServiceId}", body.Code, body.GameServiceId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Check MaxRoomTypesPerGameService for scoped types
+            if (body.GameServiceId.HasValue)
+            {
+                var countConditions = new List<QueryCondition>
+                {
+                    new() { Path = "$.GameServiceId", Operator = QueryOperator.Equals, Value = body.GameServiceId.Value.ToString() },
+                    new() { Path = "$.Code", Operator = QueryOperator.Exists, Value = true }
+                };
+                var count = await _roomTypeStore.JsonCountAsync(countConditions, cancellationToken);
+                if (count >= _configuration.MaxRoomTypesPerGameService)
+                {
+                    _logger.LogWarning("Game service {GameServiceId} has reached max room types ({Max})",
+                        body.GameServiceId, _configuration.MaxRoomTypesPerGameService);
+                    return (StatusCodes.Conflict, null);
+                }
+            }
+
+            var now = DateTimeOffset.UtcNow;
+            var model = new ChatRoomTypeModel
+            {
+                Code = body.Code,
+                DisplayName = body.DisplayName,
+                Description = body.Description,
+                GameServiceId = body.GameServiceId,
+                MessageFormat = body.MessageFormat,
+                ValidatorConfig = body.ValidatorConfig != null ? new ValidatorConfigModel
+                {
+                    MaxMessageLength = body.ValidatorConfig.MaxMessageLength,
+                    AllowedPattern = body.ValidatorConfig.AllowedPattern,
+                    AllowedValues = body.ValidatorConfig.AllowedValues?.ToList(),
+                    RequiredFields = body.ValidatorConfig.RequiredFields?.ToList(),
+                    JsonSchema = body.ValidatorConfig.JsonSchema,
+                } : null,
+                PersistenceMode = body.PersistenceMode,
+                DefaultMaxParticipants = body.DefaultMaxParticipants,
+                RetentionDays = body.RetentionDays,
+                DefaultContractTemplateId = body.DefaultContractTemplateId,
+                AllowAnonymousSenders = body.AllowAnonymousSenders,
+                RateLimitPerMinute = body.RateLimitPerMinute,
+                Metadata = body.Metadata,
+                Status = RoomTypeStatus.Active,
+                CreatedAt = now,
+            };
+
+            await _roomTypeStore.SaveAsync(typeKey, model, cancellationToken: cancellationToken);
+
+            await _messageBus.TryPublishAsync("chat-room-type.created", new ChatRoomTypeCreatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                Code = model.Code,
+                GameServiceId = model.GameServiceId,
+                DisplayName = model.DisplayName,
+                MessageFormat = model.MessageFormat,
+                PersistenceMode = model.PersistenceMode,
+                AllowAnonymousSenders = model.AllowAnonymousSenders,
+                Status = model.Status,
+                CreatedAt = model.CreatedAt,
+            }, cancellationToken);
+
+            _logger.LogInformation("Registered room type {Code} for game {GameServiceId}", body.Code, body.GameServiceId);
+            return (StatusCodes.OK, MapToRoomTypeResponse(model));
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "API error in RegisterRoomType: {Status}", ex.StatusCode);
+            throw;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing RegisterRoomType operation");
-            await _messageBus.TryPublishErrorAsync(
-                "chat",
-                "RegisterRoomType",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/chat/type/register",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            _logger.LogError(ex, "Failed to register room type {Code}", body.Code);
+            await _messageBus.TryPublishErrorAsync("chat", "RegisterRoomType", ex.GetType().Name, ex.Message);
+            return (StatusCodes.InternalServerError, null);
         }
     }
 
-    /// <summary>
-    /// Implementation of GetRoomType operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, RoomTypeResponse?)> GetRoomTypeAsync(GetRoomTypeRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc />
+    public async Task<(StatusCodes, RoomTypeResponse?)> GetRoomTypeAsync(
+        GetRoomTypeRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing GetRoomType operation");
-
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method GetRoomType not yet implemented");
+            var typeKey = BuildRoomTypeKey(body.GameServiceId, body.Code);
+            var model = await _roomTypeStore.GetAsync(typeKey, cancellationToken);
+            if (model == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+            return (StatusCodes.OK, MapToRoomTypeResponse(model));
+        }
+        catch (ApiException) { throw; }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get room type {Code}", body.Code);
+            await _messageBus.TryPublishErrorAsync("chat", "GetRoomType", ex.GetType().Name, ex.Message);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ListRoomTypesResponse?)> ListRoomTypesAsync(
+        ListRoomTypesRequest body, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var conditions = new List<QueryCondition>
+            {
+                // Type discriminator
+                new() { Path = "$.Code", Operator = QueryOperator.Exists, Value = true }
+            };
+
+            if (body.GameServiceId.HasValue)
+            {
+                conditions.Add(new QueryCondition
+                {
+                    Path = "$.GameServiceId",
+                    Operator = QueryOperator.Equals,
+                    Value = body.GameServiceId.Value.ToString()
+                });
+            }
+            if (body.MessageFormat.HasValue)
+            {
+                conditions.Add(new QueryCondition
+                {
+                    Path = "$.MessageFormat",
+                    Operator = QueryOperator.Equals,
+                    Value = body.MessageFormat.Value.ToString()
+                });
+            }
+            if (body.Status.HasValue)
+            {
+                conditions.Add(new QueryCondition
+                {
+                    Path = "$.Status",
+                    Operator = QueryOperator.Equals,
+                    Value = body.Status.Value.ToString()
+                });
+            }
+
+            var offset = body.Page * body.PageSize;
+            var result = await _roomTypeStore.JsonQueryPagedAsync(
+                conditions, offset, body.PageSize,
+                new JsonSortSpec { Path = "$.CreatedAt", Descending = true },
+                cancellationToken);
+
+            var items = result.Items.Select(r => MapToRoomTypeResponse(r.Value)).ToList();
+
+            return (StatusCodes.OK, new ListRoomTypesResponse
+            {
+                Items = items,
+                TotalCount = (int)result.TotalCount,
+                Page = body.Page,
+                PageSize = body.PageSize,
+            });
+        }
+        catch (ApiException) { throw; }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to list room types");
+            await _messageBus.TryPublishErrorAsync("chat", "ListRoomTypes", ex.GetType().Name, ex.Message);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, RoomTypeResponse?)> UpdateRoomTypeAsync(
+        UpdateRoomTypeRequest body, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var typeKey = BuildRoomTypeKey(body.GameServiceId, body.Code);
+
+            await using var lockResponse = await _lockProvider.LockAsync(
+                StateStoreDefinitions.ChatLock, $"type:{body.Code}",
+                Guid.NewGuid().ToString(), LockExpirySeconds, cancellationToken);
+            if (!lockResponse.Success)
+            {
+                return (StatusCodes.Conflict, null);
+            }
+
+            var model = await _roomTypeStore.GetAsync(typeKey, cancellationToken);
+            if (model == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            var changedFields = new List<string>();
+            if (body.DisplayName != null) { model.DisplayName = body.DisplayName; changedFields.Add("DisplayName"); }
+            if (body.Description != null) { model.Description = body.Description; changedFields.Add("Description"); }
+            if (body.ValidatorConfig != null)
+            {
+                model.ValidatorConfig = new ValidatorConfigModel
+                {
+                    MaxMessageLength = body.ValidatorConfig.MaxMessageLength,
+                    AllowedPattern = body.ValidatorConfig.AllowedPattern,
+                    AllowedValues = body.ValidatorConfig.AllowedValues?.ToList(),
+                    RequiredFields = body.ValidatorConfig.RequiredFields?.ToList(),
+                    JsonSchema = body.ValidatorConfig.JsonSchema,
+                };
+                changedFields.Add("ValidatorConfig");
+            }
+            if (body.DefaultMaxParticipants.HasValue) { model.DefaultMaxParticipants = body.DefaultMaxParticipants; changedFields.Add("DefaultMaxParticipants"); }
+            if (body.RetentionDays.HasValue) { model.RetentionDays = body.RetentionDays; changedFields.Add("RetentionDays"); }
+            if (body.DefaultContractTemplateId.HasValue) { model.DefaultContractTemplateId = body.DefaultContractTemplateId; changedFields.Add("DefaultContractTemplateId"); }
+            if (body.AllowAnonymousSenders.HasValue) { model.AllowAnonymousSenders = body.AllowAnonymousSenders.Value; changedFields.Add("AllowAnonymousSenders"); }
+            if (body.RateLimitPerMinute.HasValue) { model.RateLimitPerMinute = body.RateLimitPerMinute; changedFields.Add("RateLimitPerMinute"); }
+            if (body.Metadata != null) { model.Metadata = body.Metadata; changedFields.Add("Metadata"); }
+
+            model.UpdatedAt = DateTimeOffset.UtcNow;
+            await _roomTypeStore.SaveAsync(typeKey, model, cancellationToken: cancellationToken);
+
+            await _messageBus.TryPublishAsync("chat-room-type.updated", new ChatRoomTypeUpdatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = model.UpdatedAt.Value,
+                Code = model.Code,
+                GameServiceId = model.GameServiceId,
+                DisplayName = model.DisplayName,
+                MessageFormat = model.MessageFormat,
+                PersistenceMode = model.PersistenceMode,
+                AllowAnonymousSenders = model.AllowAnonymousSenders,
+                Status = model.Status,
+                CreatedAt = model.CreatedAt,
+                ChangedFields = changedFields,
+            }, cancellationToken);
+
+            return (StatusCodes.OK, MapToRoomTypeResponse(model));
+        }
+        catch (ApiException) { throw; }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to update room type {Code}", body.Code);
+            await _messageBus.TryPublishErrorAsync("chat", "UpdateRoomType", ex.GetType().Name, ex.Message);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, RoomTypeResponse?)> DeprecateRoomTypeAsync(
+        DeprecateRoomTypeRequest body, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var typeKey = BuildRoomTypeKey(body.GameServiceId, body.Code);
+
+            await using var lockResponse = await _lockProvider.LockAsync(
+                StateStoreDefinitions.ChatLock, $"type:{body.Code}",
+                Guid.NewGuid().ToString(), LockExpirySeconds, cancellationToken);
+            if (!lockResponse.Success)
+            {
+                return (StatusCodes.Conflict, null);
+            }
+
+            var model = await _roomTypeStore.GetAsync(typeKey, cancellationToken);
+            if (model == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            if (model.Status == RoomTypeStatus.Deprecated)
+            {
+                return (StatusCodes.OK, MapToRoomTypeResponse(model));
+            }
+
+            model.Status = RoomTypeStatus.Deprecated;
+            model.UpdatedAt = DateTimeOffset.UtcNow;
+            await _roomTypeStore.SaveAsync(typeKey, model, cancellationToken: cancellationToken);
+
+            await _messageBus.TryPublishAsync("chat-room-type.updated", new ChatRoomTypeUpdatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = model.UpdatedAt.Value,
+                Code = model.Code,
+                GameServiceId = model.GameServiceId,
+                DisplayName = model.DisplayName,
+                MessageFormat = model.MessageFormat,
+                PersistenceMode = model.PersistenceMode,
+                AllowAnonymousSenders = model.AllowAnonymousSenders,
+                Status = model.Status,
+                CreatedAt = model.CreatedAt,
+                ChangedFields = new List<string> { "Status" },
+            }, cancellationToken);
+
+            _logger.LogInformation("Deprecated room type {Code}", body.Code);
+            return (StatusCodes.OK, MapToRoomTypeResponse(model));
+        }
+        catch (ApiException) { throw; }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to deprecate room type {Code}", body.Code);
+            await _messageBus.TryPublishErrorAsync("chat", "DeprecateRoomType", ex.GetType().Name, ex.Message);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    // ============================================================================
+    // ROOM OPERATIONS
+    // ============================================================================
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ChatRoomResponse?)> CreateRoomAsync(
+        CreateRoomRequest body, CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Validate room type exists and is active
+            var roomType = await FindRoomTypeByCodeAsync(body.RoomTypeCode, cancellationToken);
+            if (roomType == null)
+            {
+                _logger.LogWarning("Room type not found: {Code}", body.RoomTypeCode);
+                return (StatusCodes.NotFound, null);
+            }
+            if (roomType.Status == RoomTypeStatus.Deprecated)
+            {
+                _logger.LogWarning("Cannot create room with deprecated type: {Code}", body.RoomTypeCode);
+                return (StatusCodes.BadRequest, null);
+            }
+
+            // Validate contract if provided
+            if (body.ContractId.HasValue)
+            {
+                try
+                {
+                    await _contractClient.GetContractInstanceAsync(new GetContractInstanceRequest { ContractId = body.ContractId.Value }, cancellationToken);
+                }
+                catch (ApiException apiEx) when (apiEx.StatusCode == 404)
+                {
+                    _logger.LogWarning("Contract {ContractId} not found", body.ContractId);
+                    return (StatusCodes.NotFound, null);
+                }
+            }
+
+            var now = DateTimeOffset.UtcNow;
+            var roomId = Guid.NewGuid();
+            var model = new ChatRoomModel
+            {
+                RoomId = roomId,
+                RoomTypeCode = body.RoomTypeCode,
+                SessionId = body.SessionId,
+                ContractId = body.ContractId,
+                DisplayName = body.DisplayName,
+                Status = ChatRoomStatus.Active,
+                MaxParticipants = body.MaxParticipants,
+                ContractFulfilledAction = body.ContractFulfilledAction,
+                ContractBreachAction = body.ContractBreachAction,
+                ContractTerminatedAction = body.ContractTerminatedAction,
+                ContractExpiredAction = body.ContractExpiredAction,
+                IsArchived = false,
+                ParticipantCount = 0,
+                Metadata = body.Metadata,
+                CreatedAt = now,
+                LastActivityAt = now,
+            };
+
+            var roomKey = $"{RoomKeyPrefix}{roomId}";
+            await _roomStore.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
+            await _roomCache.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
+
+            // Initialize empty participant list
+            await _participantStore.SaveAsync(roomId.ToString(), new List<ChatParticipantModel>(), cancellationToken: cancellationToken);
+
+            var effectiveMax = GetEffectiveMaxParticipants(model, roomType);
+
+            await _messageBus.TryPublishAsync("chat-room.created", new ChatRoomCreatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                RoomId = roomId,
+                RoomTypeCode = model.RoomTypeCode,
+                SessionId = model.SessionId,
+                ContractId = model.ContractId,
+                DisplayName = model.DisplayName ?? string.Empty,
+                Status = model.Status,
+                ParticipantCount = 0,
+                MaxParticipants = effectiveMax,
+                IsArchived = false,
+                CreatedAt = now,
+            }, cancellationToken);
+
+            _logger.LogInformation("Created chat room {RoomId} of type {RoomTypeCode}", roomId, body.RoomTypeCode);
+            return (StatusCodes.OK, MapToRoomResponse(model));
+        }
+        catch (ApiException) { throw; }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to create room of type {RoomTypeCode}", body.RoomTypeCode);
+            await _messageBus.TryPublishErrorAsync("chat", "CreateRoom", ex.GetType().Name, ex.Message);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ChatRoomResponse?)> GetRoomAsync(
+        GetRoomRequest body, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var model = await GetRoomWithCacheAsync(body.RoomId, cancellationToken);
+            if (model == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+            return (StatusCodes.OK, MapToRoomResponse(model));
+        }
+        catch (ApiException) { throw; }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get room {RoomId}", body.RoomId);
+            await _messageBus.TryPublishErrorAsync("chat", "GetRoom", ex.GetType().Name, ex.Message);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ListRoomsResponse?)> ListRoomsAsync(
+        ListRoomsRequest body, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var conditions = new List<QueryCondition>
+            {
+                new() { Path = "$.RoomId", Operator = QueryOperator.Exists, Value = true }
+            };
+
+            if (!string.IsNullOrEmpty(body.RoomTypeCode))
+            {
+                conditions.Add(new QueryCondition { Path = "$.RoomTypeCode", Operator = QueryOperator.Equals, Value = body.RoomTypeCode });
+            }
+            if (body.SessionId.HasValue)
+            {
+                conditions.Add(new QueryCondition { Path = "$.SessionId", Operator = QueryOperator.Equals, Value = body.SessionId.Value.ToString() });
+            }
+            if (body.Status.HasValue)
+            {
+                conditions.Add(new QueryCondition { Path = "$.Status", Operator = QueryOperator.Equals, Value = body.Status.Value.ToString() });
+            }
+
+            var offset = body.Page * body.PageSize;
+            var result = await _roomStore.JsonQueryPagedAsync(
+                conditions, offset, body.PageSize,
+                new JsonSortSpec { Path = "$.CreatedAt", Descending = true },
+                cancellationToken);
+
+            var items = result.Items.Select(r => MapToRoomResponse(r.Value)).ToList();
+
+            return (StatusCodes.OK, new ListRoomsResponse
+            {
+                Items = items,
+                TotalCount = (int)result.TotalCount,
+                Page = body.Page,
+                PageSize = body.PageSize,
+            });
+        }
+        catch (ApiException) { throw; }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to list rooms");
+            await _messageBus.TryPublishErrorAsync("chat", "ListRooms", ex.GetType().Name, ex.Message);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ChatRoomResponse?)> UpdateRoomAsync(
+        UpdateRoomRequest body, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var roomKey = $"{RoomKeyPrefix}{body.RoomId}";
+
+            await using var lockResponse = await _lockProvider.LockAsync(
+                StateStoreDefinitions.ChatLock, body.RoomId.ToString(),
+                Guid.NewGuid().ToString(), LockExpirySeconds, cancellationToken);
+            if (!lockResponse.Success)
+            {
+                return (StatusCodes.Conflict, null);
+            }
+
+            var model = await _roomStore.GetAsync(roomKey, cancellationToken);
+            if (model == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            var changedFields = new List<string>();
+            if (body.DisplayName != null) { model.DisplayName = body.DisplayName; changedFields.Add("DisplayName"); }
+            if (body.MaxParticipants.HasValue) { model.MaxParticipants = body.MaxParticipants; changedFields.Add("MaxParticipants"); }
+            if (body.Metadata != null) { model.Metadata = body.Metadata; changedFields.Add("Metadata"); }
+
+            await _roomStore.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
+            await _roomCache.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
+
+            await _messageBus.TryPublishAsync("chat-room.updated", new ChatRoomUpdatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                RoomId = model.RoomId,
+                RoomTypeCode = model.RoomTypeCode,
+                SessionId = model.SessionId,
+                ContractId = model.ContractId,
+                DisplayName = model.DisplayName ?? string.Empty,
+                Status = model.Status,
+                ParticipantCount = model.ParticipantCount,
+                MaxParticipants = GetEffectiveMaxParticipants(model, null),
+                IsArchived = model.IsArchived,
+                CreatedAt = model.CreatedAt,
+                ChangedFields = changedFields,
+            }, cancellationToken);
+
+            return (StatusCodes.OK, MapToRoomResponse(model));
+        }
+        catch (ApiException) { throw; }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to update room {RoomId}", body.RoomId);
+            await _messageBus.TryPublishErrorAsync("chat", "UpdateRoom", ex.GetType().Name, ex.Message);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ChatRoomResponse?)> DeleteRoomAsync(
+        DeleteRoomRequest body, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await using var lockResponse = await _lockProvider.LockAsync(
+                StateStoreDefinitions.ChatLock, body.RoomId.ToString(),
+                Guid.NewGuid().ToString(), LockExpirySeconds, cancellationToken);
+            if (!lockResponse.Success)
+            {
+                return (StatusCodes.Conflict, null);
+            }
+
+            var roomKey = $"{RoomKeyPrefix}{body.RoomId}";
+            var model = await _roomStore.GetAsync(roomKey, cancellationToken);
+            if (model == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Notify all participants before deletion
+            var participants = await GetParticipantsAsync(body.RoomId, cancellationToken);
+            if (participants.Count > 0)
+            {
+                var sessionIds = participants.Select(p => p.SessionId.ToString()).ToList();
+                await _clientEventPublisher.PublishToSessionsAsync(sessionIds, new ChatRoomDeletedClientEvent
+                {
+                    RoomId = body.RoomId,
+                    Reason = "Room deleted",
+                }, cancellationToken);
+
+                // Clear permission state for all participants
+                foreach (var participant in participants)
+                {
+                    await ClearParticipantPermissionStateAsync(participant.SessionId, cancellationToken);
+                }
+            }
+
+            // Clean up participant and message data
+            await _participantStore.DeleteAsync(body.RoomId.ToString(), cancellationToken);
+            await _roomStore.DeleteAsync(roomKey, cancellationToken);
+            await _roomCache.DeleteAsync(roomKey, cancellationToken);
+
+            var snapshot = MapToRoomResponse(model);
+
+            await _messageBus.TryPublishAsync("chat-room.deleted", new ChatRoomDeletedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                RoomId = model.RoomId,
+                RoomTypeCode = model.RoomTypeCode,
+                SessionId = model.SessionId,
+                ContractId = model.ContractId,
+                DisplayName = model.DisplayName ?? string.Empty,
+                Status = model.Status,
+                ParticipantCount = model.ParticipantCount,
+                MaxParticipants = GetEffectiveMaxParticipants(model, null),
+                IsArchived = model.IsArchived,
+                CreatedAt = model.CreatedAt,
+                DeletedReason = "Explicitly deleted",
+            }, cancellationToken);
+
+            _logger.LogInformation("Deleted chat room {RoomId}", body.RoomId);
+            return (StatusCodes.OK, snapshot);
+        }
+        catch (ApiException) { throw; }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to delete room {RoomId}", body.RoomId);
+            await _messageBus.TryPublishErrorAsync("chat", "DeleteRoom", ex.GetType().Name, ex.Message);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ChatRoomResponse?)> ArchiveRoomAsync(
+        ArchiveRoomRequest body, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await using var lockResponse = await _lockProvider.LockAsync(
+                StateStoreDefinitions.ChatLock, body.RoomId.ToString(),
+                Guid.NewGuid().ToString(), LockExpirySeconds, cancellationToken);
+            if (!lockResponse.Success)
+            {
+                return (StatusCodes.Conflict, null);
+            }
+
+            var roomKey = $"{RoomKeyPrefix}{body.RoomId}";
+            var model = await _roomStore.GetAsync(roomKey, cancellationToken);
+            if (model == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            if (model.IsArchived)
+            {
+                return (StatusCodes.OK, MapToRoomResponse(model));
+            }
+
+            // Archive via Resource service
+            Guid archiveId;
+            try
+            {
+                var compressResponse = await _resourceClient.ExecuteCompressAsync(
+                    new ExecuteCompressRequest { ResourceType = "chat-room", ResourceId = body.RoomId },
+                    cancellationToken);
+                archiveId = compressResponse.ArchiveId ?? throw new InvalidOperationException(
+                    $"Resource service returned null ArchiveId for room {body.RoomId}");
+            }
+            catch (ApiException apiEx)
+            {
+                _logger.LogWarning(apiEx, "Resource service error during archive of room {RoomId}", body.RoomId);
+                return (StatusCodes.InternalServerError, null);
+            }
+
+            model.IsArchived = true;
+            model.Status = ChatRoomStatus.Archived;
+            await _roomStore.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
+            await _roomCache.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
+
+            await _messageBus.TryPublishAsync("chat.room.archived", new ChatRoomArchivedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                RoomId = model.RoomId,
+                ArchiveId = archiveId,
+            }, cancellationToken);
+
+            _logger.LogInformation("Archived chat room {RoomId} with archive {ArchiveId}", body.RoomId, archiveId);
+            return (StatusCodes.OK, MapToRoomResponse(model));
+        }
+        catch (ApiException) { throw; }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to archive room {RoomId}", body.RoomId);
+            await _messageBus.TryPublishErrorAsync("chat", "ArchiveRoom", ex.GetType().Name, ex.Message);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    // ============================================================================
+    // PARTICIPANT OPERATIONS
+    // ============================================================================
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ChatRoomResponse?)> JoinRoomAsync(
+        JoinRoomRequest body, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var callerSessionId = GetCallerSessionId();
+            if (callerSessionId == null)
+            {
+                return (StatusCodes.Unauthorized, null);
+            }
+
+            await using var lockResponse = await _lockProvider.LockAsync(
+                StateStoreDefinitions.ChatLock, body.RoomId.ToString(),
+                Guid.NewGuid().ToString(), LockExpirySeconds, cancellationToken);
+            if (!lockResponse.Success)
+            {
+                return (StatusCodes.Conflict, null);
+            }
+
+            var roomKey = $"{RoomKeyPrefix}{body.RoomId}";
+            var model = await _roomStore.GetAsync(roomKey, cancellationToken);
+            if (model == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            if (model.Status == ChatRoomStatus.Locked)
+            {
+                return (StatusCodes.Forbidden, null);
+            }
+
+            // Check ban
+            var banKey = $"{BanKeyPrefix}{body.RoomId}:{callerSessionId}";
+            var ban = await _banStore.GetAsync(banKey, cancellationToken);
+            if (ban != null && (ban.ExpiresAt == null || ban.ExpiresAt > DateTimeOffset.UtcNow))
+            {
+                _logger.LogWarning("Banned session {SessionId} attempted to join room {RoomId}", callerSessionId, body.RoomId);
+                return (StatusCodes.Forbidden, null);
+            }
+
+            var roomType = await FindRoomTypeByCodeAsync(model.RoomTypeCode, cancellationToken);
+            var effectiveMax = GetEffectiveMaxParticipants(model, roomType);
+
+            var participants = await GetParticipantsAsync(body.RoomId, cancellationToken);
+
+            // Check if already a participant
+            if (participants.Any(p => p.SessionId == callerSessionId.Value))
+            {
+                return (StatusCodes.OK, MapToRoomResponse(model));
+            }
+
+            // Check capacity
+            if (participants.Count >= effectiveMax)
+            {
+                _logger.LogWarning("Room {RoomId} is full ({Count}/{Max})", body.RoomId, participants.Count, effectiveMax);
+                return (StatusCodes.Conflict, null);
+            }
+
+            var now = DateTimeOffset.UtcNow;
+            var role = body.Role ?? ChatParticipantRole.Member;
+            var participant = new ChatParticipantModel
+            {
+                RoomId = body.RoomId,
+                SessionId = callerSessionId.Value,
+                SenderType = body.SenderType,
+                SenderId = body.SenderId,
+                DisplayName = body.DisplayName,
+                Role = role,
+                JoinedAt = now,
+                LastActivityAt = now,
+                IsMuted = false,
+                MinuteWindowStart = now,
+            };
+
+            participants.Add(participant);
+            await SaveParticipantsAsync(body.RoomId, participants, cancellationToken);
+
+            // Update denormalized count
+            model.ParticipantCount = participants.Count;
+            model.LastActivityAt = now;
+            await _roomStore.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
+            await _roomCache.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
+
+            // Set permission state
+            await SetParticipantPermissionStateAsync(callerSessionId.Value, cancellationToken);
+
+            // Publish service event
+            await _messageBus.TryPublishAsync("chat.participant.joined", new ChatParticipantJoinedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                RoomId = body.RoomId,
+                RoomTypeCode = model.RoomTypeCode,
+                ParticipantSessionId = callerSessionId.Value,
+                SenderType = body.SenderType,
+                SenderId = body.SenderId,
+                DisplayName = body.DisplayName,
+                Role = role,
+                CurrentCount = participants.Count,
+            }, cancellationToken);
+
+            // Broadcast client event to room participants
+            var sessionIds = participants.Select(p => p.SessionId.ToString()).ToList();
+            await _clientEventPublisher.PublishToSessionsAsync(sessionIds, new ChatParticipantJoinedClientEvent
+            {
+                RoomId = body.RoomId,
+                ParticipantSessionId = callerSessionId.Value,
+                SenderType = body.SenderType,
+                SenderId = body.SenderId,
+                DisplayName = body.DisplayName,
+                Role = role,
+                CurrentCount = participants.Count,
+            }, cancellationToken);
+
+            _logger.LogInformation("Session {SessionId} joined room {RoomId}", callerSessionId, body.RoomId);
+            return (StatusCodes.OK, MapToRoomResponse(model));
+        }
+        catch (ApiException) { throw; }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to join room {RoomId}", body.RoomId);
+            await _messageBus.TryPublishErrorAsync("chat", "JoinRoom", ex.GetType().Name, ex.Message);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ChatRoomResponse?)> LeaveRoomAsync(
+        LeaveRoomRequest body, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var callerSessionId = GetCallerSessionId();
+            if (callerSessionId == null)
+            {
+                return (StatusCodes.Unauthorized, null);
+            }
+
+            await using var lockResponse = await _lockProvider.LockAsync(
+                StateStoreDefinitions.ChatLock, body.RoomId.ToString(),
+                Guid.NewGuid().ToString(), LockExpirySeconds, cancellationToken);
+            if (!lockResponse.Success)
+            {
+                return (StatusCodes.Conflict, null);
+            }
+
+            var roomKey = $"{RoomKeyPrefix}{body.RoomId}";
+            var model = await _roomStore.GetAsync(roomKey, cancellationToken);
+            if (model == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            var participants = await GetParticipantsAsync(body.RoomId, cancellationToken);
+            var leaving = participants.FirstOrDefault(p => p.SessionId == callerSessionId.Value);
+            if (leaving == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            participants.Remove(leaving);
+
+            // If Owner leaves, promote next Moderator or oldest Member
+            if (leaving.Role == ChatParticipantRole.Owner && participants.Count > 0)
+            {
+                var newOwner = participants.FirstOrDefault(p => p.Role == ChatParticipantRole.Moderator)
+                    ?? participants.OrderBy(p => p.JoinedAt).First();
+                newOwner.Role = ChatParticipantRole.Owner;
+            }
+
+            await SaveParticipantsAsync(body.RoomId, participants, cancellationToken);
+
+            model.ParticipantCount = participants.Count;
+            model.LastActivityAt = DateTimeOffset.UtcNow;
+            await _roomStore.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
+            await _roomCache.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
+
+            await ClearParticipantPermissionStateAsync(callerSessionId.Value, cancellationToken);
+
+            await _messageBus.TryPublishAsync("chat.participant.left", new ChatParticipantLeftEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                RoomId = body.RoomId,
+                ParticipantSessionId = callerSessionId.Value,
+                RemainingCount = participants.Count,
+            }, cancellationToken);
+
+            var sessionIds = participants.Select(p => p.SessionId.ToString()).ToList();
+            if (sessionIds.Count > 0)
+            {
+                await _clientEventPublisher.PublishToSessionsAsync(sessionIds, new ChatParticipantLeftClientEvent
+                {
+                    RoomId = body.RoomId,
+                    ParticipantSessionId = callerSessionId.Value,
+                    DisplayName = leaving.DisplayName,
+                    RemainingCount = participants.Count,
+                }, cancellationToken);
+            }
+
+            return (StatusCodes.OK, MapToRoomResponse(model));
+        }
+        catch (ApiException) { throw; }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to leave room {RoomId}", body.RoomId);
+            await _messageBus.TryPublishErrorAsync("chat", "LeaveRoom", ex.GetType().Name, ex.Message);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ParticipantsResponse?)> ListParticipantsAsync(
+        ListParticipantsRequest body, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var roomKey = $"{RoomKeyPrefix}{body.RoomId}";
+            var room = await GetRoomWithCacheAsync(body.RoomId, cancellationToken);
+            if (room == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            var participants = await GetParticipantsAsync(body.RoomId, cancellationToken);
+            var infos = participants.Select(p => new ParticipantInfo
+            {
+                SessionId = p.SessionId,
+                SenderType = p.SenderType,
+                SenderId = p.SenderId,
+                DisplayName = p.DisplayName,
+                Role = p.Role,
+                JoinedAt = p.JoinedAt,
+                IsMuted = p.IsMuted && (p.MutedUntil == null || p.MutedUntil > DateTimeOffset.UtcNow),
+            }).ToList();
+
+            return (StatusCodes.OK, new ParticipantsResponse
+            {
+                RoomId = body.RoomId,
+                Participants = infos,
+            });
+        }
+        catch (ApiException) { throw; }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to list participants for room {RoomId}", body.RoomId);
+            await _messageBus.TryPublishErrorAsync("chat", "ListParticipants", ex.GetType().Name, ex.Message);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ChatRoomResponse?)> KickParticipantAsync(
+        KickParticipantRequest body, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var callerSessionId = GetCallerSessionId();
+            if (callerSessionId == null)
+            {
+                return (StatusCodes.Unauthorized, null);
+            }
+
+            await using var lockResponse = await _lockProvider.LockAsync(
+                StateStoreDefinitions.ChatLock, body.RoomId.ToString(),
+                Guid.NewGuid().ToString(), LockExpirySeconds, cancellationToken);
+            if (!lockResponse.Success)
+            {
+                return (StatusCodes.Conflict, null);
+            }
+
+            var roomKey = $"{RoomKeyPrefix}{body.RoomId}";
+            var model = await _roomStore.GetAsync(roomKey, cancellationToken);
+            if (model == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            var participants = await GetParticipantsAsync(body.RoomId, cancellationToken);
+            var caller = participants.FirstOrDefault(p => p.SessionId == callerSessionId.Value);
+            if (caller == null || (caller.Role != ChatParticipantRole.Owner && caller.Role != ChatParticipantRole.Moderator))
+            {
+                return (StatusCodes.Forbidden, null);
+            }
+
+            var target = participants.FirstOrDefault(p => p.SessionId == body.TargetSessionId);
+            if (target == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            // Cannot kick someone with equal or higher role
+            if (target.Role <= caller.Role && caller.Role != ChatParticipantRole.Owner)
+            {
+                return (StatusCodes.Forbidden, null);
+            }
+
+            participants.Remove(target);
+            await SaveParticipantsAsync(body.RoomId, participants, cancellationToken);
+
+            model.ParticipantCount = participants.Count;
+            model.LastActivityAt = DateTimeOffset.UtcNow;
+            await _roomStore.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
+            await _roomCache.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
+
+            await ClearParticipantPermissionStateAsync(body.TargetSessionId, cancellationToken);
+
+            await _messageBus.TryPublishAsync("chat.participant.kicked", new ChatParticipantKickedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                RoomId = body.RoomId,
+                TargetSessionId = body.TargetSessionId,
+                KickedBySessionId = callerSessionId.Value,
+                Reason = body.Reason,
+            }, cancellationToken);
+
+            var sessionIds = participants.Select(p => p.SessionId.ToString()).Append(body.TargetSessionId.ToString()).ToList();
+            await _clientEventPublisher.PublishToSessionsAsync(sessionIds, new ChatParticipantKickedClientEvent
+            {
+                RoomId = body.RoomId,
+                TargetSessionId = body.TargetSessionId,
+                TargetDisplayName = target.DisplayName,
+                Reason = body.Reason,
+            }, cancellationToken);
+
+            return (StatusCodes.OK, MapToRoomResponse(model));
+        }
+        catch (ApiException) { throw; }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to kick participant from room {RoomId}", body.RoomId);
+            await _messageBus.TryPublishErrorAsync("chat", "KickParticipant", ex.GetType().Name, ex.Message);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ChatRoomResponse?)> BanParticipantAsync(
+        BanParticipantRequest body, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var callerSessionId = GetCallerSessionId();
+            if (callerSessionId == null)
+            {
+                return (StatusCodes.Unauthorized, null);
+            }
+
+            await using var lockResponse = await _lockProvider.LockAsync(
+                StateStoreDefinitions.ChatLock, body.RoomId.ToString(),
+                Guid.NewGuid().ToString(), LockExpirySeconds, cancellationToken);
+            if (!lockResponse.Success)
+            {
+                return (StatusCodes.Conflict, null);
+            }
+
+            var roomKey = $"{RoomKeyPrefix}{body.RoomId}";
+            var model = await _roomStore.GetAsync(roomKey, cancellationToken);
+            if (model == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            var participants = await GetParticipantsAsync(body.RoomId, cancellationToken);
+            var caller = participants.FirstOrDefault(p => p.SessionId == callerSessionId.Value);
+            if (caller == null || (caller.Role != ChatParticipantRole.Owner && caller.Role != ChatParticipantRole.Moderator))
+            {
+                return (StatusCodes.Forbidden, null);
+            }
+
+            // Save ban record
+            var now = DateTimeOffset.UtcNow;
+            var ban = new ChatBanModel
+            {
+                BanId = Guid.NewGuid(),
+                RoomId = body.RoomId,
+                TargetSessionId = body.TargetSessionId,
+                BannedBySessionId = callerSessionId.Value,
+                Reason = body.Reason,
+                BannedAt = now,
+                ExpiresAt = body.DurationMinutes.HasValue ? now.AddMinutes(body.DurationMinutes.Value) : null,
+            };
+            var banKey = $"{BanKeyPrefix}{body.RoomId}:{body.TargetSessionId}";
+            await _banStore.SaveAsync(banKey, ban, cancellationToken: cancellationToken);
+
+            // Kick if currently present
+            var target = participants.FirstOrDefault(p => p.SessionId == body.TargetSessionId);
+            if (target != null)
+            {
+                participants.Remove(target);
+                await SaveParticipantsAsync(body.RoomId, participants, cancellationToken);
+
+                model.ParticipantCount = participants.Count;
+                await ClearParticipantPermissionStateAsync(body.TargetSessionId, cancellationToken);
+            }
+
+            model.LastActivityAt = now;
+            await _roomStore.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
+            await _roomCache.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
+
+            await _messageBus.TryPublishAsync("chat.participant.banned", new ChatParticipantBannedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                RoomId = body.RoomId,
+                TargetSessionId = body.TargetSessionId,
+                BannedBySessionId = callerSessionId.Value,
+                Reason = body.Reason,
+                DurationMinutes = body.DurationMinutes,
+            }, cancellationToken);
+
+            var sessionIds = participants.Select(p => p.SessionId.ToString()).Append(body.TargetSessionId.ToString()).ToList();
+            await _clientEventPublisher.PublishToSessionsAsync(sessionIds, new ChatParticipantBannedClientEvent
+            {
+                RoomId = body.RoomId,
+                TargetSessionId = body.TargetSessionId,
+                TargetDisplayName = target?.DisplayName,
+                Reason = body.Reason,
+            }, cancellationToken);
+
+            return (StatusCodes.OK, MapToRoomResponse(model));
+        }
+        catch (ApiException) { throw; }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to ban participant from room {RoomId}", body.RoomId);
+            await _messageBus.TryPublishErrorAsync("chat", "BanParticipant", ex.GetType().Name, ex.Message);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ChatRoomResponse?)> UnbanParticipantAsync(
+        UnbanParticipantRequest body, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var banKey = $"{BanKeyPrefix}{body.RoomId}:{body.TargetSessionId}";
+            var ban = await _banStore.GetAsync(banKey, cancellationToken);
+            if (ban == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            await _banStore.DeleteAsync(banKey, cancellationToken);
+
+            var model = await GetRoomWithCacheAsync(body.RoomId, cancellationToken);
+            if (model == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            return (StatusCodes.OK, MapToRoomResponse(model));
+        }
+        catch (ApiException) { throw; }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to unban participant from room {RoomId}", body.RoomId);
+            await _messageBus.TryPublishErrorAsync("chat", "UnbanParticipant", ex.GetType().Name, ex.Message);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ChatRoomResponse?)> MuteParticipantAsync(
+        MuteParticipantRequest body, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var callerSessionId = GetCallerSessionId();
+            if (callerSessionId == null)
+            {
+                return (StatusCodes.Unauthorized, null);
+            }
+
+            await using var lockResponse = await _lockProvider.LockAsync(
+                StateStoreDefinitions.ChatLock, body.RoomId.ToString(),
+                Guid.NewGuid().ToString(), LockExpirySeconds, cancellationToken);
+            if (!lockResponse.Success)
+            {
+                return (StatusCodes.Conflict, null);
+            }
+
+            var roomKey = $"{RoomKeyPrefix}{body.RoomId}";
+            var model = await _roomStore.GetAsync(roomKey, cancellationToken);
+            if (model == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            var participants = await GetParticipantsAsync(body.RoomId, cancellationToken);
+            var caller = participants.FirstOrDefault(p => p.SessionId == callerSessionId.Value);
+            if (caller == null || (caller.Role != ChatParticipantRole.Owner && caller.Role != ChatParticipantRole.Moderator))
+            {
+                return (StatusCodes.Forbidden, null);
+            }
+
+            var target = participants.FirstOrDefault(p => p.SessionId == body.TargetSessionId);
+            if (target == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            var now = DateTimeOffset.UtcNow;
+            target.IsMuted = true;
+            target.MutedUntil = body.DurationMinutes.HasValue ? now.AddMinutes(body.DurationMinutes.Value) : null;
+            await SaveParticipantsAsync(body.RoomId, participants, cancellationToken);
+
+            await _messageBus.TryPublishAsync("chat.participant.muted", new ChatParticipantMutedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                RoomId = body.RoomId,
+                TargetSessionId = body.TargetSessionId,
+                MutedBySessionId = callerSessionId.Value,
+                DurationMinutes = body.DurationMinutes,
+            }, cancellationToken);
+
+            var sessionIds = participants.Select(p => p.SessionId.ToString()).ToList();
+            await _clientEventPublisher.PublishToSessionsAsync(sessionIds, new ChatParticipantMutedClientEvent
+            {
+                RoomId = body.RoomId,
+                TargetSessionId = body.TargetSessionId,
+                TargetDisplayName = target.DisplayName,
+                DurationMinutes = body.DurationMinutes,
+            }, cancellationToken);
+
+            return (StatusCodes.OK, MapToRoomResponse(model));
+        }
+        catch (ApiException) { throw; }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to mute participant in room {RoomId}", body.RoomId);
+            await _messageBus.TryPublishErrorAsync("chat", "MuteParticipant", ex.GetType().Name, ex.Message);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    // ============================================================================
+    // MESSAGE OPERATIONS
+    // ============================================================================
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ChatMessageResponse?)> SendMessageAsync(
+        SendMessageRequest body, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var callerSessionId = GetCallerSessionId();
+            if (callerSessionId == null)
+            {
+                return (StatusCodes.Unauthorized, null);
+            }
+
+            var model = await GetRoomWithCacheAsync(body.RoomId, cancellationToken);
+            if (model == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            if (model.Status == ChatRoomStatus.Locked || model.Status == ChatRoomStatus.Archived)
+            {
+                return (StatusCodes.Forbidden, null);
+            }
+
+            var participants = await GetParticipantsAsync(body.RoomId, cancellationToken);
+            var sender = participants.FirstOrDefault(p => p.SessionId == callerSessionId.Value);
+            if (sender == null)
+            {
+                return (StatusCodes.Forbidden, null);
+            }
+
+            if (sender.Role == ChatParticipantRole.ReadOnly)
+            {
+                return (StatusCodes.Forbidden, null);
+            }
+
+            // Check mute (auto-unmute if expired)
+            if (sender.IsMuted)
+            {
+                if (sender.MutedUntil.HasValue && sender.MutedUntil.Value <= DateTimeOffset.UtcNow)
+                {
+                    sender.IsMuted = false;
+                    sender.MutedUntil = null;
+                }
+                else
+                {
+                    return (StatusCodes.Forbidden, null);
+                }
+            }
+
+            // Validate message content against room type
+            var roomType = await FindRoomTypeByCodeAsync(model.RoomTypeCode, cancellationToken);
+            if (roomType == null)
+            {
+                _logger.LogError("Room type {RoomTypeCode} not found for room {RoomId}", model.RoomTypeCode, body.RoomId);
+                return (StatusCodes.InternalServerError, null);
+            }
+
+            var validationError = ValidateMessageContent(body.Content, roomType);
+            if (validationError != null)
+            {
+                _logger.LogWarning("Message validation failed for room {RoomId}: {Error}", body.RoomId, validationError);
+                return (StatusCodes.BadRequest, null);
+            }
+
+            // Check rate limit
+            var effectiveRateLimit = GetEffectiveRateLimit(roomType);
+            var now = DateTimeOffset.UtcNow;
+            if (now - sender.MinuteWindowStart > TimeSpan.FromMinutes(1))
+            {
+                sender.MessagesSentThisMinute = 0;
+                sender.MinuteWindowStart = now;
+            }
+            if (sender.MessagesSentThisMinute >= effectiveRateLimit)
+            {
+                return (StatusCodes.Conflict, null);
+            }
+
+            sender.MessagesSentThisMinute++;
+            sender.LastActivityAt = now;
+            await SaveParticipantsAsync(body.RoomId, participants, cancellationToken);
+
+            // Create message
+            var messageId = Guid.NewGuid();
+            var message = new ChatMessageModel
+            {
+                MessageId = messageId,
+                RoomId = body.RoomId,
+                SenderType = body.SenderType ?? sender.SenderType,
+                SenderId = body.SenderId ?? sender.SenderId,
+                DisplayName = body.DisplayName ?? sender.DisplayName,
+                Timestamp = now,
+                MessageFormat = roomType.MessageFormat,
+                TextContent = body.Content.Text,
+                SentimentCategory = body.Content.SentimentCategory,
+                SentimentIntensity = body.Content.SentimentIntensity,
+                EmojiCode = body.Content.EmojiCode,
+                EmojiSetId = body.Content.EmojiSetId,
+                CustomPayload = body.Content.CustomPayload,
+                IsPinned = false,
+            };
+
+            // Store based on persistence mode
+            if (roomType.PersistenceMode == PersistenceMode.Persistent)
+            {
+                var msgKey = $"{body.RoomId}:{messageId}";
+                await _messageStore.SaveAsync(msgKey, message, cancellationToken: cancellationToken);
+            }
+            else
+            {
+                var msgKey = $"{body.RoomId}:{messageId}";
+                var ttlSeconds = _configuration.EphemeralMessageTtlMinutes * 60;
+                await _messageBuffer.SaveAsync(msgKey, message,
+                    new StateOptions { Ttl = ttlSeconds }, cancellationToken);
+            }
+
+            // Update room last activity
+            var roomKey = $"{RoomKeyPrefix}{body.RoomId}";
+            model.LastActivityAt = now;
+            await _roomStore.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
+            await _roomCache.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
+
+            // Publish service event (no text/custom content for privacy)
+            await _messageBus.TryPublishAsync("chat.message.sent", new ChatMessageSentEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                RoomId = body.RoomId,
+                RoomTypeCode = model.RoomTypeCode,
+                MessageId = messageId,
+                SenderType = message.SenderType,
+                SenderId = message.SenderId,
+                MessageFormat = roomType.MessageFormat,
+                SentimentCategory = message.SentimentCategory,
+                SentimentIntensity = message.SentimentIntensity,
+                EmojiCode = message.EmojiCode,
+            }, cancellationToken);
+
+            // Broadcast to participants (includes full content for rendering)
+            var sessionIds = participants.Select(p => p.SessionId.ToString()).ToList();
+            await _clientEventPublisher.PublishToSessionsAsync(sessionIds, new ChatMessageReceivedEvent
+            {
+                RoomId = body.RoomId,
+                MessageId = messageId,
+                SenderType = message.SenderType,
+                SenderId = message.SenderId,
+                DisplayName = message.DisplayName,
+                MessageFormat = roomType.MessageFormat,
+                TextContent = message.TextContent,
+                SentimentCategory = message.SentimentCategory,
+                SentimentIntensity = message.SentimentIntensity,
+                EmojiCode = message.EmojiCode,
+                EmojiSetId = message.EmojiSetId,
+                CustomPayload = message.CustomPayload,
+            }, cancellationToken);
+
+            return (StatusCodes.OK, MapToMessageResponse(message, model.RoomTypeCode));
+        }
+        catch (ApiException) { throw; }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send message to room {RoomId}", body.RoomId);
+            await _messageBus.TryPublishErrorAsync("chat", "SendMessage", ex.GetType().Name, ex.Message);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, SendMessageBatchResponse?)> SendMessageBatchAsync(
+        SendMessageBatchRequest body, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var model = await GetRoomWithCacheAsync(body.RoomId, cancellationToken);
+            if (model == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            if (model.Status != ChatRoomStatus.Active)
+            {
+                return (StatusCodes.Forbidden, null);
+            }
+
+            var roomType = await FindRoomTypeByCodeAsync(model.RoomTypeCode, cancellationToken);
+            if (roomType == null)
+            {
+                return (StatusCodes.InternalServerError, null);
+            }
+
+            var participants = await GetParticipantsAsync(body.RoomId, cancellationToken);
+            var sessionIds = participants.Select(p => p.SessionId.ToString()).ToList();
+            var now = DateTimeOffset.UtcNow;
+            var messageCount = 0;
+
+            foreach (var entry in body.Messages)
+            {
+                var validationError = ValidateMessageContent(entry.Content, roomType);
+                if (validationError != null)
+                {
+                    continue;
+                }
+
+                var messageId = Guid.NewGuid();
+                var message = new ChatMessageModel
+                {
+                    MessageId = messageId,
+                    RoomId = body.RoomId,
+                    SenderType = entry.SenderType,
+                    SenderId = entry.SenderId,
+                    DisplayName = entry.DisplayName,
+                    Timestamp = now,
+                    MessageFormat = roomType.MessageFormat,
+                    TextContent = entry.Content.Text,
+                    SentimentCategory = entry.Content.SentimentCategory,
+                    SentimentIntensity = entry.Content.SentimentIntensity,
+                    EmojiCode = entry.Content.EmojiCode,
+                    EmojiSetId = entry.Content.EmojiSetId,
+                    CustomPayload = entry.Content.CustomPayload,
+                };
+
+                if (roomType.PersistenceMode == PersistenceMode.Persistent)
+                {
+                    await _messageStore.SaveAsync($"{body.RoomId}:{messageId}", message, cancellationToken: cancellationToken);
+                }
+                else
+                {
+                    var ttlSeconds = _configuration.EphemeralMessageTtlMinutes * 60;
+                    await _messageBuffer.SaveAsync($"{body.RoomId}:{messageId}", message,
+                        new StateOptions { Ttl = ttlSeconds }, cancellationToken);
+                }
+
+                await _clientEventPublisher.PublishToSessionsAsync(sessionIds, new ChatMessageReceivedEvent
+                {
+                    RoomId = body.RoomId,
+                    MessageId = messageId,
+                    SenderType = message.SenderType,
+                    SenderId = message.SenderId,
+                    DisplayName = message.DisplayName,
+                    MessageFormat = roomType.MessageFormat,
+                    TextContent = message.TextContent,
+                    SentimentCategory = message.SentimentCategory,
+                    SentimentIntensity = message.SentimentIntensity,
+                    EmojiCode = message.EmojiCode,
+                    EmojiSetId = message.EmojiSetId,
+                    CustomPayload = message.CustomPayload,
+                }, cancellationToken);
+
+                messageCount++;
+            }
+
+            // Update room activity
+            var roomKey = $"{RoomKeyPrefix}{body.RoomId}";
+            model.LastActivityAt = now;
+            await _roomStore.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
+            await _roomCache.SaveAsync(roomKey, model, cancellationToken: cancellationToken);
+
+            return (StatusCodes.OK, new SendMessageBatchResponse { MessageCount = messageCount });
+        }
+        catch (ApiException) { throw; }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send batch messages to room {RoomId}", body.RoomId);
+            await _messageBus.TryPublishErrorAsync("chat", "SendMessageBatch", ex.GetType().Name, ex.Message);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, MessageHistoryResponse?)> GetMessageHistoryAsync(
+        MessageHistoryRequest body, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var model = await GetRoomWithCacheAsync(body.RoomId, cancellationToken);
+            if (model == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            var roomType = await FindRoomTypeByCodeAsync(model.RoomTypeCode, cancellationToken);
+            if (roomType == null)
+            {
+                return (StatusCodes.InternalServerError, null);
+            }
+
+            // Ephemeral rooms have no persistent history
+            if (roomType.PersistenceMode == PersistenceMode.Ephemeral)
+            {
+                return (StatusCodes.OK, new MessageHistoryResponse
+                {
+                    Messages = new List<ChatMessageResponse>(),
+                    HasMore = false,
+                });
+            }
+
+            var limit = Math.Min(body.Limit, _configuration.MessageHistoryPageSize);
+            var conditions = new List<QueryCondition>
+            {
+                new() { Path = "$.RoomId", Operator = QueryOperator.Equals, Value = body.RoomId.ToString() },
+                new() { Path = "$.MessageId", Operator = QueryOperator.Exists, Value = true },
+            };
+
+            if (!string.IsNullOrEmpty(body.Before))
+            {
+                conditions.Add(new QueryCondition
+                {
+                    Path = "$.Timestamp",
+                    Operator = QueryOperator.LessThan,
+                    Value = body.Before,
+                });
+            }
+
+            var result = await _messageStore.JsonQueryPagedAsync(
+                conditions, 0, limit + 1,
+                new JsonSortSpec { Path = "$.Timestamp", Descending = true },
+                cancellationToken);
+
+            var messages = result.Items.Take(limit)
+                .Select(r => MapToMessageResponse(r.Value, model.RoomTypeCode))
+                .ToList();
+
+            var hasMore = result.Items.Count > limit;
+            var nextCursor = hasMore && messages.Count > 0
+                ? messages.Last().Timestamp.ToString("O")
+                : null;
+
+            return (StatusCodes.OK, new MessageHistoryResponse
+            {
+                Messages = messages,
+                HasMore = hasMore,
+                NextCursor = nextCursor,
+            });
+        }
+        catch (ApiException) { throw; }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get message history for room {RoomId}", body.RoomId);
+            await _messageBus.TryPublishErrorAsync("chat", "GetMessageHistory", ex.GetType().Name, ex.Message);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ChatMessageResponse?)> DeleteMessageAsync(
+        DeleteMessageRequest body, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var callerSessionId = GetCallerSessionId();
+            if (callerSessionId == null)
+            {
+                return (StatusCodes.Unauthorized, null);
+            }
+
+            var msgKey = $"{body.RoomId}:{body.MessageId}";
+            var message = await _messageStore.GetAsync(msgKey, cancellationToken);
+            if (message == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            var model = await GetRoomWithCacheAsync(body.RoomId, cancellationToken);
+            if (model == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            var snapshot = MapToMessageResponse(message, model.RoomTypeCode);
+            await _messageStore.DeleteAsync(msgKey, cancellationToken);
+
+            await _messageBus.TryPublishAsync("chat.message.deleted", new ChatMessageDeletedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                RoomId = body.RoomId,
+                MessageId = body.MessageId,
+                DeletedBySessionId = callerSessionId.Value,
+            }, cancellationToken);
+
+            var participants = await GetParticipantsAsync(body.RoomId, cancellationToken);
+            var sessionIds = participants.Select(p => p.SessionId.ToString()).ToList();
+            await _clientEventPublisher.PublishToSessionsAsync(sessionIds, new ChatMessageDeletedClientEvent
+            {
+                RoomId = body.RoomId,
+                MessageId = body.MessageId,
+            }, cancellationToken);
+
+            return (StatusCodes.OK, snapshot);
+        }
+        catch (ApiException) { throw; }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to delete message {MessageId} from room {RoomId}", body.MessageId, body.RoomId);
+            await _messageBus.TryPublishErrorAsync("chat", "DeleteMessage", ex.GetType().Name, ex.Message);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ChatMessageResponse?)> PinMessageAsync(
+        PinMessageRequest body, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await using var lockResponse = await _lockProvider.LockAsync(
+                StateStoreDefinitions.ChatLock, body.RoomId.ToString(),
+                Guid.NewGuid().ToString(), LockExpirySeconds, cancellationToken);
+            if (!lockResponse.Success)
+            {
+                return (StatusCodes.Conflict, null);
+            }
+
+            var msgKey = $"{body.RoomId}:{body.MessageId}";
+            var message = await _messageStore.GetAsync(msgKey, cancellationToken);
+            if (message == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            if (message.IsPinned)
+            {
+                var model2 = await GetRoomWithCacheAsync(body.RoomId, cancellationToken);
+                return (StatusCodes.OK, MapToMessageResponse(message, model2?.RoomTypeCode ?? string.Empty));
+            }
+
+            // Check max pinned messages
+            var pinnedConditions = new List<QueryCondition>
+            {
+                new() { Path = "$.RoomId", Operator = QueryOperator.Equals, Value = body.RoomId.ToString() },
+                new() { Path = "$.IsPinned", Operator = QueryOperator.Equals, Value = true },
+            };
+            var pinnedCount = await _messageStore.JsonCountAsync(pinnedConditions, cancellationToken);
+            if (pinnedCount >= _configuration.MaxPinnedMessagesPerRoom)
+            {
+                return (StatusCodes.Conflict, null);
+            }
+
+            message.IsPinned = true;
+            await _messageStore.SaveAsync(msgKey, message, cancellationToken: cancellationToken);
+
+            var model = await GetRoomWithCacheAsync(body.RoomId, cancellationToken);
+            var participants = await GetParticipantsAsync(body.RoomId, cancellationToken);
+            var sessionIds = participants.Select(p => p.SessionId.ToString()).ToList();
+            await _clientEventPublisher.PublishToSessionsAsync(sessionIds, new ChatMessagePinnedEvent
+            {
+                RoomId = body.RoomId,
+                MessageId = body.MessageId,
+                IsPinned = true,
+            }, cancellationToken);
+
+            return (StatusCodes.OK, MapToMessageResponse(message, model?.RoomTypeCode ?? string.Empty));
+        }
+        catch (ApiException) { throw; }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to pin message {MessageId} in room {RoomId}", body.MessageId, body.RoomId);
+            await _messageBus.TryPublishErrorAsync("chat", "PinMessage", ex.GetType().Name, ex.Message);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ChatMessageResponse?)> UnpinMessageAsync(
+        UnpinMessageRequest body, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var msgKey = $"{body.RoomId}:{body.MessageId}";
+            var message = await _messageStore.GetAsync(msgKey, cancellationToken);
+            if (message == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            message.IsPinned = false;
+            await _messageStore.SaveAsync(msgKey, message, cancellationToken: cancellationToken);
+
+            var model = await GetRoomWithCacheAsync(body.RoomId, cancellationToken);
+            var participants = await GetParticipantsAsync(body.RoomId, cancellationToken);
+            var sessionIds = participants.Select(p => p.SessionId.ToString()).ToList();
+            await _clientEventPublisher.PublishToSessionsAsync(sessionIds, new ChatMessagePinnedEvent
+            {
+                RoomId = body.RoomId,
+                MessageId = body.MessageId,
+                IsPinned = false,
+            }, cancellationToken);
+
+            return (StatusCodes.OK, MapToMessageResponse(message, model?.RoomTypeCode ?? string.Empty));
+        }
+        catch (ApiException) { throw; }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to unpin message {MessageId} in room {RoomId}", body.MessageId, body.RoomId);
+            await _messageBus.TryPublishErrorAsync("chat", "UnpinMessage", ex.GetType().Name, ex.Message);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, SearchMessagesResponse?)> SearchMessagesAsync(
+        SearchMessagesRequest body, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var model = await GetRoomWithCacheAsync(body.RoomId, cancellationToken);
+            if (model == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            var roomType = await FindRoomTypeByCodeAsync(model.RoomTypeCode, cancellationToken);
+            if (roomType != null && roomType.PersistenceMode == PersistenceMode.Ephemeral)
+            {
+                return (StatusCodes.BadRequest, null);
+            }
+
+            var conditions = new List<QueryCondition>
+            {
+                new() { Path = "$.RoomId", Operator = QueryOperator.Equals, Value = body.RoomId.ToString() },
+                new() { Path = "$.TextContent", Operator = QueryOperator.Contains, Value = body.Query },
+            };
+
+            var result = await _messageStore.JsonQueryPagedAsync(
+                conditions, 0, body.Limit,
+                new JsonSortSpec { Path = "$.Timestamp", Descending = true },
+                cancellationToken);
+
+            var messages = result.Items.Select(r => MapToMessageResponse(r.Value, model.RoomTypeCode)).ToList();
+
+            return (StatusCodes.OK, new SearchMessagesResponse
+            {
+                Messages = messages,
+                TotalMatches = (int)result.TotalCount,
+            });
+        }
+        catch (ApiException) { throw; }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to search messages in room {RoomId}", body.RoomId);
+            await _messageBus.TryPublishErrorAsync("chat", "SearchMessages", ex.GetType().Name, ex.Message);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    // ============================================================================
+    // ADMIN OPERATIONS
+    // ============================================================================
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ListRoomsResponse?)> AdminListRoomsAsync(
+        AdminListRoomsRequest body, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var conditions = new List<QueryCondition>
+            {
+                new() { Path = "$.RoomId", Operator = QueryOperator.Exists, Value = true }
+            };
+
+            if (!string.IsNullOrEmpty(body.RoomTypeCode))
+            {
+                conditions.Add(new QueryCondition { Path = "$.RoomTypeCode", Operator = QueryOperator.Equals, Value = body.RoomTypeCode });
+            }
+            if (body.Status.HasValue)
+            {
+                conditions.Add(new QueryCondition { Path = "$.Status", Operator = QueryOperator.Equals, Value = body.Status.Value.ToString() });
+            }
+
+            var offset = body.Page * body.PageSize;
+            var result = await _roomStore.JsonQueryPagedAsync(
+                conditions, offset, body.PageSize,
+                new JsonSortSpec { Path = "$.CreatedAt", Descending = true },
+                cancellationToken);
+
+            var items = result.Items.Select(r => MapToRoomResponse(r.Value)).ToList();
+
+            return (StatusCodes.OK, new ListRoomsResponse
+            {
+                Items = items,
+                TotalCount = (int)result.TotalCount,
+                Page = body.Page,
+                PageSize = body.PageSize,
+            });
+        }
+        catch (ApiException) { throw; }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to admin list rooms");
+            await _messageBus.TryPublishErrorAsync("chat", "AdminListRooms", ex.GetType().Name, ex.Message);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, AdminStatsResponse?)> AdminGetStatsAsync(
+        AdminGetStatsRequest body, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var allRoomsConditions = new List<QueryCondition>
+            {
+                new() { Path = "$.RoomId", Operator = QueryOperator.Exists, Value = true }
+            };
+            var totalRooms = await _roomStore.JsonCountAsync(allRoomsConditions, cancellationToken);
+
+            var activeConditions = new List<QueryCondition>
+            {
+                new() { Path = "$.Status", Operator = QueryOperator.Equals, Value = ChatRoomStatus.Active.ToString() }
+            };
+            var activeRooms = await _roomStore.JsonCountAsync(activeConditions, cancellationToken);
+
+            var lockedConditions = new List<QueryCondition>
+            {
+                new() { Path = "$.Status", Operator = QueryOperator.Equals, Value = ChatRoomStatus.Locked.ToString() }
+            };
+            var lockedRooms = await _roomStore.JsonCountAsync(lockedConditions, cancellationToken);
+
+            var archivedConditions = new List<QueryCondition>
+            {
+                new() { Path = "$.Status", Operator = QueryOperator.Equals, Value = ChatRoomStatus.Archived.ToString() }
+            };
+            var archivedRooms = await _roomStore.JsonCountAsync(archivedConditions, cancellationToken);
+
+            var typeConditions = new List<QueryCondition>
+            {
+                new() { Path = "$.Code", Operator = QueryOperator.Exists, Value = true }
+            };
+            var totalRoomTypes = await _roomTypeStore.JsonCountAsync(typeConditions, cancellationToken);
+
+            // Sum participant counts from rooms
+            var participantSum = await _roomStore.JsonAggregateAsync(
+                "$.ParticipantCount", JsonAggregation.Sum, allRoomsConditions, cancellationToken);
+            var totalParticipants = Convert.ToInt32(participantSum ?? 0);
+
+            return (StatusCodes.OK, new AdminStatsResponse
+            {
+                TotalRooms = (int)totalRooms,
+                ActiveRooms = (int)activeRooms,
+                LockedRooms = (int)lockedRooms,
+                ArchivedRooms = (int)archivedRooms,
+                TotalParticipants = totalParticipants,
+                TotalRoomTypes = (int)totalRoomTypes,
+            });
+        }
+        catch (ApiException) { throw; }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get admin stats");
+            await _messageBus.TryPublishErrorAsync("chat", "AdminGetStats", ex.GetType().Name, ex.Message);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, AdminCleanupResponse?)> AdminForceCleanupAsync(
+        AdminForceCleanupRequest body, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await CleanupIdleRoomsAsync(cancellationToken);
+            return (StatusCodes.OK, result);
+        }
+        catch (ApiException) { throw; }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to execute admin force cleanup");
+            await _messageBus.TryPublishErrorAsync("chat", "AdminForceCleanup", ex.GetType().Name, ex.Message);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    // ============================================================================
+    // INTERNAL: Cleanup logic (shared with IdleRoomCleanupWorker)
+    // ============================================================================
+
+    /// <summary>
+    /// Scans for idle rooms and cleans them up. Used by both AdminForceCleanup and the background worker.
+    /// </summary>
+    internal async Task<AdminCleanupResponse> CleanupIdleRoomsAsync(CancellationToken cancellationToken)
+    {
+        var cutoff = DateTimeOffset.UtcNow.AddMinutes(-_configuration.IdleRoomTimeoutMinutes);
+        var conditions = new List<QueryCondition>
+        {
+            new() { Path = "$.RoomId", Operator = QueryOperator.Exists, Value = true },
+            new() { Path = "$.LastActivityAt", Operator = QueryOperator.LessThan, Value = cutoff.ToString("O") },
+        };
+
+        var result = await _roomStore.JsonQueryPagedAsync(conditions, 0, 1000, cancellationToken: cancellationToken);
+
+        var archivedCount = 0;
+        var deletedCount = 0;
+
+        foreach (var item in result.Items)
+        {
+            var room = item.Value;
+
+            // Skip contract-governed rooms
+            if (room.ContractId.HasValue)
+            {
+                continue;
+            }
+
+            var roomType = await FindRoomTypeByCodeAsync(room.RoomTypeCode, cancellationToken);
+            var roomKey = $"{RoomKeyPrefix}{room.RoomId}";
+
+            if (roomType?.PersistenceMode == PersistenceMode.Persistent && !room.IsArchived)
+            {
+                // Archive persistent rooms
+                try
+                {
+                    await _resourceClient.ExecuteCompressAsync(
+                        new ExecuteCompressRequest { ResourceType = "chat-room", ResourceId = room.RoomId },
+                        cancellationToken);
+                    room.IsArchived = true;
+                    room.Status = ChatRoomStatus.Archived;
+                    await _roomStore.SaveAsync(roomKey, room, cancellationToken: cancellationToken);
+                    await _roomCache.DeleteAsync(roomKey, cancellationToken);
+                    archivedCount++;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to archive idle room {RoomId}", room.RoomId);
+                }
+            }
+            else
+            {
+                // Delete ephemeral or already-archived rooms
+                var participants = await GetParticipantsAsync(room.RoomId, cancellationToken);
+                foreach (var p in participants)
+                {
+                    await ClearParticipantPermissionStateAsync(p.SessionId, cancellationToken);
+                }
+                await _participantStore.DeleteAsync(room.RoomId.ToString(), cancellationToken);
+                await _roomStore.DeleteAsync(roomKey, cancellationToken);
+                await _roomCache.DeleteAsync(roomKey, cancellationToken);
+
+                await _messageBus.TryPublishAsync("chat-room.deleted", new ChatRoomDeletedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    RoomId = room.RoomId,
+                    RoomTypeCode = room.RoomTypeCode,
+                    DisplayName = room.DisplayName ?? string.Empty,
+                    Status = room.Status,
+                    ParticipantCount = 0,
+                    IsArchived = room.IsArchived,
+                    CreatedAt = room.CreatedAt,
+                    DeletedReason = "Idle room cleanup",
+                }, cancellationToken);
+
+                deletedCount++;
+            }
+        }
+
+        _logger.LogInformation("Idle room cleanup: {Archived} archived, {Deleted} deleted", archivedCount, deletedCount);
+        return new AdminCleanupResponse
+        {
+            CleanedRooms = archivedCount + deletedCount,
+            ArchivedRooms = archivedCount,
+            DeletedRooms = deletedCount,
+        };
+    }
+
+    // ============================================================================
+    // INTERNAL: Contract room action execution (used by ChatServiceEvents.cs)
+    // ============================================================================
+
+    /// <summary>
+    /// Executes a contract room action (Lock, Archive, Delete, Continue) on a room.
+    /// Used by contract event handlers in ChatServiceEvents.cs.
+    /// </summary>
+    internal async Task ExecuteContractRoomActionAsync(
+        ChatRoomModel room, ContractRoomAction action, ChatRoomLockReason lockReason, CancellationToken ct)
+    {
+        var roomKey = $"{RoomKeyPrefix}{room.RoomId}";
+
+        switch (action)
+        {
+            case ContractRoomAction.Lock:
+                room.Status = ChatRoomStatus.Locked;
+                await _roomStore.SaveAsync(roomKey, room, cancellationToken: ct);
+                await _roomCache.SaveAsync(roomKey, room, cancellationToken: ct);
+
+                await _messageBus.TryPublishAsync("chat.room.locked", new ChatRoomLockedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    RoomId = room.RoomId,
+                    Reason = lockReason,
+                }, ct);
+
+                var lockParticipants = await GetParticipantsAsync(room.RoomId, ct);
+                var lockSessionIds = lockParticipants.Select(p => p.SessionId.ToString()).ToList();
+                await _clientEventPublisher.PublishToSessionsAsync(lockSessionIds, new ChatRoomLockedClientEvent
+                {
+                    RoomId = room.RoomId,
+                    Reason = lockReason,
+                }, ct);
+                break;
+
+            case ContractRoomAction.Archive:
+                try
+                {
+                    var compressResponse = await _resourceClient.ExecuteCompressAsync(
+                        new ExecuteCompressRequest { ResourceType = "chat-room", ResourceId = room.RoomId }, ct);
+
+                    room.IsArchived = true;
+                    room.Status = ChatRoomStatus.Archived;
+                    await _roomStore.SaveAsync(roomKey, room, cancellationToken: ct);
+                    await _roomCache.SaveAsync(roomKey, room, cancellationToken: ct);
+
+                    var contractArchiveId = compressResponse.ArchiveId ?? throw new InvalidOperationException(
+                        $"Resource service returned null ArchiveId for room {room.RoomId}");
+
+                    await _messageBus.TryPublishAsync("chat.room.archived", new ChatRoomArchivedEvent
+                    {
+                        EventId = Guid.NewGuid(),
+                        Timestamp = DateTimeOffset.UtcNow,
+                        RoomId = room.RoomId,
+                        ArchiveId = contractArchiveId,
+                    }, ct);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to archive room {RoomId} via contract action", room.RoomId);
+                }
+                break;
+
+            case ContractRoomAction.Delete:
+                var deleteParticipants = await GetParticipantsAsync(room.RoomId, ct);
+                if (deleteParticipants.Count > 0)
+                {
+                    var deleteSessionIds = deleteParticipants.Select(p => p.SessionId.ToString()).ToList();
+                    await _clientEventPublisher.PublishToSessionsAsync(deleteSessionIds, new ChatRoomDeletedClientEvent
+                    {
+                        RoomId = room.RoomId,
+                        Reason = "Contract action",
+                    }, ct);
+
+                    foreach (var p in deleteParticipants)
+                    {
+                        await ClearParticipantPermissionStateAsync(p.SessionId, ct);
+                    }
+                }
+
+                await _participantStore.DeleteAsync(room.RoomId.ToString(), ct);
+                await _roomStore.DeleteAsync(roomKey, ct);
+                await _roomCache.DeleteAsync(roomKey, ct);
+
+                await _messageBus.TryPublishAsync("chat-room.deleted", new ChatRoomDeletedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    RoomId = room.RoomId,
+                    RoomTypeCode = room.RoomTypeCode,
+                    DisplayName = room.DisplayName ?? string.Empty,
+                    Status = room.Status,
+                    ParticipantCount = room.ParticipantCount,
+                    IsArchived = room.IsArchived,
+                    CreatedAt = room.CreatedAt,
+                    DeletedReason = "Contract action",
+                }, ct);
+                break;
+
+            case ContractRoomAction.Continue:
+                // No-op
+                break;
+        }
+    }
+
+    // ============================================================================
+    // PRIVATE HELPERS
+    // ============================================================================
+
+    private static string BuildRoomTypeKey(Guid? gameServiceId, string code)
+    {
+        var scope = gameServiceId.HasValue ? gameServiceId.Value.ToString() : "global";
+        return $"{TypeKeyPrefix}{scope}:{code}";
+    }
+
+    private async Task<ChatRoomTypeModel?> FindRoomTypeByCodeAsync(string code, CancellationToken ct)
+    {
+        // Try to find by querying for the code (searches across all scopes)
+        var conditions = new List<QueryCondition>
+        {
+            new() { Path = "$.Code", Operator = QueryOperator.Equals, Value = code }
+        };
+        var result = await _roomTypeStore.JsonQueryPagedAsync(conditions, 0, 1, cancellationToken: ct);
+        return result.Items.FirstOrDefault()?.Value;
+    }
+
+    private async Task<ChatRoomModel?> GetRoomWithCacheAsync(Guid roomId, CancellationToken ct)
+    {
+        var roomKey = $"{RoomKeyPrefix}{roomId}";
+
+        // Try cache first
+        var cached = await _roomCache.GetAsync(roomKey, ct);
+        if (cached != null)
+        {
+            return cached;
+        }
+
+        // Fall back to MySQL
+        var model = await _roomStore.GetAsync(roomKey, ct);
+        if (model != null)
+        {
+            await _roomCache.SaveAsync(roomKey, model, cancellationToken: ct);
+        }
+        return model;
+    }
+
+    private async Task<List<ChatParticipantModel>> GetParticipantsAsync(Guid roomId, CancellationToken ct)
+    {
+        var participants = await _participantStore.GetAsync(roomId.ToString(), ct);
+        return participants ?? new List<ChatParticipantModel>();
+    }
+
+    private async Task SaveParticipantsAsync(Guid roomId, List<ChatParticipantModel> participants, CancellationToken ct)
+    {
+        await _participantStore.SaveAsync(roomId.ToString(), participants, cancellationToken: ct);
+    }
+
+    private static string? ValidateMessageContent(SendMessageContent content, ChatRoomTypeModel roomType)
+    {
+        switch (roomType.MessageFormat)
+        {
+            case MessageFormat.Text:
+                if (string.IsNullOrEmpty(content.Text))
+                {
+                    return "Text content required for text rooms";
+                }
+                if (roomType.ValidatorConfig?.MaxMessageLength.HasValue == true &&
+                    content.Text.Length > roomType.ValidatorConfig.MaxMessageLength.Value)
+                {
+                    return $"Text exceeds maximum length of {roomType.ValidatorConfig.MaxMessageLength}";
+                }
+                if (!string.IsNullOrEmpty(roomType.ValidatorConfig?.AllowedPattern))
+                {
+                    if (!Regex.IsMatch(content.Text, roomType.ValidatorConfig.AllowedPattern))
+                    {
+                        return "Text does not match allowed pattern";
+                    }
+                }
+                break;
+
+            case MessageFormat.Sentiment:
+                if (content.SentimentCategory == null)
+                {
+                    return "SentimentCategory required for sentiment rooms";
+                }
+                if (content.SentimentIntensity == null)
+                {
+                    return "SentimentIntensity required for sentiment rooms";
+                }
+                if (content.SentimentIntensity < 0.0f || content.SentimentIntensity > 1.0f)
+                {
+                    return "SentimentIntensity must be between 0.0 and 1.0";
+                }
+                break;
+
+            case MessageFormat.Emoji:
+                if (string.IsNullOrEmpty(content.EmojiCode))
+                {
+                    return "EmojiCode required for emoji rooms";
+                }
+                if (roomType.ValidatorConfig?.AllowedValues != null &&
+                    !roomType.ValidatorConfig.AllowedValues.Contains(content.EmojiCode))
+                {
+                    return "Emoji code not in allowed values";
+                }
+                break;
+
+            case MessageFormat.Custom:
+                if (string.IsNullOrEmpty(content.CustomPayload))
+                {
+                    return "CustomPayload required for custom rooms";
+                }
+                if (roomType.ValidatorConfig?.MaxMessageLength.HasValue == true &&
+                    content.CustomPayload.Length > roomType.ValidatorConfig.MaxMessageLength.Value)
+                {
+                    return $"Custom payload exceeds maximum length of {roomType.ValidatorConfig.MaxMessageLength}";
+                }
+                break;
+        }
+        return null;
+    }
+
+    private int GetEffectiveMaxParticipants(ChatRoomModel room, ChatRoomTypeModel? roomType)
+    {
+        return room.MaxParticipants
+            ?? roomType?.DefaultMaxParticipants
+            ?? _configuration.DefaultMaxParticipantsPerRoom;
+    }
+
+    private int GetEffectiveRateLimit(ChatRoomTypeModel roomType)
+    {
+        return roomType.RateLimitPerMinute ?? _configuration.DefaultRateLimitPerMinute;
+    }
+
+    private Guid? GetCallerSessionId()
+    {
+        var sessionIdHeader = _httpContextAccessor.HttpContext?.Request.Headers["X-Session-Id"].FirstOrDefault();
+        if (string.IsNullOrEmpty(sessionIdHeader) || !Guid.TryParse(sessionIdHeader, out var sessionId))
+        {
+            return null;
+        }
+        return sessionId;
+    }
+
+    private async Task SetParticipantPermissionStateAsync(Guid sessionId, CancellationToken ct)
+    {
+        try
+        {
+            await _permissionClient.UpdateSessionStateAsync(new SessionStateUpdate
+            {
+                SessionId = sessionId,
+                ServiceId = "chat",
+                NewState = "in_room",
+            }, ct);
+        }
+        catch (ApiException apiEx)
+        {
+            _logger.LogWarning(apiEx, "Permission service error when setting state for session {SessionId}", sessionId);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing GetRoomType operation");
-            await _messageBus.TryPublishErrorAsync(
-                "chat",
-                "GetRoomType",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/chat/type/get",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            _logger.LogError(ex, "Failed to set permission state for session {SessionId}", sessionId);
         }
     }
 
-    /// <summary>
-    /// Implementation of ListRoomTypes operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, ListRoomTypesResponse?)> ListRoomTypesAsync(ListRoomTypesRequest body, CancellationToken cancellationToken)
+    private async Task ClearParticipantPermissionStateAsync(Guid sessionId, CancellationToken ct)
     {
-        _logger.LogInformation("Executing ListRoomTypes operation");
-
         try
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method ListRoomTypes not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
+            await _permissionClient.ClearSessionStateAsync(new ClearSessionStateRequest
+            {
+                SessionId = sessionId,
+                ServiceId = "chat",
+            }, ct);
+        }
+        catch (ApiException apiEx)
+        {
+            _logger.LogWarning(apiEx, "Permission service error when clearing state for session {SessionId}", sessionId);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing ListRoomTypes operation");
-            await _messageBus.TryPublishErrorAsync(
-                "chat",
-                "ListRoomTypes",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/chat/type/list",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
+            _logger.LogError(ex, "Failed to clear permission state for session {SessionId}", sessionId);
         }
     }
 
-    /// <summary>
-    /// Implementation of UpdateRoomType operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, RoomTypeResponse?)> UpdateRoomTypeAsync(UpdateRoomTypeRequest body, CancellationToken cancellationToken)
+    private static RoomTypeResponse MapToRoomTypeResponse(ChatRoomTypeModel model) => new()
     {
-        _logger.LogInformation("Executing UpdateRoomType operation");
-
-        try
+        Code = model.Code,
+        DisplayName = model.DisplayName,
+        Description = model.Description,
+        GameServiceId = model.GameServiceId,
+        MessageFormat = model.MessageFormat,
+        ValidatorConfig = model.ValidatorConfig != null ? new ValidatorConfig
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method UpdateRoomType not yet implemented");
+            MaxMessageLength = model.ValidatorConfig.MaxMessageLength,
+            AllowedPattern = model.ValidatorConfig.AllowedPattern,
+            AllowedValues = model.ValidatorConfig.AllowedValues,
+            RequiredFields = model.ValidatorConfig.RequiredFields,
+            JsonSchema = model.ValidatorConfig.JsonSchema,
+        } : null,
+        PersistenceMode = model.PersistenceMode,
+        DefaultMaxParticipants = model.DefaultMaxParticipants,
+        RetentionDays = model.RetentionDays,
+        DefaultContractTemplateId = model.DefaultContractTemplateId,
+        AllowAnonymousSenders = model.AllowAnonymousSenders,
+        RateLimitPerMinute = model.RateLimitPerMinute,
+        Metadata = model.Metadata,
+        Status = model.Status,
+        CreatedAt = model.CreatedAt,
+        UpdatedAt = model.UpdatedAt,
+    };
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing UpdateRoomType operation");
-            await _messageBus.TryPublishErrorAsync(
-                "chat",
-                "UpdateRoomType",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/chat/type/update",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of DeprecateRoomType operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, RoomTypeResponse?)> DeprecateRoomTypeAsync(DeprecateRoomTypeRequest body, CancellationToken cancellationToken)
+    private static ChatRoomResponse MapToRoomResponse(ChatRoomModel model) => new()
     {
-        _logger.LogInformation("Executing DeprecateRoomType operation");
+        RoomId = model.RoomId,
+        RoomTypeCode = model.RoomTypeCode,
+        SessionId = model.SessionId,
+        ContractId = model.ContractId,
+        DisplayName = model.DisplayName,
+        Status = model.Status,
+        ParticipantCount = model.ParticipantCount,
+        MaxParticipants = model.MaxParticipants,
+        IsArchived = model.IsArchived,
+        CreatedAt = model.CreatedAt,
+        Metadata = model.Metadata,
+    };
 
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method DeprecateRoomType not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing DeprecateRoomType operation");
-            await _messageBus.TryPublishErrorAsync(
-                "chat",
-                "DeprecateRoomType",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/chat/type/deprecate",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of CreateRoom operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, ChatRoomResponse?)> CreateRoomAsync(CreateRoomRequest body, CancellationToken cancellationToken)
+    private static ChatMessageResponse MapToMessageResponse(ChatMessageModel model, string roomTypeCode) => new()
     {
-        _logger.LogInformation("Executing CreateRoom operation");
-
-        try
+        MessageId = model.MessageId,
+        RoomId = model.RoomId,
+        SenderType = model.SenderType,
+        SenderId = model.SenderId,
+        DisplayName = model.DisplayName,
+        Timestamp = model.Timestamp,
+        RoomTypeCode = roomTypeCode,
+        Content = new SendMessageContent
         {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method CreateRoom not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing CreateRoom operation");
-            await _messageBus.TryPublishErrorAsync(
-                "chat",
-                "CreateRoom",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/chat/room/create",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of GetRoom operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, ChatRoomResponse?)> GetRoomAsync(GetRoomRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing GetRoom operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method GetRoom not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing GetRoom operation");
-            await _messageBus.TryPublishErrorAsync(
-                "chat",
-                "GetRoom",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/chat/room/get",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of ListRooms operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, ListRoomsResponse?)> ListRoomsAsync(ListRoomsRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing ListRooms operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method ListRooms not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing ListRooms operation");
-            await _messageBus.TryPublishErrorAsync(
-                "chat",
-                "ListRooms",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/chat/room/list",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of UpdateRoom operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, ChatRoomResponse?)> UpdateRoomAsync(UpdateRoomRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing UpdateRoom operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method UpdateRoom not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing UpdateRoom operation");
-            await _messageBus.TryPublishErrorAsync(
-                "chat",
-                "UpdateRoom",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/chat/room/update",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of DeleteRoom operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, ChatRoomResponse?)> DeleteRoomAsync(DeleteRoomRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing DeleteRoom operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method DeleteRoom not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing DeleteRoom operation");
-            await _messageBus.TryPublishErrorAsync(
-                "chat",
-                "DeleteRoom",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/chat/room/delete",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of ArchiveRoom operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, ChatRoomResponse?)> ArchiveRoomAsync(ArchiveRoomRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing ArchiveRoom operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method ArchiveRoom not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing ArchiveRoom operation");
-            await _messageBus.TryPublishErrorAsync(
-                "chat",
-                "ArchiveRoom",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/chat/room/archive",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of JoinRoom operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, ChatRoomResponse?)> JoinRoomAsync(JoinRoomRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing JoinRoom operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method JoinRoom not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing JoinRoom operation");
-            await _messageBus.TryPublishErrorAsync(
-                "chat",
-                "JoinRoom",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/chat/room/join",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of LeaveRoom operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, ChatRoomResponse?)> LeaveRoomAsync(LeaveRoomRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing LeaveRoom operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method LeaveRoom not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing LeaveRoom operation");
-            await _messageBus.TryPublishErrorAsync(
-                "chat",
-                "LeaveRoom",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/chat/room/leave",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of ListParticipants operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, ParticipantsResponse?)> ListParticipantsAsync(ListParticipantsRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing ListParticipants operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method ListParticipants not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing ListParticipants operation");
-            await _messageBus.TryPublishErrorAsync(
-                "chat",
-                "ListParticipants",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/chat/room/participants",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of KickParticipant operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, ChatRoomResponse?)> KickParticipantAsync(KickParticipantRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing KickParticipant operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method KickParticipant not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing KickParticipant operation");
-            await _messageBus.TryPublishErrorAsync(
-                "chat",
-                "KickParticipant",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/chat/room/participant/kick",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of BanParticipant operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, ChatRoomResponse?)> BanParticipantAsync(BanParticipantRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing BanParticipant operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method BanParticipant not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing BanParticipant operation");
-            await _messageBus.TryPublishErrorAsync(
-                "chat",
-                "BanParticipant",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/chat/room/participant/ban",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of UnbanParticipant operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, ChatRoomResponse?)> UnbanParticipantAsync(UnbanParticipantRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing UnbanParticipant operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method UnbanParticipant not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing UnbanParticipant operation");
-            await _messageBus.TryPublishErrorAsync(
-                "chat",
-                "UnbanParticipant",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/chat/room/participant/unban",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of MuteParticipant operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, ChatRoomResponse?)> MuteParticipantAsync(MuteParticipantRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing MuteParticipant operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method MuteParticipant not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing MuteParticipant operation");
-            await _messageBus.TryPublishErrorAsync(
-                "chat",
-                "MuteParticipant",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/chat/room/participant/mute",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of SendMessage operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, ChatMessageResponse?)> SendMessageAsync(SendMessageRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing SendMessage operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method SendMessage not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing SendMessage operation");
-            await _messageBus.TryPublishErrorAsync(
-                "chat",
-                "SendMessage",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/chat/message/send",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of SendMessageBatch operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, SendMessageBatchResponse?)> SendMessageBatchAsync(SendMessageBatchRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing SendMessageBatch operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method SendMessageBatch not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing SendMessageBatch operation");
-            await _messageBus.TryPublishErrorAsync(
-                "chat",
-                "SendMessageBatch",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/chat/message/send-batch",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of GetMessageHistory operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, MessageHistoryResponse?)> GetMessageHistoryAsync(MessageHistoryRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing GetMessageHistory operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method GetMessageHistory not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing GetMessageHistory operation");
-            await _messageBus.TryPublishErrorAsync(
-                "chat",
-                "GetMessageHistory",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/chat/message/history",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of DeleteMessage operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, ChatMessageResponse?)> DeleteMessageAsync(DeleteMessageRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing DeleteMessage operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method DeleteMessage not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing DeleteMessage operation");
-            await _messageBus.TryPublishErrorAsync(
-                "chat",
-                "DeleteMessage",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/chat/message/delete",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of PinMessage operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, ChatMessageResponse?)> PinMessageAsync(PinMessageRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing PinMessage operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method PinMessage not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing PinMessage operation");
-            await _messageBus.TryPublishErrorAsync(
-                "chat",
-                "PinMessage",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/chat/message/pin",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of UnpinMessage operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, ChatMessageResponse?)> UnpinMessageAsync(UnpinMessageRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing UnpinMessage operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method UnpinMessage not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing UnpinMessage operation");
-            await _messageBus.TryPublishErrorAsync(
-                "chat",
-                "UnpinMessage",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/chat/message/unpin",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of SearchMessages operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, SearchMessagesResponse?)> SearchMessagesAsync(SearchMessagesRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing SearchMessages operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method SearchMessages not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing SearchMessages operation");
-            await _messageBus.TryPublishErrorAsync(
-                "chat",
-                "SearchMessages",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/chat/message/search",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of AdminListRooms operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, ListRoomsResponse?)> AdminListRoomsAsync(AdminListRoomsRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing AdminListRooms operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method AdminListRooms not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing AdminListRooms operation");
-            await _messageBus.TryPublishErrorAsync(
-                "chat",
-                "AdminListRooms",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/chat/admin/rooms",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of AdminGetStats operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, AdminStatsResponse?)> AdminGetStatsAsync(AdminGetStatsRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing AdminGetStats operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method AdminGetStats not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing AdminGetStats operation");
-            await _messageBus.TryPublishErrorAsync(
-                "chat",
-                "AdminGetStats",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/chat/admin/stats",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
-    /// <summary>
-    /// Implementation of AdminForceCleanup operation.
-    /// TODO: Implement business logic for this method.
-    /// </summary>
-    public async Task<(StatusCodes, AdminCleanupResponse?)> AdminForceCleanupAsync(AdminForceCleanupRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("Executing AdminForceCleanup operation");
-
-        try
-        {
-            // TODO: Implement your business logic here
-            throw new NotImplementedException("Method AdminForceCleanup not yet implemented");
-
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error executing AdminForceCleanup operation");
-            await _messageBus.TryPublishErrorAsync(
-                "chat",
-                "AdminForceCleanup",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/chat/admin/cleanup",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }
-    }
-
+            Text = model.TextContent,
+            SentimentCategory = model.SentimentCategory,
+            SentimentIntensity = model.SentimentIntensity,
+            EmojiCode = model.EmojiCode,
+            EmojiSetId = model.EmojiSetId,
+            CustomPayload = model.CustomPayload,
+        },
+        IsPinned = model.IsPinned,
+    };
 }
