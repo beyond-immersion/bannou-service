@@ -1664,16 +1664,6 @@ public partial class LocationService : ILocationService
 
     #region Permission Registration
 
-    /// <summary>
-    /// Registers this service's API permissions with the Permission service on startup.
-    /// Uses generated permission data from x-permissions sections in the OpenAPI schema.
-    /// </summary>
-    public async Task RegisterServicePermissionsAsync(string appId)
-    {
-        _logger.LogDebug("Registering Location service permissions");
-        await LocationPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
-    }
-
     #endregion
 
     #region Cache Methods

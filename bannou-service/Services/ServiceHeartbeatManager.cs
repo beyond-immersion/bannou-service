@@ -47,13 +47,6 @@ public class ServiceHeartbeatManager : IAsyncDisposable
     public int HeartbeatIntervalSeconds { get; }
 
     /// <summary>
-    /// Whether to re-register permissions on each periodic heartbeat.
-    /// Default is true. Configurable via PERMISSION_HEARTBEAT_ENABLED environment variable.
-    /// This ensures late-joining permission services receive all API mappings.
-    /// </summary>
-    public bool PermissionHeartbeatEnabled { get; }
-
-    /// <summary>
     /// The topic name for heartbeat events.
     /// </summary>
     private const string HEARTBEAT_TOPIC = "bannou.service-heartbeat";
@@ -82,11 +75,9 @@ public class ServiceHeartbeatManager : IAsyncDisposable
         HeartbeatIntervalSeconds = configuration.HeartbeatIntervalSeconds > 0
             ? configuration.HeartbeatIntervalSeconds
             : 30;
-        PermissionHeartbeatEnabled = configuration.PermissionHeartbeatEnabled;
-
         _logger.LogInformation(
-            "ServiceHeartbeatManager initialized: InstanceId={InstanceId}, AppId={AppId}, Interval={Interval}s, PermissionHeartbeat={PermEnabled}",
-            InstanceId, AppId, HeartbeatIntervalSeconds, PermissionHeartbeatEnabled);
+            "ServiceHeartbeatManager initialized: InstanceId={InstanceId}, AppId={AppId}, Interval={Interval}s",
+            InstanceId, AppId, HeartbeatIntervalSeconds);
     }
 
     /// <summary>
@@ -218,42 +209,11 @@ public class ServiceHeartbeatManager : IAsyncDisposable
                 "Periodic heartbeat published: AppId={AppId}, Status={Status}, Services={Count}",
                 AppId, heartbeat.Status, heartbeat.Services.Count);
 
-            // Re-register permissions on each heartbeat to handle late-joining permission services
-            // and ensure eventual consistency after startup race conditions
-            if (PermissionHeartbeatEnabled)
-            {
-                await ReRegisterPermissionsAsync();
-            }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to publish periodic heartbeat");
             ReportIssue($"Heartbeat publish failed: {ex.Message}");
-        }
-    }
-
-    /// <summary>
-    /// Re-register permissions for all services as part of periodic heartbeat.
-    /// This ensures late-joining permission services receive API mappings.
-    /// </summary>
-    private async Task ReRegisterPermissionsAsync()
-    {
-        try
-        {
-            _logger.LogDebug("Re-registering permissions as part of heartbeat...");
-            var success = await _pluginLoader.RegisterServicePermissionsAsync(AppId);
-            if (success)
-            {
-                _logger.LogDebug("Permission heartbeat completed successfully");
-            }
-            else
-            {
-                _logger.LogWarning("Permission heartbeat completed with errors");
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to re-register permissions during heartbeat (non-fatal)");
         }
     }
 

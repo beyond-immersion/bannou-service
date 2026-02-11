@@ -28,10 +28,6 @@ info:
       event: SubscriptionUpdatedEvent
       handler: HandleSubscriptionUpdated
   x-event-publications:
-    # Game session state changes (for permission recompilation)
-    - topic: permission.session-state-changed
-      event: SessionStateChangeEvent
-      description: Published when player enters/exits game session affecting permissions
     # Game session lifecycle events (auto-generated)
     - topic: game-session.created
       event: GameSessionCreatedEvent

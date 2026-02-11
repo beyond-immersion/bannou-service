@@ -221,17 +221,6 @@ public partial class TestingService : ITestingService
 
     #region Permission Registration
 
-    /// <summary>
-    /// Registers this service's API permissions with the Permission service on startup.
-    /// Unlike other services which use generated permission registration, Testing service
-    /// uses a manually maintained registration since there's no testing-api.yaml schema.
-    /// </summary>
-    public async Task RegisterServicePermissionsAsync(string appId)
-    {
-        _logger.LogInformation("Registering Testing service permissions...");
-        await TestingPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
-    }
-
     #endregion
 }
 

@@ -219,33 +219,28 @@ public static class AchievementPermissionRegistration
         return matrix;
     }
 
+}
+
+/// <summary>
+/// Partial class overlay: registers Achievement service permissions via DI registry.
+/// Generated from x-permissions sections in achievement-api.yaml.
+/// Push-based: this service pushes its permission matrix TO the IPermissionRegistry.
+/// </summary>
+public partial class AchievementService
+{
     /// <summary>
-    /// Registers service permissions via event publishing.
-    /// Should only be called after messaging infrastructure is confirmed.
+    /// Registers this service's permissions with the Permission service via DI registry.
+    /// Called by PluginLoader during startup with the resolved IPermissionRegistry.
     /// </summary>
-    /// <param name="messageBus">The message bus for publishing events</param>
-    /// <param name="appId">The effective app ID for this service instance</param>
-    /// <param name="logger">Optional logger for diagnostics</param>
-    public static async Task RegisterViaEventAsync(IMessageBus messageBus, string appId, ILogger? logger = null)
+    async Task IBannouService.RegisterServicePermissionsAsync(
+        string appId, IPermissionRegistry? registry)
     {
-        var registrationEvent = CreateRegistrationEvent(Program.ServiceGUID, appId);
-
-        var success = await messageBus.TryPublishAsync(
-            "permission.service-registered",
-            registrationEvent);
-
-        if (success)
+        if (registry != null)
         {
-            logger?.LogInformation(
-                "Published service registration event for {ServiceName} v{Version} with {EndpointCount} endpoints",
-                ServiceId, ServiceVersion, registrationEvent.Endpoints.Count);
-        }
-        else
-        {
-            logger?.LogWarning(
-                "Failed to publish service registration event for {ServiceId} (will be retried)",
-                ServiceId);
+            await registry.RegisterServiceAsync(
+                AchievementPermissionRegistration.ServiceId,
+                AchievementPermissionRegistration.ServiceVersion,
+                AchievementPermissionRegistration.BuildPermissionMatrix());
         }
     }
-
 }

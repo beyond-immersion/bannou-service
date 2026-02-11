@@ -103,8 +103,6 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<ServiceHeartbeatEvent>("bannou.service-heartbeat");
 
         // From permission-events.yaml
-        EventSubscriptionRegistry.Register<ServiceRegistrationEvent>("permission.service-registered");
-        EventSubscriptionRegistry.Register<SessionStateChangeEvent>("permission.session-state-changed");
         EventSubscriptionRegistry.Register<SessionUpdatedEvent>("session.updated");
         EventSubscriptionRegistry.Register<SessionConnectedEvent>("session.connected");
         EventSubscriptionRegistry.Register<SessionDisconnectedEvent>("session.disconnected");

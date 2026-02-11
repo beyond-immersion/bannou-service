@@ -1393,16 +1393,6 @@ public partial class RealmService : IRealmService
 
     #region Permission Registration
 
-    /// <summary>
-    /// Registers this service's API permissions with the Permission service on startup.
-    /// Uses generated permission data from x-permissions sections in the OpenAPI schema.
-    /// </summary>
-    public async Task RegisterServicePermissionsAsync(string appId)
-    {
-        _logger.LogDebug("Registering Realm service permissions...");
-        await RealmPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
-    }
-
     #endregion
 }
 

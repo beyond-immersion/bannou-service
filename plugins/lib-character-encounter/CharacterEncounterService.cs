@@ -1603,30 +1603,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
     // Permission Registration
     // ============================================================================
 
-    /// <summary>
-    /// Registers this service's API permissions with the Permission service on startup.
-    /// </summary>
-    public async Task RegisterServicePermissionsAsync(string appId)
-    {
-        _logger.LogInformation("Registering CharacterEncounter service permissions...");
-        try
-        {
-            await CharacterEncounterPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
-            _logger.LogInformation("CharacterEncounter service permissions registered");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to register CharacterEncounter service permissions");
-            await _messageBus.TryPublishErrorAsync(
-                "character-encounter",
-                "RegisterServicePermissions",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: "permission");
-            throw;
-        }
-    }
-
     // ============================================================================
     // Helper Methods
     // ============================================================================

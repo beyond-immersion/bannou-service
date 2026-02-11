@@ -448,15 +448,5 @@ public partial class StateService : IStateService
 
     #region Permission Registration
 
-    /// <summary>
-    /// Registers this service's API permissions with the Permission service on startup.
-    /// Overrides the default IBannouService implementation to use generated permission data.
-    /// </summary>
-    public async Task RegisterServicePermissionsAsync(string appId)
-    {
-        _logger.LogInformation("Registering State service permissions...");
-        await StatePermissionRegistration.RegisterViaEventAsync(MessageBus, appId, _logger);
-    }
-
     #endregion
 }

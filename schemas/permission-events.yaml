@@ -12,14 +12,6 @@ info:
     Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
   x-event-subscriptions:
-    # Service registration - services publish their API permissions on startup
-    - topic: permission.service-registered
-      event: ServiceRegistrationEvent
-      handler: HandleServiceRegistration
-    # Session state changes from services (e.g., game-session state transitions)
-    - topic: permission.session-state-changed
-      event: SessionStateChangeEvent
-      handler: HandleSessionStateChange
     # Session updates from Auth service (role/authorization changes)
     - topic: session.updated
       event: SessionUpdatedEvent

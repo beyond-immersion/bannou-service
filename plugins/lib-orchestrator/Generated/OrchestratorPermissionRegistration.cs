@@ -444,33 +444,4 @@ public static class OrchestratorPermissionRegistration
         return matrix;
     }
 
-    /// <summary>
-    /// Registers service permissions via event publishing.
-    /// Should only be called after messaging infrastructure is confirmed.
-    /// </summary>
-    /// <param name="messageBus">The message bus for publishing events</param>
-    /// <param name="appId">The effective app ID for this service instance</param>
-    /// <param name="logger">Optional logger for diagnostics</param>
-    public static async Task RegisterViaEventAsync(IMessageBus messageBus, string appId, ILogger? logger = null)
-    {
-        var registrationEvent = CreateRegistrationEvent(Program.ServiceGUID, appId);
-
-        var success = await messageBus.TryPublishAsync(
-            "permission.service-registered",
-            registrationEvent);
-
-        if (success)
-        {
-            logger?.LogInformation(
-                "Published service registration event for {ServiceName} v{Version} with {EndpointCount} endpoints",
-                ServiceId, ServiceVersion, registrationEvent.Endpoints.Count);
-        }
-        else
-        {
-            logger?.LogWarning(
-                "Failed to publish service registration event for {ServiceId} (will be retried)",
-                ServiceId);
-        }
-    }
-
 }

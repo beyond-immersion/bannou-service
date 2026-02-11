@@ -595,16 +595,6 @@ public partial class SubscriptionService : ISubscriptionService
 
     #region Service Registration
 
-    /// <summary>
-    /// Registers this service's API permissions with the Permission service on startup.
-    /// Overrides the default IBannouService implementation to use generated permission data.
-    /// </summary>
-    public async Task RegisterServicePermissionsAsync(string appId)
-    {
-        _logger.LogDebug("Registering Subscription service permissions...");
-        await SubscriptionPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
-    }
-
     #endregion
 
     #region Error Event Publishing

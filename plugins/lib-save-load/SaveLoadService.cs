@@ -2633,16 +2633,6 @@ public partial class SaveLoadService : ISaveLoadService
 
     #region Permission Registration
 
-    /// <summary>
-    /// Registers this service's API permissions with the Permission service on startup.
-    /// Overrides the default IBannouService implementation to use generated permission data.
-    /// </summary>
-    public async Task RegisterServicePermissionsAsync(string appId)
-    {
-        _logger.LogDebug("Registering SaveLoad service permissions...");
-        await SaveLoadPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
-    }
-
     #endregion
 
     #region Lifecycle Event Publishing

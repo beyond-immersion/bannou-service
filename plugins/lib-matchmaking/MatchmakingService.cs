@@ -1818,14 +1818,5 @@ public partial class MatchmakingService : IMatchmakingService
 
     #region Permission Registration
 
-    /// <summary>
-    /// Registers service permissions with the Permission service.
-    /// </summary>
-    public async Task RegisterServicePermissionsAsync(string appId)
-    {
-        _logger.LogInformation("Registering Matchmaking service permissions...");
-        await MatchmakingPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
-    }
-
     #endregion
 }

@@ -426,17 +426,6 @@ public partial class GameServiceService : IGameServiceService
 
     #region Service Registration
 
-    /// <summary>
-    /// Registers this service's API permissions with the Permission service on startup.
-    /// Overrides the default IBannouService implementation to use generated permission data.
-    /// </summary>
-    /// <param name="appId">The application ID to register permissions under.</param>
-    public async Task RegisterServicePermissionsAsync(string appId)
-    {
-        _logger.LogInformation("Registering Game Service service permissions...");
-        await GameServicePermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
-    }
-
     #endregion
 
     #region Error Event Publishing

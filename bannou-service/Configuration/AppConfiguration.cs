@@ -132,12 +132,6 @@ public class AppConfiguration : BaseServiceConfiguration
     public int HeartbeatIntervalSeconds { get; set; } = 30;
 
     /// <summary>
-    /// Whether to re-register permissions on each heartbeat.
-    /// Environment variable: PERMISSION_HEARTBEAT_ENABLED or BANNOU_PERMISSION_HEARTBEAT_ENABLED
-    /// </summary>
-    public bool PermissionHeartbeatEnabled { get; set; } = true;
-
-    /// <summary>
     /// The App ID for this service instance used for mesh routing.
     /// Environment variable: BANNOU_APP_ID
     /// </summary>

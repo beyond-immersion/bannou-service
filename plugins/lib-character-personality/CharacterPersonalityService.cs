@@ -1004,27 +1004,4 @@ public partial class CharacterPersonalityService : ICharacterPersonalityService
     // Permission Registration
     // ============================================================================
 
-    /// <summary>
-    /// Registers this service's API permissions with the Permission service on startup.
-    /// </summary>
-    public async Task RegisterServicePermissionsAsync(string appId)
-    {
-        _logger.LogInformation("Registering CharacterPersonality service permissions...");
-        try
-        {
-            await CharacterPersonalityPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
-            _logger.LogInformation("CharacterPersonality service permissions registered");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to register CharacterPersonality service permissions");
-            await _messageBus.TryPublishErrorAsync(
-                "character-personality",
-                "RegisterServicePermissions",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: "permission");
-            throw;
-        }
-    }
 }

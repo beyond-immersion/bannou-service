@@ -1148,15 +1148,5 @@ public partial class RealmHistoryService : IRealmHistoryService
 
     #region Permission Registration
 
-    /// <summary>
-    /// Registers this service's API permissions with the Permission service on startup.
-    /// Overrides the default IBannouService implementation to use generated permission data.
-    /// </summary>
-    public async Task RegisterServicePermissionsAsync(string appId)
-    {
-        _logger.LogDebug("Registering RealmHistory service permissions...");
-        await RealmHistoryPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
-    }
-
     #endregion
 }

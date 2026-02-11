@@ -365,6 +365,18 @@ public interface IBannouService
     }
 
     /// <summary>
+    /// Registers service permissions via DI-based <see cref="IPermissionRegistry"/>.
+    /// Called by PluginLoader with the resolved registry during startup.
+    /// Generated partial class overlays implement this method using permission data
+    /// from x-permissions sections in the service's OpenAPI schema.
+    /// </summary>
+    /// <param name="appId">The effective app ID for this service instance</param>
+    /// <param name="registry">The permission registry to push permissions to, or null if Permission service is unavailable</param>
+    /// <returns>Task representing the registration operation</returns>
+    Task RegisterServicePermissionsAsync(string appId, IPermissionRegistry? registry)
+        => Task.CompletedTask;
+
+    /// <summary>
     /// Registers event consumers for pub/sub events this service wants to handle.
     /// This method should be called from the service constructor with the injected IEventConsumer.
     /// Override in {Service}ServiceEvents.cs partial class to register event handlers.

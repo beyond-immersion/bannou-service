@@ -27,7 +27,7 @@ namespace BeyondImmersion.BannouService.Permission;
 /// Uses lib-state for atomic operations and Redis-backed data structures.
 /// </summary>
 [BannouService("permission", typeof(IPermissionService), lifetime: ServiceLifetime.Singleton, layer: ServiceLayer.AppFoundation)]
-public partial class PermissionService : IPermissionService
+public partial class PermissionService : IPermissionService, IPermissionRegistry
 {
     private readonly ILogger<PermissionService> _logger;
     private readonly PermissionServiceConfiguration _configuration;
@@ -989,14 +989,43 @@ public partial class PermissionService : IPermissionService
     #region Permission Registration
 
     /// <summary>
-    /// Registers this service's API permissions with the Permission service on startup.
-    /// Even though Permission service publishes to itself, this follows the same pattern
-    /// as other services for consistency.
+    /// IPermissionRegistry implementation: receives permission matrices from other services
+    /// via direct DI call (push-based). Converts generic dictionary types to the generated
+    /// ServicePermissionMatrix model and delegates to the existing API registration method
+    /// which handles idempotency, Redis storage, and session recompilation.
     /// </summary>
-    public async Task RegisterServicePermissionsAsync(string appId)
+    async Task IPermissionRegistry.RegisterServiceAsync(
+        string serviceId,
+        string version,
+        Dictionary<string, IDictionary<string, ICollection<string>>> permissionMatrix)
     {
-        _logger.LogDebug("Registering Permission service permissions...");
-        await PermissionPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
+        // Convert from generic dictionary types to generated ServicePermissionMatrix model types
+        // BuildPermissionMatrix returns Dictionary<string, IDictionary<string, ICollection<string>>>
+        // but ServicePermissionMatrix.Permissions is IDictionary<string, StatePermissions>
+        var permissions = new Dictionary<string, StatePermissions>();
+        foreach (var (stateKey, roleMap) in permissionMatrix)
+        {
+            var statePermissions = new StatePermissions();
+            foreach (var (role, methods) in roleMap)
+            {
+                statePermissions[role] = new System.Collections.ObjectModel.Collection<string>(methods.ToList());
+            }
+            permissions[stateKey] = statePermissions;
+        }
+
+        var body = new ServicePermissionMatrix
+        {
+            ServiceId = serviceId,
+            Version = version,
+            Permissions = permissions
+        };
+
+        var (status, _) = await RegisterServicePermissionsAsync(body);
+        if (status != StatusCodes.OK)
+        {
+            throw new InvalidOperationException(
+                $"Permission registration failed for {serviceId}: status {status}");
+        }
     }
 
     #endregion

@@ -1667,23 +1667,5 @@ public partial class CharacterService : ICharacterService
 
     #region Permission Registration
 
-    /// <summary>
-    /// Registers this service's API permissions with the Permission service on startup.
-    /// </summary>
-    public async Task RegisterServicePermissionsAsync(string appId)
-    {
-        _logger.LogInformation("Registering Character service permissions...");
-        try
-        {
-            await CharacterPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
-            _logger.LogInformation("Character service permissions registered via event");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to register Character service permissions");
-            throw;
-        }
-    }
-
     #endregion
 }

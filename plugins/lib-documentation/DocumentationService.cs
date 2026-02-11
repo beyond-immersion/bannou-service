@@ -93,16 +93,6 @@ public partial class DocumentationService : IDocumentationService
     }
 
     /// <summary>
-    /// Registers this service's API permissions with the Permission service on startup.
-    /// Overrides the default IBannouService implementation to use generated permission data.
-    /// </summary>
-    public async Task RegisterServicePermissionsAsync(string appId)
-    {
-        _logger.LogInformation("Registering Documentation service permissions...");
-        await DocumentationPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
-    }
-
-    /// <summary>
     /// View documentation page in browser - returns fully rendered HTML string.
     /// This method is not part of the IDocumentationService interface (x-manual-implementation).
     /// Returns HTML content as string for browser rendering.

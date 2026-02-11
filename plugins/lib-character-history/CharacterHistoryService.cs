@@ -1116,27 +1116,4 @@ public partial class CharacterHistoryService : ICharacterHistoryService
     // Permission Registration
     // ============================================================================
 
-    /// <summary>
-    /// Registers this service's API permissions with the Permission service on startup.
-    /// </summary>
-    public async Task RegisterServicePermissionsAsync(string appId)
-    {
-        _logger.LogInformation("Registering CharacterHistory service permissions...");
-        try
-        {
-            await CharacterHistoryPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
-            _logger.LogInformation("CharacterHistory service permissions registered");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to register CharacterHistory service permissions");
-            await _messageBus.TryPublishErrorAsync(
-                "character-history",
-                "RegisterServicePermissions",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: "permission");
-            throw;
-        }
-    }
 }

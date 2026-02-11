@@ -262,7 +262,7 @@ for endpoint in data:
 " >> "$OUTPUT_FILE"
 fi
 
-# Complete the C# file
+# Complete the static class (data methods only, no event publishing)
 cat >> "$OUTPUT_FILE" << 'CSHARP_FOOTER'
 
         return endpoints;
@@ -314,36 +314,43 @@ cat >> "$OUTPUT_FILE" << 'CSHARP_FOOTER'
         return matrix;
     }
 
-    /// <summary>
-    /// Registers service permissions via event publishing.
-    /// Should only be called after messaging infrastructure is confirmed.
-    /// </summary>
-    /// <param name="messageBus">The message bus for publishing events</param>
-    /// <param name="appId">The effective app ID for this service instance</param>
-    /// <param name="logger">Optional logger for diagnostics</param>
-    public static async Task RegisterViaEventAsync(IMessageBus messageBus, string appId, ILogger? logger = null)
-    {
-        var registrationEvent = CreateRegistrationEvent(Program.ServiceGUID, appId);
-
-        var success = await messageBus.TryPublishAsync(
-            "permission.service-registered",
-            registrationEvent);
-
-        if (success)
-        {
-            logger?.LogInformation(
-                "Published service registration event for {ServiceName} v{Version} with {EndpointCount} endpoints",
-                ServiceId, ServiceVersion, registrationEvent.Endpoints.Count);
-        }
-        else
-        {
-            logger?.LogWarning(
-                "Failed to publish service registration event for {ServiceId} (will be retried)",
-                ServiceId);
-        }
-    }
-
 }
 CSHARP_FOOTER
+
+# Generate partial class overlay for DI-based permission registration
+# Skip for services with custom registration logic (orchestrator has SecureWebsocket conditional)
+SKIP_PARTIAL_SERVICES="orchestrator"
+
+if [[ ! " $SKIP_PARTIAL_SERVICES " =~ " $SERVICE_NAME " ]]; then
+    cat >> "$OUTPUT_FILE" << CSHARP_PARTIAL
+
+/// <summary>
+/// Partial class overlay: registers ${SERVICE_PASCAL} service permissions via DI registry.
+/// Generated from x-permissions sections in ${SERVICE_NAME}-api.yaml.
+/// Push-based: this service pushes its permission matrix TO the IPermissionRegistry.
+/// </summary>
+public partial class ${SERVICE_PASCAL}Service
+{
+    /// <summary>
+    /// Registers this service's permissions with the Permission service via DI registry.
+    /// Called by PluginLoader during startup with the resolved IPermissionRegistry.
+    /// </summary>
+    async Task IBannouService.RegisterServicePermissionsAsync(
+        string appId, IPermissionRegistry? registry)
+    {
+        if (registry != null)
+        {
+            await registry.RegisterServiceAsync(
+                ${SERVICE_PASCAL}PermissionRegistration.ServiceId,
+                ${SERVICE_PASCAL}PermissionRegistration.ServiceVersion,
+                ${SERVICE_PASCAL}PermissionRegistration.BuildPermissionMatrix());
+        }
+    }
+}
+CSHARP_PARTIAL
+    echo -e "  🔗 Generated partial class overlay for ${SERVICE_PASCAL}Service"
+else
+    echo -e "  ⚡ Skipped partial class overlay for ${SERVICE_NAME} (custom registration logic)"
+fi
 
 echo -e "${GREEN}✅ Generated: $OUTPUT_FILE${NC}"

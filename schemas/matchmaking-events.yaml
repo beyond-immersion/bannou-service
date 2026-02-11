@@ -24,10 +24,6 @@ info:
       event: SessionReconnectedEvent
       handler: HandleSessionReconnected
   x-event-publications:
-    # Matchmaking state changes (for permission recompilation)
-    - topic: permission.session-state-changed
-      event: SessionStateChangeEvent
-      description: Published when player enters/exits matchmaking affecting permissions
     # Ticket lifecycle events (auto-generated)
     - topic: matchmaking.ticket-created
       event: MatchmakingTicketCreatedEvent

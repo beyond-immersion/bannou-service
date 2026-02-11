@@ -2478,16 +2478,6 @@ public partial class MappingService : IMappingService
 
     #region Permission Registration
 
-    /// <summary>
-    /// Registers this service's API permissions with the Permission service on startup.
-    /// Uses generated permission data from x-permissions sections in the OpenAPI schema.
-    /// </summary>
-    public async Task RegisterServicePermissionsAsync(string appId)
-    {
-        _logger.LogInformation("Registering Mapping service permissions...");
-        await MappingPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
-    }
-
     #endregion
 
     #region Internal Records

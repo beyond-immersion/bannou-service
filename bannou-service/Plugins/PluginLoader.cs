@@ -1206,43 +1206,29 @@ public class PluginLoader
 
     /// <summary>
     /// Registers service permissions for all enabled plugins with the Permission service.
-    /// This should be called AFTER mesh connectivity is confirmed to ensure events are delivered.
+    /// Uses DI-based IPermissionRegistry for direct push-based registration.
     /// </summary>
     /// <param name="appId">The effective app ID for this service instance</param>
+    /// <param name="registry">The permission registry resolved from DI (null if Permission service is disabled)</param>
     /// <returns>True if all permissions were registered successfully</returns>
-    public async Task<bool> RegisterServicePermissionsAsync(string appId)
+    public async Task<bool> RegisterServicePermissionsAsync(string appId, IPermissionRegistry? registry)
     {
         _logger.LogInformation("Registering service permissions for {ServiceCount} services: {ServiceNames}",
             _resolvedServices.Count, string.Join(", ", _resolvedServices.Keys));
+
+        if (registry == null)
+        {
+            _logger.LogWarning("IPermissionRegistry not available - skipping permission registration");
+            return true;
+        }
 
         foreach (var (pluginName, service) in _resolvedServices)
         {
             try
             {
-                _logger.LogInformation("Registering permissions for service: {PluginName} (type: {ServiceType})",
-                    pluginName, service.GetType().Name);
-                const int maxAttempts = 3;
-                var attempt = 0;
-                while (true)
-                {
-                    attempt++;
-                    try
-                    {
-                        await service.RegisterServicePermissionsAsync(appId);
-                        _logger.LogInformation("Permissions registered successfully for service: {PluginName} (attempt {Attempt})", pluginName, attempt);
-                        break;
-                    }
-                    catch (HttpRequestException httpEx) when (attempt < maxAttempts)
-                    {
-                        _logger.LogWarning(httpEx, "Permission registration retry {Attempt}/{Max} for {PluginName}", attempt, maxAttempts, pluginName);
-                        await Task.Delay(TimeSpan.FromMilliseconds(500));
-                    }
-                    catch (TimeoutException timeoutEx) when (attempt < maxAttempts)
-                    {
-                        _logger.LogWarning(timeoutEx, "Permission registration retry {Attempt}/{Max} for {PluginName}", attempt, maxAttempts, pluginName);
-                        await Task.Delay(TimeSpan.FromMilliseconds(500));
-                    }
-                }
+                _logger.LogDebug("Registering permissions for service: {PluginName}", pluginName);
+                await service.RegisterServicePermissionsAsync(appId, registry);
+                _logger.LogDebug("Permissions registered for service: {PluginName}", pluginName);
             }
             catch (Exception ex)
             {

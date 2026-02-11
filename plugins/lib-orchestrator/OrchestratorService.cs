@@ -2124,45 +2124,34 @@ public partial class OrchestratorService : IOrchestratorService
 
     /// <summary>
     /// Registers service permissions for the Orchestrator API endpoints.
-    /// Uses the generated OrchestratorPermissionRegistration to publish to the correct pub/sub topic.
-    /// All orchestrator operations require admin role access.
-    /// When SecureWebsocket is enabled (default), publishes a blank registration to make
+    /// When SecureWebsocket is enabled (default), registers an empty permission matrix to make
     /// orchestrator inaccessible via WebSocket - only service-to-service calls work.
+    /// Manually implemented because Orchestrator has custom SecureWebsocket conditional logic
+    /// (generation script skips partial class overlay for orchestrator).
     /// </summary>
-    public async Task RegisterServicePermissionsAsync(string appId)
+    async Task IBannouService.RegisterServicePermissionsAsync(
+        string appId, IPermissionRegistry? registry)
     {
-        _logger.LogInformation("Registering Orchestrator service permissions... (starting)");
+        if (registry == null) return;
+
         if (_configuration.SecureWebsocket)
         {
-            // Secure mode: publish blank registration to make orchestrator inaccessible via WebSocket
-            // This overwrites any previous permissions, ensuring the service cannot be called by clients
-            var blankRegistration = new ServiceRegistrationEvent
-            {
-                EventId = Guid.NewGuid(),
-                Timestamp = DateTimeOffset.UtcNow,
-                ServiceId = Program.ServiceGUID,
-                ServiceName = OrchestratorPermissionRegistration.ServiceId,
-                Version = OrchestratorPermissionRegistration.ServiceVersion,
-                AppId = appId,
-                Endpoints = new List<ServiceEndpoint>() // Empty = no WebSocket access
-            };
-
-            var success = await _messageBus.TryPublishAsync("permission.service-registered", blankRegistration);
-            if (success)
-            {
-                _logger.LogInformation(
-                    "Orchestrator running in secure mode - published blank registration (no WebSocket access)");
-            }
-            else
-            {
-                _logger.LogWarning("Failed to publish blank registration for secure mode (will be retried)");
-            }
+            // Secure mode: register empty matrix to make orchestrator inaccessible via WebSocket
+            await registry.RegisterServiceAsync(
+                OrchestratorPermissionRegistration.ServiceId,
+                OrchestratorPermissionRegistration.ServiceVersion,
+                new Dictionary<string, IDictionary<string, ICollection<string>>>());
+            _logger.LogInformation(
+                "Orchestrator running in secure mode - registered empty permissions (no WebSocket access)");
         }
         else
         {
             // Non-secure mode: register all endpoints for admin access (testing environments)
-            await OrchestratorPermissionRegistration.RegisterViaEventAsync(_messageBus, appId, _logger);
-            _logger.LogInformation("Orchestrator service permissions registered via event (complete)");
+            await registry.RegisterServiceAsync(
+                OrchestratorPermissionRegistration.ServiceId,
+                OrchestratorPermissionRegistration.ServiceVersion,
+                OrchestratorPermissionRegistration.BuildPermissionMatrix());
+            _logger.LogInformation("Orchestrator service permissions registered via DI registry");
         }
     }
 

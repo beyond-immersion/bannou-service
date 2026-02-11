@@ -195,30 +195,68 @@ public static class TestingPermissionRegistration
     }
 
     /// <summary>
-    /// Registers service permissions via event publishing.
-    /// Should only be called after messaging connectivity is confirmed.
+    /// Builds the permission matrix for RegisterServicePermissionsAsync.
+    /// Key structure: state -> role -> list of methods
     /// </summary>
-    /// <param name="messageBus">The message bus for publishing events</param>
-    /// <param name="appId">The effective app ID for this service instance</param>
-    /// <param name="logger">Optional logger for diagnostics</param>
-    public static async Task RegisterViaEventAsync(IMessageBus messageBus, string appId, ILogger? logger = null)
+    public static Dictionary<string, IDictionary<string, ICollection<string>>> BuildPermissionMatrix()
     {
-        try
+        var matrix = new Dictionary<string, IDictionary<string, ICollection<string>>>();
+
+        foreach (var endpoint in GetEndpoints())
         {
-            var registrationEvent = CreateRegistrationEvent(Program.ServiceGUID, appId);
+            var methodKey = endpoint.Path;
 
-            await messageBus.TryPublishAsync(
-                "permission.service-registered",
-                registrationEvent);
+            foreach (var permission in endpoint.Permissions)
+            {
+                var stateKey = permission.RequiredStates.Count > 0
+                    ? string.Join("|", permission.RequiredStates.Select(s =>
+                        s.Key == ServiceId ? s.Value : $"{s.Key}:{s.Value}"))
+                    : "default";
 
-            logger?.LogInformation(
-                "Published service registration event for {ServiceId} v{Version} with {EndpointCount} endpoints",
-                ServiceId, ServiceVersion, registrationEvent.Endpoints.Count);
+                if (!matrix.TryGetValue(stateKey, out var roleMap))
+                {
+                    roleMap = new Dictionary<string, ICollection<string>>();
+                    matrix[stateKey] = roleMap;
+                }
+
+                if (!roleMap.TryGetValue(permission.Role, out var methods))
+                {
+                    methods = new List<string>();
+                    roleMap[permission.Role] = methods;
+                }
+
+                if (!methods.Contains(methodKey))
+                {
+                    methods.Add(methodKey);
+                }
+            }
         }
-        catch (Exception ex)
+
+        return matrix;
+    }
+
+}
+
+/// <summary>
+/// Partial class overlay: registers Testing service permissions via DI registry.
+/// Manually maintained since lib-testing has no API schema for code generation.
+/// Push-based: this service pushes its permission matrix TO the IPermissionRegistry.
+/// </summary>
+public partial class TestingService
+{
+    /// <summary>
+    /// Registers this service's permissions with the Permission service via DI registry.
+    /// Called by PluginLoader during startup with the resolved IPermissionRegistry.
+    /// </summary>
+    async Task IBannouService.RegisterServicePermissionsAsync(
+        string appId, IPermissionRegistry? registry)
+    {
+        if (registry != null)
         {
-            logger?.LogError(ex, "Failed to publish service registration event for {ServiceId}", ServiceId);
-            throw;
+            await registry.RegisterServiceAsync(
+                TestingPermissionRegistration.ServiceId,
+                TestingPermissionRegistration.ServiceVersion,
+                TestingPermissionRegistration.BuildPermissionMatrix());
         }
     }
 }
