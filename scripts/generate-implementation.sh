@@ -295,62 +295,47 @@ try:
     {{
         _logger.LogInformation(\"Executing {method_name} operation\");
 
-        try
-        {{
-            // TODO: Implement your business logic here
-            throw new NotImplementedException(\"Method {method_name} not yet implemented\");
+        // TODO: Implement your business logic here
+        // Note: The generated controller wraps this method with try/catch for error handling.
+        // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
+        // published as error events by the controller automatically.
+        throw new NotImplementedException(\"Method {method_name} not yet implemented\");
 
-            // Example patterns using infrastructure libs:
-            //
-            // For data retrieval (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var data = await stateStore.GetAsync(key, cancellationToken);
-            // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-            //
-            // For data creation (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.SaveAsync(key, newData, cancellationToken);
-            // return (StatusCodes.Created, newData);
-            //
-            // For data updates (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // var existing = await stateStore.GetAsync(key, cancellationToken);
-            // if (existing == null) return (StatusCodes.NotFound, default);
-            // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-            // return (StatusCodes.OK, updatedData);
-            //
-            // For data deletion (lib-state):
-            // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-            // await stateStore.DeleteAsync(key, cancellationToken);
-            // return (StatusCodes.NoContent, default);
-            //
-            // For event publishing (lib-messaging):
-            // await _messageBus.TryPublishAsync(\"topic.name\", eventModel, cancellationToken: cancellationToken);
-            //
-            // For calling other services (lib-mesh):
-            // Inject the specific client you need, e.g.: IAccountClient _accountClient
-            // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest {{ AccountId = id }}, cancellationToken);
-            // if (status != StatusCodes.OK) return (status, default);
-            //
-            // For client event delivery (if request from WebSocket):
-            // Inject IClientEventPublisher _clientEventPublisher
-            // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent {{ ... }}, cancellationToken);
-        }}
-        catch (Exception ex)
-        {{
-            _logger.LogError(ex, \"Error executing {method_name} operation\");
-            await _messageBus.TryPublishErrorAsync(
-                \"${SERVICE_NAME}\",
-                \"{method_name}\",
-                \"unexpected_exception\",
-                ex.Message,
-                dependency: null,
-                endpoint: \"{http_method}:/{path_clean}\",
-                details: null,
-                stack: ex.StackTrace,
-                cancellationToken: cancellationToken);
-            return (StatusCodes.InternalServerError, default);
-        }}
+        // Example patterns using infrastructure libs:
+        //
+        // For data retrieval (lib-state):
+        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
+        // var data = await stateStore.GetAsync(key, cancellationToken);
+        // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
+        //
+        // For data creation (lib-state):
+        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
+        // await stateStore.SaveAsync(key, newData, cancellationToken);
+        // return (StatusCodes.Created, newData);
+        //
+        // For data updates (lib-state):
+        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
+        // var existing = await stateStore.GetAsync(key, cancellationToken);
+        // if (existing == null) return (StatusCodes.NotFound, default);
+        // await stateStore.SaveAsync(key, updatedData, cancellationToken);
+        // return (StatusCodes.OK, updatedData);
+        //
+        // For data deletion (lib-state):
+        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
+        // await stateStore.DeleteAsync(key, cancellationToken);
+        // return (StatusCodes.NoContent, default);
+        //
+        // For event publishing (lib-messaging):
+        // await _messageBus.TryPublishAsync(\"topic.name\", eventModel, cancellationToken: cancellationToken);
+        //
+        // For calling other services (lib-mesh):
+        // Inject the specific client you need, e.g.: IAccountClient _accountClient
+        // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest {{ AccountId = id }}, cancellationToken);
+        // if (status != StatusCodes.OK) return (status, default);
+        //
+        // For client event delivery (if request from WebSocket):
+        // Inject IClientEventPublisher _clientEventPublisher
+        // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent {{ ... }}, cancellationToken);
     }}
 ''')
 
