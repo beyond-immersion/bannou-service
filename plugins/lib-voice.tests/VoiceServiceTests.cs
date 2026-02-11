@@ -954,7 +954,9 @@ public class VoiceServiceTests
                 e.SessionId == sessionId &&
                 e.Tier == VoiceTier.P2p &&
                 e.MaxParticipants == 6),
-            It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
+            It.IsAny<Guid?>(),
+                        It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -1097,7 +1099,9 @@ public class VoiceServiceTests
         _mockMessageBus.Verify(m => m.TryPublishAsync(
             "voice.room.created",
             It.Is<VoiceRoomCreatedEvent>(e => e.RoomId == roomId),
-            It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
+            It.IsAny<Guid?>(),
+                        It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -1293,7 +1297,9 @@ public class VoiceServiceTests
                 e.RoomId == roomId &&
                 e.ParticipantSessionId == sessionId &&
                 e.CurrentCount == 1),
-            It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
+            It.IsAny<Guid?>(),
+                        It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion
@@ -1342,7 +1348,9 @@ public class VoiceServiceTests
             It.Is<VoiceParticipantLeftEvent>(e =>
                 e.RoomId == roomId &&
                 e.ParticipantSessionId == sessionId),
-            It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
+            It.IsAny<Guid?>(),
+                        It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -1441,7 +1449,9 @@ public class VoiceServiceTests
             It.Is<VoiceRoomBroadcastStoppedEvent>(e =>
                 e.RoomId == roomId &&
                 e.Reason == VoiceBroadcastStoppedReason.ConsentRevoked),
-            It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
+            It.IsAny<Guid?>(),
+                        It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion
@@ -1482,7 +1492,9 @@ public class VoiceServiceTests
             It.Is<VoiceRoomDeletedEvent>(e =>
                 e.RoomId == roomId &&
                 e.Reason == VoiceRoomDeletedReason.Manual),
-            It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
+            It.IsAny<Guid?>(),
+                        It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -1520,13 +1532,17 @@ public class VoiceServiceTests
             It.Is<VoiceRoomBroadcastStoppedEvent>(e =>
                 e.RoomId == roomId &&
                 e.Reason == VoiceBroadcastStoppedReason.RoomClosed),
-            It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
+            It.IsAny<Guid?>(),
+                        It.IsAny<CancellationToken>()), Times.Once);
 
         // Also verify room deleted event was published
         _mockMessageBus.Verify(m => m.TryPublishAsync(
             "voice.room.deleted",
             It.Is<VoiceRoomDeletedEvent>(e => e.RoomId == roomId),
-            It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
+            It.IsAny<Guid?>(),
+                        It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion
@@ -1672,7 +1688,9 @@ public class VoiceServiceTests
         _mockMessageBus.Verify(m => m.TryPublishAsync(
             "voice.room.broadcast.approved",
             It.Is<VoiceRoomBroadcastApprovedEvent>(e => e.RoomId == roomId),
-            It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
+            It.IsAny<Guid?>(),
+                        It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -1723,7 +1741,9 @@ public class VoiceServiceTests
             It.Is<VoiceRoomBroadcastDeclinedEvent>(e =>
                 e.RoomId == roomId &&
                 e.DeclinedBySessionId == decliningSession),
-            It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
+            It.IsAny<Guid?>(),
+                        It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -1778,7 +1798,9 @@ public class VoiceServiceTests
         _mockMessageBus.Verify(m => m.TryPublishAsync(
             "voice.room.broadcast.approved",
             It.IsAny<VoiceRoomBroadcastApprovedEvent>(),
-            It.IsAny<CancellationToken>()), Times.Never);
+            It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
+            It.IsAny<Guid?>(),
+                        It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -1819,7 +1841,9 @@ public class VoiceServiceTests
             It.Is<VoiceRoomBroadcastStoppedEvent>(e =>
                 e.RoomId == roomId &&
                 e.Reason == VoiceBroadcastStoppedReason.Manual),
-            It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
+            It.IsAny<Guid?>(),
+                        It.IsAny<CancellationToken>()), Times.Once);
 
         // Verify room was saved with Inactive state
         _mockRoomStore.Verify(s => s.SaveAsync(
