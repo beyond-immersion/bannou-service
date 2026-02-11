@@ -1,7 +1,6 @@
 # Implementation Plan: Gardener Service (L4 Game Features)
 
-> **Source**: Extracted from `docs/planning/SEED-AND-GARDENER.md` (Gardener Service section)
-> **Related**: `docs/plugins/SEED.md`, `docs/reference/SERVICE-HIERARCHY.md`, `docs/planning/SEED-AND-GARDENER.md`
+> **Related**: `docs/plugins/SEED.md`, `docs/guides/SEED-SYSTEM.md`, `docs/reference/SERVICE-HIERARCHY.md`
 > **Prerequisite**: lib-seed must be fully implemented and operational before starting Gardener
 
 ## Context
@@ -28,7 +27,7 @@ Gardener is the first and primary consumer of lib-seed. It interprets seed capab
 
 #### 1a. `schemas/gardener-api.yaml`
 
-Adapt from the draft in SEED-AND-GARDENER.md. The full schema draft is preserved in the planning doc; key adjustments needed:
+Write the schema from the endpoint specifications below. Key requirements:
 
 - **Header**: `x-service-layer: GameFeatures`, `servers: [{ url: http://localhost:5012 }]`
 - **Fix x-permissions format**: Translate planning doc shorthand to actual format:

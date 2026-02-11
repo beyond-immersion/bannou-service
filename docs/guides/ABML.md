@@ -1,9 +1,8 @@
 # ABML - Arcadia Behavior Markup Language
 
-> **Version**: 2.1
-> **Status**: Implemented (414 tests passing)
-> **Location**: `bannou-service/Abml/`
-> **Related**: [GOAP Guide](./GOAP.md), [Actor System Guide](./ACTOR_SYSTEM.md), [Behavior Service Deep-Dive](../plugins/BEHAVIOR.md)
+> **Version**: 3.0
+> **Status**: Implemented
+> **Related**: [GOAP Guide](./GOAP.md), [Actor System Guide](./ACTOR-SYSTEM.md), [Behavior Service Deep-Dive](../plugins/BEHAVIOR.md)
 
 ABML is a YAML-based domain-specific language for authoring event-driven, stateful sequences of actions. It powers NPC behaviors, dialogue systems, cutscenes, and agent cognition in Bannou-powered games.
 
@@ -28,7 +27,7 @@ ABML is a YAML-based domain-specific language for authoring event-driven, statef
 15. [Examples](#15-examples)
 - [Appendix A: Bannou Implementation Requirements](#appendix-a-bannou-implementation-requirements)
 - [Appendix B: Grammar Summary](#appendix-b-grammar-summary)
-- [Appendix C: Potential Improvements](#appendix-c-potential-improvements)
+- [Appendix C: Design Decisions and Intentional Limitations](#appendix-c-design-decisions-and-intentional-limitations)
 
 ---
 
@@ -586,152 +585,33 @@ Template filters: `capitalize`, `upcase`, `downcase`, `truncate`, `strip`, `defa
 
 ### 5.4 Character Variable Providers
 
-When executing behaviors for characters, the ActorRunner automatically registers variable providers that expose character data:
+When executing behaviors for characters, the ActorRunner registers variable providers via the Variable Provider Factory pattern (see [Actor System Guide](./ACTOR-SYSTEM.md)). These providers expose character data from L4 services without hierarchy violations.
 
-#### PersonalityProvider (`${personality.*}`)
+| Namespace | Source Service | Example Variables |
+|-----------|---------------|-------------------|
+| `${personality.*}` | Character Personality (L4) | `openness`, `aggression`, `loyalty`, `traits.NEUROTICISM`, `version` |
+| `${combat.*}` | Character Personality (L4) | `style`, `preferredRange`, `groupRole`, `riskTolerance`, `retreatThreshold`, `protectAllies` |
+| `${backstory.*}` | Character History (L4) | `origin`, `fear`, `trauma`, `fear.key`, `fear.strength`, `elements`, `elements.TRAUMA` |
+| `${encounters.*}` | Character Encounter (L4) | `recent`, `count`, `grudges`, `allies`, `has_met.{id}`, `sentiment.{id}`, `encounter_count.{id}` |
 
-Exposes character personality traits (8 axes):
-
-```yaml
-# Direct trait access (normalized 0.0-1.0)
-"${personality.openness}"
-"${personality.aggression}"
-"${personality.loyalty}"
-
-# Trait enum access
-"${personality.traits.NEUROTICISM}"
-"${personality.traits.HONESTY}"
-
-# Metadata
-"${personality.version}"  # Version counter for change detection
-```
-
-#### CombatPreferencesProvider (`${combat.*}`)
-
-Exposes combat style preferences:
-
-```yaml
-# Style enum (aggressive/defensive/tactical/opportunistic)
-"${combat.style}"
-
-# Range preference (close/mid/long)
-"${combat.preferredRange}"
-
-# Group role (leader/support/striker/tank)
-"${combat.groupRole}"
-
-# Numeric preferences (0.0-1.0)
-"${combat.riskTolerance}"
-"${combat.retreatThreshold}"
-
-# Boolean preferences
-"${combat.protectAllies}"
-```
-
-#### BackstoryProvider (`${backstory.*}`)
-
-Exposes character backstory elements (9 types):
-
-```yaml
-# Direct type access (returns first element's value)
-"${backstory.origin}"
-"${backstory.fear}"
-"${backstory.trauma}"
-
-# Property access
-"${backstory.fear.key}"       # e.g., "FIRE", "BETRAYAL"
-"${backstory.fear.value}"     # Narrative description
-"${backstory.fear.strength}"  # 0.0-1.0
-
-# Collection access
-"${backstory.elements}"                # All backstory elements
-"${backstory.elements.TRAUMA}"         # All elements of type TRAUMA
-```
-
-#### EncountersProvider (`${encounters.*}`)
-
-Exposes character encounter history and relationship sentiment data:
-
-```yaml
-# Aggregate queries
-"${encounters.recent}"               # List of recent encounters
-"${encounters.count}"                # Total encounter count
-"${encounters.grudges}"              # Characters with sentiment < -0.5
-"${encounters.allies}"               # Characters with sentiment > 0.5
-
-# Character-specific queries (replace {characterId} with target GUID)
-"${encounters.has_met.{characterId}}"           # Boolean - have they met?
-"${encounters.sentiment.{characterId}}"         # Float - sentiment toward them
-"${encounters.last_context.{characterId}}"      # String - last encounter context
-"${encounters.last_emotion.{characterId}}"      # String - last emotional impact
-"${encounters.encounter_count.{characterId}}"   # Int - how many times met
-"${encounters.dominant_emotion.{characterId}}"  # String - dominant emotion
-```
-
-**Example usage for encounter-aware dialogue:**
-
-```yaml
-flows:
-  greet_character:
-    - cond:
-        # Recognize someone we've met before
-        if: "${encounters.has_met.${target.id}}"
-        then:
-          - cond:
-              # Negative history - grudge response
-              if: "${encounters.sentiment.${target.id} < -0.5}"
-              then:
-                - speak: "You again. I haven't forgotten what you did."
-              # Positive history - friendly response
-              if: "${encounters.sentiment.${target.id} > 0.5}"
-              then:
-                - speak: "Good to see you, friend!"
-              else:
-                - speak: "We've met before, haven't we?"
-        else:
-          - speak: "I don't believe we've been introduced."
-```
-
-**Example usage for NPC decision-making:**
-
-```yaml
-flows:
-  evaluate_trust:
-    - cond:
-        # Many positive encounters = trusted
-        if: "${encounters.encounter_count.${target.id} > 5 && encounters.sentiment.${target.id} > 0.3}"
-        then:
-          - set: trust_level = "high"
-        # Check for grudges when making alliance decisions
-        if: "${len(encounters.grudges) > 0}"
-        then:
-          - set: has_enemies = true
-```
-
-**Example usage in behavior decisions:**
+**Example: Multi-provider behavior decisions**
 
 ```yaml
 flows:
   evaluate_threat_response:
     - cond:
-        # High aggression + low retreat threshold = stand and fight
         if: "${personality.aggression > 0.7 && combat.retreatThreshold < 0.3}"
         then:
           - emit_intent:
               channel: stance
               stance: "aggressive"
               urgency: 0.9
-
-        # Character fears fire - avoid fire-based tactics
         if: "${backstory.fear.key == 'FIRE'}"
         then:
           - set: avoid_fire = true
-          - modify_emotion: { emotion: fear, delta: 0.2 }
-
-        # Protective personality - prioritize allies
-        if: "${combat.protectAllies && personality.loyalty > 0.6}"
+        if: "${encounters.sentiment.${target.id} < -0.5}"
         then:
-          - call: protect_ally_behavior
+          - speak: "You again. I haven't forgotten what you did."
 ```
 
 ### 5.5 Expression vs Template
@@ -1003,20 +883,22 @@ channels:
 
 ### 8.2 Control Actions (Built-in)
 
-| Action | Purpose |
-|--------|---------|
-| `cond` | Conditional branching |
-| `for_each` | Collection iteration |
-| `repeat` | Bounded repetition |
-| `goto` | Flow transfer |
-| `call` | Subroutine call |
-| `return` | Early exit |
-| `branch` | Channel transfer |
-| `emit` | Sync point declaration |
-| `wait_for` | Sync point wait |
-| `set` | Variable assignment |
-| `parallel` | Inline parallel block |
-| `log` | Debug logging |
+| Action | Purpose | Handler |
+|--------|---------|---------|
+| `cond` | Conditional branching | CondHandler |
+| `for_each` | Collection iteration | ForEachHandler |
+| `repeat` | Bounded repetition | RepeatHandler |
+| `goto` | Flow transfer | GotoHandler |
+| `call` | Subroutine call | CallHandler |
+| `return` | Early exit from flow | ReturnHandler |
+| `set` | Variable assignment | SetHandler |
+| `local` | Local-scoped variable | LocalHandler |
+| `global` | Global-scoped variable | GlobalHandler |
+| `clear` | Unset a variable | ClearHandler |
+| `increment` / `decrement` | Numeric variable mutation | NumericOperationHandler |
+| `emit_event` | Publish typed event | EmitEventHandler |
+| `log` | Debug logging | LogHandler |
+| *domain actions* | Handler-provided actions | DomainActionHandler |
 
 ### 8.3 Variable Actions
 
@@ -1086,28 +968,39 @@ These are interpreted by the runtime handler:
 
 > **⛔ SECURITY POLICY**: Generic service call actions (`service_call`, `api_call`, `http_call`,
 > `mesh_call`, `invoke_service`) are **permanently forbidden** in ABML. They will cause a
-> compilation error if used.
+> compilation error if used (enforced in SemanticAnalyzer).
 >
 > **Rationale**: Generic service calls would give behaviors unrestricted access to any Bannou
-> service endpoint, violating the principle of least privilege. A behavior could delete accounts,
-> credit unlimited currency, or perform other dangerous operations.
+> service endpoint, violating the principle of least privilege.
 >
-> **Required approach**: All service interactions must use purpose-built, validated actions that:
-> - Validate inputs before execution
-> - Limit scope to specific, safe operations
-> - Provide clear audit trails
-> - Are explicitly designed for behavior use cases
->
-> **Purpose-built actions** (implemented or planned):
-> - `load_snapshot:` - Load resource snapshots safely
-> - `prefetch_snapshots:` - Batch prefetch with validation
-> - `actor_command:` - Send validated commands to actors
-> - `actor_query:` - Query actor state (read-only)
-> - `spawn_watcher:` - Spawn regional watchers (puppetmaster-specific)
-> - `emit_event:` - Publish typed, validated events
->
-> This policy is enforced at both compile-time (SemanticAnalyzer) and runtime (IntentEmitterRegistry)
-> as defense-in-depth.
+> **Required approach**: All service interactions must use purpose-built, validated actions
+> registered as domain action handlers.
+
+**Actor actions** (lib-actor):
+
+| Action | Purpose |
+|--------|---------|
+| `actor_command` | Send validated commands to actors |
+| `actor_query` | Query actor state (read-only) |
+| `query_actor_state` | Query actor execution state |
+| `query_options` | Query available options for decision-making |
+| `emit_perception` | Inject perception events into actor cognition |
+| `schedule_event` | Schedule a timed event for later delivery |
+| `state_update` | Update actor state variables |
+| `end_encounter` | Terminate an active encounter |
+| `set_encounter_phase` | Transition encounter phase |
+
+**Puppetmaster actions** (lib-puppetmaster):
+
+| Action | Purpose |
+|--------|---------|
+| `load_snapshot` | Load resource snapshots safely |
+| `prefetch_snapshots` | Batch prefetch with validation |
+| `spawn_watcher` | Spawn regional watchers |
+| `list_watchers` | Query active watchers |
+| `stop_watcher` | Terminate a regional watcher |
+| `watch` | Subscribe to regional events |
+| `unwatch` | Unsubscribe from regional events |
 
 ### 8.5 Handler Contract
 
@@ -1470,120 +1363,68 @@ This optimizes for:
 - Hot reload capability (re-parse YAML, rebuild AST)
 - Debuggability (step through nodes)
 
-### 14.2 Register-Based VM
+### 14.2 File Structure
 
-The expression VM uses a register-based architecture for efficient null-safety handling:
-
-```
-Expression: ${entity?.health < 0.3 ? 'critical' : 'stable'}
-
-Bytecode:
-  0: LoadVar R0, "entity"
-  1: JumpIfNull R0, 8
-  2: GetProp R1, R0, "health"
-  3: LoadConst R2, 0.3
-  4: Lt R3, R1, R2
-  5: JumpIfFalse R3, 8
-  6: LoadConst R0, "critical"
-  7: Return R0
-  8: LoadConst R0, "stable"
-  9: Return R0
-```
-
-**Why register-based?**
-- Clean null-safety patterns (no stack management)
-- Value reuse without DUP/SWAP gymnastics
-- Debuggable state (named registers vs anonymous stack)
-
-### 14.3 Instruction Set Summary
-
-| Category | OpCodes |
-|----------|---------|
-| Loads | `LoadConst`, `LoadVar`, `LoadNull`, `LoadTrue`, `LoadFalse` |
-| Property | `GetProp`, `GetPropSafe`, `GetIndex`, `GetIndexSafe` |
-| Arithmetic | `Add`, `Sub`, `Mul`, `Div`, `Mod`, `Neg` |
-| Comparison | `Eq`, `Ne`, `Lt`, `Le`, `Gt`, `Ge` |
-| Logical | `Not`, `And`, `Or` |
-| Control | `Jump`, `JumpIfTrue`, `JumpIfFalse`, `JumpIfNull`, `JumpIfNotNull` |
-| Functions | `Call`, `CallArgs` |
-| Null | `Coalesce` |
-| String | `In`, `Concat` |
-| Result | `Return` |
-
-### 14.4 Compiled Expression Structure
-
-```csharp
-public sealed class CompiledExpression
-{
-    public required Instruction[] Code { get; init; }
-    public required object[] Constants { get; init; }
-    public required int RegisterCount { get; init; }
-    public required string SourceText { get; init; }
-}
-```
-
-### 14.5 File Structure
+ABML is implemented across three locations, each with a distinct responsibility:
 
 ```
-bannou-service/Abml/
+sdks/behavior-expressions/         # Expression language (standalone SDK)
 ├── Compiler/
-│   ├── ExpressionCompiler.cs
-│   ├── OpCode.cs
-│   ├── RegisterAllocator.cs
-│   └── InstructionBuilder.cs
-│
+│   ├── ExpressionCompiler.cs      # Expression → bytecode
+│   ├── OpCode.cs                  # Register-based instruction set
+│   ├── RegisterAllocator.cs       # Register allocation
+│   └── CompiledExpression.cs      # Compiled output (Code, Constants, RegisterCount, SourceText, ExpectedType)
 ├── Runtime/
-│   ├── ExpressionVm.cs
-│   └── ExpressionCache.cs
-│
+│   └── ExpressionVm.cs            # 256-register bytecode VM
+└── Parser/
+    ├── ExpressionParser.cs
+    └── ExpressionLexer.cs
+
+sdks/behavior-compiler/            # Document parsing and compilation (standalone SDK)
 ├── Parser/
-│   ├── ExpressionParser.cs
-│   ├── ExpressionLexer.cs
-│   ├── DocumentParser.cs
-│   ├── DocumentLoader.cs         # Import resolution and composition
-│   └── IDocumentResolver.cs      # Resolution interface + FileSystemDocumentResolver
-│
+│   ├── DocumentParser.cs          # YAML → AbmlDocument AST
+│   ├── DocumentLoader.cs          # Import resolution with circular detection
+│   └── IDocumentResolver.cs       # Resolution interface + FileSystemDocumentResolver
+├── Compiler/
+│   ├── SemanticAnalyzer.cs        # Validation (includes forbidden action blocklist)
+│   └── BehaviorCompiler.cs        # Full compilation pipeline
 ├── Documents/
-│   ├── AbmlDocument.cs
-│   ├── Flow.cs
-│   └── Actions/
-│
-├── Execution/
-│   ├── DocumentExecutor.cs
-│   ├── ExecutionContext.cs
-│   ├── CallStack.cs
-│   ├── Channel/
-│   │   ├── ChannelScheduler.cs
-│   │   └── ChannelState.cs
-│   └── Handlers/
-│       ├── SetHandler.cs
-│       ├── CallHandler.cs
-│       ├── GotoHandler.cs
-│       ├── CondHandler.cs
-│       ├── ForEachHandler.cs
-│       ├── RepeatHandler.cs
-│       ├── LogHandler.cs
-│       ├── EmitHandler.cs
-│       ├── WaitForHandler.cs
-│       └── SyncHandler.cs
-│
-└── Expressions/
-    ├── VariableScope.cs
-    ├── ExpressionEvaluator.cs
-    └── AbmlTypeCoercion.cs
+│   ├── AbmlDocument.cs            # Document model (supports options block)
+│   └── Flow.cs
+└── Goap/                          # GOAP annotation extraction
+
+bannou-service/Abml/               # Runtime execution (server-side)
+├── Cognition/                     # 5-stage NPC perception pipeline
+│   └── (see Actor System Guide)
+└── Execution/
+    ├── DocumentExecutor.cs        # Tree-walking interpreter
+    ├── ExecutionContext.cs
+    ├── CallStack.cs
+    ├── Channel/
+    │   ├── ChannelScheduler.cs
+    │   └── ChannelState.cs
+    └── Handlers/                  # Built-in action handlers
+        ├── SetHandler.cs
+        ├── CallHandler.cs
+        ├── GotoHandler.cs
+        ├── CondHandler.cs
+        ├── ForEachHandler.cs
+        ├── RepeatHandler.cs
+        ├── LogHandler.cs
+        ├── EmitEventHandler.cs
+        ├── ReturnHandler.cs
+        ├── ClearHandler.cs
+        ├── LocalHandler.cs
+        ├── GlobalHandler.cs
+        ├── NumericOperationHandler.cs
+        └── DomainActionHandler.cs  # Dispatches to registered domain handlers
 ```
 
-### 14.6 Runtime Cognition Pipeline
+Domain action handlers are registered by plugins:
+- **lib-actor**: `ActorCommandHandler`, `ActorQueryHandler`, `EmitPerceptionHandler`, `QueryActorStateHandler`, `QueryOptionsHandler`, `ScheduleEventHandler`, `StateUpdateHandler`, `EndEncounterHandler`, `SetEncounterPhaseHandler`
+- **lib-puppetmaster**: `LoadSnapshotHandler`, `PrefetchSnapshotsHandler`, `SpawnWatcherHandler`, `ListWatchersHandler`, `StopWatcherHandler`, `WatchHandler`, `UnwatchHandler`
 
-The Behavior service implements a 5-stage cognition pipeline for NPC perception processing:
-
-1. **Attention Filter** → Budget-limited selection with priority weighting
-2. **Significance Assessment** → Threat detection with fast-track bypass (urgency > 0.8)
-3. **Memory Formation** → Stores memories with significance >= threshold (default 0.7)
-4. **Goal Impact Evaluation** → Determines which goals are affected
-5. **Intention Formation** → Triggers GOAP replan with urgency-based parameters
-
-For complete details on the cognition pipeline, memory relevance scoring (weighted formula), urgency tier configuration, behavior model caching with variant fallbacks, and known caveats, see the [Behavior Service Deep-Dive](../plugins/BEHAVIOR.md).
+For the cognition pipeline, behavior stack, and actor execution runtime, see the [Actor System Guide](./ACTOR-SYSTEM.md).
 
 ---
 

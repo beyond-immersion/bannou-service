@@ -1,4 +1,4 @@
-# Bannou Quickstart
+# Bannou Development Quickstart
 
 > **5-minute setup for experienced developers**
 

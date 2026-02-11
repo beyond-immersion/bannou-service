@@ -2,7 +2,7 @@
 
 > **Status**: Proposal
 > **Priority**: Medium-High
-> **Related**: [SEED-AND-GARDENER.md](SEED-AND-GARDENER.md), [PLAYER-VISION.md](../reference/PLAYER-VISION.md), [VISION.md](../reference/VISION.md), [SERVICE-HIERARCHY.md](../reference/SERVICE-HIERARCHY.md)
+> **Related**: [Seed System Guide](../guides/SEED-SYSTEM.md), [Seed Deep Dive](../plugins/SEED.md), [PLAYER-VISION.md](../reference/PLAYER-VISION.md), [VISION.md](../reference/VISION.md), [SERVICE-HIERARCHY.md](../reference/SERVICE-HIERARCHY.md)
 > **External**: `arcadia-kb/04 - Game Systems/Dungeon System.md`, `arcadia-kb/04 - Game Systems/Dungeon System - Nageki-Inspired Enhancements.md`
 
 ## Executive Summary
@@ -1088,7 +1088,7 @@ The dungeon_core seed growth phase influences how strongly personality manifests
 
 ### Phase 0: Seed Foundation (Prerequisite)
 
-This phase requires **lib-seed to be implemented first** (see [SEED-AND-GARDENER.md](SEED-AND-GARDENER.md)).
+This phase requires **lib-seed to be implemented first** (see [Seed Deep Dive](../plugins/SEED.md) and [Seed System Guide](../guides/SEED-SYSTEM.md)).
 
 1. **Register `dungeon_core` Seed Type**
    - Define growth phases (Dormant/Stirring/Awakened/Ancient)
@@ -1260,4 +1260,4 @@ The asymmetric bond pattern -- player↔character, character↔dungeon -- is the
 
 ---
 
-*This document is part of the Bannou planning documentation. It depends on [SEED-AND-GARDENER.md](SEED-AND-GARDENER.md) for the Seed service design.*
+*This document is part of the Bannou planning documentation. It depends on the [Seed service](../plugins/SEED.md) (implemented) and the [Seed System Guide](../guides/SEED-SYSTEM.md) for the broader seed ecosystem design.*
