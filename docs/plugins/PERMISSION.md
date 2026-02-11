@@ -19,7 +19,7 @@ Redis-backed RBAC permission system (L1 AppFoundation) for WebSocket services. M
 |------------|-------|
 | lib-state (`IStateStoreFactory`) | Redis persistence for session states, permissions, matrix data, indexes; `ICacheableStateStore<string>` for atomic set operations on session/service tracking sets |
 | lib-messaging (`IMessageBus`) | Error event publishing |
-| lib-messaging (`IEventConsumer`) | 5 event subscriptions (session lifecycle, state changes, registrations) |
+| lib-messaging (`IEventConsumer`) | 3 event subscriptions (session lifecycle) |
 | lib-messaging (`IClientEventPublisher`) | Push capability updates to WebSocket sessions |
 
 ---
@@ -32,7 +32,7 @@ Redis-backed RBAC permission system (L1 AppFoundation) for WebSocket services. M
 | lib-game-session | Calls `IPermissionClient.UpdateSessionStateAsync` to set `in_game` state when players join/leave |
 | lib-matchmaking | Calls `IPermissionClient.UpdateSessionStateAsync` to set `in_match` state during matchmaking |
 | lib-voice | Calls `IPermissionClient.UpdateSessionStateAsync` to set voice call states (`ringing`, `in_call`) |
-| All services (via generated permission registration) | Register their x-permissions matrix on startup via `ServiceRegistrationEvent` |
+| All services (via generated permission registration) | Register their x-permissions matrix on startup via `IPermissionRegistry` DI interface |
 
 ---
 
@@ -68,8 +68,6 @@ No traditional topic-based event publications. Capability updates go directly to
 
 | Topic | Event Type | Handler |
 |-------|-----------|---------|
-| `permission.service-registered` | `ServiceRegistrationEvent` | Builds permission matrix from endpoint data, registers with system |
-| `permission.session-state-changed` | `SessionStateChangeEvent` | Triggers recompilation when service state changes |
 | `session.updated` | `SessionUpdatedEvent` | Role/authorization changes from Auth service |
 | `session.connected` | `SessionConnectedEvent` | Adds to activeConnections, triggers initial capability delivery |
 | `session.disconnected` | `SessionDisconnectedEvent` | Removes from activeConnections |
@@ -138,23 +136,19 @@ Service lifetime is **Singleton** (shared across all requests).
 Permission Compilation Flow
 ==============================
 
-  Service Startup → publishes ServiceRegistrationEvent
+  PluginLoader Startup → IPermissionRegistry.RegisterServiceAsync(serviceId, version, matrix)
        │
        ▼
-  HandleServiceRegistrationAsync
+  RegisterServicePermissionsAsync
        │
-       ├──► Build State->Role->Methods matrix from x-permissions
+       ├── Hash unchanged? → Skip (idempotent)
        │
-       └──► RegisterServicePermissionsAsync
-                │
-                ├── Hash unchanged? → Skip (idempotent)
-                │
-                ├── Store matrix: permissions:{service}:{state}:{role} → [endpoints]
-                │
-                ├── Atomic SADD: Add serviceId to registered_services set
-                │
-                └── For each active session:
-                     └── RecompileSessionPermissionsAsync
+       ├── Store matrix: permissions:{service}:{state}:{role} → [endpoints]
+       │
+       ├── Atomic SADD: Add serviceId to registered_services set
+       │
+       └── For each active session:
+            └── RecompileSessionPermissionsAsync
 
 
 Session Permission Recompilation

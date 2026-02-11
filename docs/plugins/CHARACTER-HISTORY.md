@@ -22,7 +22,7 @@ Historical event participation and backstory management (L4 GameFeatures) for ch
 | lib-messaging (`IMessageBus`) | Publishing participation and backstory lifecycle events |
 | lib-messaging (`IEventConsumer`) | Event handler registration (no current handlers) |
 | lib-resource (`IResourceClient`) | Hard dependency (L1): registers cleanup callbacks and compression callbacks on startup |
-| lib-resource (events) | Publishes `resource.reference.registered` and `resource.reference.unregistered` events for character reference tracking |
+| lib-resource (`IResourceClient`) | Calls `RegisterReferenceAsync`/`UnregisterReferenceAsync` for character reference tracking |
 | lib-character-history (`ICharacterHistoryClient`) | Used by `BackstoryCache` to load backstory data on cache miss |
 
 ---
@@ -33,7 +33,7 @@ Historical event participation and backstory management (L4 GameFeatures) for ch
 |-----------|-------------|
 | lib-actor | Reads backstory via `ICharacterHistoryClient` (PersonalityCache) to inform NPC behavior decisions |
 | lib-analytics | Subscribes to `character-history.participation.recorded`, `character-history.backstory.created`, `character-history.backstory.updated` for historical analytics |
-| lib-resource | Consumes `resource.reference.registered/unregistered` events to track character references for cleanup coordination |
+| lib-resource | Receives direct API calls for reference registration; calls `/character-history/delete-all` endpoint on cascade delete |
 
 **Note**: lib-character (L2) does **not** call this service per SERVICE_HIERARCHY - L2 cannot depend on L4. The character service explicitly notes it cannot call CharacterHistory. Callers needing history data must call this service directly.
 
@@ -64,8 +64,6 @@ Historical event participation and backstory management (L4 GameFeatures) for ch
 | `character-history.backstory.updated` | `CharacterBackstoryUpdatedEvent` | Existing backstory modified |
 | `character-history.backstory.deleted` | `CharacterBackstoryDeletedEvent` | All backstory deleted |
 | `character-history.deleted` | `CharacterHistoryDeletedEvent` | All history (participation + backstory) deleted |
-| `resource.reference.registered` | `ResourceReferenceRegisteredEvent` | Participation or backstory created (tracks character references) |
-| `resource.reference.unregistered` | `ResourceReferenceUnregisteredEvent` | Participation or backstory deleted (unregisters character references) |
 
 ### Consumed Events
 
@@ -92,7 +90,7 @@ The generated `CharacterHistoryServiceConfiguration` is injected into both `Back
 | `ILogger<CharacterHistoryService>` | Scoped | Structured logging |
 | `CharacterHistoryServiceConfiguration` | Singleton | Typed configuration (BackstoryCacheTtlSeconds, MaxBackstoryElements, IndexLockTimeoutSeconds); injected into service constructor and `BackstoryCache` |
 | `IStateStoreFactory` | Singleton | State store access |
-| `IMessageBus` | Scoped | Event publishing (including resource reference events) |
+| `IMessageBus` | Scoped | Event publishing |
 | `IEventConsumer` | Scoped | Event registration (no handlers) |
 | `IDistributedLockProvider` | Singleton | Distributed locking for helper write operations |
 | `IDualIndexHelper<ParticipationData>` | (inline) | Dual-index CRUD for participations |
@@ -211,7 +209,7 @@ None. The service is feature-complete for its scope.
 
 ## Potential Extensions
 
-1. **Batch reference unregistration in DeleteAll**: `DeleteAllHistoryAsync` publishes N individual `resource.reference.unregistered` events before bulk deletion. The DualIndexHelper bulk path is already optimized (~7 bulk operations regardless of N), but the reference unregistration loop remains O(N) messages. Blocked on lib-resource batch unregister support.
+1. **Batch reference unregistration in DeleteAll**: `DeleteAllHistoryAsync` makes N individual `UnregisterReferenceAsync` API calls before bulk deletion. The DualIndexHelper bulk path is already optimized (~7 bulk operations regardless of N), but the reference unregistration loop remains O(N) API calls. Blocked on lib-resource batch unregister endpoint.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/351 -->
 
 ---
@@ -255,6 +253,6 @@ None.
 ## Work Tracking
 
 ### Pending Design Review
-- **2026-02-08**: [#351](https://github.com/beyond-immersion/bannou-service/issues/351) - Batch reference unregistration for DeleteAll (blocked on lib-resource infrastructure; O(N) messages for N participations)
+- **2026-02-08**: [#351](https://github.com/beyond-immersion/bannou-service/issues/351) - Batch reference unregistration for DeleteAll (blocked on lib-resource batch unregister endpoint; O(N) API calls for N participations)
 - **2026-02-06**: [#311](https://github.com/beyond-immersion/bannou-service/issues/311) - AddBackstoryElement event does not distinguish element added vs updated (need to survey consumers for actual requirement)
 - **2026-02-06**: [#308](https://github.com/beyond-immersion/bannou-service/issues/308) - Replace `object?`/`additionalProperties:true` metadata pattern with typed schemas (systemic issue affecting 14+ services; violates T25 type safety)

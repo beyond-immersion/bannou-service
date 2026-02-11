@@ -481,7 +481,7 @@ The x-references pattern ensures compliance with the service hierarchy:
 ┌───────────────────────────────────────────────────────────────┐
 │ L4: Game Features (actor, scene, etc.)                        │
 │   → x-references: target: "character" (declares dependency)   │
-│   → Publishes: resource.reference.registered/unregistered     │
+│   → Calls: IResourceClient.Register/UnregisterReferenceAsync  │
 ├───────────────────────────────────────────────────────────────┤
 │ L2: Game Foundation (character, realm, etc.)                  │
 │   → x-resource-lifecycle: gracePeriodSeconds, cleanupPolicy   │

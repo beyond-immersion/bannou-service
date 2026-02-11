@@ -1016,44 +1016,6 @@ components:
 
     # NOTE: MessageFlags already defined above in Binary Protocol Schemas section
 
-    PermissionRecompileEvent:
-      type: object
-      description: |
-        Event to trigger permission recompilation for all sessions.
-        Published when services register new APIs or permission rules change.
-      additionalProperties: false
-      required:
-      - eventId
-      - timestamp
-      - reason
-      properties:
-        eventId:
-          type: string
-          description: Unique identifier for this recompilation event
-        timestamp:
-          type: string
-          format: date-time
-          description: When the recompilation was triggered
-        reason:
-          type: string
-          enum:
-          - service_registered
-          - permission_rules_changed
-          - role_definitions_updated
-          - manual_trigger
-          description: Reason for triggering permission recompilation
-        serviceId:
-          type: string
-          # NRT: Optional string MUST be nullable (Rule 2)
-          nullable: true
-          description: Service ID that triggered the recompilation (if applicable)
-        metadata:
-          type: object
-          additionalProperties: true
-          # NRT: Optional object MUST be nullable (Rule 2)
-          nullable: true
-          description: Additional context for the recompilation
-
     CompanionRoomMode:
       type: string
       description: How Connect manages companion chat rooms for WebSocket sessions

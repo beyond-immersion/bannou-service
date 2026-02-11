@@ -266,39 +266,9 @@ public class ActorServiceConfiguration : IServiceConfiguration
     public int QueryOptionsDefaultMaxAgeMs { get; set; } = 5000;
 
     /// <summary>
-    /// TTL in minutes for cached personality data
-    /// Environment variable: ACTOR_PERSONALITY_CACHE_TTL_MINUTES
-    /// </summary>
-    public int PersonalityCacheTtlMinutes { get; set; } = 5;
-
-    /// <summary>
-    /// TTL in minutes for cached encounter data
-    /// Environment variable: ACTOR_ENCOUNTER_CACHE_TTL_MINUTES
-    /// </summary>
-    public int EncounterCacheTtlMinutes { get; set; } = 5;
-
-    /// <summary>
-    /// Maximum encounter results returned per query
-    /// Environment variable: ACTOR_MAX_ENCOUNTER_RESULTS_PER_QUERY
-    /// </summary>
-    public int MaxEncounterResultsPerQuery { get; set; } = 50;
-
-    /// <summary>
     /// Maximum retry attempts for memory store operations
     /// Environment variable: ACTOR_MEMORY_STORE_MAX_RETRIES
     /// </summary>
     public int MemoryStoreMaxRetries { get; set; } = 3;
-
-    /// <summary>
-    /// TTL in minutes for cached storyline participation data
-    /// Environment variable: ACTOR_STORYLINE_CACHE_TTL_MINUTES
-    /// </summary>
-    public int StorylineCacheTtlMinutes { get; set; } = 5;
-
-    /// <summary>
-    /// TTL in minutes for cached quest data
-    /// Environment variable: ACTOR_QUEST_CACHE_TTL_MINUTES
-    /// </summary>
-    public int QuestCacheTtlMinutes { get; set; } = 5;
 
 }

@@ -17,7 +17,7 @@ Public-facing website service (L3 AppFeatures) for browser-based access to news,
 
 | Dependency | Usage |
 |------------|-------|
-| lib-messaging (`IMessageBus`) | Error event publishing via `TryPublishErrorAsync`; permission registration event |
+| lib-messaging (`IMessageBus`) | Error event publishing via `TryPublishErrorAsync` |
 | lib-messaging (`IEventConsumer`) | Event handler registration (constructor call, no handlers registered) |
 
 **Note**: The service currently has no dependency on `IStateStoreFactory`, generated service clients, or any other infrastructure libs. When implemented, it will require `IAccountClient` (for profile retrieval) and `IStateStoreFactory` for CMS page persistence. Per the service hierarchy (L3 cannot depend on L2 game services), this service intentionally does NOT use `ICharacterClient`, `ISubscriptionClient`, or `IRealmClient`.
@@ -56,7 +56,7 @@ The `schemas/state-stores.yaml` file contains no entries for "website". When CMS
 
 | Topic | Event Type | Trigger |
 |-------|-----------|---------|
-| `permission.service-registered` | `ServiceRegistrationEvent` | On startup (permission matrix registration) |
+| *(none)* | | Permission registration is now DI-based via `IPermissionRegistry` |
 | `error.*` | Error event (via `TryPublishErrorAsync`) | On unhandled exceptions in any endpoint |
 
 No domain-specific events are published (all endpoints are stubs).
@@ -85,7 +85,7 @@ The `schemas/website-configuration.yaml` defines no properties (`x-service-confi
 |---------|----------|------|
 | `ILogger<WebsiteService>` | Scoped | Structured logging (warning for stub calls, error for exceptions) |
 | `WebsiteServiceConfiguration` | Singleton | Configuration (currently unused) |
-| `IMessageBus` | Scoped | Error event publishing and permission registration |
+| `IMessageBus` | Scoped | Error event publishing |
 | `IEventConsumer` | Scoped | Event handler registration (no handlers) |
 
 Service lifetime is **Scoped** (per-request). No background services. Plugin discovery is via `WebsiteServicePlugin : StandardServicePlugin<IWebsiteService>` with `PluginName = "website"`.

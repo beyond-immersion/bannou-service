@@ -19,7 +19,7 @@ The License service (L4 GameFeatures) provides grid-based progression boards (sk
 |------------|-------|
 | lib-state (`IStateStoreFactory`) | Persistence for board templates, definitions, board instances (MySQL) and board cache, locks (Redis) |
 | lib-state (`IDistributedLockProvider`) | Board-level and template-level distributed locks for mutation operations |
-| lib-messaging (`IMessageBus`) | Publishing lifecycle events (template/board CRUD), gameplay events (unlock, unlock-failed), clone events, and resource reference events |
+| lib-messaging (`IMessageBus`) | Publishing lifecycle events (template/board CRUD), gameplay events (unlock, unlock-failed), and clone events |
 | lib-contract (`IContractClient`) | Creating contract instances, setting template values, proposing, consenting, and completing milestones during unlock execution (L1 hard dependency) |
 | lib-character (`ICharacterClient`) | Validating character existence and resolving realm context during board creation for character-type owners (L2 hard dependency) |
 | lib-inventory (`IInventoryClient`) | Creating/deleting containers for board instances and reading container contents for cache rebuild (L2 hard dependency) |
@@ -89,8 +89,6 @@ No other services currently inject `ILicenseClient` or subscribe to license even
 | `license-board.cloned` | `LicenseBoardClonedEvent` | Board unlock state cloned to new owner via `CloneBoardAsync` (includes sourceBoardId, targetBoardId, targetOwnerType, targetOwnerId, targetGameServiceId, licensesCloned) |
 | `license.unlocked` | `LicenseUnlockedEvent` | License successfully unlocked (includes boardId, ownerType, ownerId, licenseCode, position, itemInstanceId, contractInstanceId, lpCost) |
 | `license.unlock-failed` | `LicenseUnlockFailedEvent` | License unlock failed (includes boardId, ownerType, ownerId, licenseCode, reason enum) |
-| `resource.reference.registered` | `ResourceReferenceRegisteredEvent` | Character-type board created (via generated `RegisterCharacterReferenceAsync` helper) |
-| `resource.reference.unregistered` | `ResourceReferenceUnregisteredEvent` | Character-type board deleted (via generated `UnregisterCharacterReferenceAsync` helper) |
 
 **Note**: `license-board.updated` is NOT published — boards are immutable after creation. The `LicenseBoardUpdatedEvent` model exists as an unavoidable byproduct of `x-lifecycle` auto-generation but is intentionally excluded from `x-event-publications`.
 
@@ -124,7 +122,7 @@ No other services currently inject `ILicenseClient` or subscribe to license even
 | `LicenseServiceConfiguration` | Typed configuration access |
 | `IStateStoreFactory` | State store access (5 stores) |
 | `IDistributedLockProvider` | Distributed locks via `license-lock` store |
-| `IMessageBus` | Event publishing (lifecycle, gameplay, clone, resource reference) |
+| `IMessageBus` | Event publishing (lifecycle, gameplay, clone) |
 | `IContractClient` | Contract lifecycle operations during unlock |
 | `ICharacterClient` | Character validation and realm context resolution for character-type owners |
 | `IInventoryClient` | Container CRUD and content queries |

@@ -230,42 +230,12 @@ x-service-configuration:
       default: 5000
       description: Default max age in milliseconds for cached query options
 
-    # === Actor Data Caching (Tier 2) ===
-    PersonalityCacheTtlMinutes:
-      type: integer
-      env: ACTOR_PERSONALITY_CACHE_TTL_MINUTES
-      default: 5
-      description: TTL in minutes for cached personality data
-    EncounterCacheTtlMinutes:
-      type: integer
-      env: ACTOR_ENCOUNTER_CACHE_TTL_MINUTES
-      default: 5
-      description: TTL in minutes for cached encounter data
-    MaxEncounterResultsPerQuery:
-      type: integer
-      env: ACTOR_MAX_ENCOUNTER_RESULTS_PER_QUERY
-      default: 50
-      description: Maximum encounter results returned per query
-
     # === Memory Store Retry Configuration (Tier 3) ===
     MemoryStoreMaxRetries:
       type: integer
       env: ACTOR_MEMORY_STORE_MAX_RETRIES
       default: 3
       description: Maximum retry attempts for memory store operations
-
-    # === Variable Provider Caching (Tier 2) ===
-    StorylineCacheTtlMinutes:
-      type: integer
-      env: ACTOR_STORYLINE_CACHE_TTL_MINUTES
-      default: 5
-      description: TTL in minutes for cached storyline participation data
-
-    QuestCacheTtlMinutes:
-      type: integer
-      env: ACTOR_QUEST_CACHE_TTL_MINUTES
-      default: 5
-      description: TTL in minutes for cached quest data
 
 components:
   schemas: {}

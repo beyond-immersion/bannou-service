@@ -1074,20 +1074,12 @@ public class CharacterPersonalityServiceTests
     }
 
     [Fact]
-    public void CharacterPersonalityPermissionRegistration_CreateRegistrationEvent_ShouldCreateValidEvent()
+    public void CharacterPersonalityPermissionRegistration_BuildPermissionMatrix_ShouldBeValid()
     {
-        // Arrange
-        var instanceId = Guid.NewGuid();
-
-        // Act
-        var evt = CharacterPersonalityPermissionRegistration.CreateRegistrationEvent(instanceId, "test-app");
-
-        // Assert
-        Assert.NotNull(evt);
-        Assert.Equal("character-personality", evt.ServiceName);
-        Assert.Equal(instanceId, evt.ServiceId);
-        Assert.Equal(9, evt.Endpoints.Count); // Only endpoints with x-permissions (includes compression endpoints)
-        Assert.NotEmpty(evt.Version);
+        PermissionMatrixValidator.ValidatePermissionMatrix(
+            CharacterPersonalityPermissionRegistration.ServiceId,
+            CharacterPersonalityPermissionRegistration.ServiceVersion,
+            CharacterPersonalityPermissionRegistration.BuildPermissionMatrix());
     }
 
     #endregion

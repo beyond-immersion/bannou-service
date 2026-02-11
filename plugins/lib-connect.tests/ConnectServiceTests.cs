@@ -458,39 +458,6 @@ public class ConnectServiceTests
     }
 
     [Fact]
-    public async Task ProcessServiceRegistrationAsync_WithValidEvent_ShouldPublishRecompileEvent()
-    {
-        // Arrange
-        using var service = CreateConnectService();
-        var serviceId = Guid.NewGuid();
-        var eventData = new ServiceRegistrationEvent
-        {
-            ServiceId = serviceId,
-            ServiceName = "new-service-123",
-            Timestamp = DateTimeOffset.UtcNow
-        };
-
-        // Act
-        var result = await service.ProcessServiceRegistrationAsync(eventData);
-
-        // Assert
-        Assert.NotNull(result);
-        var resultJson = BannouJson.Serialize(result);
-        var resultDict = BannouJson.Deserialize<Dictionary<string, object>>(resultJson);
-        Assert.NotNull(resultDict);
-        Assert.Equal("processed", resultDict["status"].ToString());
-        Assert.Equal(serviceId.ToString(), resultDict["serviceId"].ToString());
-
-        // Verify that PublishAsync was called for permission recompilation via IMessageBus
-        _mockMessageBus.Verify(x => x.TryPublishAsync(
-            "bannou.permission-recompile",
-            It.IsAny<PermissionRecompileEvent>(),
-            It.IsAny<PublishOptions?>(),
-            It.IsAny<Guid?>(),
-            It.IsAny<CancellationToken>()), Times.Once);
-    }
-
-    [Fact]
     public async Task ProcessClientMessageEventAsync_WhenClientNotConnected_ReturnsError()
     {
         // Arrange

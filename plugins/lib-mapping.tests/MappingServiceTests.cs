@@ -221,21 +221,12 @@ public class MappingServiceTests
     }
 
     [Fact]
-    public void MappingPermissionRegistration_CreateRegistrationEvent_ShouldGenerateValidEvent()
+    public void MappingPermissionRegistration_BuildPermissionMatrix_ShouldBeValid()
     {
-        // Arrange
-        var instanceId = Guid.NewGuid();
-
-        // Act
-        var registrationEvent = MappingPermissionRegistration.CreateRegistrationEvent(instanceId, "test-app");
-
-        // Assert
-        Assert.NotNull(registrationEvent);
-        Assert.Equal("mapping", registrationEvent.ServiceName);
-        Assert.Equal(instanceId, registrationEvent.ServiceId);
-        Assert.NotNull(registrationEvent.Endpoints);
-        Assert.Equal(13, registrationEvent.Endpoints.Count);
-        Assert.NotEmpty(registrationEvent.Version);
+        PermissionMatrixValidator.ValidatePermissionMatrix(
+            MappingPermissionRegistration.ServiceId,
+            MappingPermissionRegistration.ServiceVersion,
+            MappingPermissionRegistration.BuildPermissionMatrix());
     }
 
     #endregion

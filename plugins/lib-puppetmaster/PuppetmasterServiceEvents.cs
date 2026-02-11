@@ -25,6 +25,11 @@ public partial class PuppetmasterService
             "realm.created",
             async (svc, evt) => await ((PuppetmasterService)svc).HandleRealmCreatedAsync(evt));
 
+        // Behavior hot-reload: invalidate cache and notify running actors
+        eventConsumer.RegisterHandler<IPuppetmasterService, BehaviorUpdatedEvent>(
+            "behavior.updated",
+            async (svc, evt) => await ((PuppetmasterService)svc).HandleBehaviorUpdatedAsync(evt));
+
         // Actor lifecycle events for watch cleanup
         eventConsumer.RegisterHandler<IPuppetmasterService, ActorInstanceDeletedEvent>(
             "actor.instance.deleted",
@@ -238,6 +243,108 @@ public partial class PuppetmasterService
 
         var idString = idElement.GetString();
         return !string.IsNullOrEmpty(idString) && Guid.TryParse(idString, out resourceId);
+    }
+
+    /// <summary>
+    /// Handles behavior.updated events from the Behavior service.
+    /// Invalidates cached behavior documents and notifies running actors for hot-reload.
+    /// </summary>
+    public async Task HandleBehaviorUpdatedAsync(BehaviorUpdatedEvent evt)
+    {
+        _logger.LogInformation("Received behavior.updated event for {BehaviorId}", evt.BehaviorId);
+
+        try
+        {
+            // Invalidate cached behavior document.
+            // BehaviorDocumentCache is keyed by asset reference (GUID), not BehaviorId (string code).
+            // AssetId is REQUIRED on BehaviorUpdatedEvent and matches the cache key directly.
+            _behaviorCache.Invalidate(evt.AssetId);
+            _logger.LogDebug("Invalidated cached behavior asset {AssetId} for {BehaviorId}", evt.AssetId, evt.BehaviorId);
+
+            // Notify running actors using the updated behavior via IActorClient
+            using var scope = _scopeFactory.CreateScope();
+            var actorClient = scope.ServiceProvider.GetService<IActorClient>();
+            if (actorClient == null)
+            {
+                _logger.LogDebug("IActorClient not available, skipping actor notification");
+                return;
+            }
+
+            // Paginate through all running actors. Behavior updates are rare admin events,
+            // so sequential notification is acceptable.
+            var offset = 0;
+            const int pageSize = 100;
+            var notifiedCount = 0;
+
+            while (true)
+            {
+                var listResponse = await actorClient.ListActorsAsync(
+                    new ListActorsRequest { Limit = pageSize, Offset = offset },
+                    CancellationToken.None);
+
+                if (listResponse.Actors.Count == 0)
+                    break;
+
+                foreach (var actor in listResponse.Actors)
+                {
+                    await InjectBehaviorUpdatePerceptionAsync(
+                        actorClient, actor.ActorId, evt.BehaviorId, CancellationToken.None);
+                    notifiedCount++;
+                }
+
+                offset += listResponse.Actors.Count;
+                if (offset >= listResponse.Total)
+                    break;
+            }
+
+            _logger.LogDebug(
+                "Notified {Count} actors of behavior {BehaviorId} update",
+                notifiedCount, evt.BehaviorId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling behavior.updated event for {BehaviorId}", evt.BehaviorId);
+            await _messageBus.TryPublishErrorAsync(
+                "puppetmaster",
+                "HandleBehaviorUpdated",
+                ex.GetType().Name,
+                ex.Message,
+                details: new Dictionary<string, object?> { ["behaviorId"] = evt.BehaviorId, ["assetId"] = evt.AssetId },
+                stack: ex.StackTrace);
+        }
+    }
+
+    /// <summary>
+    /// Injects a behavior update perception into an actor.
+    /// </summary>
+    private async Task InjectBehaviorUpdatePerceptionAsync(
+        IActorClient actorClient, string actorId, string behaviorId, CancellationToken ct)
+    {
+        try
+        {
+            var request = new InjectPerceptionRequest
+            {
+                ActorId = actorId,
+                Perception = new PerceptionData
+                {
+                    PerceptionType = "system",
+                    SourceId = "puppetmaster",
+                    SourceType = PerceptionSourceType.Service,
+                    Urgency = 0.5f,
+                    Data = new Dictionary<string, object?>
+                    {
+                        ["eventType"] = "behavior_updated",
+                        ["behaviorId"] = behaviorId
+                    }
+                }
+            };
+
+            await actorClient.InjectPerceptionAsync(request, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Error injecting behavior update perception to actor {ActorId}", actorId);
+        }
     }
 
     /// <summary>

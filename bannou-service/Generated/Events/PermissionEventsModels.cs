@@ -108,53 +108,6 @@ public partial class PermissionCapabilityUpdate
 
 }
 
-/// <summary>
-/// Published by services when a session's state changes within that service.
-/// <br/>Triggers permission recompilation in the Permission service.
-/// <br/>
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SessionStateChangeEvent : BaseServiceEvent
-{
-
-    /// <summary>
-    /// Session ID that had state change
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("sessionId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid SessionId { get; set; } = default!;
-
-    /// <summary>
-    /// Service where the state changed (e.g., "auth", "game-session")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string ServiceId { get; set; } = default!;
-
-    /// <summary>
-    /// Previous state (null for initial state)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("previousState")]
-    public string? PreviousState { get; set; } = default!;
-
-    /// <summary>
-    /// New state (e.g., "authenticated", "in_game", "character_selected")
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("newState")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string NewState { get; set; } = default!;
-
-    /// <summary>
-    /// Additional context about the state change
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object? Metadata { get; set; } = default!;
-
-}
-
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public enum PermissionCapabilityUpdateUpdateType

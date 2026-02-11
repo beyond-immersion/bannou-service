@@ -17,7 +17,6 @@
 #nullable enable
 
 using BeyondImmersion.BannouService;
-using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.Logging;
 
@@ -38,25 +37,6 @@ public static class TelemetryPermissionRegistration
     /// Service version from OpenAPI schema.
     /// </summary>
     public const string ServiceVersion = "1.0.0";
-
-    /// <summary>
-    /// Generates the ServiceRegistrationEvent containing all endpoint permissions.
-    /// </summary>
-    /// <param name="instanceId">The unique instance GUID for this bannou instance</param>
-    /// <param name="appId">The effective app ID for this service instance</param>
-    public static ServiceRegistrationEvent CreateRegistrationEvent(Guid instanceId, string appId)
-    {
-        return new ServiceRegistrationEvent
-        {
-            EventId = Guid.NewGuid(),
-            Timestamp = DateTimeOffset.UtcNow,
-            ServiceId = instanceId,
-            ServiceName = ServiceId,
-            Version = ServiceVersion,
-            AppId = appId,
-            Endpoints = GetEndpoints()
-        };
-    }
 
     /// <summary>
     /// Gets the list of endpoints with their permission requirements.

@@ -66,14 +66,14 @@ Resource is a **layer-agnostic intermediary** at L1 that provides three capabili
 
 ### 1. Reference Tracking
 
-Higher-layer services publish reference events when they create or remove references to foundational resources:
+Higher-layer services call the Resource API directly when they create or remove references to foundational resources:
 
 ```
 Actor (L2) spawns actor for Character X
-    -> Publishes: resource.reference.registered (resourceType: "character", resourceId: X, sourceType: "actor", sourceId: actorId)
+    -> Calls: IResourceClient.RegisterReferenceAsync (resourceType: "character", resourceId: X, sourceType: "actor", sourceId: actorId)
 
 Character Personality (L4) creates personality for Character X
-    -> Publishes: resource.reference.registered (resourceType: "character", resourceId: X, sourceType: "character-personality", sourceId: personalityId)
+    -> Calls: IResourceClient.RegisterReferenceAsync (resourceType: "character", resourceId: X, sourceType: "character-personality", sourceId: personalityId)
 ```
 
 Resource maintains a set of references per resource using Redis atomic set operations. When Character wants to check if it can be deleted, it calls Resource:

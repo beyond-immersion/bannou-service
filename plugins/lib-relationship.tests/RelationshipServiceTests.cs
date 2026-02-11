@@ -654,17 +654,12 @@ public class RelationshipServiceTests : ServiceTestBase<RelationshipServiceConfi
     }
 
     [Fact]
-    public void RelationshipPermissionRegistration_CreateRegistrationEvent_ShouldGenerateValidEvent()
+    public void RelationshipPermissionRegistration_BuildPermissionMatrix_ShouldBeValid()
     {
-        // Act
-        var instanceId = Guid.NewGuid();
-        var registrationEvent = RelationshipPermissionRegistration.CreateRegistrationEvent(instanceId, "test-app");
-
-        // Assert
-        Assert.NotNull(registrationEvent);
-        Assert.Equal("relationship", registrationEvent.ServiceName);
-        Assert.Equal(instanceId, registrationEvent.ServiceId);
-        Assert.NotNull(registrationEvent.Endpoints);
+        PermissionMatrixValidator.ValidatePermissionMatrix(
+            RelationshipPermissionRegistration.ServiceId,
+            RelationshipPermissionRegistration.ServiceVersion,
+            RelationshipPermissionRegistration.BuildPermissionMatrix());
     }
 
     [Fact]

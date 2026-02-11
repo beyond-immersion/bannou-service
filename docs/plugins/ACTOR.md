@@ -134,14 +134,13 @@ See [PUPPETMASTER.md](PUPPETMASTER.md) for Event Brain architecture details and 
 | Topic | Event Type | Handler |
 |-------|-----------|---------|
 | `session.disconnected` | `SessionDisconnectedEvent` | Stubbed handler for future session-bound actors |
-| `behavior.updated` | `BehaviorUpdatedEvent` | Invalidates behavior cache, notifies actors for hot-reload |
 | `actor.pool-node.registered` | `PoolNodeRegisteredEvent` | Register node, track capacity (control plane only) |
 | `actor.pool-node.heartbeat` | `PoolNodeHeartbeatEvent` | Update load, mark healthy (control plane only) |
 | `actor.pool-node.draining` | `PoolNodeDrainingEvent` | Mark draining, track remaining (control plane only) |
 | `actor.instance.status-changed` | `ActorStatusChangedEvent` | Update assignment status (control plane only) |
 | `actor.instance.completed` | `ActorCompletedEvent` | Remove assignment (control plane only) |
 
-**Note**: The schema (actor-events.yaml) lists `personality.evolved` and `combat-preferences.evolved` as subscriptions, but handlers are NOT implemented. Per service hierarchy, Actor (L2) does not own personality caches - it gets fresh data from provider factories. The services that own these caches (lib-character-personality) handle their own invalidation.
+**Note**: `behavior.updated` handling was moved to lib-puppetmaster (L4) per issue #380. Puppetmaster owns the dynamic behavior cache and notifies running actors via `IActorClient`. Actor (L2) no longer subscribes to any L4 events.
 
 ---
 
@@ -234,11 +233,6 @@ See [PUPPETMASTER.md](PUPPETMASTER.md) for Event Brain architecture details and 
 
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
-| `PersonalityCacheTtlMinutes` | `ACTOR_PERSONALITY_CACHE_TTL_MINUTES` | `5` | Personality data cache lifetime |
-| `EncounterCacheTtlMinutes` | `ACTOR_ENCOUNTER_CACHE_TTL_MINUTES` | `5` | Encounter data cache lifetime |
-| `StorylineCacheTtlMinutes` | `ACTOR_STORYLINE_CACHE_TTL_MINUTES` | `5` | Storyline participation data cache lifetime |
-| `QuestCacheTtlMinutes` | `ACTOR_QUEST_CACHE_TTL_MINUTES` | `5` | Quest data cache lifetime |
-| `MaxEncounterResultsPerQuery` | `ACTOR_MAX_ENCOUNTER_RESULTS_PER_QUERY` | `50` | Query result limit |
 | `QueryOptionsDefaultMaxAgeMs` | `ACTOR_QUERY_OPTIONS_DEFAULT_MAX_AGE_MS` | `5000` | Max age for cached query options |
 
 ---
@@ -257,7 +251,6 @@ See [PUPPETMASTER.md](PUPPETMASTER.md) for Event Brain architecture details and 
 | `IBehaviorDocumentLoader` | Singleton | Loads behavior documents via provider chain |
 | `SeededBehaviorProvider` | Singleton | Loads static behaviors from filesystem (Priority 50) |
 | `FallbackBehaviorProvider` | Singleton | Generates stub behaviors for missing docs (Priority 0) |
-| `PersonalityCache` | Singleton | Character personality caching |
 | `ActorPoolManager` | Singleton | Pool node management (control plane) |
 | `ActorPoolNodeWorker` | Hosted (BackgroundService) | Pool node command listener |
 | `HeartbeatEmitter` | Hosted (BackgroundService) | Pool node heartbeat publisher |
@@ -538,6 +531,8 @@ No bugs identified.
 ### Completed
 
 - **2026-02-07**: Issue #316 - GOAP scope population implemented in ActorRunner. Goals and actions extracted from ABML documents via `GoapMetadataConverter`. WorldState built from actor feelings, goal parameters, and working memory.
+
+- **2026-02-11**: Issue #380 - Removed L4 event subscriptions (`behavior.updated`, `personality.evolved`, `combat-preferences.evolved`). Moved behavior.updated handler to lib-puppetmaster. Removed 5 dead config properties (`PersonalityCacheTtlMinutes`, `EncounterCacheTtlMinutes`, `MaxEncounterResultsPerQuery`, `StorylineCacheTtlMinutes`, `QuestCacheTtlMinutes`).
 
 ### Implementation Gaps
 

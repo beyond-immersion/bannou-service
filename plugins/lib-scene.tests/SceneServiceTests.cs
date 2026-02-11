@@ -192,34 +192,12 @@ public class SceneServiceTests
     }
 
     [Fact]
-    public void ScenePermissionRegistration_CreateRegistrationEvent_ShouldGenerateValidEvent()
+    public void ScenePermissionRegistration_BuildPermissionMatrix_ShouldBeValid()
     {
-        // Arrange
-        var instanceId = Guid.NewGuid();
-
-        // Act
-        var registrationEvent = ScenePermissionRegistration.CreateRegistrationEvent(instanceId, "test-app");
-
-        // Assert
-        Assert.NotNull(registrationEvent);
-        Assert.Equal("scene", registrationEvent.ServiceName);
-        Assert.Equal(instanceId, registrationEvent.ServiceId);
-        Assert.NotNull(registrationEvent.Endpoints);
-        Assert.NotEmpty(registrationEvent.Endpoints);
-    }
-
-    [Fact]
-    public void ScenePermissionRegistration_CreateRegistrationEvent_EndpointsMatchGetEndpoints()
-    {
-        // Arrange
-        var instanceId = Guid.NewGuid();
-
-        // Act
-        var registrationEvent = ScenePermissionRegistration.CreateRegistrationEvent(instanceId, "test-app");
-        var directEndpoints = ScenePermissionRegistration.GetEndpoints();
-
-        // Assert
-        Assert.Equal(directEndpoints.Count, registrationEvent.Endpoints.Count);
+        PermissionMatrixValidator.ValidatePermissionMatrix(
+            ScenePermissionRegistration.ServiceId,
+            ScenePermissionRegistration.ServiceVersion,
+            ScenePermissionRegistration.BuildPermissionMatrix());
     }
 
     #endregion

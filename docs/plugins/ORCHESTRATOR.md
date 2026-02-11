@@ -81,7 +81,6 @@ Central intelligence (L3 AppFeatures) for Bannou environment management and serv
 | `bannou.deployment-events` | `DeploymentEvent` | Deploy/teardown started, completed, failed, or topology changed |
 | `bannou.service-restart` | `ServiceRestartEvent` | Service restart requested via SmartRestartManager |
 | `orchestrator.processor.released` | `ProcessorReleasedEvent` | Processor released back to pool (includes pool type, success/failure, lease duration) |
-| `permission.service-registered` | `ServiceRegistrationEvent` | Service startup: registers permissions (or blank in secure mode) |
 | (error topic via `TryPublishErrorAsync`) | Error event | Any unexpected internal failure |
 
 ### Consumed Events

@@ -19,10 +19,10 @@ Historical event participation and lore management (L4 GameFeatures) for realms.
 |------------|-------|
 | lib-state (`IStateStoreFactory`) | MySQL persistence for participation records, indexes, and lore |
 | lib-state (`IDistributedLockProvider`) | Distributed locks for DualIndexHelper and BackstoryStorageHelper write operations (per IMPLEMENTATION TENETS: multi-instance safety) |
-| lib-messaging (`IMessageBus`) | Publishing participation, lore lifecycle, and resource reference events |
+| lib-messaging (`IMessageBus`) | Publishing participation and lore lifecycle events |
 | lib-messaging (`IEventConsumer`) | Event handler registration (no current handlers) |
 | lib-resource (`IResourceClient`) | Registering cleanup and compression callbacks during plugin startup (in `RealmHistoryServicePlugin`, not in service constructor) |
-| lib-resource (events) | Publishes `resource.reference.registered` and `resource.reference.unregistered` events for realm reference tracking |
+| lib-resource (`IResourceClient`) | Calls `RegisterReferenceAsync`/`UnregisterReferenceAsync` for realm reference tracking |
 | `IDualIndexHelper` | Dual-index storage pattern for participation records (from `bannou-service/History/`) |
 | `IBackstoryStorageHelper` | Lore element storage with merge/replace semantics (from `bannou-service/History/`) |
 | `PaginationHelper` | Calculates skip/take for pagination (from `bannou-service/History/`) |
@@ -35,7 +35,7 @@ Historical event participation and lore management (L4 GameFeatures) for realms.
 | Dependent | Relationship |
 |-----------|-------------|
 | lib-analytics | Subscribes to `realm-history.participation.recorded`, `realm-history.lore.created`, `realm-history.lore.updated` events to ingest realm history data for analytics aggregation |
-| lib-resource | Consumes `resource.reference.registered/unregistered` events to track realm references for cleanup coordination |
+| lib-resource | Receives direct API calls for reference registration; calls cleanup endpoint on cascade delete |
 
 ---
 
@@ -64,8 +64,6 @@ Historical event participation and lore management (L4 GameFeatures) for realms.
 | `realm-history.lore.updated` | `RealmLoreUpdatedEvent` | Existing lore modified |
 | `realm-history.lore.deleted` | `RealmLoreDeletedEvent` | All lore deleted for a realm |
 | `realm-history.deleted` | `RealmHistoryDeletedEvent` | All history (participation + lore) deleted |
-| `resource.reference.registered` | `ResourceReferenceRegisteredEvent` | Participation or lore created (tracks realm references) |
-| `resource.reference.unregistered` | `ResourceReferenceUnregisteredEvent` | Participation or lore deleted (unregisters realm references) |
 
 ### Consumed Events
 

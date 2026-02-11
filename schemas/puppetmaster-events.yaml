@@ -16,6 +16,9 @@ info:
     - topic: realm.created
       event: RealmCreatedEvent
       handler: HandleRealmCreated
+    - topic: behavior.updated
+      event: BehaviorUpdatedEvent
+      handler: HandleBehaviorUpdated
   x-event-publications:
     - topic: puppetmaster.behavior.invalidated
       event: BehaviorInvalidatedEvent

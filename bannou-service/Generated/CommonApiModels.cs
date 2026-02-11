@@ -120,6 +120,85 @@ public enum SentimentCategory
 #pragma warning restore CS1591
 
 /// <summary>
+/// Individual API endpoint with permission requirements.
+/// <br/>Extracted from OpenAPI schema x-permissions sections.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ServiceEndpoint
+{
+
+    /// <summary>
+    /// API endpoint path (e.g., "/account/{id}")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("path")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Path { get; set; } = default!;
+
+    /// <summary>
+    /// HTTP method for this endpoint
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("method")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public ServiceEndpointMethod Method { get; set; } = default!;
+
+    /// <summary>
+    /// Permission requirements for this endpoint
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("permissions")]
+    [System.ComponentModel.DataAnnotations.Required]
+    public System.Collections.Generic.ICollection<PermissionRequirement> Permissions { get; set; } = new System.Collections.ObjectModel.Collection<PermissionRequirement>();
+
+    /// <summary>
+    /// Human-readable endpoint description
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    public string? Description { get; set; } = default!;
+
+    /// <summary>
+    /// API category (auth, account, game, social, etc.)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("category")]
+    public string? Category { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Permission requirement mapping role and state to endpoint access.
+/// <br/>Defines which roles can access an endpoint in which states.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class PermissionRequirement
+{
+
+    /// <summary>
+    /// Role that can access this endpoint (e.g., "user", "admin", "npc")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("role")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    public string Role { get; set; } = default!;
+
+    /// <summary>
+    /// Map of service states required for access.
+    /// <br/>Key: service_id, Value: required_state
+    /// <br/>Example: {"game-session": "in_game", "character": "selected"}
+    /// <br/>
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("requiredStates")]
+    [System.ComponentModel.DataAnnotations.Required]
+    public System.Collections.Generic.IDictionary<string, string> RequiredStates { get; set; } = new System.Collections.Generic.Dictionary<string, string>();
+
+    /// <summary>
+    /// Optional human-readable permission description
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("description")]
+    public string? Description { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Base schema for all resource archives that can be stored in
 /// <br/>the resource service's archive bundles and consumed by the
 /// <br/>storyline SDK's ArchiveExtractor.
@@ -180,6 +259,29 @@ public partial class ResourceArchiveBase
     }
 
 }
+
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ServiceEndpointMethod
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"GET")]
+    GET = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"POST")]
+    POST = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"PUT")]
+    PUT = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"DELETE")]
+    DELETE = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"PATCH")]
+    PATCH = 4,
+
+}
+#pragma warning restore CS1591
 
 
 

@@ -1698,17 +1698,12 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
     }
 
     [Fact]
-    public void CharacterEncounterPermissionRegistration_CreateRegistrationEvent_ShouldGenerateValidEvent()
+    public void CharacterEncounterPermissionRegistration_BuildPermissionMatrix_ShouldBeValid()
     {
-        // Act
-        var instanceId = Guid.NewGuid();
-        var registrationEvent = CharacterEncounterPermissionRegistration.CreateRegistrationEvent(instanceId, "test-app");
-
-        // Assert
-        Assert.NotNull(registrationEvent);
-        Assert.Equal("character-encounter", registrationEvent.ServiceName);
-        Assert.Equal(instanceId, registrationEvent.ServiceId);
-        Assert.NotNull(registrationEvent.Endpoints);
+        PermissionMatrixValidator.ValidatePermissionMatrix(
+            CharacterEncounterPermissionRegistration.ServiceId,
+            CharacterEncounterPermissionRegistration.ServiceVersion,
+            CharacterEncounterPermissionRegistration.BuildPermissionMatrix());
     }
 
     [Fact]

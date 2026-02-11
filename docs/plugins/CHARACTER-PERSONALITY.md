@@ -18,9 +18,9 @@ Machine-readable personality traits and combat preferences (L4 GameFeatures) for
 | Dependency | Usage |
 |------------|-------|
 | lib-state (`IStateStoreFactory`) | MySQL persistence for personality and combat preference data |
-| lib-messaging (`IMessageBus`) | Publishing personality/combat lifecycle events, evolution events, and resource reference events |
+| lib-messaging (`IMessageBus`) | Publishing personality/combat lifecycle events and evolution events |
 | lib-messaging (`IEventConsumer`) | Event handler registration for cache invalidation (personality.evolved, combat-preferences.evolved) |
-| lib-resource (via events) | Publishes `resource.reference.registered` / `resource.reference.unregistered` events for character reference tracking |
+| lib-resource (`IResourceClient`) | Calls `RegisterReferenceAsync`/`UnregisterReferenceAsync` for character reference tracking |
 
 ---
 
@@ -29,7 +29,7 @@ Machine-readable personality traits and combat preferences (L4 GameFeatures) for
 | Dependent | Relationship |
 |-----------|-------------|
 | lib-actor | Discovers `PersonalityProviderFactory` and `CombatPreferencesProviderFactory` via `IEnumerable<IVariableProviderFactory>` DI injection for ABML expression evaluation. Providers use `IPersonalityDataCache` internally. |
-| lib-resource | Receives `resource.reference.registered/unregistered` events for cleanup coordination; calls `/cleanup-by-character` endpoint on cascade delete |
+| lib-resource | Receives direct API calls for reference registration; calls `/cleanup-by-character` endpoint on cascade delete |
 
 **Note**: lib-character (L2) does NOT depend on lib-character-personality (L4) per SERVICE_HIERARCHY. The enrichment query params (`includePersonality`, `includeCombatPreferences`) are logged but ignored; callers should aggregate from L4 services directly.
 
@@ -62,8 +62,6 @@ Both types share the same state store, distinguished by key prefix.
 | `combat-preferences.updated` | `CombatPreferencesUpdatedEvent` | Existing combat preferences modified via Set |
 | `combat-preferences.evolved` | `CombatPreferencesEvolvedEvent` | Combat experience causes preference evolution |
 | `combat-preferences.deleted` | `CombatPreferencesDeletedEvent` | Combat preferences removed (via Delete or CleanupByCharacter) |
-| `resource.reference.registered` | `ResourceReferenceRegisteredEvent` | New personality or combat prefs created (registers character reference) |
-| `resource.reference.unregistered` | `ResourceReferenceUnregisteredEvent` | Personality or combat prefs deleted (unregisters character reference) |
 
 ### Consumed Events
 

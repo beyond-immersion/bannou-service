@@ -16,7 +16,6 @@ This document lists all events defined in Bannou's event schemas.
 | `FullServiceMappingsEvent` | Custom | `full-service-mappings` | Published periodically by Orchestrator as the auth... |
 | `ServiceErrorEvent` | Error | `service.error` | Structured error event for unexpected service fail... |
 | `ServiceHeartbeatEvent` | Health | `service.heartbeat` | Published periodically by each bannou instance to ... |
-| `ServiceRegistrationEvent` | Custom | `service-registration` | Published by any service during startup to registe... |
 | `SessionConnectedEvent` | Session | `session.connected` | Published by Connect service when a WebSocket conn... |
 | `SessionDisconnectedEvent` | Session | `session.disconnected` | Published by Connect service when a WebSocket conn... |
 | `SessionReconnectedEvent` | Session | `session-reconnected` | Published by Connect service when a WebSocket sess... |
@@ -401,12 +400,6 @@ This document lists all events defined in Bannou's event schemas.
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
 | `OrchestratorHealthPingEvent` | Custom | `orchestrator-health-ping` | Simple health ping event published to verify pub/s... |
-
-### Permission
-
-| Event | Type | Likely Topic | Description |
-|-------|------|--------------|-------------|
-| `SessionStateChangeEvent` | Custom | `session-state-change` | Published by services when a session's state chang... |
 
 ### Puppetmaster
 

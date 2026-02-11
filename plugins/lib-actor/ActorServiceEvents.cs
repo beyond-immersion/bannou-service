@@ -19,17 +19,9 @@ public partial class ActorService
     /// <param name="eventConsumer">The event consumer for registering handlers.</param>
     protected void RegisterEventConsumers(IEventConsumer eventConsumer)
     {
-        eventConsumer.RegisterHandler<IActorService, BehaviorUpdatedEvent>(
-            "behavior.updated",
-            async (svc, evt) => await ((ActorService)svc).HandleBehaviorUpdatedAsync(evt));
-
         eventConsumer.RegisterHandler<IActorService, SessionDisconnectedEvent>(
             "session.disconnected",
             async (svc, evt) => await ((ActorService)svc).HandleSessionDisconnectedAsync(evt));
-
-        // Note: Personality and quest cache invalidation is now handled by the services that own
-        // those caches (lib-character-personality, lib-quest) via their own event handlers.
-        // Actor (L2) does not own these caches - it gets fresh data from provider factories.
 
         // Pool node events (control plane only - when _poolManager is available)
         eventConsumer.RegisterHandler<IActorService, PoolNodeRegisteredEvent>(
@@ -51,91 +43,6 @@ public partial class ActorService
         eventConsumer.RegisterHandler<IActorService, ActorCompletedEvent>(
             "actor.instance.completed",
             async (svc, evt) => await ((ActorService)svc).HandleActorCompletedAsync(evt));
-    }
-
-    /// <summary>
-    /// Handles behavior.updated events.
-    /// When a behavior is updated, invalidate the cache and notify running actors
-    /// for hot-reload.
-    /// </summary>
-    /// <param name="evt">The event data.</param>
-    public async Task HandleBehaviorUpdatedAsync(BehaviorUpdatedEvent evt)
-    {
-        _logger.LogInformation("Received behavior.updated event for {BehaviorId}", evt.BehaviorId);
-
-        try
-        {
-            // Invalidate cached behavior documents (enables hot-reload)
-            _behaviorLoader.InvalidateByBehaviorId(evt.BehaviorId);
-            _logger.LogDebug("Invalidated cached behaviors matching {BehaviorId}", evt.BehaviorId);
-
-            // Also invalidate by asset ID if present
-            if (!string.IsNullOrEmpty(evt.AssetId))
-            {
-                _behaviorLoader.Invalidate(evt.AssetId);
-            }
-
-            // Find actors using this behavior
-            var templateStore = _stateStoreFactory.GetStore<ActorTemplateData>(StateStoreDefinitions.ActorTemplates);
-            var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.ActorTemplates);
-
-            // Get all template IDs from index
-            var allIds = await indexStore.GetAsync(ALL_TEMPLATES_KEY, CancellationToken.None) ?? new List<string>();
-
-            if (allIds.Count == 0)
-                return;
-
-            // Load all templates
-            var allTemplates = await templateStore.GetBulkAsync(allIds, CancellationToken.None);
-
-            foreach (var template in allTemplates.Values)
-            {
-                // Check if template uses this behavior
-                if (string.Equals(template.BehaviorRef, evt.AssetId, StringComparison.OrdinalIgnoreCase) ||
-                    template.BehaviorRef.Contains(evt.BehaviorId, StringComparison.OrdinalIgnoreCase))
-                {
-                    _logger.LogDebug(
-                        "Template {TemplateId} uses updated behavior {BehaviorId}",
-                        template.TemplateId, evt.BehaviorId);
-
-                    // Get running actors for this template
-                    var actors = _actorRegistry.GetByTemplateId(template.TemplateId).ToList();
-
-                    foreach (var actor in actors)
-                    {
-                        // Inject a notification perception to inform the actor
-                        // Use Dictionary<string, object?> instead of anonymous object per FOUNDATION TENETS
-                        actor.InjectPerception(new PerceptionData
-                        {
-                            PerceptionType = "system",
-                            SourceId = "behavior-service",
-                            SourceType = PerceptionSourceType.Service,
-                            Data = new Dictionary<string, object?>
-                            {
-                                ["eventType"] = "behavior_updated",
-                                ["behaviorId"] = evt.BehaviorId
-                            },
-                            Urgency = 0.5f
-                        });
-
-                        _logger.LogDebug(
-                            "Notified actor {ActorId} of behavior update",
-                            actor.ActorId);
-                    }
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error handling behavior.updated event for {BehaviorId}", evt.BehaviorId);
-            await _messageBus.TryPublishErrorAsync(
-                "actor",
-                "HandleBehaviorUpdated",
-                ex.GetType().Name,
-                ex.Message,
-                details: new { evt.BehaviorId, evt.AssetId },
-                stack: ex.StackTrace);
-        }
     }
 
     /// <summary>

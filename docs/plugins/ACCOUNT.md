@@ -16,7 +16,7 @@ The Account plugin is an internal-only CRUD service (L1 AppFoundation) for manag
 | lib-state (IStateStoreFactory) | All persistence - account records, email indices, provider indices, auth methods. Uses IJsonQueryableStateStore for paginated listing via MySQL JSON queries |
 | lib-state (IDistributedLockProvider) | Distributed locks for email uniqueness during account creation (prevents TOCTOU race conditions) |
 | lib-messaging (IMessageBus) | Publishing lifecycle events (created/updated/deleted) and error events |
-| Permission service (via AccountPermissionRegistration) | Registers its endpoint permission matrix on startup via a messaging event |
+| Permission service (via AccountPermissionRegistration) | Registers its endpoint permission matrix on startup via DI-based `IPermissionRegistry` |
 
 The Account plugin does **not** call any other service via lib-mesh clients. It is a leaf node that is called by others.
 
@@ -84,7 +84,7 @@ This plugin does not consume external events. The events schema explicitly decla
 | `IStateStoreFactory` | Creates typed state store instances for reading/writing account data |
 | `IMessageBus` | Publishes lifecycle and error events to RabbitMQ |
 | `IDistributedLockProvider` | Distributed locks for email uniqueness during account creation |
-| `AccountPermissionRegistration` | Generated class that registers the service's permission matrix via messaging event on startup |
+| `AccountPermissionRegistration` | Generated class that registers the service's permission matrix via `IPermissionRegistry` on startup |
 
 ## API Endpoints (Implementation Notes)
 

@@ -862,17 +862,12 @@ public class SpeciesServiceTests : ServiceTestBase<SpeciesServiceConfiguration>
     }
 
     [Fact]
-    public void SpeciesPermissionRegistration_CreateRegistrationEvent_ShouldGenerateValidEvent()
+    public void SpeciesPermissionRegistration_BuildPermissionMatrix_ShouldBeValid()
     {
-        // Act
-        var instanceId = Guid.NewGuid();
-        var registrationEvent = SpeciesPermissionRegistration.CreateRegistrationEvent(instanceId, "test-app");
-
-        // Assert
-        Assert.NotNull(registrationEvent);
-        Assert.Equal("species", registrationEvent.ServiceName);
-        Assert.Equal(instanceId, registrationEvent.ServiceId);
-        Assert.NotNull(registrationEvent.Endpoints);
+        PermissionMatrixValidator.ValidatePermissionMatrix(
+            SpeciesPermissionRegistration.ServiceId,
+            SpeciesPermissionRegistration.ServiceVersion,
+            SpeciesPermissionRegistration.BuildPermissionMatrix());
     }
 
     [Fact]

@@ -1803,10 +1803,6 @@ public partial class ConnectService : IConnectService, IDisposable
         webApp.MapPost("/events/auth-events", ProcessAuthEventAsync)
             .WithMetadata("Connect service auth event handler");
 
-        // Register service registration handler
-        webApp.MapPost("/events/service-registered", ProcessServiceRegistrationAsync)
-            .WithMetadata("Connect service registration handler");
-
         // Register client message handler
         webApp.MapPost("/events/client-messages", ProcessClientMessageEventAsync)
             .WithMetadata("Connect service client message handler");
@@ -1888,45 +1884,6 @@ public partial class ConnectService : IConnectService, IDisposable
         {
             _logger.LogError(ex, "Failed to process auth event for session {SessionId}", eventData.SessionId);
             await PublishErrorEventAsync("ProcessAuthEvent", ex.GetType().Name, ex.Message, details: new { SessionId = eventData.SessionId, EventType = eventData.EventType });
-            throw;
-        }
-    }
-
-    /// <summary>
-    /// Processes service registration events for permission recompilation.
-    /// When services register new APIs, update permission cache and notify clients.
-    /// </summary>
-    internal async Task<object> ProcessServiceRegistrationAsync(ServiceRegistrationEvent eventData)
-    {
-        try
-        {
-            _logger.LogInformation("Processing service registration for {ServiceId}", eventData.ServiceId);
-
-            // Notify permission service that a new service was registered
-            // This will trigger permission recompilation for all sessions
-            await _messageBus.TryPublishAsync(
-                "bannou.permission-recompile",
-                new PermissionRecompileEvent
-                {
-                    EventId = Guid.NewGuid().ToString(),
-                    Timestamp = DateTimeOffset.UtcNow,
-                    Reason = PermissionRecompileEventReason.ServiceRegistered,
-                    ServiceId = eventData.ServiceName,
-                    Metadata = new Dictionary<string, object>
-                    {
-                        { "triggeredBy", "connect-service" },
-                        { "instanceId", _instanceId }
-                    }
-                });
-
-            _logger.LogInformation("Triggered permission recompilation for service registration: {ServiceId}", eventData.ServiceId);
-
-            return new { status = "processed", serviceId = eventData.ServiceId };
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to process service registration event for {ServiceId}", eventData.ServiceId);
-            await PublishErrorEventAsync("ProcessServiceRegistration", ex.GetType().Name, ex.Message, details: new { ServiceId = eventData.ServiceId });
             throw;
         }
     }

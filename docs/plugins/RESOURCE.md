@@ -31,11 +31,11 @@ Resource reference tracking, lifecycle management, and hierarchical compression 
 | Dependent | Relationship |
 |-----------|-------------|
 | lib-character | Queries `/resource/check` for L4 references in `CheckCharacterReferencesAsync` |
-| lib-actor | Publishes `resource.reference.registered/unregistered` in SpawnActorAsync/StopActorAsync; cleanup via `/actor/cleanup-by-character` |
-| lib-character-encounter | Publishes reference events in RecordEncounterAsync/DeleteEncounterAsync; cleanup via `/character-encounter/delete-by-character` |
-| lib-character-history | Publishes reference events for participations and backstory; cleanup via `/character-history/delete-all` |
-| lib-character-personality | Publishes reference events for personality/combat prefs; cleanup via `/character-personality/cleanup-by-character` |
-| *lib-scene (not yet integrated)* | *Planned: would publish reference events for scene-to-character references; would register cleanup callback* |
+| lib-actor | Calls `IResourceClient.RegisterReferenceAsync`/`UnregisterReferenceAsync` in SpawnActorAsync/StopActorAsync; cleanup via `/actor/cleanup-by-character` |
+| lib-character-encounter | Calls `IResourceClient` API in RecordEncounterAsync/DeleteEncounterAsync; cleanup via `/character-encounter/delete-by-character` |
+| lib-character-history | Calls `IResourceClient` API for participations and backstory; cleanup via `/character-history/delete-all` |
+| lib-character-personality | Calls `IResourceClient` API for personality/combat prefs; cleanup via `/character-personality/cleanup-by-character` |
+| *lib-scene (not yet integrated)* | *Planned: would call `IResourceClient` API for scene-to-character references; would register cleanup callback* |
 
 ---
 
@@ -96,10 +96,7 @@ Resource reference tracking, lifecycle management, and hierarchical compression 
 
 ### Consumed Events
 
-| Topic | Event Type | Handler |
-|-------|-----------|---------|
-| `resource.reference.registered` | `ResourceReferenceRegisteredEvent` | `HandleReferenceRegisteredAsync` - delegates to `RegisterReferenceAsync` |
-| `resource.reference.unregistered` | `ResourceReferenceUnregisteredEvent` | `HandleReferenceUnregisteredAsync` - delegates to `UnregisterReferenceAsync` |
+*None* - Reference registration/unregistration is handled via direct API calls (`RegisterReferenceAsync`/`UnregisterReferenceAsync`), not events.
 
 ---
 
@@ -144,7 +141,6 @@ All configuration properties are verified as used in `ResourceService.cs`.
 | `IDistributedLockProvider` | Acquiring cleanup locks |
 | `IMessageBus` | Publishing events |
 | `IServiceNavigator` | Executing cleanup callbacks |
-| `IEventConsumer` | Registering event subscription handlers |
 | `IEnumerable<ISeededResourceProvider>` | Discovered seeded resource providers from DI |
 
 **Shared Provider Interfaces** (defined in `bannou-service/Providers/`):
@@ -483,7 +479,7 @@ None currently.
 
 5. **Reference lifecycle hooks**: Pre-register/post-unregister hooks for validation or side effects.
 
-6. **Batch reference unregistration**: When higher-layer services bulk-delete entities (e.g., character-history deleting all participations), each entity publishes an individual `resource.reference.unregistered` event. A batch unregister event or endpoint would reduce O(N) messages to a single operation.
+6. **Batch reference unregistration**: When higher-layer services bulk-delete entities (e.g., character-history deleting all participations), each entity makes an individual `UnregisterReferenceAsync` API call. A batch unregister endpoint would reduce O(N) API calls to a single operation.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/351 -->
 
 ---
@@ -526,23 +522,22 @@ None currently.
    - `RESTRICT`: Block resource deletion while references of this type exist
    - `DETACH`: Nullify/detach references when resource is deleted (consumer implements)
 
-2. **On entity creation with reference**: Publish event
+2. **On entity creation with reference**: Call Resource API directly
    ```csharp
-   await _messageBus.TryPublishAsync("resource.reference.registered",
-       new ResourceReferenceRegisteredEvent
+   await _resourceClient.RegisterReferenceAsync(
+       new RegisterReferenceRequest
        {
            ResourceType = "character",
            ResourceId = characterId,
            SourceType = "actor",
-           SourceId = actorId,
-           Timestamp = DateTimeOffset.UtcNow
+           SourceId = actorId
        }, ct);
    ```
 
-3. **On entity deletion**: Publish event
+3. **On entity deletion**: Call Resource API directly
    ```csharp
-   await _messageBus.TryPublishAsync("resource.reference.unregistered",
-       new ResourceReferenceUnregisteredEvent { ... }, ct);
+   await _resourceClient.UnregisterReferenceAsync(
+       new UnregisterReferenceRequest { ... }, ct);
    ```
 
 4. **Implement cleanup endpoint**: Handle cascading deletion when called back

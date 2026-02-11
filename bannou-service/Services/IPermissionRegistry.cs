@@ -6,16 +6,9 @@ namespace BeyondImmersion.BannouService.Services;
 /// Implemented by the Permission service (L1 AppFoundation).
 /// </summary>
 /// <remarks>
-/// <para>
-/// This replaces the event-based <c>permission.service-registered</c> pattern.
-/// Instead of publishing events that the Permission service subscribes to,
-/// services call <see cref="RegisterServiceAsync"/> directly via DI.
-/// </para>
-/// <para>
 /// The registry is resolved from DI by PluginLoader during startup and passed
 /// to each service's <see cref="IBannouService.RegisterServicePermissionsAsync(string, IPermissionRegistry?)"/>
 /// method. Generated code in <c>*PermissionRegistration.cs</c> handles the call.
-/// </para>
 /// </remarks>
 public interface IPermissionRegistry
 {

@@ -69,8 +69,6 @@ Hybrid lobby/matchmade game session management (L2 GameFoundation) with subscrip
 | `game-session.action.performed` | `GameSessionActionPerformedEvent` | Game action executed in session |
 | `game-session.session-cancelled` | `SessionCancelledServerEvent` | Matchmade session cancelled due to expired reservations |
 
-> **Note**: The `permission.session-state-changed` event is declared in the schema but is published by the **Permission service** (not game-session) when game-session calls `_permissionClient.UpdateSessionStateAsync` or `ClearSessionStateAsync`.
-
 ### Consumed Events
 
 | Topic | Event Type | Handler | Action |

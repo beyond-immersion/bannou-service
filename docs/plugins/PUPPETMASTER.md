@@ -67,6 +67,7 @@ The Puppetmaster service is a `Singleton` and maintains all state in memory via 
 | Topic | Handler | Action |
 |-------|---------|--------|
 | `realm.created` | `HandleRealmCreatedAsync` | Auto-starts regional watchers for newly created active realms |
+| `behavior.updated` | `HandleBehaviorUpdatedAsync` | Invalidates cached behavior document by AssetId, then paginates through all running actors via `IActorClient` to inject behavior_updated perceptions for hot-reload |
 
 ---
 
@@ -435,3 +436,4 @@ This section tracks active development work. Managed by `/audit-plugin` workflow
 
 - **2026-02-06**: Issue #304 - Added `x-resource-mapping` schema extension for resource event discovery. Resource mappings are now auto-generated from schema annotations instead of hardcoded in `ResourceEventMapping.cs`. Added `resource_mapping` config to `x-lifecycle` for lifecycle events and `x-resource-mapping` extension for non-lifecycle events.
 - **2026-02-06**: Issue #298 - Added `spawn_watcher`, `stop_watcher`, and `list_watchers` ABML actions for Puppetmaster self-orchestration. Replaced forbidden generic `api_call` with purpose-built handlers.
+- **2026-02-11**: Issue #380 - Added `behavior.updated` event subscription (moved from lib-actor). Puppetmaster now owns behavior cache invalidation and actor hot-reload notification, eliminating Actor's L4 hierarchy violation.

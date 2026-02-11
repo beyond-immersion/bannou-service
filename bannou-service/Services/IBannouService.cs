@@ -348,23 +348,6 @@ public interface IBannouService
         => GetType().GetServiceName();
 
     /// <summary>
-    /// Registers service permissions with the Permission service on startup.
-    /// This method is automatically called by PluginLoader and should be generated
-    /// based on x-permissions sections in the service's OpenAPI schema.
-    /// Override this method if the service has custom permission registration logic.
-    /// </summary>
-    /// <param name="appId">The effective app ID for this service instance, provided by the caller</param>
-    /// <returns>Task representing the registration operation</returns>
-    virtual async Task RegisterServicePermissionsAsync(string appId)
-    {
-        await Task.CompletedTask;
-        // Default implementation does nothing - method will be overridden
-        // by generated code when x-permissions sections are found in schema
-        var serviceName = GetName() ?? GetType().Name;
-        Program.Logger?.Log(LogLevel.Debug, null, "Service {ServiceName} has no permission registration (no x-permissions in schema)", serviceName);
-    }
-
-    /// <summary>
     /// Registers service permissions via DI-based <see cref="IPermissionRegistry"/>.
     /// Called by PluginLoader with the resolved registry during startup.
     /// Generated partial class overlays implement this method using permission data

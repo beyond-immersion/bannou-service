@@ -186,7 +186,7 @@ public class AuthServiceTests
         // Assert
         var loginEndpoint = endpoints.FirstOrDefault(e =>
             e.Path == "/auth/login" &&
-            e.Method == BeyondImmersion.BannouService.Events.ServiceEndpointMethod.POST);
+            e.Method == ServiceEndpointMethod.POST);
 
         Assert.NotNull(loginEndpoint);
         Assert.NotNull(loginEndpoint.Permissions);
@@ -224,21 +224,12 @@ public class AuthServiceTests
     }
 
     [Fact]
-    public void AuthPermissionRegistration_CreateRegistrationEvent_ShouldGenerateValidEvent()
+    public void AuthPermissionRegistration_BuildPermissionMatrix_ShouldBeValid()
     {
-        // Arrange
-        var instanceId = Guid.NewGuid();
-
-        // Act
-        var registrationEvent = AuthPermissionRegistration.CreateRegistrationEvent(instanceId, "test-app");
-
-        // Assert
-        Assert.NotNull(registrationEvent);
-        Assert.Equal("auth", registrationEvent.ServiceName);
-        Assert.Equal(instanceId, registrationEvent.ServiceId);
-        Assert.NotNull(registrationEvent.Endpoints);
-        Assert.Equal(19, registrationEvent.Endpoints.Count); // 19 endpoints (14 original + 5 MFA)
-        Assert.NotEmpty(registrationEvent.Version);
+        PermissionMatrixValidator.ValidatePermissionMatrix(
+            AuthPermissionRegistration.ServiceId,
+            AuthPermissionRegistration.ServiceVersion,
+            AuthPermissionRegistration.BuildPermissionMatrix());
     }
 
     [Fact]

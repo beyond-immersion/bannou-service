@@ -134,25 +134,20 @@ States are for contextual navigation, **not authentication status**. Authenticat
 
 ## Generation Output
 
-When services start, they call `RegisterServicePermissionsAsync()` which publishes a `ServiceRegistrationEvent` containing:
+When services start, PluginLoader calls `RegisterServicePermissionsAsync()` on each service, which pushes the permission matrix to `IPermissionRegistry`:
 
-```json
+```csharp
+// Generated in {Service}PermissionRegistration.cs
+async Task IBannouService.RegisterServicePermissionsAsync(
+    string appId, IPermissionRegistry? registry)
 {
-  "eventId": "uuid",
-  "timestamp": "2025-01-19T12:00:00Z",
-  "serviceId": "auth",
-  "version": "3.0.0",
-  "appId": "bannou",
-  "endpoints": [
+    if (registry != null)
     {
-      "path": "/auth/login",
-      "method": "POST",
-      "permissions": [
-        { "role": "anonymous", "requiredStates": {} },
-        { "role": "user", "requiredStates": {} }
-      ]
+        await registry.RegisterServiceAsync(
+            ServiceId,       // e.g., "auth"
+            ServiceVersion,  // e.g., "3.0.0"
+            BuildPermissionMatrix());  // state -> role -> [endpoints]
     }
-  ]
 }
 ```
 
@@ -160,8 +155,8 @@ When services start, they call `RegisterServicePermissionsAsync()` which publish
 
 1. **Build Time**: `generate-permissions.sh` extracts x-permissions from schema
 2. **Generated Code**: Creates `{Service}PermissionRegistration.cs` in `Generated/` with permission matrix
-3. **Service Startup**: `RegisterServicePermissionsAsync()` publishes `ServiceRegistrationEvent`
-4. **Permission Service**: Receives event, updates Redis permission matrices
+3. **Service Startup**: PluginLoader calls `RegisterServicePermissionsAsync()` with the resolved `IPermissionRegistry`
+4. **Permission Service**: Receives registration via DI, updates Redis permission matrices
 5. **Session Recompilation**: All active sessions get updated capabilities
 6. **Connect Service**: Receives capability updates, notifies WebSocket clients
 

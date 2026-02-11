@@ -75,9 +75,9 @@ Services declare their permission requirements in their OpenAPI schema using the
         roles: [user]
 ```
 
-On startup, each service publishes its permission matrix via a `ServiceRegistrationEvent`. The Permission service receives these registrations, builds the matrix in Redis, and hashes the registration data for idempotent change detection. If a service restarts and publishes the same matrix, Permission detects no change and skips recompilation.
+On startup, each service pushes its permission matrix directly to the Permission service via the `IPermissionRegistry` DI interface. PluginLoader resolves the registry and calls each service's generated `RegisterServicePermissionsAsync` method. The Permission service builds the matrix in Redis and hashes the registration data for idempotent change detection. If a service restarts and pushes the same matrix, Permission detects no change and skips recompilation.
 
-This means adding permissions to a new service requires zero changes to the Permission service itself. The service declares what it needs in its schema, the code generator produces the registration event, and Permission learns about it dynamically. The Permission service does not contain a list of services or endpoints -- it discovers them at runtime.
+This means adding permissions to a new service requires zero changes to the Permission service itself. The service declares what it needs in its schema, the code generator produces the registration code, and Permission learns about it at startup. The Permission service does not contain a list of services or endpoints -- it discovers them via DI.
 
 ---
 

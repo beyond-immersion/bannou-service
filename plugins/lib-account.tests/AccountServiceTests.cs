@@ -91,7 +91,7 @@ public class AccountServiceTests
         // Assert - POST-only pattern: /account/list replaces GET /account
         var listEndpoint = endpoints.FirstOrDefault(e =>
             e.Path == "/account/list" &&
-            e.Method == BeyondImmersion.BannouService.Events.ServiceEndpointMethod.POST);
+            e.Method == ServiceEndpointMethod.POST);
 
         Assert.NotNull(listEndpoint);
         Assert.NotNull(listEndpoint.Permissions);
@@ -113,20 +113,12 @@ public class AccountServiceTests
     }
 
     [Fact]
-    public void AccountPermissionRegistration_CreateRegistrationEvent_ShouldGenerateValidEvent()
+    public void AccountPermissionRegistration_BuildPermissionMatrix_ShouldBeValid()
     {
-        // Arrange
-        var instanceId = Guid.NewGuid();
-
-        // Act
-        var registrationEvent = AccountPermissionRegistration.CreateRegistrationEvent(instanceId, "test-app");
-
-        // Assert
-        Assert.NotNull(registrationEvent);
-        Assert.Equal("account", registrationEvent.ServiceName);
-        Assert.Equal(instanceId, registrationEvent.ServiceId);
-        Assert.NotNull(registrationEvent.Endpoints);
-        Assert.Equal(18, registrationEvent.Endpoints.Count);
+        PermissionMatrixValidator.ValidatePermissionMatrix(
+            AccountPermissionRegistration.ServiceId,
+            AccountPermissionRegistration.ServiceVersion,
+            AccountPermissionRegistration.BuildPermissionMatrix());
     }
 
     [Fact]

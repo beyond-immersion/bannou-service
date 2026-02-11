@@ -957,54 +957,6 @@ public partial class ClientRPCResponseEvent
 }
 
 /// <summary>
-/// Event to trigger permission recompilation for all sessions.
-/// <br/>Published when services register new APIs or permission rules change.
-/// <br/>
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class PermissionRecompileEvent
-{
-
-    /// <summary>
-    /// Unique identifier for this recompilation event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public string EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When the recompilation was triggered
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
-
-    /// <summary>
-    /// Reason for triggering permission recompilation
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("reason")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public PermissionRecompileEventReason Reason { get; set; } = default!;
-
-    /// <summary>
-    /// Service ID that triggered the recompilation (if applicable)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("serviceId")]
-    public string? ServiceId { get; set; } = default!;
-
-    /// <summary>
-    /// Additional context for the recompilation
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("metadata")]
-    public object? Metadata { get; set; } = default!;
-
-}
-
-/// <summary>
 /// How Connect manages companion chat rooms for WebSocket sessions
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
@@ -1113,26 +1065,6 @@ public enum InternalProxyRequestMethod
 
     [System.Runtime.Serialization.EnumMember(Value = @"PATCH")]
     PATCH = 4,
-
-}
-#pragma warning restore CS1591
-
-#pragma warning disable CS1591 // Enum members cannot have XML documentation
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public enum PermissionRecompileEventReason
-{
-
-    [System.Runtime.Serialization.EnumMember(Value = @"service_registered")]
-    ServiceRegistered = 0,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"permission_rules_changed")]
-    PermissionRulesChanged = 1,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"role_definitions_updated")]
-    RoleDefinitionsUpdated = 2,
-
-    [System.Runtime.Serialization.EnumMember(Value = @"manual_trigger")]
-    ManualTrigger = 3,
 
 }
 #pragma warning restore CS1591
