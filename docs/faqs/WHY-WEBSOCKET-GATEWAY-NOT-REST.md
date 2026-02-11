@@ -23,7 +23,6 @@ Consider what Bannou needs to push to connected clients without being asked:
 - **Permission updates**: When a player's role changes, joins a game session, enters a voice call, or gains new authorizations, the Permission service recompiles their capability manifest and pushes it immediately. The client's available API surface changes in real time.
 - **Session shortcuts**: When a player subscribes to a game, GameSession publishes a "join game" shortcut to their connection. The client can present a one-click join button without ever querying for it.
 - **Match found notifications**: When matchmaking finds a match, the accept/decline prompt must arrive at the client instantly. Polling at any interval means delayed match acceptance and degraded player experience.
-- **NPC state changes**: When 100,000+ NPCs are making decisions every 100-500ms, the clients observing those NPCs need state updates pushed to them. Polling for NPC state is computationally impossible at this scale.
 - **Session invalidation**: When Auth revokes a session (logout, security concern, admin action), the client must be disconnected immediately, not on their next poll cycle.
 - **Error forwarding**: Admin clients receive service error events in real time for operational monitoring.
 
@@ -65,7 +64,7 @@ This security model only works with persistent connections where the server know
 
 On connection, the client receives a dynamic capability manifest -- a list of all API endpoints available to them, each with its client-salted GUID, method, and authentication requirement. This manifest updates in real time as:
 
-- The user authenticates (anonymous -> authenticated: more endpoints become available)
+- The user authenticates (anonymous -> user: more endpoints become available)
 - Permissions change (admin role granted: admin endpoints appear)
 - Session state changes (joined game: in-game endpoints activate)
 - Services deploy updates (new version: new endpoints appear in manifest)

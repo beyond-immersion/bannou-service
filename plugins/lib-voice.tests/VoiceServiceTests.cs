@@ -9,6 +9,7 @@ using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.TestUtilities;
 using BeyondImmersion.BannouService.Voice;
 using BeyondImmersion.BannouService.Voice.Services;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -24,7 +25,7 @@ public class VoiceServiceTests
     private readonly Mock<IStateStore<VoiceRoomData>> _mockRoomStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<VoiceService>> _mockLogger;
-    private readonly Mock<VoiceServiceConfiguration> _mockConfiguration;
+    private readonly VoiceServiceConfiguration _configuration;
     private readonly Mock<ISipEndpointRegistry> _mockEndpointRegistry;
     private readonly Mock<IP2PCoordinator> _mockP2PCoordinator;
     private readonly Mock<IScaledTierCoordinator> _mockScaledTierCoordinator;
@@ -39,7 +40,7 @@ public class VoiceServiceTests
         _mockRoomStore = new Mock<IStateStore<VoiceRoomData>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<VoiceService>>();
-        _mockConfiguration = new Mock<VoiceServiceConfiguration>();
+        _configuration = new VoiceServiceConfiguration();
         _mockEndpointRegistry = new Mock<ISipEndpointRegistry>();
         _mockP2PCoordinator = new Mock<IP2PCoordinator>();
         _mockScaledTierCoordinator = new Mock<IScaledTierCoordinator>();
@@ -64,7 +65,7 @@ public class VoiceServiceTests
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             _mockLogger.Object,
-            _mockConfiguration.Object,
+            _configuration,
             _mockEndpointRegistry.Object,
             _mockP2PCoordinator.Object,
             _mockScaledTierCoordinator.Object,
@@ -508,7 +509,7 @@ public class VoiceServiceTests
             _mockStateStoreFactory.Object,
             _mockMessageBus.Object,
             _mockLogger.Object,
-            _mockConfiguration.Object,
+            _configuration,
             _mockEndpointRegistry.Object,
             _mockP2PCoordinator.Object,
             _mockScaledTierCoordinator.Object,
@@ -1063,7 +1064,7 @@ public class VoiceServiceTests
             .ReturnsAsync((VoiceRoomData?)null);
 
         // Enable ad-hoc rooms
-        _mockConfiguration.Setup(c => c.AdHocRoomsEnabled).Returns(true);
+        _configuration.AdHocRoomsEnabled = true;
 
         // Registration succeeds
         _mockEndpointRegistry.Setup(r => r.GetParticipantCountAsync(roomId, It.IsAny<CancellationToken>()))
@@ -1927,6 +1928,417 @@ public class VoiceServiceTests
     }
 
     #endregion
+
+    #region Tier Upgrade Tests
+
+    [Fact]
+    public async Task JoinVoiceRoom_P2PFull_ScaledEnabled_UpgradesAndPublishesTierUpgradedEvent()
+    {
+        // Arrange - enable scaled tier and tier upgrade
+        _configuration.ScaledTierEnabled = true;
+        _configuration.TierUpgradeEnabled = true;
+        var service = CreateService();
+        var roomId = Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
+        var request = new JoinVoiceRoomRequest
+        {
+            RoomId = roomId,
+            SessionId = sessionId,
+            DisplayName = "NewPlayer",
+            SipEndpoint = new SipEndpoint { SdpOffer = "offer", IceCandidates = new List<string>() }
+        };
+
+        var roomData = new VoiceRoomData
+        {
+            RoomId = roomId,
+            SessionId = Guid.NewGuid(),
+            Tier = VoiceTier.P2p,
+            MaxParticipants = 6,
+            BroadcastState = BroadcastConsentState.Inactive
+        };
+
+        var upgradedRoomData = new VoiceRoomData
+        {
+            RoomId = roomId,
+            SessionId = roomData.SessionId,
+            Tier = VoiceTier.Scaled,
+            MaxParticipants = 100,
+            RtpServerUri = "rtp://media.test:5060",
+            BroadcastState = BroadcastConsentState.Inactive
+        };
+
+        // First GetAsync returns original room, second returns upgraded room (after upgrade)
+        var callCount = 0;
+        _mockRoomStore.Setup(s => s.GetAsync(
+            $"voice:room:{roomId}",
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() =>
+            {
+                callCount++;
+                return callCount <= 1 ? roomData : upgradedRoomData;
+            });
+
+        // P2P is full (canAccept = false)
+        _mockP2PCoordinator.Setup(p => p.CanAcceptNewParticipantAsync(roomId, It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
+        // Scaled tier can accept
+        _mockScaledTierCoordinator.Setup(s => s.CanAcceptNewParticipantAsync(roomId, It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // RTP allocation succeeds
+        _mockScaledTierCoordinator.Setup(s => s.AllocateRtpServerAsync(roomId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync("rtp://media.test:5060");
+
+        // SIP credential generation for tier upgrade notification
+        _mockScaledTierCoordinator.Setup(s => s.GenerateSipCredentials(It.IsAny<Guid>(), roomId))
+            .Returns(new BeyondImmersion.BannouService.Voice.Services.SipCredentials
+            {
+                Username = "test-user",
+                Password = "test-pass",
+                Registrar = "sip.test.local"
+            });
+
+        // Current participant count
+        _mockEndpointRegistry.Setup(r => r.GetParticipantCountAsync(roomId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(6);
+
+        // Registration succeeds
+        _mockEndpointRegistry.Setup(r => r.RegisterAsync(
+            roomId, sessionId, It.IsAny<SipEndpoint>(), "NewPlayer", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        _mockEndpointRegistry.Setup(r => r.GetRoomParticipantsAsync(roomId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ParticipantRegistration>
+            {
+                new() { SessionId = Guid.NewGuid() }
+            });
+
+        _mockP2PCoordinator.Setup(p => p.ShouldUpgradeToScaledAsync(roomId, It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
+        // Act
+        var (status, result) = await service.JoinVoiceRoomAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+
+        // Verify tier upgraded event was published
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "voice.room.tier-upgraded",
+            It.Is<VoiceRoomTierUpgradedEvent>(e =>
+                e.RoomId == roomId &&
+                e.PreviousTier == VoiceTier.P2p &&
+                e.NewTier == VoiceTier.Scaled &&
+                e.RtpAudioEndpoint == "rtp://media.test:5060"),
+            It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+}
+
+/// <summary>
+/// Unit tests for ParticipantEvictionWorker background service.
+/// Tests stale participant eviction, empty room auto-cleanup, and consent timeout auto-decline.
+/// </summary>
+public class ParticipantEvictionWorkerTests
+{
+    private readonly Mock<ISipEndpointRegistry> _mockEndpointRegistry;
+    private readonly Mock<ILogger<ParticipantEvictionWorker>> _mockLogger;
+    private readonly VoiceServiceConfiguration _configuration;
+    private readonly Mock<IMessageBus> _mockMessageBus;
+    private readonly Mock<IClientEventPublisher> _mockClientEventPublisher;
+    private readonly Mock<IPermissionClient> _mockPermissionClient;
+    private readonly Mock<IStateStoreFactory> _mockStateStoreFactory;
+    private readonly Mock<IStateStore<VoiceRoomData>> _mockRoomStore;
+    private readonly Mock<IStateStore<string>> _mockStringStore;
+
+    public ParticipantEvictionWorkerTests()
+    {
+        _mockEndpointRegistry = new Mock<ISipEndpointRegistry>();
+        _mockLogger = new Mock<ILogger<ParticipantEvictionWorker>>();
+        _configuration = new VoiceServiceConfiguration
+        {
+            ParticipantHeartbeatTimeoutSeconds = 60,
+            ParticipantEvictionCheckIntervalSeconds = 15,
+            EmptyRoomGracePeriodSeconds = 300,
+            BroadcastConsentTimeoutSeconds = 30
+        };
+        _mockMessageBus = new Mock<IMessageBus>();
+        _mockClientEventPublisher = new Mock<IClientEventPublisher>();
+        _mockPermissionClient = new Mock<IPermissionClient>();
+        _mockStateStoreFactory = new Mock<IStateStoreFactory>();
+        _mockRoomStore = new Mock<IStateStore<VoiceRoomData>>();
+        _mockStringStore = new Mock<IStateStore<string>>();
+
+        _mockStateStoreFactory.Setup(f => f.GetStore<VoiceRoomData>(StateStoreDefinitions.Voice))
+            .Returns(_mockRoomStore.Object);
+        _mockStateStoreFactory.Setup(f => f.GetStore<string>(StateStoreDefinitions.Voice))
+            .Returns(_mockStringStore.Object);
+    }
+
+    /// <summary>
+    /// Creates a worker wired to the mock service provider.
+    /// </summary>
+    private ParticipantEvictionWorker CreateWorker()
+    {
+        var mockScope = new Mock<IServiceScope>();
+        mockScope.Setup(s => s.ServiceProvider).Returns(CreateMockScopedProvider());
+
+        var mockScopeFactory = new Mock<IServiceScopeFactory>();
+        mockScopeFactory.Setup(f => f.CreateScope()).Returns(mockScope.Object);
+
+        var mockServiceProvider = new Mock<IServiceProvider>();
+        mockServiceProvider
+            .Setup(p => p.GetService(typeof(IServiceScopeFactory)))
+            .Returns(mockScopeFactory.Object);
+
+        return new ParticipantEvictionWorker(
+            mockServiceProvider.Object,
+            _mockEndpointRegistry.Object,
+            _mockLogger.Object,
+            _configuration);
+    }
+
+    /// <summary>
+    /// Builds the scoped service provider that CreateScope().ServiceProvider returns.
+    /// </summary>
+    private IServiceProvider CreateMockScopedProvider()
+    {
+        var mock = new Mock<IServiceProvider>();
+        mock.Setup(p => p.GetService(typeof(IMessageBus))).Returns(_mockMessageBus.Object);
+        mock.Setup(p => p.GetService(typeof(IClientEventPublisher))).Returns(_mockClientEventPublisher.Object);
+        mock.Setup(p => p.GetService(typeof(IPermissionClient))).Returns(_mockPermissionClient.Object);
+        mock.Setup(p => p.GetService(typeof(IStateStoreFactory))).Returns(_mockStateStoreFactory.Object);
+        return mock.Object;
+    }
+
+    [Fact]
+    public async Task EvictionWorker_StaleParticipant_EvictsAndPublishesEvent()
+    {
+        // Arrange
+        using var worker = CreateWorker();
+        var roomId = Guid.NewGuid();
+        var staleSessionId = Guid.NewGuid();
+
+        _mockEndpointRegistry.Setup(r => r.GetAllTrackedRoomIds())
+            .Returns(new List<Guid> { roomId });
+
+        _mockRoomStore.Setup(s => s.GetAsync($"voice:room:{roomId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new VoiceRoomData
+            {
+                RoomId = roomId,
+                SessionId = Guid.NewGuid(),
+                BroadcastState = BroadcastConsentState.Inactive
+            });
+
+        // Participant with stale heartbeat (2 minutes ago, timeout is 60s)
+        _mockEndpointRegistry.Setup(r => r.GetRoomParticipantsAsync(roomId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ParticipantRegistration>
+            {
+                new()
+                {
+                    SessionId = staleSessionId,
+                    DisplayName = "StalePlayer",
+                    LastHeartbeat = DateTimeOffset.UtcNow.AddMinutes(-2)
+                }
+            });
+
+        _mockEndpointRegistry.Setup(r => r.GetParticipantCountAsync(roomId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(0);
+
+        // Act - call internal ProcessEvictionCycleAsync directly
+        await worker.ProcessEvictionCycleAsync(CancellationToken.None);
+
+        // Assert - participant was unregistered
+        _mockEndpointRegistry.Verify(r => r.UnregisterAsync(roomId, staleSessionId, It.IsAny<CancellationToken>()), Times.Once);
+
+        // Assert - participant left event was published
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "voice.participant.left",
+            It.Is<VoiceParticipantLeftEvent>(e =>
+                e.RoomId == roomId &&
+                e.ParticipantSessionId == staleSessionId),
+            It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Assert - permission state was cleared
+        _mockPermissionClient.Verify(p => p.ClearSessionStateAsync(
+            It.Is<ClearSessionStateRequest>(r =>
+                r.SessionId == staleSessionId &&
+                r.ServiceId == "voice"),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task EvictionWorker_EmptyAutoCleanupRoom_AfterGracePeriod_DeletesRoom()
+    {
+        // Arrange
+        using var worker = CreateWorker();
+        var roomId = Guid.NewGuid();
+        var creatorSessionId = Guid.NewGuid();
+
+        _mockEndpointRegistry.Setup(r => r.GetAllTrackedRoomIds())
+            .Returns(new List<Guid> { roomId });
+
+        // Room has AutoCleanup and LastParticipantLeftAt was 10 minutes ago (grace = 300s = 5 min)
+        _mockRoomStore.Setup(s => s.GetAsync($"voice:room:{roomId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new VoiceRoomData
+            {
+                RoomId = roomId,
+                SessionId = creatorSessionId,
+                AutoCleanup = true,
+                LastParticipantLeftAt = DateTimeOffset.UtcNow.AddMinutes(-10),
+                BroadcastState = BroadcastConsentState.Inactive
+            });
+
+        // No participants currently in room
+        _mockEndpointRegistry.Setup(r => r.GetRoomParticipantsAsync(roomId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ParticipantRegistration>());
+
+        _mockEndpointRegistry.Setup(r => r.GetParticipantCountAsync(roomId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(0);
+
+        // Act
+        await worker.ProcessEvictionCycleAsync(CancellationToken.None);
+
+        // Assert - room was deleted
+        _mockRoomStore.Verify(s => s.DeleteAsync($"voice:room:{roomId}", It.IsAny<CancellationToken>()), Times.Once);
+
+        // Assert - session mapping was deleted
+        _mockStringStore.Verify(s => s.DeleteAsync($"voice:session-room:{creatorSessionId}", It.IsAny<CancellationToken>()), Times.Once);
+
+        // Assert - room deleted event was published with Empty reason
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "voice.room.deleted",
+            It.Is<VoiceRoomDeletedEvent>(e =>
+                e.RoomId == roomId &&
+                e.Reason == VoiceRoomDeletedReason.Empty),
+            It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task EvictionWorker_EmptyAutoCleanupRoom_WithinGracePeriod_KeepsRoom()
+    {
+        // Arrange
+        using var worker = CreateWorker();
+        var roomId = Guid.NewGuid();
+
+        _mockEndpointRegistry.Setup(r => r.GetAllTrackedRoomIds())
+            .Returns(new List<Guid> { roomId });
+
+        // Room has AutoCleanup and LastParticipantLeftAt was only 1 minute ago (grace = 300s = 5 min)
+        _mockRoomStore.Setup(s => s.GetAsync($"voice:room:{roomId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new VoiceRoomData
+            {
+                RoomId = roomId,
+                SessionId = Guid.NewGuid(),
+                AutoCleanup = true,
+                LastParticipantLeftAt = DateTimeOffset.UtcNow.AddMinutes(-1),
+                BroadcastState = BroadcastConsentState.Inactive
+            });
+
+        // No participants and no stale ones
+        _mockEndpointRegistry.Setup(r => r.GetRoomParticipantsAsync(roomId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ParticipantRegistration>());
+
+        _mockEndpointRegistry.Setup(r => r.GetParticipantCountAsync(roomId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(0);
+
+        // Act
+        await worker.ProcessEvictionCycleAsync(CancellationToken.None);
+
+        // Assert - room was NOT deleted (within grace period)
+        _mockRoomStore.Verify(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+
+        // Assert - no room deleted event was published
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "voice.room.deleted",
+            It.IsAny<VoiceRoomDeletedEvent>(),
+            It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task EvictionWorker_PendingConsentTimeout_AutoDeclines()
+    {
+        // Arrange
+        using var worker = CreateWorker();
+        var roomId = Guid.NewGuid();
+        var session1 = Guid.NewGuid();
+        var session2 = Guid.NewGuid();
+
+        _mockEndpointRegistry.Setup(r => r.GetAllTrackedRoomIds())
+            .Returns(new List<Guid> { roomId });
+
+        // Room has pending consent that was requested 2 minutes ago (timeout = 30s)
+        _mockRoomStore.Setup(s => s.GetAsync($"voice:room:{roomId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new VoiceRoomData
+            {
+                RoomId = roomId,
+                SessionId = Guid.NewGuid(),
+                BroadcastState = BroadcastConsentState.Pending,
+                BroadcastRequestedAt = DateTimeOffset.UtcNow.AddMinutes(-2),
+                BroadcastRequestedBy = session1,
+                BroadcastConsentedSessions = new HashSet<Guid> { session1 }
+            });
+
+        // No stale participants (fresh heartbeats)
+        _mockEndpointRegistry.Setup(r => r.GetRoomParticipantsAsync(roomId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ParticipantRegistration>
+            {
+                new() { SessionId = session1, DisplayName = "Player1", LastHeartbeat = DateTimeOffset.UtcNow },
+                new() { SessionId = session2, DisplayName = "Player2", LastHeartbeat = DateTimeOffset.UtcNow }
+            });
+
+        _mockEndpointRegistry.Setup(r => r.GetParticipantCountAsync(roomId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(2);
+
+        _mockClientEventPublisher.Setup(p => p.PublishToSessionsAsync(
+            It.IsAny<IEnumerable<string>>(), It.IsAny<VoiceBroadcastConsentUpdateEvent>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(2);
+
+        // Act
+        await worker.ProcessEvictionCycleAsync(CancellationToken.None);
+
+        // Assert - room was saved with Inactive broadcast state
+        _mockRoomStore.Verify(s => s.SaveAsync(
+            $"voice:room:{roomId}",
+            It.Is<VoiceRoomData>(d =>
+                d.BroadcastState == BroadcastConsentState.Inactive &&
+                d.BroadcastRequestedBy == null),
+            It.IsAny<StateOptions?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Assert - declined event was published
+        _mockMessageBus.Verify(m => m.TryPublishAsync(
+            "voice.room.broadcast.declined",
+            It.Is<VoiceRoomBroadcastDeclinedEvent>(e => e.RoomId == roomId),
+            It.IsAny<BeyondImmersion.BannouService.Messaging.PublishOptions?>(),
+            It.IsAny<Guid?>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        // Assert - participants were restored to in_room state
+        _mockPermissionClient.Verify(p => p.UpdateSessionStateAsync(
+            It.Is<SessionStateUpdate>(u =>
+                u.ServiceId == "voice" &&
+                u.NewState == "in_room"),
+            It.IsAny<CancellationToken>()), Times.Exactly(2));
+
+        // Assert - client event was published
+        _mockClientEventPublisher.Verify(p => p.PublishToSessionsAsync(
+            It.Is<IEnumerable<string>>(list => list.Count() == 2),
+            It.Is<VoiceBroadcastConsentUpdateEvent>(e =>
+                e.State == BroadcastConsentState.Inactive &&
+                e.RoomId == roomId),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
 }
 
 public class VoiceConfigurationTests

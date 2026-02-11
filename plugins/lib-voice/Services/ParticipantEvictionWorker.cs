@@ -129,7 +129,7 @@ public class ParticipantEvictionWorker : BackgroundService
     /// <summary>
     /// Processes one eviction cycle: stale participants, empty rooms, consent timeouts.
     /// </summary>
-    private async Task ProcessEvictionCycleAsync(CancellationToken cancellationToken)
+    internal async Task ProcessEvictionCycleAsync(CancellationToken cancellationToken)
     {
         var trackedRoomIds = _endpointRegistry.GetAllTrackedRoomIds();
 

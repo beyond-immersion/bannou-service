@@ -1,22 +1,39 @@
 # Isn't Bannou Just Way Too Big / Exceptionally Over-Engineered?
 
-> **Short Answer**: No. The scope is a direct consequence of what it's trying to do. The engineering discipline exists because systems this large collapse without it.
+> **Short Answer**: No. The scope is a direct consequence of what it's trying to do. The engineering discipline exists because this is a solo developer project -- and a solo developer managing 48 services without structural enforcement would be insane.
 
 ---
 
-## The "15 Plugin Rule"
+## The Cognitive Load Wall
 
-There's an informal rule in platform engineering: **a system cannot meaningfully exceed ~15 internal services before devolving into an unmaintainable mess.** The reasons are well-understood:
+There's no single named rule that says "thou shalt not exceed N services," but the research converges on a hard limit from multiple directions:
 
-- **Dependency spaghetti**: Every new service can potentially depend on every other service. At 15 services, that's 210 possible pairwise dependencies. At 48, it's 1,128. Without structural enforcement, some fraction of those dependencies WILL form, creating a tangled graph that no single person can reason about.
-- **Convention drift**: Each service develops slightly different patterns. Error handling, logging, state management, event publishing -- small inconsistencies compound. By service 20, half the codebase contradicts the other half.
-- **Knowledge silos**: No developer can hold the whole system in their head. Services become tribal knowledge. The person who wrote the matchmaking service left, and now nobody knows why it publishes events to that specific topic.
-- **Test combinatorics**: Integration testing becomes exponentially harder. Testing service A requires services B, C, and D to be running. Testing D requires E, F, and G. Full-system testing becomes a multi-hour ordeal that nobody runs regularly.
-- **Schema drift**: Request/response models diverge. The "AccountId" field is a string in one service, a GUID in another, and an int in a third. Shared concepts lose shared definitions.
+- **Miller's Law (7±2)**: Humans can hold roughly 7 items in working memory. Modern cognitive science revises this to **4±1 for complex items** -- and an interconnected service with its own state model, event contracts, and dependency graph is decidedly a complex item.
+- **Dunbar's 15**: Robin Dunbar's research on social group sizes identifies ~15 as the limit for deep, trustful relationships where you genuinely understand the other party. Applied to services: ~15 is roughly where a developer stops being able to deeply understand each service's behavior, quirks, and integration points.
+- **Team Topologies / Cognitive Load**: The *Team Topologies* literature identifies team cognitive load as the primary constraint on service ownership. Amazon's "Two Pizza Team" rule (5-8 people per team, one service per team) creates implicit architectural boundaries. When service count exceeds what teams can collectively reason about, velocity drops.
+- **Conway's Law**: Service architecture mirrors organizational structure. For a team of 12-24 people with informal communication, Martin Fowler notes the natural result is a monolith. Beyond that, you need explicit structure -- or you get chaos.
 
-These are real problems. They kill real projects. The 15-plugin rule exists because most architectures have no structural answer to any of them.
+The convergence point across all of these is somewhere around **10-15 deeply interconnected services** before a system becomes unmanageable through human discipline alone. Not because of a specific rule, but because that's where cognitive load, dependency graphs, and convention drift simultaneously exceed what people can hold in their heads.
 
-**Bannou has 48 services and 691 endpoints.** It exceeds the rule by 3x. So either it's a disaster waiting to happen, or it was designed specifically to overcome every one of these failure modes.
+**Bannou has 48 services and 691 endpoints.** It exceeds this threshold by 3x.
+
+**Bannou is built by a single developer.**
+
+That combination sounds impossible. It should be. A solo developer cannot hold 48 services in their head. Cannot maintain consistent conventions across 691 endpoints through willpower. Cannot manually track 1,128 possible pairwise dependency relationships. Cannot remember why every service publishes to every event topic.
+
+So the question isn't "isn't this over-engineered?" The question is "how does one person manage this without going insane?" The answer is: **by making the system manage itself.**
+
+Every piece of architectural discipline in Bannou -- the service hierarchy, the schema-first code generation, the deep dive documents, the four-tier testing, the generated clients -- exists because a solo developer has no alternative. There is no team to distribute tribal knowledge across. There is no second pair of eyes to catch convention drift. There is no ops team to manage deployment complexity. Either the architecture enforces its own coherence, or it collapses. There is no middle ground.
+
+---
+
+## Why This Is Not Bragging
+
+The solo developer context is not a flex. It's an explanation. Specifically, it explains two things that would otherwise seem irrational:
+
+**Why the discipline is so strict.** A 200-person company can afford some convention drift because different teams own different services and tribal knowledge distributes across people. A solo developer has exactly one brain. If a convention isn't generated or validated automatically, it will drift. If a dependency isn't enforced by a compiler or validator, it will form. If documentation isn't structured and maintained alongside code, it will rot. The strictness isn't perfectionism -- it's survival.
+
+**Why the tooling investment is so high.** 139+ YAML schemas, custom code generators, a `ServiceHierarchyValidator`, 48 deep dive documents, four tiers of testing, generated clients -- this looks like massive overhead. For a team, it might be. For one person, it's the only reason the system works. The upfront investment in automation pays back every single day because there is nobody else to catch mistakes.
 
 ---
 
@@ -59,9 +76,9 @@ These aren't over-engineering. They're the difference between "a game that has a
 
 ---
 
-## How Bannou Survives Being This Large
+## How One Person Manages 48 Services
 
-The 15-plugin rule is real, but its failure modes are specific and addressable. Bannou addresses every one of them through deliberate architectural choices.
+The cognitive load wall is real, but its failure modes are specific and addressable. Bannou addresses every one of them through structural enforcement -- mechanisms that catch mistakes automatically because there is no second developer to catch them manually.
 
 ### 1. Strict Service Hierarchy (Kills Dependency Spaghetti)
 
@@ -170,8 +187,8 @@ The implicit suggestion behind "isn't this over-engineered?" is that a simpler s
 
 ## The Real Question
 
-The real question isn't "is 48 services too many?" It's "can a system with 48 services remain coherent?" The answer is yes -- if every one of the failure modes that kills large systems is addressed by structural enforcement rather than developer discipline.
+The real question isn't "is 48 services too many?" It's "can one person keep 48 services coherent?" The answer is yes -- but only if the system enforces its own coherence instead of relying on the developer to remember everything.
 
-Bannou doesn't ask developers to "please follow the hierarchy." It enforces the hierarchy with validators, generated code, test isolation boundaries, and a plugin loader that sorts by layer. Convention isn't documented -- it's generated. Knowledge isn't tribal -- it's in deep dives and schemas. Dependencies aren't guidelines -- they're compile-time constraints.
+Bannou doesn't rely on the developer to "please follow the hierarchy." It enforces the hierarchy with validators, generated code, test isolation boundaries, and a plugin loader that sorts by layer. Convention isn't documented and hoped for -- it's generated. Knowledge isn't in one person's head -- it's in deep dives and schemas that are audited against the actual implementation. Dependencies aren't guidelines that might be forgotten -- they're compile-time constraints that fail the build.
 
-The 15-plugin rule is real for systems that rely on human discipline to maintain coherence. Bannou's thesis is that discipline can be structural, and when it is, the rule doesn't apply.
+The cognitive load wall is real for systems that rely on human discipline to maintain coherence. Bannou's thesis is that discipline can be structural, and when it is, the wall doesn't apply -- whether you have 200 developers or one.
