@@ -8,7 +8,7 @@ namespace BeyondImmersion.BannouService.Chat.Tests;
 /// Tests for ChatService room type operations:
 /// RegisterRoomType, GetRoomType, ListRoomTypes, UpdateRoomType, DeprecateRoomType.
 /// </summary>
-public class ChatServiceRoomTypeTests : ChatServiceTestBase
+internal class ChatServiceRoomTypeTests : ChatServiceTestBase
 {
     #region RegisterRoomType
 

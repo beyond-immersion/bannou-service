@@ -10,7 +10,7 @@ namespace BeyondImmersion.BannouService.Chat.Tests;
 /// Tests for ChatService participant operations:
 /// JoinRoom, LeaveRoom, ListParticipants, KickParticipant, BanParticipant, UnbanParticipant, MuteParticipant.
 /// </summary>
-public class ChatServiceParticipantTests : ChatServiceTestBase
+internal class ChatServiceParticipantTests : ChatServiceTestBase
 {
     #region JoinRoom
 

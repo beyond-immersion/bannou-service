@@ -19,7 +19,7 @@ namespace BeyondImmersion.BannouService.Chat.Tests;
 /// Base class for ChatService unit tests providing shared mock infrastructure,
 /// state store wiring, and test data builders.
 /// </summary>
-public abstract class ChatServiceTestBase : ServiceTestBase<ChatServiceConfiguration>
+internal abstract class ChatServiceTestBase : ServiceTestBase<ChatServiceConfiguration>
 {
     // Infrastructure mocks
     protected readonly Mock<IMessageBus> MockMessageBus;

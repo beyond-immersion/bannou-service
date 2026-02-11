@@ -17,7 +17,7 @@ namespace BeyondImmersion.BannouService.Voice;
 
 /// <summary>
 /// Implementation of the Voice service.
-/// Manages P2P and scaled tier voice room coordination for game sessions.
+/// Manages P2P and scaled tier voice room coordination.
 /// </summary>
 [BannouService("voice", typeof(IVoiceService), lifetime: ServiceLifetime.Scoped)]
 public partial class VoiceService : IVoiceService
@@ -47,7 +47,7 @@ public partial class VoiceService : IVoiceService
     /// <param name="scaledTierCoordinator">Scaled tier coordinator for SFU-based conferencing.</param>
     /// <param name="eventConsumer">Event consumer for registering event handlers.</param>
     /// <param name="clientEventPublisher">Client event publisher for WebSocket push events.</param>
-    /// <param name="permissionClient">Permission client for setting voice:ringing state.</param>
+    /// <param name="permissionClient">Permission client for managing voice permission states.</param>
     public VoiceService(
         IStateStoreFactory stateStoreFactory,
         IMessageBus messageBus,
@@ -75,7 +75,7 @@ public partial class VoiceService : IVoiceService
     }
 
     /// <summary>
-    /// Creates a new voice room for a game session.
+    /// Creates a new voice room.
     /// </summary>
     public async Task<(StatusCodes, VoiceRoomResponse?)> CreateVoiceRoomAsync(CreateVoiceRoomRequest body, CancellationToken cancellationToken)
     {
@@ -105,7 +105,9 @@ public partial class VoiceService : IVoiceService
                 Codec = body.Codec,
                 MaxParticipants = body.MaxParticipants > 0 ? body.MaxParticipants : _p2pCoordinator.GetP2PMaxParticipants(),
                 CreatedAt = now,
-                RtpServerUri = null
+                RtpServerUri = null,
+                AutoCleanup = body.AutoCleanup,
+                Password = body.Password
             };
 
             // Save room data
@@ -114,6 +116,17 @@ public partial class VoiceService : IVoiceService
 
             // Save session -> room mapping (store Guid as string since IStateStore requires reference types)
             await stringStore.SaveAsync($"{SESSION_ROOM_KEY_PREFIX}{body.SessionId}", roomId.ToString(), cancellationToken: cancellationToken);
+
+            // Publish service event
+            await _messageBus.TryPublishAsync("voice.room.created", new VoiceRoomCreatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = now,
+                RoomId = roomId,
+                SessionId = body.SessionId,
+                Tier = roomData.Tier,
+                MaxParticipants = roomData.MaxParticipants
+            });
 
             _logger.LogInformation("Created voice room {RoomId} for session {SessionId}", roomId, body.SessionId);
 
@@ -127,7 +140,11 @@ public partial class VoiceService : IVoiceService
                 CurrentParticipants = 0,
                 Participants = new List<VoiceParticipant>(),
                 CreatedAt = now,
-                RtpServerUri = null
+                RtpServerUri = null,
+                AutoCleanup = roomData.AutoCleanup,
+                IsPasswordProtected = !string.IsNullOrEmpty(roomData.Password),
+                IsBroadcasting = false,
+                BroadcastState = BroadcastConsentState.Inactive
             });
         }
         catch (Exception ex)
@@ -177,7 +194,11 @@ public partial class VoiceService : IVoiceService
                 CurrentParticipants = participants.Count,
                 Participants = participants.Select(p => p.ToVoiceParticipant()).ToList(),
                 CreatedAt = roomData.CreatedAt,
-                RtpServerUri = roomData.RtpServerUri
+                RtpServerUri = roomData.RtpServerUri,
+                AutoCleanup = roomData.AutoCleanup,
+                IsPasswordProtected = !string.IsNullOrEmpty(roomData.Password),
+                IsBroadcasting = roomData.BroadcastState == BroadcastConsentState.Approved,
+                BroadcastState = roomData.BroadcastState
             });
         }
         catch (Exception ex)
@@ -199,6 +220,7 @@ public partial class VoiceService : IVoiceService
     /// <summary>
     /// Joins a voice room and registers the participant's SIP endpoint.
     /// Handles both P2P mode (returns peer list) and scaled mode (returns SIP credentials).
+    /// If AdHocRoomsEnabled and room doesn't exist, auto-creates it with autoCleanup enabled.
     /// </summary>
     public async Task<(StatusCodes, JoinVoiceRoomResponse?)> JoinVoiceRoomAsync(JoinVoiceRoomRequest body, CancellationToken cancellationToken)
     {
@@ -212,8 +234,54 @@ public partial class VoiceService : IVoiceService
 
             if (roomData == null)
             {
-                _logger.LogWarning("Voice room {RoomId} not found", body.RoomId);
-                return (StatusCodes.NotFound, null);
+                // Ad-hoc room support: auto-create when enabled
+                if (_configuration.AdHocRoomsEnabled)
+                {
+                    _logger.LogInformation("Auto-creating ad-hoc voice room {RoomId}", body.RoomId);
+                    var now = DateTimeOffset.UtcNow;
+                    roomData = new VoiceRoomData
+                    {
+                        RoomId = body.RoomId,
+                        SessionId = body.SessionId,
+                        Tier = VoiceTier.P2p,
+                        Codec = VoiceCodec.Opus,
+                        MaxParticipants = _p2pCoordinator.GetP2PMaxParticipants(),
+                        CreatedAt = now,
+                        AutoCleanup = true
+                    };
+
+                    await roomStore.SaveAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", roomData, cancellationToken: cancellationToken);
+
+                    // Save session -> room mapping
+                    var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Voice);
+                    await stringStore.SaveAsync($"{SESSION_ROOM_KEY_PREFIX}{body.SessionId}", body.RoomId.ToString(), cancellationToken: cancellationToken);
+
+                    // Publish room created event
+                    await _messageBus.TryPublishAsync("voice.room.created", new VoiceRoomCreatedEvent
+                    {
+                        EventId = Guid.NewGuid(),
+                        Timestamp = now,
+                        RoomId = body.RoomId,
+                        SessionId = body.SessionId,
+                        Tier = roomData.Tier,
+                        MaxParticipants = roomData.MaxParticipants
+                    });
+                }
+                else
+                {
+                    _logger.LogWarning("Voice room {RoomId} not found", body.RoomId);
+                    return (StatusCodes.NotFound, null);
+                }
+            }
+
+            // Password validation
+            if (!string.IsNullOrEmpty(roomData.Password))
+            {
+                if (body.Password != roomData.Password)
+                {
+                    _logger.LogWarning("Invalid password for voice room {RoomId}", body.RoomId);
+                    return (StatusCodes.Forbidden, null);
+                }
             }
 
             // Check participant count
@@ -287,6 +355,32 @@ public partial class VoiceService : IVoiceService
 
             var newCount = currentCount + 1;
 
+            // Set voice:in_room permission state for the joining session
+            try
+            {
+                await _permissionClient.UpdateSessionStateAsync(new SessionStateUpdate
+                {
+                    SessionId = body.SessionId,
+                    ServiceId = "voice",
+                    NewState = "in_room"
+                }, cancellationToken);
+                _logger.LogDebug("Set voice:in_room state for session {SessionId}", body.SessionId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to set voice:in_room state for session {SessionId}", body.SessionId);
+            }
+
+            // Publish participant joined service event
+            await _messageBus.TryPublishAsync("voice.participant.joined", new VoiceParticipantJoinedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                RoomId = body.RoomId,
+                ParticipantSessionId = body.SessionId,
+                CurrentCount = newCount
+            });
+
             // Parse STUN servers from config
             var stunServers = _configuration.StunServers?
                 .Split(',', StringSplitOptions.RemoveEmptyEntries)
@@ -296,8 +390,6 @@ public partial class VoiceService : IVoiceService
             // Handle based on current tier
             if (isScaledTier)
             {
-                // Scaled tier: Return RTP server URI and SIP credentials
-                // Note: SIP credentials are generated per-session for security
                 _logger.LogInformation("Session {SessionId} joined scaled tier room {RoomId}", body.SessionId, body.RoomId);
 
                 return (StatusCodes.OK, new JoinVoiceRoomResponse
@@ -305,14 +397,16 @@ public partial class VoiceService : IVoiceService
                     RoomId = body.RoomId,
                     Tier = VoiceTier.Scaled,
                     Codec = roomData.Codec,
-                    Peers = new List<VoicePeer>(), // No peers in scaled mode
+                    Peers = new List<VoicePeer>(),
                     RtpServerUri = roomData.RtpServerUri,
                     StunServers = stunServers,
-                    TierUpgradePending = false
+                    TierUpgradePending = false,
+                    IsBroadcasting = roomData.BroadcastState == BroadcastConsentState.Approved,
+                    BroadcastState = roomData.BroadcastState
                 });
             }
 
-            // P2P tier: Return peer list (P2PCoordinator already returns VoicePeer objects)
+            // P2P tier: Return peer list
             var peers = await _p2pCoordinator.GetMeshPeersForNewJoinAsync(body.RoomId, body.SessionId, cancellationToken);
 
             // Check if tier upgrade is needed for future joins
@@ -320,11 +414,10 @@ public partial class VoiceService : IVoiceService
                                     _configuration.ScaledTierEnabled &&
                                     await _p2pCoordinator.ShouldUpgradeToScaledAsync(body.RoomId, newCount, cancellationToken);
 
-            // Notify existing peers about the new participant (use sessionId for privacy - don't leak accountId)
+            // Notify existing peers about the new participant
             await NotifyPeerJoinedAsync(body.RoomId, body.SessionId, body.DisplayName, body.SipEndpoint, newCount, cancellationToken);
 
-            // Also set voice:ringing for the joining session if there are existing peers
-            // This enables them to call /voice/peer/answer to send SDP answers to those peers (FOUNDATION TENETS)
+            // Set voice:ringing for the joining session if there are existing peers
             if (peers.Count > 0)
             {
                 try
@@ -371,7 +464,9 @@ public partial class VoiceService : IVoiceService
                 Peers = peers,
                 RtpServerUri = null,
                 StunServers = stunServers,
-                TierUpgradePending = tierUpgradePending
+                TierUpgradePending = tierUpgradePending,
+                IsBroadcasting = roomData.BroadcastState == BroadcastConsentState.Approved,
+                BroadcastState = roomData.BroadcastState
             });
         }
         catch (Exception ex)
@@ -408,11 +503,57 @@ public partial class VoiceService : IVoiceService
                 return StatusCodes.NotFound;
             }
 
+            // Clear voice:in_room permission state
+            try
+            {
+                await _permissionClient.UpdateSessionStateAsync(new SessionStateUpdate
+                {
+                    SessionId = body.SessionId,
+                    ServiceId = "voice",
+                    NewState = null
+                }, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to clear voice permission state for session {SessionId}", body.SessionId);
+            }
+
             // Get remaining count
             var remainingCount = await _endpointRegistry.GetParticipantCountAsync(body.RoomId, cancellationToken);
 
+            // Publish participant left service event
+            await _messageBus.TryPublishAsync("voice.participant.left", new VoiceParticipantLeftEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                RoomId = body.RoomId,
+                ParticipantSessionId = body.SessionId,
+                RemainingCount = remainingCount
+            });
+
             // Notify remaining peers
             await NotifyPeerLeftAsync(body.RoomId, removed.SessionId, removed.DisplayName, remainingCount, cancellationToken);
+
+            // Check if leaving participant breaks broadcast consent
+            var roomStore = _stateStoreFactory.GetStore<VoiceRoomData>(StateStoreDefinitions.Voice);
+            var roomData = await roomStore.GetAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken);
+
+            if (roomData != null)
+            {
+                // If broadcasting and participant leaves, stop broadcast (consent broken)
+                if (roomData.BroadcastState == BroadcastConsentState.Approved ||
+                    roomData.BroadcastState == BroadcastConsentState.Pending)
+                {
+                    await StopBroadcastInternalAsync(body.RoomId, roomData, VoiceBroadcastStoppedReason.ConsentRevoked, cancellationToken);
+                }
+
+                // If room is now empty and AutoCleanup, set timestamp for grace period
+                if (remainingCount == 0 && roomData.AutoCleanup)
+                {
+                    roomData.LastParticipantLeftAt = DateTimeOffset.UtcNow;
+                    await roomStore.SaveAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", roomData, cancellationToken: cancellationToken);
+                }
+            }
 
             _logger.LogInformation("Session {SessionId} left voice room {RoomId}", body.SessionId, body.RoomId);
 
@@ -454,6 +595,13 @@ public partial class VoiceService : IVoiceService
                 return StatusCodes.NotFound;
             }
 
+            // If broadcasting, stop broadcast first
+            if (roomData.BroadcastState == BroadcastConsentState.Approved ||
+                roomData.BroadcastState == BroadcastConsentState.Pending)
+            {
+                await StopBroadcastInternalAsync(body.RoomId, roomData, VoiceBroadcastStoppedReason.RoomClosed, cancellationToken);
+            }
+
             // Get all participants before clearing
             var participants = await _endpointRegistry.GetRoomParticipantsAsync(body.RoomId, cancellationToken);
 
@@ -461,7 +609,6 @@ public partial class VoiceService : IVoiceService
             await _endpointRegistry.ClearRoomAsync(body.RoomId, cancellationToken);
 
             // If this was a scaled tier room, release RTP server resources
-            // Fail-fast: RTP cleanup failures propagate to caller for proper error handling
             if (roomData.Tier == VoiceTier.Scaled && !string.IsNullOrEmpty(roomData.RtpServerUri))
             {
                 await _scaledTierCoordinator.ReleaseRtpServerAsync(body.RoomId, cancellationToken);
@@ -475,8 +622,35 @@ public partial class VoiceService : IVoiceService
             var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Voice);
             await stringStore.DeleteAsync($"{SESSION_ROOM_KEY_PREFIX}{roomData.SessionId}", cancellationToken);
 
+            // Publish room deleted service event
+            await _messageBus.TryPublishAsync("voice.room.deleted", new VoiceRoomDeletedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                RoomId = body.RoomId,
+                Reason = VoiceRoomDeletedReason.Manual
+            });
+
             // Notify all participants that room is closed
-            await NotifyRoomClosedAsync(body.RoomId, participants, body.Reason ?? "session_ended", cancellationToken);
+            await NotifyRoomClosedAsync(body.RoomId, participants, VoiceRoomClosedEventReason.Manual, cancellationToken);
+
+            // Clear permission states for all participants
+            foreach (var participant in participants)
+            {
+                try
+                {
+                    await _permissionClient.UpdateSessionStateAsync(new SessionStateUpdate
+                    {
+                        SessionId = participant.SessionId,
+                        ServiceId = "voice",
+                        NewState = null
+                    }, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to clear voice permission state for session {SessionId}", participant.SessionId);
+                }
+            }
 
             _logger.LogInformation("Deleted voice room {RoomId}, notified {ParticipantCount} participants", body.RoomId, participants.Count);
 
@@ -535,7 +709,6 @@ public partial class VoiceService : IVoiceService
 
     /// <summary>
     /// Processes an SDP answer from a client to complete a WebRTC handshake.
-    /// Called by clients after receiving VoicePeerJoinedEvent with an SDP offer.
     /// </summary>
     public async Task<StatusCodes> AnswerPeerAsync(AnswerPeerRequest body, CancellationToken cancellationToken)
     {
@@ -543,7 +716,6 @@ public partial class VoiceService : IVoiceService
 
         try
         {
-            // Find the target participant to send the answer to
             var targetParticipant = await _endpointRegistry.GetParticipantAsync(body.RoomId, body.TargetSessionId, cancellationToken);
 
             if (targetParticipant == null)
@@ -552,12 +724,9 @@ public partial class VoiceService : IVoiceService
                 return StatusCodes.NotFound;
             }
 
-            // Get the sender's display name for the event
             var senderParticipant = await _endpointRegistry.GetParticipantAsync(body.RoomId, body.SenderSessionId, cancellationToken);
             var senderDisplayName = senderParticipant?.DisplayName ?? "Unknown";
 
-            // Send VoicePeerUpdatedEvent directly to the TARGET session
-            // The Peer describes who sent the update (the answering peer)
             var peerUpdatedEvent = new VoicePeerUpdatedEvent
             {
                 EventId = Guid.NewGuid(),
@@ -567,12 +736,11 @@ public partial class VoiceService : IVoiceService
                 {
                     PeerSessionId = body.SenderSessionId,
                     DisplayName = senderDisplayName,
-                    SdpOffer = body.SdpAnswer, // Using SdpOffer to carry the SDP answer
+                    SdpOffer = body.SdpAnswer,
                     IceCandidates = body.IceCandidates?.ToList() ?? new List<string>()
                 }
             };
 
-            // Send directly to the target session (IClientEventPublisher uses string routing keys)
             await _clientEventPublisher.PublishToSessionsAsync(
                 new[] { body.TargetSessionId.ToString() },
                 peerUpdatedEvent,
@@ -597,6 +765,446 @@ public partial class VoiceService : IVoiceService
             return StatusCodes.InternalServerError;
         }
     }
+
+    #region Broadcast Consent Flow
+
+    /// <summary>
+    /// Requests broadcast consent from all room participants.
+    /// </summary>
+    public async Task<(StatusCodes, BroadcastConsentStatus?)> RequestBroadcastConsentAsync(BroadcastConsentRequest body, CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("Broadcast consent requested for room {RoomId}", body.RoomId);
+
+        try
+        {
+            var roomStore = _stateStoreFactory.GetStore<VoiceRoomData>(StateStoreDefinitions.Voice);
+            var roomData = await roomStore.GetAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken);
+
+            if (roomData == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            if (roomData.BroadcastState != BroadcastConsentState.Inactive)
+            {
+                _logger.LogWarning("Broadcast consent already in state {State} for room {RoomId}", roomData.BroadcastState, body.RoomId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Get all current participant session IDs
+            var participants = await _endpointRegistry.GetRoomParticipantsAsync(body.RoomId, cancellationToken);
+            var participantSessionIds = participants.Select(p => p.SessionId).ToList();
+
+            if (participantSessionIds.Count == 0)
+            {
+                return (StatusCodes.Conflict, null);
+            }
+
+            // Update room state to Pending
+            roomData.BroadcastState = BroadcastConsentState.Pending;
+            roomData.BroadcastRequestedBy = body.RequestingSessionId;
+            roomData.BroadcastConsentedSessions = new HashSet<Guid>();
+            roomData.BroadcastRequestedAt = DateTimeOffset.UtcNow;
+            await roomStore.SaveAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", roomData, cancellationToken: cancellationToken);
+
+            // Set voice:consent_pending permission state for ALL participants
+            foreach (var sessionId in participantSessionIds)
+            {
+                try
+                {
+                    await _permissionClient.UpdateSessionStateAsync(new SessionStateUpdate
+                    {
+                        SessionId = sessionId,
+                        ServiceId = "voice",
+                        NewState = "consent_pending"
+                    }, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to set voice:consent_pending for session {SessionId}", sessionId);
+                }
+            }
+
+            // Get requester display name
+            var requester = participants.FirstOrDefault(p => p.SessionId == body.RequestingSessionId);
+
+            // Publish client event to all participants
+            var consentRequestEvent = new VoiceBroadcastConsentRequestEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                RoomId = body.RoomId,
+                RequestedBySessionId = body.RequestingSessionId ?? Guid.Empty,
+                RequestedByDisplayName = requester?.DisplayName
+            };
+
+            await _clientEventPublisher.PublishToSessionsAsync(
+                participantSessionIds.Select(id => id.ToString()),
+                consentRequestEvent,
+                cancellationToken);
+
+            _logger.LogInformation("Broadcast consent requested for room {RoomId} by {SessionId}, {Count} participants pending",
+                body.RoomId, body.RequestingSessionId, participantSessionIds.Count);
+
+            return (StatusCodes.OK, new BroadcastConsentStatus
+            {
+                RoomId = body.RoomId,
+                State = BroadcastConsentState.Pending,
+                RequestedBySessionId = body.RequestingSessionId,
+                ConsentedSessionIds = new List<Guid>(),
+                PendingSessionIds = participantSessionIds,
+                RtpAudioEndpoint = roomData.RtpServerUri
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error requesting broadcast consent for room {RoomId}", body.RoomId);
+            await _messageBus.TryPublishErrorAsync(
+                "voice",
+                "RequestBroadcastConsent",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/voice/room/broadcast/request",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Responds to a broadcast consent request.
+    /// </summary>
+    public async Task<(StatusCodes, BroadcastConsentStatus?)> RespondBroadcastConsentAsync(BroadcastConsentResponse body, CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("Broadcast consent response from {SessionId} for room {RoomId}: consented={Consented}",
+            body.SessionId, body.RoomId, body.Consented);
+
+        try
+        {
+            var roomStore = _stateStoreFactory.GetStore<VoiceRoomData>(StateStoreDefinitions.Voice);
+            var roomData = await roomStore.GetAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken);
+
+            if (roomData == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            if (roomData.BroadcastState != BroadcastConsentState.Pending)
+            {
+                _logger.LogWarning("Room {RoomId} not in Pending state for consent response", body.RoomId);
+                return (StatusCodes.Conflict, null);
+            }
+
+            var participants = await _endpointRegistry.GetRoomParticipantsAsync(body.RoomId, cancellationToken);
+            var participantSessionIds = participants.Select(p => p.SessionId).ToHashSet();
+
+            if (!body.Consented)
+            {
+                // Declined: reset to Inactive
+                roomData.BroadcastState = BroadcastConsentState.Inactive;
+                roomData.BroadcastConsentedSessions.Clear();
+                roomData.BroadcastRequestedBy = null;
+                roomData.BroadcastRequestedAt = null;
+                await roomStore.SaveAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", roomData, cancellationToken: cancellationToken);
+
+                // Clear consent_pending states
+                await ClearConsentPendingStatesAsync(participantSessionIds, cancellationToken);
+
+                // Publish declined service event
+                await _messageBus.TryPublishAsync("voice.room.broadcast.declined", new VoiceRoomBroadcastDeclinedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    RoomId = body.RoomId,
+                    DeclinedBySessionId = body.SessionId
+                });
+
+                // Get decliner display name
+                var decliner = participants.FirstOrDefault(p => p.SessionId == body.SessionId);
+
+                // Publish client event
+                await PublishBroadcastConsentUpdateAsync(body.RoomId, participantSessionIds,
+                    BroadcastConsentState.Inactive, 0, participantSessionIds.Count,
+                    decliner?.DisplayName, cancellationToken);
+
+                _logger.LogInformation("Broadcast consent declined by {SessionId} for room {RoomId}", body.SessionId, body.RoomId);
+
+                return (StatusCodes.OK, new BroadcastConsentStatus
+                {
+                    RoomId = body.RoomId,
+                    State = BroadcastConsentState.Inactive,
+                    RequestedBySessionId = null,
+                    ConsentedSessionIds = new List<Guid>(),
+                    PendingSessionIds = new List<Guid>(),
+                    RtpAudioEndpoint = roomData.RtpServerUri
+                });
+            }
+
+            // Consented: add to consented set
+            roomData.BroadcastConsentedSessions.Add(body.SessionId);
+            var consentedCount = roomData.BroadcastConsentedSessions.Count;
+
+            // Check if all participants have consented
+            if (roomData.BroadcastConsentedSessions.IsSupersetOf(participantSessionIds))
+            {
+                // All consented -> Approved
+                roomData.BroadcastState = BroadcastConsentState.Approved;
+                await roomStore.SaveAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", roomData, cancellationToken: cancellationToken);
+
+                // Clear consent_pending states, restore to in_room
+                await ClearConsentPendingStatesAsync(participantSessionIds, cancellationToken);
+
+                // Publish approved service event
+                await _messageBus.TryPublishAsync("voice.room.broadcast.approved", new VoiceRoomBroadcastApprovedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    RoomId = body.RoomId,
+                    RequestedBySessionId = roomData.BroadcastRequestedBy ?? Guid.Empty,
+                    RtpAudioEndpoint = roomData.RtpServerUri
+                });
+
+                // Publish client event
+                await PublishBroadcastConsentUpdateAsync(body.RoomId, participantSessionIds,
+                    BroadcastConsentState.Approved, consentedCount, participantSessionIds.Count,
+                    null, cancellationToken);
+
+                _logger.LogInformation("All participants consented to broadcast in room {RoomId}", body.RoomId);
+
+                return (StatusCodes.OK, new BroadcastConsentStatus
+                {
+                    RoomId = body.RoomId,
+                    State = BroadcastConsentState.Approved,
+                    RequestedBySessionId = roomData.BroadcastRequestedBy,
+                    ConsentedSessionIds = roomData.BroadcastConsentedSessions.ToList(),
+                    PendingSessionIds = new List<Guid>(),
+                    RtpAudioEndpoint = roomData.RtpServerUri
+                });
+            }
+
+            // Still waiting for more consents
+            await roomStore.SaveAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", roomData, cancellationToken: cancellationToken);
+
+            var pendingIds = participantSessionIds.Except(roomData.BroadcastConsentedSessions).ToList();
+
+            // Publish progress client event
+            await PublishBroadcastConsentUpdateAsync(body.RoomId, participantSessionIds,
+                BroadcastConsentState.Pending, consentedCount, participantSessionIds.Count,
+                null, cancellationToken);
+
+            return (StatusCodes.OK, new BroadcastConsentStatus
+            {
+                RoomId = body.RoomId,
+                State = BroadcastConsentState.Pending,
+                RequestedBySessionId = roomData.BroadcastRequestedBy,
+                ConsentedSessionIds = roomData.BroadcastConsentedSessions.ToList(),
+                PendingSessionIds = pendingIds,
+                RtpAudioEndpoint = roomData.RtpServerUri
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing broadcast consent for room {RoomId}", body.RoomId);
+            await _messageBus.TryPublishErrorAsync(
+                "voice",
+                "RespondBroadcastConsent",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/voice/room/broadcast/consent",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Stops broadcasting from a voice room.
+    /// </summary>
+    public async Task<StatusCodes> StopBroadcastAsync(StopBroadcastConsentRequest body, CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("Stopping broadcast for room {RoomId}", body.RoomId);
+
+        try
+        {
+            var roomStore = _stateStoreFactory.GetStore<VoiceRoomData>(StateStoreDefinitions.Voice);
+            var roomData = await roomStore.GetAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken);
+
+            if (roomData == null)
+            {
+                return StatusCodes.NotFound;
+            }
+
+            if (roomData.BroadcastState == BroadcastConsentState.Inactive)
+            {
+                _logger.LogDebug("Room {RoomId} is not broadcasting", body.RoomId);
+                return StatusCodes.NotFound;
+            }
+
+            await StopBroadcastInternalAsync(body.RoomId, roomData, VoiceBroadcastStoppedReason.Manual, cancellationToken);
+
+            _logger.LogInformation("Broadcast stopped for room {RoomId}", body.RoomId);
+            return StatusCodes.OK;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error stopping broadcast for room {RoomId}", body.RoomId);
+            await _messageBus.TryPublishErrorAsync(
+                "voice",
+                "StopBroadcast",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/voice/room/broadcast/stop",
+                details: null,
+                stack: ex.StackTrace);
+            return StatusCodes.InternalServerError;
+        }
+    }
+
+    /// <summary>
+    /// Gets broadcast consent status for a room.
+    /// </summary>
+    public async Task<(StatusCodes, BroadcastConsentStatus?)> GetBroadcastStatusAsync(BroadcastStatusRequest body, CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("Getting broadcast status for room {RoomId}", body.RoomId);
+
+        try
+        {
+            var roomStore = _stateStoreFactory.GetStore<VoiceRoomData>(StateStoreDefinitions.Voice);
+            var roomData = await roomStore.GetAsync($"{ROOM_KEY_PREFIX}{body.RoomId}", cancellationToken);
+
+            if (roomData == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            var participants = await _endpointRegistry.GetRoomParticipantsAsync(body.RoomId, cancellationToken);
+            var participantSessionIds = participants.Select(p => p.SessionId).ToHashSet();
+            var pendingIds = participantSessionIds.Except(roomData.BroadcastConsentedSessions).ToList();
+
+            return (StatusCodes.OK, new BroadcastConsentStatus
+            {
+                RoomId = body.RoomId,
+                State = roomData.BroadcastState,
+                RequestedBySessionId = roomData.BroadcastRequestedBy,
+                ConsentedSessionIds = roomData.BroadcastConsentedSessions.ToList(),
+                PendingSessionIds = pendingIds,
+                RtpAudioEndpoint = roomData.RtpServerUri
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting broadcast status for room {RoomId}", body.RoomId);
+            await _messageBus.TryPublishErrorAsync(
+                "voice",
+                "GetBroadcastStatus",
+                "unexpected_exception",
+                ex.Message,
+                dependency: null,
+                endpoint: "post:/voice/room/broadcast/status",
+                details: null,
+                stack: ex.StackTrace);
+            return (StatusCodes.InternalServerError, null);
+        }
+    }
+
+    /// <summary>
+    /// Internal method to stop broadcast and publish events.
+    /// </summary>
+    private async Task StopBroadcastInternalAsync(
+        Guid roomId,
+        VoiceRoomData roomData,
+        VoiceBroadcastStoppedReason reason,
+        CancellationToken cancellationToken)
+    {
+        var previousState = roomData.BroadcastState;
+        roomData.BroadcastState = BroadcastConsentState.Inactive;
+        roomData.BroadcastConsentedSessions.Clear();
+        roomData.BroadcastRequestedBy = null;
+        roomData.BroadcastRequestedAt = null;
+
+        var roomStore = _stateStoreFactory.GetStore<VoiceRoomData>(StateStoreDefinitions.Voice);
+        await roomStore.SaveAsync($"{ROOM_KEY_PREFIX}{roomId}", roomData, cancellationToken: cancellationToken);
+
+        // Publish stopped service event
+        await _messageBus.TryPublishAsync("voice.room.broadcast.stopped", new VoiceRoomBroadcastStoppedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            RoomId = roomId,
+            Reason = reason
+        });
+
+        // Publish client event
+        var participants = await _endpointRegistry.GetRoomParticipantsAsync(roomId, cancellationToken);
+        var participantSessionIds = participants.Select(p => p.SessionId).ToHashSet();
+
+        // Clear consent_pending states if they were set
+        if (previousState == BroadcastConsentState.Pending)
+        {
+            await ClearConsentPendingStatesAsync(participantSessionIds, cancellationToken);
+        }
+
+        await PublishBroadcastConsentUpdateAsync(roomId, participantSessionIds,
+            BroadcastConsentState.Inactive, 0, participantSessionIds.Count,
+            null, cancellationToken);
+    }
+
+    /// <summary>
+    /// Clears consent_pending permission states and restores to in_room.
+    /// </summary>
+    private async Task ClearConsentPendingStatesAsync(IEnumerable<Guid> sessionIds, CancellationToken cancellationToken)
+    {
+        foreach (var sessionId in sessionIds)
+        {
+            try
+            {
+                await _permissionClient.UpdateSessionStateAsync(new SessionStateUpdate
+                {
+                    SessionId = sessionId,
+                    ServiceId = "voice",
+                    NewState = "in_room"
+                }, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to restore voice:in_room state for session {SessionId}", sessionId);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Publishes a VoiceBroadcastConsentUpdateEvent to all participants.
+    /// </summary>
+    private async Task PublishBroadcastConsentUpdateAsync(
+        Guid roomId,
+        IEnumerable<Guid> participantSessionIds,
+        BroadcastConsentState state,
+        int consentedCount,
+        int totalCount,
+        string? declinedByDisplayName,
+        CancellationToken cancellationToken)
+    {
+        var updateEvent = new VoiceBroadcastConsentUpdateEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            RoomId = roomId,
+            State = state,
+            ConsentedCount = consentedCount,
+            TotalCount = totalCount,
+            DeclinedByDisplayName = declinedByDisplayName
+        };
+
+        await _clientEventPublisher.PublishToSessionsAsync(
+            participantSessionIds.Select(id => id.ToString()),
+            updateEvent,
+            cancellationToken);
+    }
+
+    #endregion
 
     #region Client Event Publishing
 
@@ -623,7 +1231,6 @@ public partial class VoiceService : IVoiceService
         }
 
         // Set voice:ringing state for all recipient sessions before publishing the event
-        // This enables them to call /voice/peer/answer to send SDP answers (FOUNDATION TENETS)
         foreach (var participant in otherParticipants)
         {
             try
@@ -638,7 +1245,6 @@ public partial class VoiceService : IVoiceService
             }
             catch (Exception ex)
             {
-                // Log but don't fail - the event is more important
                 _logger.LogWarning(ex, "Failed to set voice:ringing state for session {SessionId}", participant.SessionId);
             }
         }
@@ -659,7 +1265,6 @@ public partial class VoiceService : IVoiceService
             CurrentParticipantCount = currentCount
         };
 
-        // IClientEventPublisher uses string routing keys for RabbitMQ topics
         var sessionIdStrings = otherParticipants.Select(p => p.SessionId.ToString());
         var publishedCount = await _clientEventPublisher.PublishToSessionsAsync(sessionIdStrings, peerJoinedEvent, cancellationToken);
         _logger.LogDebug("Published peer_joined event to {Count} sessions", publishedCount);
@@ -692,51 +1297,9 @@ public partial class VoiceService : IVoiceService
             RemainingParticipantCount = remainingCount
         };
 
-        // IClientEventPublisher uses string routing keys for RabbitMQ topics
         var sessionIdStrings = participants.Select(p => p.SessionId.ToString());
         var publishedCount = await _clientEventPublisher.PublishToSessionsAsync(sessionIdStrings, peerLeftEvent, cancellationToken);
         _logger.LogDebug("Published peer_left event to {Count} sessions", publishedCount);
-    }
-
-    /// <summary>
-    /// Notifies other peers that a peer has updated their endpoint.
-    /// </summary>
-    private async Task NotifyPeerUpdatedAsync(
-        Guid roomId,
-        Guid updatedPeerSessionId,
-        string? displayName,
-        SipEndpoint sipEndpoint,
-        CancellationToken cancellationToken)
-    {
-        var participants = await _endpointRegistry.GetRoomParticipantsAsync(roomId, cancellationToken);
-        var otherParticipants = participants
-            .Where(p => p.SessionId != updatedPeerSessionId)
-            .ToList();
-
-        if (otherParticipants.Count == 0)
-        {
-            return;
-        }
-
-        var peerUpdatedEvent = new VoicePeerUpdatedEvent
-        {
-            EventId = Guid.NewGuid(),
-            Timestamp = DateTimeOffset.UtcNow,
-            RoomId = roomId,
-            Peer = new VoicePeerInfo
-            {
-                PeerSessionId = updatedPeerSessionId,
-                DisplayName = displayName,
-                SdpOffer = sipEndpoint.SdpOffer,
-                IceCandidates = sipEndpoint.IceCandidates?.ToList(),
-                IsMuted = false
-            }
-        };
-
-        // IClientEventPublisher uses string routing keys for RabbitMQ topics
-        var sessionIdStrings = otherParticipants.Select(p => p.SessionId.ToString());
-        var publishedCount = await _clientEventPublisher.PublishToSessionsAsync(sessionIdStrings, peerUpdatedEvent, cancellationToken);
-        _logger.LogDebug("Published peer_updated event to {Count} sessions", publishedCount);
     }
 
     /// <summary>
@@ -745,7 +1308,7 @@ public partial class VoiceService : IVoiceService
     private async Task NotifyRoomClosedAsync(
         Guid roomId,
         List<ParticipantRegistration> participants,
-        string reason,
+        VoiceRoomClosedEventReason reason,
         CancellationToken cancellationToken)
     {
         if (participants.Count == 0)
@@ -753,22 +1316,14 @@ public partial class VoiceService : IVoiceService
             return;
         }
 
-        var reasonEnum = reason.ToLowerInvariant() switch
-        {
-            "admin_action" => VoiceRoomClosedEventReason.Admin_action,
-            "error" => VoiceRoomClosedEventReason.Error,
-            _ => VoiceRoomClosedEventReason.Session_ended
-        };
-
         var roomClosedEvent = new VoiceRoomClosedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             RoomId = roomId,
-            Reason = reasonEnum
+            Reason = reason
         };
 
-        // IClientEventPublisher uses string routing keys for RabbitMQ topics
         var sessionIdStrings = participants.Select(p => p.SessionId.ToString());
         var publishedCount = await _clientEventPublisher.PublishToSessionsAsync(sessionIdStrings, roomClosedEvent, cancellationToken);
         _logger.LogDebug("Published room_closed event to {Count} sessions", publishedCount);
@@ -793,16 +1348,14 @@ public partial class VoiceService : IVoiceService
         var publishedCount = 0;
         foreach (var participant in participants)
         {
-            // Generate unique SIP credentials for this participant
             var internalCredentials = _scaledTierCoordinator.GenerateSipCredentials(participant.SessionId, roomId);
 
-            // Map internal credentials to client event model
             var clientCredentials = new ClientSipCredentials
             {
                 Username = internalCredentials.Username,
                 Password = internalCredentials.Password,
                 Domain = internalCredentials.Registrar,
-                ExpiresAt = null // Credentials valid for session duration
+                ExpiresAt = null
             };
 
             var tierUpgradeEvent = new VoiceTierUpgradeEvent
@@ -817,7 +1370,6 @@ public partial class VoiceService : IVoiceService
                 MigrationDeadlineMs = _configuration.TierUpgradeMigrationDeadlineMs
             };
 
-            // IClientEventPublisher uses string routing keys for RabbitMQ topics
             var success = await _clientEventPublisher.PublishToSessionAsync(participant.SessionId.ToString(), tierUpgradeEvent, cancellationToken);
             if (success)
             {
@@ -835,10 +1387,6 @@ public partial class VoiceService : IVoiceService
     /// <summary>
     /// Attempts to upgrade a room from P2P to scaled tier.
     /// </summary>
-    /// <param name="roomId">The room ID to upgrade.</param>
-    /// <param name="roomData">Current room data.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>True if upgrade succeeded, false otherwise.</returns>
     private async Task<bool> TryUpgradeToScaledTierAsync(
         Guid roomId,
         VoiceRoomData roomData,
@@ -854,23 +1402,26 @@ public partial class VoiceService : IVoiceService
         {
             _logger.LogDebug("Starting tier upgrade for room {RoomId} from P2P to scaled", roomId);
 
-            // Allocate an RTP server for this room
             var rtpServerUri = await _scaledTierCoordinator.AllocateRtpServerAsync(roomId, cancellationToken);
 
-            // Update room data to scaled tier
-            var updatedRoomData = new VoiceRoomData
-            {
-                RoomId = roomData.RoomId,
-                SessionId = roomData.SessionId,
-                Tier = VoiceTier.Scaled,
-                Codec = roomData.Codec,
-                MaxParticipants = _scaledTierCoordinator.GetScaledMaxParticipants(),
-                CreatedAt = roomData.CreatedAt,
-                RtpServerUri = rtpServerUri
-            };
+            // Update room data to scaled tier (preserve new fields)
+            roomData.Tier = VoiceTier.Scaled;
+            roomData.MaxParticipants = _scaledTierCoordinator.GetScaledMaxParticipants();
+            roomData.RtpServerUri = rtpServerUri;
 
             var roomStore = _stateStoreFactory.GetStore<VoiceRoomData>(StateStoreDefinitions.Voice);
-            await roomStore.SaveAsync($"{ROOM_KEY_PREFIX}{roomId}", updatedRoomData, cancellationToken: cancellationToken);
+            await roomStore.SaveAsync($"{ROOM_KEY_PREFIX}{roomId}", roomData, cancellationToken: cancellationToken);
+
+            // Publish tier upgraded service event
+            await _messageBus.TryPublishAsync("voice.room.tier-upgraded", new VoiceRoomTierUpgradedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                RoomId = roomId,
+                PreviousTier = VoiceTier.P2p,
+                NewTier = VoiceTier.Scaled,
+                RtpAudioEndpoint = rtpServerUri
+            });
 
             // Notify all current participants about the tier upgrade
             await NotifyTierUpgradeAsync(roomId, rtpServerUri, cancellationToken);
@@ -900,7 +1451,6 @@ public partial class VoiceService : IVoiceService
 
     /// <summary>
     /// Registers this service's API permissions with the Permission service on startup.
-    /// Uses generated permission data from x-permissions sections in the OpenAPI schema.
     /// </summary>
     public async Task RegisterServicePermissionsAsync(string appId)
     {

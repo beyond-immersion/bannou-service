@@ -10,7 +10,7 @@ namespace BeyondImmersion.BannouService.Chat.Tests;
 /// Tests for ChatService room CRUD operations:
 /// CreateRoom, GetRoom, ListRooms, UpdateRoom, DeleteRoom, ArchiveRoom.
 /// </summary>
-public class ChatServiceRoomTests : ChatServiceTestBase
+internal class ChatServiceRoomTests : ChatServiceTestBase
 {
     #region CreateRoom
 

@@ -340,6 +340,99 @@ public partial class VoiceRoomClosedEvent : BaseClientEvent
 }
 
 /// <summary>
+/// Sent to all room participants when someone requests broadcast consent. Each participant should respond via /voice/room/broadcast/consent.
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class VoiceBroadcastConsentRequestEvent : BaseClientEvent
+{
+
+    /// <summary>
+    /// Fixed event type identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "voice.broadcast_consent_request";
+
+    /// <summary>
+    /// Voice room ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("roomId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RoomId { get; set; } = default!;
+
+    /// <summary>
+    /// Who initiated the broadcast request
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("requestedBySessionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RequestedBySessionId { get; set; } = default!;
+
+    /// <summary>
+    /// Display name of requester for UI
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("requestedByDisplayName")]
+    public string? RequestedByDisplayName { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Sent to all room participants when the broadcast consent state changes (someone consented, someone declined, broadcast started, broadcast stopped).
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class VoiceBroadcastConsentUpdateEvent : BaseClientEvent
+{
+
+    /// <summary>
+    /// Fixed event type identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public override string EventName { get; set; } = "voice.broadcast_consent_update";
+
+    /// <summary>
+    /// Voice room ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("roomId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RoomId { get; set; } = default!;
+
+    /// <summary>
+    /// Current broadcast consent state
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("state")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public BroadcastConsentState State { get; set; } = default!;
+
+    /// <summary>
+    /// How many participants have consented
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("consentedCount")]
+    public int ConsentedCount { get; set; } = default!;
+
+    /// <summary>
+    /// Total participants who need to consent
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
+    public int TotalCount { get; set; } = default!;
+
+    /// <summary>
+    /// If declined, who declined (for UI feedback)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("declinedByDisplayName")]
+    public string? DeclinedByDisplayName { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Peer connection information for P2P voice
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -429,11 +522,11 @@ public partial class SipCredentials
 public enum VoiceRoomClosedEventReason
 {
 
-    [System.Runtime.Serialization.EnumMember(Value = @"session_ended")]
-    Session_ended = 0,
+    [System.Runtime.Serialization.EnumMember(Value = @"manual")]
+    Manual = 0,
 
-    [System.Runtime.Serialization.EnumMember(Value = @"admin_action")]
-    Admin_action = 1,
+    [System.Runtime.Serialization.EnumMember(Value = @"empty")]
+    Empty = 1,
 
     [System.Runtime.Serialization.EnumMember(Value = @"error")]
     Error = 2,
