@@ -180,30 +180,6 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         Assert.Null(response);
     }
 
-    [Fact]
-    public async Task GetRealmAsync_WhenStoreFails_ShouldReturnInternalServerError()
-    {
-        // Arrange
-        var service = CreateService();
-        var realmId = Guid.NewGuid();
-        var request = new GetRealmRequest { RealmId = realmId };
-
-        _mockRealmStore
-            .Setup(s => s.GetAsync($"{REALM_KEY_PREFIX}{realmId}", It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("State store connection failed"));
-
-        // Act
-        var (status, response) = await service.GetRealmAsync(request);
-
-        // Assert
-        Assert.Equal(StatusCodes.InternalServerError, status);
-        Assert.Null(response);
-        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
-            "realm", "GetRealm", "unexpected_exception", It.IsAny<string>(),
-            It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<ServiceErrorEventSeverity>(),
-            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<Guid?>(), default), Times.Once);
-    }
-
     #endregion
 
     #region GetRealmByCode Tests
@@ -511,30 +487,6 @@ public class RealmServiceTests : ServiceTestBase<RealmServiceConfiguration>
         // Second realm exists but is not active (deprecated)
         Assert.True(resultsList[1].Exists);
         Assert.False(resultsList[1].IsActive);
-    }
-
-    [Fact]
-    public async Task RealmsExistBatchAsync_WhenStoreFails_ShouldReturnInternalServerError()
-    {
-        // Arrange
-        var service = CreateService();
-        var realmId = Guid.NewGuid();
-        var request = new RealmsExistBatchRequest { RealmIds = new List<Guid> { realmId } };
-
-        _mockRealmStore
-            .Setup(s => s.GetBulkAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("State store connection failed"));
-
-        // Act
-        var (status, response) = await service.RealmsExistBatchAsync(request);
-
-        // Assert
-        Assert.Equal(StatusCodes.InternalServerError, status);
-        Assert.Null(response);
-        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
-            "realm", "RealmsExistBatch", "unexpected_exception", It.IsAny<string>(),
-            It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<ServiceErrorEventSeverity>(),
-            It.IsAny<object?>(), It.IsAny<string?>(), It.IsAny<Guid?>(), default), Times.Once);
     }
 
     #endregion

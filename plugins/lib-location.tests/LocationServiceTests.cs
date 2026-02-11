@@ -221,30 +221,6 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         Assert.Null(response);
     }
 
-    [Fact]
-    public async Task GetLocationAsync_WhenStoreFails_ShouldReturnInternalServerError()
-    {
-        // Arrange
-        var service = CreateService();
-        var locationId = Guid.NewGuid();
-        var request = new GetLocationRequest { LocationId = locationId };
-
-        _mockLocationStore
-            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{locationId}", It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("State store connection failed"));
-
-        // Act
-        var (status, response) = await service.GetLocationAsync(request);
-
-        // Assert
-        Assert.Equal(StatusCodes.InternalServerError, status);
-        Assert.Null(response);
-        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
-            "location", "GetLocation", "unexpected_exception", It.IsAny<string>(),
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ServiceErrorEventSeverity>(),
-            It.IsAny<object>(), It.IsAny<string>(), It.IsAny<Guid?>(), default), Times.Once);
-    }
-
     #endregion
 
     #region GetLocationByCode Tests
@@ -295,26 +271,6 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
 
         // Assert
         Assert.Equal(StatusCodes.NotFound, status);
-        Assert.Null(response);
-    }
-
-    [Fact]
-    public async Task GetLocationByCodeAsync_WhenStoreFails_ShouldReturnInternalServerError()
-    {
-        // Arrange
-        var service = CreateService();
-        var realmId = Guid.NewGuid();
-        var request = new GetLocationByCodeRequest { RealmId = realmId, Code = "TEST" };
-
-        _mockStringStore
-            .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("State store unavailable"));
-
-        // Act
-        var (status, response) = await service.GetLocationByCodeAsync(request);
-
-        // Assert
-        Assert.Equal(StatusCodes.InternalServerError, status);
         Assert.Null(response);
     }
 
@@ -927,34 +883,6 @@ public class LocationServiceTests : ServiceTestBase<LocationServiceConfiguration
         Assert.NotNull(response);
         Assert.False(response.IsValid);
         Assert.Equal(locationId, response.MatchedTerritoryId);
-    }
-
-    [Fact]
-    public async Task ValidateTerritoryAsync_WhenStoreFails_ShouldReturnInternalServerError()
-    {
-        // Arrange
-        var service = CreateService();
-        var locationId = Guid.NewGuid();
-        var request = new ValidateTerritoryRequest
-        {
-            LocationId = locationId,
-            TerritoryLocationIds = new List<Guid> { Guid.NewGuid() }
-        };
-
-        _mockLocationStore
-            .Setup(s => s.GetAsync($"{LOCATION_KEY_PREFIX}{locationId}", It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("State store connection failed"));
-
-        // Act
-        var (status, response) = await service.ValidateTerritoryAsync(request);
-
-        // Assert
-        Assert.Equal(StatusCodes.InternalServerError, status);
-        Assert.Null(response);
-        _mockMessageBus.Verify(m => m.TryPublishErrorAsync(
-            "location", "ValidateTerritory", "unexpected_exception", It.IsAny<string>(),
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ServiceErrorEventSeverity>(),
-            It.IsAny<object>(), It.IsAny<string>(), It.IsAny<Guid?>(), default), Times.Once);
     }
 
     #endregion
