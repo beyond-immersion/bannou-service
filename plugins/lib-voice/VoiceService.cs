@@ -81,10 +81,8 @@ public partial class VoiceService : IVoiceService
     {
         _logger.LogDebug("Creating voice room for session {SessionId}", body.SessionId);
 
-        try
-        {
-            // Check if room already exists for this session
-            var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Voice);
+        // Check if room already exists for this session
+        var stringStore = _stateStoreFactory.GetStore<string>(StateStoreDefinitions.Voice);
             var existingRoomIdStr = await stringStore.GetAsync($"{SESSION_ROOM_KEY_PREFIX}{body.SessionId}", cancellationToken);
 
             if (!string.IsNullOrEmpty(existingRoomIdStr) && Guid.TryParse(existingRoomIdStr, out _))
@@ -146,21 +144,6 @@ public partial class VoiceService : IVoiceService
                 IsBroadcasting = false,
                 BroadcastState = BroadcastConsentState.Inactive
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating voice room for session {SessionId}", body.SessionId);
-            await _messageBus.TryPublishErrorAsync(
-                "voice",
-                "CreateVoiceRoom",
-                "unexpected_exception",
-                ex.Message,
-                dependency: null,
-                endpoint: "post:/voice/room/create",
-                details: null,
-                stack: ex.StackTrace);
-            return (StatusCodes.InternalServerError, null);
-        }
     }
 
     /// <summary>
