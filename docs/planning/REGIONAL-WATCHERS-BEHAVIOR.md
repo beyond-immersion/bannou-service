@@ -1219,4 +1219,5 @@ flows:
 - [Storyline Composer](STORYLINE_COMPOSER.md)
 - [Story System Guide](../guides/STORY_SYSTEM.md)
 - [Dungeon as Actor](DUNGEON_AS_ACTOR.md) - Related watcher pattern
-- [Actor Data Access Patterns](ACTOR_DATA_ACCESS_PATTERNS.md)
+- [Actor Deep Dive](../plugins/ACTOR.md) - Data access pattern selection
+- [SERVICE-HIERARCHY.md](../reference/SERVICE-HIERARCHY.md) - Variable Provider Factory pattern

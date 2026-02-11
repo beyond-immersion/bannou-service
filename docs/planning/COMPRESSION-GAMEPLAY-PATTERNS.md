@@ -1,25 +1,41 @@
-# Compression as Seed Data: Emergent Gameplay from Archived Entities
+# Compression Gameplay Patterns: Emergent Gameplay from Archived Entities
 
-> **Status**: Exploration / Vision Document
-> **Priority**: High (Foundational Pattern)
-> **Related**: `docs/plugins/CHARACTER.md`, `docs/plugins/RESOURCE.md`, `docs/planning/DUNGEON_AS_ACTOR.md`
-> **Services**: lib-resource, lib-character, lib-character-personality, lib-character-history, lib-character-encounter, lib-scene, lib-realm
+> **Status**: Vision Document (foundation implemented, gameplay patterns pending)
+> **Priority**: High (Content Flywheel -- North Star #2)
+> **Related**: `docs/plugins/RESOURCE.md`, `docs/plugins/CHARACTER.md`, `docs/plugins/STORYLINE.md`, `docs/planning/DUNGEON_AS_ACTOR.md`
+> **Services**: lib-resource, lib-character, lib-character-personality, lib-character-history, lib-character-encounter, lib-storyline, lib-scene, lib-realm
 > **External Inspiration**: *Shangri-La Frontier* (Setsuna of Faraway Days, Wezaemon the Tombguard)
 
 ## Executive Summary
 
-What began as an "over-engineered generic archiving mechanism" has revealed itself as **one of the most generative features in Bannou**. When a character dies and is compressed, their entire life story - personality, memories, relationships, history, encounters - crystallizes into a rich JSON blob. This isn't just data cleanup; it's **seed data for emergence**.
+When a character dies and is compressed, their entire life story -- personality, memories, relationships, history, encounters -- crystallizes into a rich archive. This isn't just data cleanup; it's **generative input for emergence**.
 
-This document explores the creative possibilities that emerge from treating compressed archives as generative inputs rather than terminal states:
+This document explores the gameplay patterns that emerge from treating compressed archives as generative inputs rather than terminal states:
 
 1. **Resurrection Variants** - Ghosts, zombies, revenants, clones using compressed data
 2. **Quest Generation** - Procedural hooks from unfinished business
 3. **NPC Memory Seeding** - Living characters who remember the dead
 4. **Legacy Mechanics** - Descendants influenced by ancestral data
-5. **Live Compression** - Summarized data for AI consumption without deletion
+5. **Live Snapshots** - Summarized data for AI consumption without deletion
 6. **Cross-Entity Patterns** - Scenes, realms, items as compressible entities
 
 The fundamental insight: **compression is not the end of a lifecycle, but the beginning of a new one**.
+
+### Implementation Status
+
+| Area | Status | Details |
+|------|--------|---------|
+| Compression infrastructure | **Done** | lib-resource: `ExecuteCompressAsync`, archive storage (MySQL), callback registration |
+| Ephemeral snapshots | **Done** | lib-resource: `CreateSnapshotAsync` (Redis TTL, non-destructive) |
+| Character compression callbacks | **Done** | lib-character, lib-character-personality, lib-character-history, lib-character-encounter all register callbacks |
+| Storyline consuming archives | **Done** | lib-storyline accepts both archives and snapshots as composition seed sources |
+| Resurrection variants | **Vision** | No implementation -- this document describes the design patterns |
+| Quest generation from archives | **Vision** | No implementation |
+| NPC memory seeding | **Vision** | No implementation |
+| Legacy mechanics | **Vision** | No implementation |
+| Cross-entity compression | **Vision** | Only characters currently; scenes/realms/items pending |
+
+For the implemented compression data model and API, see the [Resource deep dive](../plugins/RESOURCE.md). This document focuses on the **gameplay patterns** that consume that infrastructure.
 
 ---
 
@@ -55,11 +71,11 @@ The emotional weight of Setsuna's story comes not from complex AI, but from **pr
 
 ---
 
-## Part 1: The Compression Data Model
+## Part 1: What Gets Archived
 
-### What Gets Archived
+When a character dies and is compressed via lib-resource's `ExecuteCompressAsync`, each registered compression callback contributes its data bundle. For the full archive data model and API, see the [Resource deep dive](../plugins/RESOURCE.md).
 
-When a character dies and is compressed via `lib-resource.ExecuteCompressAsync`, each registered `sourceType` contributes its data bundle:
+A single compressed character archive contains:
 
 | Source Type | Data Contributed | Example Content |
 |-------------|-----------------|-----------------|
@@ -70,47 +86,14 @@ When a character dies and is compressed via `lib-resource.ExecuteCompressAsync`,
 | `character-history` | Event participation | Fought in Battle of Stormgate (HERO, significance: 0.95) |
 | `character-encounter` | Memorable meetings | Met Aldric 47 times, sentiment: 0.8 (positive) |
 | `character-encounter` | Perspectives | "Aldric saved my life at the bridge" |
-
-### Archive Structure
-
-```typescript
-interface CharacterArchive {
-  archiveId: Guid;
-  resourceType: "character";
-  resourceId: Guid;  // Original characterId
-  version: number;
-  entries: ArchiveBundleEntry[];
-  createdAt: DateTimeOffset;
-  sourceDataDeleted: boolean;
-}
-
-interface ArchiveBundleEntry {
-  sourceType: string;  // e.g., "character-personality"
-  serviceName: string;
-  data: string;        // Base64 GZip JSON
-  compressedAt: DateTimeOffset;
-  dataChecksum: string;
-  originalSizeBytes: number;
-}
-```
-
-### The Richness of the Data
-
-A single compressed character can contain:
-
-- **8+ personality trait values** with evolution history
-- **Combat preferences** (style, range, role, risk tolerance, retreat threshold)
-- **10+ backstory elements** (origin, occupation, training, trauma, achievements, secrets, goals, fears, beliefs)
-- **Dozens of historical event participations** (wars, disasters, ceremonies, discoveries)
-- **Hundreds of encounters** with other characters, each with emotional context
-- **Family relationships** (spouse, children, parents, siblings, past lives)
+| `storyline` | Scenario participations | Active arcs, completed narratives |
 
 This is not just metadata - it's a **complete character prompt** suitable for:
-- LLM dialogue generation
-- Procedural narrative creation
+- Procedural narrative creation (Storyline service already does this)
 - Behavior system initialization
 - Quest graph seeding
 - Environmental storytelling
+- LLM dialogue generation
 
 ---
 
@@ -483,7 +466,6 @@ tombguard_generation:
 ```
 
 **Why This Works**: The compressed character never acts, never speaks, never fights - yet they define another character's entire existence. The archive data flows *through* the living to affect the world.
-```
 
 ---
 
@@ -572,11 +554,13 @@ reputation_inheritance:
 
 ---
 
-## Part 6: Live Compression (Without Deletion)
+## Part 6: Live Snapshots
+
+> **Implementation note**: The core concept described here has been implemented as lib-resource's ephemeral snapshot system (`/resource/snapshot/execute` and `/resource/snapshot/get`). Snapshots are stored in Redis with configurable TTL (1-24 hours) and are non-destructive. Storyline already consumes both permanent archives and ephemeral snapshots as composition seed sources.
 
 ### The Key Insight
 
-Compression doesn't require deletion. We can **compress live entities** to create summarized snapshots for:
+Compression doesn't require deletion. The **snapshot system** creates summarized views of living entities for:
 
 1. **AI Context Windows** - Feed character summaries to LLMs
 2. **Cross-Service Data Sharing** - Single blob instead of N queries
@@ -584,10 +568,10 @@ Compression doesn't require deletion. We can **compress live entities** to creat
 4. **NPC Brain Initialization** - Quick-load character context
 5. **Save/Load Summarization** - Human-readable state descriptions
 
-### 6.1: AI-Friendly Character Summaries
+### AI-Friendly Character Summaries
 
 ```yaml
-live_compression_for_ai:
+live_snapshot_for_ai:
   trigger: actor_brain_initialization, dialogue_generation, quest_npc_context
 
   output_format:
@@ -610,7 +594,7 @@ live_compression_for_ai:
   update_frequency: on_significant_change OR periodic_refresh
 ```
 
-### 6.2: Actor Brain Quick-Load
+### Actor Brain Quick-Load
 
 ```yaml
 actor_brain_initialization:
@@ -624,39 +608,19 @@ actor_brain_initialization:
     # Total: ~300ms, 5 service calls
 
   new_pattern:
-    1. resource_service.get_live_compression("character", id)  # 30ms
-    # Total: ~30ms, 1 service call, complete context
-
-  actor_state_initialization:
-    compressed = await resource.GetLiveCompression(characterId)
-    actor.personality = compressed.entries["personality"]
-    actor.backstory = compressed.entries["history"]
-    actor.memories = compressed.entries["encounter"]
-    actor.family = compressed.entries["character"].familySummary
+    1. resource_service.create_snapshot("character", id)  # Executes callbacks
+    2. resource_service.get_snapshot(snapshotId)           # ~30ms
+    # Total: ~80ms first time, ~30ms on cache hit
 ```
 
-### 6.3: Cross-Service Event Context
+### Remaining Work
 
-```yaml
-event_context_enrichment:
-  # When publishing events, include compressed context
-  event: character.entered_location
+The snapshot infrastructure is in place. What's still needed:
 
-  enriched_payload:
-    character_id: "abc123"
-    location_id: "xyz789"
-    # Include live compression for consumers
-    character_context:
-      summary: "Aldric the Bold, aggressive warrior seeking his lost brother"
-      personality_snapshot: { AGGRESSION: 0.7, LOYALTY: 0.9, ... }
-      relevant_backstory: ["trained by knights guild", "homeland destroyed"]
-      recent_encounters: [{ target: "merchant", sentiment: 0.3 }]
-
-  consumer_benefits:
-    - dialogue_service: Generate appropriate greeting without queries
-    - ambient_npc: React appropriately ("A warrior approaches...")
-    - location_service: Trigger relevant environmental responses
-```
+- **Snapshot invalidation**: Event-driven cache busting when personality/history/encounters change
+- **AI-summary generation**: Template-based text summaries optimized for LLM context windows
+- **Actor brain integration**: Using snapshots as the fast path for Variable Provider initialization
+- **Event context enrichment**: Including snapshot data in published events for downstream consumers
 
 ---
 
@@ -664,7 +628,7 @@ event_context_enrichment:
 
 ### Beyond Characters: Compressible Entities
 
-The compression pattern applies to **any entity with rich associated data**:
+The compression pattern applies to **any entity with rich associated data**. Only characters currently implement compression callbacks; the following are future patterns.
 
 ### 7.1: Scene Compression
 
@@ -677,15 +641,6 @@ scene_compression:
     - scene-assets: texture_refs, model_refs, audio_refs
     - mapping: spatial_data, affordances, pathfinding
     - scene-history: edit_history, creators, purpose
-
-  compressed_output:
-    # "What this place used to be"
-    summary: |
-      **{scene.name}** (formerly {scene.original_purpose})
-      Created by: {creators}
-      Notable features: {key_nodes}
-      Historical significance: {events_occurred_here}
-      Asset style: {dominant_textures, architectural_patterns}
 
   gameplay_applications:
     ruins_generation:
@@ -719,17 +674,6 @@ realm_compression:
     - realm-history: historical_events, lore_elements
     - character: notable_figures (compressed when dead)
 
-  compressed_output:
-    summary: |
-      **{realm.name}** - {realm.epoch} Era
-
-      **Geography**: {location_hierarchy_summary}
-      **Peoples**: {species_distribution}
-      **Culture**: {cultural_practices_summary}
-      **History**: {major_events_timeline}
-      **Notable Figures**: {compressed_character_summaries}
-      **Fall/Fate**: {end_state_description}
-
   gameplay_applications:
     lost_civilizations:
       # Compressed realm = historical record
@@ -759,15 +703,6 @@ item_compression:
     - item-history: ownership_chain, notable_uses, modifications
     - item-associations: characters_who_wielded, events_involved
 
-  compressed_output:
-    summary: |
-      **{item.name}** ({item.type}, {item.rarity})
-
-      **Origin**: Crafted by {creator} in {creation_location}
-      **Notable Owners**: {ownership_chain.map(o => o.name + ": " + o.tenure)}
-      **Significant Events**: {events.map(e => e.summary)}
-      **Current State**: {condition}, {modification_history}
-
   gameplay_applications:
     identify_spell:
       # Partial decompression reveals history
@@ -790,242 +725,7 @@ item_compression:
 
 ---
 
-## Part 8: Implementation Architecture
-
-### 8.1: The Live Compression Service
-
-```csharp
-public interface ILiveCompressionService
-{
-    /// <summary>
-    /// Get or create a live compression snapshot for an entity.
-    /// Does not delete source data - purely for summarization.
-    /// </summary>
-    Task<CompressionSnapshot> GetLiveSnapshotAsync(
-        string resourceType,
-        Guid resourceId,
-        TimeSpan? maxAge = null,
-        CancellationToken ct = default);
-
-    /// <summary>
-    /// Invalidate cached snapshot when source data changes.
-    /// </summary>
-    Task InvalidateSnapshotAsync(
-        string resourceType,
-        Guid resourceId,
-        CancellationToken ct = default);
-
-    /// <summary>
-    /// Subscribe to snapshot updates for real-time consumers.
-    /// </summary>
-    IAsyncEnumerable<CompressionSnapshot> SubscribeToUpdatesAsync(
-        string resourceType,
-        Guid resourceId,
-        CancellationToken ct = default);
-}
-
-public class CompressionSnapshot
-{
-    public Guid ResourceId { get; set; }
-    public string ResourceType { get; set; }
-    public DateTimeOffset GeneratedAt { get; set; }
-    public TimeSpan Age => DateTimeOffset.UtcNow - GeneratedAt;
-
-    // Structured data by source type
-    public Dictionary<string, JsonDocument> Entries { get; set; }
-
-    // Pre-generated summaries for common use cases
-    public string AiSummary { get; set; }        // LLM-friendly
-    public string PlayerSummary { get; set; }    // UI-friendly
-    public string DebugSummary { get; set; }     // Developer-friendly
-}
-```
-
-### 8.2: Event-Driven Snapshot Invalidation
-
-```yaml
-snapshot_invalidation:
-  triggers:
-    # Character-related
-    - event: character-personality.updated
-      action: invalidate_snapshot("character", event.characterId)
-
-    - event: character-history.backstory.updated
-      action: invalidate_snapshot("character", event.characterId)
-
-    - event: character-encounter.created
-      action: invalidate_snapshot("character", event.characterId)
-
-    # Scene-related
-    - event: scene.updated
-      action: invalidate_snapshot("scene", event.sceneId)
-
-    - event: mapping.authority.updated
-      action: invalidate_snapshot("scene", event.sceneId)
-
-  caching_strategy:
-    hot_cache: Redis with 5-minute TTL
-    warm_cache: regenerate on first access after invalidation
-    cold_storage: MySQL for historical snapshots
-```
-
-### 8.3: Resurrection Service Architecture
-
-```csharp
-public interface IResurrectionService
-{
-    /// <summary>
-    /// Create a ghost from compressed character archive.
-    /// </summary>
-    Task<GhostActorResult> CreateGhostAsync(
-        Guid archiveId,
-        GhostCreationOptions options,
-        CancellationToken ct = default);
-
-    /// <summary>
-    /// Create a zombie with degraded cognition.
-    /// </summary>
-    Task<ZombieResult> CreateZombieAsync(
-        Guid archiveId,
-        ZombieCreationOptions options,
-        CancellationToken ct = default);
-
-    /// <summary>
-    /// Create a revenant with full consciousness and purpose.
-    /// </summary>
-    Task<RevenantActorResult> CreateRevenantAsync(
-        Guid archiveId,
-        RevenantCreationOptions options,
-        CancellationToken ct = default);
-
-    /// <summary>
-    /// Create a clone initialized from archive template.
-    /// </summary>
-    Task<CharacterResponse> CreateCloneAsync(
-        Guid archiveId,
-        CloneCreationOptions options,
-        CancellationToken ct = default);
-}
-
-public class GhostCreationOptions
-{
-    public Guid? HauntLocationId { get; set; }          // Where to manifest
-    public float MemoryFidelity { get; set; } = 0.9f;   // How much they remember
-    public float PersonalityFidelity { get; set; } = 1.0f;
-    public bool CanBeLayedToRest { get; set; } = true;
-    public List<Guid> TriggerCharacterIds { get; set; } // Who they react to
-}
-```
-
-### 8.4: Quest Generation Service
-
-```csharp
-public interface IQuestGeneratorService
-{
-    /// <summary>
-    /// Generate quest hooks from a character archive.
-    /// </summary>
-    Task<List<QuestTemplate>> GenerateQuestsFromArchiveAsync(
-        Guid archiveId,
-        QuestGenerationOptions options,
-        CancellationToken ct = default);
-
-    /// <summary>
-    /// Find quest opportunities across all archives in a realm.
-    /// </summary>
-    Task<List<QuestOpportunity>> DiscoverQuestOpportunitiesAsync(
-        Guid realmId,
-        QuestDiscoveryFilters filters,
-        CancellationToken ct = default);
-}
-
-public class QuestTemplate
-{
-    public QuestType Type { get; set; }           // Revenge, Recovery, Closure, Mystery
-    public string TitleTemplate { get; set; }
-    public string DescriptionTemplate { get; set; }
-    public Guid SourceArchiveId { get; set; }
-
-    // Data extracted from archive
-    public Dictionary<string, object> Variables { get; set; }
-
-    // Generated quest structure
-    public List<QuestObjective> Objectives { get; set; }
-    public List<Guid> InvolvedCharacterIds { get; set; }
-    public List<Guid> InvolvedLocationIds { get; set; }
-
-    public float EstimatedDifficulty { get; set; }
-    public float EmotionalWeight { get; set; }
-}
-```
-
----
-
-## Part 9: Implementation Roadmap
-
-### Phase 1: Foundation (Current)
-
-**Status**: In Progress
-
-- [x] lib-resource compression infrastructure
-- [x] Character compression with archive storage
-- [ ] Character-personality compression callback
-- [ ] Character-history compression callback
-- [ ] Character-encounter compression callback
-
-### Phase 2: Live Compression
-
-**Goal**: Non-destructive snapshots for AI and performance
-
-- [ ] ILiveCompressionService interface
-- [ ] Snapshot caching with invalidation
-- [ ] AI-summary generation templates
-- [ ] Actor brain quick-load integration
-- [ ] Event context enrichment
-
-### Phase 3: Resurrection Mechanics
-
-**Goal**: Create entities from archived data
-
-- [ ] Ghost creation from archives
-- [ ] Zombie creation with corruption patterns
-- [ ] Revenant creation with purpose extraction
-- [ ] Clone creation as template-based generation
-- [ ] Resurrection service API
-
-### Phase 4: Quest Generation
-
-**Goal**: Procedural content from archived lives
-
-- [ ] Quest template extraction patterns
-- [ ] Archive analysis for quest opportunities
-- [ ] Quest chain generation from complex archives
-- [ ] NPC memory seeding from archives
-- [ ] Family/descendant quest hooks
-
-### Phase 5: Cross-Entity Compression
-
-**Goal**: Apply pattern to scenes, realms, items
-
-- [ ] Scene compression callbacks
-- [ ] Realm compression callbacks
-- [ ] Item compression callbacks
-- [ ] Ruins/temporal mechanics integration
-- [ ] Mythology generation from realm archives
-
-### Phase 6: Legacy Systems
-
-**Goal**: Descendants influenced by ancestors
-
-- [ ] Personality inheritance calculations
-- [ ] Ancestral memory mechanics
-- [ ] Family reputation system
-- [ ] Lineage-aware NPC reactions
-- [ ] Inherited knowledge/skill hints
-
----
-
-## Part 10: Design Considerations
+## Part 8: Design Considerations
 
 ### Privacy and Consent
 
@@ -1037,8 +737,8 @@ For player characters:
 
 ### Performance
 
-- Live compression cached with invalidation
-- Archive retrieval O(1) by resourceId
+- Snapshots cached in Redis with TTL-based expiration
+- Archive retrieval O(1) by resourceId from MySQL
 - Bulk archive queries for realm-wide analysis
 - Background processing for heavy operations (quest generation)
 
@@ -1069,7 +769,7 @@ What started as a cleanup mechanism has become **the narrative DNA of Arcadia**.
 5. **A quest generator** producing meaningful content
 6. **A memory seed** for living NPCs
 7. **An ancestor** influencing future generations
-8. **An AI context** for dialogue and behavior
+8. **An AI context** for dialogue and behavior (already working via Storyline)
 
 The compression archive is not an obituary - it's a **character prompt**, a **narrative seed**, and a **gameplay resource**. Every death enriches the world rather than diminishing it.
 
@@ -1079,4 +779,4 @@ The same pattern extends to scenes (ruins, temporal mechanics), realms (lost civ
 
 ---
 
-*This document is part of the Bannou planning documentation.*
+*This document is part of the Bannou planning documentation. For the compression infrastructure API and data model, see [Resource deep dive](../plugins/RESOURCE.md). For narrative generation from archives, see [Storyline deep dive](../plugins/STORYLINE.md).*

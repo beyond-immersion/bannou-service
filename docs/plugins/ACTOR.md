@@ -73,6 +73,29 @@ This separation exists because:
 
 See [PUPPETMASTER.md](PUPPETMASTER.md) for Event Brain architecture details and [BEHAVIOR.md](BEHAVIOR.md) Domain Actions Reference for the `load_snapshot:` and `prefetch_snapshots:` actions.
 
+**Data Access Pattern Selection**
+
+When an actor needs data from another service, the correct pattern depends on the data's characteristics:
+
+```
+Is this the actor's own cognitive state (memories, perceptions)?
+    YES → Shared store (agent-memories, owned by lib-behavior cognition pipeline)
+    NO  ↓
+
+Is this character attribute data for ABML expressions?
+    YES → Variable Provider Factory (cached API calls, DI-discovered)
+          Owning L4 plugin provides the factory + cache.
+    NO  ↓
+
+Is consistency critical (currency balance, item ownership)?
+    YES → Direct API call via lib-mesh (authoritative source)
+    NO  → Variable Provider Factory with appropriate cache TTL
+```
+
+Current providers cover personality, combat preferences, backstory, encounters, and quests. Planned future providers ([#147](https://github.com/BeyondImmersion/bannou-service/issues/147)): currency (30s TTL), inventory (1m TTL), relationships (5m TTL). Spatial context ([#145](https://github.com/BeyondImmersion/bannou-service/issues/145)): coarse-grained zone/region awareness (10s TTL) for GOAP planning -- actors need "am I in hostile territory?" not frame-by-frame coordinates.
+
+**Anti-patterns**: Never access another plugin's state store directly. Never poll APIs in tight loops (use Variable Providers with cache). Never cache mutation-critical data beyond short TTLs.
+
 ---
 
 ## Dependents (What Relies On This Plugin)

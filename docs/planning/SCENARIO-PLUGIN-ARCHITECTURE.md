@@ -976,9 +976,10 @@ Scenario execution:
 
 - [Quest Plugin Architecture](QUEST_PLUGIN_ARCHITECTURE.md)
 - [Storyline Composer](STORYLINE_COMPOSER.md)
-- [Compression as Seed Data](COMPRESSION_AS_SEED_DATA.md)
+- [Compression Gameplay Patterns](COMPRESSION-GAMEPLAY-PATTERNS.md)
 - [ABML/GOAP Expansion Opportunities](ABML_GOAP_EXPANSION_OPPORTUNITIES.md)
-- [Actor Data Access Patterns](ACTOR_DATA_ACCESS_PATTERNS.md)
+- [Actor Deep Dive](../plugins/ACTOR.md) - Data access pattern selection
+- [SERVICE-HIERARCHY.md](../reference/SERVICE-HIERARCHY.md) - Variable Provider Factory pattern
 
 ---
 

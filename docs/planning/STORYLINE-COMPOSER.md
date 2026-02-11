@@ -2,7 +2,7 @@
 
 > **Status**: Planning
 > **Priority**: High
-> **Related**: `docs/planning/COMPRESSION_AS_SEED_DATA.md`, `docs/planning/COMPRESSION_CHARTS.md`, `docs/planning/REGIONAL_WATCHERS_BEHAVIOR.md`, `docs/planning/COMPOSER-LAYER.md`, `docs/plugins/RESOURCE.md`
+> **Related**: `docs/planning/COMPRESSION-GAMEPLAY-PATTERNS.md`, `docs/planning/COMPRESSION-CHARTS.md`, `docs/planning/REGIONAL_WATCHERS_BEHAVIOR.md`, `docs/planning/COMPOSER-LAYER.md`, `docs/plugins/RESOURCE.md`
 > **SDK Precedent**: `sdks/music-storyteller/`, `sdks/music-theory/`, `docs/plugins/MUSIC.md`
 > **Services**: Proposed `lib-storyline` (or `lib-seed`), depends on `lib-resource`, `lib-character`, `lib-realm`, `lib-scene`, `lib-quest`, `lib-actor` clients as needed
 >
@@ -40,7 +40,7 @@ The gods decide when to call it and which plans to enact. The composer does not 
 
 ## Layering and Ownership
 
-`lib-storyline` fits into the **Application / Thin Orchestration** layer per ACTOR_DATA_ACCESS_PATTERNS.md:
+`lib-storyline` fits into the **Application / Thin Orchestration** layer per the service hierarchy:
 
 ```
 BEHAVIORAL INTELLIGENCE LAYER (Actor | Behavior | ABML | GOAP)
@@ -557,7 +557,7 @@ This keeps the composer deterministic and testable while the gods remain creativ
 
 ## Live Compression Inputs
 
-For living characters, the composer should accept **live snapshots** instead of destructive compression. This is the missing "live compression service" described in `COMPRESSION_AS_SEED_DATA.md` and can be a separate plugin or a capability inside `lib-resource`.
+For living characters, the composer should accept **live snapshots** instead of destructive compression. This is now implemented as lib-resource's ephemeral snapshot system (see `COMPRESSION-GAMEPLAY-PATTERNS.md` for the gameplay vision and `docs/plugins/RESOURCE.md` for the API).
 
 ### Live Snapshot Architecture
 
@@ -719,7 +719,7 @@ This enables natural relationship evolution into storylines:
 
 Encounter pruning (configurable limits per character and per pair) ensures that only the MOST memorable interactions survive compression. This is feature, not bug - the composer works with concentrated narrative essence, not noise.
 
-## Data Access Patterns (Per ACTOR_DATA_ACCESS_PATTERNS.md)
+## Data Access Patterns
 
 The storyline composer follows the established hybrid data access patterns:
 
@@ -1396,8 +1396,9 @@ The storyline composer doesn't invent stories. It discovers the stories that alr
 - `PROPPER-IMPLEMENTATION.md` - Propp generation algorithm details
 
 ### Architecture Documents
-- `docs/planning/ACTOR_DATA_ACCESS_PATTERNS.md` - Data access patterns for actors
-- `docs/planning/COMPRESSION_AS_SEED_DATA.md` - Archive structure as narrative seeds
+- `docs/plugins/ACTOR.md` - Actor deep dive (data access pattern selection)
+- `docs/reference/SERVICE-HIERARCHY.md` - Variable Provider Factory pattern
+- `docs/planning/COMPRESSION-GAMEPLAY-PATTERNS.md` - Archive structure as narrative seeds
 - `docs/planning/REGIONAL_WATCHERS_BEHAVIOR.md` - God actor patterns
 - `docs/plugins/RESOURCE.md` - Compression infrastructure
 - `docs/plugins/MUSIC.md` - SDK layering precedent

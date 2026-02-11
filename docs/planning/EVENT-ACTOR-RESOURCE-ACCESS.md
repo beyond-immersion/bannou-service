@@ -7,7 +7,8 @@
 > **Related Documents**:
 > - `~/.claude/plans/variable-providers-storyline-quest.md` - Variable Providers plan
 > - `docs/planning/REGIONAL_WATCHERS_BEHAVIOR.md` - Regional Watchers (Gods) design
-> - `docs/planning/ACTOR_DATA_ACCESS_PATTERNS.md` - Actor data access patterns
+> - `docs/plugins/ACTOR.md` - Actor deep dive (data access pattern selection)
+> - `docs/reference/SERVICE-HIERARCHY.md` - Variable Provider Factory pattern
 > - `docs/plugins/RESOURCE.md` - Resource plugin deep dive
 
 ---
@@ -90,9 +91,9 @@ Regional Watchers (Gods) are long-running Event Brain actors that:
        result: archives
    ```
 
-### From `ACTOR_DATA_ACCESS_PATTERNS.md`
+### Data Access Patterns (from ACTOR.md and SERVICE-HIERARCHY.md)
 
-Establishes the hybrid data access approach:
+The established hybrid data access approach:
 
 | Data Type | Pattern | Rationale |
 |-----------|---------|-----------|
@@ -1200,8 +1201,9 @@ Issue #148 tracks extending GOAP WorldState with external service data (currency
 ### Architecture References
 - [Variable Providers Plan](~/.claude/plans/variable-providers-storyline-quest.md)
 - [Regional Watchers Design](REGIONAL_WATCHERS_BEHAVIOR.md)
-- [Actor Data Access Patterns](ACTOR_DATA_ACCESS_PATTERNS.md)
-- [Resource Plugin Deep Dive](/home/lysander/repos/bannou/docs/plugins/RESOURCE.md)
+- [Actor Deep Dive](../plugins/ACTOR.md) - Data access pattern selection
+- [SERVICE-HIERARCHY.md](../reference/SERVICE-HIERARCHY.md) - Variable Provider Factory pattern
+- [Resource Plugin Deep Dive](../plugins/RESOURCE.md)
 
 ### TENET References
 - [TENETS.md](/home/lysander/repos/bannou/docs/reference/TENETS.md)

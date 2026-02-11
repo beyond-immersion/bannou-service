@@ -1,7 +1,7 @@
-# Compression as Seed Data: Visual Guide
+# Compression Gameplay Patterns: Visual Guide
 
 > Quick reference charts for explaining what character compression enables.
-> See `COMPRESSION_AS_SEED_DATA.md` for full technical details.
+> See `COMPRESSION-GAMEPLAY-PATTERNS.md` for full design details.
 
 ---
 
@@ -415,4 +415,4 @@
 
 ---
 
-*Charts for `docs/planning/COMPRESSION_AS_SEED_DATA.md`*
+*Charts for `docs/planning/COMPRESSION-GAMEPLAY-PATTERNS.md`*
