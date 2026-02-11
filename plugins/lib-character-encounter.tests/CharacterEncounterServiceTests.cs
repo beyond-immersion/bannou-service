@@ -34,7 +34,6 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
     private readonly Mock<IStateStore<EncounterPerspectiveIndexData>> _mockEncounterPerspectiveIndexStore;
     private readonly Mock<IMessageBus> _mockMessageBus;
     private readonly Mock<ILogger<CharacterEncounterService>> _mockLogger;
-    private readonly Mock<IEventConsumer> _mockEventConsumer;
     private readonly Mock<ICharacterClient> _mockCharacterClient;
     private readonly Mock<IEncounterDataCache> _mockEncounterDataCache;
 
@@ -55,7 +54,6 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
         _mockEncounterPerspectiveIndexStore = new Mock<IStateStore<EncounterPerspectiveIndexData>>();
         _mockMessageBus = new Mock<IMessageBus>();
         _mockLogger = new Mock<ILogger<CharacterEncounterService>>();
-        _mockEventConsumer = new Mock<IEventConsumer>();
         _mockCharacterClient = new Mock<ICharacterClient>();
         _mockEncounterDataCache = new Mock<IEncounterDataCache>();
 
@@ -131,7 +129,6 @@ public class CharacterEncounterServiceTests : ServiceTestBase<CharacterEncounter
             _mockStateStoreFactory.Object,
             _mockLogger.Object,
             Configuration,
-            _mockEventConsumer.Object,
             _mockCharacterClient.Object,
             _mockEncounterDataCache.Object);
     }

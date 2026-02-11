@@ -19,7 +19,6 @@ Character encounter tracking service (L4 GameFeatures) for memorable interaction
 |------------|-------|
 | lib-state (`IStateStoreFactory`) | MySQL persistence for encounters, perspectives, and all indexes |
 | lib-messaging (`IMessageBus`) | Publishing encounter lifecycle events; error event publishing |
-| lib-messaging (`IEventConsumer`) | Consuming `character.deleted` events for cleanup |
 | lib-character (`ICharacterClient`) | Validating participant character IDs exist on RecordEncounter |
 | lib-resource (`IResourceClient`) | Registering cleanup and compression callbacks on startup |
 
@@ -72,9 +71,7 @@ Character encounter tracking service (L4 GameFeatures) for memorable interaction
 
 ### Consumed Events
 
-| Topic | Event Type | Handler |
-|-------|-----------|---------|
-| `character.deleted` | `CharacterDeletedEvent` | `OnCharacterDeletedAsync` - deletes all encounters and perspectives involving the deleted character |
+None. Character deletion cleanup is handled via lib-resource cleanup callbacks (registered at startup via `x-references` / `CharacterEncounterReferenceTracking`), not event subscriptions.
 
 ---
 
@@ -116,7 +113,6 @@ Character encounter tracking service (L4 GameFeatures) for memorable interaction
 | `CharacterEncounterServiceConfiguration` | Singleton | All 22 config properties |
 | `IStateStoreFactory` | Singleton | MySQL state store access for all data types |
 | `IMessageBus` | Scoped | Event publishing and error events |
-| `IEventConsumer` | Scoped | Event subscription registration |
 | `ICharacterClient` | Scoped | Cross-service character validation |
 | `IResourceClient` | *(plugin startup)* | Cleanup/compression callback registration via generated `CharacterEncounterCompressionCallbacks` and `CharacterEncounterReferenceTracking` (not injected into service constructor) |
 | `IEncounterDataCache` | Singleton | In-memory cache for encounter queries (configurable TTL via `EncounterCacheTtlMinutes`), used by Actor's EncountersProvider; injected into service for cache invalidation on writes |
@@ -308,7 +304,7 @@ Encounter Lifecycle & Pruning
   Deletion flows:
     DeleteEncounter:       1 encounter + N perspectives + indexes
     DeleteByCharacter:     All encounters involving character + all their perspectives
-    character.deleted:     Triggers DeleteByCharacter via event consumer
+    lib-resource cleanup:  Character deletion triggers DeleteByCharacter via cleanup callback
 
 
 Index Architecture
@@ -415,3 +411,4 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **Bug #3 - EncounterDataCache never explicitly invalidated**: Injected `IEncounterDataCache` into service constructor and added `Invalidate()` calls in all write methods (2026-02-09). Actor behavior now sees fresh data immediately after writes.
 - **Design #1 - No pagination for GetAllPerspectiveIdsAsync**: Refactored `DecayMemoriesAsync` to iterate per-character (2026-02-09). Memory bounded to one character's perspectives at a time. Removed dead `GetAllPerspectiveIdsAsync` method.
 - **Design #2 - Pair index combinatorial explosion**: Added `MaxParticipantsPerEncounter` config property (default: 20) and server-side validation (2026-02-09). O(N^2) pair index creation now bounded by configurable limit.
+- **Issue #379 - Migrate cleanup from character.deleted event to lib-resource**: Removed redundant `character.deleted` event subscription (2026-02-11). Cleanup now exclusively via lib-resource cleanup callbacks registered at startup. Removed `IEventConsumer` dependency and `CharacterEncounterServiceEvents.cs`.

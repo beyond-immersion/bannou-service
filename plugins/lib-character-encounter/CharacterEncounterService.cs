@@ -72,7 +72,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         IStateStoreFactory stateStoreFactory,
         ILogger<CharacterEncounterService> logger,
         CharacterEncounterServiceConfiguration configuration,
-        IEventConsumer eventConsumer,
         ICharacterClient characterClient,
         IEncounterDataCache encounterDataCache)
     {
@@ -82,8 +81,6 @@ public partial class CharacterEncounterService : ICharacterEncounterService
         _configuration = configuration;
         _characterClient = characterClient;
         _encounterDataCache = encounterDataCache;
-
-        ((IBannouService)this).RegisterEventConsumers(eventConsumer);
     }
 
     // ============================================================================

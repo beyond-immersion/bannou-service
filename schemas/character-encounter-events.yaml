@@ -11,11 +11,6 @@ info:
     3. Only then proceed with edits
     Edits without stating the applicable rule are FORBIDDEN.
   version: 1.0.0
-  x-event-subscriptions:
-    - topic: character.deleted
-      event: CharacterDeletedEvent
-      handler: OnCharacterDeleted
-      description: Clean up all encounter data when a character is deleted
   x-event-publications:
     - topic: encounter.recorded
       event: EncounterRecordedEvent
@@ -292,9 +287,3 @@ components:
           nullable: true
           description: Character ID that triggered the cleanup (if applicable)
 
-    # ==========================================================================
-    # Subscribed Events (from other services)
-    # ==========================================================================
-    # NOTE: CharacterDeletedEvent is defined in character-events.yaml via x-lifecycle
-    # and generated to CharacterLifecycleEvents.cs. Do NOT redefine here.
-    # The x-event-subscriptions above references it by name only.
