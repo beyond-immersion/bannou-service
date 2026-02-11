@@ -73,6 +73,37 @@ The client never needs to know endpoint URLs, paths, or versioning. It discovers
 
 ---
 
+## The Self-Describing Protocol (Meta Endpoints)
+
+REST APIs have Swagger/OpenAPI documentation that developers read before writing code. The client is built against a known contract. If the contract changes, the client breaks until a developer updates it.
+
+Bannou's protocol is **self-describing at runtime**. Every service endpoint has four auto-generated meta endpoints (produced by the code generation pipeline alongside the controller itself):
+
+- `{endpoint}/meta/info` -- operation metadata (service name, method, description, tags)
+- `{endpoint}/meta/request-schema` -- full JSON Schema for the request body
+- `{endpoint}/meta/response-schema` -- full JSON Schema for the response body
+- `{endpoint}/meta/schema` -- all three combined
+
+Clients access these through the same binary protocol using the **Meta flag** (0x40) in the message header. When a client sends a message with the Meta flag set, Connect intercepts it and routes to the meta endpoint instead of executing the operation. The Channel field (2 bytes) specifies which meta type to return (0=info, 1=request-schema, 2=response-schema, 3=full).
+
+This creates a two-layer discovery system:
+
+1. **Capability manifest** answers: *"What endpoints exist and what are their GUIDs?"*
+2. **Meta requests** answer: *"What does this specific endpoint accept and return?"*
+
+Together, a client SDK can be **fully dynamic**. It connects, receives its capability manifest, and can then query the schema for any available endpoint -- all through the same WebSocket connection, all using the same binary routing protocol. No hardcoded endpoint paths. No hardcoded request/response schemas. No out-of-band documentation lookups.
+
+The practical implications:
+
+- **Client SDKs don't need to know API versions at compile time.** They discover capabilities and schemas at connection time. A server-side schema change is reflected in the next meta request.
+- **Auto-generated client UI.** A debug console or admin tool can render forms for any endpoint by fetching its request schema dynamically.
+- **Client-side validation without hardcoded rules.** The request schema provides validation constraints (required fields, formats, enums) that the client can enforce locally before sending.
+- **Game engine integration.** Unity/Unreal/Godot SDKs can expose available endpoints as inspectable objects without manual bindings -- the meta system provides the type information at runtime.
+
+In a REST architecture, the equivalent would be fetching the OpenAPI spec, parsing it client-side, and building dynamic dispatch from it. Some API gateways support this. But none deliver it through the same transport as the API calls themselves, with per-session security, at binary protocol speeds. The meta system is not bolted on -- it's a native feature of the message routing protocol.
+
+---
+
 ## The Reconnection Window
 
 WebSocket connections drop. Networks are unreliable. The Connect service handles this with a reconnection window:
@@ -90,9 +121,18 @@ This creates a seamless experience for the player. In a REST world, "reconnectio
 
 The honest counter-argument is: REST is simpler, better understood, has better tooling, and works fine for most applications. Swagger, Postman, curl, browser DevTools -- the entire HTTP ecosystem is built for request-response. WebSocket tooling is comparatively primitive. Debugging a binary-header protocol is harder than debugging JSON over HTTP.
 
-Bannou acknowledges this by keeping HTTP as a first-class transport for service-to-service communication (via lib-mesh) and for specific browser-facing endpoints (Website service uses traditional REST, Auth uses GET for OAuth callbacks). The WebSocket gateway is specifically for the client-to-server edge, where the combination of persistent connections, bidirectional communication, zero-copy routing, and real-time capability updates provides capabilities that REST fundamentally cannot.
+The meta endpoint system partially addresses the tooling gap -- clients can discover and introspect APIs at runtime through the same protocol they use to call them, which is arguably better than REST's "read the docs, then write code" workflow. But the debugging story is still harder. Binary headers are not human-readable in a packet capture the way HTTP headers are.
 
-The architecture is not "WebSocket instead of REST." It is "WebSocket for the client edge where bidirectional persistent connections are load-bearing, HTTP for everything else."
+Bannou acknowledges this by using purpose-built protocols for everything that *isn't* control-plane messaging:
+
+- **Binary assets (textures, models, audio, behavior documents)**: The Asset service (L3) issues pre-signed URLs. Clients upload/download directly to MinIO/S3 storage -- raw binary data never touches the WebSocket connection. Scene-composer and scene-loader SDKs use this for dynamic scene loading. The Behavior service stores compiled ABML bytecode through it. Save-load uses it for durable storage. This is how any large file reaches the game engine: the WebSocket delivers a pre-signed URL, the client fetches the file over plain HTTPS from the CDN. The WebSocket protocol doesn't need binary streaming because the Asset service handles it.
+- **Voice communication**: The Voice service (L3) coordinates WebRTC connections through Kamailio (SIP proxy) and RTPEngine (media relay). Voice data flows over an entirely separate connection -- SDP exchange is negotiated through the WebSocket, but the actual audio stream is peer-to-peer or SFU-routed, never through Connect. The WebSocket doesn't need audio streaming because a dedicated voice infrastructure handles it.
+- **Service-to-service communication**: lib-mesh uses direct HTTP invocation internally. Services call each other via generated clients over standard HTTP within the cluster.
+- **Browser-facing endpoints**: Website uses traditional REST for SEO and bookmarkability. Auth uses GET for OAuth callbacks. Every service exposes meta endpoints via standard HTTP GET, meaning Swagger UI and Postman still work for direct service testing during development.
+
+The WebSocket gateway is specifically for the client-to-server **control plane** -- API calls, server-push events, capability updates, session shortcuts, permission changes. Everything that's small, frequent, latency-sensitive, and bidirectional. For everything else -- large binary transfers, real-time voice, browser pages -- purpose-built protocols handle it better than WebSocket ever could.
+
+The architecture is not "WebSocket instead of everything." It is "WebSocket for the control plane, pre-signed URLs for the data plane, WebRTC for the media plane, HTTP for everything else."
 
 ---
 
@@ -104,4 +144,4 @@ The architecture is not "WebSocket instead of REST." It is "WebSocket for the cl
 
 **Server-Sent Events (SSE)**: Unidirectional (server-to-client only). The client would still need a separate mechanism for sending requests. SSE over HTTP/2 is viable, but you end up building a bidirectional protocol on top of two unidirectional channels -- which is what WebSocket already is, natively.
 
-The Connect gateway exists because the specific combination of requirements -- binary routing, client-salted security, bidirectional persistent connections, real-time capability manifests, and zero-copy message forwarding -- is not well-served by any off-the-shelf transport. The protocol is custom because the requirements are custom.
+The Connect gateway exists because the specific combination of requirements -- binary routing, client-salted security, bidirectional persistent connections, real-time capability manifests, runtime schema introspection, and zero-copy message forwarding -- is not well-served by any off-the-shelf transport. The protocol is custom because the requirements are custom. And it stays focused on what it's good at: small, frequent, latency-sensitive control messages. Binary assets go through pre-signed URLs. Voice goes through WebRTC. The WebSocket never tries to be everything -- it just does its job exceptionally well.

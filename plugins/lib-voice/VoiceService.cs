@@ -19,7 +19,7 @@ namespace BeyondImmersion.BannouService.Voice;
 /// Implementation of the Voice service.
 /// Manages P2P and scaled tier voice room coordination.
 /// </summary>
-[BannouService("voice", typeof(IVoiceService), lifetime: ServiceLifetime.Scoped)]
+[BannouService("voice", typeof(IVoiceService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.AppFeatures)]
 public partial class VoiceService : IVoiceService
 {
     private readonly IStateStoreFactory _stateStoreFactory;

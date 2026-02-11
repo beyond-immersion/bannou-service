@@ -52,15 +52,13 @@ The client learns its session-specific GUIDs through the **capability manifest**
   "capabilities": [
     {
       "name": "account/get",
-      "guid": "f9e8d7c6-b5a4-3210-fedc-ba0987654321",
-      "method": "POST",
-      "requires_auth": true
+      "guid": "f9e8d7c6-b5a4-3210-fedc-ba0987654321"
+      //, ...
     },
     {
       "name": "character/create",
-      "guid": "aabbccdd-eeff-0011-2233-445566778899",
-      "method": "POST",
-      "requires_auth": true
+      "guid": "aabbccdd-eeff-0011-2233-445566778899"
+      //, ...
     }
   ]
 }
@@ -101,8 +99,9 @@ Client-salted GUIDs make debugging harder. You cannot look at a captured message
 
 Bannou accepts this trade-off because:
 
-- **Development tooling compensates.** Swagger UI is available for HTTP-based testing. The edge-tester project provides structured WebSocket testing. The binary protocol is documented.
+- **Development tooling compensates.** Swagger UI is available for HTTP-based testing. The edge-tester project provides structured WebSocket testing. The binary protocol is documented. Every service also exposes its meta endpoints via standard HTTP GET, so direct service testing during development works with conventional tools.
+- **Meta endpoints work through the same protocol.** Clients can request runtime schema introspection for any endpoint by sending a message with the Meta flag (0x40) set and the endpoint's salted GUID. Connect intercepts the meta request and returns the endpoint's JSON schema -- request format, response format, operation metadata -- through the same binary protocol. This means even with opaque GUIDs, a client SDK can dynamically discover not just *what* endpoints exist (via the capability manifest) but *what they accept and return* (via meta requests). The GUIDs are opaque for security, but the protocol is fully self-describing for functionality.
 - **Security is load-bearing.** In a system where 100,000+ concurrent connections share the same infrastructure, cross-session message injection is a real threat, not a theoretical concern.
-- **The manifest is self-documenting.** Clients do not need external API documentation to discover available endpoints. The manifest tells them everything they need to know, and it updates in real time.
+- **The manifest is self-documenting.** Clients do not need external API documentation to discover available endpoints. The manifest tells them what exists, meta requests tell them how to call it, and both update in real time.
 
 The debugging inconvenience is bounded to development time. The security benefit applies to every message in production, permanently.
