@@ -672,12 +672,14 @@ public class GardenerVoidOrchestratorWorker : BackgroundService
         if (drift.TotalDistance <= 0)
             return TriggerMode.Forced;
 
-        var hesitationRatio = drift.HesitationCount / MathF.Max(drift.TotalDistance / 10f, 1f);
+        var hesitationRatio = drift.HesitationCount /
+            MathF.Max(drift.TotalDistance / (float)_configuration.HesitationRatioNormalizationFactor, 1f);
 
         if (hesitationRatio > (float)_configuration.HesitantHesitationThreshold)
             return TriggerMode.Prompted;
 
-        if (drift.TotalDistance > (float)_configuration.ExplorationDistanceThreshold && hesitationRatio < 0.2f)
+        if (drift.TotalDistance > (float)_configuration.ExplorationDistanceThreshold
+            && hesitationRatio < (float)_configuration.ProximityTriggerMaxHesitationRatio)
             return TriggerMode.Proximity;
 
         return TriggerMode.Interaction;

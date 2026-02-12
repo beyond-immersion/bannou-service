@@ -19,8 +19,6 @@ namespace BeyondImmersion.BannouService.Gardener;
 /// </remarks>
 public class GardenerServicePlugin : StandardServicePlugin<IGardenerService>
 {
-    private IServiceProvider? _serviceProvider;
-
     /// <inheritdoc />
     public override string PluginName => "gardener";
 
@@ -48,13 +46,6 @@ public class GardenerServicePlugin : StandardServicePlugin<IGardenerService>
         services.AddHostedService<GardenerScenarioLifecycleWorker>();
     }
 
-    /// <inheritdoc />
-    public override void Configure(IServiceProvider serviceProvider)
-    {
-        base.Configure(serviceProvider);
-        _serviceProvider = serviceProvider;
-    }
-
     /// <summary>
     /// Running phase - registers the guardian seed type with the Seed service.
     /// ISeedClient is L2 (hard dependency per SERVICE HIERARCHY).
@@ -63,7 +54,7 @@ public class GardenerServicePlugin : StandardServicePlugin<IGardenerService>
     {
         await base.OnRunningAsync();
 
-        var serviceProvider = _serviceProvider
+        var serviceProvider = ServiceProvider
             ?? throw new InvalidOperationException("ServiceProvider not available during OnRunningAsync");
 
         var seedClient = serviceProvider.GetRequiredService<ISeedClient>();

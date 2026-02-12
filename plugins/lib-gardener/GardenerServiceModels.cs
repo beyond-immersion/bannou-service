@@ -434,7 +434,7 @@ internal class ScenarioContentModel
     /// <summary>
     /// ABML behavior document ID for NPC orchestration.
     /// </summary>
-    public string? BehaviorDocumentId { get; set; }
+    public Guid? BehaviorDocumentId { get; set; }
 
     /// <summary>
     /// Scene document ID for environment composition.
