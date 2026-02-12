@@ -34,6 +34,7 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<PoolNodeDrainingEvent>("actor.pool-node.draining");
         EventSubscriptionRegistry.Register<ActorStatusChangedEvent>("actor.instance.status-changed");
         EventSubscriptionRegistry.Register<ActorCompletedEvent>("actor.instance.completed");
+        EventSubscriptionRegistry.Register<ActorTemplateUpdatedEvent>("actor-template.updated");
 
         // From analytics-events.yaml
         EventSubscriptionRegistry.Register<GameSessionActionPerformedEvent>("game-session.action.performed");

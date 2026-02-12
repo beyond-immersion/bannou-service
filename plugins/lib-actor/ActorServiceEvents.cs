@@ -43,6 +43,10 @@ public partial class ActorService
         eventConsumer.RegisterHandler<IActorService, ActorCompletedEvent>(
             "actor.instance.completed",
             async (svc, evt) => await ((ActorService)svc).HandleActorCompletedAsync(evt));
+
+        eventConsumer.RegisterHandler<IActorService, ActorTemplateUpdatedEvent>(
+            "actor-template.updated",
+            async (svc, evt) => await ((ActorService)svc).HandleActorTemplateUpdatedAsync(evt));
     }
 
     /// <summary>
@@ -242,6 +246,65 @@ public partial class ActorService
                 ex.GetType().Name,
                 ex.Message,
                 details: new { evt.ActorId, evt.ExitReason, evt.LoopIterations },
+                stack: ex.StackTrace);
+        }
+    }
+
+    #endregion
+
+    #region Template Update Event Handlers
+
+    /// <summary>
+    /// Handles actor-template.updated events.
+    /// When a template's BehaviorRef changes, invalidates the behavior document cache
+    /// and signals running actors on this node to reload on their next tick.
+    /// </summary>
+    /// <param name="evt">The template updated event.</param>
+    public async Task HandleActorTemplateUpdatedAsync(ActorTemplateUpdatedEvent evt)
+    {
+        // Only act on BehaviorRef changes — other field updates don't affect cached behaviors
+        if (!evt.ChangedFields.Contains("behaviorRef"))
+        {
+            _logger.LogDebug(
+                "Template {TemplateId} updated but BehaviorRef unchanged, skipping cache invalidation",
+                evt.TemplateId);
+            return;
+        }
+
+        _logger.LogInformation(
+            "Template {TemplateId} BehaviorRef changed to {BehaviorRef}, invalidating behavior caches",
+            evt.TemplateId, evt.BehaviorRef);
+
+        try
+        {
+            // Invalidate provider chain caches so next load fetches the updated behavior
+            _behaviorLoader.Invalidate(evt.BehaviorRef);
+
+            // Signal running actors on this node that use this template to reload
+            var affectedRunners = _actorRegistry.GetByTemplateId(evt.TemplateId).ToList();
+            foreach (var runner in affectedRunners)
+            {
+                runner.InvalidateCachedBehavior();
+            }
+
+            if (affectedRunners.Count > 0)
+            {
+                _logger.LogInformation(
+                    "Invalidated cached behavior for {Count} running actors using template {TemplateId}",
+                    affectedRunners.Count, evt.TemplateId);
+            }
+
+            await Task.CompletedTask;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error invalidating behavior caches for template {TemplateId}", evt.TemplateId);
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "HandleActorTemplateUpdated",
+                ex.GetType().Name,
+                ex.Message,
+                details: new { evt.TemplateId, evt.BehaviorRef },
                 stack: ex.StackTrace);
         }
     }

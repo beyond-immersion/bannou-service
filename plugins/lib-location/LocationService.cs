@@ -558,6 +558,79 @@ public partial class LocationService : ILocationService
         });
     }
 
+    /// <inheritdoc />
+    public async Task<(StatusCodes, LocationListResponse?)> QueryLocationsByPositionAsync(QueryLocationsByPositionRequest body, CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("Querying locations by position in realm {RealmId}: ({X}, {Y}, {Z})",
+            body.RealmId, body.Position.X, body.Position.Y, body.Position.Z);
+
+        // Load all location IDs from realm index
+        var realmIndexKey = BuildRealmIndexKey(body.RealmId);
+        var locationIds = await _stateStoreFactory.GetStore<List<Guid>>(StateStoreDefinitions.Location)
+            .GetAsync(realmIndexKey, cancellationToken) ?? new List<Guid>();
+
+        if (locationIds.Count == 0)
+        {
+            return (StatusCodes.OK, new LocationListResponse
+            {
+                Locations = new List<LocationResponse>(),
+                TotalCount = 0,
+                Page = body.Page,
+                PageSize = body.PageSize,
+                HasNextPage = false,
+                HasPreviousPage = false
+            });
+        }
+
+        // Bulk load location models
+        var store = _stateStoreFactory.GetStore<LocationModel>(StateStoreDefinitions.Location);
+        var matchingModels = new List<LocationModel>();
+
+        foreach (var locationId in locationIds)
+        {
+            var locationKey = BuildLocationKey(locationId);
+            var model = await GetLocationWithCacheAsync(locationKey, cancellationToken);
+
+            if (model is null) continue;
+
+            // Filter: must have bounds and boundsPrecision != none
+            if (model.Bounds is null || model.BoundsPrecision == BoundsPrecision.None)
+                continue;
+
+            // Filter: optionally by maxDepth
+            if (body.MaxDepth.HasValue && model.Depth > body.MaxDepth.Value)
+                continue;
+
+            // AABB containment check
+            if (body.Position.X >= model.Bounds.MinX && body.Position.X <= model.Bounds.MaxX &&
+                body.Position.Y >= model.Bounds.MinY && body.Position.Y <= model.Bounds.MaxY &&
+                body.Position.Z >= model.Bounds.MinZ && body.Position.Z <= model.Bounds.MaxZ)
+            {
+                matchingModels.Add(model);
+            }
+        }
+
+        // Sort by depth descending (most specific first)
+        matchingModels.Sort((a, b) => b.Depth.CompareTo(a.Depth));
+
+        // Paginate
+        var totalCount = matchingModels.Count;
+        var page = body.Page;
+        var pageSize = body.PageSize;
+        var skip = (page - 1) * pageSize;
+        var pagedResults = matchingModels.Skip(skip).Take(pageSize).Select(MapToResponse).ToList();
+
+        return (StatusCodes.OK, new LocationListResponse
+        {
+            Locations = pagedResults,
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize,
+            HasNextPage = skip + pageSize < totalCount,
+            HasPreviousPage = page > 1
+        });
+    }
+
     #endregion
 
     #region Write Operations
@@ -624,6 +697,10 @@ public partial class LocationService : ILocationService
             IsDeprecated = false,
             DeprecatedAt = null,
             DeprecationReason = null,
+            Bounds = body.Bounds,
+            BoundsPrecision = body.BoundsPrecision ?? BoundsPrecision.None,
+            CoordinateMode = body.CoordinateMode ?? CoordinateMode.Inherit,
+            LocalOrigin = body.LocalOrigin,
             Metadata = body.Metadata,
             CreatedAt = now,
             UpdatedAt = now
@@ -691,6 +768,30 @@ public partial class LocationService : ILocationService
         {
             model.LocationType = body.LocationType.Value;
             changedFields.Add("locationType");
+        }
+
+        if (body.Bounds != null)
+        {
+            model.Bounds = body.Bounds;
+            changedFields.Add("bounds");
+        }
+
+        if (body.BoundsPrecision.HasValue && body.BoundsPrecision.Value != model.BoundsPrecision)
+        {
+            model.BoundsPrecision = body.BoundsPrecision.Value;
+            changedFields.Add("boundsPrecision");
+        }
+
+        if (body.CoordinateMode.HasValue && body.CoordinateMode.Value != model.CoordinateMode)
+        {
+            model.CoordinateMode = body.CoordinateMode.Value;
+            changedFields.Add("coordinateMode");
+        }
+
+        if (body.LocalOrigin != null)
+        {
+            model.LocalOrigin = body.LocalOrigin;
+            changedFields.Add("localOrigin");
         }
 
         if (body.Metadata != null)
@@ -1098,6 +1199,10 @@ public partial class LocationService : ILocationService
                             existingModel.Name = seedLocation.Name;
                             if (seedLocation.Description != null) existingModel.Description = seedLocation.Description;
                             existingModel.LocationType = seedLocation.LocationType;
+                            if (seedLocation.Bounds != null) existingModel.Bounds = seedLocation.Bounds;
+                            if (seedLocation.BoundsPrecision.HasValue) existingModel.BoundsPrecision = seedLocation.BoundsPrecision.Value;
+                            if (seedLocation.CoordinateMode.HasValue) existingModel.CoordinateMode = seedLocation.CoordinateMode.Value;
+                            if (seedLocation.LocalOrigin != null) existingModel.LocalOrigin = seedLocation.LocalOrigin;
                             if (seedLocation.Metadata != null) existingModel.Metadata = seedLocation.Metadata;
                             existingModel.UpdatedAt = DateTimeOffset.UtcNow;
 
@@ -1123,6 +1228,10 @@ public partial class LocationService : ILocationService
                         RealmId = realmId,
                         LocationType = seedLocation.LocationType,
                         ParentLocationId = null, // Set later in second pass
+                        Bounds = seedLocation.Bounds,
+                        BoundsPrecision = seedLocation.BoundsPrecision,
+                        CoordinateMode = seedLocation.CoordinateMode,
+                        LocalOrigin = seedLocation.LocalOrigin,
                         Metadata = seedLocation.Metadata
                     };
 
@@ -1580,6 +1689,10 @@ public partial class LocationService : ILocationService
             IsDeprecated = model.IsDeprecated,
             DeprecatedAt = model.DeprecatedAt,
             DeprecationReason = model.DeprecationReason,
+            Bounds = model.Bounds,
+            BoundsPrecision = model.BoundsPrecision,
+            CoordinateMode = model.CoordinateMode,
+            LocalOrigin = model.LocalOrigin,
             Metadata = model.Metadata,
             CreatedAt = model.CreatedAt,
             UpdatedAt = model.UpdatedAt
@@ -1603,6 +1716,10 @@ public partial class LocationService : ILocationService
             IsDeprecated = model.IsDeprecated,
             DeprecatedAt = model.DeprecatedAt,
             DeprecationReason = model.DeprecationReason,
+            Bounds = model.Bounds,
+            BoundsPrecision = model.BoundsPrecision,
+            CoordinateMode = model.CoordinateMode,
+            LocalOrigin = model.LocalOrigin,
             Metadata = model.Metadata,
             CreatedAt = model.CreatedAt,
             UpdatedAt = model.UpdatedAt
@@ -1628,6 +1745,10 @@ public partial class LocationService : ILocationService
             IsDeprecated = model.IsDeprecated,
             DeprecatedAt = model.DeprecatedAt,
             DeprecationReason = model.DeprecationReason,
+            Bounds = model.Bounds,
+            BoundsPrecision = model.BoundsPrecision,
+            CoordinateMode = model.CoordinateMode,
+            LocalOrigin = model.LocalOrigin,
             Metadata = model.Metadata,
             CreatedAt = model.CreatedAt,
             UpdatedAt = model.UpdatedAt,
@@ -1654,6 +1775,10 @@ public partial class LocationService : ILocationService
             IsDeprecated = model.IsDeprecated,
             DeprecatedAt = model.DeprecatedAt,
             DeprecationReason = model.DeprecationReason,
+            Bounds = model.Bounds,
+            BoundsPrecision = model.BoundsPrecision,
+            CoordinateMode = model.CoordinateMode,
+            LocalOrigin = model.LocalOrigin,
             Metadata = model.Metadata
         };
 
@@ -1726,6 +1851,10 @@ public partial class LocationService : ILocationService
         public bool IsDeprecated { get; set; }
         public DateTimeOffset? DeprecatedAt { get; set; }
         public string? DeprecationReason { get; set; }
+        public BoundingBox3D? Bounds { get; set; }
+        public BoundsPrecision BoundsPrecision { get; set; } = BoundsPrecision.None;
+        public CoordinateMode CoordinateMode { get; set; } = CoordinateMode.Inherit;
+        public Position3D? LocalOrigin { get; set; }
         public object? Metadata { get; set; }
         public DateTimeOffset CreatedAt { get; set; }
         public DateTimeOffset UpdatedAt { get; set; }

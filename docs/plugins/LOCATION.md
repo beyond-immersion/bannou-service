@@ -103,7 +103,7 @@ Service lifetime is **Scoped** (per-request). No background services.
 
 ## API Endpoints (Implementation Notes)
 
-### Read Operations (10 endpoints)
+### Read Operations (11 endpoints)
 
 - **GetLocation** (`/location/get`): Direct lookup by location ID. Returns full location data with parent reference and depth.
 - **GetLocationByCode** (`/location/get-by-code`): Code index lookup using `{realmId}:{CODE}` composite key. Codes are unique per realm.
@@ -115,18 +115,19 @@ Service lifetime is **Scoped** (per-request). No background services.
 - **GetLocationDescendants** (`/location/get-descendants`): Recursive traversal via `CollectDescendantsAsync`. Safety limit of 20 depth levels. Optional `maxDepth` parameter.
 - **ValidateTerritory** (`/location/validate-territory`): Territory constraint checking designed for Contract service's clause handler system. Builds location + ancestor hierarchy set, checks for overlap with territory location IDs. Supports two modes: `exclusive` (location must NOT overlap territory) and `inclusive` (location MUST be within territory). Defaults to `Exclusive` mode when `TerritoryMode` is not specified. The `territory_constraint` clause type is registered with Contract during plugin startup via `LocationServicePlugin.OnRunningAsync()`.
 - **LocationExists** (`/location/exists`): Quick existence check. Returns `Exists` boolean and `IsActive` (not deprecated) flag.
+- **QueryLocationsByPosition** (`/location/query/by-position`): Spatial query. Given a Position3D and realmId, returns all locations whose BoundingBox3D bounds contain that position. Only considers locations with non-null bounds and `boundsPrecision != none`. Results ordered by depth descending (most specific first). Supports optional `maxDepth` filter and pagination. Loads all realm locations, filters in-memory via AABB containment check.
 
 ### Write Operations (9 endpoints)
 
-- **CreateLocation** (`/location/create`): Validates realm exists via `IRealmClient`. Normalizes code to uppercase. Checks code uniqueness within realm. If parent specified: validates parent exists, checks same realm, sets depth=parent.depth+1. Updates all indexes (code, realm, parent/root). Publishes `location.created`.
-- **UpdateLocation** (`/location/update`): Partial update for name, description, locationType, metadata. Tracks `changedFields`. Does not allow parent or code changes (use separate endpoints). Publishes `location.updated`.
+- **CreateLocation** (`/location/create`): Validates realm exists via `IRealmClient`. Normalizes code to uppercase. Checks code uniqueness within realm. If parent specified: validates parent exists, checks same realm, sets depth=parent.depth+1. Accepts optional spatial fields (bounds, boundsPrecision, coordinateMode, localOrigin) — defaults to `BoundsPrecision.None` and `CoordinateMode.Inherit`. Updates all indexes (code, realm, parent/root). Publishes `location.created`.
+- **UpdateLocation** (`/location/update`): Partial update for name, description, locationType, bounds, boundsPrecision, coordinateMode, localOrigin, metadata. Tracks `changedFields`. Does not allow parent or code changes (use separate endpoints). Publishes `location.updated`.
 - **SetLocationParent** (`/location/set-parent`): Circular reference detection via `IsDescendantOfAsync` (max 20 depth). Validates new parent is in same realm. Updates old parent's child index, new parent's child index, root-locations index. Cascading depth update for all descendants via `UpdateDescendantDepthsAsync`. Publishes update event.
 - **RemoveLocationParent** (`/location/remove-parent`): Makes location a root (depth=0). Updates parent index and root-locations index. Cascading depth update for descendants.
 - **DeleteLocation** (`/location/delete`): Requires no child locations (Conflict if children exist). Checks external references via `IResourceClient` - if references exist, executes cleanup callbacks before proceeding (returns Conflict if cleanup fails). Removes from all indexes. Publishes `location.deleted`. Does NOT require deprecation first (unlike species/relationship types).
 - **DeprecateLocation** (`/location/deprecate`): Sets `IsDeprecated=true` with timestamp and reason. Location remains queryable. Publishes update event.
 - **UndeprecateLocation** (`/location/undeprecate`): Restores deprecated location. Returns BadRequest if not deprecated.
 - **TransferLocationToRealm** (`/location/transfer-realm`): Moves a location to a different realm. Validates target realm exists and is active via `IRealmClient`. Checks code uniqueness in target realm (returns 409 Conflict on collision). Removes from all source realm indexes (code, realm, parent, root), clears parent (becomes root, depth 0), saves with new realm ID, adds to target realm indexes. Idempotent (no-op if already in target realm). Publishes `location.updated` with changed fields: `realmId`, `parentLocationId`, `depth`. Invalidates cache. Used by Realm merge for tree migration — caller is responsible for re-parenting descendants after transfer.
-- **SeedLocations** (`/location/seed`): Two-pass algorithm. Pass 1: Creates all locations without parent relationships, resolves realm codes via `IRealmClient`. Pass 2: Sets parent relationships by resolving parent codes from pass 1 results. Supports `updateExisting`. Returns created/updated/skipped/errors.
+- **SeedLocations** (`/location/seed`): Two-pass algorithm. Pass 1: Creates all locations without parent relationships, resolves realm codes via `IRealmClient`. Spatial fields (bounds, boundsPrecision, coordinateMode, localOrigin) are passed through when present. Pass 2: Sets parent relationships by resolving parent codes from pass 1 results. Supports `updateExisting` (spatial fields updated when provided). Returns created/updated/skipped/errors.
 
 ---
 
@@ -206,7 +207,11 @@ State Store Layout
   │    ├── LocationType (CITY, REGION, BUILDING, ROOM, etc.)  │
   │    ├── ParentLocationId (nullable for roots)              │
   │    ├── Depth (0 for roots, auto-calculated)               │
-  │    └── IsDeprecated, DeprecatedAt, DeprecationReason      │
+  │    ├── IsDeprecated, DeprecatedAt, DeprecationReason      │
+  │    ├── Bounds (nullable BoundingBox3D, AABB in meters)    │
+  │    ├── BoundsPrecision (exact/approximate/none)           │
+  │    ├── CoordinateMode (inherit/local/portal)              │
+  │    └── LocalOrigin (nullable Position3D)                  │
   │                                                           │
   │  code-index:{realmId}:{CODE} → locationId                 │
   │  realm-index:{realmId} → [locationId, ...]                │
@@ -225,8 +230,7 @@ None. All features are fully implemented.
 
 ## Potential Extensions
 
-1. **Spatial coordinates**: Add optional latitude/longitude or x/y/z coordinates for mapping integration.
-<!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/165 -->
+None currently identified.
 
 ---
 
@@ -266,5 +270,5 @@ No design considerations currently pending.
 
 ## Work Tracking
 
-- **Spatial coordinates** (Potential Extensions #1): NEEDS_DESIGN - requires design decision for mapping integration ([#165](https://github.com/beyond-immersion/bannou-service/issues/165))
+- **2026-02-12**: Issue [#165](https://github.com/beyond-immersion/bannou-service/issues/165) - Added optional spatial coordinates (BoundingBox3D bounds, BoundsPrecision, CoordinateMode, Position3D localOrigin) to locations. Added `/location/query/by-position` endpoint for spatial-to-location lookup. Shared Position3D/BoundingBox3D types added to common-api.yaml.
 - **T4 Violation: Graceful degradation for L1 dependency** (Bugs #1): COMPLETED (2026-02-08) - Changed to `GetRequiredService` with fail-fast behavior

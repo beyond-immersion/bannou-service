@@ -114,6 +114,40 @@ public partial class LocationController
                     "nullable": true,
                     "description": "Optional reason for deprecation"
                 },
+                "bounds": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional spatial extent in world coordinates"
+                },
+                "boundsPrecision": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BoundsPrecision"
+                        }
+                    ],
+                    "description": "Precision level of spatial bounds"
+                },
+                "coordinateMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CoordinateMode"
+                        }
+                    ],
+                    "description": "How this location's coordinate system relates to its parent"
+                },
+                "localOrigin": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Origin point for local or inherited coordinate systems"
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
@@ -146,6 +180,24 @@ public partial class LocationController
                 "WILDERNESS",
                 "DUNGEON",
                 "OTHER"
+            ]
+        },
+        "BoundsPrecision": {
+            "type": "string",
+            "description": "Precision level of spatial bounds for a location",
+            "enum": [
+                "exact",
+                "approximate",
+                "none"
+            ]
+        },
+        "CoordinateMode": {
+            "type": "string",
+            "description": "How this location's coordinate system relates to its parent",
+            "enum": [
+                "inherit",
+                "local",
+                "portal"
             ]
         }
     }
@@ -313,6 +365,40 @@ public partial class LocationController
                     "nullable": true,
                     "description": "Optional reason for deprecation"
                 },
+                "bounds": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional spatial extent in world coordinates"
+                },
+                "boundsPrecision": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BoundsPrecision"
+                        }
+                    ],
+                    "description": "Precision level of spatial bounds"
+                },
+                "coordinateMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CoordinateMode"
+                        }
+                    ],
+                    "description": "How this location's coordinate system relates to its parent"
+                },
+                "localOrigin": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Origin point for local or inherited coordinate systems"
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
@@ -345,6 +431,24 @@ public partial class LocationController
                 "WILDERNESS",
                 "DUNGEON",
                 "OTHER"
+            ]
+        },
+        "BoundsPrecision": {
+            "type": "string",
+            "description": "Precision level of spatial bounds for a location",
+            "enum": [
+                "exact",
+                "approximate",
+                "none"
+            ]
+        },
+        "CoordinateMode": {
+            "type": "string",
+            "description": "How this location's coordinate system relates to its parent",
+            "enum": [
+                "inherit",
+                "local",
+                "portal"
             ]
         }
     }
@@ -587,6 +691,40 @@ public partial class LocationController
                     "nullable": true,
                     "description": "Optional reason for deprecation"
                 },
+                "bounds": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional spatial extent in world coordinates"
+                },
+                "boundsPrecision": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BoundsPrecision"
+                        }
+                    ],
+                    "description": "Precision level of spatial bounds"
+                },
+                "coordinateMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CoordinateMode"
+                        }
+                    ],
+                    "description": "How this location's coordinate system relates to its parent"
+                },
+                "localOrigin": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Origin point for local or inherited coordinate systems"
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
@@ -619,6 +757,24 @@ public partial class LocationController
                 "WILDERNESS",
                 "DUNGEON",
                 "OTHER"
+            ]
+        },
+        "BoundsPrecision": {
+            "type": "string",
+            "description": "Precision level of spatial bounds for a location",
+            "enum": [
+                "exact",
+                "approximate",
+                "none"
+            ]
+        },
+        "CoordinateMode": {
+            "type": "string",
+            "description": "How this location's coordinate system relates to its parent",
+            "enum": [
+                "inherit",
+                "local",
+                "portal"
             ]
         }
     }
@@ -861,6 +1017,40 @@ public partial class LocationController
                     "nullable": true,
                     "description": "Optional reason for deprecation"
                 },
+                "bounds": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional spatial extent in world coordinates"
+                },
+                "boundsPrecision": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BoundsPrecision"
+                        }
+                    ],
+                    "description": "Precision level of spatial bounds"
+                },
+                "coordinateMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CoordinateMode"
+                        }
+                    ],
+                    "description": "How this location's coordinate system relates to its parent"
+                },
+                "localOrigin": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Origin point for local or inherited coordinate systems"
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
@@ -893,6 +1083,24 @@ public partial class LocationController
                 "WILDERNESS",
                 "DUNGEON",
                 "OTHER"
+            ]
+        },
+        "BoundsPrecision": {
+            "type": "string",
+            "description": "Precision level of spatial bounds for a location",
+            "enum": [
+                "exact",
+                "approximate",
+                "none"
+            ]
+        },
+        "CoordinateMode": {
+            "type": "string",
+            "description": "How this location's coordinate system relates to its parent",
+            "enum": [
+                "inherit",
+                "local",
+                "portal"
             ]
         }
     }
@@ -1135,6 +1343,40 @@ public partial class LocationController
                     "nullable": true,
                     "description": "Optional reason for deprecation"
                 },
+                "bounds": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional spatial extent in world coordinates"
+                },
+                "boundsPrecision": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BoundsPrecision"
+                        }
+                    ],
+                    "description": "Precision level of spatial bounds"
+                },
+                "coordinateMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CoordinateMode"
+                        }
+                    ],
+                    "description": "How this location's coordinate system relates to its parent"
+                },
+                "localOrigin": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Origin point for local or inherited coordinate systems"
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
@@ -1167,6 +1409,24 @@ public partial class LocationController
                 "WILDERNESS",
                 "DUNGEON",
                 "OTHER"
+            ]
+        },
+        "BoundsPrecision": {
+            "type": "string",
+            "description": "Precision level of spatial bounds for a location",
+            "enum": [
+                "exact",
+                "approximate",
+                "none"
+            ]
+        },
+        "CoordinateMode": {
+            "type": "string",
+            "description": "How this location's coordinate system relates to its parent",
+            "enum": [
+                "inherit",
+                "local",
+                "portal"
             ]
         }
     }
@@ -1409,6 +1669,40 @@ public partial class LocationController
                     "nullable": true,
                     "description": "Optional reason for deprecation"
                 },
+                "bounds": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional spatial extent in world coordinates"
+                },
+                "boundsPrecision": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BoundsPrecision"
+                        }
+                    ],
+                    "description": "Precision level of spatial bounds"
+                },
+                "coordinateMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CoordinateMode"
+                        }
+                    ],
+                    "description": "How this location's coordinate system relates to its parent"
+                },
+                "localOrigin": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Origin point for local or inherited coordinate systems"
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
@@ -1441,6 +1735,24 @@ public partial class LocationController
                 "WILDERNESS",
                 "DUNGEON",
                 "OTHER"
+            ]
+        },
+        "BoundsPrecision": {
+            "type": "string",
+            "description": "Precision level of spatial bounds for a location",
+            "enum": [
+                "exact",
+                "approximate",
+                "none"
+            ]
+        },
+        "CoordinateMode": {
+            "type": "string",
+            "description": "How this location's coordinate system relates to its parent",
+            "enum": [
+                "inherit",
+                "local",
+                "portal"
             ]
         }
     }
@@ -1640,6 +1952,40 @@ public partial class LocationController
                     "nullable": true,
                     "description": "Optional reason for deprecation"
                 },
+                "bounds": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional spatial extent in world coordinates"
+                },
+                "boundsPrecision": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BoundsPrecision"
+                        }
+                    ],
+                    "description": "Precision level of spatial bounds"
+                },
+                "coordinateMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CoordinateMode"
+                        }
+                    ],
+                    "description": "How this location's coordinate system relates to its parent"
+                },
+                "localOrigin": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Origin point for local or inherited coordinate systems"
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
@@ -1672,6 +2018,24 @@ public partial class LocationController
                 "WILDERNESS",
                 "DUNGEON",
                 "OTHER"
+            ]
+        },
+        "BoundsPrecision": {
+            "type": "string",
+            "description": "Precision level of spatial bounds for a location",
+            "enum": [
+                "exact",
+                "approximate",
+                "none"
+            ]
+        },
+        "CoordinateMode": {
+            "type": "string",
+            "description": "How this location's coordinate system relates to its parent",
+            "enum": [
+                "inherit",
+                "local",
+                "portal"
             ]
         }
     }
@@ -2061,6 +2425,40 @@ public partial class LocationController
                     "nullable": true,
                     "description": "Optional reason for deprecation"
                 },
+                "bounds": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional spatial extent in world coordinates"
+                },
+                "boundsPrecision": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BoundsPrecision"
+                        }
+                    ],
+                    "description": "Precision level of spatial bounds"
+                },
+                "coordinateMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CoordinateMode"
+                        }
+                    ],
+                    "description": "How this location's coordinate system relates to its parent"
+                },
+                "localOrigin": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Origin point for local or inherited coordinate systems"
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
@@ -2093,6 +2491,24 @@ public partial class LocationController
                 "WILDERNESS",
                 "DUNGEON",
                 "OTHER"
+            ]
+        },
+        "BoundsPrecision": {
+            "type": "string",
+            "description": "Precision level of spatial bounds for a location",
+            "enum": [
+                "exact",
+                "approximate",
+                "none"
+            ]
+        },
+        "CoordinateMode": {
+            "type": "string",
+            "description": "How this location's coordinate system relates to its parent",
+            "enum": [
+                "inherit",
+                "local",
+                "portal"
             ]
         }
     }
@@ -2205,6 +2621,42 @@ public partial class LocationController
                     "nullable": true,
                     "description": "Parent location ID for hierarchy (null for root locations)"
                 },
+                "bounds": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional spatial extent in world coordinates"
+                },
+                "boundsPrecision": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BoundsPrecision"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Precision level of spatial bounds (defaults to none)"
+                },
+                "coordinateMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CoordinateMode"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "How this location's coordinate system relates to its parent (defaults to inherit)"
+                },
+                "localOrigin": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Origin point for local or inherited coordinate systems"
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
@@ -2227,6 +2679,24 @@ public partial class LocationController
                 "WILDERNESS",
                 "DUNGEON",
                 "OTHER"
+            ]
+        },
+        "BoundsPrecision": {
+            "type": "string",
+            "description": "Precision level of spatial bounds for a location",
+            "enum": [
+                "exact",
+                "approximate",
+                "none"
+            ]
+        },
+        "CoordinateMode": {
+            "type": "string",
+            "description": "How this location's coordinate system relates to its parent",
+            "enum": [
+                "inherit",
+                "local",
+                "portal"
             ]
         }
     }
@@ -2306,6 +2776,40 @@ public partial class LocationController
                     "nullable": true,
                     "description": "Optional reason for deprecation"
                 },
+                "bounds": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional spatial extent in world coordinates"
+                },
+                "boundsPrecision": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BoundsPrecision"
+                        }
+                    ],
+                    "description": "Precision level of spatial bounds"
+                },
+                "coordinateMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CoordinateMode"
+                        }
+                    ],
+                    "description": "How this location's coordinate system relates to its parent"
+                },
+                "localOrigin": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Origin point for local or inherited coordinate systems"
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
@@ -2338,6 +2842,24 @@ public partial class LocationController
                 "WILDERNESS",
                 "DUNGEON",
                 "OTHER"
+            ]
+        },
+        "BoundsPrecision": {
+            "type": "string",
+            "description": "Precision level of spatial bounds for a location",
+            "enum": [
+                "exact",
+                "approximate",
+                "none"
+            ]
+        },
+        "CoordinateMode": {
+            "type": "string",
+            "description": "How this location's coordinate system relates to its parent",
+            "enum": [
+                "inherit",
+                "local",
+                "portal"
             ]
         }
     }
@@ -2440,6 +2962,42 @@ public partial class LocationController
                     "nullable": true,
                     "description": "Type of location"
                 },
+                "bounds": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional spatial extent in world coordinates"
+                },
+                "boundsPrecision": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BoundsPrecision"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Precision level of spatial bounds"
+                },
+                "coordinateMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CoordinateMode"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "How this location's coordinate system relates to its parent"
+                },
+                "localOrigin": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Origin point for local or inherited coordinate systems"
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
@@ -2462,6 +3020,24 @@ public partial class LocationController
                 "WILDERNESS",
                 "DUNGEON",
                 "OTHER"
+            ]
+        },
+        "BoundsPrecision": {
+            "type": "string",
+            "description": "Precision level of spatial bounds for a location",
+            "enum": [
+                "exact",
+                "approximate",
+                "none"
+            ]
+        },
+        "CoordinateMode": {
+            "type": "string",
+            "description": "How this location's coordinate system relates to its parent",
+            "enum": [
+                "inherit",
+                "local",
+                "portal"
             ]
         }
     }
@@ -2541,6 +3117,40 @@ public partial class LocationController
                     "nullable": true,
                     "description": "Optional reason for deprecation"
                 },
+                "bounds": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional spatial extent in world coordinates"
+                },
+                "boundsPrecision": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BoundsPrecision"
+                        }
+                    ],
+                    "description": "Precision level of spatial bounds"
+                },
+                "coordinateMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CoordinateMode"
+                        }
+                    ],
+                    "description": "How this location's coordinate system relates to its parent"
+                },
+                "localOrigin": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Origin point for local or inherited coordinate systems"
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
@@ -2573,6 +3183,24 @@ public partial class LocationController
                 "WILDERNESS",
                 "DUNGEON",
                 "OTHER"
+            ]
+        },
+        "BoundsPrecision": {
+            "type": "string",
+            "description": "Precision level of spatial bounds for a location",
+            "enum": [
+                "exact",
+                "approximate",
+                "none"
+            ]
+        },
+        "CoordinateMode": {
+            "type": "string",
+            "description": "How this location's coordinate system relates to its parent",
+            "enum": [
+                "inherit",
+                "local",
+                "portal"
             ]
         }
     }
@@ -2738,6 +3366,40 @@ public partial class LocationController
                     "nullable": true,
                     "description": "Optional reason for deprecation"
                 },
+                "bounds": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional spatial extent in world coordinates"
+                },
+                "boundsPrecision": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BoundsPrecision"
+                        }
+                    ],
+                    "description": "Precision level of spatial bounds"
+                },
+                "coordinateMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CoordinateMode"
+                        }
+                    ],
+                    "description": "How this location's coordinate system relates to its parent"
+                },
+                "localOrigin": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Origin point for local or inherited coordinate systems"
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
@@ -2770,6 +3432,24 @@ public partial class LocationController
                 "WILDERNESS",
                 "DUNGEON",
                 "OTHER"
+            ]
+        },
+        "BoundsPrecision": {
+            "type": "string",
+            "description": "Precision level of spatial bounds for a location",
+            "enum": [
+                "exact",
+                "approximate",
+                "none"
+            ]
+        },
+        "CoordinateMode": {
+            "type": "string",
+            "description": "How this location's coordinate system relates to its parent",
+            "enum": [
+                "inherit",
+                "local",
+                "portal"
             ]
         }
     }
@@ -2929,6 +3609,40 @@ public partial class LocationController
                     "nullable": true,
                     "description": "Optional reason for deprecation"
                 },
+                "bounds": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional spatial extent in world coordinates"
+                },
+                "boundsPrecision": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BoundsPrecision"
+                        }
+                    ],
+                    "description": "Precision level of spatial bounds"
+                },
+                "coordinateMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CoordinateMode"
+                        }
+                    ],
+                    "description": "How this location's coordinate system relates to its parent"
+                },
+                "localOrigin": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Origin point for local or inherited coordinate systems"
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
@@ -2961,6 +3675,24 @@ public partial class LocationController
                 "WILDERNESS",
                 "DUNGEON",
                 "OTHER"
+            ]
+        },
+        "BoundsPrecision": {
+            "type": "string",
+            "description": "Precision level of spatial bounds for a location",
+            "enum": [
+                "exact",
+                "approximate",
+                "none"
+            ]
+        },
+        "CoordinateMode": {
+            "type": "string",
+            "description": "How this location's coordinate system relates to its parent",
+            "enum": [
+                "inherit",
+                "local",
+                "portal"
             ]
         }
     }
@@ -3210,6 +3942,40 @@ public partial class LocationController
                     "nullable": true,
                     "description": "Optional reason for deprecation"
                 },
+                "bounds": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional spatial extent in world coordinates"
+                },
+                "boundsPrecision": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BoundsPrecision"
+                        }
+                    ],
+                    "description": "Precision level of spatial bounds"
+                },
+                "coordinateMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CoordinateMode"
+                        }
+                    ],
+                    "description": "How this location's coordinate system relates to its parent"
+                },
+                "localOrigin": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Origin point for local or inherited coordinate systems"
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
@@ -3242,6 +4008,24 @@ public partial class LocationController
                 "WILDERNESS",
                 "DUNGEON",
                 "OTHER"
+            ]
+        },
+        "BoundsPrecision": {
+            "type": "string",
+            "description": "Precision level of spatial bounds for a location",
+            "enum": [
+                "exact",
+                "approximate",
+                "none"
+            ]
+        },
+        "CoordinateMode": {
+            "type": "string",
+            "description": "How this location's coordinate system relates to its parent",
+            "enum": [
+                "inherit",
+                "local",
+                "portal"
             ]
         }
     }
@@ -3407,6 +4191,40 @@ public partial class LocationController
                     "nullable": true,
                     "description": "Optional reason for deprecation"
                 },
+                "bounds": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional spatial extent in world coordinates"
+                },
+                "boundsPrecision": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BoundsPrecision"
+                        }
+                    ],
+                    "description": "Precision level of spatial bounds"
+                },
+                "coordinateMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CoordinateMode"
+                        }
+                    ],
+                    "description": "How this location's coordinate system relates to its parent"
+                },
+                "localOrigin": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Origin point for local or inherited coordinate systems"
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
@@ -3439,6 +4257,24 @@ public partial class LocationController
                 "WILDERNESS",
                 "DUNGEON",
                 "OTHER"
+            ]
+        },
+        "BoundsPrecision": {
+            "type": "string",
+            "description": "Precision level of spatial bounds for a location",
+            "enum": [
+                "exact",
+                "approximate",
+                "none"
+            ]
+        },
+        "CoordinateMode": {
+            "type": "string",
+            "description": "How this location's coordinate system relates to its parent",
+            "enum": [
+                "inherit",
+                "local",
+                "portal"
             ]
         }
     }
@@ -3598,6 +4434,40 @@ public partial class LocationController
                     "nullable": true,
                     "description": "Optional reason for deprecation"
                 },
+                "bounds": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional spatial extent in world coordinates"
+                },
+                "boundsPrecision": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BoundsPrecision"
+                        }
+                    ],
+                    "description": "Precision level of spatial bounds"
+                },
+                "coordinateMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CoordinateMode"
+                        }
+                    ],
+                    "description": "How this location's coordinate system relates to its parent"
+                },
+                "localOrigin": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Origin point for local or inherited coordinate systems"
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
@@ -3630,6 +4500,24 @@ public partial class LocationController
                 "WILDERNESS",
                 "DUNGEON",
                 "OTHER"
+            ]
+        },
+        "BoundsPrecision": {
+            "type": "string",
+            "description": "Precision level of spatial bounds for a location",
+            "enum": [
+                "exact",
+                "approximate",
+                "none"
+            ]
+        },
+        "CoordinateMode": {
+            "type": "string",
+            "description": "How this location's coordinate system relates to its parent",
+            "enum": [
+                "inherit",
+                "local",
+                "portal"
             ]
         }
     }
@@ -3810,6 +4698,313 @@ public partial class LocationController
 
     #endregion
 
+    #region Meta Endpoints for QueryLocationsByPosition
+
+    private static readonly string _QueryLocationsByPosition_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/QueryLocationsByPositionRequest",
+    "$defs": {
+        "QueryLocationsByPositionRequest": {
+            "description": "Request to find all locations containing a spatial position",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "position",
+                "realmId"
+            ],
+            "properties": {
+                "position": {
+                    "type": "object",
+                    "description": "Position to query in world coordinates"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Realm to search within"
+                },
+                "maxDepth": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "nullable": true,
+                    "description": "Maximum hierarchy depth to search (null for all depths)"
+                },
+                "page": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "default": 1,
+                    "description": "Page number for pagination (1-indexed)"
+                },
+                "pageSize": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "default": 20,
+                    "description": "Number of results per page"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _QueryLocationsByPosition_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/LocationListResponse",
+    "$defs": {
+        "LocationListResponse": {
+            "description": "Paginated list of locations with metadata for navigation",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "locations",
+                "totalCount",
+                "page",
+                "pageSize"
+            ],
+            "properties": {
+                "locations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/LocationResponse"
+                    },
+                    "description": "List of locations matching the query"
+                },
+                "totalCount": {
+                    "type": "integer",
+                    "description": "Total number of locations matching the query (across all pages)"
+                },
+                "page": {
+                    "type": "integer",
+                    "description": "Current page number (1-indexed)"
+                },
+                "pageSize": {
+                    "type": "integer",
+                    "description": "Number of results per page"
+                },
+                "hasNextPage": {
+                    "type": "boolean",
+                    "description": "Whether there are more pages after the current page"
+                },
+                "hasPreviousPage": {
+                    "type": "boolean",
+                    "description": "Whether there are pages before the current page"
+                }
+            }
+        },
+        "LocationResponse": {
+            "description": "Complete location data returned from API operations",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "locationId",
+                "realmId",
+                "code",
+                "name",
+                "locationType",
+                "depth",
+                "isDeprecated",
+                "createdAt",
+                "updatedAt"
+            ],
+            "properties": {
+                "locationId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for the location"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Realm this location belongs to"
+                },
+                "code": {
+                    "type": "string",
+                    "description": "Unique code for the location within its realm"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Display name of the location"
+                },
+                "description": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional description of the location"
+                },
+                "locationType": {
+                    "$ref": "#/$defs/LocationType",
+                    "description": "Type classification of the location"
+                },
+                "parentLocationId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Parent location ID (null for root locations)"
+                },
+                "depth": {
+                    "type": "integer",
+                    "description": "Depth in hierarchy (0 for root locations)"
+                },
+                "isDeprecated": {
+                    "type": "boolean",
+                    "description": "Whether this location is deprecated and cannot be used"
+                },
+                "deprecatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Timestamp when this location was deprecated"
+                },
+                "deprecationReason": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Optional reason for deprecation"
+                },
+                "bounds": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional spatial extent in world coordinates"
+                },
+                "boundsPrecision": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BoundsPrecision"
+                        }
+                    ],
+                    "description": "Precision level of spatial bounds"
+                },
+                "coordinateMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CoordinateMode"
+                        }
+                    ],
+                    "description": "How this location's coordinate system relates to its parent"
+                },
+                "localOrigin": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Origin point for local or inherited coordinate systems"
+                },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Additional metadata for the location (JSON)"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the location was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Timestamp when the location was last updated"
+                }
+            }
+        },
+        "LocationType": {
+            "type": "string",
+            "description": "Type classification for locations",
+            "enum": [
+                "CONTINENT",
+                "REGION",
+                "CITY",
+                "DISTRICT",
+                "BUILDING",
+                "ROOM",
+                "LANDMARK",
+                "WILDERNESS",
+                "DUNGEON",
+                "OTHER"
+            ]
+        },
+        "BoundsPrecision": {
+            "type": "string",
+            "description": "Precision level of spatial bounds for a location",
+            "enum": [
+                "exact",
+                "approximate",
+                "none"
+            ]
+        },
+        "CoordinateMode": {
+            "type": "string",
+            "description": "How this location's coordinate system relates to its parent",
+            "enum": [
+                "inherit",
+                "local",
+                "portal"
+            ]
+        }
+    }
+}
+""";
+
+    private static readonly string _QueryLocationsByPosition_Info = """
+{
+    "summary": "Find locations containing a spatial position",
+    "description": "Given a Position3D and realmId, returns all locations whose bounds contain\nthat position, ordered by depth descending (most specific first). Only\nlocations with spatial bounds data are considered. A position is \"in\" a\nlocation if it falls within the location's axis-aligned bounding box.\n",
+    "tags": [
+        "Location"
+    ],
+    "deprecated": false,
+    "operationId": "queryLocationsByPosition"
+}
+""";
+
+    /// <summary>Returns endpoint information for QueryLocationsByPosition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/query/by-position/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> QueryLocationsByPosition_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Location",
+            "POST",
+            "/location/query/by-position",
+            _QueryLocationsByPosition_Info));
+
+    /// <summary>Returns request schema for QueryLocationsByPosition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/query/by-position/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> QueryLocationsByPosition_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Location",
+            "POST",
+            "/location/query/by-position",
+            "request-schema",
+            _QueryLocationsByPosition_RequestSchema));
+
+    /// <summary>Returns response schema for QueryLocationsByPosition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/query/by-position/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> QueryLocationsByPosition_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Location",
+            "POST",
+            "/location/query/by-position",
+            "response-schema",
+            _QueryLocationsByPosition_ResponseSchema));
+
+    /// <summary>Returns full schema for QueryLocationsByPosition</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/location/query/by-position/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> QueryLocationsByPosition_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Location",
+            "POST",
+            "/location/query/by-position",
+            _QueryLocationsByPosition_Info,
+            _QueryLocationsByPosition_RequestSchema,
+            _QueryLocationsByPosition_ResponseSchema));
+
+    #endregion
+
     #region Meta Endpoints for SeedLocations
 
     private static readonly string _SeedLocations_RequestSchema = """
@@ -3876,6 +5071,42 @@ public partial class LocationController
                     "nullable": true,
                     "description": "Code of the parent location (resolved during seeding)"
                 },
+                "bounds": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Optional spatial extent in world coordinates"
+                },
+                "boundsPrecision": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/BoundsPrecision"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Precision level of spatial bounds (defaults to none)"
+                },
+                "coordinateMode": {
+                    "allOf": [
+                        {
+                            "$ref": "#/$defs/CoordinateMode"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "How this location's coordinate system relates to its parent (defaults to inherit)"
+                },
+                "localOrigin": {
+                    "allOf": [
+                        {
+                            "type": "object"
+                        }
+                    ],
+                    "nullable": true,
+                    "description": "Origin point for local or inherited coordinate systems"
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
@@ -3898,6 +5129,24 @@ public partial class LocationController
                 "WILDERNESS",
                 "DUNGEON",
                 "OTHER"
+            ]
+        },
+        "BoundsPrecision": {
+            "type": "string",
+            "description": "Precision level of spatial bounds for a location",
+            "enum": [
+                "exact",
+                "approximate",
+                "none"
+            ]
+        },
+        "CoordinateMode": {
+            "type": "string",
+            "description": "How this location's coordinate system relates to its parent",
+            "enum": [
+                "inherit",
+                "local",
+                "portal"
             ]
         }
     }

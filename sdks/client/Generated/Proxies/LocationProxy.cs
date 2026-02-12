@@ -349,6 +349,24 @@ public sealed class LocationProxy
     }
 
     /// <summary>
+    /// Find locations containing a spatial position
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing LocationListResponse on success.</returns>
+    public Task<ApiResponse<LocationListResponse>> QueryLocationsByPositionAsync(
+        QueryLocationsByPositionRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<QueryLocationsByPositionRequest, LocationListResponse>(
+            "/location/query/by-position", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
     /// Seed locations from configuration
     /// </summary>
     /// <param name="request">The request payload.</param>

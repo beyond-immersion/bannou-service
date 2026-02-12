@@ -120,6 +120,11 @@ public partial interface IGardenerService : IBannouService
         Task<(StatusCodes, ScenarioTemplateResponse?)> DeprecateTemplateAsync(DeprecateTemplateRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// DeleteTemplate operation
+        /// </summary>
+        Task<(StatusCodes, ScenarioTemplateResponse?)> DeleteTemplateAsync(DeleteTemplateRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// GetPhaseConfig operation
         /// </summary>
         Task<(StatusCodes, PhaseConfigResponse?)> GetPhaseConfigAsync(GetPhaseConfigRequest body, CancellationToken cancellationToken = default(CancellationToken));

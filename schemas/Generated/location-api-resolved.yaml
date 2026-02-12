@@ -948,7 +948,7 @@ components:
           description: Parent location ID for hierarchy (null for root locations)
         bounds:
           allOf:
-          - $ref: 'common-api.yaml#/components/schemas/BoundingBox3D'
+          - $ref: '#/components/schemas/BoundingBox3D'
           nullable: true
           description: Optional spatial extent in world coordinates
         boundsPrecision:
@@ -963,7 +963,7 @@ components:
           description: How this location's coordinate system relates to its parent (defaults to inherit)
         localOrigin:
           allOf:
-          - $ref: 'common-api.yaml#/components/schemas/Position3D'
+          - $ref: '#/components/schemas/Position3D'
           nullable: true
           description: Origin point for local or inherited coordinate systems
         metadata:
@@ -1001,7 +1001,7 @@ components:
           description: Type of location
         bounds:
           allOf:
-          - $ref: 'common-api.yaml#/components/schemas/BoundingBox3D'
+          - $ref: '#/components/schemas/BoundingBox3D'
           nullable: true
           description: Optional spatial extent in world coordinates
         boundsPrecision:
@@ -1016,7 +1016,7 @@ components:
           description: How this location's coordinate system relates to its parent
         localOrigin:
           allOf:
-          - $ref: 'common-api.yaml#/components/schemas/Position3D'
+          - $ref: '#/components/schemas/Position3D'
           nullable: true
           description: Origin point for local or inherited coordinate systems
         metadata:
@@ -1198,7 +1198,7 @@ components:
           description: Code of the parent location (resolved during seeding)
         bounds:
           allOf:
-          - $ref: 'common-api.yaml#/components/schemas/BoundingBox3D'
+          - $ref: '#/components/schemas/BoundingBox3D'
           nullable: true
           description: Optional spatial extent in world coordinates
         boundsPrecision:
@@ -1213,7 +1213,7 @@ components:
           description: How this location's coordinate system relates to its parent (defaults to inherit)
         localOrigin:
           allOf:
-          - $ref: 'common-api.yaml#/components/schemas/Position3D'
+          - $ref: '#/components/schemas/Position3D'
           nullable: true
           description: Origin point for local or inherited coordinate systems
         metadata:
@@ -1231,7 +1231,7 @@ components:
       - realmId
       properties:
         position:
-          $ref: 'common-api.yaml#/components/schemas/Position3D'
+          $ref: '#/components/schemas/Position3D'
           description: Position to query in world coordinates
         realmId:
           type: string
@@ -1312,7 +1312,7 @@ components:
           description: Optional reason for deprecation
         bounds:
           allOf:
-          - $ref: 'common-api.yaml#/components/schemas/BoundingBox3D'
+          - $ref: '#/components/schemas/BoundingBox3D'
           nullable: true
           description: Optional spatial extent in world coordinates
         boundsPrecision:
@@ -1325,7 +1325,7 @@ components:
           description: How this location's coordinate system relates to its parent
         localOrigin:
           allOf:
-          - $ref: 'common-api.yaml#/components/schemas/Position3D'
+          - $ref: '#/components/schemas/Position3D'
           nullable: true
           description: Origin point for local or inherited coordinate systems
         metadata:
@@ -1398,3 +1398,69 @@ components:
             type: string
           description: List of error messages for locations that failed to seed
 
+    BoundingBox3D:
+      type: object
+      additionalProperties: false
+      description: Axis-aligned bounding box in world coordinates (meters, Y-up, right-handed)
+      required:
+      - minX
+      - minY
+      - minZ
+      - maxX
+      - maxY
+      - maxZ
+      properties:
+        minX:
+          type: number
+          format: float
+          description: Minimum X bound in world space
+        minY:
+          type: number
+          format: float
+          description: Minimum Y bound in world space
+        minZ:
+          type: number
+          format: float
+          description: Minimum Z bound in world space
+        maxX:
+          type: number
+          format: float
+          description: Maximum X bound in world space
+        maxY:
+          type: number
+          format: float
+          description: Maximum Y bound in world space
+        maxZ:
+          type: number
+          format: float
+          description: Maximum Z bound in world space
+
+    # ==========================================================================
+    # Archive Base Types
+    # ==========================================================================
+
+    Position3D:
+      type: object
+      additionalProperties: false
+      description: Position in world coordinates (meters, Y-up, right-handed)
+      required:
+      - x
+      - y
+      - z
+      properties:
+        x:
+          type: number
+          format: float
+          description: X coordinate in world space (meters)
+        y:
+          type: number
+          format: float
+          description: Y coordinate (up axis) in world space (meters)
+        z:
+          type: number
+          format: float
+          description: Z coordinate in world space (meters)
+
+x-inlined-types:
+- BoundingBox3D
+- Position3D

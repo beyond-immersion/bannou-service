@@ -108,4 +108,10 @@ public interface IActorRunner : IAsyncDisposable
     /// </summary>
     /// <returns>True if an encounter was ended, false if none was active.</returns>
     bool EndEncounter();
+
+    /// <summary>
+    /// Invalidates the cached behavior document, forcing a reload on the next tick.
+    /// Used for hot-reload when a template's BehaviorRef changes.
+    /// </summary>
+    void InvalidateCachedBehavior();
 }

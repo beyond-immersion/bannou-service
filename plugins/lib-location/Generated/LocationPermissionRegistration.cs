@@ -317,6 +317,21 @@ public static class LocationPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
+            Path = "/location/query/by-position",
+            Method = ServiceEndpointMethod.POST,
+            Description = "queryLocationsByPosition",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "user",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
             Path = "/location/seed",
             Method = ServiceEndpointMethod.POST,
             Description = "seedLocations",

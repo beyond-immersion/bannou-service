@@ -4972,6 +4972,384 @@ public partial class GardenerController
 
     #endregion
 
+    #region Meta Endpoints for DeleteTemplate
+
+    private static readonly string _DeleteTemplate_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/DeleteTemplateRequest",
+    "$defs": {
+        "DeleteTemplateRequest": {
+            "type": "object",
+            "description": "Request to permanently delete a deprecated template",
+            "required": [
+                "scenarioTemplateId"
+            ],
+            "properties": {
+                "scenarioTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Template ID to delete"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _DeleteTemplate_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ScenarioTemplateResponse",
+    "$defs": {
+        "ScenarioTemplateResponse": {
+            "type": "object",
+            "description": "Full scenario template with all fields",
+            "required": [
+                "scenarioTemplateId",
+                "code",
+                "displayName",
+                "description",
+                "category",
+                "domainWeights",
+                "connectivityMode",
+                "allowedPhases",
+                "maxConcurrentInstances",
+                "status",
+                "createdAt",
+                "updatedAt"
+            ],
+            "properties": {
+                "scenarioTemplateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for this template"
+                },
+                "code": {
+                    "type": "string",
+                    "description": "Unique template code"
+                },
+                "displayName": {
+                    "type": "string",
+                    "description": "Human-readable name"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Template description"
+                },
+                "category": {
+                    "$ref": "#/$defs/ScenarioCategory",
+                    "description": "Primary gameplay category"
+                },
+                "subcategory": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Subcategory within the primary category"
+                },
+                "domainWeights": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/DomainWeight"
+                    },
+                    "description": "Growth domain weights"
+                },
+                "minGrowthPhase": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Minimum seed growth phase"
+                },
+                "connectivityMode": {
+                    "$ref": "#/$defs/ConnectivityMode",
+                    "description": "World connectivity mode"
+                },
+                "allowedPhases": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/DeploymentPhase"
+                    },
+                    "description": "Deployment phases where this template is available"
+                },
+                "maxConcurrentInstances": {
+                    "type": "integer",
+                    "description": "Maximum concurrent active instances"
+                },
+                "estimatedDurationMinutes": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Estimated scenario duration in minutes"
+                },
+                "prerequisites": {
+                    "$ref": "#/$defs/ScenarioPrerequisites",
+                    "nullable": true,
+                    "description": "Entry requirements"
+                },
+                "chaining": {
+                    "$ref": "#/$defs/ScenarioChaining",
+                    "nullable": true,
+                    "description": "Chaining configuration"
+                },
+                "multiplayer": {
+                    "$ref": "#/$defs/ScenarioMultiplayer",
+                    "nullable": true,
+                    "description": "Multiplayer support"
+                },
+                "content": {
+                    "$ref": "#/$defs/ScenarioContent",
+                    "nullable": true,
+                    "description": "Content references"
+                },
+                "status": {
+                    "$ref": "#/$defs/TemplateStatus",
+                    "description": "Current lifecycle status"
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When this template was created"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When this template was last updated"
+                }
+            }
+        },
+        "ScenarioCategory": {
+            "type": "string",
+            "enum": [
+                "Combat",
+                "Crafting",
+                "Social",
+                "Trade",
+                "Exploration",
+                "Magic",
+                "Survival",
+                "Mixed",
+                "Narrative",
+                "Tutorial"
+            ],
+            "description": "Primary gameplay category for a scenario template"
+        },
+        "DomainWeight": {
+            "type": "object",
+            "description": "Domain name and weight pair for scenario template growth weighting",
+            "required": [
+                "domain",
+                "weight"
+            ],
+            "properties": {
+                "domain": {
+                    "type": "string",
+                    "description": "Growth domain path (e.g. combat.melee, exploration.caves)"
+                },
+                "weight": {
+                    "type": "number",
+                    "format": "float",
+                    "description": "Weight applied to this domain on scenario completion"
+                }
+            }
+        },
+        "ConnectivityMode": {
+            "type": "string",
+            "enum": [
+                "Isolated",
+                "WorldSlice",
+                "Persistent"
+            ],
+            "description": "How a scenario instance connects to the broader game world"
+        },
+        "DeploymentPhase": {
+            "type": "string",
+            "enum": [
+                "Alpha",
+                "Beta",
+                "Release"
+            ],
+            "description": "Current deployment phase for scenario availability gating"
+        },
+        "ScenarioPrerequisites": {
+            "type": "object",
+            "description": "Prerequisite requirements for entering a scenario",
+            "properties": {
+                "requiredDomains": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "nullable": true,
+                    "description": "Minimum growth depth per domain (domain path to minimum depth)"
+                },
+                "requiredScenarios": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Scenario template codes that must be completed first"
+                },
+                "excludedScenarios": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Scenario template codes that disqualify the player"
+                }
+            }
+        },
+        "ScenarioChaining": {
+            "type": "object",
+            "description": "Chaining configuration for linking scenarios together",
+            "properties": {
+                "leadsTo": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "nullable": true,
+                    "description": "Template codes this scenario can chain into"
+                },
+                "chainProbabilities": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "nullable": true,
+                    "description": "Per-code probability weights for chain selection"
+                },
+                "maxChainDepth": {
+                    "type": "integer",
+                    "default": 3,
+                    "description": "Maximum chain depth allowed from the initial scenario"
+                }
+            }
+        },
+        "ScenarioMultiplayer": {
+            "type": "object",
+            "description": "Multiplayer configuration for group scenarios",
+            "required": [
+                "minPlayers",
+                "maxPlayers"
+            ],
+            "properties": {
+                "minPlayers": {
+                    "type": "integer",
+                    "description": "Minimum number of players required"
+                },
+                "maxPlayers": {
+                    "type": "integer",
+                    "description": "Maximum number of players allowed"
+                },
+                "matchmakingQueueCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Matchmaking queue code for automatic grouping"
+                },
+                "bondPreferred": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether bonded players receive a scoring boost for this scenario"
+                }
+            }
+        },
+        "ScenarioContent": {
+            "type": "object",
+            "description": "Content references linking a scenario template to game assets",
+            "properties": {
+                "behaviorDocumentId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "ABML behavior document ID for NPC orchestration"
+                },
+                "sceneDocumentId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Scene document ID for environment composition"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Realm ID where this scenario takes place"
+                },
+                "locationCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Location code within the realm"
+                }
+            }
+        },
+        "TemplateStatus": {
+            "type": "string",
+            "enum": [
+                "Draft",
+                "Active",
+                "Deprecated"
+            ],
+            "description": "Current lifecycle status of a scenario template"
+        }
+    }
+}
+""";
+
+    private static readonly string _DeleteTemplate_Info = """
+{
+    "summary": "Delete scenario template",
+    "description": "Permanently deletes a scenario template. Template must be in Deprecated status before deletion. Publishes a scenario-template.deleted lifecycle event.",
+    "tags": [
+        "Template Management"
+    ],
+    "deprecated": false,
+    "operationId": "deleteTemplate"
+}
+""";
+
+    /// <summary>Returns endpoint information for DeleteTemplate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/template/delete/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteTemplate_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Gardener",
+            "POST",
+            "/gardener/template/delete",
+            _DeleteTemplate_Info));
+
+    /// <summary>Returns request schema for DeleteTemplate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/template/delete/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteTemplate_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Gardener",
+            "POST",
+            "/gardener/template/delete",
+            "request-schema",
+            _DeleteTemplate_RequestSchema));
+
+    /// <summary>Returns response schema for DeleteTemplate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/template/delete/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteTemplate_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Gardener",
+            "POST",
+            "/gardener/template/delete",
+            "response-schema",
+            _DeleteTemplate_ResponseSchema));
+
+    /// <summary>Returns full schema for DeleteTemplate</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/template/delete/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> DeleteTemplate_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Gardener",
+            "POST",
+            "/gardener/template/delete",
+            _DeleteTemplate_Info,
+            _DeleteTemplate_RequestSchema,
+            _DeleteTemplate_ResponseSchema));
+
+    #endregion
+
     #region Meta Endpoints for GetPhaseConfig
 
     private static readonly string _GetPhaseConfig_RequestSchema = """

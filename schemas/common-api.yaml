@@ -124,6 +124,69 @@ components:
           description: Optional human-readable permission description
 
     # ==========================================================================
+    # Spatial Types
+    # ==========================================================================
+
+    Position3D:
+      type: object
+      additionalProperties: false
+      description: Position in world coordinates (meters, Y-up, right-handed)
+      required:
+        - x
+        - y
+        - z
+      properties:
+        x:
+          type: number
+          format: float
+          description: X coordinate in world space (meters)
+        y:
+          type: number
+          format: float
+          description: Y coordinate (up axis) in world space (meters)
+        z:
+          type: number
+          format: float
+          description: Z coordinate in world space (meters)
+
+    BoundingBox3D:
+      type: object
+      additionalProperties: false
+      description: Axis-aligned bounding box in world coordinates (meters, Y-up, right-handed)
+      required:
+        - minX
+        - minY
+        - minZ
+        - maxX
+        - maxY
+        - maxZ
+      properties:
+        minX:
+          type: number
+          format: float
+          description: Minimum X bound in world space
+        minY:
+          type: number
+          format: float
+          description: Minimum Y bound in world space
+        minZ:
+          type: number
+          format: float
+          description: Minimum Z bound in world space
+        maxX:
+          type: number
+          format: float
+          description: Maximum X bound in world space
+        maxY:
+          type: number
+          format: float
+          description: Maximum Y bound in world space
+        maxZ:
+          type: number
+          format: float
+          description: Maximum Z bound in world space
+
+    # ==========================================================================
     # Archive Base Types
     # ==========================================================================
 

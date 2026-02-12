@@ -83,7 +83,7 @@ x-lifecycle:
       ownerId: { type: string, format: uuid, required: true, description: "Entity that owns this seed" }
       ownerType: { type: string, required: true, description: "Owner entity type discriminator" }
       seedTypeCode: { type: string, required: true, description: "Registered seed type code" }
-      gameServiceId: { type: string, format: uuid, required: true, description: "Game service this seed is scoped to" }
+      gameServiceId: { type: string, format: uuid, nullable: true, description: "Game service this seed is scoped to. Null for cross-game seed types." }
       growthPhase: { type: string, required: true, description: "Current computed growth phase code" }
       totalGrowth: { type: number, format: float, required: true, description: "Aggregate growth across all domains" }
       displayName: { type: string, required: true, description: "Human-readable seed name" }
@@ -93,7 +93,7 @@ x-lifecycle:
   SeedType:
     model:
       seedTypeCode: { type: string, primary: true, required: true, description: "Unique seed type code" }
-      gameServiceId: { type: string, format: uuid, required: true, description: "Game service this type is scoped to" }
+      gameServiceId: { type: string, format: uuid, nullable: true, description: "Game service this type is scoped to. Null for cross-game seed types." }
       displayName: { type: string, required: true, description: "Human-readable name" }
       description: { type: string, required: true, description: "Description of what this seed type represents" }
       maxPerOwner: { type: integer, required: true, description: "Maximum seeds of this type per owner" }

@@ -199,6 +199,78 @@ public partial class PermissionRequirement
 }
 
 /// <summary>
+/// Position in world coordinates (meters, Y-up, right-handed)
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class Position3D
+{
+
+    /// <summary>
+    /// X coordinate in world space (meters)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("x")]
+    public float X { get; set; } = default!;
+
+    /// <summary>
+    /// Y coordinate (up axis) in world space (meters)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("y")]
+    public float Y { get; set; } = default!;
+
+    /// <summary>
+    /// Z coordinate in world space (meters)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("z")]
+    public float Z { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Axis-aligned bounding box in world coordinates (meters, Y-up, right-handed)
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BoundingBox3D
+{
+
+    /// <summary>
+    /// Minimum X bound in world space
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("minX")]
+    public float MinX { get; set; } = default!;
+
+    /// <summary>
+    /// Minimum Y bound in world space
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("minY")]
+    public float MinY { get; set; } = default!;
+
+    /// <summary>
+    /// Minimum Z bound in world space
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("minZ")]
+    public float MinZ { get; set; } = default!;
+
+    /// <summary>
+    /// Maximum X bound in world space
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("maxX")]
+    public float MaxX { get; set; } = default!;
+
+    /// <summary>
+    /// Maximum Y bound in world space
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("maxY")]
+    public float MaxY { get; set; } = default!;
+
+    /// <summary>
+    /// Maximum Z bound in world space
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("maxZ")]
+    public float MaxZ { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Base schema for all resource archives that can be stored in
 /// <br/>the resource service's archive bundles and consumed by the
 /// <br/>storyline SDK's ArchiveExtractor.

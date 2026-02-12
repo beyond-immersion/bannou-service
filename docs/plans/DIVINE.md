@@ -2,7 +2,7 @@
 
 > **Source**: Synthesized from `~/repos/arcadia-kb/Claude/systems-mining-2026-02-10/` (5 agent reports + synthesis)
 > **Related**: `docs/plugins/PUPPETMASTER.md`, `docs/plugins/ACTOR.md`, `docs/reference/SERVICE-HIERARCHY.md`
-> **Prerequisites**: lib-seed, lib-currency, lib-item, lib-inventory, lib-contract, lib-relationship, lib-actor, lib-puppetmaster must be operational
+> **Prerequisites**: lib-seed, lib-currency, lib-collection, lib-contract, lib-relationship, lib-actor, lib-puppetmaster must be operational
 > **Status**: APPROVED -- All design decisions resolved
 
 ---
@@ -39,7 +39,7 @@ Blessings map to existing "itemize anything" patterns:
 
 lib-divine orchestrates the granting/revoking ceremony (deity evaluation, divinity debit, worthiness check) and delegates the actual blessing storage to whichever pattern fits the tier. This avoids inventing a new storage model.
 
-### Q7: MVP Scope -> Deity + Divinity + Blessings (~18 endpoints)
+### Q7: MVP Scope -> Deity + Divinity + Blessings (~22 endpoints)
 
 Core identity, economy, and primary output. No holy magic invocations, no leveling gate, no god personality simulation (ABML behavior docs handle that). God personality and attention patterns are behavior authoring concerns, not lib-divine API concerns.
 
@@ -86,52 +86,79 @@ The Divine service is a new L4 Game Features plugin that manages the pantheon --
 - All properties have `description` fields (CS1591 compliance)
 - NRT compliance: optional ref types have `nullable: true`, required fields in `required` arrays
 
-**~18 POST endpoints** across four API groups:
+**`x-references`** (resource reference tracking for lib-resource cleanup):
+```yaml
+info:
+  x-references:
+    - target: character
+      sourceType: divine
+      field: characterId
+      onDelete: cascade
+      cleanup:
+        endpoint: /divine/cleanup-by-character
+        payloadTemplate: '{"characterId": "{{resourceId}}"}'
+    - target: game-service
+      sourceType: divine
+      field: gameServiceId
+      onDelete: cascade
+      cleanup:
+        endpoint: /divine/cleanup-by-game-service
+        payloadTemplate: '{"gameServiceId": "{{resourceId}}"}'
+```
+
+**~22 POST endpoints** across five API groups:
 
 | Group | Endpoints | Permissions |
 |-------|-----------|-------------|
-| Deity Management (7) | create, get, get-by-code, list, update, activate, deactivate | `developer` |
+| Deity Management (8) | create, get, get-by-code, list, update, activate, deactivate, delete | `developer` |
 | Divinity Economy (4) | get-balance, credit, debit, get-history | `developer` |
 | Blessing Orchestration (5) | grant, revoke, list-by-character, list-by-deity, get | `developer` |
-| Follower Management (2) | register-follower, get-followers | `developer` |
+| Follower Management (3) | register-follower, unregister-follower, get-followers | `developer` |
+| Resource Cleanup (2) | cleanup-by-character, cleanup-by-game-service | `developer` |
 
 **Enums** (defined in `components/schemas`):
 - `DeityStatus`: Active, Dormant, Archived
 - `BlessingTier`: Minor, Standard, Greater, Supreme
-- `DomainCategory`: War, Knowledge, Nature, Commerce, Death, Life, Magic, Craft, Sea, Sky, Earth, Fire, Time, Fate, Chaos, Order, Love, Trickery
+- `BlessingStatus`: Active, Revoked
 - `AttentionPriority`: Low, Medium, High, Critical
 
+**Note on domain categories**: Domain codes are **opaque strings**, not enums. Different games define different domains (Arcadia uses War, Knowledge, Nature, etc.; another game might use completely different categories). Domain codes follow the same pattern as seed type codes, collection type codes, and relationship type codes -- extensible without schema changes. Deities register their domains via the `domains` array on creation.
+
 **Shared sub-types** (defined in `components/schemas`):
-- `DomainInfluence` -- domain (DomainCategory) + weight (float) pair for primary/secondary domains
-- `DeityPersonalityTraits` -- temperament (string), attentionBias (string), generosity (float 0-1), jealousy (float 0-1)
+- `DomainInfluence` -- domain (string, opaque domain code) + weight (double) pair for primary/secondary domains
+- `DeityPersonalityTraits` -- temperament (string), attentionBias (string), generosity (double 0-1), jealousy (double 0-1)
 - `BlessingSummary` -- blessingId (uuid), deityId (uuid), characterId (uuid), tier (BlessingTier), itemInstanceId (uuid), grantedAt (date-time)
 
 **Request models** (one per endpoint):
 - `CreateDeityRequest`: gameServiceId (uuid), code (string), displayName (string), description (string), domains (array DomainInfluence, min 1), personalityTraits (DeityPersonalityTraits), maxAttentionSlots (int, default 10), realmId (uuid, nullable -- home realm)
 - `GetDeityRequest`: deityId (uuid)
 - `GetDeityByCodeRequest`: gameServiceId (uuid), code (string)
-- `ListDeitiesRequest`: gameServiceId (uuid), domainCategory (nullable DomainCategory), status (nullable DeityStatus), page (int, default 1), pageSize (int, default 50)
+- `ListDeitiesRequest`: gameServiceId (uuid), domainCode (nullable string -- filter by domain code), status (nullable DeityStatus), page (int, default 1), pageSize (int, default 50)
 - `UpdateDeityRequest`: deityId (uuid), displayName (nullable string), description (nullable string), domains (nullable array DomainInfluence), personalityTraits (nullable DeityPersonalityTraits), maxAttentionSlots (nullable int)
 - `ActivateDeityRequest`: deityId (uuid)
 - `DeactivateDeityRequest`: deityId (uuid)
 - `GetDivinityBalanceRequest`: deityId (uuid)
-- `CreditDivinityRequest`: deityId (uuid), amount (float), source (string), sourceEventId (uuid, nullable), description (string)
-- `DebitDivinityRequest`: deityId (uuid), amount (float), purpose (string), targetCharacterId (uuid, nullable), description (string)
+- `CreditDivinityRequest`: deityId (uuid), amount (double), source (string), sourceEventId (uuid, nullable), description (string)
+- `DebitDivinityRequest`: deityId (uuid), amount (double), purpose (string), targetCharacterId (uuid, nullable), description (string)
 - `GetDivinityHistoryRequest`: deityId (uuid), page (int, default 1), pageSize (int, default 50)
 - `GrantBlessingRequest`: deityId (uuid), characterId (uuid), tier (BlessingTier), itemTemplateCode (string), reason (string)
 - `RevokeBlessingRequest`: blessingId (uuid), reason (string)
 - `ListBlessingsByCharacterRequest`: characterId (uuid), page (int, default 1), pageSize (int, default 50)
 - `ListBlessingsByDeityRequest`: deityId (uuid), tier (nullable BlessingTier), page (int, default 1), pageSize (int, default 50)
 - `GetBlessingRequest`: blessingId (uuid)
+- `DeleteDeityRequest`: deityId (uuid)
 - `RegisterFollowerRequest`: deityId (uuid), characterId (uuid)
+- `UnregisterFollowerRequest`: deityId (uuid), characterId (uuid)
 - `GetFollowersRequest`: deityId (uuid), page (int, default 1), pageSize (int, default 50)
+- `CleanupByCharacterRequest`: characterId (uuid)
+- `CleanupByGameServiceRequest`: gameServiceId (uuid)
 
 **Response models**:
 - `DeityResponse`: deityId, gameServiceId, code, displayName, description, domains, personalityTraits, maxAttentionSlots, actorId (nullable uuid), seedId (nullable uuid), currencyWalletId (nullable uuid), realmId (nullable uuid), status, followerCount (int), createdAt, updatedAt
 - `ListDeitiesResponse`: deities (array DeityResponse), totalCount, page, pageSize
-- `DivinityBalanceResponse`: deityId (uuid), balance (float), currencyCode (string), walletId (uuid)
+- `DivinityBalanceResponse`: deityId (uuid), balance (double), currencyCode (string), walletId (uuid)
 - `DivinityHistoryResponse`: transactions (array -- reuse Currency's transaction format), totalCount, page, pageSize
-- `BlessingResponse`: blessingId, deityId, characterId, tier, itemTemplateCode, itemInstanceId, reason, grantedAt, revokedAt (nullable), status (Active/Revoked)
+- `BlessingResponse`: blessingId, deityId, characterId, tier (BlessingTier), itemTemplateCode, itemInstanceId, reason, grantedAt, revokedAt (nullable), status (BlessingStatus)
 - `ListBlessingsResponse`: blessings (array BlessingSummary), totalCount, page, pageSize
 - `FollowerResponse`: characterId (uuid), deityId (uuid), registeredAt (date-time), relationshipId (uuid)
 - `ListFollowersResponse`: followers (array FollowerResponse), totalCount, page, pageSize
@@ -143,8 +170,9 @@ The Divine service is a new L4 Game Features plugin that manages the pantheon --
 - Sensitive: personalityTraits (exclude -- internal simulation data)
 
 **x-event-subscriptions** (consumed events):
-- `character.deleted` -> `CharacterDeletedEvent` -> `HandleCharacterDeleted` -- clean up follower relationships and revoke blessings for deleted character
 - `analytics.score.updated` -> `AnalyticsScoreUpdatedEvent` -> `HandleAnalyticsScoreUpdated` -- detect domain-relevant achievements for divinity generation [SOFT: Analytics is L4]
+
+> **Note**: Character deletion cleanup is handled via `x-references` + cleanup endpoints (T28), NOT via `character.deleted` event subscription. See Step 1a for `x-references` declaration and Step 7 for cleanup endpoint implementations.
 
 **x-event-publications** (published events):
 - Lifecycle events from x-lifecycle: `deity.created`, `deity.updated`, `deity.deleted`
@@ -188,7 +216,7 @@ DivineDivinityCreditedEvent:
   properties:
     eventId: { type: string, format: uuid, description: Unique event identifier }
     deityId: { type: string, format: uuid, description: The deity receiving divinity }
-    amount: { type: number, format: float, description: Amount of divinity credited }
+    amount: { type: number, format: double, description: Amount of divinity credited }
     source: { type: string, description: Source of the divinity gain }
     sourceEventId: { type: string, format: uuid, nullable: true, description: The triggering event if applicable }
 
@@ -198,7 +226,7 @@ DivineDivinityDebitedEvent:
   properties:
     eventId: { type: string, format: uuid, description: Unique event identifier }
     deityId: { type: string, format: uuid, description: The deity spending divinity }
-    amount: { type: number, format: float, description: Amount of divinity spent }
+    amount: { type: number, format: double, description: Amount of divinity spent }
     purpose: { type: string, description: What the divinity was spent on }
     targetCharacterId: { type: string, format: uuid, nullable: true, description: Target character if blessing-related }
 
@@ -252,7 +280,7 @@ x-service-configuration:
 
     DivinityCostMinor:
       type: number
-      format: float
+      format: double
       env: DIVINE_DIVINITY_COST_MINOR
       minimum: 0.0
       default: 10.0
@@ -260,7 +288,7 @@ x-service-configuration:
 
     DivinityCostStandard:
       type: number
-      format: float
+      format: double
       env: DIVINE_DIVINITY_COST_STANDARD
       minimum: 0.0
       default: 50.0
@@ -268,7 +296,7 @@ x-service-configuration:
 
     DivinityCostGreater:
       type: number
-      format: float
+      format: double
       env: DIVINE_DIVINITY_COST_GREATER
       minimum: 0.0
       default: 200.0
@@ -276,7 +304,7 @@ x-service-configuration:
 
     DivinityCostSupreme:
       type: number
-      format: float
+      format: double
       env: DIVINE_DIVINITY_COST_SUPREME
       minimum: 0.0
       default: 1000.0
@@ -284,7 +312,7 @@ x-service-configuration:
 
     DivinityGenerationMultiplier:
       type: number
-      format: float
+      format: double
       env: DIVINE_DIVINITY_GENERATION_MULTIPLIER
       minimum: 0.0
       default: 1.0
@@ -340,6 +368,14 @@ x-service-configuration:
       maximum: 1440
       default: 60
       description: Minutes between attention slot decay evaluations for inactive followers
+
+    AttentionImpressionThreshold:
+      type: number
+      format: double
+      env: DIVINE_ATTENTION_IMPRESSION_THRESHOLD
+      minimum: 0.0
+      default: 0.1
+      description: Minimum cumulative impression below which an attention slot is freed during decay
 
     # Seed integration
     DeitySeedTypeCode:
@@ -470,11 +506,11 @@ The generator creates the skeleton. Fill in following the GameSessionServicePlug
 Internal storage models (not API-facing):
 
 - **`DeityModel`**: DeityId (Guid), GameServiceId (Guid), Code (string), DisplayName (string), Description (string), Domains (List\<DomainInfluenceModel\>), PersonalityTraits (DeityPersonalityTraitsModel), MaxAttentionSlots (int), ActorId (Guid?), SeedId (Guid?), CurrencyWalletId (Guid?), RealmId (Guid?), Status (DeityStatus), FollowerCount (int), CreatedAt (DateTimeOffset), UpdatedAt (DateTimeOffset)
-- **`DomainInfluenceModel`**: Domain (DomainCategory), Weight (float)
-- **`DeityPersonalityTraitsModel`**: Temperament (string), AttentionBias (string), Generosity (float), Jealousy (float)
-- **`BlessingModel`**: BlessingId (Guid), DeityId (Guid), CharacterId (Guid), Tier (BlessingTier), ItemTemplateCode (string), ItemInstanceId (Guid), Reason (string), GrantedAt (DateTimeOffset), RevokedAt (DateTimeOffset?), Status (BlessingStatus enum: Active, Revoked)
-- **`AttentionSlotModel`**: DeityId (Guid), CharacterId (Guid), Priority (AttentionPriority), LastActionAt (DateTimeOffset), CumulativeImpression (float)
-- **`DivinityEventModel`**: EventId (Guid), DeityId (Guid), CharacterId (Guid?), Domain (DomainCategory), Amount (float), Source (string), SourceEventId (Guid?), CreatedAt (DateTimeOffset)
+- **`DomainInfluenceModel`**: Domain (string, opaque domain code), Weight (double)
+- **`DeityPersonalityTraitsModel`**: Temperament (string), AttentionBias (string), Generosity (double), Jealousy (double)
+- **`BlessingModel`**: BlessingId (Guid), DeityId (Guid), CharacterId (Guid), Tier (BlessingTier), ItemTemplateCode (string), ItemInstanceId (Guid), Reason (string), GrantedAt (DateTimeOffset), RevokedAt (DateTimeOffset?), Status (BlessingStatus)
+- **`AttentionSlotModel`**: DeityId (Guid), CharacterId (Guid), Priority (AttentionPriority), LastActionAt (DateTimeOffset), CumulativeImpression (double)
+- **`DivinityEventModel`**: EventId (Guid), DeityId (Guid), CharacterId (Guid?), Domain (string, opaque domain code), Amount (double), Source (string), SourceEventId (Guid?), CreatedAt (DateTimeOffset)
 
 All models use proper types per T25 (enums, Guids, DateTimeOffset). Nullable for optional fields per T26.
 
@@ -482,27 +518,17 @@ All models use proper types per T25 (enums, Guids, DateTimeOffset). Nullable for
 
 #### 5a. `plugins/lib-divine/DivineServiceEvents.cs` (manual - not auto-generated)
 
-Partial class of DivineService:
+Partial class of DivineService. The generated `DivineEventsController.cs` handles event subscription registration from `x-event-subscriptions` -- do NOT manually register events via `IEventConsumer` or add `IEventConsumer` as a constructor dependency.
 
-- `RegisterEventConsumers(IEventConsumer eventConsumer)` - registers handlers for all consumed events:
-  - `character.deleted`
-  - `analytics.score.updated` (soft -- Analytics may not be enabled)
-
-**Handler implementations**:
-
-- `HandleCharacterDeletedAsync(CharacterDeletedEvent evt)`:
-  1. Query blessings by characterId from `divine-blessings` store
-  2. For each active blessing: revoke it (remove via Collection or Status Inventory as appropriate, update blessing record)
-  3. Remove follower relationships via `IRelationshipClient`
-  4. Update follower counts on affected deities
-  5. Remove character from any deity attention slots
-  6. Publish `divine.follower.removed` and `divine.blessing.revoked` events as applicable
+**Handler implementations** (methods called by generated `DivineEventsController`):
 
 - `HandleAnalyticsScoreUpdatedAsync(AnalyticsScoreUpdatedEvent evt)`:
-  1. Determine which domain(s) the score update relates to (map analytics category -> DomainCategory)
+  1. Determine which domain(s) the score update relates to (map analytics category -> domain code)
   2. For each relevant domain, find active deities with that domain
   3. Queue a `DivinityEventModel` in `divine-divinity-events` Redis store for batch processing
   4. The background worker will process these in batches, crediting divinity to deity wallets
+
+> **Note**: Character deletion cleanup is NOT handled via event subscription. It is handled via the `x-references` cleanup endpoints (`/divine/cleanup-by-character` and `/divine/cleanup-by-game-service`) defined in Step 1a. See `CleanupByCharacterAsync` and `CleanupByGameServiceAsync` in Step 7 for the implementations.
 
 ### Step 6: Create Background Worker Services
 
@@ -511,24 +537,28 @@ Partial class of DivineService:
 A `BackgroundService` that manages deity attention slot decay.
 
 **Loop** (every `AttentionWorkerIntervalSeconds`):
-1. Load all active deities from MySQL
-2. For each deity with attention slots in Redis:
+1. Acquire distributed lock `divine:lock:attention-worker` (T9 multi-instance safety -- only one instance processes at a time)
+2. Load all active deities from MySQL
+3. For each deity with attention slots in Redis:
    a. Check each slot's `LastActionAt` against `AttentionDecayIntervalMinutes`
    b. If a follower hasn't performed domain-relevant actions within the decay window, reduce their `CumulativeImpression`
-   c. If impression drops below a threshold, free the attention slot
+   c. If impression drops below `AttentionImpressionThreshold` config value, free the attention slot
    d. This creates turnover in which characters a god is "watching"
+4. Release lock
 
 #### 6b. `plugins/lib-divine/Services/DivineDivinityGenerationWorker.cs` (manual)
 
 A `BackgroundService` that batches divinity generation events into currency credits.
 
 **Loop** (every `DivinityGenerationWorkerIntervalSeconds`):
-1. Drain pending `DivinityEventModel` entries from `divine-divinity-events` Redis store
-2. Aggregate by deityId (sum amounts per deity)
-3. For each deity with pending divinity:
+1. Acquire distributed lock `divine:lock:divinity-generation-worker` (T9 multi-instance safety -- only one instance processes at a time)
+2. Drain pending `DivinityEventModel` entries from `divine-divinity-events` Redis store
+3. Aggregate by deityId (sum amounts per deity)
+4. For each deity with pending divinity:
    a. Credit the deity's currency wallet via `ICurrencyClient.CreditAsync` with `DivinityGenerationMultiplier` applied
    b. Publish `divine.divinity.credited` event with aggregated amount and source summary
-4. Clear processed events from Redis
+5. Clear processed events from Redis
+6. Release lock
 
 ### Step 7: Implement Service Business Logic
 
@@ -542,7 +572,6 @@ Partial class with `[BannouService("divine", typeof(IDivineService), lifetime: S
 - `IDistributedLockProvider` - concurrent modification safety
 - `ILogger<DivineService>` - structured logging
 - `DivineServiceConfiguration` - typed config
-- `IEventConsumer` - event handler registration
 - `ICurrencyClient` - divinity wallet management (L2 hard dependency)
 - `IRelationshipClient` - follower/rivalry bond management (L2 hard dependency)
 - `ICharacterClient` - validate character existence (L2 hard dependency)
@@ -550,6 +579,8 @@ Partial class with `[BannouService("divine", typeof(IDivineService), lifetime: S
 - `ISeedClient` - deity domain power seed management (L2 hard dependency)
 - `ICollectionClient` - permanent blessing grants via lib-collection (#286) (L2 hard dependency)
 - `IServiceProvider` - for optional L4 soft dependencies
+
+> **Note**: `IEventConsumer` is NOT a constructor dependency. Event subscriptions declared via `x-event-subscriptions` in the events schema are handled by the generated `DivineEventsController.cs`, which calls methods on the service class directly.
 
 **Soft dependencies** (resolved at runtime via `IServiceProvider`, null-checked):
 - `IStatusClient` - temporary blessing grants via Status Inventory (#282) (L4)
@@ -583,8 +614,12 @@ Partial class with `[BannouService("divine", typeof(IDivineService), lifetime: S
 | `ListBlessingsByCharacterAsync` | Paged JSON query on `divine-blessings` by characterId. |
 | `ListBlessingsByDeityAsync` | Paged JSON query on `divine-blessings` by deityId, optional tier filter. |
 | `GetBlessingAsync` | Load from MySQL by blessingId. 404 if not found. |
+| `DeleteDeityAsync` | Lock deity. Validate exists. Deactivate if Active (stop watcher if Puppetmaster available). Revoke all active blessings. Remove all follower relationships. Delete attention slots. Call `IResourceClient.ExecuteCleanupAsync` for deity's owned resources (wallet, seed). Delete DeityModel from MySQL. Publish lifecycle deleted event. |
 | `RegisterFollowerAsync` | Validate deity and character exist. Create relationship via `IRelationshipClient.CreateRelationshipAsync` (type: `deity_follower`). Increment deity's FollowerCount. Add character to deity's attention slots if capacity available. Publish `divine.follower.registered` event. |
+| `UnregisterFollowerAsync` | Validate deity and character exist. Delete relationship via `IRelationshipClient.DeleteRelationshipAsync`. Decrement deity's FollowerCount. Remove character from deity's attention slots. Publish `divine.follower.removed` event. |
 | `GetFollowersAsync` | Query relationships by deityId and type `deity_follower` via `IRelationshipClient`. Paginate results. |
+| `CleanupByCharacterAsync` | Called by lib-resource when a character is deleted (T28 cleanup endpoint). Query blessings by characterId -- revoke all active blessings. Remove follower relationships for this character from all deities. Update follower counts. Clear attention slots. Publish `divine.follower.removed` and `divine.blessing.revoked` events as applicable. |
+| `CleanupByGameServiceAsync` | Called by lib-resource when a game service is deleted (T28 cleanup endpoint). Query all deities for this gameServiceId. For each deity: deactivate, revoke blessings, remove followers, delete deity record. Publish lifecycle deleted events. |
 
 **State key patterns**:
 - Deity: `deity:{deityId}`
@@ -625,6 +660,8 @@ Following testing patterns from TESTING-PATTERNS.md:
 - `UpdateDeity_PartialUpdate_OnlyUpdatesProvidedFields`
 - `ActivateDeity_Dormant_SetsActiveAndPublishesEvent`
 - `DeactivateDeity_Active_SetsDormantAndClearsAttention`
+- `DeleteDeity_Active_DeactivatesAndDeletesAllDependentData`
+- `DeleteDeity_NotFound_ReturnsNotFound`
 
 **Divinity economy tests**:
 - `GetDivinityBalance_ValidDeity_ReturnsCurrencyBalance`
@@ -648,12 +685,17 @@ Following testing patterns from TESTING-PATTERNS.md:
 **Follower management tests**:
 - `RegisterFollower_ValidRequest_CreatesRelationshipAndIncrementsCount`
 - `RegisterFollower_AlreadyFollowing_ReturnsConflict`
+- `UnregisterFollower_ValidRequest_RemovesRelationshipAndDecrementsCount`
+- `UnregisterFollower_NotFollowing_ReturnsNotFound`
 - `RegisterFollower_AttentionCapacityFull_RegistersButNoAttentionSlot`
 - `GetFollowers_ReturnsPagedFollowers`
 
+**Cleanup endpoint tests** (T28):
+- `CleanupByCharacter_WithBlessings_RevokesAllAndRemovesFollower`
+- `CleanupByCharacter_NotFollower_NoOp`
+- `CleanupByGameService_DeletesAllDeitiesAndDependents`
+
 **Event handler tests**:
-- `HandleCharacterDeleted_WithBlessings_RevokesAllAndRemovesFollower`
-- `HandleCharacterDeleted_NotFollower_NoOp`
 - `HandleAnalyticsScoreUpdated_DomainRelevant_QueuesDivinityEvent`
 - `HandleAnalyticsScoreUpdated_IrrelevantDomain_NoOp`
 
@@ -665,14 +707,14 @@ All tests use the capture pattern (Callback on mock setups) to verify saved stat
 
 | File | Action |
 |------|--------|
-| `schemas/divine-api.yaml` | Create (~18 endpoints across 4 groups) |
-| `schemas/divine-events.yaml` | Create (lifecycle + 2 subscriptions + 8 custom events) |
-| `schemas/divine-configuration.yaml` | Create (17 configuration properties) |
+| `schemas/divine-api.yaml` | Create (~22 endpoints across 5 groups) |
+| `schemas/divine-events.yaml` | Create (lifecycle + 1 subscription + 8 custom events) |
+| `schemas/divine-configuration.yaml` | Create (18 configuration properties) |
 | `schemas/state-stores.yaml` | Modify (add 5 divine stores) |
 | `plugins/lib-divine/DivineService.cs` | Fill in (auto-generated template) |
 | `plugins/lib-divine/DivineServiceModels.cs` | Fill in (auto-generated template) |
 | `plugins/lib-divine/DivineServicePlugin.cs` | Fill in (auto-generated template) |
-| `plugins/lib-divine/DivineServiceEvents.cs` | Create (NOT auto-generated -- partial class with 2 event handlers) |
+| `plugins/lib-divine/DivineServiceEvents.cs` | Create (NOT auto-generated -- partial class with 1 event handler) |
 | `plugins/lib-divine/Services/DivineAttentionWorker.cs` | Create (background service for attention slot decay) |
 | `plugins/lib-divine/Services/DivineDivinityGenerationWorker.cs` | Create (background service for batched divinity credit) |
 | `plugins/lib-divine.tests/DivineServiceTests.cs` | Fill in (auto-generated template) |
@@ -694,7 +736,6 @@ All tests use the capture pattern (Callback on mock setups) to verify saved stat
 | `IStateStoreFactory` | L0 | All state stores (MySQL deities/blessings, Redis attention/events/locks) |
 | `IDistributedLockProvider` | L0 | Concurrent modification safety for deity and blessing mutations |
 | `IMessageBus` | L0 | Event publishing for all 8+ custom events |
-| `IEventConsumer` | L0 | Event subscription registration for 2 consumed events |
 | `ICurrencyClient` | L2 | Divinity wallet creation, credit, debit, balance, history |
 | `IRelationshipClient` | L2 | Follower bonds (deity-character), rivalry bonds (deity-deity) |
 | `ICharacterClient` | L2 | Validate character existence for blessings and followers |
@@ -763,11 +804,14 @@ All tests use the capture pattern (Callback on mock setups) to verify saved stat
 | Register deity_domain seed type on startup | `ISeedClient.RegisterSeedTypeAsync` |
 | Create domain power seed for deity | `ISeedClient.CreateSeedAsync` (ownerType: "deity", seedTypeCode: config.DeitySeedTypeCode) |
 
-### Character -> Divine (consumed events)
+### Character -> Divine (via lib-resource cleanup, T28)
 
-| Event | Action |
-|-------|--------|
-| `character.deleted` | Revoke all blessings, remove follower bonds, clear attention slots |
+| Trigger | Endpoint | Action |
+|---------|----------|--------|
+| Character deleted | `/divine/cleanup-by-character` | Revoke all blessings, remove follower bonds, clear attention slots |
+| Game service deleted | `/divine/cleanup-by-game-service` | Delete all deities and dependent data for the game service |
+
+> **Note**: Cleanup is triggered by lib-resource calling the cleanup endpoints declared in `x-references`, NOT via event subscription to `character.deleted`. This follows T28 (Resource-Managed Cleanup).
 
 ### Analytics -> Divine (consumed events, soft)
 
@@ -807,7 +851,7 @@ These are smaller questions that should be resolved during implementation, not b
 
 3. **Attention slot semantics**: Start internal-only (god "notices" characters for behavior purposes). Add client events in follow-up if players should see divine attention.
 
-4. **Domain-to-analytics mapping**: The `HandleAnalyticsScoreUpdated` handler needs analytics-category-to-DomainCategory mapping. Recommendation: config property `DomainAnalyticsMappings` as a JSON string, or a dedicated mapping state store.
+4. **Domain-to-analytics mapping**: The `HandleAnalyticsScoreUpdated` handler needs analytics-category-to-domain-code mapping. Recommendation: config property `DomainAnalyticsMappings` as a JSON string, or a dedicated mapping state store.
 
 5. **Multi-deity follower rules**: Allow multiple followings; `MaxBlessingsPerCharacter` is the natural limit. The KB suggests monotheistic tendencies ("a character's patron deity") but doesn't forbid polytheism -- the game design (ABML behaviors, blessing costs, god jealousy) creates soft monotheistic pressure without hard-coding it.
 
@@ -821,6 +865,6 @@ These are smaller questions that should be resolved during implementation, not b
 4. Verify `StateStoreDefinitions.cs` contains all 5 Divine constants after generation
 5. Verify `DivineClient.cs` generated in `bannou-service/Generated/Clients/` for other services to call Divine
 6. Verify event subscription handlers generated in `DivineEventsController.cs` for consumed events
-7. Verify the `IDivineService` interface has methods for all 18 endpoints
-8. Manual verification: confirm `ICurrencyClient`, `IItemClient`, `IInventoryClient`, `IRelationshipClient` are available via constructor injection (L2 loads before L4)
+7. Verify the `IDivineService` interface has methods for all ~22 endpoints
+8. Manual verification: confirm `ICurrencyClient`, `ICollectionClient`, `ISeedClient`, `IRelationshipClient`, `ICharacterClient`, `IGameServiceClient` are available via constructor injection (L2 loads before L4)
 9. Verify blessing grant flow end-to-end in unit tests: debit divinity -> grant via Collection (#286) or Status Inventory (#282) based on tier -> record BlessingModel -> publish event

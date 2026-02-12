@@ -1902,7 +1902,6 @@ public partial class GameSessionController
             "description": "Request to leave a specific game session by ID",
             "additionalProperties": false,
             "required": [
-                "webSocketSessionId",
                 "accountId",
                 "gameSessionId"
             ],
@@ -1910,7 +1909,8 @@ public partial class GameSessionController
                 "webSocketSessionId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "WebSocket session ID of the client leaving."
+                    "nullable": true,
+                    "description": "WebSocket session ID of the client leaving. Null for server-side cleanup operations (e.g., scenario lifecycle worker) where no real WebSocket session exists."
                 },
                 "accountId": {
                     "type": "string",

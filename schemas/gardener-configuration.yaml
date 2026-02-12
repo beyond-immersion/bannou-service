@@ -207,6 +207,22 @@ x-service-configuration:
       default: 0.5
       description: Baseline narrative score when no player drift pattern is detected
 
+    ScenarioTemplateQueryPageSize:
+      type: integer
+      env: GARDENER_SCENARIO_TEMPLATE_QUERY_PAGE_SIZE
+      minimum: 10
+      maximum: 2000
+      default: 500
+      description: Maximum number of scenario templates to load per orchestrator evaluation cycle
+
+    ScenarioHistoryQueryPageSize:
+      type: integer
+      env: GARDENER_SCENARIO_HISTORY_QUERY_PAGE_SIZE
+      minimum: 10
+      maximum: 1000
+      default: 200
+      description: Maximum number of scenario history records to load per orchestrator evaluation cycle
+
     # =========================================================================
     # Scenario Selection Algorithm Weights
     # =========================================================================

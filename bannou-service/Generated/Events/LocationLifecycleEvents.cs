@@ -124,6 +124,36 @@ public partial class LocationCreatedEvent : BaseServiceEvent
     public string? DeprecationReason { get; set; } = default!;
 
     /// <summary>
+    /// Optional spatial extent in world coordinates
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bounds")]
+    public BoundingBox3D? Bounds { get; set; } = default!;
+
+    /// <summary>
+    /// Precision level of spatial bounds
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("boundsPrecision")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public BoundsPrecision BoundsPrecision { get; set; } = default!;
+
+    /// <summary>
+    /// How this location's coordinate system relates to its parent
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("coordinateMode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CoordinateMode CoordinateMode { get; set; } = default!;
+
+    /// <summary>
+    /// Origin point for local or inherited coordinate systems
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("localOrigin")]
+    public Position3D? LocalOrigin { get; set; } = default!;
+
+    /// <summary>
     /// Additional custom metadata associated with the location
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
@@ -238,6 +268,36 @@ public partial class LocationUpdatedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
     public string? DeprecationReason { get; set; } = default!;
+
+    /// <summary>
+    /// Optional spatial extent in world coordinates
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bounds")]
+    public BoundingBox3D? Bounds { get; set; } = default!;
+
+    /// <summary>
+    /// Precision level of spatial bounds
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("boundsPrecision")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public BoundsPrecision BoundsPrecision { get; set; } = default!;
+
+    /// <summary>
+    /// How this location's coordinate system relates to its parent
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("coordinateMode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CoordinateMode CoordinateMode { get; set; } = default!;
+
+    /// <summary>
+    /// Origin point for local or inherited coordinate systems
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("localOrigin")]
+    public Position3D? LocalOrigin { get; set; } = default!;
 
     /// <summary>
     /// Additional custom metadata associated with the location
@@ -362,6 +422,36 @@ public partial class LocationDeletedEvent : BaseServiceEvent
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
     public string? DeprecationReason { get; set; } = default!;
+
+    /// <summary>
+    /// Optional spatial extent in world coordinates
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bounds")]
+    public BoundingBox3D? Bounds { get; set; } = default!;
+
+    /// <summary>
+    /// Precision level of spatial bounds
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("boundsPrecision")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public BoundsPrecision BoundsPrecision { get; set; } = default!;
+
+    /// <summary>
+    /// How this location's coordinate system relates to its parent
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("coordinateMode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CoordinateMode CoordinateMode { get; set; } = default!;
+
+    /// <summary>
+    /// Origin point for local or inherited coordinate systems
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("localOrigin")]
+    public Position3D? LocalOrigin { get; set; } = default!;
 
     /// <summary>
     /// Additional custom metadata associated with the location

@@ -168,6 +168,20 @@ public partial class GardenerService : IGardenerService
     /// </summary>
     internal const string ActiveScenariosTrackingKey = "gardener:active-scenarios";
 
+    /// <summary>
+    /// All deployment phases. Used to normalize null/empty AllowedPhases into explicit values
+    /// so storage always contains queryable phase entries (no empty-array sentinel).
+    /// </summary>
+    private static readonly List<DeploymentPhase> AllDeploymentPhases =
+        new() { DeploymentPhase.Alpha, DeploymentPhase.Beta, DeploymentPhase.Release };
+
+    /// <summary>
+    /// Converts API-provided AllowedPhases (nullable/empty = all phases) to storage representation
+    /// (always explicit, never empty).
+    /// </summary>
+    private static List<DeploymentPhase> ToStorageAllowedPhases(ICollection<DeploymentPhase>? phases) =>
+        phases == null || phases.Count == 0 ? AllDeploymentPhases.ToList() : phases.ToList();
+
     #endregion
 
     #region Garden Management
@@ -176,6 +190,20 @@ public partial class GardenerService : IGardenerService
     public async Task<(StatusCodes, GardenStateResponse?)> EnterGardenAsync(
         EnterGardenRequest body, CancellationToken cancellationToken)
     {
+        var lockOwner = $"enter-garden-{Guid.NewGuid():N}";
+        await using var lockResult = await _lockProvider.LockAsync(
+            StateStoreDefinitions.GardenerLock,
+            $"garden:{body.AccountId}",
+            lockOwner,
+            _configuration.DistributedLockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResult.Success)
+        {
+            _logger.LogWarning("Could not acquire lock for entering garden, account {AccountId}", body.AccountId);
+            return (StatusCodes.Conflict, null);
+        }
+
         var existing = await GardenStore.GetAsync(GardenKey(body.AccountId), cancellationToken);
         if (existing != null)
         {
@@ -584,7 +612,7 @@ public partial class GardenerService : IGardenerService
 
         // Phase gating
         var phaseConfig = await GetOrCreatePhaseConfigAsync(cancellationToken);
-        if (template.AllowedPhases.Count > 0 && !template.AllowedPhases.Contains(phaseConfig.CurrentPhase))
+        if (!template.AllowedPhases.Contains(phaseConfig.CurrentPhase))
         {
             _logger.LogInformation(
                 "Template {TemplateId} not allowed in current phase {Phase}",
@@ -604,17 +632,32 @@ public partial class GardenerService : IGardenerService
         }
 
         // Create backing game session
-        var gameSession = await _gameSessionClient.CreateGameSessionAsync(
-            new CreateGameSessionRequest
-            {
-                GameType = "gardener-scenario",
-                MaxPlayers = template.Multiplayer?.MaxPlayers ?? 1,
-                SessionName = $"Scenario: {template.DisplayName}",
-                SessionType = SessionType.Matchmade,
-                OwnerId = body.AccountId,
-                ExpectedPlayers = new List<Guid> { body.AccountId },
-                ReservationTtlSeconds = (int)(_configuration.ScenarioTimeoutMinutes * 60)
-            }, cancellationToken);
+        GameSessionResponse gameSession;
+        try
+        {
+            gameSession = await _gameSessionClient.CreateGameSessionAsync(
+                new CreateGameSessionRequest
+                {
+                    GameType = "gardener-scenario",
+                    MaxPlayers = template.Multiplayer?.MaxPlayers ?? 1,
+                    SessionName = $"Scenario: {template.DisplayName}",
+                    SessionType = SessionType.Matchmade,
+                    OwnerId = body.AccountId,
+                    ExpectedPlayers = new List<Guid> { body.AccountId },
+                    ReservationTtlSeconds = (int)(_configuration.ScenarioTimeoutMinutes * 60)
+                }, cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogError(ex,
+                "Failed to create game session for scenario {TemplateId}, account {AccountId}: {StatusCode}",
+                body.ScenarioTemplateId, body.AccountId, ex.StatusCode);
+            await _messageBus.TryPublishErrorAsync(
+                "gardener", "EnterScenario", "game_session_creation_failed", ex.Message,
+                dependency: "game-session", endpoint: "post:/game-session/create",
+                details: new { TemplateId = body.ScenarioTemplateId, AccountId = body.AccountId });
+            return (StatusCodes.ServiceUnavailable, null);
+        }
 
         var scenarioInstanceId = Guid.NewGuid();
         var now = DateTimeOffset.UtcNow;
@@ -978,7 +1021,7 @@ public partial class GardenerService : IGardenerService
             }).ToList(),
             MinGrowthPhase = body.MinGrowthPhase,
             EstimatedDurationMinutes = body.EstimatedDurationMinutes,
-            AllowedPhases = body.AllowedPhases?.ToList() ?? new List<DeploymentPhase>(),
+            AllowedPhases = ToStorageAllowedPhases(body.AllowedPhases),
             MaxConcurrentInstances = body.MaxConcurrentInstances,
             Prerequisites = body.Prerequisites != null ? MapFromPrerequisites(body.Prerequisites) : null,
             Chaining = body.Chaining != null ? MapFromChaining(body.Chaining) : null,
@@ -1066,23 +1109,18 @@ public partial class GardenerService : IGardenerService
         if (body.Status != null)
             conditions.Add(new QueryCondition { Path = "$.Status", Operator = QueryOperator.Equals, Value = body.Status.Value.ToString() });
 
+        // AllowedPhases always contains explicit values (no empty-array sentinel),
+        // so JSON_CONTAINS query works directly via QueryOperator.In with a scalar value
+        if (body.DeploymentPhase != null)
+            conditions.Add(new QueryCondition { Path = "$.AllowedPhases", Operator = QueryOperator.In, Value = body.DeploymentPhase.Value.ToString() });
+
         var result = await TemplateStore.JsonQueryPagedAsync(
             conditions, body.Page, body.PageSize, cancellationToken: cancellationToken);
 
-        // In-memory filter for deployment phase (JSON array contains not supported in queries)
-        var templates = result.Items.Select(i => i.Value);
-        if (body.DeploymentPhase != null)
-        {
-            templates = templates.Where(t =>
-                t.AllowedPhases.Count == 0 || t.AllowedPhases.Contains(body.DeploymentPhase.Value));
-        }
-
-        var templateList = templates.ToList();
-
         return (StatusCodes.OK, new ListTemplatesResponse
         {
-            Templates = templateList.Select(MapToTemplateResponse).ToList(),
-            TotalCount = body.DeploymentPhase != null ? templateList.Count : (int)result.TotalCount,
+            Templates = result.Items.Select(i => MapToTemplateResponse(i.Value)).ToList(),
+            TotalCount = (int)result.TotalCount,
             Page = body.Page,
             PageSize = body.PageSize
         });
@@ -1192,6 +1230,53 @@ public partial class GardenerService : IGardenerService
 
         _logger.LogInformation(
             "Deprecated scenario template {TemplateId} ({Code})",
+            body.ScenarioTemplateId, template.Code);
+
+        return (StatusCodes.OK, MapToTemplateResponse(template));
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ScenarioTemplateResponse?)> DeleteTemplateAsync(
+        DeleteTemplateRequest body, CancellationToken cancellationToken)
+    {
+        await using var lockResult = await _lockProvider.LockAsync(
+            StateStoreDefinitions.GardenerLock,
+            $"template:{body.ScenarioTemplateId}",
+            Guid.NewGuid().ToString(),
+            _configuration.DistributedLockTimeoutSeconds,
+            cancellationToken);
+
+        if (!lockResult.Success)
+            return (StatusCodes.Conflict, null);
+
+        var template = await TemplateStore.GetAsync(
+            TemplateKey(body.ScenarioTemplateId), cancellationToken);
+        if (template == null)
+            return (StatusCodes.NotFound, null);
+
+        if (template.Status != TemplateStatus.Deprecated)
+            return (StatusCodes.Conflict, null);
+
+        await TemplateStore.DeleteAsync(TemplateKey(body.ScenarioTemplateId), cancellationToken);
+
+        await _messageBus.TryPublishAsync("scenario-template.deleted",
+            new ScenarioTemplateDeletedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                ScenarioTemplateId = template.ScenarioTemplateId,
+                Code = template.Code,
+                DisplayName = template.DisplayName,
+                Description = template.Description,
+                Category = template.Category,
+                ConnectivityMode = template.ConnectivityMode,
+                Status = template.Status,
+                CreatedAt = template.CreatedAt,
+                UpdatedAt = template.UpdatedAt
+            }, cancellationToken: cancellationToken);
+
+        _logger.LogInformation(
+            "Deleted scenario template {TemplateId} ({Code})",
             body.ScenarioTemplateId, template.Code);
 
         return (StatusCodes.OK, MapToTemplateResponse(template));
@@ -1364,7 +1449,7 @@ public partial class GardenerService : IGardenerService
 
         // Phase gating
         var phaseConfig = await GetOrCreatePhaseConfigAsync(cancellationToken);
-        if (template.AllowedPhases.Count > 0 && !template.AllowedPhases.Contains(phaseConfig.CurrentPhase))
+        if (!template.AllowedPhases.Contains(phaseConfig.CurrentPhase))
         {
             _logger.LogInformation(
                 "Template {TemplateId} not allowed in current phase {Phase}",
@@ -1384,17 +1469,32 @@ public partial class GardenerService : IGardenerService
         }
 
         // Create shared game session
-        var gameSession = await _gameSessionClient.CreateGameSessionAsync(
-            new CreateGameSessionRequest
-            {
-                GameType = "gardener-scenario",
-                MaxPlayers = template.Multiplayer.MaxPlayers,
-                SessionName = $"Bond Scenario: {template.DisplayName}",
-                SessionType = SessionType.Matchmade,
-                OwnerId = partnerAccountIds[0],
-                ExpectedPlayers = partnerAccountIds,
-                ReservationTtlSeconds = (int)(_configuration.ScenarioTimeoutMinutes * 60)
-            }, cancellationToken);
+        GameSessionResponse gameSession;
+        try
+        {
+            gameSession = await _gameSessionClient.CreateGameSessionAsync(
+                new CreateGameSessionRequest
+                {
+                    GameType = "gardener-scenario",
+                    MaxPlayers = template.Multiplayer.MaxPlayers,
+                    SessionName = $"Bond Scenario: {template.DisplayName}",
+                    SessionType = SessionType.Matchmade,
+                    OwnerId = partnerAccountIds[0],
+                    ExpectedPlayers = partnerAccountIds,
+                    ReservationTtlSeconds = (int)(_configuration.ScenarioTimeoutMinutes * 60)
+                }, cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogError(ex,
+                "Failed to create game session for bond scenario {TemplateId}: {StatusCode}",
+                body.ScenarioTemplateId, ex.StatusCode);
+            await _messageBus.TryPublishErrorAsync(
+                "gardener", "EnterScenarioTogether", "game_session_creation_failed", ex.Message,
+                dependency: "game-session", endpoint: "post:/game-session/create",
+                details: new { TemplateId = body.ScenarioTemplateId, Partners = partnerAccountIds });
+            return (StatusCodes.ServiceUnavailable, null);
+        }
 
         var scenarioId = Guid.NewGuid();
         var now = DateTimeOffset.UtcNow;

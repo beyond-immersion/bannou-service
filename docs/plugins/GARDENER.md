@@ -212,9 +212,9 @@ Player experience orchestration service (L4 GameFeatures) for garden navigation,
 - **ChainScenarioAsync**: Validates chaining rules (template `LeadsTo` list and `MaxChainDepth`). Completes current scenario with growth, creates new chained scenario reusing the same game session. Increments chain depth.
 - **EnterScenarioTogetherAsync** (Bond): Resolves bond participants via `ISeedClient.GetBondAsync` + `GetSeedAsync`. Validates both in garden, template supports multiplayer. Creates shared game session and scenario for all participants.
 
-### Template Management (6 endpoints)
+### Template Management (7 endpoints)
 
-Standard CRUD on scenario templates with JSON-queryable MySQL storage. Code uniqueness enforced via JSON query on creation. `ListTemplatesAsync` supports filtering by category, connectivity mode, status, and deployment phase. Deployment phase filtering is done in-memory post-query because JSON array contains is not supported in queries. `DeprecateTemplateAsync` sets status to Deprecated and publishes update event.
+Standard CRUD on scenario templates with JSON-queryable MySQL storage. Code uniqueness enforced via JSON query on creation. `ListTemplatesAsync` supports filtering by category, connectivity mode, status, and deployment phase. Deployment phase filtering is done in-memory post-query because JSON array contains is not supported in queries. `DeprecateTemplateAsync` sets status to Deprecated and publishes update event. `DeleteTemplateAsync` requires Deprecated status, permanently removes template from store, and publishes `scenario-template.deleted` lifecycle event.
 
 ### Phase Management (3 endpoints)
 
@@ -339,19 +339,19 @@ If the player has a bond and the template is bond-preferred, score is multiplied
 
 ### Bugs (Fix Immediately)
 
-1. **Guid.Empty sentinel for WebSocketSessionId**: Both `TryCleanupGameSessionAsync` (GardenerService.cs:1674) and `ForceCompleteScenarioAsync` (GardenerScenarioLifecycleWorker.cs:393) pass `Guid.Empty` as `WebSocketSessionId` when calling `LeaveGameSessionByIdAsync`. This is a no-sentinel tenet violation. The game-session schema requires a non-nullable `webSocketSessionId` field but server-side leave operations have no real WebSocket session. Fix requires making `webSocketSessionId` nullable in the game-session API schema.
+1. ~~**Guid.Empty sentinel for WebSocketSessionId**~~: Resolved -- made `webSocketSessionId` nullable in game-session API schema; Gardener now passes `null`.
 
-2. **Guid.Empty for GameServiceId in seed type registration**: `GardenerServicePlugin.OnRunningAsync` (line 69) passes `Guid.Empty` for `GameServiceId` when registering the guardian seed type. Comment says "cross-game; resolved at runtime" but this is a no-sentinel tenet violation. If the seed type is truly cross-game, `GameServiceId` should be nullable in the seed API schema.
+2. ~~**Guid.Empty for GameServiceId in seed type registration**~~: Resolved -- made `GameServiceId` nullable in seed API schema; Seed service handles null→storage conversion internally via `CrossGameServiceId` constant.
 
-3. **ListTemplatesAsync in-memory phase filtering breaks pagination**: When `DeploymentPhase` filter is provided, templates are filtered in-memory after the database query. The response uses `templateList.Count` instead of `result.TotalCount`, making TotalCount inaccurate relative to page/pageSize. If 100 templates exist but only 10 match the phase filter on page 1, the client sees TotalCount=10 regardless of what's on other pages.
+3. ~~**ListTemplatesAsync in-memory phase filtering breaks pagination**~~: Resolved -- `AllowedPhases` now always stores explicit phase values (null/empty at API boundary normalized to all phases). Eliminated empty-array sentinel. Phase filtering uses `JSON_CONTAINS` via `QueryOperator.In` at the database level with correct server-side pagination.
 
-4. **Missing try-catch around CreateGameSessionAsync**: In `EnterScenarioAsync` (line 607) and `EnterScenarioTogetherAsync` (line 1383), `_gameSessionClient.CreateGameSessionAsync` is called without try-catch. If game session creation fails, the exception propagates unhandled. Per error handling tenets, external service calls should be wrapped with `ApiException` distinction. The garden tracking set and garden instance may be in an inconsistent state if this call fails mid-operation (garden already deleted, but scenario never created -- player stuck with no garden and no scenario). Fix requires try-catch with compensation (restore garden instance on failure) or transactional ordering (create game session before deleting garden).
+4. ~~**Missing try-catch around CreateGameSessionAsync**~~: Resolved -- both call sites wrapped with `ApiException` catch, error event publication, and `ServiceUnavailable` return. No compensation needed because game session creation precedes scenario state.
 
-5. **EnterGardenAsync has no distributed lock**: Unlike `LeaveGardenAsync`, `InteractWithPoiAsync`, `DeclinePoiAsync`, and all scenario mutation methods, `EnterGardenAsync` does not acquire a distributed lock before checking for an existing garden and creating a new one. Two concurrent calls for the same account could both pass the existence check (line 179-184), both create a garden instance, and both publish `gardener.garden.entered` events. The second `SaveAsync` overwrites the first, and the tracking set `AddToSetAsync` is idempotent, but the first call's event would reference a garden that was immediately replaced. Unlike `UpdatePositionAsync` (which intentionally omits the lock for latency on high-frequency calls), `EnterGardenAsync` is a low-frequency operation where a lock would be appropriate.
+5. ~~**EnterGardenAsync has no distributed lock**~~: Resolved -- added distributed lock on `garden:{accountId}` key; returns `Conflict` if lock cannot be acquired.
 
-6. **Hardcoded query page sizes in GardenOrchestratorWorker (T21 violation)**: `GetEligibleTemplatesAsync` (GardenerGardenOrchestratorWorker.cs:427) queries templates with hardcoded `page: 0, pageSize: 500` and history with `page: 0, pageSize: 200` (line 438). If a deployment has more than 500 active templates or a player has more than 200 history records, excess entries are silently ignored. These limits should be configuration properties per the Configuration-First tenet.
+6. ~~**Hardcoded query page sizes in GardenOrchestratorWorker**~~: Resolved -- extracted to `ScenarioTemplateQueryPageSize` (default: 500) and `ScenarioHistoryQueryPageSize` (default: 200) configuration properties.
 
-7. **Race condition in background worker POI expiry**: `GardenerGardenOrchestratorWorker.ExpireStalePoiAsync` modifies POI state (setting `Status = Expired`) and removes POI IDs from the garden's `ActivePoiIds` list without acquiring a distributed lock for the garden instance. If a player interacts with a POI via `InteractWithPoiAsync` (which does acquire a lock) at the same moment the worker expires it, the worker's unlocked write could overwrite the interaction result. The API and worker operate on the same Redis keys without coordination. Fix requires either acquiring a garden-level lock in the worker's per-garden processing or accepting and documenting last-write-wins semantics for POI state.
+7. ~~**Race condition in background worker POI expiry**~~: Resolved -- moved to Intentional Quirks #8 as accepted last-write-wins behavior.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -369,17 +369,19 @@ If the player has a bond and the template is bond-preferred, score is multiplied
 
 7. **Chained scenarios reuse the game session**: When `ChainScenarioAsync` transitions to a new scenario, it reuses the previous scenario's `GameSessionId` rather than creating a new game session. This keeps the player in the same session context across the chain.
 
+8. **Background worker POI expiry uses last-write-wins**: `GardenerGardenOrchestratorWorker.ExpireStalePoiAsync` modifies POI state (setting `Status = Expired`) and removes POI IDs from the garden's `ActivePoiIds` list without acquiring a distributed lock. If a player interacts with a POI via `InteractWithPoiAsync` (which does acquire a lock) at the same moment the worker expires it, the worker's unlocked write could overwrite the interaction result. This is accepted because: (a) the window is extremely narrow (worker runs every 5s, POI interaction is sub-millisecond), (b) the consequence is benign (player enters a scenario that was about to expire, or an expired POI briefly appears interactable), and (c) adding per-garden locks to the worker would significantly reduce throughput when processing many gardens per tick. The same last-write-wins semantics apply to `UpdatePositionAsync` (Quirk #1) for the same throughput reasons.
+
 ### Design Considerations (Requires Planning)
 
 1. **Growth phase ordering is unresolved**: Templates can specify `MinGrowthPhase` but there is no mechanism to compare phase labels ordinally. The growth phases ("nascent", "awakening", "attuned", "resonant", "transcendent") are registered with `MinTotalGrowth` thresholds in the Seed service, but Gardener only caches the phase label string. Implementing this requires either querying Seed for phase ordering or maintaining a local phase-to-ordinal mapping.
 
-2. **DeploymentPhase filter needs MySQL JSON array query**: The `ListTemplatesAsync` in-memory filtering for `AllowedPhases` is a workaround because MySQL JSON path queries don't support "array contains value" natively in the lib-state abstraction. A proper fix requires either extending `IJsonQueryableStateStore` with array-contains semantics or using a different storage pattern (e.g., separate phase-template mapping).
+2. ~~**DeploymentPhase filter needs MySQL JSON array query**~~: Resolved -- eliminated the empty-array sentinel by normalizing null/empty `AllowedPhases` to all phases at the API boundary. Storage always contains explicit values, enabling `QueryOperator.In` (which generates `JSON_CONTAINS`) for server-side filtering.
 
 3. **Persistent connectivity mode and the release transition**: PLAYER-VISION.md describes the release as "a scenario that doesn't end, a door that leads to permanent inhabitation." `ConnectivityMode.Persistent` exists as an enum value but has no differentiated code path. Designing this requires answering: What makes a Persistent scenario different from Isolated? Does the player stay in-world indefinitely? Does the garden become a between-sessions lobby? How does the "surprise" transition work without disrupting players mid-scenario?
 
 4. **Content flywheel integration point**: Gardener generates play (scenarios, growth, history) but doesn't contribute to the content side of the flywheel. The architectural question is where the connection point should be: Should scenario completion publish events that Storyline/Puppetmaster consume? Should scenario history records feed into compressed archives via lib-resource? This is a cross-cutting design question that affects multiple services.
 
-5. **Background worker and API lock coordination**: The `GardenerGardenOrchestratorWorker` processes gardens without distributed locks (for throughput), while API endpoints acquire locks for the same garden instances. A design decision is needed: either the worker acquires per-garden locks (safe but slower, limits throughput at scale), or the system accepts eventual consistency between worker and API state (current implicit behavior, needs explicit documentation and edge case analysis).
+5. **Background worker and API lock coordination**: The `GardenerGardenOrchestratorWorker` processes gardens without distributed locks (for throughput), while API endpoints acquire locks for the same garden instances. Resolution: last-write-wins is accepted for the worker (see Intentional Quirk #8). The worker's unlocked operations (POI expiry, spawning) have benign race consequences, and per-garden locks would throttle throughput at scale. API endpoints continue to use locks for user-initiated mutations where correctness matters (scenario entry, garden creation).
 
 6. **Plan document superseded**: The original implementation plan (`docs/plans/GARDENER.md`) was superseded by this deep dive and has been deleted. The plan had several inaccuracies: stated 25 endpoints (actual: 23), specified event-based growth awards (actual: direct API via `ISeedClient.RecordGrowthBatchAsync`), listed 5 broadcast event subscriptions (actual: 3 events + DI listener), and named `game-session.ended` (actual: `game-session.deleted`). This deep dive is the authoritative reference.
 
@@ -387,13 +389,13 @@ If the player has a bond and the template is bond-preferred, score is multiplied
 
 ### P0 -- Fix Immediately
 
-- [ ] **Bug #1**: Make `webSocketSessionId` nullable in game-session API schema, update Gardener to pass `null` instead of `Guid.Empty`
-- [ ] **Bug #2**: Make `GameServiceId` nullable in seed API schema for cross-game seed types, update Gardener plugin registration
-- [ ] **Bug #3**: Fix `ListTemplatesAsync` pagination -- either compute TotalCount from full filtered set or extend JSON query with array-contains
-- [ ] **Bug #4**: Add try-catch + compensation around `CreateGameSessionAsync` in `EnterScenarioAsync` and `EnterScenarioTogetherAsync`
-- [ ] **Bug #5**: Add distributed lock to `EnterGardenAsync` (low-frequency operation, lock is appropriate)
-- [ ] **Bug #6**: Extract hardcoded query page sizes (500, 200) in `GardenerGardenOrchestratorWorker` to configuration properties
-- [ ] **Bug #7**: Resolve POI expiry race condition -- either add garden-level lock in worker or document last-write-wins acceptance
+- [x] **Bug #1**: Make `webSocketSessionId` nullable in game-session API schema, update Gardener to pass `null` instead of `Guid.Empty`
+- [x] **Bug #2**: Make `GameServiceId` nullable in seed API schema for cross-game seed types, update Gardener plugin registration
+- [x] **Bug #3**: Eliminated empty-array sentinel for `AllowedPhases`; null/empty normalized to all phases at API boundary; `ListTemplatesAsync` now uses `JSON_CONTAINS` query with correct server-side pagination
+- [x] **Bug #4**: Add try-catch + compensation around `CreateGameSessionAsync` in `EnterScenarioAsync` and `EnterScenarioTogetherAsync`
+- [x] **Bug #5**: Add distributed lock to `EnterGardenAsync` (low-frequency operation, lock is appropriate)
+- [x] **Bug #6**: Extract hardcoded query page sizes (500, 200) in `GardenerGardenOrchestratorWorker` to configuration properties
+- [x] **Bug #7**: POI expiry race condition documented as accepted last-write-wins behavior (Intentional Quirk #8)
 
 ### P1 -- Complete Before Beta
 
@@ -417,5 +419,5 @@ If the player has a bond and the template is bond-preferred, score is multiplied
 ### P3 -- Documentation & Cleanup
 
 - [x] **Design #6**: Implementation plan (`docs/plans/GARDENER.md`) superseded by this deep dive and deleted
-- [ ] **Stub #2**: Either add template delete endpoint to publish `scenario-template.deleted` or remove lifecycle event from schema
+- [x] **Stub #2**: Added `/gardener/template/delete` endpoint (developer-only) that requires Deprecated status, publishes `scenario-template.deleted` lifecycle event
 - [ ] **Extension #7**: Document multi-seed-type deployment pattern (multiple Gardener instances with different `GARDENER_SEED_TYPE_CODE`)

@@ -425,6 +425,15 @@ public sealed class ActorRunner : IActorRunner
     }
 
     /// <inheritdoc/>
+    public void InvalidateCachedBehavior()
+    {
+        _behavior = null;
+        _goapGoals = null;
+        _goapActions = null;
+        _logger.LogInformation("Actor {ActorId} cached behavior invalidated, will reload on next tick", ActorId);
+    }
+
+    /// <inheritdoc/>
     public async ValueTask DisposeAsync()
     {
         if (_disposed)

@@ -271,6 +271,21 @@ public interface ILocationController : BeyondImmersion.BannouService.Controllers
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationExistsResponse>> LocationExistsAsync(LocationExistsRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
+    /// Find locations containing a spatial position
+    /// </summary>
+
+    /// <remarks>
+    /// Given a Position3D and realmId, returns all locations whose bounds contain
+    /// <br/>that position, ordered by depth descending (most specific first). Only
+    /// <br/>locations with spatial bounds data are considered. A position is "in" a
+    /// <br/>location if it falls within the location's axis-aligned bounding box.
+    /// </remarks>
+
+    /// <returns>Locations containing the position</returns>
+
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationListResponse>> QueryLocationsByPositionAsync(QueryLocationsByPositionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+    /// <summary>
     /// Seed locations from configuration
     /// </summary>
 
@@ -1089,6 +1104,50 @@ public partial class LocationController : Microsoft.AspNetCore.Mvc.ControllerBas
                 "unexpected_exception",
                 ex_.Message,
                 endpoint: "post:location/exists",
+                stack: ex_.StackTrace,
+                cancellationToken: cancellationToken);
+            return StatusCode(500);
+        }
+    }
+
+    /// <summary>
+    /// Find locations containing a spatial position
+    /// </summary>
+    /// <remarks>
+    /// Given a Position3D and realmId, returns all locations whose bounds contain
+    /// <br/>that position, ordered by depth descending (most specific first). Only
+    /// <br/>locations with spatial bounds data are considered. A position is "in" a
+    /// <br/>location if it falls within the location's axis-aligned bounding box.
+    /// </remarks>
+    /// <returns>Locations containing the position</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("location/query/by-position")]
+
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LocationListResponse>> QueryLocationsByPosition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] QueryLocationsByPositionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    {
+
+        try
+        {
+
+            var (statusCode, result) = await _implementation.QueryLocationsByPositionAsync(body, cancellationToken);
+            return ConvertToActionResult(statusCode, result);
+        }
+        catch (BeyondImmersion.Bannou.Core.ApiException ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LocationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:location/query/by-position");
+            return StatusCode(503);
+        }
+        catch (System.Exception ex_)
+        {
+            var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<LocationController>>(HttpContext.RequestServices);
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:location/query/by-position");
+            var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
+            await messageBus_.TryPublishErrorAsync(
+                "location",
+                "QueryLocationsByPosition",
+                "unexpected_exception",
+                ex_.Message,
+                endpoint: "post:location/query/by-position",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
             return StatusCode(500);

@@ -28,8 +28,7 @@ public partial class SeedController
             "required": [
                 "ownerId",
                 "ownerType",
-                "seedTypeCode",
-                "gameServiceId"
+                "seedTypeCode"
             ],
             "properties": {
                 "ownerId": {
@@ -48,7 +47,8 @@ public partial class SeedController
                 "gameServiceId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Game service this seed is scoped to."
+                    "nullable": true,
+                    "description": "Game service this seed is scoped to. Null for cross-game seed types that are not scoped to any single game service."
                 },
                 "displayName": {
                     "type": "string",
@@ -80,7 +80,6 @@ public partial class SeedController
                 "ownerId",
                 "ownerType",
                 "seedTypeCode",
-                "gameServiceId",
                 "createdAt",
                 "growthPhase",
                 "totalGrowth",
@@ -109,7 +108,8 @@ public partial class SeedController
                 "gameServiceId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Game service this seed is scoped to."
+                    "nullable": true,
+                    "description": "Game service this seed is scoped to. Null for cross-game seed types."
                 },
                 "createdAt": {
                     "type": "string",
@@ -244,7 +244,6 @@ public partial class SeedController
                 "ownerId",
                 "ownerType",
                 "seedTypeCode",
-                "gameServiceId",
                 "createdAt",
                 "growthPhase",
                 "totalGrowth",
@@ -273,7 +272,8 @@ public partial class SeedController
                 "gameServiceId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Game service this seed is scoped to."
+                    "nullable": true,
+                    "description": "Game service this seed is scoped to. Null for cross-game seed types."
                 },
                 "createdAt": {
                     "type": "string",
@@ -444,7 +444,6 @@ public partial class SeedController
                 "ownerId",
                 "ownerType",
                 "seedTypeCode",
-                "gameServiceId",
                 "createdAt",
                 "growthPhase",
                 "totalGrowth",
@@ -473,7 +472,8 @@ public partial class SeedController
                 "gameServiceId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Game service this seed is scoped to."
+                    "nullable": true,
+                    "description": "Game service this seed is scoped to. Null for cross-game seed types."
                 },
                 "createdAt": {
                     "type": "string",
@@ -666,7 +666,6 @@ public partial class SeedController
                 "ownerId",
                 "ownerType",
                 "seedTypeCode",
-                "gameServiceId",
                 "createdAt",
                 "growthPhase",
                 "totalGrowth",
@@ -695,7 +694,8 @@ public partial class SeedController
                 "gameServiceId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Game service this seed is scoped to."
+                    "nullable": true,
+                    "description": "Game service this seed is scoped to. Null for cross-game seed types."
                 },
                 "createdAt": {
                     "type": "string",
@@ -841,7 +841,6 @@ public partial class SeedController
                 "ownerId",
                 "ownerType",
                 "seedTypeCode",
-                "gameServiceId",
                 "createdAt",
                 "growthPhase",
                 "totalGrowth",
@@ -870,7 +869,8 @@ public partial class SeedController
                 "gameServiceId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Game service this seed is scoped to."
+                    "nullable": true,
+                    "description": "Game service this seed is scoped to. Null for cross-game seed types."
                 },
                 "createdAt": {
                     "type": "string",
@@ -1005,7 +1005,6 @@ public partial class SeedController
                 "ownerId",
                 "ownerType",
                 "seedTypeCode",
-                "gameServiceId",
                 "createdAt",
                 "growthPhase",
                 "totalGrowth",
@@ -1034,7 +1033,8 @@ public partial class SeedController
                 "gameServiceId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Game service this seed is scoped to."
+                    "nullable": true,
+                    "description": "Game service this seed is scoped to. Null for cross-game seed types."
                 },
                 "createdAt": {
                     "type": "string",
@@ -1169,7 +1169,6 @@ public partial class SeedController
                 "ownerId",
                 "ownerType",
                 "seedTypeCode",
-                "gameServiceId",
                 "createdAt",
                 "growthPhase",
                 "totalGrowth",
@@ -1198,7 +1197,8 @@ public partial class SeedController
                 "gameServiceId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Game service this seed is scoped to."
+                    "nullable": true,
+                    "description": "Game service this seed is scoped to. Null for cross-game seed types."
                 },
                 "createdAt": {
                     "type": "string",
@@ -1986,7 +1986,6 @@ public partial class SeedController
             "description": "Request to register a new seed type definition.",
             "required": [
                 "seedTypeCode",
-                "gameServiceId",
                 "displayName",
                 "description",
                 "maxPerOwner",
@@ -2003,7 +2002,8 @@ public partial class SeedController
                 "gameServiceId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Game service this type is scoped to."
+                    "nullable": true,
+                    "description": "Game service this type is scoped to. Null for cross-game seed types that are not scoped to any single game service."
                 },
                 "displayName": {
                     "type": "string",
@@ -2191,7 +2191,6 @@ public partial class SeedController
             "description": "Full seed type definition response.",
             "required": [
                 "seedTypeCode",
-                "gameServiceId",
                 "displayName",
                 "description",
                 "maxPerOwner",
@@ -2209,7 +2208,8 @@ public partial class SeedController
                 "gameServiceId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Game service scope."
+                    "nullable": true,
+                    "description": "Game service scope. Null for cross-game seed types."
                 },
                 "displayName": {
                     "type": "string",
@@ -2461,8 +2461,7 @@ public partial class SeedController
             "type": "object",
             "description": "Request to get a seed type definition.",
             "required": [
-                "seedTypeCode",
-                "gameServiceId"
+                "seedTypeCode"
             ],
             "properties": {
                 "seedTypeCode": {
@@ -2472,7 +2471,8 @@ public partial class SeedController
                 "gameServiceId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "The game service scope."
+                    "nullable": true,
+                    "description": "The game service scope. Null for cross-game seed types."
                 }
             }
         }
@@ -2490,7 +2490,6 @@ public partial class SeedController
             "description": "Full seed type definition response.",
             "required": [
                 "seedTypeCode",
-                "gameServiceId",
                 "displayName",
                 "description",
                 "maxPerOwner",
@@ -2508,7 +2507,8 @@ public partial class SeedController
                 "gameServiceId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Game service scope."
+                    "nullable": true,
+                    "description": "Game service scope. Null for cross-game seed types."
                 },
                 "displayName": {
                     "type": "string",
@@ -2758,15 +2758,13 @@ public partial class SeedController
     "$defs": {
         "ListSeedTypesRequest": {
             "type": "object",
-            "description": "Request to list seed types for a game service.",
-            "required": [
-                "gameServiceId"
-            ],
+            "description": "Request to list seed types, optionally filtered by game service.",
             "properties": {
                 "gameServiceId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Game service to list seed types for."
+                    "nullable": true,
+                    "description": "Game service to filter seed types for. Null returns cross-game types."
                 },
                 "includeDeprecated": {
                     "type": "boolean",
@@ -2805,7 +2803,6 @@ public partial class SeedController
             "description": "Full seed type definition response.",
             "required": [
                 "seedTypeCode",
-                "gameServiceId",
                 "displayName",
                 "description",
                 "maxPerOwner",
@@ -2823,7 +2820,8 @@ public partial class SeedController
                 "gameServiceId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Game service scope."
+                    "nullable": true,
+                    "description": "Game service scope. Null for cross-game seed types."
                 },
                 "displayName": {
                     "type": "string",
@@ -3075,8 +3073,7 @@ public partial class SeedController
             "type": "object",
             "description": "Request to update a seed type definition.",
             "required": [
-                "seedTypeCode",
-                "gameServiceId"
+                "seedTypeCode"
             ],
             "properties": {
                 "seedTypeCode": {
@@ -3086,7 +3083,8 @@ public partial class SeedController
                 "gameServiceId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "The game service scope."
+                    "nullable": true,
+                    "description": "The game service scope. Null for cross-game seed types."
                 },
                 "displayName": {
                     "type": "string",
@@ -3262,7 +3260,6 @@ public partial class SeedController
             "description": "Full seed type definition response.",
             "required": [
                 "seedTypeCode",
-                "gameServiceId",
                 "displayName",
                 "description",
                 "maxPerOwner",
@@ -3280,7 +3277,8 @@ public partial class SeedController
                 "gameServiceId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Game service scope."
+                    "nullable": true,
+                    "description": "Game service scope. Null for cross-game seed types."
                 },
                 "displayName": {
                     "type": "string",
@@ -3533,8 +3531,7 @@ public partial class SeedController
             "description": "Request to deprecate a seed type, preventing new seed creation.",
             "additionalProperties": false,
             "required": [
-                "seedTypeCode",
-                "gameServiceId"
+                "seedTypeCode"
             ],
             "properties": {
                 "seedTypeCode": {
@@ -3544,7 +3541,8 @@ public partial class SeedController
                 "gameServiceId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "The game service scope."
+                    "nullable": true,
+                    "description": "The game service scope. Null for cross-game seed types."
                 },
                 "reason": {
                     "type": "string",
@@ -3568,7 +3566,6 @@ public partial class SeedController
             "description": "Full seed type definition response.",
             "required": [
                 "seedTypeCode",
-                "gameServiceId",
                 "displayName",
                 "description",
                 "maxPerOwner",
@@ -3586,7 +3583,8 @@ public partial class SeedController
                 "gameServiceId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Game service scope."
+                    "nullable": true,
+                    "description": "Game service scope. Null for cross-game seed types."
                 },
                 "displayName": {
                     "type": "string",
@@ -3839,8 +3837,7 @@ public partial class SeedController
             "description": "Request to restore a deprecated seed type to active status.",
             "additionalProperties": false,
             "required": [
-                "seedTypeCode",
-                "gameServiceId"
+                "seedTypeCode"
             ],
             "properties": {
                 "seedTypeCode": {
@@ -3850,7 +3847,8 @@ public partial class SeedController
                 "gameServiceId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "The game service scope."
+                    "nullable": true,
+                    "description": "The game service scope. Null for cross-game seed types."
                 }
             }
         }
@@ -3868,7 +3866,6 @@ public partial class SeedController
             "description": "Full seed type definition response.",
             "required": [
                 "seedTypeCode",
-                "gameServiceId",
                 "displayName",
                 "description",
                 "maxPerOwner",
@@ -3886,7 +3883,8 @@ public partial class SeedController
                 "gameServiceId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Game service scope."
+                    "nullable": true,
+                    "description": "Game service scope. Null for cross-game seed types."
                 },
                 "displayName": {
                     "type": "string",
@@ -4139,8 +4137,7 @@ public partial class SeedController
             "description": "Request to hard-delete a deprecated seed type with no remaining non-archived seeds.",
             "additionalProperties": false,
             "required": [
-                "seedTypeCode",
-                "gameServiceId"
+                "seedTypeCode"
             ],
             "properties": {
                 "seedTypeCode": {
@@ -4150,7 +4147,8 @@ public partial class SeedController
                 "gameServiceId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "The game service scope."
+                    "nullable": true,
+                    "description": "The game service scope. Null for cross-game seed types."
                 }
             }
         }

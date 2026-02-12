@@ -205,6 +205,20 @@ public class GardenerServiceConfiguration : IServiceConfiguration
     public double NarrativeScoreNeutral { get; set; } = 0.5;
 
     /// <summary>
+    /// Maximum number of scenario templates to load per orchestrator evaluation cycle
+    /// Environment variable: GARDENER_SCENARIO_TEMPLATE_QUERY_PAGE_SIZE
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 2000)]
+    public int ScenarioTemplateQueryPageSize { get; set; } = 500;
+
+    /// <summary>
+    /// Maximum number of scenario history records to load per orchestrator evaluation cycle
+    /// Environment variable: GARDENER_SCENARIO_HISTORY_QUERY_PAGE_SIZE
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 1000)]
+    public int ScenarioHistoryQueryPageSize { get; set; } = 200;
+
+    /// <summary>
     /// Weight for domain affinity in scenario scoring algorithm
     /// Environment variable: GARDENER_AFFINITY_WEIGHT
     /// </summary>

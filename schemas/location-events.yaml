@@ -40,6 +40,10 @@ x-lifecycle:
       isDeprecated: { type: boolean, required: true, description: "Whether this location has been marked as deprecated" }
       deprecatedAt: { type: string, format: date-time, nullable: true, description: "Timestamp when the location was deprecated" }
       deprecationReason: { type: string, nullable: true, description: "Explanation for why the location was deprecated" }
+      bounds: { $ref: 'common-api.yaml#/components/schemas/BoundingBox3D', nullable: true, description: "Optional spatial extent in world coordinates" }
+      boundsPrecision: { $ref: 'location-api.yaml#/components/schemas/BoundsPrecision', required: true, description: "Precision level of spatial bounds" }
+      coordinateMode: { $ref: 'location-api.yaml#/components/schemas/CoordinateMode', required: true, description: "How this location's coordinate system relates to its parent" }
+      localOrigin: { $ref: 'common-api.yaml#/components/schemas/Position3D', nullable: true, description: "Origin point for local or inherited coordinate systems" }
       metadata: { type: object, additionalProperties: true, nullable: true, description: "Additional custom metadata associated with the location" }
       createdAt: { type: string, format: date-time, required: true, description: "Timestamp when the location was created" }
       updatedAt: { type: string, format: date-time, required: true, description: "Timestamp when the location was last updated" }

@@ -21,7 +21,6 @@ components:
       - ownerId
       - ownerType
       - seedTypeCode
-      - gameServiceId
       - growthPhase
       - totalGrowth
       - displayName
@@ -48,7 +47,8 @@ components:
         gameServiceId: &id005
           type: string
           format: uuid
-          description: "Game service this seed is scoped to"
+          nullable: true
+          description: "Game service this seed is scoped to. Null for cross-game seed types."
         growthPhase: &id006
           type: string
           description: "Current computed growth phase code"
@@ -81,7 +81,6 @@ components:
       - ownerId
       - ownerType
       - seedTypeCode
-      - gameServiceId
       - growthPhase
       - totalGrowth
       - displayName
@@ -121,7 +120,6 @@ components:
       - ownerId
       - ownerType
       - seedTypeCode
-      - gameServiceId
       - growthPhase
       - totalGrowth
       - displayName
@@ -156,7 +154,6 @@ components:
       - eventId
       - timestamp
       - seedTypeCode
-      - gameServiceId
       - displayName
       - description
       - maxPerOwner
@@ -175,7 +172,8 @@ components:
         gameServiceId: &id012
           type: string
           format: uuid
-          description: "Game service this type is scoped to"
+          nullable: true
+          description: "Game service this type is scoped to. Null for cross-game seed types."
         displayName: &id013
           type: string
           description: "Human-readable name"
@@ -218,7 +216,6 @@ components:
       - eventId
       - timestamp
       - seedTypeCode
-      - gameServiceId
       - displayName
       - description
       - maxPerOwner
@@ -259,7 +256,6 @@ components:
       - eventId
       - timestamp
       - seedTypeCode
-      - gameServiceId
       - displayName
       - description
       - maxPerOwner

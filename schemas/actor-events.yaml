@@ -31,6 +31,9 @@ info:
     - topic: actor.instance.completed
       event: ActorCompletedEvent
       handler: HandleActorCompleted
+    - topic: actor-template.updated
+      event: ActorTemplateUpdatedEvent
+      handler: HandleActorTemplateUpdated
 
 servers: []
 

@@ -120,6 +120,11 @@ public partial interface ILocationService : IBannouService
         Task<(StatusCodes, LocationExistsResponse?)> LocationExistsAsync(LocationExistsRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
+        /// QueryLocationsByPosition operation
+        /// </summary>
+        Task<(StatusCodes, LocationListResponse?)> QueryLocationsByPositionAsync(QueryLocationsByPositionRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
         /// SeedLocations operation
         /// </summary>
         Task<(StatusCodes, SeedLocationsResponse?)> SeedLocationsAsync(SeedLocationsRequest body, CancellationToken cancellationToken = default(CancellationToken));

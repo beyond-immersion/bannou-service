@@ -99,18 +99,34 @@ paths:
         ,\n                    \"nullable\": true,\n                    \"description\": \"Timestamp when this location was
         deprecated\"\n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\"\
         ,\n                    \"nullable\": true,\n                    \"description\": \"Optional reason for deprecation\"\
-        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
-        \     \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Additional metadata for the location (JSON)\"\n                },\n                \"createdAt\": {\n        \
-        \            \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the location was created\"\n                },\n                \"updatedAt\": {\n            \
-        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the location was last updated\"\n                }\n            }\n        },\n        \"LocationType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n    \
-        \        \"enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n   \
-        \             \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\"\
-        ,\n                \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n     \
-        \   }\n    }\n}"
+        \n                },\n                \"bounds\": {\n                    \"allOf\": [\n                        {\n\
+        \                            \"type\": \"object\"\n                        }\n                    ],\n           \
+        \         \"nullable\": true,\n                    \"description\": \"Optional spatial extent in world coordinates\"\
+        \n                },\n                \"boundsPrecision\": {\n                    \"allOf\": [\n                 \
+        \       {\n                            \"$ref\": \"#/$defs/BoundsPrecision\"\n                        }\n        \
+        \            ],\n                    \"description\": \"Precision level of spatial bounds\"\n                },\n\
+        \                \"coordinateMode\": {\n                    \"allOf\": [\n                        {\n            \
+        \                \"$ref\": \"#/$defs/CoordinateMode\"\n                        }\n                    ],\n       \
+        \             \"description\": \"How this location's coordinate system relates to its parent\"\n                },\n\
+        \                \"localOrigin\": {\n                    \"allOf\": [\n                        {\n               \
+        \             \"type\": \"object\"\n                        }\n                    ],\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Origin point for local or inherited coordinate systems\"\n       \
+        \         },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Additional metadata for the
+        location (JSON)\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location
+        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location
+        was last updated\"\n                }\n            }\n        },\n        \"LocationType\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Type classification for locations\",\n            \"enum\": [\n    \
+        \            \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n                \"DISTRICT\"\
+        ,\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\"\
+        ,\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n        },\n        \"BoundsPrecision\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Precision level of spatial bounds for a location\"\
+        ,\n            \"enum\": [\n                \"exact\",\n                \"approximate\",\n                \"none\"\
+        \n            ]\n        },\n        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"How this location's coordinate system relates to its parent\",\n            \"enum\": [\n                \"inherit\"\
+        ,\n                \"local\",\n                \"portal\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get location by ID\",\n    \"description\": \"\",\n    \"tags\": [\n  \
         \      \"Location\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getLocation\"\n}"
   /location/get-by-code:
@@ -174,18 +190,34 @@ paths:
         ,\n                    \"nullable\": true,\n                    \"description\": \"Timestamp when this location was
         deprecated\"\n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\"\
         ,\n                    \"nullable\": true,\n                    \"description\": \"Optional reason for deprecation\"\
-        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
-        \     \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Additional metadata for the location (JSON)\"\n                },\n                \"createdAt\": {\n        \
-        \            \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the location was created\"\n                },\n                \"updatedAt\": {\n            \
-        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the location was last updated\"\n                }\n            }\n        },\n        \"LocationType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n    \
-        \        \"enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n   \
-        \             \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\"\
-        ,\n                \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n     \
-        \   }\n    }\n}"
+        \n                },\n                \"bounds\": {\n                    \"allOf\": [\n                        {\n\
+        \                            \"type\": \"object\"\n                        }\n                    ],\n           \
+        \         \"nullable\": true,\n                    \"description\": \"Optional spatial extent in world coordinates\"\
+        \n                },\n                \"boundsPrecision\": {\n                    \"allOf\": [\n                 \
+        \       {\n                            \"$ref\": \"#/$defs/BoundsPrecision\"\n                        }\n        \
+        \            ],\n                    \"description\": \"Precision level of spatial bounds\"\n                },\n\
+        \                \"coordinateMode\": {\n                    \"allOf\": [\n                        {\n            \
+        \                \"$ref\": \"#/$defs/CoordinateMode\"\n                        }\n                    ],\n       \
+        \             \"description\": \"How this location's coordinate system relates to its parent\"\n                },\n\
+        \                \"localOrigin\": {\n                    \"allOf\": [\n                        {\n               \
+        \             \"type\": \"object\"\n                        }\n                    ],\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Origin point for local or inherited coordinate systems\"\n       \
+        \         },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Additional metadata for the
+        location (JSON)\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location
+        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location
+        was last updated\"\n                }\n            }\n        },\n        \"LocationType\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Type classification for locations\",\n            \"enum\": [\n    \
+        \            \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n                \"DISTRICT\"\
+        ,\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\"\
+        ,\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n        },\n        \"BoundsPrecision\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Precision level of spatial bounds for a location\"\
+        ,\n            \"enum\": [\n                \"exact\",\n                \"approximate\",\n                \"none\"\
+        \n            ]\n        },\n        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"How this location's coordinate system relates to its parent\",\n            \"enum\": [\n                \"inherit\"\
+        ,\n                \"local\",\n                \"portal\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get location by code and realm\",\n    \"description\": \"Retrieve a location
         using its unique code within a specific realm\",\n    \"tags\": [\n        \"Location\"\n    ],\n    \"deprecated\"\
         : false,\n    \"operationId\": \"getLocationByCode\"\n}"
@@ -273,18 +305,35 @@ paths:
         ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
         description\": \"Timestamp when this location was deprecated\"\n                },\n                \"deprecationReason\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Optional reason for deprecation\"\n                },\n                \"metadata\": {\n                    \"\
-        type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Additional metadata for the location (JSON)\"\n                },\n      \
-        \          \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Timestamp when the location was created\"\n                },\n        \
-        \        \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Timestamp when the location was last updated\"\n                }\n    \
-        \        }\n        },\n        \"LocationType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Type classification for locations\",\n            \"enum\": [\n                \"CONTINENT\",\n              \
-        \  \"REGION\",\n                \"CITY\",\n                \"DISTRICT\",\n                \"BUILDING\",\n        \
-        \        \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\",\n                \"DUNGEON\",\n\
-        \                \"OTHER\"\n            ]\n        }\n    }\n}"
+        : \"Optional reason for deprecation\"\n                },\n                \"bounds\": {\n                    \"allOf\"\
+        : [\n                        {\n                            \"type\": \"object\"\n                        }\n    \
+        \                ],\n                    \"nullable\": true,\n                    \"description\": \"Optional spatial
+        extent in world coordinates\"\n                },\n                \"boundsPrecision\": {\n                    \"\
+        allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/BoundsPrecision\"\n       \
+        \                 }\n                    ],\n                    \"description\": \"Precision level of spatial bounds\"\
+        \n                },\n                \"coordinateMode\": {\n                    \"allOf\": [\n                  \
+        \      {\n                            \"$ref\": \"#/$defs/CoordinateMode\"\n                        }\n          \
+        \          ],\n                    \"description\": \"How this location's coordinate system relates to its parent\"\
+        \n                },\n                \"localOrigin\": {\n                    \"allOf\": [\n                     \
+        \   {\n                            \"type\": \"object\"\n                        }\n                    ],\n     \
+        \               \"nullable\": true,\n                    \"description\": \"Origin point for local or inherited coordinate
+        systems\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n      \
+        \              \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Additional metadata for the location (JSON)\"\n                },\n                \"createdAt\": {\n        \
+        \            \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Timestamp when the location was created\"\n                },\n                \"updatedAt\": {\n            \
+        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Timestamp when the location was last updated\"\n                }\n            }\n        },\n        \"LocationType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n    \
+        \        \"enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n   \
+        \             \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\"\
+        ,\n                \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n     \
+        \   },\n        \"BoundsPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision
+        level of spatial bounds for a location\",\n            \"enum\": [\n                \"exact\",\n                \"\
+        approximate\",\n                \"none\"\n            ]\n        },\n        \"CoordinateMode\": {\n            \"\
+        type\": \"string\",\n            \"description\": \"How this location's coordinate system relates to its parent\"\
+        ,\n            \"enum\": [\n                \"inherit\",\n                \"local\",\n                \"portal\"\n\
+        \            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List locations with filtering\",\n    \"description\": \"Retrieve locations
         with optional realm, parent, and type filtering\",\n    \"tags\": [\n        \"Location\"\n    ],\n    \"deprecated\"\
         : false,\n    \"operationId\": \"listLocations\"\n}"
@@ -374,18 +423,35 @@ paths:
         ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
         description\": \"Timestamp when this location was deprecated\"\n                },\n                \"deprecationReason\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Optional reason for deprecation\"\n                },\n                \"metadata\": {\n                    \"\
-        type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Additional metadata for the location (JSON)\"\n                },\n      \
-        \          \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Timestamp when the location was created\"\n                },\n        \
-        \        \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Timestamp when the location was last updated\"\n                }\n    \
-        \        }\n        },\n        \"LocationType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Type classification for locations\",\n            \"enum\": [\n                \"CONTINENT\",\n              \
-        \  \"REGION\",\n                \"CITY\",\n                \"DISTRICT\",\n                \"BUILDING\",\n        \
-        \        \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\",\n                \"DUNGEON\",\n\
-        \                \"OTHER\"\n            ]\n        }\n    }\n}"
+        : \"Optional reason for deprecation\"\n                },\n                \"bounds\": {\n                    \"allOf\"\
+        : [\n                        {\n                            \"type\": \"object\"\n                        }\n    \
+        \                ],\n                    \"nullable\": true,\n                    \"description\": \"Optional spatial
+        extent in world coordinates\"\n                },\n                \"boundsPrecision\": {\n                    \"\
+        allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/BoundsPrecision\"\n       \
+        \                 }\n                    ],\n                    \"description\": \"Precision level of spatial bounds\"\
+        \n                },\n                \"coordinateMode\": {\n                    \"allOf\": [\n                  \
+        \      {\n                            \"$ref\": \"#/$defs/CoordinateMode\"\n                        }\n          \
+        \          ],\n                    \"description\": \"How this location's coordinate system relates to its parent\"\
+        \n                },\n                \"localOrigin\": {\n                    \"allOf\": [\n                     \
+        \   {\n                            \"type\": \"object\"\n                        }\n                    ],\n     \
+        \               \"nullable\": true,\n                    \"description\": \"Origin point for local or inherited coordinate
+        systems\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n      \
+        \              \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Additional metadata for the location (JSON)\"\n                },\n                \"createdAt\": {\n        \
+        \            \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Timestamp when the location was created\"\n                },\n                \"updatedAt\": {\n            \
+        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Timestamp when the location was last updated\"\n                }\n            }\n        },\n        \"LocationType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n    \
+        \        \"enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n   \
+        \             \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\"\
+        ,\n                \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n     \
+        \   },\n        \"BoundsPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision
+        level of spatial bounds for a location\",\n            \"enum\": [\n                \"exact\",\n                \"\
+        approximate\",\n                \"none\"\n            ]\n        },\n        \"CoordinateMode\": {\n            \"\
+        type\": \"string\",\n            \"description\": \"How this location's coordinate system relates to its parent\"\
+        ,\n            \"enum\": [\n                \"inherit\",\n                \"local\",\n                \"portal\"\n\
+        \            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List all locations in a realm (primary query pattern)\",\n    \"description\"\
         : \"Returns all locations within a specific realm, optionally filtered by\\nlocation type and parent. This is the
         primary access pattern for\\nrealm-scoped location queries.\\n\",\n    \"tags\": [\n        \"Location\"\n    ],\n\
@@ -478,18 +544,35 @@ paths:
         ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
         description\": \"Timestamp when this location was deprecated\"\n                },\n                \"deprecationReason\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Optional reason for deprecation\"\n                },\n                \"metadata\": {\n                    \"\
-        type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Additional metadata for the location (JSON)\"\n                },\n      \
-        \          \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Timestamp when the location was created\"\n                },\n        \
-        \        \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Timestamp when the location was last updated\"\n                }\n    \
-        \        }\n        },\n        \"LocationType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Type classification for locations\",\n            \"enum\": [\n                \"CONTINENT\",\n              \
-        \  \"REGION\",\n                \"CITY\",\n                \"DISTRICT\",\n                \"BUILDING\",\n        \
-        \        \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\",\n                \"DUNGEON\",\n\
-        \                \"OTHER\"\n            ]\n        }\n    }\n}"
+        : \"Optional reason for deprecation\"\n                },\n                \"bounds\": {\n                    \"allOf\"\
+        : [\n                        {\n                            \"type\": \"object\"\n                        }\n    \
+        \                ],\n                    \"nullable\": true,\n                    \"description\": \"Optional spatial
+        extent in world coordinates\"\n                },\n                \"boundsPrecision\": {\n                    \"\
+        allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/BoundsPrecision\"\n       \
+        \                 }\n                    ],\n                    \"description\": \"Precision level of spatial bounds\"\
+        \n                },\n                \"coordinateMode\": {\n                    \"allOf\": [\n                  \
+        \      {\n                            \"$ref\": \"#/$defs/CoordinateMode\"\n                        }\n          \
+        \          ],\n                    \"description\": \"How this location's coordinate system relates to its parent\"\
+        \n                },\n                \"localOrigin\": {\n                    \"allOf\": [\n                     \
+        \   {\n                            \"type\": \"object\"\n                        }\n                    ],\n     \
+        \               \"nullable\": true,\n                    \"description\": \"Origin point for local or inherited coordinate
+        systems\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n      \
+        \              \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Additional metadata for the location (JSON)\"\n                },\n                \"createdAt\": {\n        \
+        \            \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Timestamp when the location was created\"\n                },\n                \"updatedAt\": {\n            \
+        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Timestamp when the location was last updated\"\n                }\n            }\n        },\n        \"LocationType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n    \
+        \        \"enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n   \
+        \             \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\"\
+        ,\n                \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n     \
+        \   },\n        \"BoundsPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision
+        level of spatial bounds for a location\",\n            \"enum\": [\n                \"exact\",\n                \"\
+        approximate\",\n                \"none\"\n            ]\n        },\n        \"CoordinateMode\": {\n            \"\
+        type\": \"string\",\n            \"description\": \"How this location's coordinate system relates to its parent\"\
+        ,\n            \"enum\": [\n                \"inherit\",\n                \"local\",\n                \"portal\"\n\
+        \            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get child locations for a parent location\",\n    \"description\": \"Retrieve
         all locations that have the specified location as their parent.\\nUseful for getting all cities in a region, all buildings
         in a city, etc.\\n\",\n    \"tags\": [\n        \"Location\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -580,18 +663,35 @@ paths:
         ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
         description\": \"Timestamp when this location was deprecated\"\n                },\n                \"deprecationReason\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Optional reason for deprecation\"\n                },\n                \"metadata\": {\n                    \"\
-        type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Additional metadata for the location (JSON)\"\n                },\n      \
-        \          \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Timestamp when the location was created\"\n                },\n        \
-        \        \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Timestamp when the location was last updated\"\n                }\n    \
-        \        }\n        },\n        \"LocationType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Type classification for locations\",\n            \"enum\": [\n                \"CONTINENT\",\n              \
-        \  \"REGION\",\n                \"CITY\",\n                \"DISTRICT\",\n                \"BUILDING\",\n        \
-        \        \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\",\n                \"DUNGEON\",\n\
-        \                \"OTHER\"\n            ]\n        }\n    }\n}"
+        : \"Optional reason for deprecation\"\n                },\n                \"bounds\": {\n                    \"allOf\"\
+        : [\n                        {\n                            \"type\": \"object\"\n                        }\n    \
+        \                ],\n                    \"nullable\": true,\n                    \"description\": \"Optional spatial
+        extent in world coordinates\"\n                },\n                \"boundsPrecision\": {\n                    \"\
+        allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/BoundsPrecision\"\n       \
+        \                 }\n                    ],\n                    \"description\": \"Precision level of spatial bounds\"\
+        \n                },\n                \"coordinateMode\": {\n                    \"allOf\": [\n                  \
+        \      {\n                            \"$ref\": \"#/$defs/CoordinateMode\"\n                        }\n          \
+        \          ],\n                    \"description\": \"How this location's coordinate system relates to its parent\"\
+        \n                },\n                \"localOrigin\": {\n                    \"allOf\": [\n                     \
+        \   {\n                            \"type\": \"object\"\n                        }\n                    ],\n     \
+        \               \"nullable\": true,\n                    \"description\": \"Origin point for local or inherited coordinate
+        systems\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n      \
+        \              \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Additional metadata for the location (JSON)\"\n                },\n                \"createdAt\": {\n        \
+        \            \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Timestamp when the location was created\"\n                },\n                \"updatedAt\": {\n            \
+        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Timestamp when the location was last updated\"\n                }\n            }\n        },\n        \"LocationType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n    \
+        \        \"enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n   \
+        \             \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\"\
+        ,\n                \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n     \
+        \   },\n        \"BoundsPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision
+        level of spatial bounds for a location\",\n            \"enum\": [\n                \"exact\",\n                \"\
+        approximate\",\n                \"none\"\n            ]\n        },\n        \"CoordinateMode\": {\n            \"\
+        type\": \"string\",\n            \"description\": \"How this location's coordinate system relates to its parent\"\
+        ,\n            \"enum\": [\n                \"inherit\",\n                \"local\",\n                \"portal\"\n\
+        \            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get root locations in a realm\",\n    \"description\": \"Returns all top-level
         locations in a realm (locations with no parent).\\nThese are typically regions or major areas within the realm.\\\
         n\",\n    \"tags\": [\n        \"Location\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listRootLocations\"\
@@ -671,18 +771,35 @@ paths:
         ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
         description\": \"Timestamp when this location was deprecated\"\n                },\n                \"deprecationReason\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Optional reason for deprecation\"\n                },\n                \"metadata\": {\n                    \"\
-        type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Additional metadata for the location (JSON)\"\n                },\n      \
-        \          \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Timestamp when the location was created\"\n                },\n        \
-        \        \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Timestamp when the location was last updated\"\n                }\n    \
-        \        }\n        },\n        \"LocationType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Type classification for locations\",\n            \"enum\": [\n                \"CONTINENT\",\n              \
-        \  \"REGION\",\n                \"CITY\",\n                \"DISTRICT\",\n                \"BUILDING\",\n        \
-        \        \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\",\n                \"DUNGEON\",\n\
-        \                \"OTHER\"\n            ]\n        }\n    }\n}"
+        : \"Optional reason for deprecation\"\n                },\n                \"bounds\": {\n                    \"allOf\"\
+        : [\n                        {\n                            \"type\": \"object\"\n                        }\n    \
+        \                ],\n                    \"nullable\": true,\n                    \"description\": \"Optional spatial
+        extent in world coordinates\"\n                },\n                \"boundsPrecision\": {\n                    \"\
+        allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/BoundsPrecision\"\n       \
+        \                 }\n                    ],\n                    \"description\": \"Precision level of spatial bounds\"\
+        \n                },\n                \"coordinateMode\": {\n                    \"allOf\": [\n                  \
+        \      {\n                            \"$ref\": \"#/$defs/CoordinateMode\"\n                        }\n          \
+        \          ],\n                    \"description\": \"How this location's coordinate system relates to its parent\"\
+        \n                },\n                \"localOrigin\": {\n                    \"allOf\": [\n                     \
+        \   {\n                            \"type\": \"object\"\n                        }\n                    ],\n     \
+        \               \"nullable\": true,\n                    \"description\": \"Origin point for local or inherited coordinate
+        systems\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n      \
+        \              \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Additional metadata for the location (JSON)\"\n                },\n                \"createdAt\": {\n        \
+        \            \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Timestamp when the location was created\"\n                },\n                \"updatedAt\": {\n            \
+        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Timestamp when the location was last updated\"\n                }\n            }\n        },\n        \"LocationType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n    \
+        \        \"enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n   \
+        \             \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\"\
+        ,\n                \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n     \
+        \   },\n        \"BoundsPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision
+        level of spatial bounds for a location\",\n            \"enum\": [\n                \"exact\",\n                \"\
+        approximate\",\n                \"none\"\n            ]\n        },\n        \"CoordinateMode\": {\n            \"\
+        type\": \"string\",\n            \"description\": \"How this location's coordinate system relates to its parent\"\
+        ,\n            \"enum\": [\n                \"inherit\",\n                \"local\",\n                \"portal\"\n\
+        \            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get all ancestors of a location\",\n    \"description\": \"Returns the
         full ancestry chain from the specified location up to the\\nroot location (parentLocationId=null). For example, for
         a specific building\\nmight return [district, city, region].\\n\",\n    \"tags\": [\n        \"Location\"\n    ],\n\
@@ -843,18 +960,35 @@ paths:
         ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
         description\": \"Timestamp when this location was deprecated\"\n                },\n                \"deprecationReason\"\
         : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Optional reason for deprecation\"\n                },\n                \"metadata\": {\n                    \"\
-        type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Additional metadata for the location (JSON)\"\n                },\n      \
-        \          \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Timestamp when the location was created\"\n                },\n        \
-        \        \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Timestamp when the location was last updated\"\n                }\n    \
-        \        }\n        },\n        \"LocationType\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"Type classification for locations\",\n            \"enum\": [\n                \"CONTINENT\",\n              \
-        \  \"REGION\",\n                \"CITY\",\n                \"DISTRICT\",\n                \"BUILDING\",\n        \
-        \        \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\",\n                \"DUNGEON\",\n\
-        \                \"OTHER\"\n            ]\n        }\n    }\n}"
+        : \"Optional reason for deprecation\"\n                },\n                \"bounds\": {\n                    \"allOf\"\
+        : [\n                        {\n                            \"type\": \"object\"\n                        }\n    \
+        \                ],\n                    \"nullable\": true,\n                    \"description\": \"Optional spatial
+        extent in world coordinates\"\n                },\n                \"boundsPrecision\": {\n                    \"\
+        allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/BoundsPrecision\"\n       \
+        \                 }\n                    ],\n                    \"description\": \"Precision level of spatial bounds\"\
+        \n                },\n                \"coordinateMode\": {\n                    \"allOf\": [\n                  \
+        \      {\n                            \"$ref\": \"#/$defs/CoordinateMode\"\n                        }\n          \
+        \          ],\n                    \"description\": \"How this location's coordinate system relates to its parent\"\
+        \n                },\n                \"localOrigin\": {\n                    \"allOf\": [\n                     \
+        \   {\n                            \"type\": \"object\"\n                        }\n                    ],\n     \
+        \               \"nullable\": true,\n                    \"description\": \"Origin point for local or inherited coordinate
+        systems\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n      \
+        \              \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Additional metadata for the location (JSON)\"\n                },\n                \"createdAt\": {\n        \
+        \            \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Timestamp when the location was created\"\n                },\n                \"updatedAt\": {\n            \
+        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Timestamp when the location was last updated\"\n                }\n            }\n        },\n        \"LocationType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n    \
+        \        \"enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n   \
+        \             \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\"\
+        ,\n                \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n     \
+        \   },\n        \"BoundsPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision
+        level of spatial bounds for a location\",\n            \"enum\": [\n                \"exact\",\n                \"\
+        approximate\",\n                \"none\"\n            ]\n        },\n        \"CoordinateMode\": {\n            \"\
+        type\": \"string\",\n            \"description\": \"How this location's coordinate system relates to its parent\"\
+        ,\n            \"enum\": [\n                \"inherit\",\n                \"local\",\n                \"portal\"\n\
+        \            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get all descendants of a location\",\n    \"description\": \"Returns all
         locations that are descendants of the specified location\\n(direct children, grandchildren, etc.). Useful for finding
         all places\\nwithin a region or city.\\n\",\n    \"tags\": [\n        \"Location\"\n    ],\n    \"deprecated\": false,\n\
@@ -902,14 +1036,32 @@ paths:
         \  \"$ref\": \"#/$defs/LocationType\",\n                    \"description\": \"Type classification for this location\"\
         \n                },\n                \"parentLocationId\": {\n                    \"type\": \"string\",\n       \
         \             \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Parent location ID for hierarchy (null for root locations)\"\n                },\n                \"metadata\"\
-        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Additional metadata for the location (JSON)\"\
-        \n                }\n            }\n        },\n        \"LocationType\": {\n            \"type\": \"string\",\n \
-        \           \"description\": \"Type classification for locations\",\n            \"enum\": [\n                \"CONTINENT\"\
-        ,\n                \"REGION\",\n                \"CITY\",\n                \"DISTRICT\",\n                \"BUILDING\"\
-        ,\n                \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\",\n                \"DUNGEON\"\
-        ,\n                \"OTHER\"\n            ]\n        }\n    }\n}"
+        : \"Parent location ID for hierarchy (null for root locations)\"\n                },\n                \"bounds\":
+        {\n                    \"allOf\": [\n                        {\n                            \"type\": \"object\"\n\
+        \                        }\n                    ],\n                    \"nullable\": true,\n                    \"\
+        description\": \"Optional spatial extent in world coordinates\"\n                },\n                \"boundsPrecision\"\
+        : {\n                    \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/BoundsPrecision\"\
+        \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
+        \ \"description\": \"Precision level of spatial bounds (defaults to none)\"\n                },\n                \"\
+        coordinateMode\": {\n                    \"allOf\": [\n                        {\n                            \"$ref\"\
+        : \"#/$defs/CoordinateMode\"\n                        }\n                    ],\n                    \"nullable\"\
+        : true,\n                    \"description\": \"How this location's coordinate system relates to its parent (defaults
+        to inherit)\"\n                },\n                \"localOrigin\": {\n                    \"allOf\": [\n        \
+        \                {\n                            \"type\": \"object\"\n                        }\n                \
+        \    ],\n                    \"nullable\": true,\n                    \"description\": \"Origin point for local or
+        inherited coordinate systems\"\n                },\n                \"metadata\": {\n                    \"type\"\
+        : \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n    \
+        \                \"description\": \"Additional metadata for the location (JSON)\"\n                }\n           \
+        \ }\n        },\n        \"LocationType\": {\n            \"type\": \"string\",\n            \"description\": \"Type
+        classification for locations\",\n            \"enum\": [\n                \"CONTINENT\",\n                \"REGION\"\
+        ,\n                \"CITY\",\n                \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\"\
+        ,\n                \"LANDMARK\",\n                \"WILDERNESS\",\n                \"DUNGEON\",\n                \"\
+        OTHER\"\n            ]\n        },\n        \"BoundsPrecision\": {\n            \"type\": \"string\",\n          \
+        \  \"description\": \"Precision level of spatial bounds for a location\",\n            \"enum\": [\n             \
+        \   \"exact\",\n                \"approximate\",\n                \"none\"\n            ]\n        },\n        \"\
+        CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\": \"How this location's coordinate
+        system relates to its parent\",\n            \"enum\": [\n                \"inherit\",\n                \"local\"\
+        ,\n                \"portal\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LocationResponse\"\
         ,\n    \"$defs\": {\n        \"LocationResponse\": {\n            \"description\": \"Complete location data returned
         from API operations\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n        \
@@ -936,18 +1088,34 @@ paths:
         ,\n                    \"nullable\": true,\n                    \"description\": \"Timestamp when this location was
         deprecated\"\n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\"\
         ,\n                    \"nullable\": true,\n                    \"description\": \"Optional reason for deprecation\"\
-        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
-        \     \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Additional metadata for the location (JSON)\"\n                },\n                \"createdAt\": {\n        \
-        \            \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the location was created\"\n                },\n                \"updatedAt\": {\n            \
-        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the location was last updated\"\n                }\n            }\n        },\n        \"LocationType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n    \
-        \        \"enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n   \
-        \             \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\"\
-        ,\n                \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n     \
-        \   }\n    }\n}"
+        \n                },\n                \"bounds\": {\n                    \"allOf\": [\n                        {\n\
+        \                            \"type\": \"object\"\n                        }\n                    ],\n           \
+        \         \"nullable\": true,\n                    \"description\": \"Optional spatial extent in world coordinates\"\
+        \n                },\n                \"boundsPrecision\": {\n                    \"allOf\": [\n                 \
+        \       {\n                            \"$ref\": \"#/$defs/BoundsPrecision\"\n                        }\n        \
+        \            ],\n                    \"description\": \"Precision level of spatial bounds\"\n                },\n\
+        \                \"coordinateMode\": {\n                    \"allOf\": [\n                        {\n            \
+        \                \"$ref\": \"#/$defs/CoordinateMode\"\n                        }\n                    ],\n       \
+        \             \"description\": \"How this location's coordinate system relates to its parent\"\n                },\n\
+        \                \"localOrigin\": {\n                    \"allOf\": [\n                        {\n               \
+        \             \"type\": \"object\"\n                        }\n                    ],\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Origin point for local or inherited coordinate systems\"\n       \
+        \         },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Additional metadata for the
+        location (JSON)\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location
+        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location
+        was last updated\"\n                }\n            }\n        },\n        \"LocationType\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Type classification for locations\",\n            \"enum\": [\n    \
+        \            \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n                \"DISTRICT\"\
+        ,\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\"\
+        ,\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n        },\n        \"BoundsPrecision\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Precision level of spatial bounds for a location\"\
+        ,\n            \"enum\": [\n                \"exact\",\n                \"approximate\",\n                \"none\"\
+        \n            ]\n        },\n        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"How this location's coordinate system relates to its parent\",\n            \"enum\": [\n                \"inherit\"\
+        ,\n                \"local\",\n                \"portal\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create new location\",\n    \"description\": \"\",\n    \"tags\": [\n \
         \       \"Location Admin\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"createLocation\"\n}"
   /location/update:
@@ -989,13 +1157,31 @@ paths:
         of the location\"\n                },\n                \"locationType\": {\n                    \"allOf\": [\n   \
         \                     {\n                            \"$ref\": \"#/$defs/LocationType\"\n                        }\n\
         \                    ],\n                    \"nullable\": true,\n                    \"description\": \"Type of location\"\
-        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
-        \     \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Additional metadata\"\n                }\n            }\n        },\n        \"LocationType\": {\n           \
-        \ \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n            \"enum\"\
-        : [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n                \"DISTRICT\"\
-        ,\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\"\
-        ,\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n        }\n    }\n}"
+        \n                },\n                \"bounds\": {\n                    \"allOf\": [\n                        {\n\
+        \                            \"type\": \"object\"\n                        }\n                    ],\n           \
+        \         \"nullable\": true,\n                    \"description\": \"Optional spatial extent in world coordinates\"\
+        \n                },\n                \"boundsPrecision\": {\n                    \"allOf\": [\n                 \
+        \       {\n                            \"$ref\": \"#/$defs/BoundsPrecision\"\n                        }\n        \
+        \            ],\n                    \"nullable\": true,\n                    \"description\": \"Precision level of
+        spatial bounds\"\n                },\n                \"coordinateMode\": {\n                    \"allOf\": [\n  \
+        \                      {\n                            \"$ref\": \"#/$defs/CoordinateMode\"\n                     \
+        \   }\n                    ],\n                    \"nullable\": true,\n                    \"description\": \"How
+        this location's coordinate system relates to its parent\"\n                },\n                \"localOrigin\": {\n\
+        \                    \"allOf\": [\n                        {\n                            \"type\": \"object\"\n \
+        \                       }\n                    ],\n                    \"nullable\": true,\n                    \"\
+        description\": \"Origin point for local or inherited coordinate systems\"\n                },\n                \"\
+        metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"Additional metadata\"\n           \
+        \     }\n            }\n        },\n        \"LocationType\": {\n            \"type\": \"string\",\n            \"\
+        description\": \"Type classification for locations\",\n            \"enum\": [\n                \"CONTINENT\",\n \
+        \               \"REGION\",\n                \"CITY\",\n                \"DISTRICT\",\n                \"BUILDING\"\
+        ,\n                \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\",\n                \"DUNGEON\"\
+        ,\n                \"OTHER\"\n            ]\n        },\n        \"BoundsPrecision\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"Precision level of spatial bounds for a location\",\n            \"enum\"\
+        : [\n                \"exact\",\n                \"approximate\",\n                \"none\"\n            ]\n     \
+        \   },\n        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\": \"How this
+        location's coordinate system relates to its parent\",\n            \"enum\": [\n                \"inherit\",\n   \
+        \             \"local\",\n                \"portal\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LocationResponse\"\
         ,\n    \"$defs\": {\n        \"LocationResponse\": {\n            \"description\": \"Complete location data returned
         from API operations\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n        \
@@ -1022,18 +1208,34 @@ paths:
         ,\n                    \"nullable\": true,\n                    \"description\": \"Timestamp when this location was
         deprecated\"\n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\"\
         ,\n                    \"nullable\": true,\n                    \"description\": \"Optional reason for deprecation\"\
-        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
-        \     \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Additional metadata for the location (JSON)\"\n                },\n                \"createdAt\": {\n        \
-        \            \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the location was created\"\n                },\n                \"updatedAt\": {\n            \
-        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the location was last updated\"\n                }\n            }\n        },\n        \"LocationType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n    \
-        \        \"enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n   \
-        \             \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\"\
-        ,\n                \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n     \
-        \   }\n    }\n}"
+        \n                },\n                \"bounds\": {\n                    \"allOf\": [\n                        {\n\
+        \                            \"type\": \"object\"\n                        }\n                    ],\n           \
+        \         \"nullable\": true,\n                    \"description\": \"Optional spatial extent in world coordinates\"\
+        \n                },\n                \"boundsPrecision\": {\n                    \"allOf\": [\n                 \
+        \       {\n                            \"$ref\": \"#/$defs/BoundsPrecision\"\n                        }\n        \
+        \            ],\n                    \"description\": \"Precision level of spatial bounds\"\n                },\n\
+        \                \"coordinateMode\": {\n                    \"allOf\": [\n                        {\n            \
+        \                \"$ref\": \"#/$defs/CoordinateMode\"\n                        }\n                    ],\n       \
+        \             \"description\": \"How this location's coordinate system relates to its parent\"\n                },\n\
+        \                \"localOrigin\": {\n                    \"allOf\": [\n                        {\n               \
+        \             \"type\": \"object\"\n                        }\n                    ],\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Origin point for local or inherited coordinate systems\"\n       \
+        \         },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Additional metadata for the
+        location (JSON)\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location
+        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location
+        was last updated\"\n                }\n            }\n        },\n        \"LocationType\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Type classification for locations\",\n            \"enum\": [\n    \
+        \            \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n                \"DISTRICT\"\
+        ,\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\"\
+        ,\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n        },\n        \"BoundsPrecision\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Precision level of spatial bounds for a location\"\
+        ,\n            \"enum\": [\n                \"exact\",\n                \"approximate\",\n                \"none\"\
+        \n            ]\n        },\n        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"How this location's coordinate system relates to its parent\",\n            \"enum\": [\n                \"inherit\"\
+        ,\n                \"local\",\n                \"portal\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update location\",\n    \"description\": \"\",\n    \"tags\": [\n     \
         \   \"Location Admin\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateLocation\"\n}"
   /location/set-parent:
@@ -1103,18 +1305,34 @@ paths:
         ,\n                    \"nullable\": true,\n                    \"description\": \"Timestamp when this location was
         deprecated\"\n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\"\
         ,\n                    \"nullable\": true,\n                    \"description\": \"Optional reason for deprecation\"\
-        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
-        \     \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Additional metadata for the location (JSON)\"\n                },\n                \"createdAt\": {\n        \
-        \            \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the location was created\"\n                },\n                \"updatedAt\": {\n            \
-        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the location was last updated\"\n                }\n            }\n        },\n        \"LocationType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n    \
-        \        \"enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n   \
-        \             \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\"\
-        ,\n                \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n     \
-        \   }\n    }\n}"
+        \n                },\n                \"bounds\": {\n                    \"allOf\": [\n                        {\n\
+        \                            \"type\": \"object\"\n                        }\n                    ],\n           \
+        \         \"nullable\": true,\n                    \"description\": \"Optional spatial extent in world coordinates\"\
+        \n                },\n                \"boundsPrecision\": {\n                    \"allOf\": [\n                 \
+        \       {\n                            \"$ref\": \"#/$defs/BoundsPrecision\"\n                        }\n        \
+        \            ],\n                    \"description\": \"Precision level of spatial bounds\"\n                },\n\
+        \                \"coordinateMode\": {\n                    \"allOf\": [\n                        {\n            \
+        \                \"$ref\": \"#/$defs/CoordinateMode\"\n                        }\n                    ],\n       \
+        \             \"description\": \"How this location's coordinate system relates to its parent\"\n                },\n\
+        \                \"localOrigin\": {\n                    \"allOf\": [\n                        {\n               \
+        \             \"type\": \"object\"\n                        }\n                    ],\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Origin point for local or inherited coordinate systems\"\n       \
+        \         },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Additional metadata for the
+        location (JSON)\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location
+        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location
+        was last updated\"\n                }\n            }\n        },\n        \"LocationType\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Type classification for locations\",\n            \"enum\": [\n    \
+        \            \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n                \"DISTRICT\"\
+        ,\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\"\
+        ,\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n        },\n        \"BoundsPrecision\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Precision level of spatial bounds for a location\"\
+        ,\n            \"enum\": [\n                \"exact\",\n                \"approximate\",\n                \"none\"\
+        \n            ]\n        },\n        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"How this location's coordinate system relates to its parent\",\n            \"enum\": [\n                \"inherit\"\
+        ,\n                \"local\",\n                \"portal\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Set or change the parent of a location\",\n    \"description\": \"Update
         a location's parent, moving it in the hierarchy.\\nValidates that:\\n- New parent exists and is in the same realm\\
         n- No circular reference would be created\\n- Updates depth for location and all descendants\\n\",\n    \"tags\":
@@ -1179,18 +1397,34 @@ paths:
         ,\n                    \"nullable\": true,\n                    \"description\": \"Timestamp when this location was
         deprecated\"\n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\"\
         ,\n                    \"nullable\": true,\n                    \"description\": \"Optional reason for deprecation\"\
-        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
-        \     \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Additional metadata for the location (JSON)\"\n                },\n                \"createdAt\": {\n        \
-        \            \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the location was created\"\n                },\n                \"updatedAt\": {\n            \
-        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the location was last updated\"\n                }\n            }\n        },\n        \"LocationType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n    \
-        \        \"enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n   \
-        \             \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\"\
-        ,\n                \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n     \
-        \   }\n    }\n}"
+        \n                },\n                \"bounds\": {\n                    \"allOf\": [\n                        {\n\
+        \                            \"type\": \"object\"\n                        }\n                    ],\n           \
+        \         \"nullable\": true,\n                    \"description\": \"Optional spatial extent in world coordinates\"\
+        \n                },\n                \"boundsPrecision\": {\n                    \"allOf\": [\n                 \
+        \       {\n                            \"$ref\": \"#/$defs/BoundsPrecision\"\n                        }\n        \
+        \            ],\n                    \"description\": \"Precision level of spatial bounds\"\n                },\n\
+        \                \"coordinateMode\": {\n                    \"allOf\": [\n                        {\n            \
+        \                \"$ref\": \"#/$defs/CoordinateMode\"\n                        }\n                    ],\n       \
+        \             \"description\": \"How this location's coordinate system relates to its parent\"\n                },\n\
+        \                \"localOrigin\": {\n                    \"allOf\": [\n                        {\n               \
+        \             \"type\": \"object\"\n                        }\n                    ],\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Origin point for local or inherited coordinate systems\"\n       \
+        \         },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Additional metadata for the
+        location (JSON)\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location
+        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location
+        was last updated\"\n                }\n            }\n        },\n        \"LocationType\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Type classification for locations\",\n            \"enum\": [\n    \
+        \            \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n                \"DISTRICT\"\
+        ,\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\"\
+        ,\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n        },\n        \"BoundsPrecision\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Precision level of spatial bounds for a location\"\
+        ,\n            \"enum\": [\n                \"exact\",\n                \"approximate\",\n                \"none\"\
+        \n            ]\n        },\n        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"How this location's coordinate system relates to its parent\",\n            \"enum\": [\n                \"inherit\"\
+        ,\n                \"local\",\n                \"portal\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Remove parent from a location (make it a root location)\",\n    \"description\"\
         : \"Remove the parent of a location, making it a top-level root location\\nwithin its realm. Updates depth for location
         and all descendants.\\n\",\n    \"tags\": [\n        \"Location Admin\"\n    ],\n    \"deprecated\": false,\n    \"\
@@ -1303,18 +1537,34 @@ paths:
         ,\n                    \"nullable\": true,\n                    \"description\": \"Timestamp when this location was
         deprecated\"\n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\"\
         ,\n                    \"nullable\": true,\n                    \"description\": \"Optional reason for deprecation\"\
-        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
-        \     \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Additional metadata for the location (JSON)\"\n                },\n                \"createdAt\": {\n        \
-        \            \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the location was created\"\n                },\n                \"updatedAt\": {\n            \
-        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the location was last updated\"\n                }\n            }\n        },\n        \"LocationType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n    \
-        \        \"enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n   \
-        \             \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\"\
-        ,\n                \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n     \
-        \   }\n    }\n}"
+        \n                },\n                \"bounds\": {\n                    \"allOf\": [\n                        {\n\
+        \                            \"type\": \"object\"\n                        }\n                    ],\n           \
+        \         \"nullable\": true,\n                    \"description\": \"Optional spatial extent in world coordinates\"\
+        \n                },\n                \"boundsPrecision\": {\n                    \"allOf\": [\n                 \
+        \       {\n                            \"$ref\": \"#/$defs/BoundsPrecision\"\n                        }\n        \
+        \            ],\n                    \"description\": \"Precision level of spatial bounds\"\n                },\n\
+        \                \"coordinateMode\": {\n                    \"allOf\": [\n                        {\n            \
+        \                \"$ref\": \"#/$defs/CoordinateMode\"\n                        }\n                    ],\n       \
+        \             \"description\": \"How this location's coordinate system relates to its parent\"\n                },\n\
+        \                \"localOrigin\": {\n                    \"allOf\": [\n                        {\n               \
+        \             \"type\": \"object\"\n                        }\n                    ],\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Origin point for local or inherited coordinate systems\"\n       \
+        \         },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Additional metadata for the
+        location (JSON)\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location
+        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location
+        was last updated\"\n                }\n            }\n        },\n        \"LocationType\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Type classification for locations\",\n            \"enum\": [\n    \
+        \            \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n                \"DISTRICT\"\
+        ,\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\"\
+        ,\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n        },\n        \"BoundsPrecision\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Precision level of spatial bounds for a location\"\
+        ,\n            \"enum\": [\n                \"exact\",\n                \"approximate\",\n                \"none\"\
+        \n            ]\n        },\n        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"How this location's coordinate system relates to its parent\",\n            \"enum\": [\n                \"inherit\"\
+        ,\n                \"local\",\n                \"portal\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Transfer a location to a different realm\",\n    \"description\": \"Moves
         a location from its current realm to a target realm.\\nUpdates all realm-scoped indexes (code-index, realm-index,
         parent/root indexes).\\nThe transferred location becomes a root location in the target realm (parent cleared).\\nReturns
@@ -1388,18 +1638,34 @@ paths:
         ,\n                    \"nullable\": true,\n                    \"description\": \"Timestamp when this location was
         deprecated\"\n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\"\
         ,\n                    \"nullable\": true,\n                    \"description\": \"Optional reason for deprecation\"\
-        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
-        \     \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Additional metadata for the location (JSON)\"\n                },\n                \"createdAt\": {\n        \
-        \            \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the location was created\"\n                },\n                \"updatedAt\": {\n            \
-        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the location was last updated\"\n                }\n            }\n        },\n        \"LocationType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n    \
-        \        \"enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n   \
-        \             \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\"\
-        ,\n                \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n     \
-        \   }\n    }\n}"
+        \n                },\n                \"bounds\": {\n                    \"allOf\": [\n                        {\n\
+        \                            \"type\": \"object\"\n                        }\n                    ],\n           \
+        \         \"nullable\": true,\n                    \"description\": \"Optional spatial extent in world coordinates\"\
+        \n                },\n                \"boundsPrecision\": {\n                    \"allOf\": [\n                 \
+        \       {\n                            \"$ref\": \"#/$defs/BoundsPrecision\"\n                        }\n        \
+        \            ],\n                    \"description\": \"Precision level of spatial bounds\"\n                },\n\
+        \                \"coordinateMode\": {\n                    \"allOf\": [\n                        {\n            \
+        \                \"$ref\": \"#/$defs/CoordinateMode\"\n                        }\n                    ],\n       \
+        \             \"description\": \"How this location's coordinate system relates to its parent\"\n                },\n\
+        \                \"localOrigin\": {\n                    \"allOf\": [\n                        {\n               \
+        \             \"type\": \"object\"\n                        }\n                    ],\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Origin point for local or inherited coordinate systems\"\n       \
+        \         },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Additional metadata for the
+        location (JSON)\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location
+        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location
+        was last updated\"\n                }\n            }\n        },\n        \"LocationType\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Type classification for locations\",\n            \"enum\": [\n    \
+        \            \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n                \"DISTRICT\"\
+        ,\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\"\
+        ,\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n        },\n        \"BoundsPrecision\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Precision level of spatial bounds for a location\"\
+        ,\n            \"enum\": [\n                \"exact\",\n                \"approximate\",\n                \"none\"\
+        \n            ]\n        },\n        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"How this location's coordinate system relates to its parent\",\n            \"enum\": [\n                \"inherit\"\
+        ,\n                \"local\",\n                \"portal\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Deprecate a location\",\n    \"description\": \"Soft-delete a location
         by marking it as deprecated.\\nDeprecated locations:\\n- Remain queryable for historical data\\n- Cannot be used for
         placing new entities\\n- Can be hard-deleted after all references are removed\\n\",\n    \"tags\": [\n        \"Location
@@ -1466,18 +1732,34 @@ paths:
         ,\n                    \"nullable\": true,\n                    \"description\": \"Timestamp when this location was
         deprecated\"\n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\"\
         ,\n                    \"nullable\": true,\n                    \"description\": \"Optional reason for deprecation\"\
-        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
-        \     \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Additional metadata for the location (JSON)\"\n                },\n                \"createdAt\": {\n        \
-        \            \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the location was created\"\n                },\n                \"updatedAt\": {\n            \
-        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the location was last updated\"\n                }\n            }\n        },\n        \"LocationType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n    \
-        \        \"enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n   \
-        \             \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\"\
-        ,\n                \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n     \
-        \   }\n    }\n}"
+        \n                },\n                \"bounds\": {\n                    \"allOf\": [\n                        {\n\
+        \                            \"type\": \"object\"\n                        }\n                    ],\n           \
+        \         \"nullable\": true,\n                    \"description\": \"Optional spatial extent in world coordinates\"\
+        \n                },\n                \"boundsPrecision\": {\n                    \"allOf\": [\n                 \
+        \       {\n                            \"$ref\": \"#/$defs/BoundsPrecision\"\n                        }\n        \
+        \            ],\n                    \"description\": \"Precision level of spatial bounds\"\n                },\n\
+        \                \"coordinateMode\": {\n                    \"allOf\": [\n                        {\n            \
+        \                \"$ref\": \"#/$defs/CoordinateMode\"\n                        }\n                    ],\n       \
+        \             \"description\": \"How this location's coordinate system relates to its parent\"\n                },\n\
+        \                \"localOrigin\": {\n                    \"allOf\": [\n                        {\n               \
+        \             \"type\": \"object\"\n                        }\n                    ],\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Origin point for local or inherited coordinate systems\"\n       \
+        \         },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Additional metadata for the
+        location (JSON)\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location
+        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location
+        was last updated\"\n                }\n            }\n        },\n        \"LocationType\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Type classification for locations\",\n            \"enum\": [\n    \
+        \            \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n                \"DISTRICT\"\
+        ,\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\"\
+        ,\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n        },\n        \"BoundsPrecision\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Precision level of spatial bounds for a location\"\
+        ,\n            \"enum\": [\n                \"exact\",\n                \"approximate\",\n                \"none\"\
+        \n            ]\n        },\n        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"How this location's coordinate system relates to its parent\",\n            \"enum\": [\n                \"inherit\"\
+        ,\n                \"local\",\n                \"portal\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Restore a deprecated location\",\n    \"description\": \"Remove the deprecated
         status from a location, making it\\navailable for entity placement again.\\n\",\n    \"tags\": [\n        \"Location
         Admin\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"undeprecateLocation\"\n}"
@@ -1530,6 +1812,122 @@ paths:
         validation endpoint for other services to check location validity.\\nReturns true if location exists and is not deprecated,
         false otherwise.\\n\",\n    \"tags\": [\n        \"Location\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
         : \"locationExists\"\n}"
+  /location/query/by-position:
+    post:
+      summary: Find locations containing a spatial position
+      description: |
+        Given a Position3D and realmId, returns all locations whose bounds contain
+        that position, ordered by depth descending (most specific first). Only
+        locations with spatial bounds data are considered. A position is "in" a
+        location if it falls within the location's axis-aligned bounding box.
+      operationId: queryLocationsByPosition
+      tags:
+      - Location
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryLocationsByPositionRequest'
+      responses:
+        '200':
+          description: Locations containing the position
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationListResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryLocationsByPositionRequest\"\
+        ,\n    \"$defs\": {\n        \"QueryLocationsByPositionRequest\": {\n            \"description\": \"Request to find
+        all locations containing a spatial position\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"position\",\n                \"realmId\"\n            ],\n\
+        \            \"properties\": {\n                \"position\": {\n                    \"type\": \"object\",\n     \
+        \               \"description\": \"Position to query in world coordinates\"\n                },\n                \"\
+        realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n             \
+        \       \"description\": \"Realm to search within\"\n                },\n                \"maxDepth\": {\n       \
+        \             \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Maximum hierarchy depth to search (null for all depths)\"\n              \
+        \  },\n                \"page\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n\
+        \                    \"default\": 1,\n                    \"description\": \"Page number for pagination (1-indexed)\"\
+        \n                },\n                \"pageSize\": {\n                    \"type\": \"integer\",\n              \
+        \      \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"default\": 20,\n            \
+        \        \"description\": \"Number of results per page\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LocationListResponse\"\
+        ,\n    \"$defs\": {\n        \"LocationListResponse\": {\n            \"description\": \"Paginated list of locations
+        with metadata for navigation\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"locations\",\n                \"totalCount\",\n                \"\
+        page\",\n                \"pageSize\"\n            ],\n            \"properties\": {\n                \"locations\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/LocationResponse\"\n                    },\n                    \"description\": \"List of locations matching
+        the query\"\n                },\n                \"totalCount\": {\n                    \"type\": \"integer\",\n \
+        \                   \"description\": \"Total number of locations matching the query (across all pages)\"\n       \
+        \         },\n                \"page\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Current page number (1-indexed)\"\n                },\n                \"pageSize\": {\n                    \"\
+        type\": \"integer\",\n                    \"description\": \"Number of results per page\"\n                },\n  \
+        \              \"hasNextPage\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether there are more pages after the current page\"\n                },\n                \"hasPreviousPage\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether there are pages before
+        the current page\"\n                }\n            }\n        },\n        \"LocationResponse\": {\n            \"\
+        description\": \"Complete location data returned from API operations\",\n            \"type\": \"object\",\n     \
+        \       \"additionalProperties\": false,\n            \"required\": [\n                \"locationId\",\n         \
+        \       \"realmId\",\n                \"code\",\n                \"name\",\n                \"locationType\",\n  \
+        \              \"depth\",\n                \"isDeprecated\",\n                \"createdAt\",\n                \"updatedAt\"\
+        \n            ],\n            \"properties\": {\n                \"locationId\": {\n                    \"type\":
+        \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for
+        the location\"\n                },\n                \"realmId\": {\n                    \"type\": \"string\",\n  \
+        \                  \"format\": \"uuid\",\n                    \"description\": \"Realm this location belongs to\"\n\
+        \                },\n                \"code\": {\n                    \"type\": \"string\",\n                    \"\
+        description\": \"Unique code for the location within its realm\"\n                },\n                \"name\": {\n\
+        \                    \"type\": \"string\",\n                    \"description\": \"Display name of the location\"\n\
+        \                },\n                \"description\": {\n                    \"type\": \"string\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"Optional description of the location\"\n     \
+        \           },\n                \"locationType\": {\n                    \"$ref\": \"#/$defs/LocationType\",\n   \
+        \                 \"description\": \"Type classification of the location\"\n                },\n                \"\
+        parentLocationId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Parent location ID (null for root locations)\"\
+        \n                },\n                \"depth\": {\n                    \"type\": \"integer\",\n                 \
+        \   \"description\": \"Depth in hierarchy (0 for root locations)\"\n                },\n                \"isDeprecated\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether this location is deprecated
+        and cannot be used\"\n                },\n                \"deprecatedAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
+        description\": \"Timestamp when this location was deprecated\"\n                },\n                \"deprecationReason\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Optional reason for deprecation\"\n                },\n                \"bounds\": {\n                    \"allOf\"\
+        : [\n                        {\n                            \"type\": \"object\"\n                        }\n    \
+        \                ],\n                    \"nullable\": true,\n                    \"description\": \"Optional spatial
+        extent in world coordinates\"\n                },\n                \"boundsPrecision\": {\n                    \"\
+        allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/BoundsPrecision\"\n       \
+        \                 }\n                    ],\n                    \"description\": \"Precision level of spatial bounds\"\
+        \n                },\n                \"coordinateMode\": {\n                    \"allOf\": [\n                  \
+        \      {\n                            \"$ref\": \"#/$defs/CoordinateMode\"\n                        }\n          \
+        \          ],\n                    \"description\": \"How this location's coordinate system relates to its parent\"\
+        \n                },\n                \"localOrigin\": {\n                    \"allOf\": [\n                     \
+        \   {\n                            \"type\": \"object\"\n                        }\n                    ],\n     \
+        \               \"nullable\": true,\n                    \"description\": \"Origin point for local or inherited coordinate
+        systems\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n      \
+        \              \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Additional metadata for the location (JSON)\"\n                },\n                \"createdAt\": {\n        \
+        \            \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Timestamp when the location was created\"\n                },\n                \"updatedAt\": {\n            \
+        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Timestamp when the location was last updated\"\n                }\n            }\n        },\n        \"LocationType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n    \
+        \        \"enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n   \
+        \             \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\"\
+        ,\n                \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n     \
+        \   },\n        \"BoundsPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision
+        level of spatial bounds for a location\",\n            \"enum\": [\n                \"exact\",\n                \"\
+        approximate\",\n                \"none\"\n            ]\n        },\n        \"CoordinateMode\": {\n            \"\
+        type\": \"string\",\n            \"description\": \"How this location's coordinate system relates to its parent\"\
+        ,\n            \"enum\": [\n                \"inherit\",\n                \"local\",\n                \"portal\"\n\
+        \            ]\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Find locations containing a spatial position\",\n    \"description\": \"\
+        Given a Position3D and realmId, returns all locations whose bounds contain\\nthat position, ordered by depth descending
+        (most specific first). Only\\nlocations with spatial bounds data are considered. A position is \\\"in\\\" a\\nlocation
+        if it falls within the location's axis-aligned bounding box.\\n\",\n    \"tags\": [\n        \"Location\"\n    ],\n\
+        \    \"deprecated\": false,\n    \"operationId\": \"queryLocationsByPosition\"\n}"
   /location/seed:
     post:
       summary: Seed locations from configuration
@@ -1581,14 +1979,32 @@ paths:
         \           \"$ref\": \"#/$defs/LocationType\",\n                    \"description\": \"Type classification for this
         location\"\n                },\n                \"parentLocationCode\": {\n                    \"type\": \"string\"\
         ,\n                    \"nullable\": true,\n                    \"description\": \"Code of the parent location (resolved
-        during seeding)\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n\
-        \                    \"additionalProperties\": true,\n                    \"nullable\": true,\n                  \
-        \  \"description\": \"Additional metadata for the location (JSON)\"\n                }\n            }\n        },\n\
-        \        \"LocationType\": {\n            \"type\": \"string\",\n            \"description\": \"Type classification
-        for locations\",\n            \"enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n         \
-        \       \"CITY\",\n                \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n     \
-        \           \"LANDMARK\",\n                \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\
-        \n            ]\n        }\n    }\n}"
+        during seeding)\"\n                },\n                \"bounds\": {\n                    \"allOf\": [\n         \
+        \               {\n                            \"type\": \"object\"\n                        }\n                 \
+        \   ],\n                    \"nullable\": true,\n                    \"description\": \"Optional spatial extent in
+        world coordinates\"\n                },\n                \"boundsPrecision\": {\n                    \"allOf\": [\n\
+        \                        {\n                            \"$ref\": \"#/$defs/BoundsPrecision\"\n                  \
+        \      }\n                    ],\n                    \"nullable\": true,\n                    \"description\": \"\
+        Precision level of spatial bounds (defaults to none)\"\n                },\n                \"coordinateMode\": {\n\
+        \                    \"allOf\": [\n                        {\n                            \"$ref\": \"#/$defs/CoordinateMode\"\
+        \n                        }\n                    ],\n                    \"nullable\": true,\n                   \
+        \ \"description\": \"How this location's coordinate system relates to its parent (defaults to inherit)\"\n       \
+        \         },\n                \"localOrigin\": {\n                    \"allOf\": [\n                        {\n  \
+        \                          \"type\": \"object\"\n                        }\n                    ],\n             \
+        \       \"nullable\": true,\n                    \"description\": \"Origin point for local or inherited coordinate
+        systems\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n      \
+        \              \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Additional metadata for the location (JSON)\"\n                }\n            }\n        },\n        \"LocationType\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n    \
+        \        \"enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n   \
+        \             \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\"\
+        ,\n                \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n     \
+        \   },\n        \"BoundsPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision
+        level of spatial bounds for a location\",\n            \"enum\": [\n                \"exact\",\n                \"\
+        approximate\",\n                \"none\"\n            ]\n        },\n        \"CoordinateMode\": {\n            \"\
+        type\": \"string\",\n            \"description\": \"How this location's coordinate system relates to its parent\"\
+        ,\n            \"enum\": [\n                \"inherit\",\n                \"local\",\n                \"portal\"\n\
+        \            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SeedLocationsResponse\"\
         ,\n    \"$defs\": {\n        \"SeedLocationsResponse\": {\n            \"description\": \"Summary of a seed operation
         including counts of created, updated, and skipped locations\",\n            \"type\": \"object\",\n            \"\
@@ -1623,6 +2039,20 @@ components:
       - WILDERNESS
       - DUNGEON
       - OTHER
+    BoundsPrecision:
+      type: string
+      description: Precision level of spatial bounds for a location
+      enum:
+      - exact
+      - approximate
+      - none
+    CoordinateMode:
+      type: string
+      description: How this location's coordinate system relates to its parent
+      enum:
+      - inherit
+      - local
+      - portal
     TerritoryMode:
       type: string
       description: Territory validation mode for constraint checking
@@ -1910,6 +2340,26 @@ components:
           format: uuid
           nullable: true
           description: Parent location ID for hierarchy (null for root locations)
+        bounds:
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/BoundingBox3D'
+          nullable: true
+          description: Optional spatial extent in world coordinates
+        boundsPrecision:
+          allOf:
+          - $ref: '#/components/schemas/BoundsPrecision'
+          nullable: true
+          description: Precision level of spatial bounds (defaults to none)
+        coordinateMode:
+          allOf:
+          - $ref: '#/components/schemas/CoordinateMode'
+          nullable: true
+          description: How this location's coordinate system relates to its parent (defaults to inherit)
+        localOrigin:
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Position3D'
+          nullable: true
+          description: Origin point for local or inherited coordinate systems
         metadata:
           type: object
           additionalProperties: true
@@ -1942,6 +2392,26 @@ components:
           - $ref: '#/components/schemas/LocationType'
           nullable: true
           description: Type of location
+        bounds:
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/BoundingBox3D'
+          nullable: true
+          description: Optional spatial extent in world coordinates
+        boundsPrecision:
+          allOf:
+          - $ref: '#/components/schemas/BoundsPrecision'
+          nullable: true
+          description: Precision level of spatial bounds
+        coordinateMode:
+          allOf:
+          - $ref: '#/components/schemas/CoordinateMode'
+          nullable: true
+          description: How this location's coordinate system relates to its parent
+        localOrigin:
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Position3D'
+          nullable: true
+          description: Origin point for local or inherited coordinate systems
         metadata:
           type: object
           additionalProperties: true
@@ -2109,11 +2579,62 @@ components:
           type: string
           nullable: true
           description: Code of the parent location (resolved during seeding)
+        bounds:
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/BoundingBox3D'
+          nullable: true
+          description: Optional spatial extent in world coordinates
+        boundsPrecision:
+          allOf:
+          - $ref: '#/components/schemas/BoundsPrecision'
+          nullable: true
+          description: Precision level of spatial bounds (defaults to none)
+        coordinateMode:
+          allOf:
+          - $ref: '#/components/schemas/CoordinateMode'
+          nullable: true
+          description: How this location's coordinate system relates to its parent (defaults to inherit)
+        localOrigin:
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Position3D'
+          nullable: true
+          description: Origin point for local or inherited coordinate systems
         metadata:
           type: object
           additionalProperties: true
           nullable: true
           description: Additional metadata for the location (JSON)
+    QueryLocationsByPositionRequest:
+      description: Request to find all locations containing a spatial position
+      type: object
+      additionalProperties: false
+      required:
+      - position
+      - realmId
+      properties:
+        position:
+          $ref: 'common-api.yaml#/components/schemas/Position3D'
+          description: Position to query in world coordinates
+        realmId:
+          type: string
+          format: uuid
+          description: Realm to search within
+        maxDepth:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Maximum hierarchy depth to search (null for all depths)
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Page number for pagination (1-indexed)
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+          description: Number of results per page
     LocationResponse:
       description: Complete location data returned from API operations
       type: object
@@ -2170,6 +2691,24 @@ components:
           type: string
           nullable: true
           description: Optional reason for deprecation
+        bounds:
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/BoundingBox3D'
+          nullable: true
+          description: Optional spatial extent in world coordinates
+        boundsPrecision:
+          allOf:
+          - $ref: '#/components/schemas/BoundsPrecision'
+          description: Precision level of spatial bounds
+        coordinateMode:
+          allOf:
+          - $ref: '#/components/schemas/CoordinateMode'
+          description: How this location's coordinate system relates to its parent
+        localOrigin:
+          allOf:
+          - $ref: 'common-api.yaml#/components/schemas/Position3D'
+          nullable: true
+          description: Origin point for local or inherited coordinate systems
         metadata:
           type: object
           additionalProperties: true

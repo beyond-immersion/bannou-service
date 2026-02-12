@@ -351,6 +351,24 @@ public sealed class GardenerProxy
     }
 
     /// <summary>
+    /// Delete scenario template
+    /// </summary>
+    /// <param name="request">The request payload.</param>
+    /// <param name="channel">Message channel for ordering (default 0).</param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>ApiResponse containing ScenarioTemplateResponse on success.</returns>
+    public Task<ApiResponse<ScenarioTemplateResponse>> DeleteTemplateAsync(
+        DeleteTemplateRequest request,
+        ushort channel = 0,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        return _client.InvokeAsync<DeleteTemplateRequest, ScenarioTemplateResponse>(
+            "/gardener/template/delete", request, channel, timeout, cancellationToken);
+    }
+
+    /// <summary>
     /// Get deployment phase configuration
     /// </summary>
     /// <param name="request">The request payload.</param>

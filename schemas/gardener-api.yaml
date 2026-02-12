@@ -543,6 +543,36 @@ paths:
         '404':
           description: Template not found
 
+  /gardener/template/delete:
+    post:
+      summary: Delete scenario template
+      description: >-
+        Permanently deletes a scenario template. Template must be in Deprecated
+        status before deletion. Publishes a scenario-template.deleted lifecycle event.
+      operationId: deleteTemplate
+      tags:
+      - Template Management
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteTemplateRequest'
+      responses:
+        '200':
+          description: Template deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScenarioTemplateResponse'
+        '404':
+          description: Template not found
+        '409':
+          description: Template is not in Deprecated status
+
   # =========================================================================
   # Deployment Phase (3 endpoints)
   # =========================================================================
@@ -1099,7 +1129,7 @@ components:
     CreateTemplateRequest:
       type: object
       description: Request to create a scenario template
-      required: [code, displayName, description, category, domainWeights, allowedPhases]
+      required: [code, displayName, description, category, domainWeights]
       properties:
         code:
           type: string
@@ -1132,9 +1162,12 @@ components:
           default: Isolated
         allowedPhases:
           type: array
+          nullable: true
           items:
             $ref: '#/components/schemas/DeploymentPhase'
-          description: Deployment phases in which this template is available
+          description: >-
+            Deployment phases in which this template is available.
+            Null or empty means available in all phases.
         maxConcurrentInstances:
           type: integer
           default: 100
@@ -1261,6 +1294,16 @@ components:
           type: string
           format: uuid
           description: Template ID to deprecate
+
+    DeleteTemplateRequest:
+      type: object
+      description: Request to permanently delete a deprecated template
+      required: [scenarioTemplateId]
+      properties:
+        scenarioTemplateId:
+          type: string
+          format: uuid
+          description: Template ID to delete
 
     GetPhaseConfigRequest:
       type: object
@@ -1545,7 +1588,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/DeploymentPhase'
-          description: Deployment phases where this template is available
+          description: Deployment phases where this template is available. Always contains explicit values (never empty).
         maxConcurrentInstances:
           type: integer
           description: Maximum concurrent active instances

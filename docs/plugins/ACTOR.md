@@ -163,6 +163,7 @@ Current providers cover personality, combat preferences, backstory, encounters, 
 | `actor.pool-node.draining` | `PoolNodeDrainingEvent` | Mark draining, track remaining (control plane only) |
 | `actor.instance.status-changed` | `ActorStatusChangedEvent` | Update assignment status (control plane only) |
 | `actor.instance.completed` | `ActorCompletedEvent` | Remove assignment (control plane only) |
+| `actor-template.updated` | `ActorTemplateUpdatedEvent` | Invalidate behavior cache and signal running actors when BehaviorRef changes |
 
 **Note**: `behavior.updated` handling was moved to lib-puppetmaster (L4) per issue #380. Puppetmaster owns the dynamic behavior cache and notifies running actors via `IActorClient`. Actor (L2) no longer subscribes to any L4 events.
 
@@ -577,6 +578,7 @@ No bugs identified.
 - (2026-02-11) Moved "Encounter phase strings unvalidated" from Design Considerations to Intentional Quirks (#12) with expanded documentation explaining ABML-driven phase semantics and why server-side validation would violate the extensibility model.
 - (2026-02-11) Moved "Fresh options query waits approximately one tick" from Design Considerations to Intentional Quirks (#13) with expanded documentation covering why the approximate wait is acceptable, alternatives considered (TaskCompletionSource synchronization), and the caller's ability to use freshness levels or re-query.
 - (2026-02-11) Moved "Auto-spawn failure returns NotFound" from Design Considerations to Intentional Quirks (#14) with documentation explaining why NotFound is the correct caller-facing response (auto-spawn is an implementation detail) and noting the concurrent auto-spawn edge case.
+- (2026-02-11) Fixed missing behavior cache invalidation on template update (issue #391 side finding). Added `actor-template.updated` event subscription. Handler checks `ChangedFields` for `behaviorRef`, invalidates `BehaviorDocumentLoader` provider caches, and signals running actors on this node via `IActorRunner.InvalidateCachedBehavior()` to reload on next tick. This fixes hot-reload across all nodes (each node receives the event via RabbitMQ and invalidates locally).
 
 ### Implementation Gaps
 

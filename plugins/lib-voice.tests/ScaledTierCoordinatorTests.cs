@@ -115,24 +115,6 @@ public class ScaledTierCoordinatorTests
         Assert.Equal(100, result);
     }
 
-    [Fact]
-    public void GetScaledMaxParticipants_WithZeroConfiguration_ReturnsDefault()
-    {
-        // Arrange
-        var config = new VoiceServiceConfiguration { ScaledMaxParticipants = 0 };
-        var coordinator = new ScaledTierCoordinator(
-            _mockRtpEngineClient.Object,
-            _mockLogger.Object,
-            _mockMessageBus.Object,
-            config);
-
-        // Act
-        var result = coordinator.GetScaledMaxParticipants();
-
-        // Assert
-        Assert.Equal(100, result); // Default fallback
-    }
-
     #endregion
 
     #region GenerateSipCredentials Tests

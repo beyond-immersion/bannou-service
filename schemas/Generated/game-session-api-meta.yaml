@@ -794,10 +794,11 @@ paths:
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LeaveGameSessionByIdRequest\"\
         ,\n    \"$defs\": {\n        \"LeaveGameSessionByIdRequest\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Request to leave a specific game session by ID\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"webSocketSessionId\",\n                \"accountId\",\n          \
-        \      \"gameSessionId\"\n            ],\n            \"properties\": {\n                \"webSocketSessionId\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"WebSocket session ID of the client leaving.\"\n                },\n                \"accountId\": {\n        \
+        \            \"required\": [\n                \"accountId\",\n                \"gameSessionId\"\n            ],\n\
+        \            \"properties\": {\n                \"webSocketSessionId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"WebSocket session ID of the client leaving. Null for server-side cleanup operations (e.g., scenario lifecycle
+        worker) where no real WebSocket session exists.\"\n                },\n                \"accountId\": {\n        \
         \            \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
         : \"Account ID of the player leaving.\"\n                },\n                \"gameSessionId\": {\n              \
         \      \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"ID
@@ -1447,14 +1448,17 @@ components:
       description: Request to leave a specific game session by ID
       additionalProperties: false
       required:
-      - webSocketSessionId
       - accountId
       - gameSessionId
       properties:
         webSocketSessionId:
           type: string
           format: uuid
-          description: WebSocket session ID of the client leaving.
+          nullable: true
+          description: >-
+            WebSocket session ID of the client leaving. Null for server-side
+            cleanup operations (e.g., scenario lifecycle worker) where no real
+            WebSocket session exists.
         accountId:
           type: string
           format: uuid

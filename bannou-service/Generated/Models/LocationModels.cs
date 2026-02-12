@@ -72,6 +72,46 @@ public enum LocationType
 #pragma warning restore CS1591
 
 /// <summary>
+/// Precision level of spatial bounds for a location
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum BoundsPrecision
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"exact")]
+    Exact = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"approximate")]
+    Approximate = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"none")]
+    None = 2,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// How this location's coordinate system relates to its parent
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum CoordinateMode
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"inherit")]
+    Inherit = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"local")]
+    Local = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"portal")]
+    Portal = 2,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
 /// Territory validation mode for constraint checking
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
@@ -492,6 +532,32 @@ public partial class CreateLocationRequest
     public System.Guid? ParentLocationId { get; set; } = default!;
 
     /// <summary>
+    /// Optional spatial extent in world coordinates
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bounds")]
+    public BoundingBox3D? Bounds { get; set; } = default!;
+
+    /// <summary>
+    /// Precision level of spatial bounds (defaults to none)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("boundsPrecision")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public BoundsPrecision? BoundsPrecision { get; set; } = default!;
+
+    /// <summary>
+    /// How this location's coordinate system relates to its parent (defaults to inherit)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("coordinateMode")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CoordinateMode? CoordinateMode { get; set; } = default!;
+
+    /// <summary>
+    /// Origin point for local or inherited coordinate systems
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("localOrigin")]
+    public Position3D? LocalOrigin { get; set; } = default!;
+
+    /// <summary>
     /// Additional metadata for the location (JSON)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
@@ -534,6 +600,32 @@ public partial class UpdateLocationRequest
     [System.Text.Json.Serialization.JsonPropertyName("locationType")]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public LocationType? LocationType { get; set; } = default!;
+
+    /// <summary>
+    /// Optional spatial extent in world coordinates
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bounds")]
+    public BoundingBox3D? Bounds { get; set; } = default!;
+
+    /// <summary>
+    /// Precision level of spatial bounds
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("boundsPrecision")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public BoundsPrecision? BoundsPrecision { get; set; } = default!;
+
+    /// <summary>
+    /// How this location's coordinate system relates to its parent
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("coordinateMode")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CoordinateMode? CoordinateMode { get; set; } = default!;
+
+    /// <summary>
+    /// Origin point for local or inherited coordinate systems
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("localOrigin")]
+    public Position3D? LocalOrigin { get; set; } = default!;
 
     /// <summary>
     /// Additional metadata
@@ -794,10 +886,82 @@ public partial class SeedLocation
     public string? ParentLocationCode { get; set; } = default!;
 
     /// <summary>
+    /// Optional spatial extent in world coordinates
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bounds")]
+    public BoundingBox3D? Bounds { get; set; } = default!;
+
+    /// <summary>
+    /// Precision level of spatial bounds (defaults to none)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("boundsPrecision")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public BoundsPrecision? BoundsPrecision { get; set; } = default!;
+
+    /// <summary>
+    /// How this location's coordinate system relates to its parent (defaults to inherit)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("coordinateMode")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CoordinateMode? CoordinateMode { get; set; } = default!;
+
+    /// <summary>
+    /// Origin point for local or inherited coordinate systems
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("localOrigin")]
+    public Position3D? LocalOrigin { get; set; } = default!;
+
+    /// <summary>
     /// Additional metadata for the location (JSON)
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Request to find all locations containing a spatial position
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class QueryLocationsByPositionRequest
+{
+
+    /// <summary>
+    /// Position to query in world coordinates
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("position")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public Position3D Position { get; set; } = new Position3D();
+
+    /// <summary>
+    /// Realm to search within
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RealmId { get; set; } = default!;
+
+    /// <summary>
+    /// Maximum hierarchy depth to search (null for all depths)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("maxDepth")]
+    [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+    public int? MaxDepth { get; set; } = default!;
+
+    /// <summary>
+    /// Page number for pagination (1-indexed)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("page")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
+    public int Page { get; set; } = 1;
+
+    /// <summary>
+    /// Number of results per page
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("pageSize")]
+    [System.ComponentModel.DataAnnotations.Range(1, 100)]
+    public int PageSize { get; set; } = 20;
 
 }
 
@@ -884,6 +1048,32 @@ public partial class LocationResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("deprecationReason")]
     public string? DeprecationReason { get; set; } = default!;
+
+    /// <summary>
+    /// Optional spatial extent in world coordinates
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("bounds")]
+    public BoundingBox3D? Bounds { get; set; } = default!;
+
+    /// <summary>
+    /// Precision level of spatial bounds
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("boundsPrecision")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public BoundsPrecision BoundsPrecision { get; set; } = default!;
+
+    /// <summary>
+    /// How this location's coordinate system relates to its parent
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("coordinateMode")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public CoordinateMode CoordinateMode { get; set; } = default!;
+
+    /// <summary>
+    /// Origin point for local or inherited coordinate systems
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("localOrigin")]
+    public Position3D? LocalOrigin { get; set; } = default!;
 
     /// <summary>
     /// Additional metadata for the location (JSON)

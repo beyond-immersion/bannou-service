@@ -1874,6 +1874,149 @@ paths:
       x-endpoint-info-json: "{\n    \"summary\": \"Deprecate scenario template\",\n    \"description\": \"Sets the template
         status to Deprecated, preventing new instances.\",\n    \"tags\": [\n        \"Template Management\"\n    ],\n   \
         \ \"deprecated\": false,\n    \"operationId\": \"deprecateTemplate\"\n}"
+  /gardener/template/delete:
+    post:
+      summary: Delete scenario template
+      description: >-
+        Permanently deletes a scenario template. Template must be in Deprecated
+        status before deletion. Publishes a scenario-template.deleted lifecycle event.
+      operationId: deleteTemplate
+      tags:
+      - Template Management
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteTemplateRequest'
+      responses:
+        '200':
+          description: Template deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScenarioTemplateResponse'
+        '404':
+          description: Template not found
+        '409':
+          description: Template is not in Deprecated status
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteTemplateRequest\"\
+        ,\n    \"$defs\": {\n        \"DeleteTemplateRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to permanently delete a deprecated template\",\n            \"required\": [\n                \"scenarioTemplateId\"\
+        \n            ],\n            \"properties\": {\n                \"scenarioTemplateId\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Template ID
+        to delete\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ScenarioTemplateResponse\"\
+        ,\n    \"$defs\": {\n        \"ScenarioTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Full scenario template with all fields\",\n            \"required\": [\n                \"scenarioTemplateId\"\
+        ,\n                \"code\",\n                \"displayName\",\n                \"description\",\n               \
+        \ \"category\",\n                \"domainWeights\",\n                \"connectivityMode\",\n                \"allowedPhases\"\
+        ,\n                \"maxConcurrentInstances\",\n                \"status\",\n                \"createdAt\",\n    \
+        \            \"updatedAt\"\n            ],\n            \"properties\": {\n                \"scenarioTemplateId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Unique identifier for this template\"\n                },\n                \"code\": {\n        \
+        \            \"type\": \"string\",\n                    \"description\": \"Unique template code\"\n              \
+        \  },\n                \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Human-readable name\"\n                },\n                \"description\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Template description\"\n                },\n                \"category\"\
+        : {\n                    \"$ref\": \"#/$defs/ScenarioCategory\",\n                    \"description\": \"Primary gameplay
+        category\"\n                },\n                \"subcategory\": {\n                    \"type\": \"string\",\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"Subcategory within the primary category\"\
+        \n                },\n                \"domainWeights\": {\n                    \"type\": \"array\",\n           \
+        \         \"items\": {\n                        \"$ref\": \"#/$defs/DomainWeight\"\n                    },\n     \
+        \               \"description\": \"Growth domain weights\"\n                },\n                \"minGrowthPhase\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Minimum seed growth phase\"\n                },\n                \"connectivityMode\": {\n                   \
+        \ \"$ref\": \"#/$defs/ConnectivityMode\",\n                    \"description\": \"World connectivity mode\"\n    \
+        \            },\n                \"allowedPhases\": {\n                    \"type\": \"array\",\n                \
+        \    \"items\": {\n                        \"$ref\": \"#/$defs/DeploymentPhase\"\n                    },\n       \
+        \             \"description\": \"Deployment phases where this template is available\"\n                },\n      \
+        \          \"maxConcurrentInstances\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Maximum concurrent active instances\"\n                },\n                \"estimatedDurationMinutes\": {\n \
+        \                   \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Estimated scenario duration in minutes\"\n                },\n                \"prerequisites\": {\n         \
+        \           \"$ref\": \"#/$defs/ScenarioPrerequisites\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Entry requirements\"\n                },\n                \"chaining\": {\n            \
+        \        \"$ref\": \"#/$defs/ScenarioChaining\",\n                    \"nullable\": true,\n                    \"\
+        description\": \"Chaining configuration\"\n                },\n                \"multiplayer\": {\n              \
+        \      \"$ref\": \"#/$defs/ScenarioMultiplayer\",\n                    \"nullable\": true,\n                    \"\
+        description\": \"Multiplayer support\"\n                },\n                \"content\": {\n                    \"\
+        $ref\": \"#/$defs/ScenarioContent\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Content references\"\n                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/TemplateStatus\"\
+        ,\n                    \"description\": \"Current lifecycle status\"\n                },\n                \"createdAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"When this template was created\"\n                },\n                \"updatedAt\": {\n  \
+        \                  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"When this template was last updated\"\n                }\n            }\n        },\n        \"ScenarioCategory\"\
+        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Combat\",\n                \"Crafting\"\
+        ,\n                \"Social\",\n                \"Trade\",\n                \"Exploration\",\n                \"Magic\"\
+        ,\n                \"Survival\",\n                \"Mixed\",\n                \"Narrative\",\n                \"Tutorial\"\
+        \n            ],\n            \"description\": \"Primary gameplay category for a scenario template\"\n        },\n\
+        \        \"DomainWeight\": {\n            \"type\": \"object\",\n            \"description\": \"Domain name and weight
+        pair for scenario template growth weighting\",\n            \"required\": [\n                \"domain\",\n       \
+        \         \"weight\"\n            ],\n            \"properties\": {\n                \"domain\": {\n             \
+        \       \"type\": \"string\",\n                    \"description\": \"Growth domain path (e.g. combat.melee, exploration.caves)\"\
+        \n                },\n                \"weight\": {\n                    \"type\": \"number\",\n                 \
+        \   \"format\": \"float\",\n                    \"description\": \"Weight applied to this domain on scenario completion\"\
+        \n                }\n            }\n        },\n        \"ConnectivityMode\": {\n            \"type\": \"string\"\
+        ,\n            \"enum\": [\n                \"Isolated\",\n                \"WorldSlice\",\n                \"Persistent\"\
+        \n            ],\n            \"description\": \"How a scenario instance connects to the broader game world\"\n  \
+        \      },\n        \"DeploymentPhase\": {\n            \"type\": \"string\",\n            \"enum\": [\n          \
+        \      \"Alpha\",\n                \"Beta\",\n                \"Release\"\n            ],\n            \"description\"\
+        : \"Current deployment phase for scenario availability gating\"\n        },\n        \"ScenarioPrerequisites\": {\n\
+        \            \"type\": \"object\",\n            \"description\": \"Prerequisite requirements for entering a scenario\"\
+        ,\n            \"properties\": {\n                \"requiredDomains\": {\n                    \"type\": \"object\"\
+        ,\n                    \"additionalProperties\": {\n                        \"type\": \"number\",\n              \
+        \          \"format\": \"float\"\n                    },\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Minimum growth depth per domain (domain path to minimum depth)\"\n                },\n \
+        \               \"requiredScenarios\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Scenario template codes that must be completed first\"\n                },\n\
+        \                \"excludedScenarios\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Scenario template codes that disqualify the player\"\n                }\n\
+        \            }\n        },\n        \"ScenarioChaining\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Chaining configuration for linking scenarios together\",\n            \"properties\": {\n                \"leadsTo\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Template codes this scenario can chain into\"\n                },\n                \"chainProbabilities\": {\n\
+        \                    \"type\": \"object\",\n                    \"additionalProperties\": {\n                    \
+        \    \"type\": \"number\",\n                        \"format\": \"float\"\n                    },\n              \
+        \      \"nullable\": true,\n                    \"description\": \"Per-code probability weights for chain selection\"\
+        \n                },\n                \"maxChainDepth\": {\n                    \"type\": \"integer\",\n         \
+        \           \"default\": 3,\n                    \"description\": \"Maximum chain depth allowed from the initial scenario\"\
+        \n                }\n            }\n        },\n        \"ScenarioMultiplayer\": {\n            \"type\": \"object\"\
+        ,\n            \"description\": \"Multiplayer configuration for group scenarios\",\n            \"required\": [\n\
+        \                \"minPlayers\",\n                \"maxPlayers\"\n            ],\n            \"properties\": {\n\
+        \                \"minPlayers\": {\n                    \"type\": \"integer\",\n                    \"description\"\
+        : \"Minimum number of players required\"\n                },\n                \"maxPlayers\": {\n                \
+        \    \"type\": \"integer\",\n                    \"description\": \"Maximum number of players allowed\"\n        \
+        \        },\n                \"matchmakingQueueCode\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Matchmaking queue code for automatic grouping\"\
+        \n                },\n                \"bondPreferred\": {\n                    \"type\": \"boolean\",\n         \
+        \           \"default\": false,\n                    \"description\": \"Whether bonded players receive a scoring boost
+        for this scenario\"\n                }\n            }\n        },\n        \"ScenarioContent\": {\n            \"\
+        type\": \"object\",\n            \"description\": \"Content references linking a scenario template to game assets\"\
+        ,\n            \"properties\": {\n                \"behaviorDocumentId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"ABML behavior document ID for NPC orchestration\"\n                },\n                \"sceneDocumentId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Scene document ID for environment composition\"\n                },\n\
+        \                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Realm ID where this scenario takes
+        place\"\n                },\n                \"locationCode\": {\n                    \"type\": \"string\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Location code within the realm\"\n  \
+        \              }\n            }\n        },\n        \"TemplateStatus\": {\n            \"type\": \"string\",\n  \
+        \          \"enum\": [\n                \"Draft\",\n                \"Active\",\n                \"Deprecated\"\n\
+        \            ],\n            \"description\": \"Current lifecycle status of a scenario template\"\n        }\n   \
+        \ }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Delete scenario template\",\n    \"description\": \"Permanently deletes
+        a scenario template. Template must be in Deprecated status before deletion. Publishes a scenario-template.deleted
+        lifecycle event.\",\n    \"tags\": [\n        \"Template Management\"\n    ],\n    \"deprecated\": false,\n    \"\
+        operationId\": \"deleteTemplate\"\n}"
   /gardener/phase/get:
     post:
       summary: Get deployment phase configuration
@@ -2806,6 +2949,16 @@ components:
           type: string
           format: uuid
           description: Template ID to deprecate
+    DeleteTemplateRequest:
+      type: object
+      description: Request to permanently delete a deprecated template
+      required:
+      - scenarioTemplateId
+      properties:
+        scenarioTemplateId:
+          type: string
+          format: uuid
+          description: Template ID to delete
     GetPhaseConfigRequest:
       type: object
       description: Request to get deployment phase configuration

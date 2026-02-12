@@ -424,7 +424,7 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
             new QueryCondition { Path = "$.Status", Operator = QueryOperator.Equals, Value = TemplateStatus.Active.ToString() }
         };
         var templateResult = await templateStore.JsonQueryPagedAsync(
-            templateConditions, 0, 500, cancellationToken: ct);
+            templateConditions, 0, _configuration.ScenarioTemplateQueryPageSize, cancellationToken: ct);
 
         // Query recent scenario history for cooldown checking
         var cooldownThreshold = DateTimeOffset.UtcNow
@@ -435,7 +435,7 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
             new QueryCondition { Path = "$.AccountId", Operator = QueryOperator.Equals, Value = accountId.ToString() }
         };
         var historyResult = await historyStore.JsonQueryPagedAsync(
-            historyConditions, 0, 200, cancellationToken: ct);
+            historyConditions, 0, _configuration.ScenarioHistoryQueryPageSize, cancellationToken: ct);
         var recentTemplateIds = historyResult.Items
             .Where(h => h.Value.CompletedAt >= cooldownThreshold)
             .Select(h => h.Value.ScenarioTemplateId)
@@ -447,7 +447,7 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
             var template = item.Value;
 
             // Phase gating
-            if (template.AllowedPhases.Count > 0 && !template.AllowedPhases.Contains(garden.Phase))
+            if (!template.AllowedPhases.Contains(garden.Phase))
                 continue;
 
             // Cooldown check

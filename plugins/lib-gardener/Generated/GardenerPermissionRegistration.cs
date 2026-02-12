@@ -317,6 +317,21 @@ public static class GardenerPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
+            Path = "/gardener/template/delete",
+            Method = ServiceEndpointMethod.POST,
+            Description = "deleteTemplate",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
             Path = "/gardener/phase/get",
             Method = ServiceEndpointMethod.POST,
             Description = "getPhaseConfig",
