@@ -71,10 +71,12 @@ plugins/lib-{service}/
 └── Services/                        # MANUAL - optional helper services
 
 bannou-service/Generated/
-├── Models/{Service}Models.cs        # Request/response models
+├── Models/{Service}Models.cs        # Request/response models (use make print-models to inspect)
 ├── Clients/{Service}Client.cs       # Service client for mesh calls
 └── Events/{Service}EventsModels.cs  # Service event models
 ```
+
+> **Model Inspection**: Use `make print-models PLUGIN="service"` to view compact model shapes instead of reading generated files directly. If print-models fails, generate first — never guess at model definitions.
 
 ### The Cardinal Rules
 
@@ -274,8 +276,8 @@ Tenets are organized into categories based on when they're needed:
 | Hardcoded magic number for tunable | T21 | Define in configuration schema, use config |
 | Defined cache store not used | T21 | Implement cache read-through or remove store |
 | Secondary fallback for defaulted config property | T21 | Remove fallback; if null, throw (infrastructure failure) |
-| Non-async Task-returning method | T23 | Add async keyword and await |
-| `Task.FromResult` without async | T23 | Use async method with await |
+| Non-async Task-returning method | T23 | Add `async` keyword and `await Task.CompletedTask` if no other await exists |
+| `Task.FromResult` without async | T23 | Use `async` method with `await Task.CompletedTask` |
 | `.Result` or `.Wait()` on Task | T23 | Use await instead |
 | Manual `.Dispose()` in method scope | T24 | Use `using` statement instead |
 | try/finally for disposal | T24 | Use `using` statement instead |

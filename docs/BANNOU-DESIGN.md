@@ -96,15 +96,22 @@ Each service is an independent **plugin** - a .NET assembly that can be loaded o
 ```
 plugins/lib-account/              # Account service plugin
 ├── Generated/                    # Auto-generated from schema (never edit)
-│   ├── AccountController.cs
-│   ├── IAccountService.cs
-│   └── AccountModels.cs
+│   ├── AccountController.cs      # HTTP routing
+│   ├── IAccountService.cs        # Service interface
+│   └── AccountServiceConfiguration.cs  # Typed config class
 ├── AccountService.cs             # Business logic implementation
 ├── AccountServiceModels.cs       # Internal data models (storage, cache, DTOs)
 ├── AccountServiceEvents.cs       # Event handlers (partial class)
 ├── AccountServicePlugin.cs       # Plugin registration
 └── lib-account.csproj
+
+bannou-service/Generated/         # Shared generated code (never edit)
+├── Models/AccountModels.cs       # Request/response models
+├── Clients/AccountClient.cs      # Client for inter-service calls
+└── Events/AccountEventsModels.cs # Event models
 ```
+
+Use `make print-models PLUGIN="account"` to inspect request/response model shapes instead of reading generated files directly.
 
 **Key principles**:
 - **One schema, one plugin** - Clear ownership and boundaries

@@ -2,6 +2,7 @@ using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,15 +30,17 @@ namespace BeyondImmersion.BannouService.Divine;
 /// </list>
 /// </para>
 /// <para>
+/// <b>MODELS:</b> Run <c>make print-models PLUGIN="divine"</c> to view compact request/response model shapes.
+/// If print-models fails or generation has not been run, DO NOT proceed with implementation.
+/// Generate first (<c>cd scripts &amp;&amp; ./generate-service.sh divine</c>) or ask the developer how to continue.
+/// Never guess at model definitions.
+/// </para>
+/// <para>
 /// <b>RELATED FILES:</b>
 /// <list type="bullet">
 ///   <item>Internal data models: DivineServiceModels.cs (storage models, cache entries, internal DTOs)</item>
 ///   <item>Event handlers: DivineServiceEvents.cs (event consumer registration and handlers)</item>
-///   <item>Request/Response models: bannou-service/Generated/Models/DivineModels.cs</item>
-///   <item>Event models: bannou-service/Generated/Events/DivineEventsModels.cs</item>
-///   <item>Lifecycle events: bannou-service/Generated/Events/DivineLifecycleEvents.cs</item>
 ///   <item>Configuration: Generated/DivineServiceConfiguration.cs</item>
-///   <item>State stores: bannou-service/Generated/StateStoreDefinitions.cs</item>
 /// </list>
 /// </para>
 /// </remarks>
@@ -46,6 +49,7 @@ public partial class DivineService : IDivineService
 {
     private readonly IMessageBus _messageBus;
     private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly IResourceClient _resourceClient;
     private readonly ILogger<DivineService> _logger;
     private readonly DivineServiceConfiguration _configuration;
 
@@ -54,11 +58,13 @@ public partial class DivineService : IDivineService
     public DivineService(
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
+        IResourceClient resourceClient,
         ILogger<DivineService> logger,
         DivineServiceConfiguration configuration)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
+        _resourceClient = resourceClient;
         _logger = logger;
         _configuration = configuration;
     }
@@ -67,7 +73,7 @@ public partial class DivineService : IDivineService
     /// Implementation of CreateDeity operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
-    public Task<(StatusCodes, DeityResponse?)> CreateDeityAsync(CreateDeityRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, DeityResponse?)> CreateDeityAsync(CreateDeityRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing CreateDeity operation");
 
@@ -75,6 +81,7 @@ public partial class DivineService : IDivineService
         // Note: The generated controller wraps this method with try/catch for error handling.
         // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
         // published as error events by the controller automatically.
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method CreateDeity not yet implemented");
 
         // Example patterns using infrastructure libs:
@@ -99,26 +106,17 @@ public partial class DivineService : IDivineService
         // For data deletion (lib-state):
         // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
         // await stateStore.DeleteAsync(key, cancellationToken);
-        // return (StatusCodes.NoContent, default);
+        // return StatusCodes.NoContent;
         //
         // For event publishing (lib-messaging):
         // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        //
-        // For calling other services (lib-mesh):
-        // Inject the specific client you need, e.g.: IAccountClient _accountClient
-        // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-        // if (status != StatusCodes.OK) return (status, default);
-        //
-        // For client event delivery (if request from WebSocket):
-        // Inject IClientEventPublisher _clientEventPublisher
-        // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
     }
 
     /// <summary>
     /// Implementation of GetDeity operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
-    public Task<(StatusCodes, DeityResponse?)> GetDeityAsync(GetDeityRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, DeityResponse?)> GetDeityAsync(GetDeityRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing GetDeity operation");
 
@@ -126,6 +124,7 @@ public partial class DivineService : IDivineService
         // Note: The generated controller wraps this method with try/catch for error handling.
         // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
         // published as error events by the controller automatically.
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method GetDeity not yet implemented");
 
         // Example patterns using infrastructure libs:
@@ -150,26 +149,17 @@ public partial class DivineService : IDivineService
         // For data deletion (lib-state):
         // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
         // await stateStore.DeleteAsync(key, cancellationToken);
-        // return (StatusCodes.NoContent, default);
+        // return StatusCodes.NoContent;
         //
         // For event publishing (lib-messaging):
         // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        //
-        // For calling other services (lib-mesh):
-        // Inject the specific client you need, e.g.: IAccountClient _accountClient
-        // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-        // if (status != StatusCodes.OK) return (status, default);
-        //
-        // For client event delivery (if request from WebSocket):
-        // Inject IClientEventPublisher _clientEventPublisher
-        // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
     }
 
     /// <summary>
     /// Implementation of GetDeityByCode operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
-    public Task<(StatusCodes, DeityResponse?)> GetDeityByCodeAsync(GetDeityByCodeRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, DeityResponse?)> GetDeityByCodeAsync(GetDeityByCodeRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing GetDeityByCode operation");
 
@@ -177,6 +167,7 @@ public partial class DivineService : IDivineService
         // Note: The generated controller wraps this method with try/catch for error handling.
         // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
         // published as error events by the controller automatically.
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method GetDeityByCode not yet implemented");
 
         // Example patterns using infrastructure libs:
@@ -201,26 +192,17 @@ public partial class DivineService : IDivineService
         // For data deletion (lib-state):
         // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
         // await stateStore.DeleteAsync(key, cancellationToken);
-        // return (StatusCodes.NoContent, default);
+        // return StatusCodes.NoContent;
         //
         // For event publishing (lib-messaging):
         // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        //
-        // For calling other services (lib-mesh):
-        // Inject the specific client you need, e.g.: IAccountClient _accountClient
-        // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-        // if (status != StatusCodes.OK) return (status, default);
-        //
-        // For client event delivery (if request from WebSocket):
-        // Inject IClientEventPublisher _clientEventPublisher
-        // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
     }
 
     /// <summary>
     /// Implementation of ListDeities operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
-    public Task<(StatusCodes, ListDeitiesResponse?)> ListDeitiesAsync(ListDeitiesRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, ListDeitiesResponse?)> ListDeitiesAsync(ListDeitiesRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing ListDeities operation");
 
@@ -228,6 +210,7 @@ public partial class DivineService : IDivineService
         // Note: The generated controller wraps this method with try/catch for error handling.
         // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
         // published as error events by the controller automatically.
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method ListDeities not yet implemented");
 
         // Example patterns using infrastructure libs:
@@ -252,26 +235,17 @@ public partial class DivineService : IDivineService
         // For data deletion (lib-state):
         // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
         // await stateStore.DeleteAsync(key, cancellationToken);
-        // return (StatusCodes.NoContent, default);
+        // return StatusCodes.NoContent;
         //
         // For event publishing (lib-messaging):
         // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        //
-        // For calling other services (lib-mesh):
-        // Inject the specific client you need, e.g.: IAccountClient _accountClient
-        // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-        // if (status != StatusCodes.OK) return (status, default);
-        //
-        // For client event delivery (if request from WebSocket):
-        // Inject IClientEventPublisher _clientEventPublisher
-        // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
     }
 
     /// <summary>
     /// Implementation of UpdateDeity operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
-    public Task<(StatusCodes, DeityResponse?)> UpdateDeityAsync(UpdateDeityRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, DeityResponse?)> UpdateDeityAsync(UpdateDeityRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing UpdateDeity operation");
 
@@ -279,6 +253,7 @@ public partial class DivineService : IDivineService
         // Note: The generated controller wraps this method with try/catch for error handling.
         // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
         // published as error events by the controller automatically.
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method UpdateDeity not yet implemented");
 
         // Example patterns using infrastructure libs:
@@ -303,26 +278,17 @@ public partial class DivineService : IDivineService
         // For data deletion (lib-state):
         // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
         // await stateStore.DeleteAsync(key, cancellationToken);
-        // return (StatusCodes.NoContent, default);
+        // return StatusCodes.NoContent;
         //
         // For event publishing (lib-messaging):
         // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        //
-        // For calling other services (lib-mesh):
-        // Inject the specific client you need, e.g.: IAccountClient _accountClient
-        // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-        // if (status != StatusCodes.OK) return (status, default);
-        //
-        // For client event delivery (if request from WebSocket):
-        // Inject IClientEventPublisher _clientEventPublisher
-        // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
     }
 
     /// <summary>
     /// Implementation of ActivateDeity operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
-    public Task<(StatusCodes, DeityResponse?)> ActivateDeityAsync(ActivateDeityRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, DeityResponse?)> ActivateDeityAsync(ActivateDeityRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing ActivateDeity operation");
 
@@ -330,6 +296,7 @@ public partial class DivineService : IDivineService
         // Note: The generated controller wraps this method with try/catch for error handling.
         // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
         // published as error events by the controller automatically.
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method ActivateDeity not yet implemented");
 
         // Example patterns using infrastructure libs:
@@ -354,26 +321,17 @@ public partial class DivineService : IDivineService
         // For data deletion (lib-state):
         // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
         // await stateStore.DeleteAsync(key, cancellationToken);
-        // return (StatusCodes.NoContent, default);
+        // return StatusCodes.NoContent;
         //
         // For event publishing (lib-messaging):
         // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        //
-        // For calling other services (lib-mesh):
-        // Inject the specific client you need, e.g.: IAccountClient _accountClient
-        // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-        // if (status != StatusCodes.OK) return (status, default);
-        //
-        // For client event delivery (if request from WebSocket):
-        // Inject IClientEventPublisher _clientEventPublisher
-        // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
     }
 
     /// <summary>
     /// Implementation of DeactivateDeity operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
-    public Task<(StatusCodes, DeityResponse?)> DeactivateDeityAsync(DeactivateDeityRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, DeityResponse?)> DeactivateDeityAsync(DeactivateDeityRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing DeactivateDeity operation");
 
@@ -381,6 +339,7 @@ public partial class DivineService : IDivineService
         // Note: The generated controller wraps this method with try/catch for error handling.
         // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
         // published as error events by the controller automatically.
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method DeactivateDeity not yet implemented");
 
         // Example patterns using infrastructure libs:
@@ -405,26 +364,17 @@ public partial class DivineService : IDivineService
         // For data deletion (lib-state):
         // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
         // await stateStore.DeleteAsync(key, cancellationToken);
-        // return (StatusCodes.NoContent, default);
+        // return StatusCodes.NoContent;
         //
         // For event publishing (lib-messaging):
         // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        //
-        // For calling other services (lib-mesh):
-        // Inject the specific client you need, e.g.: IAccountClient _accountClient
-        // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-        // if (status != StatusCodes.OK) return (status, default);
-        //
-        // For client event delivery (if request from WebSocket):
-        // Inject IClientEventPublisher _clientEventPublisher
-        // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
     }
 
     /// <summary>
     /// Implementation of DeleteDeity operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
-    public Task<(StatusCodes, object?)> DeleteDeityAsync(DeleteDeityRequest body, CancellationToken cancellationToken)
+    public async Task<StatusCodes> DeleteDeityAsync(DeleteDeityRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing DeleteDeity operation");
 
@@ -432,50 +382,17 @@ public partial class DivineService : IDivineService
         // Note: The generated controller wraps this method with try/catch for error handling.
         // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
         // published as error events by the controller automatically.
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method DeleteDeity not yet implemented");
 
-        // Example patterns using infrastructure libs:
-        //
-        // For data retrieval (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var data = await stateStore.GetAsync(key, cancellationToken);
-        // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-        //
-        // For data creation (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.SaveAsync(key, newData, cancellationToken);
-        // return (StatusCodes.Created, newData);
-        //
-        // For data updates (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var existing = await stateStore.GetAsync(key, cancellationToken);
-        // if (existing == null) return (StatusCodes.NotFound, default);
-        // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-        // return (StatusCodes.OK, updatedData);
-        //
-        // For data deletion (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.DeleteAsync(key, cancellationToken);
-        // return (StatusCodes.NoContent, default);
-        //
-        // For event publishing (lib-messaging):
-        // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        //
-        // For calling other services (lib-mesh):
-        // Inject the specific client you need, e.g.: IAccountClient _accountClient
-        // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-        // if (status != StatusCodes.OK) return (status, default);
-        //
-        // For client event delivery (if request from WebSocket):
-        // Inject IClientEventPublisher _clientEventPublisher
-        // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
+        // Example: return StatusCodes.NoContent;
     }
 
     /// <summary>
     /// Implementation of GetDivinityBalance operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
-    public Task<(StatusCodes, DivinityBalanceResponse?)> GetDivinityBalanceAsync(GetDivinityBalanceRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, DivinityBalanceResponse?)> GetDivinityBalanceAsync(GetDivinityBalanceRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing GetDivinityBalance operation");
 
@@ -483,6 +400,7 @@ public partial class DivineService : IDivineService
         // Note: The generated controller wraps this method with try/catch for error handling.
         // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
         // published as error events by the controller automatically.
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method GetDivinityBalance not yet implemented");
 
         // Example patterns using infrastructure libs:
@@ -507,26 +425,17 @@ public partial class DivineService : IDivineService
         // For data deletion (lib-state):
         // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
         // await stateStore.DeleteAsync(key, cancellationToken);
-        // return (StatusCodes.NoContent, default);
+        // return StatusCodes.NoContent;
         //
         // For event publishing (lib-messaging):
         // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        //
-        // For calling other services (lib-mesh):
-        // Inject the specific client you need, e.g.: IAccountClient _accountClient
-        // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-        // if (status != StatusCodes.OK) return (status, default);
-        //
-        // For client event delivery (if request from WebSocket):
-        // Inject IClientEventPublisher _clientEventPublisher
-        // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
     }
 
     /// <summary>
     /// Implementation of CreditDivinity operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
-    public Task<(StatusCodes, DivinityBalanceResponse?)> CreditDivinityAsync(CreditDivinityRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, DivinityBalanceResponse?)> CreditDivinityAsync(CreditDivinityRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing CreditDivinity operation");
 
@@ -534,6 +443,7 @@ public partial class DivineService : IDivineService
         // Note: The generated controller wraps this method with try/catch for error handling.
         // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
         // published as error events by the controller automatically.
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method CreditDivinity not yet implemented");
 
         // Example patterns using infrastructure libs:
@@ -558,26 +468,17 @@ public partial class DivineService : IDivineService
         // For data deletion (lib-state):
         // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
         // await stateStore.DeleteAsync(key, cancellationToken);
-        // return (StatusCodes.NoContent, default);
+        // return StatusCodes.NoContent;
         //
         // For event publishing (lib-messaging):
         // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        //
-        // For calling other services (lib-mesh):
-        // Inject the specific client you need, e.g.: IAccountClient _accountClient
-        // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-        // if (status != StatusCodes.OK) return (status, default);
-        //
-        // For client event delivery (if request from WebSocket):
-        // Inject IClientEventPublisher _clientEventPublisher
-        // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
     }
 
     /// <summary>
     /// Implementation of DebitDivinity operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
-    public Task<(StatusCodes, DivinityBalanceResponse?)> DebitDivinityAsync(DebitDivinityRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, DivinityBalanceResponse?)> DebitDivinityAsync(DebitDivinityRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing DebitDivinity operation");
 
@@ -585,6 +486,7 @@ public partial class DivineService : IDivineService
         // Note: The generated controller wraps this method with try/catch for error handling.
         // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
         // published as error events by the controller automatically.
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method DebitDivinity not yet implemented");
 
         // Example patterns using infrastructure libs:
@@ -609,26 +511,17 @@ public partial class DivineService : IDivineService
         // For data deletion (lib-state):
         // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
         // await stateStore.DeleteAsync(key, cancellationToken);
-        // return (StatusCodes.NoContent, default);
+        // return StatusCodes.NoContent;
         //
         // For event publishing (lib-messaging):
         // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        //
-        // For calling other services (lib-mesh):
-        // Inject the specific client you need, e.g.: IAccountClient _accountClient
-        // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-        // if (status != StatusCodes.OK) return (status, default);
-        //
-        // For client event delivery (if request from WebSocket):
-        // Inject IClientEventPublisher _clientEventPublisher
-        // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
     }
 
     /// <summary>
     /// Implementation of GetDivinityHistory operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
-    public Task<(StatusCodes, DivinityHistoryResponse?)> GetDivinityHistoryAsync(GetDivinityHistoryRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, DivinityHistoryResponse?)> GetDivinityHistoryAsync(GetDivinityHistoryRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing GetDivinityHistory operation");
 
@@ -636,6 +529,7 @@ public partial class DivineService : IDivineService
         // Note: The generated controller wraps this method with try/catch for error handling.
         // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
         // published as error events by the controller automatically.
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method GetDivinityHistory not yet implemented");
 
         // Example patterns using infrastructure libs:
@@ -660,26 +554,17 @@ public partial class DivineService : IDivineService
         // For data deletion (lib-state):
         // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
         // await stateStore.DeleteAsync(key, cancellationToken);
-        // return (StatusCodes.NoContent, default);
+        // return StatusCodes.NoContent;
         //
         // For event publishing (lib-messaging):
         // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        //
-        // For calling other services (lib-mesh):
-        // Inject the specific client you need, e.g.: IAccountClient _accountClient
-        // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-        // if (status != StatusCodes.OK) return (status, default);
-        //
-        // For client event delivery (if request from WebSocket):
-        // Inject IClientEventPublisher _clientEventPublisher
-        // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
     }
 
     /// <summary>
     /// Implementation of GrantBlessing operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
-    public Task<(StatusCodes, BlessingResponse?)> GrantBlessingAsync(GrantBlessingRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, BlessingResponse?)> GrantBlessingAsync(GrantBlessingRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing GrantBlessing operation");
 
@@ -687,6 +572,7 @@ public partial class DivineService : IDivineService
         // Note: The generated controller wraps this method with try/catch for error handling.
         // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
         // published as error events by the controller automatically.
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method GrantBlessing not yet implemented");
 
         // Example patterns using infrastructure libs:
@@ -711,26 +597,17 @@ public partial class DivineService : IDivineService
         // For data deletion (lib-state):
         // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
         // await stateStore.DeleteAsync(key, cancellationToken);
-        // return (StatusCodes.NoContent, default);
+        // return StatusCodes.NoContent;
         //
         // For event publishing (lib-messaging):
         // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        //
-        // For calling other services (lib-mesh):
-        // Inject the specific client you need, e.g.: IAccountClient _accountClient
-        // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-        // if (status != StatusCodes.OK) return (status, default);
-        //
-        // For client event delivery (if request from WebSocket):
-        // Inject IClientEventPublisher _clientEventPublisher
-        // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
     }
 
     /// <summary>
     /// Implementation of RevokeBlessing operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
-    public Task<(StatusCodes, BlessingResponse?)> RevokeBlessingAsync(RevokeBlessingRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, BlessingResponse?)> RevokeBlessingAsync(RevokeBlessingRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing RevokeBlessing operation");
 
@@ -738,6 +615,7 @@ public partial class DivineService : IDivineService
         // Note: The generated controller wraps this method with try/catch for error handling.
         // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
         // published as error events by the controller automatically.
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method RevokeBlessing not yet implemented");
 
         // Example patterns using infrastructure libs:
@@ -762,26 +640,17 @@ public partial class DivineService : IDivineService
         // For data deletion (lib-state):
         // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
         // await stateStore.DeleteAsync(key, cancellationToken);
-        // return (StatusCodes.NoContent, default);
+        // return StatusCodes.NoContent;
         //
         // For event publishing (lib-messaging):
         // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        //
-        // For calling other services (lib-mesh):
-        // Inject the specific client you need, e.g.: IAccountClient _accountClient
-        // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-        // if (status != StatusCodes.OK) return (status, default);
-        //
-        // For client event delivery (if request from WebSocket):
-        // Inject IClientEventPublisher _clientEventPublisher
-        // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
     }
 
     /// <summary>
     /// Implementation of ListBlessingsByEntity operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
-    public Task<(StatusCodes, ListBlessingsResponse?)> ListBlessingsByEntityAsync(ListBlessingsByEntityRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, ListBlessingsResponse?)> ListBlessingsByEntityAsync(ListBlessingsByEntityRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing ListBlessingsByEntity operation");
 
@@ -789,6 +658,7 @@ public partial class DivineService : IDivineService
         // Note: The generated controller wraps this method with try/catch for error handling.
         // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
         // published as error events by the controller automatically.
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method ListBlessingsByEntity not yet implemented");
 
         // Example patterns using infrastructure libs:
@@ -813,26 +683,17 @@ public partial class DivineService : IDivineService
         // For data deletion (lib-state):
         // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
         // await stateStore.DeleteAsync(key, cancellationToken);
-        // return (StatusCodes.NoContent, default);
+        // return StatusCodes.NoContent;
         //
         // For event publishing (lib-messaging):
         // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        //
-        // For calling other services (lib-mesh):
-        // Inject the specific client you need, e.g.: IAccountClient _accountClient
-        // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-        // if (status != StatusCodes.OK) return (status, default);
-        //
-        // For client event delivery (if request from WebSocket):
-        // Inject IClientEventPublisher _clientEventPublisher
-        // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
     }
 
     /// <summary>
     /// Implementation of ListBlessingsByDeity operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
-    public Task<(StatusCodes, ListBlessingsResponse?)> ListBlessingsByDeityAsync(ListBlessingsByDeityRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, ListBlessingsResponse?)> ListBlessingsByDeityAsync(ListBlessingsByDeityRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing ListBlessingsByDeity operation");
 
@@ -840,6 +701,7 @@ public partial class DivineService : IDivineService
         // Note: The generated controller wraps this method with try/catch for error handling.
         // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
         // published as error events by the controller automatically.
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method ListBlessingsByDeity not yet implemented");
 
         // Example patterns using infrastructure libs:
@@ -864,26 +726,17 @@ public partial class DivineService : IDivineService
         // For data deletion (lib-state):
         // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
         // await stateStore.DeleteAsync(key, cancellationToken);
-        // return (StatusCodes.NoContent, default);
+        // return StatusCodes.NoContent;
         //
         // For event publishing (lib-messaging):
         // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        //
-        // For calling other services (lib-mesh):
-        // Inject the specific client you need, e.g.: IAccountClient _accountClient
-        // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-        // if (status != StatusCodes.OK) return (status, default);
-        //
-        // For client event delivery (if request from WebSocket):
-        // Inject IClientEventPublisher _clientEventPublisher
-        // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
     }
 
     /// <summary>
     /// Implementation of GetBlessing operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
-    public Task<(StatusCodes, BlessingResponse?)> GetBlessingAsync(GetBlessingRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, BlessingResponse?)> GetBlessingAsync(GetBlessingRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing GetBlessing operation");
 
@@ -891,6 +744,7 @@ public partial class DivineService : IDivineService
         // Note: The generated controller wraps this method with try/catch for error handling.
         // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
         // published as error events by the controller automatically.
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method GetBlessing not yet implemented");
 
         // Example patterns using infrastructure libs:
@@ -915,26 +769,17 @@ public partial class DivineService : IDivineService
         // For data deletion (lib-state):
         // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
         // await stateStore.DeleteAsync(key, cancellationToken);
-        // return (StatusCodes.NoContent, default);
+        // return StatusCodes.NoContent;
         //
         // For event publishing (lib-messaging):
         // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        //
-        // For calling other services (lib-mesh):
-        // Inject the specific client you need, e.g.: IAccountClient _accountClient
-        // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-        // if (status != StatusCodes.OK) return (status, default);
-        //
-        // For client event delivery (if request from WebSocket):
-        // Inject IClientEventPublisher _clientEventPublisher
-        // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
     }
 
     /// <summary>
     /// Implementation of RegisterFollower operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
-    public Task<(StatusCodes, FollowerResponse?)> RegisterFollowerAsync(RegisterFollowerRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, FollowerResponse?)> RegisterFollowerAsync(RegisterFollowerRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing RegisterFollower operation");
 
@@ -942,6 +787,7 @@ public partial class DivineService : IDivineService
         // Note: The generated controller wraps this method with try/catch for error handling.
         // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
         // published as error events by the controller automatically.
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method RegisterFollower not yet implemented");
 
         // Example patterns using infrastructure libs:
@@ -966,26 +812,17 @@ public partial class DivineService : IDivineService
         // For data deletion (lib-state):
         // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
         // await stateStore.DeleteAsync(key, cancellationToken);
-        // return (StatusCodes.NoContent, default);
+        // return StatusCodes.NoContent;
         //
         // For event publishing (lib-messaging):
         // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        //
-        // For calling other services (lib-mesh):
-        // Inject the specific client you need, e.g.: IAccountClient _accountClient
-        // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-        // if (status != StatusCodes.OK) return (status, default);
-        //
-        // For client event delivery (if request from WebSocket):
-        // Inject IClientEventPublisher _clientEventPublisher
-        // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
     }
 
     /// <summary>
     /// Implementation of UnregisterFollower operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
-    public Task<(StatusCodes, object?)> UnregisterFollowerAsync(UnregisterFollowerRequest body, CancellationToken cancellationToken)
+    public async Task<StatusCodes> UnregisterFollowerAsync(UnregisterFollowerRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing UnregisterFollower operation");
 
@@ -993,50 +830,17 @@ public partial class DivineService : IDivineService
         // Note: The generated controller wraps this method with try/catch for error handling.
         // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
         // published as error events by the controller automatically.
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method UnregisterFollower not yet implemented");
 
-        // Example patterns using infrastructure libs:
-        //
-        // For data retrieval (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var data = await stateStore.GetAsync(key, cancellationToken);
-        // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-        //
-        // For data creation (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.SaveAsync(key, newData, cancellationToken);
-        // return (StatusCodes.Created, newData);
-        //
-        // For data updates (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var existing = await stateStore.GetAsync(key, cancellationToken);
-        // if (existing == null) return (StatusCodes.NotFound, default);
-        // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-        // return (StatusCodes.OK, updatedData);
-        //
-        // For data deletion (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.DeleteAsync(key, cancellationToken);
-        // return (StatusCodes.NoContent, default);
-        //
-        // For event publishing (lib-messaging):
-        // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        //
-        // For calling other services (lib-mesh):
-        // Inject the specific client you need, e.g.: IAccountClient _accountClient
-        // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-        // if (status != StatusCodes.OK) return (status, default);
-        //
-        // For client event delivery (if request from WebSocket):
-        // Inject IClientEventPublisher _clientEventPublisher
-        // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
+        // Example: return StatusCodes.NoContent;
     }
 
     /// <summary>
     /// Implementation of GetFollowers operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
-    public Task<(StatusCodes, ListFollowersResponse?)> GetFollowersAsync(GetFollowersRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, ListFollowersResponse?)> GetFollowersAsync(GetFollowersRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing GetFollowers operation");
 
@@ -1044,6 +848,7 @@ public partial class DivineService : IDivineService
         // Note: The generated controller wraps this method with try/catch for error handling.
         // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
         // published as error events by the controller automatically.
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method GetFollowers not yet implemented");
 
         // Example patterns using infrastructure libs:
@@ -1068,26 +873,17 @@ public partial class DivineService : IDivineService
         // For data deletion (lib-state):
         // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
         // await stateStore.DeleteAsync(key, cancellationToken);
-        // return (StatusCodes.NoContent, default);
+        // return StatusCodes.NoContent;
         //
         // For event publishing (lib-messaging):
         // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        //
-        // For calling other services (lib-mesh):
-        // Inject the specific client you need, e.g.: IAccountClient _accountClient
-        // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-        // if (status != StatusCodes.OK) return (status, default);
-        //
-        // For client event delivery (if request from WebSocket):
-        // Inject IClientEventPublisher _clientEventPublisher
-        // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
     }
 
     /// <summary>
     /// Implementation of CleanupByCharacter operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
-    public Task<(StatusCodes, object?)> CleanupByCharacterAsync(CleanupByCharacterRequest body, CancellationToken cancellationToken)
+    public async Task<StatusCodes> CleanupByCharacterAsync(CleanupByCharacterRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing CleanupByCharacter operation");
 
@@ -1095,50 +891,17 @@ public partial class DivineService : IDivineService
         // Note: The generated controller wraps this method with try/catch for error handling.
         // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
         // published as error events by the controller automatically.
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method CleanupByCharacter not yet implemented");
 
-        // Example patterns using infrastructure libs:
-        //
-        // For data retrieval (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var data = await stateStore.GetAsync(key, cancellationToken);
-        // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-        //
-        // For data creation (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.SaveAsync(key, newData, cancellationToken);
-        // return (StatusCodes.Created, newData);
-        //
-        // For data updates (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var existing = await stateStore.GetAsync(key, cancellationToken);
-        // if (existing == null) return (StatusCodes.NotFound, default);
-        // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-        // return (StatusCodes.OK, updatedData);
-        //
-        // For data deletion (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.DeleteAsync(key, cancellationToken);
-        // return (StatusCodes.NoContent, default);
-        //
-        // For event publishing (lib-messaging):
-        // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        //
-        // For calling other services (lib-mesh):
-        // Inject the specific client you need, e.g.: IAccountClient _accountClient
-        // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-        // if (status != StatusCodes.OK) return (status, default);
-        //
-        // For client event delivery (if request from WebSocket):
-        // Inject IClientEventPublisher _clientEventPublisher
-        // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
+        // Example: return StatusCodes.NoContent;
     }
 
     /// <summary>
     /// Implementation of CleanupByGameService operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
-    public Task<(StatusCodes, object?)> CleanupByGameServiceAsync(CleanupByGameServiceRequest body, CancellationToken cancellationToken)
+    public async Task<StatusCodes> CleanupByGameServiceAsync(CleanupByGameServiceRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing CleanupByGameService operation");
 
@@ -1146,47 +909,10 @@ public partial class DivineService : IDivineService
         // Note: The generated controller wraps this method with try/catch for error handling.
         // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
         // published as error events by the controller automatically.
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method CleanupByGameService not yet implemented");
 
-        // Example patterns using infrastructure libs:
-        //
-        // For data retrieval (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var data = await stateStore.GetAsync(key, cancellationToken);
-        // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-        //
-        // For data creation (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.SaveAsync(key, newData, cancellationToken);
-        // return (StatusCodes.Created, newData);
-        //
-        // For data updates (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var existing = await stateStore.GetAsync(key, cancellationToken);
-        // if (existing == null) return (StatusCodes.NotFound, default);
-        // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-        // return (StatusCodes.OK, updatedData);
-        //
-        // For data deletion (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.DeleteAsync(key, cancellationToken);
-        // return (StatusCodes.NoContent, default);
-        //
-        // For event publishing (lib-messaging):
-        // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        //
-        // For calling other services (lib-mesh):
-        // Inject the specific client you need, e.g.: IAccountClient _accountClient
-        // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-        // if (status != StatusCodes.OK) return (status, default);
-        //
-        // For client event delivery (if request from WebSocket):
-        // Inject IClientEventPublisher _clientEventPublisher
-        // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
+        // Example: return StatusCodes.NoContent;
     }
 
-    Task<StatusCodes> IDivineService.DeleteDeityAsync(DeleteDeityRequest body, CancellationToken cancellationToken) => throw new NotImplementedException();
-    Task<StatusCodes> IDivineService.UnregisterFollowerAsync(UnregisterFollowerRequest body, CancellationToken cancellationToken) => throw new NotImplementedException();
-    Task<StatusCodes> IDivineService.CleanupByCharacterAsync(CleanupByCharacterRequest body, CancellationToken cancellationToken) => throw new NotImplementedException();
-    Task<StatusCodes> IDivineService.CleanupByGameServiceAsync(CleanupByGameServiceRequest body, CancellationToken cancellationToken) => throw new NotImplementedException();
 }

@@ -29,15 +29,17 @@ namespace BeyondImmersion.BannouService.Status;
 /// </list>
 /// </para>
 /// <para>
+/// <b>MODELS:</b> Run <c>make print-models PLUGIN="status"</c> to view compact request/response model shapes.
+/// If print-models fails or generation has not been run, DO NOT proceed with implementation.
+/// Generate first (<c>cd scripts &amp;&amp; ./generate-service.sh status</c>) or ask the developer how to continue.
+/// Never guess at model definitions.
+/// </para>
+/// <para>
 /// <b>RELATED FILES:</b>
 /// <list type="bullet">
 ///   <item>Internal data models: StatusServiceModels.cs (storage models, cache entries, internal DTOs)</item>
 ///   <item>Event handlers: StatusServiceEvents.cs (event consumer registration and handlers)</item>
-///   <item>Request/Response models: bannou-service/Generated/Models/StatusModels.cs</item>
-///   <item>Event models: bannou-service/Generated/Events/StatusEventsModels.cs</item>
-///   <item>Lifecycle events: bannou-service/Generated/Events/StatusLifecycleEvents.cs</item>
 ///   <item>Configuration: Generated/StatusServiceConfiguration.cs</item>
-///   <item>State stores: bannou-service/Generated/StateStoreDefinitions.cs</item>
 /// </list>
 /// </para>
 /// </remarks>
@@ -67,7 +69,7 @@ public partial class StatusService : IStatusService
     /// Implementation of CreateStatusTemplate operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
-    public Task<(StatusCodes, StatusTemplateResponse?)> CreateStatusTemplateAsync(CreateStatusTemplateRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, StatusTemplateResponse?)> CreateStatusTemplateAsync(CreateStatusTemplateRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing CreateStatusTemplate operation");
 
@@ -75,6 +77,7 @@ public partial class StatusService : IStatusService
         // Note: The generated controller wraps this method with try/catch for error handling.
         // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
         // published as error events by the controller automatically.
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method CreateStatusTemplate not yet implemented");
 
         // Example patterns using infrastructure libs:
@@ -99,26 +102,17 @@ public partial class StatusService : IStatusService
         // For data deletion (lib-state):
         // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
         // await stateStore.DeleteAsync(key, cancellationToken);
-        // return (StatusCodes.NoContent, default);
+        // return StatusCodes.NoContent;
         //
         // For event publishing (lib-messaging):
         // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        //
-        // For calling other services (lib-mesh):
-        // Inject the specific client you need, e.g.: IAccountClient _accountClient
-        // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-        // if (status != StatusCodes.OK) return (status, default);
-        //
-        // For client event delivery (if request from WebSocket):
-        // Inject IClientEventPublisher _clientEventPublisher
-        // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
     }
 
     /// <summary>
     /// Implementation of GetStatusTemplate operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
-    public Task<(StatusCodes, StatusTemplateResponse?)> GetStatusTemplateAsync(GetStatusTemplateRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, StatusTemplateResponse?)> GetStatusTemplateAsync(GetStatusTemplateRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing GetStatusTemplate operation");
 
@@ -126,6 +120,7 @@ public partial class StatusService : IStatusService
         // Note: The generated controller wraps this method with try/catch for error handling.
         // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
         // published as error events by the controller automatically.
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method GetStatusTemplate not yet implemented");
 
         // Example patterns using infrastructure libs:
@@ -150,26 +145,17 @@ public partial class StatusService : IStatusService
         // For data deletion (lib-state):
         // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
         // await stateStore.DeleteAsync(key, cancellationToken);
-        // return (StatusCodes.NoContent, default);
+        // return StatusCodes.NoContent;
         //
         // For event publishing (lib-messaging):
         // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        //
-        // For calling other services (lib-mesh):
-        // Inject the specific client you need, e.g.: IAccountClient _accountClient
-        // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-        // if (status != StatusCodes.OK) return (status, default);
-        //
-        // For client event delivery (if request from WebSocket):
-        // Inject IClientEventPublisher _clientEventPublisher
-        // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
     }
 
     /// <summary>
     /// Implementation of GetStatusTemplateByCode operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
-    public Task<(StatusCodes, StatusTemplateResponse?)> GetStatusTemplateByCodeAsync(GetStatusTemplateByCodeRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, StatusTemplateResponse?)> GetStatusTemplateByCodeAsync(GetStatusTemplateByCodeRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing GetStatusTemplateByCode operation");
 
@@ -177,6 +163,7 @@ public partial class StatusService : IStatusService
         // Note: The generated controller wraps this method with try/catch for error handling.
         // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
         // published as error events by the controller automatically.
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method GetStatusTemplateByCode not yet implemented");
 
         // Example patterns using infrastructure libs:
@@ -201,26 +188,17 @@ public partial class StatusService : IStatusService
         // For data deletion (lib-state):
         // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
         // await stateStore.DeleteAsync(key, cancellationToken);
-        // return (StatusCodes.NoContent, default);
+        // return StatusCodes.NoContent;
         //
         // For event publishing (lib-messaging):
         // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        //
-        // For calling other services (lib-mesh):
-        // Inject the specific client you need, e.g.: IAccountClient _accountClient
-        // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-        // if (status != StatusCodes.OK) return (status, default);
-        //
-        // For client event delivery (if request from WebSocket):
-        // Inject IClientEventPublisher _clientEventPublisher
-        // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
     }
 
     /// <summary>
     /// Implementation of ListStatusTemplates operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
-    public Task<(StatusCodes, ListStatusTemplatesResponse?)> ListStatusTemplatesAsync(ListStatusTemplatesRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, ListStatusTemplatesResponse?)> ListStatusTemplatesAsync(ListStatusTemplatesRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing ListStatusTemplates operation");
 
@@ -228,6 +206,7 @@ public partial class StatusService : IStatusService
         // Note: The generated controller wraps this method with try/catch for error handling.
         // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
         // published as error events by the controller automatically.
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method ListStatusTemplates not yet implemented");
 
         // Example patterns using infrastructure libs:
@@ -252,26 +231,17 @@ public partial class StatusService : IStatusService
         // For data deletion (lib-state):
         // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
         // await stateStore.DeleteAsync(key, cancellationToken);
-        // return (StatusCodes.NoContent, default);
+        // return StatusCodes.NoContent;
         //
         // For event publishing (lib-messaging):
         // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        //
-        // For calling other services (lib-mesh):
-        // Inject the specific client you need, e.g.: IAccountClient _accountClient
-        // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-        // if (status != StatusCodes.OK) return (status, default);
-        //
-        // For client event delivery (if request from WebSocket):
-        // Inject IClientEventPublisher _clientEventPublisher
-        // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
     }
 
     /// <summary>
     /// Implementation of UpdateStatusTemplate operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
-    public Task<(StatusCodes, StatusTemplateResponse?)> UpdateStatusTemplateAsync(UpdateStatusTemplateRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, StatusTemplateResponse?)> UpdateStatusTemplateAsync(UpdateStatusTemplateRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing UpdateStatusTemplate operation");
 
@@ -279,6 +249,7 @@ public partial class StatusService : IStatusService
         // Note: The generated controller wraps this method with try/catch for error handling.
         // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
         // published as error events by the controller automatically.
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method UpdateStatusTemplate not yet implemented");
 
         // Example patterns using infrastructure libs:
@@ -303,26 +274,17 @@ public partial class StatusService : IStatusService
         // For data deletion (lib-state):
         // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
         // await stateStore.DeleteAsync(key, cancellationToken);
-        // return (StatusCodes.NoContent, default);
+        // return StatusCodes.NoContent;
         //
         // For event publishing (lib-messaging):
         // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        //
-        // For calling other services (lib-mesh):
-        // Inject the specific client you need, e.g.: IAccountClient _accountClient
-        // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-        // if (status != StatusCodes.OK) return (status, default);
-        //
-        // For client event delivery (if request from WebSocket):
-        // Inject IClientEventPublisher _clientEventPublisher
-        // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
     }
 
     /// <summary>
     /// Implementation of SeedStatusTemplates operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
-    public Task<(StatusCodes, SeedStatusTemplatesResponse?)> SeedStatusTemplatesAsync(SeedStatusTemplatesRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, SeedStatusTemplatesResponse?)> SeedStatusTemplatesAsync(SeedStatusTemplatesRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing SeedStatusTemplates operation");
 
@@ -330,6 +292,7 @@ public partial class StatusService : IStatusService
         // Note: The generated controller wraps this method with try/catch for error handling.
         // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
         // published as error events by the controller automatically.
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method SeedStatusTemplates not yet implemented");
 
         // Example patterns using infrastructure libs:
@@ -354,26 +317,17 @@ public partial class StatusService : IStatusService
         // For data deletion (lib-state):
         // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
         // await stateStore.DeleteAsync(key, cancellationToken);
-        // return (StatusCodes.NoContent, default);
+        // return StatusCodes.NoContent;
         //
         // For event publishing (lib-messaging):
         // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        //
-        // For calling other services (lib-mesh):
-        // Inject the specific client you need, e.g.: IAccountClient _accountClient
-        // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-        // if (status != StatusCodes.OK) return (status, default);
-        //
-        // For client event delivery (if request from WebSocket):
-        // Inject IClientEventPublisher _clientEventPublisher
-        // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
     }
 
     /// <summary>
     /// Implementation of GrantStatus operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
-    public Task<(StatusCodes, GrantStatusResponse?)> GrantStatusAsync(GrantStatusRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, GrantStatusResponse?)> GrantStatusAsync(GrantStatusRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing GrantStatus operation");
 
@@ -381,6 +335,7 @@ public partial class StatusService : IStatusService
         // Note: The generated controller wraps this method with try/catch for error handling.
         // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
         // published as error events by the controller automatically.
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method GrantStatus not yet implemented");
 
         // Example patterns using infrastructure libs:
@@ -405,26 +360,17 @@ public partial class StatusService : IStatusService
         // For data deletion (lib-state):
         // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
         // await stateStore.DeleteAsync(key, cancellationToken);
-        // return (StatusCodes.NoContent, default);
+        // return StatusCodes.NoContent;
         //
         // For event publishing (lib-messaging):
         // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        //
-        // For calling other services (lib-mesh):
-        // Inject the specific client you need, e.g.: IAccountClient _accountClient
-        // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-        // if (status != StatusCodes.OK) return (status, default);
-        //
-        // For client event delivery (if request from WebSocket):
-        // Inject IClientEventPublisher _clientEventPublisher
-        // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
     }
 
     /// <summary>
     /// Implementation of RemoveStatus operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
-    public Task<(StatusCodes, StatusInstanceResponse?)> RemoveStatusAsync(RemoveStatusRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, StatusInstanceResponse?)> RemoveStatusAsync(RemoveStatusRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing RemoveStatus operation");
 
@@ -432,6 +378,7 @@ public partial class StatusService : IStatusService
         // Note: The generated controller wraps this method with try/catch for error handling.
         // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
         // published as error events by the controller automatically.
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method RemoveStatus not yet implemented");
 
         // Example patterns using infrastructure libs:
@@ -456,26 +403,17 @@ public partial class StatusService : IStatusService
         // For data deletion (lib-state):
         // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
         // await stateStore.DeleteAsync(key, cancellationToken);
-        // return (StatusCodes.NoContent, default);
+        // return StatusCodes.NoContent;
         //
         // For event publishing (lib-messaging):
         // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        //
-        // For calling other services (lib-mesh):
-        // Inject the specific client you need, e.g.: IAccountClient _accountClient
-        // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-        // if (status != StatusCodes.OK) return (status, default);
-        //
-        // For client event delivery (if request from WebSocket):
-        // Inject IClientEventPublisher _clientEventPublisher
-        // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
     }
 
     /// <summary>
     /// Implementation of RemoveBySource operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
-    public Task<(StatusCodes, RemoveStatusesResponse?)> RemoveBySourceAsync(RemoveBySourceRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, RemoveStatusesResponse?)> RemoveBySourceAsync(RemoveBySourceRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing RemoveBySource operation");
 
@@ -483,6 +421,7 @@ public partial class StatusService : IStatusService
         // Note: The generated controller wraps this method with try/catch for error handling.
         // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
         // published as error events by the controller automatically.
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method RemoveBySource not yet implemented");
 
         // Example patterns using infrastructure libs:
@@ -507,26 +446,17 @@ public partial class StatusService : IStatusService
         // For data deletion (lib-state):
         // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
         // await stateStore.DeleteAsync(key, cancellationToken);
-        // return (StatusCodes.NoContent, default);
+        // return StatusCodes.NoContent;
         //
         // For event publishing (lib-messaging):
         // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        //
-        // For calling other services (lib-mesh):
-        // Inject the specific client you need, e.g.: IAccountClient _accountClient
-        // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-        // if (status != StatusCodes.OK) return (status, default);
-        //
-        // For client event delivery (if request from WebSocket):
-        // Inject IClientEventPublisher _clientEventPublisher
-        // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
     }
 
     /// <summary>
     /// Implementation of RemoveByCategory operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
-    public Task<(StatusCodes, RemoveStatusesResponse?)> RemoveByCategoryAsync(RemoveByCategoryRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, RemoveStatusesResponse?)> RemoveByCategoryAsync(RemoveByCategoryRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing RemoveByCategory operation");
 
@@ -534,6 +464,7 @@ public partial class StatusService : IStatusService
         // Note: The generated controller wraps this method with try/catch for error handling.
         // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
         // published as error events by the controller automatically.
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method RemoveByCategory not yet implemented");
 
         // Example patterns using infrastructure libs:
@@ -558,26 +489,17 @@ public partial class StatusService : IStatusService
         // For data deletion (lib-state):
         // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
         // await stateStore.DeleteAsync(key, cancellationToken);
-        // return (StatusCodes.NoContent, default);
+        // return StatusCodes.NoContent;
         //
         // For event publishing (lib-messaging):
         // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        //
-        // For calling other services (lib-mesh):
-        // Inject the specific client you need, e.g.: IAccountClient _accountClient
-        // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-        // if (status != StatusCodes.OK) return (status, default);
-        //
-        // For client event delivery (if request from WebSocket):
-        // Inject IClientEventPublisher _clientEventPublisher
-        // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
     }
 
     /// <summary>
     /// Implementation of HasStatus operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
-    public Task<(StatusCodes, HasStatusResponse?)> HasStatusAsync(HasStatusRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, HasStatusResponse?)> HasStatusAsync(HasStatusRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing HasStatus operation");
 
@@ -585,6 +507,7 @@ public partial class StatusService : IStatusService
         // Note: The generated controller wraps this method with try/catch for error handling.
         // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
         // published as error events by the controller automatically.
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method HasStatus not yet implemented");
 
         // Example patterns using infrastructure libs:
@@ -609,26 +532,17 @@ public partial class StatusService : IStatusService
         // For data deletion (lib-state):
         // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
         // await stateStore.DeleteAsync(key, cancellationToken);
-        // return (StatusCodes.NoContent, default);
+        // return StatusCodes.NoContent;
         //
         // For event publishing (lib-messaging):
         // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        //
-        // For calling other services (lib-mesh):
-        // Inject the specific client you need, e.g.: IAccountClient _accountClient
-        // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-        // if (status != StatusCodes.OK) return (status, default);
-        //
-        // For client event delivery (if request from WebSocket):
-        // Inject IClientEventPublisher _clientEventPublisher
-        // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
     }
 
     /// <summary>
     /// Implementation of ListStatuses operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
-    public Task<(StatusCodes, ListStatusesResponse?)> ListStatusesAsync(ListStatusesRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, ListStatusesResponse?)> ListStatusesAsync(ListStatusesRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing ListStatuses operation");
 
@@ -636,6 +550,7 @@ public partial class StatusService : IStatusService
         // Note: The generated controller wraps this method with try/catch for error handling.
         // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
         // published as error events by the controller automatically.
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method ListStatuses not yet implemented");
 
         // Example patterns using infrastructure libs:
@@ -660,26 +575,17 @@ public partial class StatusService : IStatusService
         // For data deletion (lib-state):
         // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
         // await stateStore.DeleteAsync(key, cancellationToken);
-        // return (StatusCodes.NoContent, default);
+        // return StatusCodes.NoContent;
         //
         // For event publishing (lib-messaging):
         // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        //
-        // For calling other services (lib-mesh):
-        // Inject the specific client you need, e.g.: IAccountClient _accountClient
-        // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-        // if (status != StatusCodes.OK) return (status, default);
-        //
-        // For client event delivery (if request from WebSocket):
-        // Inject IClientEventPublisher _clientEventPublisher
-        // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
     }
 
     /// <summary>
     /// Implementation of GetStatus operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
-    public Task<(StatusCodes, StatusInstanceResponse?)> GetStatusAsync(GetStatusRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, StatusInstanceResponse?)> GetStatusAsync(GetStatusRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing GetStatus operation");
 
@@ -687,6 +593,7 @@ public partial class StatusService : IStatusService
         // Note: The generated controller wraps this method with try/catch for error handling.
         // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
         // published as error events by the controller automatically.
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method GetStatus not yet implemented");
 
         // Example patterns using infrastructure libs:
@@ -711,26 +618,17 @@ public partial class StatusService : IStatusService
         // For data deletion (lib-state):
         // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
         // await stateStore.DeleteAsync(key, cancellationToken);
-        // return (StatusCodes.NoContent, default);
+        // return StatusCodes.NoContent;
         //
         // For event publishing (lib-messaging):
         // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        //
-        // For calling other services (lib-mesh):
-        // Inject the specific client you need, e.g.: IAccountClient _accountClient
-        // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-        // if (status != StatusCodes.OK) return (status, default);
-        //
-        // For client event delivery (if request from WebSocket):
-        // Inject IClientEventPublisher _clientEventPublisher
-        // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
     }
 
     /// <summary>
     /// Implementation of GetEffects operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
-    public Task<(StatusCodes, GetEffectsResponse?)> GetEffectsAsync(GetEffectsRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, GetEffectsResponse?)> GetEffectsAsync(GetEffectsRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing GetEffects operation");
 
@@ -738,6 +636,7 @@ public partial class StatusService : IStatusService
         // Note: The generated controller wraps this method with try/catch for error handling.
         // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
         // published as error events by the controller automatically.
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method GetEffects not yet implemented");
 
         // Example patterns using infrastructure libs:
@@ -762,26 +661,17 @@ public partial class StatusService : IStatusService
         // For data deletion (lib-state):
         // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
         // await stateStore.DeleteAsync(key, cancellationToken);
-        // return (StatusCodes.NoContent, default);
+        // return StatusCodes.NoContent;
         //
         // For event publishing (lib-messaging):
         // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        //
-        // For calling other services (lib-mesh):
-        // Inject the specific client you need, e.g.: IAccountClient _accountClient
-        // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-        // if (status != StatusCodes.OK) return (status, default);
-        //
-        // For client event delivery (if request from WebSocket):
-        // Inject IClientEventPublisher _clientEventPublisher
-        // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
     }
 
     /// <summary>
     /// Implementation of GetSeedEffects operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
-    public Task<(StatusCodes, SeedEffectsResponse?)> GetSeedEffectsAsync(GetSeedEffectsRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, SeedEffectsResponse?)> GetSeedEffectsAsync(GetSeedEffectsRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing GetSeedEffects operation");
 
@@ -789,6 +679,7 @@ public partial class StatusService : IStatusService
         // Note: The generated controller wraps this method with try/catch for error handling.
         // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
         // published as error events by the controller automatically.
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method GetSeedEffects not yet implemented");
 
         // Example patterns using infrastructure libs:
@@ -813,26 +704,17 @@ public partial class StatusService : IStatusService
         // For data deletion (lib-state):
         // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
         // await stateStore.DeleteAsync(key, cancellationToken);
-        // return (StatusCodes.NoContent, default);
+        // return StatusCodes.NoContent;
         //
         // For event publishing (lib-messaging):
         // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        //
-        // For calling other services (lib-mesh):
-        // Inject the specific client you need, e.g.: IAccountClient _accountClient
-        // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-        // if (status != StatusCodes.OK) return (status, default);
-        //
-        // For client event delivery (if request from WebSocket):
-        // Inject IClientEventPublisher _clientEventPublisher
-        // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
     }
 
     /// <summary>
     /// Implementation of CleanupByOwner operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
-    public Task<(StatusCodes, CleanupResponse?)> CleanupByOwnerAsync(CleanupByOwnerRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, CleanupResponse?)> CleanupByOwnerAsync(CleanupByOwnerRequest body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Executing CleanupByOwner operation");
 
@@ -840,6 +722,7 @@ public partial class StatusService : IStatusService
         // Note: The generated controller wraps this method with try/catch for error handling.
         // Do NOT add an outer try/catch here -- exceptions will be caught, logged, and
         // published as error events by the controller automatically.
+        await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method CleanupByOwner not yet implemented");
 
         // Example patterns using infrastructure libs:
@@ -864,19 +747,10 @@ public partial class StatusService : IStatusService
         // For data deletion (lib-state):
         // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
         // await stateStore.DeleteAsync(key, cancellationToken);
-        // return (StatusCodes.NoContent, default);
+        // return StatusCodes.NoContent;
         //
         // For event publishing (lib-messaging):
         // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
-        //
-        // For calling other services (lib-mesh):
-        // Inject the specific client you need, e.g.: IAccountClient _accountClient
-        // var (status, result) = await _accountClient.GetAccountAsync(new GetAccountRequest { AccountId = id }, cancellationToken);
-        // if (status != StatusCodes.OK) return (status, default);
-        //
-        // For client event delivery (if request from WebSocket):
-        // Inject IClientEventPublisher _clientEventPublisher
-        // await _clientEventPublisher.PublishToSessionAsync(sessionId, new YourClientEvent { ... }, cancellationToken);
     }
 
 }

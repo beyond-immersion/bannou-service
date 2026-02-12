@@ -450,10 +450,6 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
-| `ContractActivatedEvent` | Custom | `contract-activated` | Consumed from contract service when a contract bec... |
-| `ContractExpiredEvent` | Expiration | `contract.expired` | Consumed from contract service when a contract rea... |
-| `ContractFulfilledEvent` | Custom | `contract-fulfilled` | Consumed from contract service when all required m... |
-| `ContractTerminatedEvent` | Custom | `contract-terminated` | Consumed from contract service when a contract is ... |
 | `ObligationCacheRebuiltEvent` | Custom | `obligation-cache-rebuilt` | Published when a character's obligation cache is r... |
 | `ObligationViolationReportedEvent` | Custom | `obligation-violation-reported` | Published when a character knowingly violates an o... |
 

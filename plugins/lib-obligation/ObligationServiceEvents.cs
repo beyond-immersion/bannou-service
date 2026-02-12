@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Events;
+using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Obligation;
 
@@ -41,7 +42,7 @@ public partial class ObligationService
     public Task HandleContractActivatedAsync(ContractActivatedEvent evt)
     {
         // TODO: Implement contract.activated event handling
-        _logger.LogInformation("[EVENT] Received contract.activated event");
+        _logger.LogInformation("Received {Topic} event", "contract.activated");
         return Task.CompletedTask;
     }
 
@@ -53,7 +54,7 @@ public partial class ObligationService
     public Task HandleContractTerminatedAsync(ContractTerminatedEvent evt)
     {
         // TODO: Implement contract.terminated event handling
-        _logger.LogInformation("[EVENT] Received contract.terminated event");
+        _logger.LogInformation("Received {Topic} event", "contract.terminated");
         return Task.CompletedTask;
     }
 
@@ -65,7 +66,7 @@ public partial class ObligationService
     public Task HandleContractFulfilledAsync(ContractFulfilledEvent evt)
     {
         // TODO: Implement contract.fulfilled event handling
-        _logger.LogInformation("[EVENT] Received contract.fulfilled event");
+        _logger.LogInformation("Received {Topic} event", "contract.fulfilled");
         return Task.CompletedTask;
     }
 
@@ -77,7 +78,7 @@ public partial class ObligationService
     public Task HandleContractExpiredAsync(ContractExpiredEvent evt)
     {
         // TODO: Implement contract.expired event handling
-        _logger.LogInformation("[EVENT] Received contract.expired event");
+        _logger.LogInformation("Received {Topic} event", "contract.expired");
         return Task.CompletedTask;
     }
 }

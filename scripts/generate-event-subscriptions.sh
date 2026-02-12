@@ -200,6 +200,7 @@ else
 
     cat > "$SERVICE_EVENTS_FILE" << CSHARP_EVENTS_HEADER
 using BeyondImmersion.BannouService.Events;
+using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.${SERVICE_PASCAL};
 
@@ -268,7 +269,7 @@ for sub in data:
     public Task {handler}Async({event_type} evt)
     {{
         // TODO: Implement {topic} event handling
-        _logger.LogInformation(\"[EVENT] Received {topic} event\");
+        _logger.LogInformation(\"Received {{Topic}} event\", \"{topic}\");
         return Task.CompletedTask;
     }}''')
 " >> "$SERVICE_EVENTS_FILE"

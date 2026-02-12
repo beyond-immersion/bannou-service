@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Events;
+using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Status;
 
@@ -29,7 +30,7 @@ public partial class StatusService
     public Task HandleSeedCapabilityUpdatedAsync(SeedCapabilityUpdatedEvent evt)
     {
         // TODO: Implement seed.capability.updated event handling
-        _logger.LogInformation("[EVENT] Received seed.capability.updated event");
+        _logger.LogInformation("Received {Topic} event", "seed.capability.updated");
         return Task.CompletedTask;
     }
 }

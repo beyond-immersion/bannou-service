@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Events;
+using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Divine;
 
@@ -29,7 +30,7 @@ public partial class DivineService
     public Task HandleAnalyticsScoreUpdatedAsync(AnalyticsScoreUpdatedEvent evt)
     {
         // TODO: Implement analytics.score.updated event handling
-        _logger.LogInformation("[EVENT] Received analytics.score.updated event");
+        _logger.LogInformation("Received {Topic} event", "analytics.score.updated");
         return Task.CompletedTask;
     }
 }

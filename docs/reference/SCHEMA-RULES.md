@@ -93,10 +93,12 @@ Running `generate-service.sh {service}` bootstraps an entire new plugin from scr
    - `{Service}EventsController.cs` - event subscription handlers (from `x-event-subscriptions`)
 
 3. **Generates shared code** into `bannou-service/Generated/`:
-   - `Models/{Service}Models.cs` - request/response models
+   - `Models/{Service}Models.cs` - request/response models (inspect with `make print-models PLUGIN="service"`)
    - `Clients/{Service}Client.cs` - client for other services to call this service
    - `Events/{Service}EventsModels.cs` - event models
    - Updated `StateStoreDefinitions.cs` with new store constants
+
+   > **Model Inspection**: Always use `make print-models PLUGIN="service"` to inspect model shapes. If it fails or generation hasn't been run, generate first — never guess at model definitions.
 
 4. **Creates template files** (one-time, never overwritten):
    - `{Service}Service.cs` - business logic with TODO stubs for each endpoint

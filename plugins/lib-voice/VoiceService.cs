@@ -17,8 +17,38 @@ namespace BeyondImmersion.BannouService.Voice;
 
 /// <summary>
 /// Implementation of the Voice service.
-/// Manages P2P and scaled tier voice room coordination.
+/// This class contains the business logic for all Voice operations.
 /// </summary>
+/// <remarks>
+/// <para>
+/// <b>FOUNDATION TENETS - PARTIAL CLASS REQUIRED:</b> This class MUST remain a partial class.
+/// Generated code (event handlers, permissions) is placed in companion partial classes.
+/// </para>
+/// <para>
+/// <b>IMPLEMENTATION TENETS CHECKLIST:</b>
+/// <list type="bullet">
+///   <item><b>Type Safety:</b> Internal POCOs MUST use proper C# types (enums, Guids, DateTimeOffset) - never string representations. No Enum.Parse in business logic.</item>
+///   <item><b>Configuration:</b> ALL config properties in VoiceServiceConfiguration MUST be wired up. No hardcoded magic numbers for tunables.</item>
+///   <item><b>Events:</b> ALL meaningful state changes MUST publish typed events, even without current consumers.</item>
+///   <item><b>Cache Stores:</b> If state-stores.yaml defines cache stores for this service, implement read-through/write-through caching.</item>
+///   <item><b>Concurrency:</b> Use GetWithETagAsync + TrySaveAsync for list/index operations. No non-atomic read-modify-write.</item>
+/// </list>
+/// </para>
+/// <para>
+/// <b>MODELS:</b> Run <c>make print-models PLUGIN="voice"</c> to view compact request/response model shapes.
+/// If print-models fails or generation has not been run, DO NOT proceed with implementation.
+/// Generate first (<c>cd scripts &amp;&amp; ./generate-service.sh voice</c>) or ask the developer how to continue.
+/// Never guess at model definitions.
+/// </para>
+/// <para>
+/// <b>RELATED FILES:</b>
+/// <list type="bullet">
+///   <item>Internal data models: VoiceServiceModels.cs (storage models, cache entries, internal DTOs)</item>
+///   <item>Event handlers: VoiceServiceEvents.cs (event consumer registration and handlers)</item>
+///   <item>Configuration: Generated/VoiceServiceConfiguration.cs</item>
+/// </list>
+/// </para>
+/// </remarks>
 [BannouService("voice", typeof(IVoiceService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.AppFeatures)]
 public partial class VoiceService : IVoiceService
 {
