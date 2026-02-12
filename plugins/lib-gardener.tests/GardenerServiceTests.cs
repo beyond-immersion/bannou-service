@@ -4,6 +4,7 @@ using BeyondImmersion.BannouService.Gardener;
 using BeyondImmersion.BannouService.GameSession;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Seed;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Testing;
@@ -97,11 +98,11 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
                 It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockLockResponse.Object);
 
-        // Default message bus succeeds
+        // Default message bus succeeds (3-arg overload used by service code)
         _mockMessageBus
             .Setup(m => m.TryPublishAsync(
                 It.IsAny<string>(), It.IsAny<object>(),
-                It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         // Default game session creation
@@ -297,7 +298,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
             CancellationToken.None);
 
         // Assert - Response
-        Assert.Equal(StatusCodes.Created, status);
+        Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.Equal(_testAccountId, response.AccountId);
         Assert.Equal(_testSeedId, response.SeedId);
@@ -312,14 +313,14 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         // Assert - Tracking set updated
         _mockCacheStore.Verify(c => c.AddToSetAsync<Guid>(
             GardenerService.ActiveVoidsTrackingKey, _testAccountId,
-            It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Once);
 
         // Assert - Event published
         _mockMessageBus.Verify(m => m.TryPublishAsync(
             "gardener.void.entered",
             It.Is<GardenerVoidEnteredEvent>(e =>
                 e.AccountId == _testAccountId && e.SeedId == _testSeedId),
-            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -431,7 +432,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         _mockMessageBus.Verify(m => m.TryPublishAsync(
             "gardener.void.left",
             It.Is<GardenerVoidLeftEvent>(e => e.AccountId == _testAccountId),
-            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -563,7 +564,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         _mockMessageBus.Verify(m => m.TryPublishAsync(
             "gardener.poi.entered",
             It.Is<GardenerPoiEnteredEvent>(e => e.PoiId == poiId),
-            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -735,7 +736,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         _mockMessageBus.Verify(m => m.TryPublishAsync(
             "gardener.poi.declined",
             It.Is<GardenerPoiDeclinedEvent>(e => e.PoiId == poiId),
-            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion
@@ -775,7 +776,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
             CancellationToken.None);
 
         // Assert - Response
-        Assert.Equal(StatusCodes.Created, status);
+        Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.Equal(ScenarioStatus.Active, response.Status);
         Assert.Equal(_testGameSessionId, response.GameSessionId);
@@ -793,7 +794,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
             It.IsAny<CancellationToken>()), Times.Once);
         _mockCacheStore.Verify(c => c.AddToSetAsync<Guid>(
             GardenerService.ActiveScenariosTrackingKey, _testAccountId,
-            It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Once);
 
         // Assert - Garden cleaned up
         _mockGardenStore.Verify(s => s.DeleteAsync(
@@ -805,7 +806,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
             It.Is<GardenerScenarioStartedEvent>(e =>
                 e.AccountId == _testAccountId &&
                 e.ScenarioTemplateId == _testTemplateId),
-            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -985,7 +986,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
             It.Is<GardenerScenarioCompletedEvent>(e =>
                 e.ScenarioInstanceId == scenarioId &&
                 e.AccountId == _testAccountId),
-            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -1070,7 +1071,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
             It.Is<GardenerScenarioAbandonedEvent>(e =>
                 e.ScenarioInstanceId == scenarioId &&
                 e.AccountId == _testAccountId),
-            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<CancellationToken>()), Times.Once);
 
         // Assert - Tracking set updated
         _mockCacheStore.Verify(c => c.RemoveFromSetAsync<Guid>(
@@ -1127,7 +1128,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
             },
             CancellationToken.None);
 
-        Assert.Equal(StatusCodes.Created, status);
+        Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.Equal(1, response.ChainDepth);
         Assert.Equal(currentScenarioId, response.ChainedFrom);
@@ -1138,7 +1139,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
             It.Is<GardenerScenarioChainedEvent>(e =>
                 e.PreviousScenarioInstanceId == currentScenarioId &&
                 e.ChainDepth == 1),
-            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -1233,14 +1234,10 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         _mockTemplateStore
             .Setup(s => s.JsonQueryPagedAsync(
                 It.IsAny<List<QueryCondition>>(), It.IsAny<int>(), It.IsAny<int>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new JsonPagedResult<ScenarioTemplateModel>
-            {
-                Items = new List<JsonQueryResult<ScenarioTemplateModel>>(),
-                TotalCount = 0,
-                Page = 1,
-                PageSize = 1
-            });
+                It.IsAny<JsonSortSpec?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JsonPagedResult<ScenarioTemplateModel>(
+                new List<JsonQueryResult<ScenarioTemplateModel>>(),
+                0, 0, 1));
 
         ScenarioTemplateModel? savedTemplate = null;
         _mockTemplateStore
@@ -1265,7 +1262,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
             },
             CancellationToken.None);
 
-        Assert.Equal(StatusCodes.Created, status);
+        Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.Equal("combat-test-01", response.Code);
         Assert.Equal(TemplateStatus.Active, response.Status);
@@ -1283,17 +1280,13 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         _mockTemplateStore
             .Setup(s => s.JsonQueryPagedAsync(
                 It.IsAny<List<QueryCondition>>(), It.IsAny<int>(), It.IsAny<int>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new JsonPagedResult<ScenarioTemplateModel>
-            {
-                Items = new List<JsonQueryResult<ScenarioTemplateModel>>
+                It.IsAny<JsonSortSpec?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new JsonPagedResult<ScenarioTemplateModel>(
+                new List<JsonQueryResult<ScenarioTemplateModel>>
                 {
-                    new() { Key = "template:existing", Value = CreateTestTemplate() }
+                    new("template:existing", CreateTestTemplate())
                 },
-                TotalCount = 1,
-                Page = 1,
-                PageSize = 1
-            });
+                1, 0, 1));
 
         var (status, _) = await service.CreateTemplateAsync(
             new CreateTemplateRequest
@@ -1419,7 +1412,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
             It.Is<GardenerPhaseChangedEvent>(e =>
                 e.PreviousPhase == DeploymentPhase.Alpha &&
                 e.NewPhase == DeploymentPhase.Beta),
-            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -1478,17 +1471,28 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         var bondId = Guid.NewGuid();
 
         _mockSeedClient
-            .Setup(c => c.GetBondPartnersAsync(
-                It.IsAny<GetBondPartnersRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new BondPartnersResponse
+            .Setup(c => c.GetBondAsync(
+                It.IsAny<GetBondRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BondResponse
             {
                 BondId = bondId,
-                Partners = new List<PartnerSummary>
+                SeedTypeCode = "guardian",
+                Participants = new List<BondParticipant>
                 {
-                    new() { SeedId = _testSeedId, OwnerId = _testAccountId, OwnerType = "account", GrowthPhase = "nascent" },
-                    new() { SeedId = partnerSeedId, OwnerId = partnerAccountId, OwnerType = "account", GrowthPhase = "nascent" }
+                    new() { SeedId = _testSeedId, JoinedAt = DateTimeOffset.UtcNow },
+                    new() { SeedId = partnerSeedId, JoinedAt = DateTimeOffset.UtcNow }
                 }
             });
+
+        // GetSeedAsync resolves participant SeedId → OwnerId
+        _mockSeedClient
+            .Setup(c => c.GetSeedAsync(
+                It.Is<GetSeedRequest>(r => r.SeedId == _testSeedId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SeedResponse { SeedId = _testSeedId, OwnerId = _testAccountId, OwnerType = "account" });
+        _mockSeedClient
+            .Setup(c => c.GetSeedAsync(
+                It.Is<GetSeedRequest>(r => r.SeedId == partnerSeedId), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SeedResponse { SeedId = partnerSeedId, OwnerId = partnerAccountId, OwnerType = "account" });
 
         var garden1 = CreateTestGarden(_testAccountId);
         var garden2 = CreateTestGarden(partnerAccountId);
@@ -1520,7 +1524,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
             },
             CancellationToken.None);
 
-        Assert.Equal(StatusCodes.Created, status);
+        Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.Equal(ScenarioStatus.Active, response.Status);
 
@@ -1530,7 +1534,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
             It.IsAny<CancellationToken>()), Times.Exactly(2));
         _mockCacheStore.Verify(c => c.AddToSetAsync<Guid>(
             GardenerService.ActiveScenariosTrackingKey, It.IsAny<Guid>(),
-            It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
+            It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
 
         // Assert - Event published
         _mockMessageBus.Verify(m => m.TryPublishAsync(
@@ -1538,7 +1542,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
             It.Is<GardenerBondEnteredTogetherEvent>(e =>
                 e.BondId == bondId &&
                 e.Participants.Count == 2),
-            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -1585,8 +1589,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         await service.HandleSeedBondFormedAsync(new SeedBondFormedEvent
         {
             BondId = bondId,
-            InitiatorSeedId = _testSeedId,
-            TargetSeedId = Guid.NewGuid()
+            ParticipantSeedIds = new List<Guid> { _testSeedId, Guid.NewGuid() }
         });
 
         Assert.NotNull(savedGarden);
@@ -1660,11 +1663,15 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         Assert.Contains("guardian", listener.InterestedSeedTypes);
 
         await listener.OnGrowthRecordedAsync(
-            new SeedGrowthNotification
-            {
-                SeedId = _testSeedId,
-                OwnerId = _testAccountId
-            },
+            new SeedGrowthNotification(
+                SeedId: _testSeedId,
+                SeedTypeCode: "guardian",
+                OwnerId: _testAccountId,
+                OwnerType: "account",
+                DomainChanges: new List<DomainChange>(),
+                TotalGrowth: 10.0f,
+                CrossPollinated: false,
+                Source: "test"),
             CancellationToken.None);
 
         Assert.NotNull(savedGarden);
@@ -1700,12 +1707,15 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
             Mock.Of<ILogger<GardenerSeedEvolutionListener>>());
 
         await listener.OnPhaseChangedAsync(
-            new SeedPhaseNotification
-            {
-                SeedId = _testSeedId,
-                OwnerId = _testAccountId,
-                NewPhase = "awakening"
-            },
+            new SeedPhaseNotification(
+                SeedId: _testSeedId,
+                SeedTypeCode: "guardian",
+                OwnerId: _testAccountId,
+                OwnerType: "account",
+                PreviousPhase: "dormant",
+                NewPhase: "awakening",
+                TotalGrowth: 50.0f,
+                Progressed: true),
             CancellationToken.None);
 
         Assert.NotNull(savedGarden);

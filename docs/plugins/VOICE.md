@@ -225,12 +225,16 @@ Voice Communication Flow (P2P → Scaled Upgrade)
 
 ## Potential Extensions
 
-1. **RTP server pool**: Multiple RTPEngine instances with load-based allocation.
+1. **RTP server pool**: Multiple RTPEngine instances with load-based allocation. *(Duplicate of Stubs #2 — tracked by #258)*
+<!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/258 -->
 2. **Room quality metrics**: Track audio quality, latency, packet loss per participant.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/400 -->
 3. **Recording support**: Integrate RTPEngine recording for compliance/replay.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/401 -->
 4. **Mute state synchronization**: Currently `IsMuted` is tracked but not synchronized across peers.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/402 -->
 5. **ICE trickle support**: Current implementation sends all ICE candidates in initial SDP; could support trickle ICE for faster connections.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/403 -->
 
 ---
 
@@ -278,6 +282,9 @@ None identified.
 | 2026-02-01 | [#258](https://github.com/beyond-immersion/bannou-service/issues/258) | RTP server pool allocation with load-based selection | Needs Design |
 | 2026-02-11 | [#396](https://github.com/beyond-immersion/bannou-service/issues/396) | VoiceRoomStateEvent defined but never published — redundancy with JoinVoiceRoomResponse | Needs Design |
 | 2026-02-11 | [#400](https://github.com/beyond-immersion/bannou-service/issues/400) | Room quality metrics design — metric set, sources, storage, analytics integration | Needs Design |
+| 2026-02-11 | [#401](https://github.com/beyond-immersion/bannou-service/issues/401) | Voice recording support architecture — storage, consent, RTPEngine protocol, retention | Needs Design |
+| 2026-02-11 | [#402](https://github.com/beyond-immersion/bannou-service/issues/402) | Mute state synchronization — self vs admin mute, SFU enforcement, notification scope | Needs Design |
+| 2026-02-11 | [#403](https://github.com/beyond-immersion/bannou-service/issues/403) | ICE trickle support — relay vs accumulate, permission gating, P2P/SFU scope | Needs Design |
 
 ### Completed
 

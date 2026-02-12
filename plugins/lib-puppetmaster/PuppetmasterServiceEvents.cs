@@ -194,14 +194,10 @@ public partial class PuppetmasterService
     {
         try
         {
+            // IActorClient is L2 (GameFoundation) - must be available per FOUNDATION TENETS.
+            // Resolved via scope because Puppetmaster is Singleton and IActorClient is Scoped.
             using var scope = _scopeFactory.CreateScope();
-            var actorClient = scope.ServiceProvider.GetService<IActorClient>();
-
-            if (actorClient == null)
-            {
-                _logger.LogWarning("IActorClient not available, cannot inject perception");
-                return;
-            }
+            var actorClient = scope.ServiceProvider.GetRequiredService<IActorClient>();
 
             var request = new InjectPerceptionRequest
             {
@@ -269,14 +265,10 @@ public partial class PuppetmasterService
             _behaviorCache.Invalidate(evt.AssetId);
             _logger.LogDebug("Invalidated cached behavior asset {AssetId} for {BehaviorId}", evt.AssetId, evt.BehaviorId);
 
-            // Notify running actors using the updated behavior via IActorClient
+            // IActorClient is L2 (GameFoundation) - must be available per FOUNDATION TENETS.
+            // Resolved via scope because Puppetmaster is Singleton and IActorClient is Scoped.
             using var scope = _scopeFactory.CreateScope();
-            var actorClient = scope.ServiceProvider.GetService<IActorClient>();
-            if (actorClient == null)
-            {
-                _logger.LogDebug("IActorClient not available, skipping actor notification");
-                return;
-            }
+            var actorClient = scope.ServiceProvider.GetRequiredService<IActorClient>();
 
             // Paginate through all running actors. Behavior updates are rare admin events,
             // so sequential notification is acceptable.

@@ -19,7 +19,7 @@ The Puppetmaster service (L4 GameFeatures) orchestrates dynamic behaviors, regio
 |------------|-------|
 | lib-messaging (`IMessageBus`) | Publishing watcher and behavior invalidation events |
 | lib-messaging (`IMessageSubscriber`) | Dynamic subscriptions to lifecycle event topics for watch system |
-| lib-actor (`IActorClient`) | Injecting perceptions into actors (watch notifications, behavior hot-reload) - resolved via `IServiceScopeFactory` |
+| lib-actor (`IActorClient`) | Injecting perceptions into actors (watch notifications, behavior hot-reload) - resolved via `IServiceScopeFactory` with `GetRequiredService` (L2 hard dependency) |
 | lib-asset (`IAssetClient`) | Downloading ABML YAML documents via pre-signed URLs |
 | lib-resource (`IResourceClient`) | Loading resource snapshots for Event Brain actors |
 | `IEventConsumer` | Registering handlers for realm lifecycle, behavior, and actor deletion events |
@@ -485,7 +485,7 @@ When a lifecycle event arrives (e.g., `personality.updated`):
 
 7. **Dynamic lifecycle subscriptions bypass `IEventConsumer`**: The `SubscribeToLifecycleEvents` method uses `IMessageSubscriber.SubscribeDynamicRawAsync()` directly because the subscribed topics are determined at runtime from `ResourceEventMapping`, not statically known at schema time. This is intentional - `IEventConsumer` requires compile-time event type registration.
 
-8. **`IActorClient` uses soft dependency pattern despite being L2 (hard dependency from L4)**: Both `InjectWatchPerceptionAsync` and `HandleBehaviorUpdatedAsync` resolve `IActorClient` via `GetService<T>()` with null check instead of `GetRequiredService<T>()`. Actor is L2 (GameFoundation), which per the hierarchy is a hard dependency from L4. The soft pattern is used because these are event handlers that may fire during startup before Actor is fully available, but this diverges from the documented hard dependency pattern.
+8. ~~**`IActorClient` uses soft dependency pattern despite being L2 (hard dependency from L4)**~~: **FIXED** (2026-02-11) - Changed `GetService<IActorClient>()` to `GetRequiredService<IActorClient>()` in both `InjectWatchPerceptionAsync` and `HandleBehaviorUpdatedAsync`. Actor is L2 and must be available when L4 is enabled per FOUNDATION TENETS. Layer-based plugin loading guarantees Actor is registered before Puppetmaster. Matches the correct pattern already used by `ResourceSnapshotCache` for `IResourceClient`.
 
 ### Design Considerations (Requires Planning)
 
@@ -493,12 +493,14 @@ When a lifecycle event arrives (e.g., `personality.updated`):
    - State store backend (Redis vs MySQL)
    - Recovery behavior on startup (auto-restart previously active watchers?)
    - Heartbeat/liveness tracking for watchers
+<!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/395 -->
 
 2. **No actor spawning integration**: Watchers are just data structures without actual behavior execution. The full implementation requires:
    - Spawning actors via `IActorClient`
    - Passing behavior references to actors
    - Tracking actor lifecycle (restart on crash)
    - Correlating watcher IDs with actor IDs
+<!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/388 -->
 
 ---
 
@@ -510,3 +512,4 @@ This section tracks active development work. Managed by `/audit-plugin` workflow
 
 - **ResourceSnapshotCache TTL Configuration** (2026-02-11): Added `SnapshotCacheTtlSeconds` config property to schema, regenerated config class, wired into `ResourceSnapshotCache` constructor. T21 compliance fix.
 - **Configurable Default Watcher Types** (2026-02-11): Issue #389. Added `DefaultWatcherTypes` array config property (default `["regional"]`). Added comma-delimited env var to `string[]` binding support in `IServiceConfiguration` infrastructure. T21 compliance fix.
+- **IActorClient Hard Dependency Pattern** (2026-02-11): Changed `GetService<IActorClient>()` to `GetRequiredService<IActorClient>()` in event handlers. T4 compliance fix — L2 is a hard dependency from L4.

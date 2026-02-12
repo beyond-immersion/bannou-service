@@ -692,7 +692,7 @@ public partial class GardenerService : IGardenerService
         await ScenarioStore.SaveAsync(ScenarioKey(body.AccountId), scenario, cancellationToken: cancellationToken);
 
         // Move to durable history
-        await WriteScenarioHistoryAsync(scenario, template, cancellationToken: cancellationToken);
+        await WriteScenarioHistoryAsync(scenario, template, cancellationToken);
 
         // Clean up from Redis
         await ScenarioStore.DeleteAsync(ScenarioKey(body.AccountId), cancellationToken);
@@ -762,7 +762,7 @@ public partial class GardenerService : IGardenerService
         scenario.GrowthAwarded = partialGrowth;
 
         // Move to durable history
-        await WriteScenarioHistoryAsync(scenario, template, cancellationToken: cancellationToken);
+        await WriteScenarioHistoryAsync(scenario, template, cancellationToken);
 
         // Clean up from Redis
         await ScenarioStore.DeleteAsync(ScenarioKey(body.AccountId), cancellationToken);
@@ -1014,7 +1014,7 @@ public partial class GardenerService : IGardenerService
         return (StatusCodes.OK, new ListTemplatesResponse
         {
             Templates = templateList.Select(MapToTemplateResponse).ToList(),
-            TotalCount = body.DeploymentPhase != null ? templateList.Count : result.TotalCount,
+            TotalCount = body.DeploymentPhase != null ? templateList.Count : (int)result.TotalCount,
             Page = body.Page,
             PageSize = body.PageSize
         });
@@ -1461,7 +1461,7 @@ public partial class GardenerService : IGardenerService
         var entries = new List<GrowthEntry>();
         foreach (var dw in template.DomainWeights)
         {
-            var amount = dw.Weight * _configuration.GrowthAwardMultiplier * timeRatio;
+            var amount = (float)(dw.Weight * _configuration.GrowthAwardMultiplier * timeRatio);
             growthAwarded[dw.Domain] = amount;
             entries.Add(new GrowthEntry { Domain = dw.Domain, Amount = amount });
         }
@@ -1554,8 +1554,9 @@ public partial class GardenerService : IGardenerService
                 await _gameSessionClient.LeaveGameSessionByIdAsync(
                     new LeaveGameSessionByIdRequest
                     {
-                        SessionId = scenario.GameSessionId,
-                        AccountId = participant.AccountId
+                        GameSessionId = scenario.GameSessionId,
+                        AccountId = participant.AccountId,
+                        WebSocketSessionId = Guid.Empty
                     }, ct);
             }
             catch (ApiException ex)
