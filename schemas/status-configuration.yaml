@@ -62,6 +62,20 @@ x-service-configuration:
       default: 300
       description: TTL in seconds for seed-derived effects cache (longer because capabilities change less frequently)
 
+    MaxCachedEntities:
+      type: integer
+      env: STATUS_MAX_CACHED_ENTITIES
+      minimum: 100
+      maximum: 100000
+      default: 10000
+      description: Maximum number of entity active-status cache entries retained in Redis (LRU eviction when exceeded)
+
+    CacheWarmingEnabled:
+      type: boolean
+      env: STATUS_CACHE_WARMING_ENABLED
+      default: false
+      description: Enable proactive cache warming on startup by pre-loading active statuses for recently active entities
+
     # =========================================================================
     # Distributed Locks
     # =========================================================================
@@ -73,6 +87,14 @@ x-service-configuration:
       maximum: 120
       default: 30
       description: TTL for distributed locks on status mutations
+
+    LockAcquisitionTimeoutSeconds:
+      type: integer
+      env: STATUS_LOCK_ACQUISITION_TIMEOUT_SECONDS
+      minimum: 1
+      maximum: 60
+      default: 5
+      description: Maximum seconds to wait when acquiring a distributed lock before failing with a timeout error
 
     MaxConcurrencyRetries:
       type: integer

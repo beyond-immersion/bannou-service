@@ -31,6 +31,8 @@ public static class ResourceEventMappings
         new("character", "character-personality", "personality.created", "characterId", false),
         new("character", "character-personality", "personality.evolved", "characterId", false),
         new("character", "character-personality", "personality.updated", "characterId", false),
+        new("character", "obligation", "obligation.cache.rebuilt", "characterId", false),
+        new("character", "obligation", "obligation.violation.reported", "characterId", false),
         new("realm", "realm", "realm.created", "realmId", false),
         new("realm", "realm", "realm.deleted", "realmId", true),
         new("realm", "realm", "realm.updated", "realmId", false),

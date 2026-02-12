@@ -180,16 +180,18 @@ public static class StateStoreDefinitions
     public const string EscrowTokens = "escrow-tokens";
 
     // Faction Service
-    /// <summary>Faction and membership lookup cache (frequently read)</summary>
+    /// <summary>Faction lookup and norm resolution cache (frequently read, TTL-based)</summary>
     public const string FactionCache = "faction-cache";
-    /// <summary>Distributed locks for faction and membership modifications</summary>
+    /// <summary>Distributed locks for faction, membership, and territory mutations</summary>
     public const string FactionLock = "faction-lock";
-    /// <summary>Faction membership records linking characters to factions</summary>
+    /// <summary>Faction membership records linking characters to factions with roles</summary>
     public const string FactionMembership = "faction-membership-statestore";
-    /// <summary>Faction entity records (durable, queryable by type/realm/game service)</summary>
+    /// <summary>Behavioral norm definitions per faction (durable, queryable by violation type)</summary>
+    public const string FactionNorm = "faction-norm-statestore";
+    /// <summary>Faction entity records (durable, queryable by realm/game service/status)</summary>
     public const string Faction = "faction-statestore";
-    /// <summary>Faction type definitions and configuration rules</summary>
-    public const string FactionTypeDefinitions = "faction-type-definitions";
+    /// <summary>Territory claim records linking factions to controlled locations</summary>
+    public const string FactionTerritory = "faction-territory-statestore";
 
     // GameService Service
     /// <summary>Game service registry</summary>
@@ -405,6 +407,20 @@ public static class StateStoreDefinitions
     /// <summary>Test store with RedisSearch enabled</summary>
     public const string TestSearch = "test-search-statestore";
 
+    // Status Service
+    /// <summary>Active status cache per entity (fast lookup, rebuilt from instances on miss)</summary>
+    public const string StatusActiveCache = "status-active-cache";
+    /// <summary>Status container records mapping entities to inventory containers (durable)</summary>
+    public const string StatusContainers = "status-containers";
+    /// <summary>Status instance records with metadata (durable, queryable by entity/source/category)</summary>
+    public const string StatusInstances = "status-instances";
+    /// <summary>Distributed locks for status mutations and template updates</summary>
+    public const string StatusLock = "status-lock";
+    /// <summary>Cached seed-derived effects per entity (invalidated on capability.updated events)</summary>
+    public const string StatusSeedEffectsCache = "status-seed-effects-cache";
+    /// <summary>Status template definitions (durable, queryable by category/code/gameServiceId)</summary>
+    public const string StatusTemplates = "status-templates";
+
     // Storyline Service
     /// <summary>Plan index by realm for list queries</summary>
     public const string StorylinePlanIndex = "storyline-plan-index";
@@ -505,8 +521,9 @@ public static class StateStoreDefinitions
             [FactionCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "faction:cache" },
             [FactionLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "faction:lock" },
             [FactionMembership] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "faction_membership_statestore" },
+            [FactionNorm] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "faction_norm_statestore" },
             [Faction] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "faction_statestore" },
-            [FactionTypeDefinitions] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "faction_type_definitions" },
+            [FactionTerritory] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "faction_territory_statestore" },
             [GameService] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "game_service_statestore" },
             [GameSession] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "game_session_statestore" },
             [GardenerGardenInstances] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "gardener:garden" },
@@ -587,6 +604,12 @@ public static class StateStoreDefinitions
             [Seed] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "seed_statestore" },
             [SeedTypeDefinitions] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "seed_type_definitions_statestore" },
             [Species] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "species_statestore" },
+            [StatusActiveCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "status:active" },
+            [StatusContainers] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "status_containers" },
+            [StatusInstances] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "status_instances" },
+            [StatusLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "status:lock" },
+            [StatusSeedEffectsCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "status:seed" },
+            [StatusTemplates] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "status_templates" },
             [StorylinePlanIndex] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "storyline:idx" },
             [StorylinePlans] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "storyline:plan" },
             [StorylineScenarioActive] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "storyline:scenario:active" },
@@ -670,11 +693,12 @@ public static class StateStoreDefinitions
             [EscrowPartyPending] = new StoreMetadata("Escrow", "Count pending escrows per party for limits", "redis"),
             [EscrowStatusIndex] = new StoreMetadata("Escrow", "Escrow IDs by status (sorted set for expiration/validation)", "redis"),
             [EscrowTokens] = new StoreMetadata("Escrow", "Token hash validation (hashed tokens to escrow/party info)", "redis"),
-            [FactionCache] = new StoreMetadata("Faction", "Faction and membership lookup cache (frequently read)", "redis"),
-            [FactionLock] = new StoreMetadata("Faction", "Distributed locks for faction and membership modifications", "redis"),
-            [FactionMembership] = new StoreMetadata("Faction", "Faction membership records linking characters to factions", "mysql"),
-            [Faction] = new StoreMetadata("Faction", "Faction entity records (durable, queryable by type/realm/game service)", "mysql"),
-            [FactionTypeDefinitions] = new StoreMetadata("Faction", "Faction type definitions and configuration rules", "mysql"),
+            [FactionCache] = new StoreMetadata("Faction", "Faction lookup and norm resolution cache (frequently read, TTL-based)", "redis"),
+            [FactionLock] = new StoreMetadata("Faction", "Distributed locks for faction, membership, and territory mutations", "redis"),
+            [FactionMembership] = new StoreMetadata("Faction", "Faction membership records linking characters to factions with roles", "mysql"),
+            [FactionNorm] = new StoreMetadata("Faction", "Behavioral norm definitions per faction (durable, queryable by violation type)", "mysql"),
+            [Faction] = new StoreMetadata("Faction", "Faction entity records (durable, queryable by realm/game service/status)", "mysql"),
+            [FactionTerritory] = new StoreMetadata("Faction", "Territory claim records linking factions to controlled locations", "mysql"),
             [GameService] = new StoreMetadata("GameService", "Game service registry", "mysql"),
             [GameSession] = new StoreMetadata("GameSession", "Game session state and history", "mysql"),
             [GardenerGardenInstances] = new StoreMetadata("Gardener", "Active garden instance state per player (ephemeral, TTL-based)", "redis"),
@@ -755,6 +779,12 @@ public static class StateStoreDefinitions
             [Seed] = new StoreMetadata("Seed", "Seed entity records (durable, queryable by owner/type)", "mysql"),
             [SeedTypeDefinitions] = new StoreMetadata("Seed", "Registered seed type definitions (durable, admin-managed)", "mysql"),
             [Species] = new StoreMetadata("Species", "Species definitions", "mysql"),
+            [StatusActiveCache] = new StoreMetadata("Status", "Active status cache per entity (fast lookup, rebuilt from instances on miss)", "redis"),
+            [StatusContainers] = new StoreMetadata("Status", "Status container records mapping entities to inventory containers (durable)", "mysql"),
+            [StatusInstances] = new StoreMetadata("Status", "Status instance records with metadata (durable, queryable by entity/source/category)", "mysql"),
+            [StatusLock] = new StoreMetadata("Status", "Distributed locks for status mutations and template updates", "redis"),
+            [StatusSeedEffectsCache] = new StoreMetadata("Status", "Cached seed-derived effects per entity (invalidated on capability.updated events)", "redis"),
+            [StatusTemplates] = new StoreMetadata("Status", "Status template definitions (durable, queryable by category/code/gameServiceId)", "mysql"),
             [StorylinePlanIndex] = new StoreMetadata("Storyline", "Plan index by realm for list queries", "redis"),
             [StorylinePlans] = new StoreMetadata("Storyline", "Cached composed storyline plans (ephemeral, TTL from config)", "redis"),
             [StorylineScenarioActive] = new StoreMetadata("Storyline", "Active scenario tracking per character (set membership)", "redis"),

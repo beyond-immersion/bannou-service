@@ -69,11 +69,12 @@ This document lists all state store components used in Bannou.
 | `escrow-party-pending` | Redis | Escrow | Count pending escrows per party for limits |
 | `escrow-status-index` | Redis | Escrow | Escrow IDs by status (sorted set for expiration/validation) |
 | `escrow-tokens` | Redis | Escrow | Token hash validation (hashed tokens to escrow/party info) |
-| `faction-cache` | Redis | Faction | Faction and membership lookup cache (frequently read) |
-| `faction-lock` | Redis | Faction | Distributed locks for faction and membership modifications |
-| `faction-membership-statestore` | MySQL | Faction | Faction membership records linking characters to factions |
-| `faction-statestore` | MySQL | Faction | Faction entity records (durable, queryable by type/realm/game service) |
-| `faction-type-definitions` | MySQL | Faction | Faction type definitions and configuration rules |
+| `faction-cache` | Redis | Faction | Faction lookup and norm resolution cache (frequently read, TTL-based) |
+| `faction-lock` | Redis | Faction | Distributed locks for faction, membership, and territory mutations |
+| `faction-membership-statestore` | MySQL | Faction | Faction membership records linking characters to factions with roles |
+| `faction-norm-statestore` | MySQL | Faction | Behavioral norm definitions per faction (durable, queryable by violation type) |
+| `faction-statestore` | MySQL | Faction | Faction entity records (durable, queryable by realm/game service/status) |
+| `faction-territory-statestore` | MySQL | Faction | Territory claim records linking factions to controlled locations |
 | `game-service-statestore` | MySQL | GameService | Game service registry |
 | `game-session-statestore` | MySQL | GameSession | Game session state and history |
 | `gardener-garden-instances` | Redis | Gardener | Active garden instance state per player (ephemeral, TTL-based) |
@@ -154,6 +155,12 @@ This document lists all state store components used in Bannou.
 | `seed-statestore` | MySQL | Seed | Seed entity records (durable, queryable by owner/type) |
 | `seed-type-definitions-statestore` | MySQL | Seed | Registered seed type definitions (durable, admin-managed) |
 | `species-statestore` | MySQL | Species | Species definitions |
+| `status-active-cache` | Redis | Status | Active status cache per entity (fast lookup, rebuilt from instances on miss) |
+| `status-containers` | MySQL | Status | Status container records mapping entities to inventory containers (durable) |
+| `status-instances` | MySQL | Status | Status instance records with metadata (durable, queryable by entity/source/category) |
+| `status-lock` | Redis | Status | Distributed locks for status mutations and template updates |
+| `status-seed-effects-cache` | Redis | Status | Cached seed-derived effects per entity (invalidated on capability.updated events) |
+| `status-templates` | MySQL | Status | Status template definitions (durable, queryable by category/code/gameServiceId) |
 | `storyline-plan-index` | Redis | Storyline | Plan index by realm for list queries |
 | `storyline-plans` | Redis | Storyline | Cached composed storyline plans (ephemeral, TTL from config) |
 | `storyline-scenario-active` | Redis | Storyline | Active scenario tracking per character (set membership) |
@@ -166,7 +173,7 @@ This document lists all state store components used in Bannou.
 | `test-search-statestore` | Redis | State | Test store with RedisSearch enabled |
 | `voice-statestore` | Redis | Voice | Voice room and peer state |
 
-**Total**: 156 stores (95 Redis, 61 MySQL)
+**Total**: 163 stores (98 Redis, 65 MySQL)
 
 ## Naming Conventions
 

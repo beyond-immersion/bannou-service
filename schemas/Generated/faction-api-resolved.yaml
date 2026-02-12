@@ -1,0 +1,2494 @@
+openapi: 3.0.0
+info:
+  title: Bannou Faction Service API
+  description: |
+    Faction management as seed-based living entities (L4 GameFeatures).
+
+    Factions are organizations whose capabilities emerge from growth, not static
+    assignment. Each faction owns a seed (via lib-seed) that grows through member
+    activities fed by the Collection-to-Seed pipeline. As the faction's seed grows
+    through phases (nascent, established, influential, dominant), capabilities
+    unlock: norm definition, enforcement tiers, territory claiming, and trade
+    regulation. A nascent faction literally CANNOT enforce norms -- it hasn't grown
+    enough governance capability yet.
+
+    **Primary Purpose**: Store and serve social norms for lib-obligation.
+    lib-obligation is the PRIMARY CONSUMER of faction norm data -- it queries
+    this service's /faction/norm/query-applicable endpoint to resolve the full
+    norm hierarchy (guild faction -> location faction -> realm baseline faction)
+    into a merged norm set, then applies personality-weighted moral reasoning
+    on top to produce GOAP action cost modifiers for NPC cognition. Without
+    lib-faction, lib-obligation only has contractual obligations (guild charters,
+    trade agreements). With lib-faction, ambient social and cultural norms
+    become enforceable through the same cognition pipeline.
+
+    **Seed Integration** (follows Gardener/Seed pattern):
+    - Does NOT own seeds -- creates and grows them via lib-seed's API
+    - Seed type "faction" registered at startup with growth phases and capability rules
+    - Capability checks gate norm and territory endpoints
+    - Implements ISeedEvolutionListener for growth/phase/capability notifications
+      (DI interface for lower-to-higher communication per FOUNDATION TENETS, T27
+      "DI interfaces for lower<->higher"; in-process guaranteed delivery, writes
+      to distributed state for multi-node safety)
+
+    **Collection-to-Seed Pipeline**:
+    - Implements ICollectionUnlockListener to convert member activity collection entries
+      into faction seed growth via tag prefix matching (governance, commerce, military)
+      (DI interface for lower-to-higher communication per FOUNDATION TENETS, T27;
+      in-process guaranteed delivery, writes to distributed state via lib-seed API)
+    - Member activities grow the faction's seed, unlocking organizational capabilities
+
+    **Variable Provider**:
+    - Implements IVariableProviderFactory providing ${faction.*} namespace to Actor (L2)
+      via the Variable Provider Factory pattern for ABML behavior expressions:
+      - ${faction.is_member} -- whether character belongs to any faction (boolean)
+      - ${faction.membership_count} -- number of faction memberships (integer)
+      - ${faction.primary_faction} -- name of highest-role faction (string)
+      - ${faction.primary_faction_phase} -- seed growth phase of primary faction (string)
+      - ${faction.has_norm.<type>} -- whether any applicable norm covers a violation type (boolean)
+      - ${faction.norm_penalty.<type>} -- merged base penalty for a violation type (float)
+      - ${faction.in_controlled_territory} -- whether character is at a faction-controlled location (boolean)
+      - ${faction.controlling_faction} -- name of controlling faction at current location (string)
+      - ${faction.realm_baseline_faction} -- name of realm baseline faction (string)
+
+    **Faction Concepts**:
+    - Realm baseline faction: provides realm-wide cultural norms (honor codes, taboos)
+    - Location controlling faction: provides local norms (lawless district, temple sanctity)
+    - Guild factions: character memberships with role hierarchy
+    - Parent/child hierarchy for organizational structure
+
+    **Political Connections** (alliances, rivalries, treaties):
+    - Inter-faction political relationships are modeled as seed bonds via lib-seed's
+      existing bond API, NOT through lib-relationship. A bond between two faction
+      seeds represents the alliance/rivalry as a growable entity with its own
+      capability manifest (owned by ownerType: "relationship" in lib-seed).
+    - Joint member activities grow the bonded seed, unlocking alliance capabilities
+    - Bond strength increases with mutual activity; dissolution via seed bond API
+
+    **Norm Resolution Hierarchy** (most specific wins):
+    1. Guild faction norms (character's direct memberships)
+    2. Location faction norms (controlling faction at character's current location)
+    3. Realm baseline faction norms (realm-wide cultural context)
+
+    **violationType as Opaque String**: Norm violation types (e.g., "theft", "deception",
+    "violence") are opaque strings, not enums. Per SCHEMA-RULES.md "When NOT to Create
+    Enums": enumerating violation types would create L4-to-L4 coupling between lib-faction
+    and lib-obligation. The vocabulary is defined by contract templates and action tag
+    mappings in lib-obligation; lib-faction stores whatever violation type strings callers
+    provide. Adding new violation types never requires a schema change.
+
+    **Norm Cache Invalidation**: The /faction/norm/query-applicable endpoint caches
+    resolved norm sets per character+location in Redis with configurable TTL
+    (FACTION_NORM_QUERY_CACHE_TTL_SECONDS, default 300s). Cache entries are
+    invalidated on write operations (member add/remove, norm define/update/delete,
+    territory claim/release, realm baseline designation) affecting any faction in
+    the resolution chain. lib-obligation can also use forceRefresh to bypass the
+    cache after detecting stale data via contract lifecycle events.
+
+    **Dependencies**:
+    - lib-seed (L2) -- faction capabilities emerge from seed growth; bonds for alliances
+    - lib-collection (L2) -- member activities feed faction growth via DI listener
+    - lib-location (L2) -- factions control/influence locations via territory claims
+    - lib-realm (L2) -- realm factions provide baseline cultural context
+    - lib-contract (L1) -- formal membership agreements, guild charters
+    - lib-obligation (L4, primary consumer) -- queries faction norms for NPC cognition
+      cost modifiers; graceful degradation when lib-faction is disabled
+
+    **State Store Backend Rationale**:
+    - MySQL for factions, memberships, territory claims, norms: durable records
+      requiring queryable indexes (by realm, game service, character, location)
+    - Redis for faction cache: high-frequency reads of resolved norm sets and
+      faction lookups with TTL-based expiration
+    - Redis for locks: distributed lock coordination for multi-node safety
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
+    WebSocket routing. Path parameters are passed in request bodies instead of URLs.
+    See docs/BANNOU_DESIGN.md for architectural rationale.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  x-references:
+  - target: character
+    sourceType: faction
+    field: characterId
+    onDelete: cascade
+    cleanup:
+      endpoint: /faction/cleanup-by-character
+      payloadTemplate: '{"characterId": "{{resourceId}}"}'
+  - target: realm
+    sourceType: faction
+    field: realmId
+    onDelete: cascade
+    cleanup:
+      endpoint: /faction/cleanup-by-realm
+      payloadTemplate: '{"realmId": "{{resourceId}}"}'
+  - target: location
+    sourceType: faction
+    field: locationId
+    onDelete: cascade
+    cleanup:
+      endpoint: /faction/cleanup-by-location
+      payloadTemplate: '{"locationId": "{{resourceId}}"}'
+  x-compression-callback:
+    resourceType: character
+    sourceType: faction
+    compressEndpoint: /faction/get-compress-data
+    compressPayloadTemplate: '{"characterId": "{{resourceId}}"}'
+    priority: 20
+    templateNamespace: faction
+    description: Faction memberships, roles, and applicable norm context
+    decompressEndpoint: /faction/restore-from-archive
+    decompressPayloadTemplate: '{"characterId": "{{resourceId}}", "data": "{{data}}"}'
+x-service-layer: GameFeatures
+servers:
+- url: http://localhost:5012
+  description: Bannou service endpoint (internal only)
+
+paths:
+  # ===========================================================================
+  # Faction CRUD (11 endpoints)
+  # ===========================================================================
+
+  /faction/create:
+    post:
+      summary: Create a new faction
+      operationId: createFaction
+      tags:
+      - Faction CRUD
+      description: |
+        Creates a new faction entity and automatically creates a seed via lib-seed
+        with ownerType "faction" and the configured seed type code. The seed starts
+        in the "nascent" phase with no capabilities unlocked.
+
+        The faction code must be unique within the game service scope.
+
+        If parentFactionId is provided, validates that the parent exists, belongs
+        to the same game service and realm, and that the resulting hierarchy depth
+        does not exceed the configured maximum.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFactionRequest'
+      responses:
+        '200':
+          description: Faction created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionResponse'
+        '400':
+          description: Invalid faction data or hierarchy depth exceeded
+        '404':
+          description: Parent faction, game service, or realm not found
+        '409':
+          description: Faction code already exists in this game service
+
+  /faction/get:
+    post:
+      summary: Get a faction by ID
+      operationId: getFaction
+      tags:
+      - Faction CRUD
+      description: |
+        Retrieves a faction by its unique identifier. Includes the current seed
+        growth phase (denormalized from lib-seed for convenience) and member count.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetFactionRequest'
+      responses:
+        '200':
+          description: Faction retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionResponse'
+        '404':
+          description: Faction not found
+
+  /faction/get-by-code:
+    post:
+      summary: Get a faction by code
+      operationId: getFactionByCode
+      tags:
+      - Faction CRUD
+      description: |
+        Retrieves a faction by its unique code within a game service scope.
+        Codes are human-readable identifiers like "thieves_guild" or "royal_guard".
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetFactionByCodeRequest'
+      responses:
+        '200':
+          description: Faction retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionResponse'
+        '404':
+          description: Faction not found
+
+  /faction/list:
+    post:
+      summary: List factions with filters
+      operationId: listFactions
+      tags:
+      - Faction CRUD
+      description: |
+        Returns a paginated list of factions with optional filters by realm,
+        game service, status, and parent faction. Supports cursor-based pagination.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListFactionsRequest'
+      responses:
+        '200':
+          description: Factions retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListFactionsResponse'
+
+  /faction/update:
+    post:
+      summary: Update a faction
+      operationId: updateFaction
+      tags:
+      - Faction CRUD
+      description: |
+        Updates mutable faction properties (name, description, code). The faction
+        code must remain unique within its game service scope. Cannot change
+        gameServiceId or realmId after creation.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateFactionRequest'
+      responses:
+        '200':
+          description: Faction updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionResponse'
+        '404':
+          description: Faction not found
+        '409':
+          description: Updated code conflicts with existing faction
+
+  /faction/deprecate:
+    post:
+      summary: Deprecate a faction
+      operationId: deprecateFaction
+      tags:
+      - Faction CRUD
+      description: |
+        Marks a faction as deprecated. Deprecated factions cannot accept new members
+        or define new norms, but existing memberships and norms remain active.
+        Existing norm enforcement continues until the faction is dissolved.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeprecateFactionRequest'
+      responses:
+        '200':
+          description: Faction deprecated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionResponse'
+        '404':
+          description: Faction not found
+        '409':
+          description: Faction is already deprecated or dissolved
+
+  /faction/undeprecate:
+    post:
+      summary: Reactivate a deprecated faction
+      operationId: undeprecateFaction
+      tags:
+      - Faction CRUD
+      description: Restores a deprecated faction to active status.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UndeprecateFactionRequest'
+      responses:
+        '200':
+          description: Faction reactivated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionResponse'
+        '404':
+          description: Faction not found
+        '409':
+          description: Faction is not in deprecated status
+
+  /faction/delete:
+    post:
+      summary: Delete a faction
+      operationId: deleteFaction
+      tags:
+      - Faction CRUD
+      description: |
+        Permanently deletes a faction. Checks resource references via lib-resource
+        before deletion. If references exist, executes cleanup callbacks (CASCADE
+        policy). Removes all memberships, territory claims, norm definitions, and
+        the associated seed.
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteFactionRequest'
+      responses:
+        '200':
+          description: Faction deleted
+        '404':
+          description: Faction not found
+        '409':
+          description: Faction has active references that could not be cleaned up
+
+  /faction/seed:
+    post:
+      summary: Bulk seed factions from configuration
+      operationId: seedFactions
+      tags:
+      - Faction CRUD
+      description: |
+        Creates multiple factions from a configuration payload. Uses two-pass
+        parent resolution: first pass creates all factions without parent links,
+        second pass sets parentFactionId by matching parent codes.
+
+        Each faction in the payload gets a seed created via lib-seed. Existing
+        factions (matched by code within game service) are skipped.
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SeedFactionsRequest'
+      responses:
+        '200':
+          description: Seeding completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeedFactionsResponse'
+        '400':
+          description: Invalid seeding data
+
+  /faction/designate-realm-baseline:
+    post:
+      summary: Designate a faction as realm baseline
+      operationId: designateRealmBaseline
+      tags:
+      - Faction CRUD
+      description: |
+        Sets a faction as the realm's baseline cultural faction. The baseline
+        faction provides realm-wide default norms (honor codes, cultural taboos,
+        species instincts) that apply to all characters in the realm unless
+        overridden by more specific faction norms.
+
+        Only one faction per realm can be the baseline. Setting a new baseline
+        clears the previous one. The faction must belong to the specified realm.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DesignateRealmBaselineRequest'
+      responses:
+        '200':
+          description: Faction designated as realm baseline
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionResponse'
+        '404':
+          description: Faction not found
+        '409':
+          description: Faction does not belong to the specified realm
+
+  /faction/get-realm-baseline:
+    post:
+      summary: Get the realm baseline faction
+      operationId: getRealmBaseline
+      tags:
+      - Faction CRUD
+      description: |
+        Returns the faction designated as the baseline cultural faction for a realm.
+        Returns 404 if no baseline has been designated.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetRealmBaselineRequest'
+      responses:
+        '200':
+          description: Realm baseline faction retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionResponse'
+        '404':
+          description: No baseline faction designated for this realm
+
+  # ===========================================================================
+  # Membership (6 endpoints)
+  # ===========================================================================
+
+  /faction/member/add:
+    post:
+      summary: Add a character to a faction
+      operationId: addMember
+      tags:
+      - Membership
+      description: |
+        Adds a character as a member of a faction. The faction must be active
+        (not deprecated or dissolved). If no role is specified, the configured
+        default member role is used.
+
+        A character can be a member of multiple factions simultaneously. Duplicate
+        membership (same character + same faction) returns Conflict.
+
+        Publishes a faction.member.added event for downstream consumers.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddMemberRequest'
+      responses:
+        '200':
+          description: Member added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionMemberResponse'
+        '404':
+          description: Faction or character not found
+        '409':
+          description: Character is already a member of this faction, or faction is not active
+
+  /faction/member/remove:
+    post:
+      summary: Remove a character from a faction
+      operationId: removeMember
+      tags:
+      - Membership
+      description: |
+        Removes a character's membership in a faction. Publishes a
+        faction.member.removed event for downstream consumers.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveMemberRequest'
+      responses:
+        '200':
+          description: Member removed
+        '404':
+          description: Membership not found
+
+  /faction/member/list:
+    post:
+      summary: List members of a faction
+      operationId: listMembers
+      tags:
+      - Membership
+      description: |
+        Returns a paginated list of members for a faction. Supports filtering
+        by role and cursor-based pagination. Ordered by join date descending.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListMembersRequest'
+      responses:
+        '200':
+          description: Members retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListMembersResponse'
+        '404':
+          description: Faction not found
+
+  /faction/member/list-by-character:
+    post:
+      summary: List a character's faction memberships
+      operationId: listMembershipsByCharacter
+      tags:
+      - Membership
+      description: |
+        Returns all faction memberships for a character. Used by lib-obligation
+        to determine which guild faction norms apply to a character, and by the
+        ${faction.*} variable provider for ABML behavior expressions.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListMembershipsByCharacterRequest'
+      responses:
+        '200':
+          description: Memberships retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListMembershipsByCharacterResponse'
+
+  /faction/member/update-role:
+    post:
+      summary: Update a member's role
+      operationId: updateMemberRole
+      tags:
+      - Membership
+      description: |
+        Changes a member's role within a faction. Publishes a
+        faction.member.role-changed event for downstream consumers.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMemberRoleRequest'
+      responses:
+        '200':
+          description: Role updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionMemberResponse'
+        '404':
+          description: Membership not found
+
+  /faction/member/check:
+    post:
+      summary: Check if a character is a member of a faction
+      operationId: checkMembership
+      tags:
+      - Membership
+      description: |
+        Returns whether a character is currently a member of the specified faction,
+        and if so, their role. Lightweight lookup for permission/capability checks.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckMembershipRequest'
+      responses:
+        '200':
+          description: Membership check result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckMembershipResponse'
+
+  # ===========================================================================
+  # Territory (4 endpoints)
+  # ===========================================================================
+
+  /faction/territory/claim:
+    post:
+      summary: Claim a location for a faction
+      operationId: claimTerritory
+      tags:
+      - Territory
+      description: |
+        Claims a location as faction territory. Requires the faction's seed to
+        have unlocked the "territory.claim" capability. A location can only have
+        one controlling faction at a time (exclusive claim). If the location is
+        already claimed by another faction, the claim is rejected with Conflict.
+
+        The faction must belong to the same realm as the location.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClaimTerritoryRequest'
+      responses:
+        '200':
+          description: Territory claimed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TerritoryClaimResponse'
+        '403':
+          description: Faction seed lacks territory.claim capability
+        '404':
+          description: Faction or location not found
+        '409':
+          description: Location already claimed by another faction, or realm mismatch
+
+  /faction/territory/release:
+    post:
+      summary: Release a territory claim
+      operationId: releaseTerritory
+      tags:
+      - Territory
+      description: |
+        Releases a faction's claim on a location. The territory becomes unclaimed
+        and available for other factions. Publishes a faction.territory.released event.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReleaseTerritoryRequest'
+      responses:
+        '200':
+          description: Territory released
+        '404':
+          description: Territory claim not found
+
+  /faction/territory/list:
+    post:
+      summary: List territory claims for a faction
+      operationId: listTerritoryClaims
+      tags:
+      - Territory
+      description: |
+        Returns all territory claims for a faction with optional status filtering
+        and cursor-based pagination.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListTerritoryClaimsRequest'
+      responses:
+        '200':
+          description: Territory claims retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListTerritoryClaimsResponse'
+        '404':
+          description: Faction not found
+
+  /faction/territory/get-controlling:
+    post:
+      summary: Get the controlling faction for a location
+      operationId: getControllingFaction
+      tags:
+      - Territory
+      description: |
+        Returns the faction that currently controls a location. Used by
+        lib-obligation and the norm resolution hierarchy to determine which
+        location faction norms apply at a character's current position.
+
+        Returns 404 if the location has no controlling faction.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetControllingFactionRequest'
+      responses:
+        '200':
+          description: Controlling faction retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ControllingFactionResponse'
+        '404':
+          description: No faction controls this location
+
+  # ===========================================================================
+  # Norms (5 endpoints)
+  # ===========================================================================
+
+  /faction/norm/define:
+    post:
+      summary: Define a behavioral norm for a faction
+      operationId: defineNorm
+      tags:
+      - Norms
+      description: |
+        Creates a new behavioral norm definition for a faction. Requires the
+        faction's seed to have unlocked the "norm.define" capability (growth
+        threshold must be reached). Higher-severity norms may require additional
+        capabilities (norm.enforce.basic for Standard, norm.enforce.sanctions
+        for Strict).
+
+        Norms are stored as faction configuration and queried by lib-obligation
+        for NPC cognition cost modifiers. They are NOT contract instances --
+        this avoids the scaling problem of 100K NPCs each needing individual
+        contract instances for ambient social rules.
+
+        The violationType is an opaque string that maps to lib-obligation's
+        violation type vocabulary (e.g., "theft", "deception", "violence",
+        "honor_combat"). No separate taxonomy is maintained -- the vocabulary
+        is defined by contract templates and action tag mappings.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DefineNormRequest'
+      responses:
+        '200':
+          description: Norm defined
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NormDefinitionResponse'
+        '403':
+          description: Faction seed lacks required norm capability
+        '404':
+          description: Faction not found
+        '409':
+          description: Faction is not active, or maximum norms per faction reached
+
+  /faction/norm/update:
+    post:
+      summary: Update an existing norm
+      operationId: updateNorm
+      tags:
+      - Norms
+      description: |
+        Updates properties of an existing norm definition. The violationType
+        cannot be changed (delete and recreate if needed). Severity changes
+        are subject to capability checks.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateNormRequest'
+      responses:
+        '200':
+          description: Norm updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NormDefinitionResponse'
+        '403':
+          description: Faction seed lacks required capability for new severity
+        '404':
+          description: Norm not found
+
+  /faction/norm/delete:
+    post:
+      summary: Delete a norm definition
+      operationId: deleteNorm
+      tags:
+      - Norms
+      description: Removes a behavioral norm definition from a faction.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteNormRequest'
+      responses:
+        '200':
+          description: Norm deleted
+        '404':
+          description: Norm not found
+
+  /faction/norm/list:
+    post:
+      summary: List norms defined by a faction
+      operationId: listNorms
+      tags:
+      - Norms
+      description: |
+        Returns all norm definitions for a faction with optional filtering
+        by severity and scope.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListNormsRequest'
+      responses:
+        '200':
+          description: Norms retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListNormsResponse'
+        '404':
+          description: Faction not found
+
+  /faction/norm/query-applicable:
+    post:
+      summary: Query all norms applicable to a character
+      operationId: queryApplicableNorms
+      tags:
+      - Norms
+      description: |
+        Critical integration endpoint for lib-obligation. Aggregates norms from
+        three resolution layers and returns a merged norm set with most-specific-wins
+        resolution applied:
+
+        1. Membership norms: from the character's faction memberships (guild norms)
+        2. Territory norms: from the controlling faction at the character's location
+        3. Realm baseline norms: from the realm's baseline cultural faction
+
+        The mergedNormMap provides the winning norm for each violation type after
+        resolution. When multiple layers define the same violation type, the
+        most specific layer wins (membership > territory > realm baseline).
+
+        Results are cached per character+location combination with configurable TTL.
+        lib-obligation can use forceRefresh to bypass the cache after faction
+        membership or location changes.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryApplicableNormsRequest'
+      responses:
+        '200':
+          description: Applicable norms resolved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryApplicableNormsResponse'
+
+  # ===========================================================================
+  # Resource Cleanup (3 endpoints)
+  # ===========================================================================
+
+  /faction/cleanup-by-character:
+    post:
+      summary: Cleanup faction data for a deleted character
+      operationId: cleanupByCharacter
+      tags:
+      - Resource Cleanup
+      description: |
+        Called by lib-resource cleanup coordination when a character is deleted.
+        Removes all faction memberships for the character. Territory claims and
+        norm definitions are faction-owned, not character-owned, so they remain.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByCharacterRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupByCharacterResponse'
+
+  /faction/cleanup-by-realm:
+    post:
+      summary: Cleanup faction data for a deleted realm
+      operationId: cleanupByRealm
+      tags:
+      - Resource Cleanup
+      description: |
+        Called by lib-resource cleanup coordination when a realm is deleted.
+        Removes all factions belonging to the realm, including their memberships,
+        territory claims, norm definitions, and associated seeds.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByRealmRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupByRealmResponse'
+
+  /faction/cleanup-by-location:
+    post:
+      summary: Cleanup territory claims for a deleted location
+      operationId: cleanupByLocation
+      tags:
+      - Resource Cleanup
+      description: |
+        Called by lib-resource cleanup coordination when a location is deleted.
+        Removes all territory claims referencing the location. The faction itself
+        remains intact.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByLocationRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupByLocationResponse'
+
+  # ===========================================================================
+  # Compression (2 endpoints)
+  # ===========================================================================
+
+  /faction/get-compress-data:
+    post:
+      summary: Get faction data for character archival compression
+      operationId: getCompressData
+      tags:
+      - Compression
+      description: |
+        Called by Resource service during character compression. Returns faction
+        memberships and roles for the character for archival. Norm definitions
+        are faction-owned data and not included in character archives.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCompressDataRequest'
+      responses:
+        '200':
+          description: Compressed data returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionArchive'
+        '404':
+          description: No faction data for character
+
+  /faction/restore-from-archive:
+    post:
+      summary: Restore faction data from archive
+      operationId: restoreFromArchive
+      tags:
+      - Compression
+      description: |
+        Called by Resource service during character decompression. Restores
+        faction memberships from archive data. Only restores memberships for
+        factions that still exist.
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestoreFromArchiveRequest'
+      responses:
+        '200':
+          description: Restoration result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestoreFromArchiveResponse'
+        '400':
+          description: Invalid archive data
+
+components:
+  schemas:
+    # =========================================================================
+    # Enums
+    # =========================================================================
+
+    FactionStatus:
+      type: string
+      description: Lifecycle status of a faction entity
+      enum:
+      - Active
+      - Deprecated
+      - Dissolved
+
+    FactionMemberRole:
+      type: string
+      description: Role hierarchy for faction membership
+      enum:
+      - Leader
+      - Officer
+      - Member
+      - Recruit
+
+    NormSeverity:
+      type: string
+      description: Enforcement intensity level for a behavioral norm
+      enum:
+      - Advisory
+      - Standard
+      - Strict
+
+    NormScope:
+      type: string
+      description: Applicability scope for a behavioral norm
+      enum:
+      - Internal
+      - External
+
+    NormSource:
+      type: string
+      description: Resolution layer source indicating how a norm was resolved for a character
+      enum:
+      - Membership
+      - Territory
+      - RealmBaseline
+
+    TerritoryClaimStatus:
+      type: string
+      description: Lifecycle status of a territory claim
+      enum:
+      - Active
+      - Contested
+      - Released
+
+    # =========================================================================
+    # Faction CRUD Models
+    # =========================================================================
+
+    FactionResponse:
+      type: object
+      description: Complete faction entity with seed growth status
+      additionalProperties: false
+      required:
+      - factionId
+      - gameServiceId
+      - name
+      - code
+      - realmId
+      - isRealmBaseline
+      - status
+      - memberCount
+      - createdAt
+      - updatedAt
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: Unique identifier for the faction
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service this faction belongs to
+        name:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: Display name of the faction
+        code:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Unique code within the game service (e.g., "thieves_guild")
+        description:
+          type: string
+          nullable: true
+          maxLength: 2048
+          description: Human-readable description of the faction
+        realmId:
+          type: string
+          format: uuid
+          description: Realm this faction belongs to
+        isRealmBaseline:
+          type: boolean
+          description: Whether this faction is the realm's baseline cultural faction
+        parentFactionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Parent faction in hierarchy (null for top-level factions)
+        seedId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Associated seed for growth tracking (null if seed creation failed)
+        status:
+          $ref: '#/components/schemas/FactionStatus'
+          description: Current lifecycle status
+        currentPhase:
+          type: string
+          nullable: true
+          maxLength: 64
+          description: Current seed growth phase (denormalized from lib-seed for convenience)
+        memberCount:
+          type: integer
+          minimum: 0
+          description: Current number of members in this faction
+        createdAt:
+          type: string
+          format: date-time
+          description: When this faction was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: When this faction was last updated
+
+    CreateFactionRequest:
+      type: object
+      description: Request to create a new faction
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - name
+      - code
+      - realmId
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service to scope this faction to
+        name:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: Display name for the faction
+        code:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Unique code within the game service (e.g., "thieves_guild")
+        description:
+          type: string
+          nullable: true
+          maxLength: 2048
+          description: Human-readable description of the faction
+        realmId:
+          type: string
+          format: uuid
+          description: Realm this faction belongs to
+        parentFactionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Parent faction for hierarchy (null for top-level)
+
+    GetFactionRequest:
+      type: object
+      description: Request to get a faction by ID
+      additionalProperties: false
+      required:
+      - factionId
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: ID of the faction to retrieve
+
+    GetFactionByCodeRequest:
+      type: object
+      description: Request to get a faction by code within a game service
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - code
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope for code lookup
+        code:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Faction code to look up
+
+    ListFactionsRequest:
+      type: object
+      description: Request to list factions with filters
+      additionalProperties: false
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by game service
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by realm
+        status:
+          $ref: '#/components/schemas/FactionStatus'
+          nullable: true
+          description: Filter by lifecycle status
+        parentFactionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by parent faction (null returns top-level factions only when isTopLevelOnly is true)
+        isTopLevelOnly:
+          type: boolean
+          default: false
+          description: When true, returns only factions with no parent
+        isRealmBaseline:
+          type: boolean
+          nullable: true
+          description: Filter by realm baseline status
+        cursor:
+          type: string
+          nullable: true
+          maxLength: 512
+          description: Pagination cursor from a previous response
+        pageSize:
+          type: integer
+          default: 20
+          minimum: 1
+          maximum: 100
+          description: Number of factions to return per page
+
+    ListFactionsResponse:
+      type: object
+      description: Paginated list of factions
+      additionalProperties: false
+      required:
+      - factions
+      - hasMore
+      properties:
+        factions:
+          type: array
+          items:
+            $ref: '#/components/schemas/FactionResponse'
+          description: Factions for this page
+        nextCursor:
+          type: string
+          nullable: true
+          maxLength: 512
+          description: Cursor for the next page (null if no more pages)
+        hasMore:
+          type: boolean
+          description: Whether more pages are available
+
+    UpdateFactionRequest:
+      type: object
+      description: Request to update a faction
+      additionalProperties: false
+      required:
+      - factionId
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: ID of the faction to update
+        name:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 256
+          description: New display name (null to keep current)
+        code:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 128
+          description: New code (null to keep current, must be unique within game service)
+        description:
+          type: string
+          nullable: true
+          maxLength: 2048
+          description: New description (null to keep current)
+
+    DeprecateFactionRequest:
+      type: object
+      description: Request to deprecate a faction
+      additionalProperties: false
+      required:
+      - factionId
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: ID of the faction to deprecate
+
+    UndeprecateFactionRequest:
+      type: object
+      description: Request to reactivate a deprecated faction
+      additionalProperties: false
+      required:
+      - factionId
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: ID of the faction to reactivate
+
+    DeleteFactionRequest:
+      type: object
+      description: Request to delete a faction
+      additionalProperties: false
+      required:
+      - factionId
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: ID of the faction to delete
+
+    SeedFactionDefinition:
+      type: object
+      description: A single faction definition for bulk seeding
+      additionalProperties: false
+      required:
+      - code
+      - name
+      - realmId
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Unique faction code within game service
+        name:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: Display name
+        description:
+          type: string
+          nullable: true
+          maxLength: 2048
+          description: Faction description
+        realmId:
+          type: string
+          format: uuid
+          description: Realm this faction belongs to
+        parentCode:
+          type: string
+          nullable: true
+          maxLength: 128
+          description: Code of parent faction (resolved in second pass)
+        isRealmBaseline:
+          type: boolean
+          default: false
+          description: Whether to designate this as the realm baseline faction
+
+    SeedFactionsRequest:
+      type: object
+      description: Request to bulk seed factions from configuration
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - factions
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service to scope all seeded factions to
+        factions:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeedFactionDefinition'
+          minItems: 1
+          maxItems: 500
+          description: Faction definitions to seed
+
+    SeedFactionsResponse:
+      type: object
+      description: Result of bulk faction seeding
+      additionalProperties: false
+      required:
+      - created
+      - skipped
+      - failed
+      properties:
+        created:
+          type: integer
+          minimum: 0
+          description: Number of factions successfully created
+        skipped:
+          type: integer
+          minimum: 0
+          description: Number of factions skipped (already exist)
+        failed:
+          type: integer
+          minimum: 0
+          description: Number of factions that failed to create
+        errors:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: Error messages for failed faction creations
+
+    DesignateRealmBaselineRequest:
+      type: object
+      description: Request to designate a faction as the realm baseline
+      additionalProperties: false
+      required:
+      - factionId
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: ID of the faction to designate as realm baseline
+
+    GetRealmBaselineRequest:
+      type: object
+      description: Request to get the realm baseline faction
+      additionalProperties: false
+      required:
+      - realmId
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm to get the baseline faction for
+
+    # =========================================================================
+    # Membership Models
+    # =========================================================================
+
+    FactionMemberResponse:
+      type: object
+      description: Faction membership record linking a character to a faction with a role
+      additionalProperties: false
+      required:
+      - factionId
+      - characterId
+      - role
+      - joinedAt
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: Faction the character belongs to
+        characterId:
+          type: string
+          format: uuid
+          description: Character who is a member
+        role:
+          $ref: '#/components/schemas/FactionMemberRole'
+          description: Member's role in the faction
+        joinedAt:
+          type: string
+          format: date-time
+          description: When the character joined the faction
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the membership was last updated (role change)
+
+    AddMemberRequest:
+      type: object
+      description: Request to add a character to a faction
+      additionalProperties: false
+      required:
+      - factionId
+      - characterId
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: Faction to add the character to
+        characterId:
+          type: string
+          format: uuid
+          description: Character to add as a member
+        role:
+          $ref: '#/components/schemas/FactionMemberRole'
+          nullable: true
+          description: Role to assign (null uses configured default)
+
+    RemoveMemberRequest:
+      type: object
+      description: Request to remove a character from a faction
+      additionalProperties: false
+      required:
+      - factionId
+      - characterId
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: Faction to remove the character from
+        characterId:
+          type: string
+          format: uuid
+          description: Character to remove
+
+    ListMembersRequest:
+      type: object
+      description: Request to list members of a faction
+      additionalProperties: false
+      required:
+      - factionId
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: Faction to list members for
+        role:
+          $ref: '#/components/schemas/FactionMemberRole'
+          nullable: true
+          description: Filter by role
+        cursor:
+          type: string
+          nullable: true
+          maxLength: 512
+          description: Pagination cursor from a previous response
+        pageSize:
+          type: integer
+          default: 20
+          minimum: 1
+          maximum: 100
+          description: Number of members to return per page
+
+    ListMembersResponse:
+      type: object
+      description: Paginated list of faction members
+      additionalProperties: false
+      required:
+      - members
+      - hasMore
+      properties:
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/FactionMemberResponse'
+          description: Members for this page
+        nextCursor:
+          type: string
+          nullable: true
+          maxLength: 512
+          description: Cursor for the next page (null if no more pages)
+        hasMore:
+          type: boolean
+          description: Whether more pages are available
+
+    ListMembershipsByCharacterRequest:
+      type: object
+      description: Request to list a character's faction memberships
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character to list memberships for
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by game service
+
+    ListMembershipsByCharacterResponse:
+      type: object
+      description: All faction memberships for a character
+      additionalProperties: false
+      required:
+      - characterId
+      - memberships
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character these memberships belong to
+        memberships:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterMembershipEntry'
+          description: All faction memberships for the character
+
+    CharacterMembershipEntry:
+      type: object
+      description: A character's membership in a faction with faction details
+      additionalProperties: false
+      required:
+      - factionId
+      - factionName
+      - factionCode
+      - role
+      - joinedAt
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: Faction the character belongs to
+        factionName:
+          type: string
+          description: Display name of the faction
+        factionCode:
+          type: string
+          description: Unique code of the faction
+        role:
+          $ref: '#/components/schemas/FactionMemberRole'
+          description: Character's role in this faction
+        joinedAt:
+          type: string
+          format: date-time
+          description: When the character joined this faction
+
+    UpdateMemberRoleRequest:
+      type: object
+      description: Request to update a member's role
+      additionalProperties: false
+      required:
+      - factionId
+      - characterId
+      - role
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: Faction containing the membership
+        characterId:
+          type: string
+          format: uuid
+          description: Character whose role to update
+        role:
+          $ref: '#/components/schemas/FactionMemberRole'
+          description: New role to assign
+
+    CheckMembershipRequest:
+      type: object
+      description: Request to check faction membership
+      additionalProperties: false
+      required:
+      - factionId
+      - characterId
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: Faction to check membership in
+        characterId:
+          type: string
+          format: uuid
+          description: Character to check
+
+    CheckMembershipResponse:
+      type: object
+      description: Result of a membership check
+      additionalProperties: false
+      required:
+      - factionId
+      - characterId
+      - isMember
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: Faction that was checked
+        characterId:
+          type: string
+          format: uuid
+          description: Character that was checked
+        isMember:
+          type: boolean
+          description: Whether the character is a member
+        role:
+          $ref: '#/components/schemas/FactionMemberRole'
+          nullable: true
+          description: Member's role (null if not a member)
+
+    # =========================================================================
+    # Territory Models
+    # =========================================================================
+
+    TerritoryClaimResponse:
+      type: object
+      description: A faction's territory claim on a location
+      additionalProperties: false
+      required:
+      - claimId
+      - factionId
+      - locationId
+      - status
+      - claimedAt
+      properties:
+        claimId:
+          type: string
+          format: uuid
+          description: Unique identifier for this territory claim
+        factionId:
+          type: string
+          format: uuid
+          description: Faction that holds this claim
+        locationId:
+          type: string
+          format: uuid
+          description: Location that is claimed
+        status:
+          $ref: '#/components/schemas/TerritoryClaimStatus'
+          description: Current status of the territory claim
+        claimedAt:
+          type: string
+          format: date-time
+          description: When the territory was claimed
+        releasedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the territory was released (null if still active)
+
+    ClaimTerritoryRequest:
+      type: object
+      description: Request to claim a location as faction territory
+      additionalProperties: false
+      required:
+      - factionId
+      - locationId
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: Faction claiming the territory
+        locationId:
+          type: string
+          format: uuid
+          description: Location to claim
+
+    ReleaseTerritoryRequest:
+      type: object
+      description: Request to release a territory claim
+      additionalProperties: false
+      required:
+      - claimId
+      properties:
+        claimId:
+          type: string
+          format: uuid
+          description: ID of the territory claim to release
+
+    ListTerritoryClaimsRequest:
+      type: object
+      description: Request to list territory claims for a faction
+      additionalProperties: false
+      required:
+      - factionId
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: Faction to list claims for
+        status:
+          $ref: '#/components/schemas/TerritoryClaimStatus'
+          nullable: true
+          description: Filter by claim status
+        cursor:
+          type: string
+          nullable: true
+          maxLength: 512
+          description: Pagination cursor from a previous response
+        pageSize:
+          type: integer
+          default: 20
+          minimum: 1
+          maximum: 100
+          description: Number of claims to return per page
+
+    ListTerritoryClaimsResponse:
+      type: object
+      description: Paginated list of territory claims
+      additionalProperties: false
+      required:
+      - claims
+      - hasMore
+      properties:
+        claims:
+          type: array
+          items:
+            $ref: '#/components/schemas/TerritoryClaimResponse'
+          description: Territory claims for this page
+        nextCursor:
+          type: string
+          nullable: true
+          maxLength: 512
+          description: Cursor for the next page (null if no more pages)
+        hasMore:
+          type: boolean
+          description: Whether more pages are available
+
+    GetControllingFactionRequest:
+      type: object
+      description: Request to get the controlling faction for a location
+      additionalProperties: false
+      required:
+      - locationId
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: Location to find the controlling faction for
+
+    ControllingFactionResponse:
+      type: object
+      description: The faction controlling a location
+      additionalProperties: false
+      required:
+      - locationId
+      - faction
+      - claimId
+      - claimedAt
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: Location that is controlled
+        faction:
+          $ref: '#/components/schemas/FactionResponse'
+          description: The controlling faction
+        claimId:
+          type: string
+          format: uuid
+          description: Territory claim record ID
+        claimedAt:
+          type: string
+          format: date-time
+          description: When the territory was claimed
+
+    # =========================================================================
+    # Norm Models
+    # =========================================================================
+
+    NormDefinitionResponse:
+      type: object
+      description: A behavioral norm definition stored in a faction
+      additionalProperties: false
+      required:
+      - normId
+      - factionId
+      - violationType
+      - basePenalty
+      - severity
+      - scope
+      - createdAt
+      properties:
+        normId:
+          type: string
+          format: uuid
+          description: Unique identifier for this norm definition
+        factionId:
+          type: string
+          format: uuid
+          description: Faction that owns this norm
+        violationType:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Violation type code mapping to lib-obligation vocabulary (e.g., "theft", "deception")
+        basePenalty:
+          type: number
+          format: float
+          minimum: 0.0
+          description: Base GOAP cost penalty for violating this norm
+        severity:
+          $ref: '#/components/schemas/NormSeverity'
+          description: Enforcement intensity level
+        scope:
+          $ref: '#/components/schemas/NormScope'
+          description: Whether norm applies to member-only or all interactions
+        description:
+          type: string
+          nullable: true
+          maxLength: 1024
+          description: Human-readable description of the norm
+        createdAt:
+          type: string
+          format: date-time
+          description: When this norm was defined
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this norm was last updated
+
+    DefineNormRequest:
+      type: object
+      description: Request to define a behavioral norm for a faction
+      additionalProperties: false
+      required:
+      - factionId
+      - violationType
+      - basePenalty
+      - severity
+      - scope
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: Faction to define the norm for
+        violationType:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Violation type code (e.g., "theft", "deception", "violence")
+        basePenalty:
+          type: number
+          format: float
+          minimum: 0.0
+          description: Base GOAP cost penalty for violating this norm
+        severity:
+          $ref: '#/components/schemas/NormSeverity'
+          description: Enforcement intensity level
+        scope:
+          $ref: '#/components/schemas/NormScope'
+          description: Whether norm applies to member-only or all interactions
+        description:
+          type: string
+          nullable: true
+          maxLength: 1024
+          description: Human-readable description of the norm
+
+    UpdateNormRequest:
+      type: object
+      description: Request to update an existing norm definition
+      additionalProperties: false
+      required:
+      - normId
+      properties:
+        normId:
+          type: string
+          format: uuid
+          description: ID of the norm to update
+        basePenalty:
+          type: number
+          format: float
+          nullable: true
+          minimum: 0.0
+          description: New base penalty (null to keep current)
+        severity:
+          $ref: '#/components/schemas/NormSeverity'
+          nullable: true
+          description: New severity level (null to keep current)
+        scope:
+          $ref: '#/components/schemas/NormScope'
+          nullable: true
+          description: New scope (null to keep current)
+        description:
+          type: string
+          nullable: true
+          maxLength: 1024
+          description: New description (null to keep current)
+
+    DeleteNormRequest:
+      type: object
+      description: Request to delete a norm definition
+      additionalProperties: false
+      required:
+      - normId
+      properties:
+        normId:
+          type: string
+          format: uuid
+          description: ID of the norm to delete
+
+    ListNormsRequest:
+      type: object
+      description: Request to list norms defined by a faction
+      additionalProperties: false
+      required:
+      - factionId
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: Faction to list norms for
+        severity:
+          $ref: '#/components/schemas/NormSeverity'
+          nullable: true
+          description: Filter by severity level
+        scope:
+          $ref: '#/components/schemas/NormScope'
+          nullable: true
+          description: Filter by scope
+
+    ListNormsResponse:
+      type: object
+      description: List of norm definitions for a faction
+      additionalProperties: false
+      required:
+      - factionId
+      - norms
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: Faction these norms belong to
+        norms:
+          type: array
+          items:
+            $ref: '#/components/schemas/NormDefinitionResponse'
+          description: All matching norm definitions
+
+    QueryApplicableNormsRequest:
+      type: object
+      description: Request to query all norms applicable to a character
+      additionalProperties: false
+      required:
+      - characterId
+      - realmId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character to resolve norms for
+        realmId:
+          type: string
+          format: uuid
+          description: Realm the character is in (for baseline faction resolution)
+        locationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Character's current location (for territory faction resolution)
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Game service scope for membership filtering
+        forceRefresh:
+          type: boolean
+          default: false
+          description: Bypass cached norm resolution and rebuild from current state
+
+    ApplicableNormEntry:
+      type: object
+      description: A norm applicable to a character from the resolution hierarchy
+      additionalProperties: false
+      required:
+      - normId
+      - factionId
+      - factionName
+      - violationType
+      - basePenalty
+      - severity
+      - scope
+      - source
+      properties:
+        normId:
+          type: string
+          format: uuid
+          description: Unique identifier of the norm definition
+        factionId:
+          type: string
+          format: uuid
+          description: Faction that owns this norm
+        factionName:
+          type: string
+          description: Display name of the owning faction
+        violationType:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Violation type code
+        basePenalty:
+          type: number
+          format: float
+          minimum: 0.0
+          description: Base GOAP cost penalty
+        severity:
+          $ref: '#/components/schemas/NormSeverity'
+          description: Enforcement intensity level
+        scope:
+          $ref: '#/components/schemas/NormScope'
+          description: Applicability scope
+        source:
+          $ref: '#/components/schemas/NormSource'
+          description: Resolution layer this norm came from
+        description:
+          type: string
+          nullable: true
+          maxLength: 1024
+          description: Human-readable description of the norm
+
+    MergedNormEntry:
+      type: object
+      description: Winning norm for a violation type after most-specific-wins resolution
+      additionalProperties: false
+      required:
+      - violationType
+      - basePenalty
+      - source
+      - factionId
+      - severity
+      properties:
+        violationType:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Violation type code
+        basePenalty:
+          type: number
+          format: float
+          minimum: 0.0
+          description: Base GOAP cost penalty from the winning norm
+        source:
+          $ref: '#/components/schemas/NormSource'
+          description: Resolution layer that won
+        factionId:
+          type: string
+          format: uuid
+          description: Faction that owns the winning norm
+        severity:
+          $ref: '#/components/schemas/NormSeverity'
+          description: Severity of the winning norm
+
+    QueryApplicableNormsResponse:
+      type: object
+      description: Resolved applicable norms for a character with hierarchy merge results
+      additionalProperties: false
+      required:
+      - characterId
+      - realmId
+      - applicableNorms
+      - mergedNormMap
+      - membershipFactionCount
+      - territoryFactionResolved
+      - realmBaselineResolved
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character norms were resolved for
+        realmId:
+          type: string
+          format: uuid
+          description: Realm used for baseline resolution
+        locationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Location used for territory resolution (null if not provided)
+        applicableNorms:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApplicableNormEntry'
+          description: All applicable norms from all resolution layers
+        mergedNormMap:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/MergedNormEntry'
+          description: Violation type to winning norm after most-specific-wins resolution
+        membershipFactionCount:
+          type: integer
+          minimum: 0
+          description: Number of factions the character is a member of
+        territoryFactionResolved:
+          type: boolean
+          description: Whether a controlling faction was found for the location
+        realmBaselineResolved:
+          type: boolean
+          description: Whether a baseline faction was found for the realm
+
+    # =========================================================================
+    # Resource Cleanup Models
+    # =========================================================================
+
+    CleanupByCharacterRequest:
+      type: object
+      description: Request to cleanup faction data for a deleted character
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character that was deleted
+
+    CleanupByCharacterResponse:
+      type: object
+      description: Result of character faction data cleanup
+      additionalProperties: false
+      required:
+      - membershipsRemoved
+      - success
+      properties:
+        membershipsRemoved:
+          type: integer
+          minimum: 0
+          description: Number of faction memberships removed
+        success:
+          type: boolean
+          description: Whether cleanup completed successfully
+
+    CleanupByRealmRequest:
+      type: object
+      description: Request to cleanup faction data for a deleted realm
+      additionalProperties: false
+      required:
+      - realmId
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm that was deleted
+
+    CleanupByRealmResponse:
+      type: object
+      description: Result of realm faction data cleanup
+      additionalProperties: false
+      required:
+      - factionsRemoved
+      - membershipsRemoved
+      - territoryClaimsRemoved
+      - normsRemoved
+      - success
+      properties:
+        factionsRemoved:
+          type: integer
+          minimum: 0
+          description: Number of factions removed
+        membershipsRemoved:
+          type: integer
+          minimum: 0
+          description: Number of memberships removed across all factions
+        territoryClaimsRemoved:
+          type: integer
+          minimum: 0
+          description: Number of territory claims removed
+        normsRemoved:
+          type: integer
+          minimum: 0
+          description: Number of norm definitions removed
+        success:
+          type: boolean
+          description: Whether cleanup completed successfully
+
+    CleanupByLocationRequest:
+      type: object
+      description: Request to cleanup territory claims for a deleted location
+      additionalProperties: false
+      required:
+      - locationId
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: ID of the location that was deleted
+
+    CleanupByLocationResponse:
+      type: object
+      description: Result of location territory claim cleanup
+      additionalProperties: false
+      required:
+      - claimsRemoved
+      - success
+      properties:
+        claimsRemoved:
+          type: integer
+          minimum: 0
+          description: Number of territory claims removed
+        success:
+          type: boolean
+          description: Whether cleanup completed successfully
+
+    # =========================================================================
+    # Compression Models
+    # =========================================================================
+
+    GetCompressDataRequest:
+      type: object
+      description: Request to get faction data for character compression
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to get compress data for
+
+    FactionArchive:
+      type: object
+      x-archive-type: true
+      description: |
+        Complete faction membership data for archive storage and storyline SDK consumption.
+        Inherits base archive properties from ResourceArchiveBase.
+        The characterId field equals resourceId for convenience.
+      allOf:
+      - $ref: '#/components/schemas/ResourceArchiveBase'
+      additionalProperties: false
+      required:
+      - characterId
+      - hasMemberships
+      - membershipCount
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character this data belongs to (equals resourceId)
+        hasMemberships:
+          type: boolean
+          description: Whether any faction memberships exist
+        membershipCount:
+          type: integer
+          minimum: 0
+          description: Number of membership records in archive
+        memberships:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/FactionMemberResponse'
+          description: Faction membership records (null if hasMemberships is false)
+
+    RestoreFromArchiveRequest:
+      type: object
+      description: Request to restore faction data from archive
+      additionalProperties: false
+      required:
+      - characterId
+      - data
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to restore data for
+        data:
+          type: string
+          description: Base64-encoded gzipped FactionArchive JSON
+
+    RestoreFromArchiveResponse:
+      type: object
+      description: Result of restoration from archive
+      additionalProperties: false
+      required:
+      - characterId
+      - membershipsRestored
+      - success
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character data was restored for
+        membershipsRestored:
+          type: boolean
+          description: Whether faction memberships were restored
+        success:
+          type: boolean
+          description: Whether the restoration completed successfully
+    ResourceArchiveBase:
+      type: object
+      description: |
+        Base schema for all resource archives that can be stored in
+        the resource service's archive bundles and consumed by the
+        storyline SDK's ArchiveExtractor.
+
+        Archives implementing this base schema are marked with
+        x-archive-type: true and are automatically collected by
+        the archive generation script for SDK model generation.
+      required:
+      - resourceId
+      - resourceType
+      - archivedAt
+      - schemaVersion
+      properties:
+        resourceId:
+          type: string
+          format: uuid
+          description: Unique identifier of the archived resource
+        resourceType:
+          type: string
+          description: Type identifier (e.g., "character", "character-personality", "realm-history")
+        archivedAt:
+          type: string
+          format: date-time
+          description: When this archive was created
+        schemaVersion:
+          type: integer
+          minimum: 1
+          description: Schema version for forward compatibility migration
+        nestedArchives:
+          type: array
+          description: Child archives from dependent resources (populated by lib-resource compression)
+          items:
+            $ref: '#/components/schemas/ResourceArchiveBase'
+x-inlined-types:
+- ResourceArchiveBase

@@ -1,0 +1,186 @@
+openapi: 3.0.3
+info:
+  title: Divine Service Events Lifecycle Events
+  description: "Auto-generated lifecycle event schemas for divine service.\nDO NOT EDIT - This file is completely overwritten
+    by generate-lifecycle-events.py.\nSource of truth: divine-events.yaml x-lifecycle section."
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    DeityCreatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to deity.created when a deity is created
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - deityId
+      - gameServiceId
+      - code
+      - displayName
+      - description
+      - domains
+      - status
+      - followerCount
+      - maxAttentionSlots
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: deity.created
+          description: 'Event type identifier: deity.created'
+        deityId: &id001
+          type: string
+          format: uuid
+          description: "Unique identifier for the deity"
+        gameServiceId: &id002
+          type: string
+          format: uuid
+          description: "Game service this deity belongs to"
+        code: &id003
+          type: string
+          description: "Unique code within the game service"
+        displayName: &id004
+          type: string
+          description: "Human-readable display name"
+        description: &id005
+          type: string
+          description: "Description of the deity"
+        domains: &id006
+          type: array
+          items:
+            $ref: '../divine-api.yaml#/components/schemas/DomainInfluence'
+          description: "Domain influences"
+        status: &id007
+          $ref: ../divine-api.yaml#/components/schemas/DeityStatus
+          description: "Current lifecycle status"
+        followerCount: &id008
+          type: integer
+          description: "Number of active followers"
+        maxAttentionSlots: &id009
+          type: integer
+          description: "Maximum characters the deity can actively monitor"
+        actorId: &id010
+          type: string
+          format: uuid
+          nullable: true
+          description: "Associated actor ID for the deity watcher brain"
+        seedId: &id011
+          type: string
+          format: uuid
+          nullable: true
+          description: "Domain power seed ID"
+        currencyWalletId: &id012
+          type: string
+          format: uuid
+          nullable: true
+          description: "Divinity currency wallet ID"
+        realmId: &id013
+          type: string
+          format: uuid
+          nullable: true
+          description: "Home realm for this deity"
+        createdAt: &id014
+          type: string
+          format: date-time
+          description: "When the deity was created"
+        updatedAt: &id015
+          type: string
+          format: date-time
+          description: "When the deity was last updated"
+    DeityUpdatedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to deity.updated when a deity is updated
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - deityId
+      - gameServiceId
+      - code
+      - displayName
+      - description
+      - domains
+      - status
+      - followerCount
+      - maxAttentionSlots
+      - createdAt
+      - updatedAt
+      - changedFields
+      properties:
+        eventName:
+          type: string
+          default: deity.updated
+          description: 'Event type identifier: deity.updated'
+        deityId: *id001
+        gameServiceId: *id002
+        code: *id003
+        displayName: *id004
+        description: *id005
+        domains: *id006
+        status: *id007
+        followerCount: *id008
+        maxAttentionSlots: *id009
+        actorId: *id010
+        seedId: *id011
+        currencyWalletId: *id012
+        realmId: *id013
+        createdAt: *id014
+        updatedAt: *id015
+        changedFields:
+          type: array
+          items:
+            type: string
+          description: List of field names that were modified
+    DeityDeletedEvent:
+      allOf:
+      - $ref: ../common-events.yaml#/components/schemas/BaseServiceEvent
+      type: object
+      additionalProperties: false
+      description: Published to deity.deleted when a deity is deleted
+      required:
+      - eventName
+      - eventId
+      - timestamp
+      - deityId
+      - gameServiceId
+      - code
+      - displayName
+      - description
+      - domains
+      - status
+      - followerCount
+      - maxAttentionSlots
+      - createdAt
+      - updatedAt
+      properties:
+        eventName:
+          type: string
+          default: deity.deleted
+          description: 'Event type identifier: deity.deleted'
+        deityId: *id001
+        gameServiceId: *id002
+        code: *id003
+        displayName: *id004
+        description: *id005
+        domains: *id006
+        status: *id007
+        followerCount: *id008
+        maxAttentionSlots: *id009
+        actorId: *id010
+        seedId: *id011
+        currencyWalletId: *id012
+        realmId: *id013
+        createdAt: *id014
+        updatedAt: *id015
+        deletedReason:
+          type: string
+          nullable: true
+          description: Optional reason for deletion (e.g., "Merged into {targetId}")

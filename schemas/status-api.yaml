@@ -733,7 +733,7 @@ components:
           type: string
           format: uuid
           nullable: true
-          description: Contract template for lifecycle management (null for simple TTL statuses)
+          description: Contract template for lifecycle management (null for simple TTL statuses). When set, granting this status creates a contract instance with milestones matching the template's defined structure. The contract template should define milestones for status lifecycle phases (e.g., activation, expiration). Template values receive the grant request's metadata map, allowing callers to parameterize contract behavior per grant.
         itemTemplateId:
           type: string
           format: uuid
@@ -1033,7 +1033,7 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Arbitrary data passed to contract template values
+          description: "Arbitrary key-value data passed to contract template values and stored on the status instance. Convention for Divine integration - set metadata.blessingTier to the blessing tier string (e.g., minor, standard, greater, supreme) so the Divine service can query active blessings by tier."
 
     RemoveStatusRequest:
       type: object
@@ -1139,7 +1139,7 @@ components:
         includePassive:
           type: boolean
           default: false
-          description: Whether to include seed-derived passive effects in results
+          description: Whether to include seed-derived passive effects in results. Defaults to false because ListStatuses is typically used for UI display of item-based status effects only. Use GetEffects for unified queries that include seed-derived capabilities.
         page:
           type: integer
           minimum: 1
@@ -1365,7 +1365,7 @@ components:
         includePassive:
           type: boolean
           default: true
-          description: Whether to include seed-derived passive effects
+          description: Whether to include seed-derived passive effects. Defaults to true because GetEffects is the unified query endpoint designed to return all active effects. Set to false to retrieve only item-based statuses from this endpoint.
 
     GetSeedEffectsRequest:
       type: object
