@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Status;
@@ -7,6 +8,13 @@ namespace BeyondImmersion.BannouService.Status;
 /// Partial class for StatusService event handling.
 /// Contains event consumer registration and handler implementations.
 /// </summary>
+/// <remarks>
+/// <para>
+/// The <c>seed.capability.updated</c> subscription provides the distributed guarantee
+/// for seed effects cache invalidation across all nodes. The DI listener
+/// (<see cref="StatusSeedEvolutionListener"/>) provides fast local notification.
+/// </para>
+/// </remarks>
 public partial class StatusService
 {
     /// <summary>
@@ -19,18 +27,34 @@ public partial class StatusService
         eventConsumer.RegisterHandler<IStatusService, SeedCapabilityUpdatedEvent>(
             "seed.capability.updated",
             async (svc, evt) => await ((StatusService)svc).HandleSeedCapabilityUpdatedAsync(evt));
-
     }
 
     /// <summary>
-    /// Handles seed.capability.updated events.
-    /// TODO: Implement event handling logic.
+    /// Handles seed.capability.updated events for distributed cache invalidation.
+    /// Complements the DI listener which only fires on the node that processed the API call.
     /// </summary>
-    /// <param name="evt">The event data.</param>
-    public Task HandleSeedCapabilityUpdatedAsync(SeedCapabilityUpdatedEvent evt)
+    /// <param name="evt">The seed capability updated event.</param>
+    public async Task HandleSeedCapabilityUpdatedAsync(SeedCapabilityUpdatedEvent evt)
     {
-        // TODO: Implement seed.capability.updated event handling
-        _logger.LogInformation("Received {Topic} event", "seed.capability.updated");
-        return Task.CompletedTask;
+        if (!_configuration.SeedEffectsEnabled)
+        {
+            return;
+        }
+
+        var cacheKey = $"seed:{evt.OwnerId}:{evt.OwnerType}";
+        try
+        {
+            await SeedEffectsCacheStore.DeleteAsync(cacheKey);
+            _logger.LogDebug(
+                "Invalidated seed effects cache for {OwnerType} {OwnerId} via event",
+                evt.OwnerType, evt.OwnerId);
+        }
+        catch (Exception ex)
+        {
+            // Cache invalidation failure is non-fatal; cache will expire via TTL
+            _logger.LogWarning(ex,
+                "Failed to invalidate seed effects cache for {OwnerType} {OwnerId} via event",
+                evt.OwnerType, evt.OwnerId);
+        }
     }
 }

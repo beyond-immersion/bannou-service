@@ -1,6 +1,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
-using BeyondImmersion.BannouService.Core;
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Generated.Events;
 using BeyondImmersion.BannouService.Generated.Models;
 using BeyondImmersion.BannouService.Locking;
@@ -242,6 +242,58 @@ public partial class FactionService : IFactionService
     }
 
     // ========================================================================
+    // NORM CACHE INVALIDATION
+    // ========================================================================
+
+    /// <summary>
+    /// Invalidates norm resolution cache entries for all members of a faction.
+    /// Called after mutations that affect norm resolution (norm CRUD, territory, baseline).
+    /// </summary>
+    /// <remarks>
+    /// Cache keys are <c>ncache:{characterId}:{locationId}</c>. Since we cannot enumerate
+    /// all location combinations per character, this deletes the known character-scoped entries
+    /// by querying faction members. For location-specific invalidation, callers should use
+    /// the <c>forceRefresh</c> parameter on QueryApplicableNorms. Remaining stale entries
+    /// expire via TTL (configured by NormQueryCacheTtlSeconds).
+    /// </remarks>
+    private async Task InvalidateNormCacheForFactionAsync(Guid factionId, CancellationToken ct)
+    {
+        // Query members of this faction to invalidate their norm caches
+        var memberConditions = new List<QueryCondition>
+        {
+            new("$.FactionId", QueryOperator.Exists),
+            new("$.FactionId", QueryOperator.Equals, factionId.ToString()),
+        };
+        var memberQuery = _stateStoreFactory.GetJsonQueryableStore<FactionMemberModel>(
+            StateStoreDefinitions.FactionMembership);
+
+        string? cursor = null;
+        do
+        {
+            var members = await memberQuery.JsonQueryPagedAsync(
+                memberConditions, _configuration.SeedBulkPageSize, cursor, ct);
+
+            foreach (var member in members.Items)
+            {
+                // Delete the generic cache key (no location)
+                await _normCacheStore.DeleteAsync(NormCacheKey(member.Value.CharacterId, null), ct);
+            }
+
+            cursor = members.NextCursor;
+        } while (cursor != null);
+    }
+
+    /// <summary>
+    /// Invalidates norm resolution cache entries for a specific character.
+    /// Called after membership mutations (add/remove member).
+    /// </summary>
+    private async Task InvalidateNormCacheForCharacterAsync(Guid characterId, CancellationToken ct)
+    {
+        // Delete the generic cache key (no location); location-specific entries expire via TTL
+        await _normCacheStore.DeleteAsync(NormCacheKey(characterId, null), ct);
+    }
+
+    // ========================================================================
     // FACTION CRUD
     // ========================================================================
 
@@ -285,11 +337,28 @@ public partial class FactionService : IFactionService
         var existing = await _factionStore.GetAsync(FactionCodeKey(body.GameServiceId, body.Code), cancellationToken);
         if (existing != null) return (StatusCodes.Conflict, null);
 
-        // Validate parent faction if specified
+        // Validate parent faction if specified and check hierarchy depth
         if (body.ParentFactionId.HasValue)
         {
             var parent = await _factionStore.GetAsync(FactionKey(body.ParentFactionId.Value), cancellationToken);
             if (parent == null) return (StatusCodes.BadRequest, null);
+
+            // Walk up the parent chain to check hierarchy depth
+            int depth = 1;
+            var current = parent;
+            while (current.ParentFactionId.HasValue)
+            {
+                if (depth >= _configuration.MaxHierarchyDepth)
+                {
+                    _logger.LogWarning(
+                        "Faction hierarchy depth {Depth} would exceed maximum {MaxDepth} for parent {ParentId}",
+                        depth + 1, _configuration.MaxHierarchyDepth, body.ParentFactionId.Value);
+                    return (StatusCodes.BadRequest, null);
+                }
+                current = await _factionStore.GetAsync(FactionKey(current.ParentFactionId.Value), cancellationToken);
+                if (current == null) break;
+                depth++;
+            }
         }
 
         var now = DateTimeOffset.UtcNow;
@@ -320,6 +389,11 @@ public partial class FactionService : IFactionService
         catch (ApiException ex)
         {
             _logger.LogWarning(ex, "Seed creation failed for faction {FactionId}, continuing without seed", factionId);
+            await _messageBus.TryPublishErrorAsync(
+                "faction", "CreateFaction", "seed_creation_failed",
+                $"Seed creation failed for faction {factionId}, continuing without seed",
+                dependency: "seed", endpoint: "post:/faction/create",
+                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
         }
 
         var model = new FactionModel
@@ -555,20 +629,24 @@ public partial class FactionService : IFactionService
         var model = await _factionStore.GetAsync(FactionKey(body.FactionId), cancellationToken);
         if (model == null) return StatusCodes.NotFound;
 
-        // Cascade: remove all members
-        var memberList = await _memberListStore.GetAsync(CharacterMembershipsKey(body.FactionId), cancellationToken);
-        // Query members by faction using JSON query
+        // Cascade: remove all members (paginated to handle large factions)
         var memberConditions = new List<QueryCondition>
         {
             new("$.FactionId", QueryOperator.Exists),
             new("$.FactionId", QueryOperator.Equals, body.FactionId.ToString()),
         };
         var memberQuery = _stateStoreFactory.GetJsonQueryableStore<FactionMemberModel>(StateStoreDefinitions.FactionMembership);
-        var members = await memberQuery.JsonQueryPagedAsync(memberConditions, _configuration.SeedBulkPageSize, null, cancellationToken);
-        foreach (var member in members.Items)
+        string? memberCursor = null;
+        do
         {
-            await RemoveMemberInternalAsync(member.Value.FactionId, member.Value.CharacterId, cancellationToken);
-        }
+            var members = await memberQuery.JsonQueryPagedAsync(
+                memberConditions, _configuration.SeedBulkPageSize, memberCursor, cancellationToken);
+            foreach (var member in members.Items)
+            {
+                await RemoveMemberInternalAsync(member.Value.FactionId, member.Value.CharacterId, cancellationToken);
+            }
+            memberCursor = members.NextCursor;
+        } while (memberCursor != null);
 
         // Cascade: release all territory claims
         var claimList = await _territoryListStore.GetAsync(FactionClaimsKey(body.FactionId), cancellationToken);
@@ -791,6 +869,11 @@ public partial class FactionService : IFactionService
             PreviousBaselineFactionId = previousBaselineId,
         };
         await _messageBus.TryPublishAsync("faction.realm-baseline.designated", evt, cancellationToken: cancellationToken);
+        await InvalidateNormCacheForFactionAsync(model.FactionId, cancellationToken);
+        if (previousBaselineId.HasValue)
+        {
+            await InvalidateNormCacheForFactionAsync(previousBaselineId.Value, cancellationToken);
+        }
 
         _logger.LogInformation("Designated faction {FactionId} as realm baseline for realm {RealmId}", body.FactionId, model.RealmId);
         return (StatusCodes.OK, MapToResponse(model));
@@ -888,6 +971,11 @@ public partial class FactionService : IFactionService
         catch (ApiException ex)
         {
             _logger.LogWarning(ex, "Failed to register resource reference for character {CharacterId}", body.CharacterId);
+            await _messageBus.TryPublishErrorAsync(
+                "faction", "AddMember", "resource_reference_failed",
+                $"Failed to register resource reference for character {body.CharacterId}",
+                dependency: "resource", endpoint: "post:/faction/add-member",
+                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
         }
 
         var evt = new FactionMemberAddedEvent
@@ -899,6 +987,7 @@ public partial class FactionService : IFactionService
             Role = role,
         };
         await _messageBus.TryPublishAsync("faction.member.added", evt, cancellationToken: cancellationToken);
+        await InvalidateNormCacheForCharacterAsync(body.CharacterId, cancellationToken);
 
         _logger.LogInformation("Added member {CharacterId} to faction {FactionId} with role {Role}",
             body.CharacterId, body.FactionId, role);
@@ -955,6 +1044,7 @@ public partial class FactionService : IFactionService
             CharacterId = characterId,
         };
         await _messageBus.TryPublishAsync("faction.member.removed", evt, cancellationToken: ct);
+        await InvalidateNormCacheForCharacterAsync(characterId, ct);
 
         _logger.LogInformation("Removed member {CharacterId} from faction {FactionId}", characterId, factionId);
         return StatusCodes.NoContent;
@@ -1181,6 +1271,11 @@ public partial class FactionService : IFactionService
         catch (ApiException ex)
         {
             _logger.LogWarning(ex, "Failed to register resource reference for location {LocationId}", body.LocationId);
+            await _messageBus.TryPublishErrorAsync(
+                "faction", "ClaimTerritory", "resource_reference_failed",
+                $"Failed to register resource reference for location {body.LocationId}",
+                dependency: "resource", endpoint: "post:/faction/claim-territory",
+                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
         }
 
         var evt = new FactionTerritoryClaimedEvent
@@ -1192,6 +1287,7 @@ public partial class FactionService : IFactionService
             ClaimId = claimId,
         };
         await _messageBus.TryPublishAsync("faction.territory.claimed", evt, cancellationToken: cancellationToken);
+        await InvalidateNormCacheForFactionAsync(body.FactionId, cancellationToken);
 
         _logger.LogInformation("Faction {FactionId} claimed territory at location {LocationId}", body.FactionId, body.LocationId);
         return (StatusCodes.OK, MapToClaimResponse(claim));
@@ -1242,6 +1338,7 @@ public partial class FactionService : IFactionService
             ClaimId = claim.ClaimId,
         };
         await _messageBus.TryPublishAsync("faction.territory.released", evt, cancellationToken: ct);
+        await InvalidateNormCacheForFactionAsync(claim.FactionId, ct);
 
         _logger.LogInformation("Released territory claim {ClaimId} at location {LocationId}", claim.ClaimId, claim.LocationId);
         return StatusCodes.NoContent;
@@ -1365,6 +1462,7 @@ public partial class FactionService : IFactionService
             Scope = body.Scope,
         };
         await _messageBus.TryPublishAsync("faction.norm.defined", evt, cancellationToken: cancellationToken);
+        await InvalidateNormCacheForFactionAsync(body.FactionId, cancellationToken);
 
         _logger.LogInformation("Defined norm {NormId} for faction {FactionId}, violation type {ViolationType}",
             normId, body.FactionId, body.ViolationType);
@@ -1430,6 +1528,7 @@ public partial class FactionService : IFactionService
             Scope = updatedScope,
         };
         await _messageBus.TryPublishAsync("faction.norm.updated", evt, cancellationToken: cancellationToken);
+        await InvalidateNormCacheForFactionAsync(norm.FactionId, cancellationToken);
 
         _logger.LogInformation("Updated norm {NormId}", body.NormId);
         return (StatusCodes.OK, MapToNormResponse(norm));
@@ -1470,6 +1569,7 @@ public partial class FactionService : IFactionService
             ViolationType = norm.ViolationType,
         };
         await _messageBus.TryPublishAsync("faction.norm.deleted", evt, cancellationToken: cancellationToken);
+        await InvalidateNormCacheForFactionAsync(norm.FactionId, cancellationToken);
 
         _logger.LogInformation("Deleted norm {NormId}", body.NormId);
         return StatusCodes.NoContent;

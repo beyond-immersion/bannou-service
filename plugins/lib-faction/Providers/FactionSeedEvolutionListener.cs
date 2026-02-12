@@ -73,6 +73,8 @@ public class FactionSeedEvolutionListener : ISeedEvolutionListener
         _logger.LogDebug(
             "Growth recorded for faction seed {SeedId}, faction {FactionId}, total growth {TotalGrowth}",
             notification.SeedId, notification.OwnerId, notification.TotalGrowth);
+
+        await Task.CompletedTask;
     }
 
     /// <summary>
@@ -102,11 +104,6 @@ public class FactionSeedEvolutionListener : ISeedEvolutionListener
         faction.CurrentPhase = notification.NewPhase;
         faction.UpdatedAt = DateTimeOffset.UtcNow;
         await factionStore.SaveAsync(factionKey, faction, cancellationToken: ct);
-
-        // Invalidate faction cache
-        var cacheStore = _stateStoreFactory.GetStore<FactionCacheModel>(
-            StateStoreDefinitions.FactionCache);
-        await cacheStore.DeleteAsync($"fcache:{faction.FactionId}", ct);
 
         _logger.LogInformation(
             "Updated faction {FactionId} phase from {OldPhase} to {NewPhase} for seed {SeedId}",

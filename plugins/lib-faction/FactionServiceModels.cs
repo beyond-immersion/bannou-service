@@ -308,30 +308,3 @@ internal class CachedMergedNorm
     public NormSeverity Severity { get; set; }
 }
 
-/// <summary>
-/// Cached faction summary for fast lookups in faction-cache (Redis).
-/// Key: fcache:{factionId}
-/// </summary>
-internal class FactionCacheModel
-{
-    /// <summary>Faction identifier.</summary>
-    public Guid FactionId { get; set; }
-
-    /// <summary>Faction display name.</summary>
-    public string Name { get; set; } = string.Empty;
-
-    /// <summary>Faction code.</summary>
-    public string Code { get; set; } = string.Empty;
-
-    /// <summary>Associated seed ID.</summary>
-    public Guid? SeedId { get; set; }
-
-    /// <summary>Current seed growth phase.</summary>
-    public string? CurrentPhase { get; set; }
-
-    /// <summary>Faction status.</summary>
-    public FactionStatus Status { get; set; }
-
-    /// <summary>When this cache entry was created.</summary>
-    public DateTimeOffset CachedAt { get; set; }
-}
