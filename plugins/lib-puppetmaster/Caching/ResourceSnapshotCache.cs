@@ -30,19 +30,22 @@ public sealed class ResourceSnapshotCache : IResourceSnapshotCache
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<ResourceSnapshotCache> _logger;
     private readonly ConcurrentDictionary<string, CacheEntry> _cache = new();
-    private readonly TimeSpan _defaultTtl = TimeSpan.FromMinutes(5);
+    private readonly TimeSpan _defaultTtl;
 
     /// <summary>
     /// Creates a new resource snapshot cache.
     /// </summary>
     /// <param name="scopeFactory">Service scope factory for accessing IResourceClient.</param>
     /// <param name="logger">Logger instance.</param>
+    /// <param name="configuration">Puppetmaster service configuration.</param>
     public ResourceSnapshotCache(
         IServiceScopeFactory scopeFactory,
-        ILogger<ResourceSnapshotCache> logger)
+        ILogger<ResourceSnapshotCache> logger,
+        PuppetmasterServiceConfiguration configuration)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
+        _defaultTtl = TimeSpan.FromSeconds(configuration.SnapshotCacheTtlSeconds);
     }
 
     /// <inheritdoc />

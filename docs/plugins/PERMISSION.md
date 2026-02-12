@@ -158,7 +158,7 @@ Session Permission Recompilation
 
   RecompileSessionPermissionsAsync(sessionId, states, reason)
        │
-       ├── role = states["role"] (default: "user")
+       ├── role = states["role"] (default: "anonymous")
        │
        ├── For each registered service:
        │    ├── Relevant states: ["default"] + session states
@@ -211,7 +211,7 @@ None identified. Previous extensions were either implemented (Permission TTL →
 
 ### Bugs
 
-1. **Inconsistent default role between connection and update paths**: `DetermineHighestPriorityRole` (used by `HandleSessionConnectedAsync`) returns `"anonymous"` when roles is null/empty, but `DetermineHighestRoleFromEvent` (used by `HandleSessionUpdatedAsync`) returns `"user"` for the same input. A session connecting with no roles gets `anonymous` permissions, but a subsequent `session.updated` event with no roles would upgrade it to `user` without an explicit role assignment.
+1. ~~**Inconsistent default role between connection and update paths**~~: **FIXED** (2026-02-11) - Unified all four default-role locations to return `"anonymous"` when roles are null/empty: `DetermineHighestRoleFromEvent` (two returns), `RecompileSessionPermissionsAsync` (`GetValueOrDefault`), and `GetSessionInfoAsync` (`GetValueOrDefault`). Sessions with no roles now consistently get anonymous-level permissions across all code paths.
 
 ### Intentional Quirks
 
@@ -223,7 +223,7 @@ None identified. Previous extensions were either implemented (Permission TTL →
 
 4. **Static ROLE_ORDER array**: The role hierarchy is hardcoded as `["anonymous", "user", "developer", "admin"]`. Adding new roles requires code changes, not configuration.
 
-5. **GetRegisteredServices endpoint count is approximate**: `GetRegisteredServicesAsync` uses a hardcoded array of states `["authenticated", "default", "lobby", "in_game"]` and roles `["user", "admin", "anonymous"]` when scanning for unique endpoints per service. This misses the `"developer"` role and any custom states registered by services, so the reported `endpointCount` may undercount.
+5. **GetRegisteredServices endpoint count is approximate**: `GetRegisteredServicesAsync` uses `ROLE_ORDER` for roles but a hardcoded array of states `["authenticated", "default", "lobby", "in_game"]` when scanning for unique endpoints per service. Custom states registered by services may be missed, so the reported `endpointCount` may undercount. *(Previously also missed the "developer" role — fixed 2026-02-11 by using `ROLE_ORDER` instead of a hardcoded roles subset.)*
 
 ### Design Considerations
 

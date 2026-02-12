@@ -651,7 +651,7 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
         {
             SessionId = body.SessionId,
             States = states,
-            Role = states.GetValueOrDefault("role", "user"),
+            Role = states.GetValueOrDefault("role", "anonymous"),
             Permissions = permissions,
             Version = version,
             LastUpdated = DateTimeOffset.UtcNow
@@ -709,7 +709,7 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
                 return;
             }
 
-            var role = sessionStates.GetValueOrDefault("role", "user");
+            var role = sessionStates.GetValueOrDefault("role", "anonymous");
             _logger.LogDebug("Recompiling permissions for session {SessionId}, role: {Role}, reason: {Reason}",
                 sessionId, role, reason);
 
@@ -939,9 +939,10 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
             var endpointCount = 0;
             var uniqueEndpoints = new HashSet<string>();
 
-            // Check common states and roles
+            // Check common states and all roles from ROLE_ORDER
+            // States are approximate (custom states from services may be missed)
             var states = new[] { "authenticated", "default", "lobby", "in_game" };
-            var roles = new[] { "user", "admin", "anonymous" };
+            var roles = ROLE_ORDER;
 
             foreach (var state in states)
             {

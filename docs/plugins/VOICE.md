@@ -132,7 +132,7 @@ This plugin does not consume external events (`x-event-subscriptions: []`).
 | `ISipEndpointRegistry` / `SipEndpointRegistry` | Singleton | Participant tracking with local ConcurrentDictionary cache + Redis persistence |
 | `IP2PCoordinator` / `P2PCoordinator` | Singleton | P2P mesh topology decisions and upgrade thresholds |
 | `IScaledTierCoordinator` / `ScaledTierCoordinator` | Singleton | SFU management, SIP credential generation, RTP allocation |
-| `IKamailioClient` / `KamailioClient` | Singleton | JSON-RPC client for Kamailio SIP proxy control |
+| `IKamailioClient` / `KamailioClient` | Singleton | HTTP client for Kamailio SIP proxy health checking |
 | `IRtpEngineClient` / `RtpEngineClient` | Singleton | UDP bencode client for RTPEngine ng protocol |
 | `IPermissionClient` | (via mesh) | Permission state management: `voice:in_room`, `voice:consent_pending`, `voice:ringing` |
 | `IClientEventPublisher` | (via DI) | WebSocket event delivery to sessions |
@@ -217,7 +217,7 @@ Voice Communication Flow (P2P → Scaled Upgrade)
 2. **RTP server pool allocation**: `AllocateRtpServerAsync` currently returns the single configured RTP server. The implementation notes "In production, this would select from a pool based on load."
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/258 -->
 
-3. **IKamailioClient methods unused**: `GetActiveDialogsAsync`, `TerminateDialogAsync`, `ReloadDispatcherAsync`, and `GetStatsAsync` are implemented but never called by VoiceService. Only `IsHealthyAsync` is used (indirectly via `AllocateRtpServerAsync`).
+3. ~~**IKamailioClient methods unused**~~: **FIXED** (2026-02-11) - Removed `GetActiveDialogsAsync`, `TerminateDialogAsync`, `ReloadDispatcherAsync`, `GetStatsAsync` and all supporting JSONRPC infrastructure (models, `CallRpcAsync`, `_messageBus` dependency, `_requestId` counter). `IKamailioClient` now exposes only `IsHealthyAsync`. Note: `IsHealthyAsync` is also currently unused — `ScaledTierCoordinator` injects `IKamailioClient` but never calls any method on it. The `_kamailioClient` field in `ScaledTierCoordinator` is dead code (separate gap).
 
 4. **VoiceRoomStateEvent**: Defined in `voice-client-events.yaml` but never published by the service.
 
@@ -263,7 +263,7 @@ None identified.
 
 4. **Hardcoded fallbacks in coordinators**: `P2PCoordinator` returns 6 as fallback for `P2PMaxParticipants`, `ScaledTierCoordinator` returns 100 for `ScaledMaxParticipants`. These differ from schema defaults (8 and 100). Additionally, `ScaledTierCoordinator.GetStunServers()` falls back to a hardcoded `"stun:stun.l.google.com:19302"` when config is empty, while `VoiceService.JoinVoiceRoomAsync` throws `InvalidOperationException` if `StunServers` is null. Should either throw for invalid config or use schema defaults consistently.
 
-5. **Kamailio health check path assumption**: `KamailioClient.IsHealthyAsync` assumes a `/health` endpoint exists by replacing `/RPC` in the configured endpoint URL. This may not work for all Kamailio deployments.
+5. **Kamailio health check path assumption**: `KamailioClient.IsHealthyAsync` constructs the health endpoint as `http://{host}:{port}/health` directly from the configured host and RPC port. This assumes a `/health` endpoint exists at the Kamailio JSONRPC port, which may not work for all Kamailio deployments.
 
 ---
 
@@ -275,3 +275,9 @@ None identified.
 |------|-------|-----|--------|
 | 2026-01-31 | [#195](https://github.com/beyond-immersion/bannou-service/issues/195) | RTPEngine publish/subscribe methods unused in scaled tier | Needs Design |
 | 2026-02-01 | [#258](https://github.com/beyond-immersion/bannou-service/issues/258) | RTP server pool allocation with load-based selection | Needs Design |
+
+### Completed
+
+| Date | Gap | Action |
+|------|-----|--------|
+| 2026-02-11 | IKamailioClient methods unused (Stubs #3) | Removed 4 dead JSONRPC methods and all supporting infrastructure. `IKamailioClient` reduced to `IsHealthyAsync` only. |

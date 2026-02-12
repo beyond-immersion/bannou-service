@@ -33,9 +33,9 @@ Actor loads ABML documents via `IBehaviorDocumentLoader` which discovers provide
 |----------|----------|---------------|---------|
 | `DynamicBehaviorProvider` | 100 | lib-puppetmaster | Scene-specific dynamic behaviors |
 | `SeededBehaviorProvider` | 50 | lib-actor | Static behaviors from filesystem/embedded resources |
-| `FallbackBehaviorProvider` | 0 | lib-actor | Generates default stub behavior for missing docs |
+| `FallbackBehaviorProvider` | 0 | lib-actor | Logs warning and returns null for missing behaviors (graceful degradation) |
 
-Higher priority providers are checked first. If a provider returns `null`, the next lower priority provider is tried. The fallback provider always returns a minimal behavior document.
+Higher priority providers are checked first. If a provider returns `null`, the next lower priority provider is tried. The fallback provider always returns `null` after logging a warning (it does not generate stub behaviors).
 
 **Note**: Actor uses shared ABML compiler types from `BeyondImmersion.Bannou.BehaviorCompiler` (in bannou-service), NOT a service client dependency on lib-behavior.
 
@@ -126,6 +126,7 @@ Current providers cover personality, combat preferences, backstory, encounters, 
 | `{nodeId}` | `PoolNodeState` | Pool node health and capacity |
 | `_node_index` | `List<string>` | All registered pool node IDs |
 | `{actorId}` | `ActorAssignment` | Actor-to-node mapping |
+| `_actor_index` | `ActorIndex` | Node-to-actor-set mapping for pool queries |
 
 ---
 
@@ -269,14 +270,14 @@ Current providers cover personality, combat preferences, backstory, encounters, 
 | `IStateStoreFactory` | Singleton | 4 state store access |
 | `IMessageBus` | Scoped | Event publishing, pool commands |
 | `IEventConsumer` | Scoped | Cache invalidation, pool events |
-| `ActorRunnerFactory` | Scoped | Creates ActorRunner instances |
+| `ActorRunnerFactory` | Singleton | Creates ActorRunner instances |
 | `ActorRegistry` | Singleton | Local actor instance tracking |
 | `IBehaviorDocumentLoader` | Singleton | Loads behavior documents via provider chain |
 | `SeededBehaviorProvider` | Singleton | Loads static behaviors from filesystem (Priority 50) |
-| `FallbackBehaviorProvider` | Singleton | Generates stub behaviors for missing docs (Priority 0) |
+| `FallbackBehaviorProvider` | Singleton | Returns null for missing behaviors after logging warning (Priority 0) |
 | `ActorPoolManager` | Singleton | Pool node management (control plane) |
 | `ActorPoolNodeWorker` | Hosted (BackgroundService) | Pool node command listener |
-| `HeartbeatEmitter` | Hosted (BackgroundService) | Pool node heartbeat publisher |
+| `HeartbeatEmitter` | Singleton | Pool node heartbeat publisher (started/stopped by ActorPoolNodeWorker) |
 | `PoolHealthMonitor` | Hosted (BackgroundService) | Pool node health checking |
 
 Service lifetime is **Scoped** for ActorService. Multiple BackgroundServices for pool operations.
@@ -376,7 +377,7 @@ ActorRunner Behavior Loop
                 │    ├── Build execution scope:
                 │    │    ├── agent: {id, behavior_id, character_id, category}
                 │    │    ├── feelings: {joy: 0.5, anger: 0.2, ...}
-                │    │    ├── goals: {primary, secondary[], relevance{}}
+                │    │    ├── goals: {primary, secondary[], parameters{}}
                 │    │    ├── memories: {key → value (with TTL)}
                 │    │    ├── working_memory: {perception:type:source → data}
                 │    │    ├── personality: {traits, combat_style, risk}
@@ -455,7 +456,7 @@ Actor State Model
 ===================
 
   ActorState
-  ├── Feelings: Dict<string, float> [0-1]
+  ├── Feelings: Dict<string, double> [0-1]
   │    ├── joy, sadness, anger, fear
   │    ├── surprise, trust, disgust
   │    └── anticipation
@@ -463,7 +464,7 @@ Actor State Model
   ├── Goals
   │    ├── PrimaryGoal: string
   │    ├── SecondaryGoals: List<string>
-  │    └── GoalRelevance: Dict<string, float>
+  │    └── GoalParameters: Dict<string, object>
   │
   ├── Memories: Dict<string, MemoryEntry>
   │    ├── Key → { Value, ExpiresAt }
@@ -485,16 +486,17 @@ Actor State Model
 
 1. **Session disconnection handling**: `HandleSessionDisconnectedAsync` is stubbed. Actors are not tied to player sessions - NPC brains continue running when players disconnect. Future: session-bound actors that stop on disconnect.
 <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/191 -->
-2. ~~**GOAP integration partial**~~: **FIXED** (2026-02-07) - ActorRunner now extracts GOAP goals and actions from loaded ABML documents via `GoapMetadataConverter` and populates `goap_goals`, `goap_actions`, `world_state`, and `current_goal` in the execution scope. WorldState is built from actor feelings, goal parameters, and working memory flags. The `trigger_goap_replan:` handler can now execute planning successfully.
-3. **Auto-scale deployment mode**: Declared as a valid `DeploymentMode` value but no auto-scaling logic is implemented. Pool nodes must be manually managed or pre-provisioned.
+2. **Auto-scale deployment mode**: Declared as a valid `DeploymentMode` value but no auto-scaling logic is implemented. Pool nodes must be manually managed or pre-provisioned.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-07:https://github.com/beyond-immersion/bannou-service/issues/318 -->
 
 ---
 
 ## Potential Extensions
 
-1. **Session-bound actors**: Actors that stop when their controlling player session disconnects.
+1. **Session-bound actors**: Actors that stop when their controlling player session disconnects. (See Stubs #1 and issue #191)
+<!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/191 -->
 2. **Memory decay**: Gradual relevance decay for memories over time (not just TTL expiry).
+<!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/387 -->
 3. **Cross-node encounters**: Encounter coordination across multiple pool nodes for large-scale events.
 4. **Behavior versioning**: Deploy behavior updates with version tracking, enabling rollback without service restart.
 5. **Actor migration**: Move running actors between pool nodes for load balancing without state loss.
@@ -553,9 +555,7 @@ No bugs identified.
 
 ### Completed
 
-- **2026-02-07**: Issue #316 - GOAP scope population implemented in ActorRunner. Goals and actions extracted from ABML documents via `GoapMetadataConverter`. WorldState built from actor feelings, goal parameters, and working memory.
-
-- **2026-02-11**: Issue #380 - Removed L4 event subscriptions (`behavior.updated`, `personality.evolved`, `combat-preferences.evolved`). Moved behavior.updated handler to lib-puppetmaster. Removed 5 dead config properties (`PersonalityCacheTtlMinutes`, `EncounterCacheTtlMinutes`, `MaxEncounterResultsPerQuery`, `StorylineCacheTtlMinutes`, `QuestCacheTtlMinutes`).
+(No pending items — all completed changes have been absorbed into document content.)
 
 ### Implementation Gaps
 

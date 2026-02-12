@@ -19,6 +19,9 @@ info:
     - topic: behavior.updated
       event: BehaviorUpdatedEvent
       handler: HandleBehaviorUpdated
+    - topic: actor.instance.deleted
+      event: ActorInstanceDeletedEvent
+      handler: HandleActorDeleted
   x-event-publications:
     - topic: puppetmaster.behavior.invalidated
       event: BehaviorInvalidatedEvent

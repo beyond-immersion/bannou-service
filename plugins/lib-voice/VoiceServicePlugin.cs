@@ -38,8 +38,7 @@ public class VoiceServicePlugin : StandardServicePlugin<IVoiceService>
             var config = sp.GetRequiredService<VoiceServiceConfiguration>();
             var logger = sp.GetRequiredService<ILogger<KamailioClient>>();
             var httpClient = sp.GetRequiredService<IHttpClientFactory>().CreateClient("Kamailio");
-            var messageBus = sp.GetRequiredService<IMessageBus>();
-            return new KamailioClient(httpClient, config.KamailioHost, config.KamailioRpcPort, TimeSpan.FromSeconds(config.KamailioRequestTimeoutSeconds), logger, messageBus);
+            return new KamailioClient(httpClient, config.KamailioHost, config.KamailioRpcPort, TimeSpan.FromSeconds(config.KamailioRequestTimeoutSeconds), logger);
         });
 
         services.AddSingleton<IRtpEngineClient>(sp =>

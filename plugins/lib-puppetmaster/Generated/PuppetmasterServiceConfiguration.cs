@@ -71,4 +71,11 @@ public class PuppetmasterServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int AssetDownloadTimeoutSeconds { get; set; } = 30;
 
+    /// <summary>
+    /// Time-to-live for cached resource snapshots in seconds (used by Event Brain actors)
+    /// Environment variable: PUPPETMASTER_SNAPSHOT_CACHE_TTL_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1)]
+    public int SnapshotCacheTtlSeconds { get; set; } = 300;
+
 }

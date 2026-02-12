@@ -33,3 +33,9 @@ x-service-configuration:
       default: 30
       env: PUPPETMASTER_ASSET_DOWNLOAD_TIMEOUT_SECONDS
       description: Timeout for downloading behavior YAML from asset service
+    SnapshotCacheTtlSeconds:
+      type: integer
+      minimum: 1
+      default: 300
+      env: PUPPETMASTER_SNAPSHOT_CACHE_TTL_SECONDS
+      description: Time-to-live for cached resource snapshots in seconds (used by Event Brain actors)

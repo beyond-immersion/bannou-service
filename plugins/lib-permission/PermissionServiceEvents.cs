@@ -127,7 +127,7 @@ public partial class PermissionService
     {
         if (roles == null || !roles.Any())
         {
-            return "user"; // Default role
+            return "anonymous"; // No roles = unauthenticated (consistent with DetermineHighestPriorityRole)
         }
 
         // Check for highest priority roles first
@@ -146,8 +146,8 @@ public partial class PermissionService
             return "user";
         }
 
-        // If no recognized role, return the first one or default to user
-        return roles.FirstOrDefault() ?? "user";
+        // If no recognized role, return the first one or default to anonymous
+        return roles.FirstOrDefault() ?? "anonymous";
     }
 
     #endregion

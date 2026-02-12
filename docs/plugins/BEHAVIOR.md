@@ -64,12 +64,12 @@ ABML (Arcadia Behavior Markup Language) compiler and GOAP (Goal-Oriented Action 
 | `behavior.created` | `BehaviorCreatedEvent` | New behavior compiled and stored (lifecycle) |
 | `behavior.updated` | `BehaviorUpdatedEvent` | Behavior recompiled/updated (lifecycle) |
 | `behavior.deleted` | `BehaviorDeletedEvent` | Behavior deleted/invalidated (lifecycle) |
-| `behavior-bundle.created` | `BehaviorBundleCreatedEvent` | Bundle created (lifecycle) |
-| `behavior-bundle.updated` | `BehaviorBundleUpdatedEvent` | Bundle updated (lifecycle) |
-| `behavior-bundle.deleted` | `BehaviorBundleDeletedEvent` | Bundle deleted (lifecycle) |
+| `behavior-bundle.created` | `BehaviorBundleCreatedEvent` | Bundle created (lifecycle) - **schema-defined but not yet published by code** |
+| `behavior-bundle.updated` | `BehaviorBundleUpdatedEvent` | Bundle updated (lifecycle) - **schema-defined but not yet published by code** |
+| `behavior-bundle.deleted` | `BehaviorBundleDeletedEvent` | Bundle deleted (lifecycle) - **schema-defined but not yet published by code** |
 | `behavior.compilation-failed` | `BehaviorCompilationFailedEvent` | ABML compilation fails (monitoring/alerting) |
 | `behavior.goap.plan-generated` | `GoapPlanGeneratedEvent` | GOAP planner generates new plan |
-| `character.cinematic_extension` | `CinematicExtensionAvailableEvent` | Cinematic extension available for injection at continuation point |
+| `character.cinematic_extension` | `CinematicExtensionAvailableEvent` | Cinematic extension available for injection at continuation point - **schema-defined but not yet published by code** |
 
 ### Consumed Events
 
@@ -125,20 +125,31 @@ This plugin does not consume external events (confirmed by `x-event-subscription
 |---------|----------|------|
 | `ILogger<BehaviorService>` | Scoped | Structured logging |
 | `BehaviorServiceConfiguration` | Singleton | All 33 config properties (urgency, attention, memory, compiler) |
-| `IStateStoreFactory` | Singleton | Access to behavior-statestore |
+| `IStateStoreFactory` | Singleton | Access to behavior-statestore (used by BehaviorBundleManager and ActorLocalMemoryStore) |
 | `IMessageBus` | Scoped | Event publishing and error events |
-| `IAssetClient` | Scoped | Asset service integration for bytecode storage |
-| `IHttpClientFactory` | Scoped | HTTP client for asset upload operations |
-| `IEventConsumer` | Scoped | Event consumer registration (lifecycle) |
-| `IGoapPlanner` (via `GoapPlanner`) | Per-use (stateless) | A* search for GOAP planning |
-| `BehaviorCompiler` | Per-use (stateless) | ABML-to-bytecode compilation pipeline |
-| `SemanticAnalyzer` | Per-use (internal to compiler) | Pre-compilation validation pass |
-| `IBehaviorBundleManager` | Scoped | Bundle creation and management |
-| `BehaviorModelCache` | Singleton (in-memory) | Per-character interpreter caching with fallback chains |
-| `IMemoryStore` (via `ActorLocalMemoryStore`) | Scoped | Keyword-based memory storage and retrieval (uses `agent-memories` store owned by Actor) |
-| `CognitionConstants` | Static | Configurable cognition pipeline thresholds (initialized from config) |
+| `IAssetClient` | Singleton | Asset service integration for bytecode storage (registered centrally by PluginLoader) |
+| `IHttpClientFactory` | Singleton | HTTP client for asset upload operations |
+| `IEventConsumer` | Scoped | Event consumer registration (no subscriptions - handler call is a no-op) |
+| `IGoapPlanner` (via `GoapPlanner`) | Singleton | A* search for GOAP planning (thread-safe, stateless) |
+| `BehaviorCompiler` | Singleton | ABML-to-bytecode compilation pipeline (thread-safe, stateless) |
+| `SemanticAnalyzer` | Per-use (internal to compiler) | Pre-compilation validation pass (uses `IResourceTemplateRegistry` when available) |
+| `IBehaviorBundleManager` | Scoped | Bundle creation, membership tracking, and GOAP metadata caching |
+| `BehaviorModelCache` | Singleton (in-memory) | Per-character interpreter caching with variant fallback chains (ConcurrentDictionary) |
+| `IMemoryStore` (via `ActorLocalMemoryStore`) | Singleton | Keyword-based memory storage and retrieval (uses `agent-memories` store) |
+| `CognitionConstants` | Static | Configurable cognition pipeline thresholds (initialized from config at startup) |
+| `IBehaviorModelInterpreterFactory` | Singleton | Runtime execution of compiled behavior models |
+| `IArchetypeRegistry` | Singleton | Pre-loaded behavior archetype definitions |
+| `IIntentEmitterRegistry` | Singleton | Core intent emitters for action/locomotion/attention/stance/vocalization channels |
+| `IControlGateRegistry` (via `ControlGateManager`) | Singleton | Per-entity control tracking for behavior gating |
+| `IEntityResolver` | Singleton | Cutscene semantic name resolution |
+| `IActionHandler` (6 cognition handlers) | Singleton | FilterAttention, QueryMemory, AssessSignificance, StoreMemory, EvaluateGoalImpact, TriggerGoapReplan |
+| `IExternalDialogueLoader` | Singleton | YAML-based dialogue file loading with caching |
+| `IDialogueResolver` | Singleton | Three-step dialogue resolution pipeline |
+| `ILocalizationProvider` (via `FileLocalizationProvider`) | Singleton | String table lookups for localization |
+| `ICognitionTemplateRegistry` | Singleton | Base cognition templates (humanoid, creature, object) with embedded defaults |
+| `ICognitionBuilder` | Singleton | Pipeline construction from cognition templates with overrides |
 
-Service lifetime is **Scoped** (per-request). `BehaviorModelCache` is a singleton in-memory cache using `ConcurrentDictionary`. `CognitionConstants` is static but initialized from `BehaviorServiceConfiguration` once at service startup.
+BehaviorService itself is **Scoped** (per-request). Most helper services are **Singleton** for shared, thread-safe access. `CognitionConstants` is static but initialized from `BehaviorServiceConfiguration` once at service startup. `IMemoryStore` is registered as Singleton despite using `IStateStoreFactory` (which creates per-call store instances internally).
 
 ---
 
@@ -146,7 +157,7 @@ Service lifetime is **Scoped** (per-request). `BehaviorModelCache` is a singleto
 
 ### ABML Operations (2 endpoints)
 
-- **CompileAbmlBehavior** (`/compile`): Accepts ABML YAML string with optional compilation options (debug info, optimizations, skip semantic analysis, model ID, max constants/strings). Invokes the multi-phase compiler pipeline: YAML parsing via `DocumentParser`, semantic analysis (unless skipped), variable registration from context block, flow compilation with action compiler registry, bytecode emission with label patching. On success: returns compiled bytecode (base64), model metadata (inputs, outputs, continuation points, debug line map), and bytecode size. On failure: returns error list with messages and optional line numbers. Publishes `behavior.compilation-failed` event with content hash for deduplication on compilation errors. Stores compiled behavior metadata in state store. For successful compilation: publishes `behavior.created` or `behavior.updated` lifecycle event.
+- **CompileAbmlBehavior** (`/compile`): Accepts ABML YAML string with optional compilation options (debug info, optimizations, skip semantic analysis, model ID, max constants/strings). Invokes the multi-phase compiler pipeline: YAML parsing via `DocumentParser`, semantic analysis (unless skipped), variable registration from context block, flow compilation with action compiler registry, bytecode emission with label patching. On success: returns compiled bytecode (base64), model metadata (inputs, outputs, continuation points, debug line map), and bytecode size. On failure: returns error list with messages and optional line numbers. Publishes `behavior.compilation-failed` event on compilation errors (note: `ContentHash` field in event schema is defined but never populated by the code). Stores compiled behavior metadata in state store. For successful compilation: publishes `behavior.created` or `behavior.updated` lifecycle event.
 
 - **ValidateAbml** (`/validate`): Validates ABML YAML by running the full compilation pipeline (including bytecode emission) then discarding the bytecode and returning only the error/success status. Despite the "validate-only" intent, calls `_compiler.CompileYaml()` which performs the same multi-phase pipeline as `/compile`. Returns validation result with `isValid` flag and error list (undefined flows, empty conditionals, invalid continuation points, type mismatches). Semantic warnings (unreachable code, unused flows, etc.) are propagated via `result.Warnings` when `StrictMode=true` enables semantic analysis. When `StrictMode=false` (default), semantic analysis is skipped entirely and no warnings are produced. Does not modify state or publish events.
 
@@ -453,13 +464,15 @@ Memory Relevance Scoring (Keyword-Based)
 
 1. **Bundle management partial**: `IBehaviorBundleManager` interface is defined and injected but the full bundle lifecycle (creation from multiple behaviors, versioning, metabundles) routes through the asset service. The local `BehaviorBundleManager` handles membership tracking in state but asset upload/download for bundles is delegated to lib-asset.
 
-2. **Cinematic extension delivery**: The `CinematicExtensionAvailableEvent` is published but the actual extension attachment to a running interpreter (matching `continuationPointName` to an active `ContinuationPoint` opcode) is handled by the actor runtime, not the behavior service itself.
+2. **Cinematic extension delivery**: The `CinematicExtensionAvailableEvent` schema and event model are defined but no code in lib-behavior actually publishes this event. The event model exists in generated code and `CinematicInterpreterTests.cs` references it, but the publishing path and the actual extension attachment to a running interpreter (matching `continuationPointName` to an active `ContinuationPoint` opcode) are not yet implemented.
 
 3. **Embedding-based memory store**: `IMemoryStore` interface is designed for swappable implementations. Only `ActorLocalMemoryStore` (keyword-based) exists. The embedding-based implementation for semantic similarity matching is documented as a future migration path in BEHAVIOR-SYSTEM.md section 7.5.
 
 4. **GOAP plan persistence**: Plans are stored in state for debugging (`goap-metadata:` prefix) but there is no retrieval endpoint or plan history query. The `GoapPlanGeneratedEvent` provides the analytics trail instead.
 
 5. **Compiler optimizations**: `CompilationOptions.EnableOptimizations` flag exists and `CompilationOptions.Release` preset enables it, but no optimization passes are currently implemented in the compiler pipeline. The flag is a placeholder for future dead-code elimination, constant folding, etc.
+
+6. **Bundle lifecycle events not published**: The `x-lifecycle` schema defines `BehaviorBundleCreatedEvent`, `BehaviorBundleUpdatedEvent`, and `BehaviorBundleDeletedEvent` (auto-generated to `BehaviorLifecycleEvents.cs`), but `BehaviorBundleManager` never calls `_messageBus.TryPublishAsync()` for these events. The bundle manager handles state store operations for membership tracking but does not publish lifecycle events when bundles are created, updated, or deleted.
 
 ---
 
@@ -523,7 +536,7 @@ No bugs identified.
 
 13. **GOAP planner returns null silently for multiple failure modes**: `PlanAsync` returns `null` without indicating cause when: (a) no actions available, (b) timeout exceeded, (c) cancellation requested, (d) node limit reached without finding goal. Callers cannot distinguish between "no valid plan exists" and "ran out of resources."
 
-14. **Memory index update forces save after retry exhaustion**: If ETag-based optimistic concurrency fails 3 times (MemoryStoreMaxRetries), the memory index update falls back to unconditional save (lines 289-299 of ActorLocalMemoryStore.cs), potentially losing concurrent updates.
+14. **Memory index update forces save after retry exhaustion**: If ETag-based optimistic concurrency fails 3 times (MemoryStoreMaxRetries), the memory index update in `StoreExperienceAsync` falls back to an unconditional save (re-reads, appends, saves without ETag), potentially losing concurrent updates from other nodes.
 
 15. **ClearAsync deletes memories sequentially**: Clearing an entity's memories iterates through each memory ID and issues individual delete calls (lines 234-237 of ActorLocalMemoryStore.cs). An entity with 100 memories generates 101 state store operations (100 deletes + 1 index delete).
 
@@ -531,9 +544,11 @@ No bugs identified.
 
 17. **BehaviorModelCache.GetInterpreter race condition on cold cache**: At lines 142-158 of BehaviorModelCache.cs, two concurrent threads calling `GetInterpreter` for the same character/type/variant can both miss the cache check (line 144), both create separate `BehaviorModelInterpreter` instances (line 155), and both write to the cache via direct assignment. The last writer wins and the earlier caller's interpreter is evicted from the cache while potentially still in use. In practice benign because actors run single-threaded behavior loops, so concurrent access to the same character's interpreter doesn't occur.
 
-18. **GOAP failure response discards actual search effort**: At lines 864-865 of BehaviorService.cs, when `PlanAsync` returns null (timeout, node limit, no path), the response hardcodes `PlanningTimeMs = 0` and `NodesExpanded = 0`. The actual time spent searching and nodes expanded before failure are lost because these statistics are only available on the `GoapPlan` object which is null on failure. Callers cannot distinguish "instant failure (no actions)" from "searched 1000 nodes for 100ms and gave up."
+18. **GOAP failure response discards actual search effort**: In `GenerateGoapPlanAsync`, when `PlanAsync` returns null (timeout, node limit, no path), the response hardcodes `PlanningTimeMs = 0` and `NodesExpanded = 0`. The actual time spent searching and nodes expanded before failure are lost because these statistics are only available on the `GoapPlan` object which is null on failure. Callers cannot distinguish "instant failure (no actions)" from "searched 1000 nodes for 100ms and gave up."
 
-19. **Generic service call actions are forbidden**: The SemanticAnalyzer blocks `service_call`, `api_call`, `http_call`, `mesh_call`, and `invoke_service` domain actions at compile time with `SemanticErrorKind.ForbiddenDomainAction`. The IntentEmitterRegistry also rejects these at runtime as defense-in-depth. All service interactions must use purpose-built actions (e.g., `load_snapshot`, `actor_command`, `spawn_watcher`). See issue #296.
+19. **IAssetClient is constructor-injected (hard dependency on L3)**: Per SERVICE-HIERARCHY.md, L4 services should use `GetService<T>()` with null checks for L3 dependencies (graceful degradation if L3 is missing). BehaviorService constructor-injects `IAssetClient` (L3 AppFeatures), which means the service crashes at startup if Asset is not loaded. In practice, Behavior cannot function without Asset (bytecode storage is fundamental), so this behaves correctly in typical deployments but violates the hierarchy's soft-dependency pattern for L3.
+
+20. **Generic service call actions are forbidden**: The SemanticAnalyzer blocks `service_call`, `api_call`, `http_call`, `mesh_call`, and `invoke_service` domain actions at compile time with `SemanticErrorKind.ForbiddenDomainAction`. The IntentEmitterRegistry also rejects these at runtime as defense-in-depth. All service interactions must use purpose-built actions (e.g., `load_snapshot`, `actor_command`, `spawn_watcher`). See issue #296.
 
 ---
 
@@ -767,7 +782,7 @@ flows:
       #       - character-encounter
 ```
 
-**Future enhancements (Issue #294):** When `IResourceTemplateRegistry` is implemented, the compiler will additionally validate that declared template names exist in the registry and that expression paths (e.g., `${candidate.personality.aggression}`) match the template schemas.
+**Template validation (Issue #294, implemented):** The `IResourceTemplateRegistry` is now fully integrated. The `SemanticAnalyzer` validates that declared template names exist in the registry via `HasTemplate()`, and validates expression paths (e.g., `${candidate.personality.aggression}`) against template schemas via `GetByNamespace()` + `ValidatePath()`. Unregistered templates produce warnings (not errors) since templates may be registered at runtime by plugins that aren't loaded during compilation.
 
 #### prefetch_snapshots (batch cache warmup)
 
@@ -1011,8 +1026,7 @@ flows:
 
 ### Completed
 
-- **2026-02-06**: Issues #291-#293, #297, #299 - Added Event Brain domain actions: `load_snapshot`, `prefetch_snapshots`, `resource_templates` metadata, `actor_command`, `actor_query`, `emit_event`. See Domain Actions Reference section.
-- **2026-02-06**: Issue #296 - Forbidden generic `service_call`/`api_call` actions in ABML. See quirk #19.
+*(Historical entries cleared — see git history for prior completions.)*
 
 ### AUDIT Markers
 

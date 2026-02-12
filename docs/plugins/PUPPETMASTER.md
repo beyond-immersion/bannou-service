@@ -84,6 +84,7 @@ The Puppetmaster service is a `Singleton` and maintains all state in memory via 
 | `BehaviorCacheMaxSize` | `PUPPETMASTER_BEHAVIOR_CACHE_MAX_SIZE` | 1000 | Maximum number of behavior documents to cache in memory |
 | `BehaviorCacheTtlSeconds` | `PUPPETMASTER_BEHAVIOR_CACHE_TTL_SECONDS` | 3600 | Time-to-live for cached behavior documents in seconds (1 hour default) |
 | `AssetDownloadTimeoutSeconds` | `PUPPETMASTER_ASSET_DOWNLOAD_TIMEOUT_SECONDS` | 30 | Timeout for downloading behavior YAML from asset service |
+| `SnapshotCacheTtlSeconds` | `PUPPETMASTER_SNAPSHOT_CACHE_TTL_SECONDS` | 300 | Time-to-live for cached resource snapshots in seconds (5 minutes default, used by Event Brain actors) |
 
 ---
 
@@ -433,10 +434,11 @@ When a lifecycle event arrives (e.g., `personality.updated`):
 ## Stubs & Unimplemented Features
 
 1. **Watcher-Actor Integration**: The `ActorId` field on `WatcherInfo` is always `null`. The TODO comment at line 213 indicates actor spawning is not yet implemented. Watchers don't actually execute any behavior - they're just registered in memory.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/388 -->
 
 2. **Configurable Default Watcher Types**: `StartWatchersForRealmAsync` hardcodes `defaultWatcherTypes = ["regional"]`. The code comment notes this "could be configurable per realm or game service".
 
-3. **ResourceSnapshotCache TTL Configuration**: The TTL is hardcoded to 5 minutes (`TimeSpan.FromMinutes(5)`). There's no configuration property to adjust this.
+3. ~~**ResourceSnapshotCache TTL Configuration**~~: **FIXED** (2026-02-11) - Added `SnapshotCacheTtlSeconds` config property (default 300s, minimum 1s). ResourceSnapshotCache now injects `PuppetmasterServiceConfiguration` and uses the config value instead of hardcoded 5-minute TTL.
 
 ---
 
@@ -460,7 +462,7 @@ When a lifecycle event arrives (e.g., `personality.updated`):
 
 ### Bugs (Fix Immediately)
 
-1. **`actor.instance.deleted` subscription not declared in events schema**: The subscription is registered manually in `RegisterEventConsumers` via `IEventConsumer` but is NOT declared in `x-event-subscriptions` in `puppetmaster-events.yaml`. This is a schema-code mismatch violating schema-first development. Fix: add `actor.instance.deleted` to the schema's `x-event-subscriptions` list.
+*None currently identified.*
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -498,3 +500,7 @@ When a lifecycle event arrives (e.g., `personality.updated`):
 ## Work Tracking
 
 This section tracks active development work. Managed by `/audit-plugin` workflow.
+
+### Completed
+
+- **ResourceSnapshotCache TTL Configuration** (2026-02-11): Added `SnapshotCacheTtlSeconds` config property to schema, regenerated config class, wired into `ResourceSnapshotCache` constructor. T21 compliance fix.
