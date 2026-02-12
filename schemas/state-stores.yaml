@@ -1042,3 +1042,40 @@ x-state-stores:
     prefix: "obligation:lock"
     service: Obligation
     purpose: Distributed locks for obligation cache rebuild operations
+
+  # ============================================================================
+  # Status Stores - Unified Entity Effects Layer
+  # ============================================================================
+
+  status-templates:
+    backend: mysql
+    service: Status
+    purpose: Status template definitions (durable, queryable by category/code/gameServiceId)
+
+  status-instances:
+    backend: mysql
+    service: Status
+    purpose: Status instance records with metadata (durable, queryable by entity/source/category)
+
+  status-containers:
+    backend: mysql
+    service: Status
+    purpose: Status container records mapping entities to inventory containers (durable)
+
+  status-active-cache:
+    backend: redis
+    prefix: "status:active"
+    service: Status
+    purpose: Active status cache per entity (fast lookup, rebuilt from instances on miss)
+
+  status-seed-effects-cache:
+    backend: redis
+    prefix: "status:seed"
+    service: Status
+    purpose: Cached seed-derived effects per entity (invalidated on capability.updated events)
+
+  status-lock:
+    backend: redis
+    prefix: "status:lock"
+    service: Status
+    purpose: Distributed locks for status mutations and template updates

@@ -12,26 +12,44 @@ info:
     regulation. A nascent faction literally CANNOT enforce norms -- it hasn't grown
     enough governance capability yet.
 
-    **Primary Purpose**: Store and serve social norms for lib-obligation. When
-    lib-obligation queries "what norms apply to this character?", this service
-    resolves the norm hierarchy (guild faction -> location faction -> realm baseline
-    faction) and returns merged norm definitions. lib-obligation applies personality
-    weighting on top.
+    **Primary Purpose**: Store and serve social norms for lib-obligation.
+    lib-obligation is the PRIMARY CONSUMER of faction norm data -- it queries
+    this service's /faction/norm/query-applicable endpoint to resolve the full
+    norm hierarchy (guild faction -> location faction -> realm baseline faction)
+    into a merged norm set, then applies personality-weighted moral reasoning
+    on top to produce GOAP action cost modifiers for NPC cognition. Without
+    lib-faction, lib-obligation only has contractual obligations (guild charters,
+    trade agreements). With lib-faction, ambient social and cultural norms
+    become enforceable through the same cognition pipeline.
 
     **Seed Integration** (follows Gardener/Seed pattern):
     - Does NOT own seeds -- creates and grows them via lib-seed's API
     - Seed type "faction" registered at startup with growth phases and capability rules
     - Capability checks gate norm and territory endpoints
-    - Implements ISeedEvolutionListener for growth/phase/capability notifications (DI pattern)
+    - Implements ISeedEvolutionListener for growth/phase/capability notifications
+      (DI interface for lower-to-higher communication per FOUNDATION TENETS, T27
+      "DI interfaces for lower<->higher"; in-process guaranteed delivery, writes
+      to distributed state for multi-node safety)
 
     **Collection-to-Seed Pipeline**:
     - Implements ICollectionUnlockListener to convert member activity collection entries
       into faction seed growth via tag prefix matching (governance, commerce, military)
+      (DI interface for lower-to-higher communication per FOUNDATION TENETS, T27;
+      in-process guaranteed delivery, writes to distributed state via lib-seed API)
     - Member activities grow the faction's seed, unlocking organizational capabilities
 
     **Variable Provider**:
     - Implements IVariableProviderFactory providing ${faction.*} namespace to Actor (L2)
-      via the Variable Provider Factory pattern for ABML behavior expressions
+      via the Variable Provider Factory pattern for ABML behavior expressions:
+      - ${faction.is_member} -- whether character belongs to any faction (boolean)
+      - ${faction.membership_count} -- number of faction memberships (integer)
+      - ${faction.primary_faction} -- name of highest-role faction (string)
+      - ${faction.primary_faction_phase} -- seed growth phase of primary faction (string)
+      - ${faction.has_norm.<type>} -- whether any applicable norm covers a violation type (boolean)
+      - ${faction.norm_penalty.<type>} -- merged base penalty for a violation type (float)
+      - ${faction.in_controlled_territory} -- whether character is at a faction-controlled location (boolean)
+      - ${faction.controlling_faction} -- name of controlling faction at current location (string)
+      - ${faction.realm_baseline_faction} -- name of realm baseline faction (string)
 
     **Faction Concepts**:
     - Realm baseline faction: provides realm-wide cultural norms (honor codes, taboos)
@@ -39,19 +57,49 @@ info:
     - Guild factions: character memberships with role hierarchy
     - Parent/child hierarchy for organizational structure
 
+    **Political Connections** (alliances, rivalries, treaties):
+    - Inter-faction political relationships are modeled as seed bonds via lib-seed's
+      existing bond API, NOT through lib-relationship. A bond between two faction
+      seeds represents the alliance/rivalry as a growable entity with its own
+      capability manifest (owned by ownerType: "relationship" in lib-seed).
+    - Joint member activities grow the bonded seed, unlocking alliance capabilities
+    - Bond strength increases with mutual activity; dissolution via seed bond API
+
     **Norm Resolution Hierarchy** (most specific wins):
     1. Guild faction norms (character's direct memberships)
     2. Location faction norms (controlling faction at character's current location)
     3. Realm baseline faction norms (realm-wide cultural context)
 
+    **violationType as Opaque String**: Norm violation types (e.g., "theft", "deception",
+    "violence") are opaque strings, not enums. Per SCHEMA-RULES.md "When NOT to Create
+    Enums": enumerating violation types would create L4-to-L4 coupling between lib-faction
+    and lib-obligation. The vocabulary is defined by contract templates and action tag
+    mappings in lib-obligation; lib-faction stores whatever violation type strings callers
+    provide. Adding new violation types never requires a schema change.
+
+    **Norm Cache Invalidation**: The /faction/norm/query-applicable endpoint caches
+    resolved norm sets per character+location in Redis with configurable TTL
+    (FACTION_NORM_QUERY_CACHE_TTL_SECONDS, default 300s). Cache entries are
+    invalidated on write operations (member add/remove, norm define/update/delete,
+    territory claim/release, realm baseline designation) affecting any faction in
+    the resolution chain. lib-obligation can also use forceRefresh to bypass the
+    cache after detecting stale data via contract lifecycle events.
+
     **Dependencies**:
-    - lib-seed (L2) -- faction capabilities emerge from seed growth
-    - lib-collection (L2) -- member activities feed faction growth
-    - lib-location (L2) -- factions control/influence locations
+    - lib-seed (L2) -- faction capabilities emerge from seed growth; bonds for alliances
+    - lib-collection (L2) -- member activities feed faction growth via DI listener
+    - lib-location (L2) -- factions control/influence locations via territory claims
     - lib-realm (L2) -- realm factions provide baseline cultural context
-    - lib-relationship (L2) -- inter-faction relationships, alliances
     - lib-contract (L1) -- formal membership agreements, guild charters
-    - lib-obligation (L4, optional) -- consumes faction norms for NPC cognition
+    - lib-obligation (L4, primary consumer) -- queries faction norms for NPC cognition
+      cost modifiers; graceful degradation when lib-faction is disabled
+
+    **State Store Backend Rationale**:
+    - MySQL for factions, memberships, territory claims, norms: durable records
+      requiring queryable indexes (by realm, game service, character, location)
+    - Redis for faction cache: high-frequency reads of resolved norm sets and
+      faction lookups with TTL-based expiration
+    - Redis for locks: distributed lock coordination for multi-node safety
 
     **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
     WebSocket routing. Path parameters are passed in request bodies instead of URLs.

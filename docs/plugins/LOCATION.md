@@ -44,15 +44,20 @@ Hierarchical location management (L2 GameFoundation) for the Arcadia game world.
 - `location-statestore` (via `StateStoreDefinitions.Location`) - MySQL backend (persistent)
 - `location-cache` (via `StateStoreDefinitions.LocationCache`) - Redis backend (cache)
 - `location-lock` (via `StateStoreDefinitions.LocationLock`) - Redis backend (distributed locks)
+- `location-entity-presence` (via `StateStoreDefinitions.LocationEntityPresence`) - Redis backend (ephemeral entity-to-location bindings with TTL)
+- `location-entity-set` (via `StateStoreDefinitions.LocationEntitySet`) - Redis backend (Sets tracking which entities are at each location)
 
 | Key Pattern | Data Type | Store | Purpose |
 |-------------|-----------|-------|---------|
 | `location:{locationId}` | `LocationModel` | MySQL | Individual location definition (persistent) |
-| `location:{locationId}` | `LocationModel` | Redis | Location cache (TTL-based) |
+| `location:{locationId}` | `LocationModel` | Redis (cache) | Location cache (TTL-based) |
 | `code-index:{realmId}:{CODE}` | `string` | MySQL | Code → location ID (unique per realm) |
 | `realm-index:{realmId}` | `List<Guid>` | MySQL | All location IDs in a realm |
 | `parent-index:{realmId}:{parentId}` | `List<Guid>` | MySQL | Child location IDs for a parent |
 | `root-locations:{realmId}` | `List<Guid>` | MySQL | Location IDs with no parent in a realm |
+| `entity-location:{entityType}:{entityId}` | `EntityPresenceModel` | Redis (presence) | Entity-to-location binding with TTL |
+| `location-entities:{locationId}` | `Set<string>` | Redis (entity-set) | Set of `{entityType}:{entityId}` members at a location |
+| `location-entities:__index__` | `Set<string>` | Redis (entity-set) | Index of location IDs with active entity sets (for cleanup worker discovery) |
 
 ---
 
@@ -65,6 +70,8 @@ Hierarchical location management (L2 GameFoundation) for the Arcadia game world.
 | `location.created` | `LocationCreatedEvent` | New location created |
 | `location.updated` | `LocationUpdatedEvent` | Location fields changed (includes `ChangedFields`) |
 | `location.deleted` | `LocationDeletedEvent` | Location hard-deleted |
+| `location.entity-arrived` | `LocationEntityArrivedEvent` | Entity presence reported at a new location (not on TTL refresh) |
+| `location.entity-departed` | `LocationEntityDepartedEvent` | Entity presence cleared or moved to a different location |
 
 ### Consumed Events
 
@@ -81,6 +88,10 @@ This plugin does not consume external events.
 | `MaxDescendantDepth` | `LOCATION_MAX_DESCENDANT_DEPTH` | `20` | Safety limit for descendant/circular reference checks |
 | `CacheTtlSeconds` | `LOCATION_CACHE_TTL_SECONDS` | `3600` | TTL for location cache entries (locations change infrequently) |
 | `IndexLockTimeoutSeconds` | `LOCATION_INDEX_LOCK_TIMEOUT_SECONDS` | `5` | Timeout for acquiring distributed locks on index operations |
+| `EntityPresenceTtlSeconds` | `LOCATION_ENTITY_PRESENCE_TTL_SECONDS` | `30` | Default TTL for entity presence entries (reporters must refresh within this window) |
+| `EntityPresenceCleanupIntervalSeconds` | `LOCATION_ENTITY_PRESENCE_CLEANUP_INTERVAL_SECONDS` | `60` | Interval between background cleanup cycles for expired set members |
+| `EntityPresenceCleanupStartupDelaySeconds` | `LOCATION_ENTITY_PRESENCE_CLEANUP_STARTUP_DELAY_SECONDS` | `15` | Delay before entity presence cleanup worker starts processing |
+| `MaxEntitiesPerLocationQuery` | `LOCATION_MAX_ENTITIES_PER_LOCATION_QUERY` | `100` | Maximum entities returned by list-entities-at-location (pagination cap) |
 
 ---
 
@@ -89,7 +100,7 @@ This plugin does not consume external events.
 | Service | Lifetime | Role |
 |---------|----------|------|
 | `ILogger<LocationService>` | Scoped | Structured logging |
-| `LocationServiceConfiguration` | Singleton | All 5 config properties |
+| `LocationServiceConfiguration` | Singleton | All 9 config properties |
 | `IStateStoreFactory` | Singleton | State store access |
 | `IDistributedLockProvider` | Singleton | Distributed locks for index concurrency |
 | `IMessageBus` | Scoped | Event publishing and error events |
@@ -97,7 +108,10 @@ This plugin does not consume external events.
 | `IRealmClient` | Scoped | Realm validation |
 | `IResourceClient` | Scoped | Reference tracking checks before deletion |
 
-Service lifetime is **Scoped** (per-request). No background services.
+Service lifetime is **Scoped** (per-request).
+
+**Background Services**:
+- `EntityPresenceCleanupWorker` — Periodically cleans up stale members from location-entities sets. When an entity's presence TTL expires, the entity-location key is removed by Redis automatically, but the entity remains in the location's entity set. This worker evicts those stale set members using the `location-entities:__index__` index set for discovery.
 
 ---
 
@@ -128,6 +142,13 @@ Service lifetime is **Scoped** (per-request). No background services.
 - **UndeprecateLocation** (`/location/undeprecate`): Restores deprecated location. Returns BadRequest if not deprecated.
 - **TransferLocationToRealm** (`/location/transfer-realm`): Moves a location to a different realm. Validates target realm exists and is active via `IRealmClient`. Checks code uniqueness in target realm (returns 409 Conflict on collision). Removes from all source realm indexes (code, realm, parent, root), clears parent (becomes root, depth 0), saves with new realm ID, adds to target realm indexes. Idempotent (no-op if already in target realm). Publishes `location.updated` with changed fields: `realmId`, `parentLocationId`, `depth`. Invalidates cache. Used by Realm merge for tree migration — caller is responsible for re-parenting descendants after transfer.
 - **SeedLocations** (`/location/seed`): Two-pass algorithm. Pass 1: Creates all locations without parent relationships, resolves realm codes via `IRealmClient`. Spatial fields (bounds, boundsPrecision, coordinateMode, localOrigin) are passed through when present. Pass 2: Sets parent relationships by resolving parent codes from pass 1 results. Supports `updateExisting` (spatial fields updated when provided). Returns created/updated/skipped/errors.
+
+### Entity Presence Operations (4 endpoints)
+
+- **ReportEntityPosition** (`/location/report-entity-position`): Reports an entity's current location. Validates location exists, saves ephemeral presence with configurable TTL (`EntityPresenceTtlSeconds`, default 30s). Detects location changes via caller-hint (`previousLocationId`) fast path or atomic GETSET fallback. On actual location change: updates entity sets (removes from old location set, adds to new), maintains index set, publishes `location.entity-arrived` and `location.entity-departed` events. TTL refreshes are silent (no events).
+- **GetEntityLocation** (`/location/get-entity-location`): Returns current location for an entity by type+ID. Reads from presence store; returns `Found=false` if TTL expired or never reported.
+- **ListEntitiesAtLocation** (`/location/list-entities-at-location`): Lists entities at a specific location. Reads from Redis Set, optionally filters by `entityType`, paginates with `offset`/`limit` (capped by `MaxEntitiesPerLocationQuery`, default 100). Hydrates each member from presence store, skipping stale entries. Returns `EntityPresenceEntry` objects with entity details and `reportedAt` timestamps.
+- **ClearEntityPosition** (`/location/clear-entity-position`): Explicitly removes an entity's presence. Deletes presence key, removes from location's entity set, publishes `location.entity-departed`. Returns `Cleared=false` if entity had no active presence.
 
 ---
 
@@ -270,5 +291,6 @@ No design considerations currently pending.
 
 ## Work Tracking
 
+- **2026-02-12**: Issue [#406](https://github.com/BeyondImmersion/bannou-service/issues/406) - Added entity presence tracking: 4 new endpoints (report-entity-position, get-entity-location, list-entities-at-location, clear-entity-position), Redis-backed ephemeral storage with TTL, background cleanup worker, arrived/departed events. Prerequisite for #145.
 - **2026-02-12**: Issue [#165](https://github.com/beyond-immersion/bannou-service/issues/165) - Added optional spatial coordinates (BoundingBox3D bounds, BoundsPrecision, CoordinateMode, Position3D localOrigin) to locations. Added `/location/query/by-position` endpoint for spatial-to-location lookup. Shared Position3D/BoundingBox3D types added to common-api.yaml.
 - **T4 Violation: Graceful degradation for L1 dependency** (Bugs #1): COMPLETED (2026-02-08) - Changed to `GetRequiredService` with fail-fast behavior

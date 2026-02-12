@@ -1,0 +1,1471 @@
+openapi: 3.0.0
+info:
+  title: Status Service API
+  version: 1.0.0
+  description: |
+    Unified entity effects query layer for temporary contract-managed statuses
+    and passive seed-derived capabilities.
+
+    lib-status (L4 GameFeatures) aggregates item-based statuses (buffs, debuffs,
+    death penalties, subscription benefits) stored as items in per-entity status
+    containers, and seed-derived passive effects computed from seed growth state.
+    Any system needing "what effects does this entity have" queries lib-status.
+
+    Follows the "items in inventories" pattern: status templates define effect
+    definitions, status containers hold per-entity inventory containers, and
+    granting a status creates an item instance in that container. Contract
+    integration is optional per-template for complex lifecycle management;
+    simple TTL-based statuses use lib-item's native decay system (#407).
+
+    **Ownership Model**: Statuses use polymorphic ownership (entityId + entityType),
+    following the Collection/License/Seed pattern. Entity types are opaque strings
+    (e.g., "character", "account") -- NOT enums, per SCHEMA-RULES.md guidance on
+    not enumerating entity types from other layers.
+
+    **Seed Integration**: Implements ISeedEvolutionListener for capability change
+    notifications and queries ISeedClient for passive effects. Unified queries
+    merge item-based and seed-derived effects with source attribution.
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support
+    zero-copy WebSocket routing. Path parameters are passed in request bodies.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+x-service-layer: GameFeatures
+
+servers:
+- url: http://localhost:5012
+  description: Bannou service endpoint (internal only)
+
+x-references:
+- target: character
+  sourceType: status-container
+  field: ownerId
+  onDelete: cascade
+  cleanup:
+    endpoint: /status/cleanup-by-owner
+    payloadTemplate: '{"ownerType": "character", "ownerId": "{{resourceId}}"}'
+- target: account
+  sourceType: status-container
+  field: ownerId
+  onDelete: cascade
+  cleanup:
+    endpoint: /status/cleanup-by-owner
+    payloadTemplate: '{"ownerType": "account", "ownerId": "{{resourceId}}"}'
+
+paths:
+  # ===========================================================================
+  # Template Management (6 endpoints)
+  # ===========================================================================
+
+  /status/template/create:
+    post:
+      operationId: createStatusTemplate
+      tags:
+      - StatusTemplate
+      summary: Create a status template
+      description: |
+        Create a status template defining a status effect type. Each template has
+        a unique code within its game service, references an item template for
+        inventory placement, and configures stacking behavior and optional contract
+        integration for lifecycle management.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateStatusTemplateRequest'
+      responses:
+        '200':
+          description: Status template created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusTemplateResponse'
+        '400':
+          description: Invalid request (validation error)
+        '404':
+          description: Referenced game service or item template not found
+        '409':
+          description: Duplicate code for this game service, or max templates exceeded
+
+  /status/template/get:
+    post:
+      operationId: getStatusTemplate
+      tags:
+      - StatusTemplate
+      summary: Get a status template by ID
+      description: Retrieves a status template by its unique identifier.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetStatusTemplateRequest'
+      responses:
+        '200':
+          description: Status template retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusTemplateResponse'
+        '404':
+          description: Status template not found
+
+  /status/template/get-by-code:
+    post:
+      operationId: getStatusTemplateByCode
+      tags:
+      - StatusTemplate
+      summary: Get a status template by code
+      description: Retrieves a status template by its game service and unique code.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetStatusTemplateByCodeRequest'
+      responses:
+        '200':
+          description: Status template retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusTemplateResponse'
+        '404':
+          description: Status template not found
+
+  /status/template/list:
+    post:
+      operationId: listStatusTemplates
+      tags:
+      - StatusTemplate
+      summary: List status templates
+      description: Paginated list of status templates filtered by game service with optional category filter.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListStatusTemplatesRequest'
+      responses:
+        '200':
+          description: Status templates retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListStatusTemplatesResponse'
+
+  /status/template/update:
+    post:
+      operationId: updateStatusTemplate
+      tags:
+      - StatusTemplate
+      summary: Update a status template
+      description: Update mutable fields of a status template. Only non-null fields in the request are updated.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateStatusTemplateRequest'
+      responses:
+        '200':
+          description: Status template updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusTemplateResponse'
+        '404':
+          description: Status template not found
+
+  /status/template/seed:
+    post:
+      operationId: seedStatusTemplates
+      tags:
+      - StatusTemplate
+      summary: Bulk seed status templates
+      description: Bulk create status templates from a payload, skipping duplicates. Validates item template IDs. Returns count of created templates.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SeedStatusTemplatesRequest'
+      responses:
+        '200':
+          description: Seed completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeedStatusTemplatesResponse'
+        '400':
+          description: Invalid request (validation errors)
+
+  # ===========================================================================
+  # Status Operations (7 endpoints)
+  # ===========================================================================
+
+  /status/grant:
+    post:
+      operationId: grantStatus
+      tags:
+      - Status
+      summary: Grant a status effect to an entity
+      description: |
+        Grant a status effect to an entity. Creates an item instance in the entity's
+        status container and optionally creates a contract instance for lifecycle
+        management. Auto-creates the status container (and inventory container) if
+        one does not exist for this entity and game service.
+
+        Stacking behavior is determined by the template:
+        - refresh_duration: resets timer, increments stack count
+        - independent: creates a separate instance per application
+        - increase_intensity: increments stack, resets timer
+        - replace: removes existing, creates new
+        - ignore: rejects if already present
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GrantStatusRequest'
+      responses:
+        '200':
+          description: Status granted successfully (or stacked/refreshed/replaced)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GrantStatusResponse'
+        '404':
+          description: Status template or game service not found
+        '409':
+          description: Grant rejected (max statuses, stack limit, ignore behavior, contract/item failure)
+
+  /status/remove:
+    post:
+      operationId: removeStatus
+      tags:
+      - Status
+      summary: Remove a specific status instance
+      description: |
+        Remove a specific status instance by ID. Destroys the item via lib-item,
+        cancels any associated contract, deletes the instance record, and invalidates
+        the active status cache.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveStatusRequest'
+      responses:
+        '200':
+          description: Status removed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusInstanceResponse'
+        '404':
+          description: Status instance not found
+
+  /status/remove-by-source:
+    post:
+      operationId: removeBySource
+      tags:
+      - Status
+      summary: Remove all statuses from a source
+      description: Remove all status instances granted by a specific source for an entity. Used for cascading removal when a source entity is deleted.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveBySourceRequest'
+      responses:
+        '200':
+          description: Statuses removed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RemoveStatusesResponse'
+
+  /status/remove-by-category:
+    post:
+      operationId: removeByCategory
+      tags:
+      - Status
+      summary: Remove all statuses of a category (cleanse)
+      description: Remove all status instances of a given category for an entity. Used for cleanse mechanics (remove all debuffs, etc.).
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveByCategoryRequest'
+      responses:
+        '200':
+          description: Statuses cleansed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RemoveStatusesResponse'
+
+  /status/has:
+    post:
+      operationId: hasStatus
+      tags:
+      - Status
+      summary: Check if an entity has a specific status
+      description: Check if an entity has a specific status template code active. Returns the status instance ID and stack count if found.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HasStatusRequest'
+      responses:
+        '200':
+          description: Check completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HasStatusResponse'
+
+  /status/list:
+    post:
+      operationId: listStatuses
+      tags:
+      - Status
+      summary: List active statuses for an entity
+      description: |
+        List active status effects for an entity with optional category filter
+        and seed-derived passive effect inclusion. Merges item-based statuses
+        from cache with seed-derived effects when includePassive is true.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListStatusesRequest'
+      responses:
+        '200':
+          description: Statuses retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListStatusesResponse'
+
+  /status/get:
+    post:
+      operationId: getStatus
+      tags:
+      - Status
+      summary: Get a specific status instance
+      description: Retrieves a status instance by its unique identifier with full details including metadata.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetStatusRequest'
+      responses:
+        '200':
+          description: Status instance retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusInstanceResponse'
+        '404':
+          description: Status instance not found
+
+  # ===========================================================================
+  # Effects Query (2 endpoints)
+  # ===========================================================================
+
+  /status/effects/get:
+    post:
+      operationId: getEffects
+      tags:
+      - Effects
+      summary: Get unified effects for an entity
+      description: |
+        Get all active effects for an entity including both item-based statuses
+        and seed-derived passive capabilities. Returns a unified view with source
+        attribution via the effectSource field.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetEffectsRequest'
+      responses:
+        '200':
+          description: Effects retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetEffectsResponse'
+
+  /status/effects/get-seed:
+    post:
+      operationId: getSeedEffects
+      tags:
+      - Effects
+      summary: Get seed-derived passive effects for an entity
+      description: |
+        Get seed-derived passive effects only. Queries ISeedClient for capability
+        manifests across all seeds owned by the entity. Returns capabilities with
+        domain, fidelity, and seed attribution.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetSeedEffectsRequest'
+      responses:
+        '200':
+          description: Seed effects retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeedEffectsResponse'
+
+  # ===========================================================================
+  # Cleanup (1 endpoint)
+  # ===========================================================================
+
+  /status/cleanup-by-owner:
+    post:
+      operationId: cleanupByOwner
+      tags:
+      - Cleanup
+      summary: Remove all statuses and containers for an owner
+      description: |
+        Remove all status containers, instances, and inventory containers for an
+        owner entity. Called by lib-resource cleanup callbacks when a character or
+        account is deleted. Destroys inventory containers (cascades to items),
+        deletes all instance records, and invalidates all caches.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByOwnerRequest'
+      responses:
+        '200':
+          description: Cleanup completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupResponse'
+
+components:
+  schemas:
+    # ==========================================================================
+    # Enums
+    # ==========================================================================
+
+    StatusCategory:
+      type: string
+      description: |
+        Classification of status effects for filtering and cleanse targeting.
+        - buff: positive temporary effect (strength boost, speed increase)
+        - debuff: negative temporary effect (poison, slow, weakness)
+        - death: death penalty or incapacitation state
+        - subscription: account-level subscription benefit
+        - event: time-limited event effect (festival bonus, seasonal)
+        - passive: seed-derived passive capability (used in unified queries)
+      enum:
+      - buff
+      - debuff
+      - death
+      - subscription
+      - event
+      - passive
+
+    StackBehavior:
+      type: string
+      description: |
+        How multiple applications of the same status template interact.
+        - refresh_duration: resets timer, preserves or increments stack count
+        - independent: each application is a separate item with own timer
+        - increase_intensity: stacks increase effect magnitude, shared timer reset
+        - replace: new application replaces existing entirely
+        - ignore: cannot apply if already present
+      enum:
+      - refresh_duration
+      - independent
+      - increase_intensity
+      - replace
+      - ignore
+
+    EffectSource:
+      type: string
+      description: |
+        Whether an effect comes from a status item or a seed capability.
+        - item_based: temporary effect stored as an item in a status container
+        - seed_derived: passive capability computed from seed growth state
+      enum:
+      - item_based
+      - seed_derived
+
+    StatusRemoveReason:
+      type: string
+      description: |
+        Why a status was removed from an entity.
+        - expired: TTL or contract duration elapsed
+        - cleansed: removed by category cleanse mechanic
+        - cancelled: explicitly cancelled by service or admin
+        - source_removed: source entity was deleted (cascading removal)
+        - admin: removed by administrative action
+      enum:
+      - expired
+      - cleansed
+      - cancelled
+      - source_removed
+      - admin
+
+    GrantFailureReason:
+      type: string
+      description: |
+        Why a status grant was rejected.
+        - template_not_found: status template code does not exist for game service
+        - entity_at_max_statuses: entity has reached maximum concurrent statuses
+        - stack_limit_reached: status has reached maximum stack count
+        - stack_behavior_ignore: template uses ignore stacking and status already present
+        - contract_failed: contract instance creation or lifecycle failed
+        - item_creation_failed: item instance creation via lib-item failed
+      enum:
+      - template_not_found
+      - entity_at_max_statuses
+      - stack_limit_reached
+      - stack_behavior_ignore
+      - contract_failed
+      - item_creation_failed
+
+    GrantResult:
+      type: string
+      description: |
+        How a successful status grant was resolved.
+        - granted: new status applied (no prior instance)
+        - stacked: stack count increased on existing instance
+        - refreshed: timer reset on existing instance
+        - replaced: existing instance removed and new one created
+      enum:
+      - granted
+      - stacked
+      - refreshed
+      - replaced
+
+    # ==========================================================================
+    # Shared Models
+    # ==========================================================================
+
+    StatusEffectSummary:
+      type: object
+      description: Unified summary of an active effect from any source (item-based or seed-derived)
+      additionalProperties: false
+      required:
+      - statusCode
+      - category
+      - effectSource
+      properties:
+        statusCode:
+          type: string
+          description: Status template code (item-based) or capability code (seed-derived)
+        category:
+          $ref: '#/components/schemas/StatusCategory'
+          description: Status category for filtering
+        effectSource:
+          $ref: '#/components/schemas/EffectSource'
+          description: Whether this effect is item-based or seed-derived
+        stackCount:
+          type: integer
+          nullable: true
+          description: Current stack count (null for seed-derived effects)
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this effect expires (null for permanent or seed-derived)
+        fidelity:
+          type: number
+          format: float
+          nullable: true
+          description: Seed capability fidelity value (null for item-based effects)
+        seedId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Seed providing this effect (null for item-based effects)
+        sourceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: What granted this status (null for seed-derived effects)
+
+    SeedEffectEntry:
+      type: object
+      description: A single seed-derived passive effect entry
+      additionalProperties: false
+      required:
+      - capabilityCode
+      - domain
+      - fidelity
+      - seedId
+      - seedTypeCode
+      properties:
+        capabilityCode:
+          type: string
+          description: Capability code from the seed's capability manifest
+        domain:
+          type: string
+          description: Seed domain this capability belongs to
+        fidelity:
+          type: number
+          format: float
+          description: Capability fidelity value (0.0 to 1.0)
+        seedId:
+          type: string
+          format: uuid
+          description: Seed providing this capability
+        seedTypeCode:
+          type: string
+          description: Type code of the seed providing this capability
+
+    # ==========================================================================
+    # Request/Response Models - Template Management
+    # ==========================================================================
+
+    CreateStatusTemplateRequest:
+      type: object
+      description: Request to create a new status template
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - code
+      - displayName
+      - description
+      - category
+      - stackable
+      - itemTemplateId
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service this template is scoped to
+        code:
+          type: string
+          maxLength: 128
+          description: Unique status code within this game service
+        displayName:
+          type: string
+          description: Human-readable display name for this status effect
+        description:
+          type: string
+          description: Detailed description of what this status effect does
+        category:
+          $ref: '#/components/schemas/StatusCategory'
+          description: Classification of this status effect
+        stackable:
+          type: boolean
+          description: Whether this status can stack (multiple applications)
+        maxStacks:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Maximum number of stacks when stackable is true
+        stackBehavior:
+          $ref: '#/components/schemas/StackBehavior'
+          description: How multiple applications interact (defaults to ignore)
+        contractTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Contract template for lifecycle management (null for simple TTL statuses)
+        itemTemplateId:
+          type: string
+          format: uuid
+          description: Item template used when granting this status as an inventory item
+        defaultDurationSeconds:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: Default duration in seconds for non-contract TTL management (null for permanent)
+        iconAssetId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Asset identifier for this status effect's icon
+
+    GetStatusTemplateRequest:
+      type: object
+      description: Request to get a status template by ID
+      additionalProperties: false
+      required:
+      - statusTemplateId
+      properties:
+        statusTemplateId:
+          type: string
+          format: uuid
+          description: Status template identifier
+
+    GetStatusTemplateByCodeRequest:
+      type: object
+      description: Request to get a status template by game service and code
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - code
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service the template is scoped to
+        code:
+          type: string
+          description: Unique status code within this game service
+
+    ListStatusTemplatesRequest:
+      type: object
+      description: Request to list status templates with filtering and pagination
+      additionalProperties: false
+      required:
+      - gameServiceId
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Filter by game service
+        category:
+          nullable: true
+          description: Optional filter by status category
+          allOf:
+          - $ref: '#/components/schemas/StatusCategory'
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Page number (one-indexed)
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+          description: Number of items per page
+
+    UpdateStatusTemplateRequest:
+      type: object
+      description: Request to update mutable fields of a status template (null fields are not updated)
+      additionalProperties: false
+      required:
+      - statusTemplateId
+      properties:
+        statusTemplateId:
+          type: string
+          format: uuid
+          description: Status template to update
+        displayName:
+          type: string
+          nullable: true
+          description: Updated display name (null means no change)
+        description:
+          type: string
+          nullable: true
+          description: Updated description (null means no change)
+        category:
+          nullable: true
+          description: Updated status category (null means no change)
+          allOf:
+          - $ref: '#/components/schemas/StatusCategory'
+        stackable:
+          type: boolean
+          nullable: true
+          description: Updated stackable flag (null means no change)
+        maxStacks:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: Updated maximum stack count (null means no change)
+        stackBehavior:
+          nullable: true
+          description: Updated stacking behavior (null means no change)
+          allOf:
+          - $ref: '#/components/schemas/StackBehavior'
+        contractTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Updated contract template reference (null means no change)
+        defaultDurationSeconds:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: Updated default duration in seconds (null means no change)
+        iconAssetId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Updated icon asset reference (null means no change)
+
+    SeedStatusTemplatesRequest:
+      type: object
+      description: Request to bulk seed status templates for a game service
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - templates
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service to seed templates for (all templates must belong to this game service)
+        templates:
+          type: array
+          items:
+            $ref: '#/components/schemas/CreateStatusTemplateRequest'
+          description: Status templates to create (duplicates are skipped)
+
+    StatusTemplateResponse:
+      type: object
+      description: Status template with all fields
+      additionalProperties: false
+      required:
+      - statusTemplateId
+      - gameServiceId
+      - code
+      - displayName
+      - description
+      - category
+      - stackable
+      - maxStacks
+      - stackBehavior
+      - itemTemplateId
+      - createdAt
+      properties:
+        statusTemplateId:
+          type: string
+          format: uuid
+          description: Unique status template identifier
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service this template is scoped to
+        code:
+          type: string
+          description: Unique status code within this game service
+        displayName:
+          type: string
+          description: Human-readable display name
+        description:
+          type: string
+          description: Detailed description of this status effect
+        category:
+          $ref: '#/components/schemas/StatusCategory'
+          description: Classification of this status effect
+        stackable:
+          type: boolean
+          description: Whether this status can stack
+        maxStacks:
+          type: integer
+          description: Maximum number of stacks
+        stackBehavior:
+          $ref: '#/components/schemas/StackBehavior'
+          description: How multiple applications interact
+        contractTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Contract template for lifecycle management (null if not contract-managed)
+        itemTemplateId:
+          type: string
+          format: uuid
+          description: Item template used when granting this status
+        defaultDurationSeconds:
+          type: integer
+          nullable: true
+          description: Default duration in seconds (null for permanent statuses)
+        iconAssetId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Asset identifier for this status effect's icon
+        createdAt:
+          type: string
+          format: date-time
+          description: When this template was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this template was last updated
+
+    ListStatusTemplatesResponse:
+      type: object
+      description: Paginated list of status templates
+      additionalProperties: false
+      required:
+      - templates
+      - totalCount
+      - page
+      - pageSize
+      properties:
+        templates:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusTemplateResponse'
+          description: Status templates in this page
+        totalCount:
+          type: integer
+          description: Total number of templates matching the filter
+        page:
+          type: integer
+          description: Current page number
+        pageSize:
+          type: integer
+          description: Number of items per page
+
+    SeedStatusTemplatesResponse:
+      type: object
+      description: Result of bulk seed operation
+      additionalProperties: false
+      required:
+      - created
+      - skipped
+      properties:
+        created:
+          type: integer
+          description: Number of status templates successfully created
+        skipped:
+          type: integer
+          description: Number of templates skipped (duplicates)
+
+    # ==========================================================================
+    # Request/Response Models - Status Operations
+    # ==========================================================================
+
+    GrantStatusRequest:
+      type: object
+      description: Request to grant a status effect to an entity
+      additionalProperties: false
+      required:
+      - entityId
+      - entityType
+      - gameServiceId
+      - statusTemplateCode
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: Entity to receive the status effect
+        entityType:
+          type: string
+          description: Entity type discriminator (e.g., character, account)
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope for template lookup
+        statusTemplateCode:
+          type: string
+          description: Status template code to grant
+        sourceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: What granted this status (for cascading removal via remove-by-source)
+        durationOverrideSeconds:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: Override the template's default duration in seconds
+        metadata:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Arbitrary data passed to contract template values
+
+    RemoveStatusRequest:
+      type: object
+      description: Request to remove a specific status instance
+      additionalProperties: false
+      required:
+      - statusInstanceId
+      - reason
+      properties:
+        statusInstanceId:
+          type: string
+          format: uuid
+          description: Status instance to remove
+        reason:
+          $ref: '#/components/schemas/StatusRemoveReason'
+          description: Why this status is being removed
+
+    RemoveBySourceRequest:
+      type: object
+      description: Request to remove all statuses from a specific source for an entity
+      additionalProperties: false
+      required:
+      - entityId
+      - entityType
+      - sourceId
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: Entity to remove statuses from
+        entityType:
+          type: string
+          description: Entity type discriminator
+        sourceId:
+          type: string
+          format: uuid
+          description: Source that originally granted the statuses
+
+    RemoveByCategoryRequest:
+      type: object
+      description: Request to remove all statuses of a category for an entity (cleanse)
+      additionalProperties: false
+      required:
+      - entityId
+      - entityType
+      - category
+      - reason
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: Entity to cleanse statuses from
+        entityType:
+          type: string
+          description: Entity type discriminator
+        category:
+          $ref: '#/components/schemas/StatusCategory'
+          description: Category of statuses to remove
+        reason:
+          $ref: '#/components/schemas/StatusRemoveReason'
+          description: Why these statuses are being removed
+
+    HasStatusRequest:
+      type: object
+      description: Request to check if an entity has a specific status
+      additionalProperties: false
+      required:
+      - entityId
+      - entityType
+      - statusCode
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: Entity to check
+        entityType:
+          type: string
+          description: Entity type discriminator
+        statusCode:
+          type: string
+          description: Status template code to check for
+
+    ListStatusesRequest:
+      type: object
+      description: Request to list active statuses for an entity
+      additionalProperties: false
+      required:
+      - entityId
+      - entityType
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: Entity to list statuses for
+        entityType:
+          type: string
+          description: Entity type discriminator
+        category:
+          nullable: true
+          description: Optional filter by status category
+          allOf:
+          - $ref: '#/components/schemas/StatusCategory'
+        includePassive:
+          type: boolean
+          default: false
+          description: Whether to include seed-derived passive effects in results
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Page number (one-indexed)
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+          description: Number of items per page
+
+    GetStatusRequest:
+      type: object
+      description: Request to get a status instance by ID
+      additionalProperties: false
+      required:
+      - statusInstanceId
+      properties:
+        statusInstanceId:
+          type: string
+          format: uuid
+          description: Status instance identifier
+
+    GrantStatusResponse:
+      type: object
+      description: Result of a successful status grant operation
+      additionalProperties: false
+      required:
+      - statusInstanceId
+      - statusTemplateCode
+      - stackCount
+      - itemInstanceId
+      - grantedAt
+      - grantResult
+      properties:
+        statusInstanceId:
+          type: string
+          format: uuid
+          description: Status instance that was created or updated
+        statusTemplateCode:
+          type: string
+          description: Status template code that was granted
+        stackCount:
+          type: integer
+          description: Current stack count after grant
+        contractInstanceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Contract instance managing this status lifecycle (null if not contract-managed)
+        itemInstanceId:
+          type: string
+          format: uuid
+          description: Item instance created in the status container
+        grantedAt:
+          type: string
+          format: date-time
+          description: When this status was granted
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this status expires (null for permanent statuses)
+        grantResult:
+          $ref: '#/components/schemas/GrantResult'
+          description: How the grant was resolved (granted, stacked, refreshed, replaced)
+
+    GrantStatusFailedResponse:
+      type: object
+      description: Details of a failed grant attempt (used in StatusGrantFailedEvent)
+      additionalProperties: false
+      required:
+      - reason
+      properties:
+        reason:
+          $ref: '#/components/schemas/GrantFailureReason'
+          description: Why the grant was rejected
+        existingStatusInstanceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Existing status instance ID (set when ignore behavior prevents grant)
+
+    HasStatusResponse:
+      type: object
+      description: Result of a status existence check
+      additionalProperties: false
+      required:
+      - hasStatus
+      properties:
+        hasStatus:
+          type: boolean
+          description: Whether the entity has this status active
+        statusInstanceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Status instance ID if found (null if not present)
+        stackCount:
+          type: integer
+          nullable: true
+          description: Current stack count if found (null if not present)
+
+    StatusInstanceResponse:
+      type: object
+      description: Full details of a status instance
+      additionalProperties: false
+      required:
+      - statusInstanceId
+      - entityId
+      - entityType
+      - statusTemplateCode
+      - category
+      - stackCount
+      - itemInstanceId
+      - grantedAt
+      properties:
+        statusInstanceId:
+          type: string
+          format: uuid
+          description: Unique status instance identifier
+        entityId:
+          type: string
+          format: uuid
+          description: Entity this status is applied to
+        entityType:
+          type: string
+          description: Entity type discriminator
+        statusTemplateCode:
+          type: string
+          description: Status template code
+        category:
+          $ref: '#/components/schemas/StatusCategory'
+          description: Status category
+        stackCount:
+          type: integer
+          description: Current stack count
+        sourceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: What granted this status (null if no source tracking)
+        contractInstanceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Contract instance managing lifecycle (null if not contract-managed)
+        itemInstanceId:
+          type: string
+          format: uuid
+          description: Item instance in the status container
+        grantedAt:
+          type: string
+          format: date-time
+          description: When this status was granted
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this status expires (null for permanent)
+        metadata:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Arbitrary metadata associated with this status instance
+
+    ListStatusesResponse:
+      type: object
+      description: Paginated list of active status effects
+      additionalProperties: false
+      required:
+      - statuses
+      - totalCount
+      - page
+      - pageSize
+      properties:
+        statuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusEffectSummary'
+          description: Active status effects (item-based and optionally seed-derived)
+        totalCount:
+          type: integer
+          description: Total number of effects matching the filter
+        page:
+          type: integer
+          description: Current page number
+        pageSize:
+          type: integer
+          description: Number of items per page
+
+    RemoveStatusesResponse:
+      type: object
+      description: Result of a bulk status removal operation
+      additionalProperties: false
+      required:
+      - statusesRemoved
+      properties:
+        statusesRemoved:
+          type: integer
+          description: Number of status instances removed
+
+    # ==========================================================================
+    # Request/Response Models - Effects Query
+    # ==========================================================================
+
+    GetEffectsRequest:
+      type: object
+      description: Request to get unified effects for an entity
+      additionalProperties: false
+      required:
+      - entityId
+      - entityType
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: Entity to get effects for
+        entityType:
+          type: string
+          description: Entity type discriminator
+        includePassive:
+          type: boolean
+          default: true
+          description: Whether to include seed-derived passive effects
+
+    GetSeedEffectsRequest:
+      type: object
+      description: Request to get seed-derived passive effects for an entity
+      additionalProperties: false
+      required:
+      - entityId
+      - entityType
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: Entity to get seed effects for
+        entityType:
+          type: string
+          description: Entity type discriminator
+
+    GetEffectsResponse:
+      type: object
+      description: Unified view of all active effects for an entity
+      additionalProperties: false
+      required:
+      - entityId
+      - entityType
+      - itemBasedCount
+      - seedDerivedCount
+      - effects
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: Entity these effects belong to
+        entityType:
+          type: string
+          description: Entity type discriminator
+        itemBasedCount:
+          type: integer
+          description: Number of item-based status effects
+        seedDerivedCount:
+          type: integer
+          description: Number of seed-derived passive effects
+        effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusEffectSummary'
+          description: All active effects with source attribution
+
+    SeedEffectsResponse:
+      type: object
+      description: Seed-derived passive effects for an entity
+      additionalProperties: false
+      required:
+      - entityId
+      - entityType
+      - effects
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: Entity these effects belong to
+        entityType:
+          type: string
+          description: Entity type discriminator
+        effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeedEffectEntry'
+          description: Seed-derived passive effects
+
+    # ==========================================================================
+    # Request/Response Models - Cleanup
+    # ==========================================================================
+
+    CleanupByOwnerRequest:
+      type: object
+      description: Request to remove all statuses and containers for an owner entity
+      additionalProperties: false
+      required:
+      - ownerType
+      - ownerId
+      properties:
+        ownerType:
+          type: string
+          description: Owner entity type (e.g., character, account)
+        ownerId:
+          type: string
+          format: uuid
+          description: Owner entity identifier
+
+    CleanupResponse:
+      type: object
+      description: Result of an owner cleanup operation
+      additionalProperties: false
+      required:
+      - statusesRemoved
+      - containersDeleted
+      properties:
+        statusesRemoved:
+          type: integer
+          description: Number of status instances removed
+        containersDeleted:
+          type: integer
+          description: Number of status containers deleted

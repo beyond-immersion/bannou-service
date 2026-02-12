@@ -7,14 +7,17 @@ info:
     for Faction entities. Custom events cover membership changes, territory claims,
     norm lifecycle, and realm baseline designation.
 
-    **Cross-Service Integration**:
+    **Cross-Service Integration** (per FOUNDATION TENETS, T27 "DI interfaces for lower<->higher"):
     - Implements ISeedEvolutionListener DI provider pattern for growth/phase/capability
-      notifications (in-process, guaranteed delivery). This replaces broadcast event
-      subscriptions for seed.growth.updated and seed.phase.changed.
+      notifications (in-process, guaranteed delivery, writes to distributed state).
+      This replaces broadcast event subscriptions for seed.growth.updated and
+      seed.phase.changed.
     - Implements ICollectionUnlockListener DI provider pattern for member activity
-      collection entries feeding faction seed growth (in-process, tag prefix matching).
-    - Resource cleanup handled via x-references cleanup callbacks (T28 compliant),
-      NOT via event subscriptions to character.deleted, realm.deleted, or location.deleted.
+      collection entries feeding faction seed growth (in-process, tag prefix matching,
+      writes to distributed state via lib-seed API).
+    - Resource cleanup handled via x-references cleanup callbacks (per FOUNDATION
+      TENETS, T28 "Resource-Managed Cleanup"), NOT via event subscriptions to
+      character.deleted, realm.deleted, or location.deleted.
 
     **Topic Naming**: Uses dot-separated format (faction.member.added).
 

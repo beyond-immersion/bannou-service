@@ -1,0 +1,345 @@
+openapi: 3.0.3
+info:
+  title: Status Service Events
+  description: |
+    Event subscription and publication declarations for Status service.
+    Lifecycle events (Created, Updated, Deleted) are auto-generated from x-lifecycle
+    for the StatusTemplate entity.
+    Custom events cover grant outcomes, removal, expiration, stacking, and cleansing.
+
+    **Event Categories**:
+    - Status template lifecycle: created, updated, deleted (auto-generated)
+    - Status events: granted, removed, expired, stacked, grant-failed, cleansed
+
+    **Consumed Events**:
+    - seed.capability.updated: Invalidate seed effects cache for affected entity
+    - item.expired: Clean up expired status instance records (blocked on #407)
+
+    **Topic Naming**: Uses dot-separated format (status.granted).
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  x-event-subscriptions:
+    - topic: seed.capability.updated
+      event: SeedCapabilityUpdatedEvent
+      handler: HandleSeedCapabilityUpdated
+    # Blocked on #407 (Item Decay/Expiration System) -- lib-item does not yet
+    # publish item.expired events. Uncomment when #407 is implemented.
+    # - topic: item.expired
+    #   event: ItemExpiredEvent
+    #   handler: HandleItemExpired
+  x-event-publications:
+    # Status template lifecycle events (auto-generated from x-lifecycle)
+    - topic: status-template.created
+      event: StatusTemplateCreatedEvent
+      description: Published when a new status template is created
+    - topic: status-template.updated
+      event: StatusTemplateUpdatedEvent
+      description: Published when a status template is updated
+    - topic: status-template.deleted
+      event: StatusTemplateDeletedEvent
+      description: Published when a status template is deleted
+
+    # Custom events
+    - topic: status.granted
+      event: StatusGrantedEvent
+      description: Published when a status effect is successfully applied to an entity
+    - topic: status.removed
+      event: StatusRemovedEvent
+      description: Published when a status effect is removed from an entity (any reason)
+    - topic: status.expired
+      event: StatusExpiredEvent
+      description: Published when a status effect expires via TTL or contract timeout
+    - topic: status.stacked
+      event: StatusStackedEvent
+      description: Published when a status effect is stacked (count changed)
+    - topic: status.grant-failed
+      event: StatusGrantFailedEvent
+      description: Published when a grant attempt is rejected
+    - topic: status.cleansed
+      event: StatusCleansedEvent
+      description: Published when statuses are removed by category cleanse
+
+# Lifecycle events auto-generated from this definition
+# Output: schemas/Generated/status-lifecycle-events.yaml
+x-lifecycle:
+  StatusTemplate:
+    model:
+      statusTemplateId: { type: string, format: uuid, primary: true, required: true, description: "Unique status template identifier" }
+      gameServiceId: { type: string, format: uuid, required: true, description: "Game service this template is scoped to" }
+      code: { type: string, required: true, description: "Unique status code within this game service" }
+      displayName: { type: string, required: true, description: "Human-readable display name" }
+      category: { $ref: 'status-api.yaml#/components/schemas/StatusCategory', required: true, description: "Classification of this status effect" }
+      stackable: { type: boolean, required: true, description: "Whether this status can stack" }
+      maxStacks: { type: integer, required: true, description: "Maximum number of stacks" }
+      stackBehavior: { $ref: 'status-api.yaml#/components/schemas/StackBehavior', required: true, description: "How multiple applications interact" }
+      createdAt: { type: string, format: date-time, required: true, description: "When this template was created" }
+      updatedAt: { type: string, format: date-time, nullable: true, description: "When this template was last updated" }
+    sensitive:
+    - contractTemplateId
+
+paths: {}  # Events don't have HTTP paths
+
+# Note: StatusTemplateCreatedEvent, StatusTemplateUpdatedEvent, StatusTemplateDeletedEvent
+# are auto-generated from x-lifecycle. See: schemas/Generated/status-lifecycle-events.yaml
+
+components:
+  schemas:
+    # =========================================================================
+    # Custom Published Events (non-lifecycle)
+    # =========================================================================
+
+    StatusGrantedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a status effect is successfully applied to an entity
+      required:
+      - eventId
+      - timestamp
+      - entityId
+      - entityType
+      - statusTemplateCode
+      - statusInstanceId
+      - category
+      - stackCount
+      - grantResult
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the grant occurred
+        entityId:
+          type: string
+          format: uuid
+          description: Entity that received the status effect
+        entityType:
+          type: string
+          description: Entity type discriminator
+        statusTemplateCode:
+          type: string
+          description: Status template code that was granted
+        statusInstanceId:
+          type: string
+          format: uuid
+          description: Status instance that was created or updated
+        category:
+          $ref: 'status-api.yaml#/components/schemas/StatusCategory'
+          description: Classification of the granted status
+        stackCount:
+          type: integer
+          description: Current stack count after grant
+        sourceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: What granted this status
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this status expires (null for permanent)
+        grantResult:
+          $ref: 'status-api.yaml#/components/schemas/GrantResult'
+          description: How the grant was resolved (granted, stacked, refreshed, replaced)
+
+    StatusRemovedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a status effect is removed from an entity (any reason)
+      required:
+      - eventId
+      - timestamp
+      - entityId
+      - entityType
+      - statusTemplateCode
+      - statusInstanceId
+      - reason
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the removal occurred
+        entityId:
+          type: string
+          format: uuid
+          description: Entity that lost the status effect
+        entityType:
+          type: string
+          description: Entity type discriminator
+        statusTemplateCode:
+          type: string
+          description: Status template code that was removed
+        statusInstanceId:
+          type: string
+          format: uuid
+          description: Status instance that was removed
+        reason:
+          $ref: 'status-api.yaml#/components/schemas/StatusRemoveReason'
+          description: Why the status was removed
+
+    StatusExpiredEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a status effect expires via TTL or contract timeout
+      required:
+      - eventId
+      - timestamp
+      - entityId
+      - entityType
+      - statusTemplateCode
+      - statusInstanceId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the expiration occurred
+        entityId:
+          type: string
+          format: uuid
+          description: Entity whose status expired
+        entityType:
+          type: string
+          description: Entity type discriminator
+        statusTemplateCode:
+          type: string
+          description: Status template code that expired
+        statusInstanceId:
+          type: string
+          format: uuid
+          description: Status instance that expired
+
+    StatusStackedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a status effect stack count changes
+      required:
+      - eventId
+      - timestamp
+      - entityId
+      - entityType
+      - statusTemplateCode
+      - statusInstanceId
+      - oldStackCount
+      - newStackCount
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the stacking occurred
+        entityId:
+          type: string
+          format: uuid
+          description: Entity whose status was stacked
+        entityType:
+          type: string
+          description: Entity type discriminator
+        statusTemplateCode:
+          type: string
+          description: Status template code
+        statusInstanceId:
+          type: string
+          format: uuid
+          description: Status instance that was stacked
+        oldStackCount:
+          type: integer
+          description: Stack count before this application
+        newStackCount:
+          type: integer
+          description: Stack count after this application
+
+    StatusGrantFailedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a grant attempt is rejected
+      required:
+      - eventId
+      - timestamp
+      - entityId
+      - entityType
+      - statusTemplateCode
+      - reason
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the failure occurred
+        entityId:
+          type: string
+          format: uuid
+          description: Entity that was targeted
+        entityType:
+          type: string
+          description: Entity type discriminator
+        statusTemplateCode:
+          type: string
+          description: Status template code that failed to grant
+        reason:
+          $ref: 'status-api.yaml#/components/schemas/GrantFailureReason'
+          description: Why the grant was rejected
+        existingStatusInstanceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Existing status instance ID (set when ignore behavior prevents grant)
+
+    StatusCleansedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when statuses are removed by category cleanse
+      required:
+      - eventId
+      - timestamp
+      - entityId
+      - entityType
+      - category
+      - statusesRemoved
+      - reason
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique event identifier
+        timestamp:
+          type: string
+          format: date-time
+          description: When the cleanse occurred
+        entityId:
+          type: string
+          format: uuid
+          description: Entity that was cleansed
+        entityType:
+          type: string
+          description: Entity type discriminator
+        category:
+          $ref: 'status-api.yaml#/components/schemas/StatusCategory'
+          description: Category of statuses that were removed
+        statusesRemoved:
+          type: integer
+          description: Number of statuses removed by the cleanse
+        reason:
+          $ref: 'status-api.yaml#/components/schemas/StatusRemoveReason'
+          description: Why the cleanse was performed
