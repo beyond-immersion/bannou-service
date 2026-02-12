@@ -109,6 +109,14 @@ Binding agreement management (L1 AppFoundation) between entities with milestone-
 
 Multi-currency management service (L2 GameFoundation) for game economies. Handles currency definitions with scope/realm restrictions, wallet lifecycle management, balance operations (credit/debit/transfer with idempotency-key deduplication), authorization holds (reserve/capture/release), currency conversion via exchange-rate-to-base pivot, and escrow integration (deposit/release/refund endpoints consumed by lib-escrow). Features a background autogain worker for passive income and transaction history with configurable retention. All mutating balance operations use distributed locks for multi-instance safety.
 
+## Divine {#divine}
+
+**Version**: 1.0.0 | **Schema**: `schemas/divine-api.yaml` | **Endpoints**: 22 | **Deep Dive**: [docs/plugins/DIVINE.md](plugins/DIVINE.md)
+
+Pantheon management service (L4 GameFeatures) for deity entities, divinity economy,
+and blessing orchestration. A thin orchestration layer (like Quest over Contract,
+Escrow over Currency/Item) that...
+
 ## Documentation {#documentation}
 
 **Version**: 1.0.0 | **Schema**: `schemas/documentation-api.yaml` | **Endpoints**: 27 | **Deep Dive**: [docs/plugins/DOCUMENTATION.md](plugins/DOCUMENTATION.md)
@@ -120,6 +128,12 @@ Knowledge base API (L3 AppFeatures) designed for AI agents (SignalWire SWAIG, Op
 **Version**: 1.0.0 | **Schema**: `schemas/escrow-api.yaml` | **Endpoints**: 22 | **Deep Dive**: [docs/plugins/ESCROW.md](plugins/ESCROW.md)
 
 Full-custody orchestration layer (L4 GameFeatures) for multi-party asset exchanges. Manages the complete escrow lifecycle from creation through deposit collection, consent gathering, condition verification, and final release or refund. Supports four escrow types (two-party, multi-party, conditional, auction) with three trust modes and a 13-state finite state machine. Handles currency, items, contracts, and extensible custom asset types -- calling lib-currency and lib-inventory directly for asset movements. Integrates with lib-contract for conditional releases where contract fulfillment triggers escrow completion. See Release Modes section below for configurable confirmation flows.
+
+## Faction {#faction}
+
+**Version**: 1.0.0 | **Schema**: `schemas/faction-api.yaml` | **Endpoints**: 31 | **Deep Dive**: [docs/plugins/FACTION.md](plugins/FACTION.md)
+
+Faction management as seed-based living entities (L4 GameFeatures).
 
 ## Game Service {#game-service}
 
@@ -165,7 +179,7 @@ The License service (L4 GameFeatures) provides grid-based progression boards (sk
 
 ## Location {#location}
 
-**Version**: 1.0.0 | **Schema**: `schemas/location-api.yaml` | **Endpoints**: 20 | **Deep Dive**: [docs/plugins/LOCATION.md](plugins/LOCATION.md)
+**Version**: 1.0.0 | **Schema**: `schemas/location-api.yaml` | **Endpoints**: 24 | **Deep Dive**: [docs/plugins/LOCATION.md](plugins/LOCATION.md)
 
 Hierarchical location management (L2 GameFoundation) for the Arcadia game world. Manages physical places (cities, regions, buildings, rooms, landmarks) within realms as a tree structure with depth tracking. Each location belongs to exactly one realm and optionally has a parent location. Supports deprecation, circular reference prevention, cascading depth updates, code-based lookups, and bulk seeding with two-pass parent resolution.
 
@@ -198,6 +212,12 @@ The Messaging service (L0 Infrastructure) is the native RabbitMQ pub/sub infrast
 **Version**: 1.0.0 | **Schema**: `schemas/music-api.yaml` | **Endpoints**: 8 | **Deep Dive**: [docs/plugins/MUSIC.md](plugins/MUSIC.md)
 
 Pure computation music generation (L4 GameFeatures) using formal music theory rules and narrative-driven composition. Leverages two internal SDKs: `MusicTheory` (harmony, melody, pitch, MIDI-JSON output) and `MusicStoryteller` (narrative templates, emotional state planning). Generates complete compositions, chord progressions, melodies, and voice-led voicings. Deterministic when seeded, enabling Redis caching for repeat requests. No external service dependencies -- fully self-contained computation.
+
+## Obligation {#obligation}
+
+**Version**: 1.0.0 | **Schema**: `schemas/obligation-api.yaml` | **Endpoints**: 11 | **Deep Dive**: [docs/plugins/OBLIGATION.md](plugins/OBLIGATION.md)
+
+Contract-aware obligation tracking for NPC cognition (L4 GameFeatures).
 
 ## Orchestrator {#orchestrator}
 
@@ -277,6 +297,13 @@ Realm-scoped species management (L2 GameFoundation) for the Arcadia game world. 
 
 The State service (L0 Infrastructure) provides all Bannou services with unified access to Redis and MySQL backends through a repository-pattern API. Operates in a dual role: as the `IStateStoreFactory` infrastructure library used by every service for state persistence, and as an HTTP API for debugging and administration. Supports three backends (Redis for ephemeral/session data, MySQL for durable/queryable data, InMemory for testing) with optimistic concurrency via ETags, TTL support, and specialized interfaces for cache operations, LINQ queries, JSON path queries, and full-text search. See the Interface Hierarchy section for the full interface tree and backend support matrix.
 
+## Status {#status}
+
+**Version**: 1.0.0 | **Schema**: `schemas/status-api.yaml` | **Endpoints**: 16 | **Deep Dive**: [docs/plugins/STATUS.md](plugins/STATUS.md)
+
+Unified entity effects query layer for temporary contract-managed statuses
+and passive seed-derived capabilities.
+
 ## Storyline {#storyline}
 
 **Version**: 1.0.0 | **Schema**: `schemas/storyline-api.yaml` | **Endpoints**: 15 | **Deep Dive**: [docs/plugins/STORYLINE.md](plugins/STORYLINE.md)
@@ -309,8 +336,8 @@ Public-facing website service (L3 AppFeatures) for browser-based access to news,
 
 ## Summary
 
-- **Total services**: 50
-- **Total endpoints**: 749
+- **Total services**: 54
+- **Total endpoints**: 833
 
 ---
 

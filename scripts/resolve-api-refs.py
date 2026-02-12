@@ -177,6 +177,37 @@ def convert_cross_refs_to_local(obj: Any, inlined_types: Set[str]) -> Any:
     return obj
 
 
+def fix_relative_paths_for_generated(obj: Any) -> Any:
+    """
+    Fix relative paths in refs when the output file is in Generated/ subdirectory.
+
+    All cross-file refs need '../' prefix because the output is in schemas/Generated/.
+    This function normalizes refs - whether they already have '../' or not - to ensure
+    consistent '../filename.yaml#/...' format in the output.
+
+    Schema authors should write sibling-relative refs (e.g., 'actor-api.yaml#/...').
+    This function adds the '../' needed for the Generated/ output location.
+    """
+    if isinstance(obj, dict):
+        if '$ref' in obj:
+            ref = obj['$ref']
+            # Match refs to sibling files - with or without existing ../ prefix
+            # Pattern 1: '../filename.yaml#/...' (already has ../)
+            # Pattern 2: 'filename.yaml#/...' (no ../)
+            # Pattern 3: './filename.yaml#/...' (explicit same-dir)
+            match = re.match(r"['\"]?(?:\.\.?/)?([a-zA-Z][a-zA-Z0-9_-]*\.yaml)#(.+)['\"]?", ref)
+            if match:
+                # Normalize to ../ prefix for Generated/ output location
+                obj['$ref'] = f"../{match.group(1)}#{match.group(2)}"
+        for key, value in obj.items():
+            obj[key] = fix_relative_paths_for_generated(value)
+    elif isinstance(obj, list):
+        for i, item in enumerate(obj):
+            obj[i] = fix_relative_paths_for_generated(item)
+
+    return obj
+
+
 def resolve_api_schema(api_path: Path, schema_dir: Path) -> Optional[Path]:
     """
     Resolve cross-file allOf refs in an API schema.
@@ -247,6 +278,9 @@ def resolve_api_schema(api_path: Path, schema_dir: Path) -> Optional[Path]:
 
     # Convert cross-file refs to local refs for inlined types
     resolved = convert_cross_refs_to_local(resolved, set(types_to_inline.keys()))
+
+    # Fix relative paths since output is in Generated/ subdirectory
+    resolved = fix_relative_paths_for_generated(resolved)
 
     # Embed the list of inlined types for the shell script to read
     resolved['x-inlined-types'] = sorted(types_to_inline.keys())

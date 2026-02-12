@@ -25,8 +25,10 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Connect API](#connect) | `client.Connect` | 5 | Real-time communication and WebSocket connection management ... |
 | [Contract Service API](#contract) | `client.Contract` | 30 | Binding agreements between entities with milestone-based pro... |
 | [Currency Service API](#currency) | `client.Currency` | 32 | Multi-currency management service for game economies. |
+| [Bannou Divine Service API](#divine) | `client.Divine` | 22 | Pantheon management service (L4 GameFeatures) for deity enti... |
 | [Bannou Documentation API](#documentation) | `client.Documentation` | 25 | Knowledge base API for AI agents to query documentation. Des... |
 | [Escrow Service API](#escrow) | `client.Escrow` | 22 | Full-custody orchestration layer for multi-party asset excha... |
+| [Bannou Faction Service API](#faction) | `client.Faction` | 31 | Faction management as seed-based living entities (L4 GameFea... |
 | [Bannou Game Service API](#game-service) | `client.GameService` | 5 | Registry service for game services that users can subscribe ... |
 | [Bannou Game Session Service API](#game-session) | `client.GameSession` | 11 | Minimal game session management for games. |
 | [Bannou Gardener Service API](#gardener) | `client.Gardener` | 24 | Player experience orchestration service (L4 GameFeatures) fo... |
@@ -34,12 +36,13 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Item Service API](#item) | `client.Item` | 16 | Item template and instance management service. |
 | [Bannou Leaderboard Service API](#leaderboard) | `client.Leaderboard` | 12 | Real-time leaderboard management using Redis Sorted Sets for... |
 | [License Service API](#license) | `client.License` | 20 | Grid-based progression boards via itemized contracts. |
-| [Bannou Location Service API](#location) | `client.Location` | 20 | Location management service for game worlds. |
+| [Bannou Location Service API](#location) | `client.Location` | 24 | Location management service for game worlds. |
 | [Bannou Mapping Service API](#mapping) | `client.Mapping` | 18 | Spatial data management service for game worlds. |
 | [Bannou Matchmaking Service API](#matchmaking) | `client.Matchmaking` | 11 | Matchmaking service for competitive and casual game matching... |
 | [Bannou Mesh Service API](#mesh) | `client.Mesh` | 8 | Native service mesh plugin providing direct service-to-servi... |
 | [Bannou Messaging Service API](#messaging) | `client.Messaging` | 4 | Native RabbitMQ pub/sub messaging with native serialization. |
 | [Music Theory Engine API](#music) | `client.Music` | 8 | Pure computation music generation using formal music theory ... |
+| [Bannou Obligation Service API](#obligation) | `client.Obligation` | 11 | Contract-aware obligation tracking for NPC cognition (L4 Gam... |
 | [Orchestrator API](#orchestrator) | `client.Orchestrator` | 22 | Central intelligence for Bannou environment management and s... |
 | [Bannou Permission System API](#permission) | `client.Permission` | 8 | Redis-backed high-performance permission system for WebSocke... |
 | [Bannou Puppetmaster Service API](#puppetmaster) | `client.Puppetmaster` | 6 | Orchestration service for dynamic behaviors, regional watche... |
@@ -53,6 +56,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Seed Service API](#seed) | `client.Seed` | 24 | Generic progressive growth entity service (L2 GameFoundation... |
 | [Bannou Species Service API](#species) | `client.Species` | 13 | Species management service for game worlds. |
 | [Bannou State Service API](#state) | `client.State` | 9 | Repository pattern state management with Redis and MySQL bac... |
+| [Status Service API](#status) | `client.Status` | 16 | Unified entity effects query layer for temporary contract-ma... |
 | [Storyline Composer API](#storyline) | `client.Storyline` | 15 | Seeded narrative generation from compressed archives using t... |
 | [Bannou Subscription Service API](#subscription) | `client.Subscription` | 7 | Manages user subscriptions to game services. Tracks which ac... |
 | [Bannou Telemetry Service API](#telemetry) | `client.Telemetry` | 2 | Unified observability plugin providing distributed tracing, ... |
@@ -842,6 +846,61 @@ Multi-currency management service for game economies.
 
 ---
 
+## Bannou Divine Service API {#divine}
+
+**Proxy**: `client.Divine` | **Version**: 1.0.0
+
+Pantheon management service (L4 GameFeatures) for deity entities, divinity economy, and blessing orchestration. A thin orchestration layer (like Qu...
+
+### Blessing Orchestration
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GrantblessingAsync` | `GrantBlessingRequest` | `BlessingResponse` | Grant a blessing from a deity to an entity |
+| `RevokeblessingAsync` | `RevokeBlessingRequest` | `BlessingResponse` | Revoke an active blessing |
+| `ListBlessingsbyentityAsync` | `ListBlessingsByEntityRequest` | `ListBlessingsResponse` | List blessings for an entity |
+| `ListBlessingsbydeityAsync` | `ListBlessingsByDeityRequest` | `ListBlessingsResponse` | List blessings granted by a deity |
+| `GetBlessingAsync` | `GetBlessingRequest` | `BlessingResponse` | Get a blessing by ID |
+
+### Deity Management
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateDeityAsync` | `CreateDeityRequest` | `DeityResponse` | Create a new deity |
+| `GetDeityAsync` | `GetDeityRequest` | `DeityResponse` | Get a deity by ID |
+| `GetDeitybycodeAsync` | `GetDeityByCodeRequest` | `DeityResponse` | Get a deity by code within a game service |
+| `ListDeitiesAsync` | `ListDeitiesRequest` | `ListDeitiesResponse` | List deities with optional filters |
+| `UpdateDeityAsync` | `UpdateDeityRequest` | `DeityResponse` | Update deity properties |
+| `ActivatedeityAsync` | `ActivateDeityRequest` | `DeityResponse` | Activate a dormant deity |
+| `DeactivatedeityAsync` | `DeactivateDeityRequest` | `DeityResponse` | Deactivate an active deity |
+| `DeleteDeityEventAsync` | `DeleteDeityRequest` | *(fire-and-forget)* | Delete a deity |
+
+### Divinity Economy
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetDivinitybalanceAsync` | `GetDivinityBalanceRequest` | `DivinityBalanceResponse` | Get a deity's divinity balance |
+| `CreditdivinityAsync` | `CreditDivinityRequest` | `DivinityBalanceResponse` | Credit divinity to a deity |
+| `DebitdivinityAsync` | `DebitDivinityRequest` | `DivinityBalanceResponse` | Debit divinity from a deity |
+| `GetDivinityhistoryAsync` | `GetDivinityHistoryRequest` | `DivinityHistoryResponse` | Get divinity transaction history |
+
+### Follower Management
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `RegisterFollowerAsync` | `RegisterFollowerRequest` | `FollowerResponse` | Register a character as a follower of a deity |
+| `UnregisterfollowerEventAsync` | `UnregisterFollowerRequest` | *(fire-and-forget)* | Unregister a character as a follower |
+| `GetFollowersAsync` | `GetFollowersRequest` | `ListFollowersResponse` | Get followers of a deity |
+
+### Resource Cleanup
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CleanupbycharacterEventAsync` | `CleanupByCharacterRequest` | *(fire-and-forget)* | Cleanup divine data for a deleted character |
+| `CleanupbygameserviceEventAsync` | `CleanupByGameServiceRequest` | *(fire-and-forget)* | Cleanup divine data for a deleted game service |
+
+---
+
 ## Bannou Documentation API {#documentation}
 
 **Proxy**: `client.Documentation` | **Version**: 1.0.0
@@ -967,6 +1026,75 @@ Full-custody orchestration layer for multi-party asset exchanges.
 |--------|---------|----------|---------|
 | `ValidateEscrowAsync` | `ValidateEscrowRequest` | `ValidateEscrowResponse` | Manually trigger validation |
 | `ReaffirmAsync` | `ReaffirmRequest` | `ReaffirmResponse` | Re-affirm after validation failure |
+
+---
+
+## Bannou Faction Service API {#faction}
+
+**Proxy**: `client.Faction` | **Version**: 1.0.0
+
+Faction management as seed-based living entities (L4 GameFeatures).
+
+### Compression
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetCompressdataAsync` | `GetCompressDataRequest` | `FactionArchive` | Get faction data for character archival compression |
+| `RestorefromarchiveAsync` | `RestoreFromArchiveRequest` | `RestoreFromArchiveResponse` | Restore faction data from archive |
+
+### Faction CRUD
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateFactionAsync` | `CreateFactionRequest` | `FactionResponse` | Create a new faction |
+| `GetFactionAsync` | `GetFactionRequest` | `FactionResponse` | Get a faction by ID |
+| `GetFactionbycodeAsync` | `GetFactionByCodeRequest` | `FactionResponse` | Get a faction by code |
+| `ListFactionsAsync` | `ListFactionsRequest` | `ListFactionsResponse` | List factions with filters |
+| `UpdateFactionAsync` | `UpdateFactionRequest` | `FactionResponse` | Update a faction |
+| `DeprecatefactionAsync` | `DeprecateFactionRequest` | `FactionResponse` | Deprecate a faction |
+| `UndeprecatefactionAsync` | `UndeprecateFactionRequest` | `FactionResponse` | Reactivate a deprecated faction |
+| `DeleteFactionEventAsync` | `DeleteFactionRequest` | *(fire-and-forget)* | Delete a faction |
+| `SeedfactionsAsync` | `SeedFactionsRequest` | `SeedFactionsResponse` | Bulk seed factions from configuration |
+| `DesignaterealmbaselineAsync` | `DesignateRealmBaselineRequest` | `FactionResponse` | Designate a faction as realm baseline |
+| `GetRealmbaselineAsync` | `GetRealmBaselineRequest` | `FactionResponse` | Get the realm baseline faction |
+
+### Membership
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `AddmemberAsync` | `AddMemberRequest` | `FactionMemberResponse` | Add a character to a faction |
+| `RemovememberEventAsync` | `RemoveMemberRequest` | *(fire-and-forget)* | Remove a character from a faction |
+| `ListMembersAsync` | `ListMembersRequest` | `ListMembersResponse` | List members of a faction |
+| `ListMembershipsbycharacterAsync` | `ListMembershipsByCharacterRequest` | `ListMembershipsByCharacterResponse` | List a character's faction memberships |
+| `UpdateMemberroleAsync` | `UpdateMemberRoleRequest` | `FactionMemberResponse` | Update a member's role |
+| `CheckmembershipAsync` | `CheckMembershipRequest` | `CheckMembershipResponse` | Check if a character is a member of a faction |
+
+### Norms
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `DefinenormAsync` | `DefineNormRequest` | `NormDefinitionResponse` | Define a behavioral norm for a faction |
+| `UpdateNormAsync` | `UpdateNormRequest` | `NormDefinitionResponse` | Update an existing norm |
+| `DeleteNormEventAsync` | `DeleteNormRequest` | *(fire-and-forget)* | Delete a norm definition |
+| `ListNormsAsync` | `ListNormsRequest` | `ListNormsResponse` | List norms defined by a faction |
+| `QueryapplicablenormsAsync` | `QueryApplicableNormsRequest` | `QueryApplicableNormsResponse` | Query all norms applicable to a character |
+
+### Resource Cleanup
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CleanupbycharacterAsync` | `CleanupByCharacterRequest` | `CleanupByCharacterResponse` | Cleanup faction data for a deleted character |
+| `CleanupbyrealmAsync` | `CleanupByRealmRequest` | `CleanupByRealmResponse` | Cleanup faction data for a deleted realm |
+| `CleanupbylocationAsync` | `CleanupByLocationRequest` | `CleanupByLocationResponse` | Cleanup territory claims for a deleted location |
+
+### Territory
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `ClaimterritoryAsync` | `ClaimTerritoryRequest` | `TerritoryClaimResponse` | Claim a location for a faction |
+| `ReleaseterritoryEventAsync` | `ReleaseTerritoryRequest` | *(fire-and-forget)* | Release a territory claim |
+| `ListTerritoryclaimsAsync` | `ListTerritoryClaimsRequest` | `ListTerritoryClaimsResponse` | List territory claims for a faction |
+| `GetControllingfactionAsync` | `GetControllingFactionRequest` | `ControllingFactionResponse` | Get the controlling faction for a location |
 
 ---
 
@@ -1296,6 +1424,15 @@ Location management service for game worlds.
 | `UndeprecatelocationAsync` | `UndeprecateLocationRequest` | `LocationResponse` | Restore a deprecated location |
 | `SeedlocationsAsync` | `SeedLocationsRequest` | `SeedLocationsResponse` | Seed locations from configuration |
 
+### Location Presence
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `ReportentitypositionAsync` | `ReportEntityPositionRequest` | `ReportEntityPositionResponse` | Report entity presence at a location |
+| `GetEntitylocationAsync` | `GetEntityLocationRequest` | `GetEntityLocationResponse` | Get the current location of an entity |
+| `ListEntitiesatlocationAsync` | `ListEntitiesAtLocationRequest` | `ListEntitiesAtLocationResponse` | List entities currently at a location |
+| `ClearentitypositionAsync` | `ClearEntityPositionRequest` | `ClearEntityPositionResponse` | Remove entity presence from its current location |
+
 ---
 
 ## Bannou Mapping Service API {#mapping}
@@ -1474,6 +1611,55 @@ Pure computation music generation using formal music theory rules.
 | Method | Request | Response | Summary |
 |--------|---------|----------|---------|
 | `ValidateMidijsonAsync` | `ValidateMidiJsonRequest` | `ValidateMidiJsonResponse` | Validate MIDI-JSON structure |
+
+---
+
+## Bannou Obligation Service API {#obligation}
+
+**Proxy**: `client.Obligation` | **Version**: 1.0.0
+
+Contract-aware obligation tracking for NPC cognition (L4 GameFeatures).
+
+### Action Mapping
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `SetactionmappingAsync` | `SetActionMappingRequest` | `ActionMappingResponse` | Create or update an action tag to violation type mapping |
+| `ListActionmappingsAsync` | `ListActionMappingsRequest` | `ListActionMappingsResponse` | List registered action tag mappings |
+| `DeleteActionmappingEventAsync` | `DeleteActionMappingRequest` | *(fire-and-forget)* | Delete an action tag mapping |
+
+### Cache Management
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `InvalidatecacheAsync` | `InvalidateCacheRequest` | `InvalidateCacheResponse` | Force obligation cache refresh for a character |
+
+### Compression
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetCompressdataAsync` | `GetCompressDataRequest` | `ObligationArchive` | Get obligation data for character archival compression |
+| `RestorefromarchiveAsync` | `RestoreFromArchiveRequest` | `RestoreFromArchiveResponse` | Restore obligation data from archive |
+
+### Obligations
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `QueryobligationsAsync` | `QueryObligationsRequest` | `QueryObligationsResponse` | Query active obligations for a character |
+| `EvaluateactionAsync` | `EvaluateActionRequest` | `EvaluateActionResponse` | Evaluate obligation violation costs for proposed actions |
+
+### Resource Cleanup
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CleanupbycharacterAsync` | `CleanupByCharacterRequest` | `CleanupByCharacterResponse` | Cleanup all obligation data for a deleted character |
+
+### Violations
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `ReportviolationAsync` | `ReportViolationRequest` | `ReportViolationResponse` | Report a knowing obligation violation |
+| `QueryviolationsAsync` | `QueryViolationsRequest` | `QueryViolationsResponse` | Query violation history for a character |
 
 ---
 
@@ -2007,6 +2193,50 @@ Repository pattern state management with Redis and MySQL backends.
 
 ---
 
+## Status Service API {#status}
+
+**Proxy**: `client.Status` | **Version**: 1.0.0
+
+Unified entity effects query layer for temporary contract-managed statuses and passive seed-derived capabilities.
+
+### Cleanup
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CleanupbyownerAsync` | `CleanupByOwnerRequest` | `CleanupResponse` | Remove all statuses and containers for an owner |
+
+### Effects
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetEffectsAsync` | `GetEffectsRequest` | `GetEffectsResponse` | Get unified effects for an entity |
+| `GetSeedeffectsAsync` | `GetSeedEffectsRequest` | `SeedEffectsResponse` | Get seed-derived passive effects for an entity |
+
+### Status
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GrantstatusAsync` | `GrantStatusRequest` | `GrantStatusResponse` | Grant a status effect to an entity |
+| `RemovestatusAsync` | `RemoveStatusRequest` | `StatusInstanceResponse` | Remove a specific status instance |
+| `RemovebysourceAsync` | `RemoveBySourceRequest` | `RemoveStatusesResponse` | Remove all statuses from a source |
+| `RemovebycategoryAsync` | `RemoveByCategoryRequest` | `RemoveStatusesResponse` | Remove all statuses of a category (cleanse) |
+| `HasstatusAsync` | `HasStatusRequest` | `HasStatusResponse` | Check if an entity has a specific status |
+| `ListStatusesAsync` | `ListStatusesRequest` | `ListStatusesResponse` | List active statuses for an entity |
+| `GetStatusAsync` | `GetStatusRequest` | `StatusInstanceResponse` | Get a specific status instance |
+
+### StatusTemplate
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateStatustemplateAsync` | `CreateStatusTemplateRequest` | `StatusTemplateResponse` | Create a status template |
+| `GetStatustemplateAsync` | `GetStatusTemplateRequest` | `StatusTemplateResponse` | Get a status template by ID |
+| `GetStatustemplatebycodeAsync` | `GetStatusTemplateByCodeRequest` | `StatusTemplateResponse` | Get a status template by code |
+| `ListStatustemplatesAsync` | `ListStatusTemplatesRequest` | `ListStatusTemplatesResponse` | List status templates |
+| `UpdateStatustemplateAsync` | `UpdateStatusTemplateRequest` | `StatusTemplateResponse` | Update a status template |
+| `SeedstatustemplatesAsync` | `SeedStatusTemplatesRequest` | `SeedStatusTemplatesResponse` | Bulk seed status templates |
+
+---
+
 ## Storyline Composer API {#storyline}
 
 **Proxy**: `client.Storyline` | **Version**: 1.0.0
@@ -2181,8 +2411,8 @@ Public-facing website service for registration, information, and account managem
 
 ## Summary
 
-- **Total services**: 49
-- **Total methods**: 743
+- **Total services**: 53
+- **Total methods**: 827
 
 ---
 

@@ -249,6 +249,19 @@ This document lists all events defined in Bannou's event schemas.
 | `CurrencyWalletFrozenEvent` | Custom | `currency-wallet-frozen` | Event published when a wallet is frozen |
 | `CurrencyWalletUnfrozenEvent` | Custom | `currency-wallet-unfrozen` | Event published when a wallet is unfrozen |
 
+### Divine
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `DivineBlessingGrantedEvent` | Custom | `divine-blessing-granted` | Published when a god grants a blessing to an entit... |
+| `DivineBlessingRevokedEvent` | Expiration | `divine-blessing.revoked` | Published when a blessing is revoked |
+| `DivineDeityActivatedEvent` | Custom | `divine-deity-activated` | Published when a deity becomes active in the world |
+| `DivineDeityDormantEvent` | Custom | `divine-deity-dormant` | Published when a deity goes dormant |
+| `DivineDivinityCreditedEvent` | Custom | `divine-divinity-credited` | Published when divinity is earned by a deity from ... |
+| `DivineDivinityDebitedEvent` | Custom | `divine-divinity-debited` | Published when divinity is spent by a deity for bl... |
+| `DivineFollowerRegisteredEvent` | Registration | `divine-follower.registered` | Published when a character becomes a follower of a... |
+| `DivineFollowerRemovedEvent` | Custom | `divine-follower-removed` | Published when a character is removed as a followe... |
+
 ### Documentation
 
 | Event | Type | Likely Topic | Description |
@@ -280,6 +293,20 @@ This document lists all events defined in Bannou's event schemas.
 | `EscrowResolvedEvent` | Custom | `escrow-resolved` | Event published when an arbiter resolves a dispute |
 | `EscrowValidationFailedEvent` | Custom | `escrow-validation-failed` | Event published when validation detects asset chan... |
 | `EscrowValidationReaffirmedEvent` | Custom | `escrow-validation-reaffirmed` | Event published when a party reaffirms after valid... |
+
+### Faction
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `FactionMemberAddedEvent` | Custom | `faction-member-added` | Published when a character joins a faction |
+| `FactionMemberRemovedEvent` | Custom | `faction-member-removed` | Published when a character leaves or is removed fr... |
+| `FactionMemberRoleChangedEvent` | Custom | `faction-member-role-changed` | Published when a member's role is updated |
+| `FactionNormDefinedEvent` | Custom | `faction-norm-defined` | Published when a new behavioral norm is defined fo... |
+| `FactionNormDeletedEvent` | Lifecycle (Deleted) | `faction-norm.deleted` | Published when a norm definition is removed from a... |
+| `FactionNormUpdatedEvent` | Lifecycle (Updated) | `faction-norm.updated` | Published when a norm definition is modified |
+| `FactionRealmBaselineDesignatedEvent` | Custom | `faction-realm-baseline-designated` | Published when a faction is designated as the real... |
+| `FactionTerritoryClaimedEvent` | Custom | `faction-territory-claimed` | Published when a faction claims a location as terr... |
+| `FactionTerritoryReleasedEvent` | Custom | `faction-territory-released` | Published when a faction releases a territory clai... |
 
 ### Game Session
 
@@ -360,6 +387,13 @@ This document lists all events defined in Bannou's event schemas.
 | `LicenseUnlockFailedEvent` | Custom | `license-unlock-failed` | Published when a license unlock attempt fails |
 | `LicenseUnlockedEvent` | Custom | `license-unlocked` | Published when a license is successfully unlocked ... |
 
+### Location
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `LocationEntityArrivedEvent` | Custom | `location-entity-arrived` | Published when an entity arrives at a location |
+| `LocationEntityDepartedEvent` | Custom | `location-entity-departed` | Published when an entity departs from a location |
+
 ### Mapping
 
 | Event | Type | Likely Topic | Description |
@@ -411,6 +445,17 @@ This document lists all events defined in Bannou's event schemas.
 | `MeshEndpointDeregisteredEvent` | Registration | `mesh-endpoint-deregistered` | Published when an endpoint is removed from the ser... |
 | `MeshEndpointHealthCheckFailedEvent` | Custom | `mesh-endpoint-health-check-failed` | Published when a health check probe fails (before ... |
 | `MeshEndpointRegisteredEvent` | Registration | `mesh-endpoint.registered` | Published when a new endpoint is registered in the... |
+
+### Obligation
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `ContractActivatedEvent` | Custom | `contract-activated` | Consumed from contract service when a contract bec... |
+| `ContractExpiredEvent` | Expiration | `contract.expired` | Consumed from contract service when a contract rea... |
+| `ContractFulfilledEvent` | Custom | `contract-fulfilled` | Consumed from contract service when all required m... |
+| `ContractTerminatedEvent` | Custom | `contract-terminated` | Consumed from contract service when a contract is ... |
+| `ObligationCacheRebuiltEvent` | Custom | `obligation-cache-rebuilt` | Published when a character's obligation cache is r... |
+| `ObligationViolationReportedEvent` | Custom | `obligation-violation-reported` | Published when a character knowingly violates an o... |
 
 ### Orchestrator
 
@@ -518,6 +563,17 @@ This document lists all events defined in Bannou's event schemas.
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
 | `SpeciesMergedEvent` | Custom | `species-merged` | Published when two species are merged, with the so... |
+
+### Status
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `StatusCleansedEvent` | Custom | `status-cleansed` | Published when statuses are removed by category cl... |
+| `StatusExpiredEvent` | Expiration | `status.expired` | Published when a status effect expires via TTL or ... |
+| `StatusGrantFailedEvent` | Custom | `status-grant-failed` | Published when a grant attempt is rejected |
+| `StatusGrantedEvent` | Custom | `status-granted` | Published when a status effect is successfully app... |
+| `StatusRemovedEvent` | Custom | `status-removed` | Published when a status effect is removed from an ... |
+| `StatusStackedEvent` | Custom | `status-stacked` | Published when a status effect stack count changes |
 
 ### Storyline
 

@@ -2023,6 +2023,242 @@ paths:
         locations.\\nProcesses locations in dependency order (parents before children).\\nTypically called at service startup
         with YAML-defined location hierarchies.\\n\",\n    \"tags\": [\n        \"Location Admin\"\n    ],\n    \"deprecated\"\
         : false,\n    \"operationId\": \"seedLocations\"\n}"
+  /location/report-entity-position:
+    post:
+      summary: Report entity presence at a location
+      description: |
+        Reports that an entity is present at a location. Creates or refreshes an ephemeral
+        presence binding with configurable TTL. Reporters must call this periodically to
+        keep the presence alive. Publishes arrival/departure events only when the entity's
+        location actually changes (pure refreshes are silent).
+
+        The optional previousLocationId provides a caller-hint optimization: if provided
+        and matches the current stored location, only a TTL refresh occurs (no GET needed).
+        If omitted, the service reads the current value to detect location changes.
+      operationId: reportEntityPosition
+      tags:
+      - Location Presence
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportEntityPositionRequest'
+      responses:
+        '200':
+          description: Position reported successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportEntityPositionResponse'
+        '404':
+          description: Location not found
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ReportEntityPositionRequest\"\
+        ,\n    \"$defs\": {\n        \"ReportEntityPositionRequest\": {\n            \"description\": \"Request to report
+        an entity's presence at a location\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"entityType\",\n                \"entityId\",\n                \"locationId\"\
+        \n            ],\n            \"properties\": {\n                \"entityType\": {\n                    \"type\":
+        \"string\",\n                    \"description\": \"Type of entity (opaque string - character, actor, npc, player,
+        etc.)\"\n                },\n                \"entityId\": {\n                    \"type\": \"string\",\n        \
+        \            \"format\": \"uuid\",\n                    \"description\": \"ID of the entity being reported\"\n   \
+        \             },\n                \"locationId\": {\n                    \"type\": \"string\",\n                 \
+        \   \"format\": \"uuid\",\n                    \"description\": \"ID of the location the entity is at\"\n        \
+        \        },\n                \"previousLocationId\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Caller
+        hint for the entity's previous location (optimization to skip GET on refresh)\"\n                },\n            \
+        \    \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n      \
+        \              \"nullable\": true,\n                    \"description\": \"ID of the realm the location belongs to
+        (included in arrival events if provided)\"\n                },\n                \"reportedBy\": {\n              \
+        \      \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Identifier
+        of the reporter (service name or session ID)\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ReportEntityPositionResponse\"\
+        ,\n    \"$defs\": {\n        \"ReportEntityPositionResponse\": {\n            \"description\": \"Result of reporting
+        entity presence\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"\
+        required\": [\n                \"recorded\"\n            ],\n            \"properties\": {\n                \"recorded\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the position was successfully
+        recorded\"\n                },\n                \"arrivedAt\": {\n                    \"type\": \"string\",\n    \
+        \                \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Location ID the entity arrived at (only set when location changed)\"\n                },\n                \"departedFrom\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Location ID the entity departed from (only set when location
+        changed)\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Report entity presence at a location\",\n    \"description\": \"Reports
+        that an entity is present at a location. Creates or refreshes an ephemeral\\npresence binding with configurable TTL.
+        Reporters must call this periodically to\\nkeep the presence alive. Publishes arrival/departure events only when the
+        entity's\\nlocation actually changes (pure refreshes are silent).\\n\\nThe optional previousLocationId provides a
+        caller-hint optimization: if provided\\nand matches the current stored location, only a TTL refresh occurs (no GET
+        needed).\\nIf omitted, the service reads the current value to detect location changes.\\n\",\n    \"tags\": [\n  \
+        \      \"Location Presence\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"reportEntityPosition\"\n}"
+  /location/get-entity-location:
+    post:
+      summary: Get the current location of an entity
+      description: |
+        Queries where an entity currently is. Returns the entity's location if a
+        non-expired presence binding exists.
+      operationId: getEntityLocation
+      tags:
+      - Location Presence
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetEntityLocationRequest'
+      responses:
+        '200':
+          description: Entity location query result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetEntityLocationResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetEntityLocationRequest\"\
+        ,\n    \"$defs\": {\n        \"GetEntityLocationRequest\": {\n            \"description\": \"Request to query an entity's
+        current location\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n           \
+        \ \"required\": [\n                \"entityType\",\n                \"entityId\"\n            ],\n            \"properties\"\
+        : {\n                \"entityType\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Type of entity (opaque string - character, actor, npc, player, etc.)\"\n                },\n                \"\
+        entityId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n            \
+        \        \"description\": \"ID of the entity to look up\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetEntityLocationResponse\"\
+        ,\n    \"$defs\": {\n        \"GetEntityLocationResponse\": {\n            \"description\": \"Result of querying an
+        entity's current location\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n  \
+        \          \"required\": [\n                \"found\"\n            ],\n            \"properties\": {\n           \
+        \     \"found\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether a non-expired
+        presence binding exists for this entity\"\n                },\n                \"locationId\": {\n               \
+        \     \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"ID of the location the entity is currently at\"\n                },\n    \
+        \            \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"ID of the realm the location belongs
+        to\"\n                },\n                \"entityType\": {\n                    \"type\": \"string\",\n         \
+        \           \"nullable\": true,\n                    \"description\": \"Type of entity (echoed back)\"\n         \
+        \       },\n                \"entityId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"ID of the entity (echoed
+        back)\"\n                },\n                \"reportedAt\": {\n                    \"type\": \"string\",\n      \
+        \              \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"When the presence was last reported\"\n                },\n                \"reportedBy\": {\n               \
+        \     \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Identifier
+        of the last reporter\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get the current location of an entity\",\n    \"description\": \"Queries
+        where an entity currently is. Returns the entity's location if a\\nnon-expired presence binding exists.\\n\",\n  \
+        \  \"tags\": [\n        \"Location Presence\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getEntityLocation\"\
+        \n}"
+  /location/list-entities-at-location:
+    post:
+      summary: List entities currently at a location
+      description: |
+        Queries which entities are currently present at a location. Supports optional
+        entity type filtering and pagination. Results are hydrated from the entity
+        presence store for reporting metadata.
+      operationId: listEntitiesAtLocation
+      tags:
+      - Location Presence
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListEntitiesAtLocationRequest'
+      responses:
+        '200':
+          description: Entity list for the location
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListEntitiesAtLocationResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListEntitiesAtLocationRequest\"\
+        ,\n    \"$defs\": {\n        \"ListEntitiesAtLocationRequest\": {\n            \"description\": \"Request to list
+        entities at a specific location\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"locationId\"\n            ],\n            \"properties\": {\n    \
+        \            \"locationId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"ID of the location to query\"\n                },\n                \"entityType\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Optional filter by entity type (opaque string)\"\n                },\n                \"page\": {\n          \
+        \          \"type\": \"integer\",\n                    \"default\": 1,\n                    \"description\": \"Page
+        number (1-indexed)\"\n                },\n                \"pageSize\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"default\": 50,\n                    \"description\": \"Number of entities per page\"\n  \
+        \              }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListEntitiesAtLocationResponse\"\
+        ,\n    \"$defs\": {\n        \"ListEntitiesAtLocationResponse\": {\n            \"description\": \"Result of listing
+        entities at a location\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n     \
+        \       \"required\": [\n                \"entities\",\n                \"totalCount\",\n                \"locationId\"\
+        \n            ],\n            \"properties\": {\n                \"entities\": {\n                    \"type\": \"\
+        array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/EntityPresenceEntry\"\n  \
+        \                  },\n                    \"description\": \"Entities currently present at the location\"\n     \
+        \           },\n                \"totalCount\": {\n                    \"type\": \"integer\",\n                  \
+        \  \"description\": \"Total number of entities matching the query\"\n                },\n                \"locationId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"ID of the queried location\"\n                }\n            }\n        },\n        \"EntityPresenceEntry\"\
+        : {\n            \"description\": \"An entity currently present at a location\",\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"entityType\",\n  \
+        \              \"entityId\"\n            ],\n            \"properties\": {\n                \"entityType\": {\n  \
+        \                  \"type\": \"string\",\n                    \"description\": \"Type of entity (opaque string)\"\n\
+        \                },\n                \"entityId\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"uuid\",\n                    \"description\": \"ID of the entity\"\n                },\n      \
+        \          \"reportedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"When the presence was last reported\"\
+        \n                },\n                \"reportedBy\": {\n                    \"type\": \"string\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"Identifier of the last reporter\"\n          \
+        \      }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"List entities currently at a location\",\n    \"description\": \"Queries
+        which entities are currently present at a location. Supports optional\\nentity type filtering and pagination. Results
+        are hydrated from the entity\\npresence store for reporting metadata.\\n\",\n    \"tags\": [\n        \"Location Presence\"\
+        \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listEntitiesAtLocation\"\n}"
+  /location/clear-entity-position:
+    post:
+      summary: Remove entity presence from its current location
+      description: |
+        Clears an entity's presence binding, removing it from its current location.
+        Publishes a departure event if the entity was present at a location.
+      operationId: clearEntityPosition
+      tags:
+      - Location Presence
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClearEntityPositionRequest'
+      responses:
+        '200':
+          description: Entity position cleared
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClearEntityPositionResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ClearEntityPositionRequest\"\
+        ,\n    \"$defs\": {\n        \"ClearEntityPositionRequest\": {\n            \"description\": \"Request to clear an
+        entity's presence from its current location\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"entityType\",\n                \"entityId\"\n           \
+        \ ],\n            \"properties\": {\n                \"entityType\": {\n                    \"type\": \"string\",\n\
+        \                    \"description\": \"Type of entity (opaque string - character, actor, npc, player, etc.)\"\n \
+        \               },\n                \"entityId\": {\n                    \"type\": \"string\",\n                 \
+        \   \"format\": \"uuid\",\n                    \"description\": \"ID of the entity to clear\"\n                }\n\
+        \            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ClearEntityPositionResponse\"\
+        ,\n    \"$defs\": {\n        \"ClearEntityPositionResponse\": {\n            \"description\": \"Result of clearing
+        entity presence\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"\
+        required\": [\n                \"cleared\"\n            ],\n            \"properties\": {\n                \"cleared\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the entity had an
+        active presence that was cleared\"\n                },\n                \"previousLocationId\": {\n              \
+        \      \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Location the entity was removed from (null if entity had no active presence)\"\
+        \n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Remove entity presence from its current location\",\n    \"description\"\
+        : \"Clears an entity's presence binding, removing it from its current location.\\nPublishes a departure event if the
+        entity was present at a location.\\n\",\n    \"tags\": [\n        \"Location Presence\"\n    ],\n    \"deprecated\"\
+        : false,\n    \"operationId\": \"clearEntityPosition\"\n}"
 components:
   schemas:
     LocationType:
@@ -2776,3 +3012,208 @@ components:
           items:
             type: string
           description: List of error messages for locations that failed to seed
+    ReportEntityPositionRequest:
+      description: Request to report an entity's presence at a location
+      type: object
+      additionalProperties: false
+      required:
+      - entityType
+      - entityId
+      - locationId
+      properties:
+        entityType:
+          type: string
+          description: Type of entity (opaque string - character, actor, npc, player, etc.)
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity being reported
+        locationId:
+          type: string
+          format: uuid
+          description: ID of the location the entity is at
+        previousLocationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Caller hint for the entity's previous location (optimization to skip GET on refresh)
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of the realm the location belongs to (included in arrival events if provided)
+        reportedBy:
+          type: string
+          nullable: true
+          description: Identifier of the reporter (service name or session ID)
+    ReportEntityPositionResponse:
+      description: Result of reporting entity presence
+      type: object
+      additionalProperties: false
+      required:
+      - recorded
+      properties:
+        recorded:
+          type: boolean
+          description: Whether the position was successfully recorded
+        arrivedAt:
+          type: string
+          format: uuid
+          nullable: true
+          description: Location ID the entity arrived at (only set when location changed)
+        departedFrom:
+          type: string
+          format: uuid
+          nullable: true
+          description: Location ID the entity departed from (only set when location changed)
+    GetEntityLocationRequest:
+      description: Request to query an entity's current location
+      type: object
+      additionalProperties: false
+      required:
+      - entityType
+      - entityId
+      properties:
+        entityType:
+          type: string
+          description: Type of entity (opaque string - character, actor, npc, player, etc.)
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity to look up
+    GetEntityLocationResponse:
+      description: Result of querying an entity's current location
+      type: object
+      additionalProperties: false
+      required:
+      - found
+      properties:
+        found:
+          type: boolean
+          description: Whether a non-expired presence binding exists for this entity
+        locationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of the location the entity is currently at
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of the realm the location belongs to
+        entityType:
+          type: string
+          nullable: true
+          description: Type of entity (echoed back)
+        entityId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of the entity (echoed back)
+        reportedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the presence was last reported
+        reportedBy:
+          type: string
+          nullable: true
+          description: Identifier of the last reporter
+    ListEntitiesAtLocationRequest:
+      description: Request to list entities at a specific location
+      type: object
+      additionalProperties: false
+      required:
+      - locationId
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: ID of the location to query
+        entityType:
+          type: string
+          nullable: true
+          description: Optional filter by entity type (opaque string)
+        page:
+          type: integer
+          default: 1
+          description: Page number (1-indexed)
+        pageSize:
+          type: integer
+          default: 50
+          description: Number of entities per page
+    ListEntitiesAtLocationResponse:
+      description: Result of listing entities at a location
+      type: object
+      additionalProperties: false
+      required:
+      - entities
+      - totalCount
+      - locationId
+      properties:
+        entities:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityPresenceEntry'
+          description: Entities currently present at the location
+        totalCount:
+          type: integer
+          description: Total number of entities matching the query
+        locationId:
+          type: string
+          format: uuid
+          description: ID of the queried location
+    EntityPresenceEntry:
+      description: An entity currently present at a location
+      type: object
+      additionalProperties: false
+      required:
+      - entityType
+      - entityId
+      properties:
+        entityType:
+          type: string
+          description: Type of entity (opaque string)
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity
+        reportedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the presence was last reported
+        reportedBy:
+          type: string
+          nullable: true
+          description: Identifier of the last reporter
+    ClearEntityPositionRequest:
+      description: Request to clear an entity's presence from its current location
+      type: object
+      additionalProperties: false
+      required:
+      - entityType
+      - entityId
+      properties:
+        entityType:
+          type: string
+          description: Type of entity (opaque string - character, actor, npc, player, etc.)
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity to clear
+    ClearEntityPositionResponse:
+      description: Result of clearing entity presence
+      type: object
+      additionalProperties: false
+      required:
+      - cleared
+      properties:
+        cleared:
+          type: boolean
+          description: Whether the entity had an active presence that was cleared
+        previousLocationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Location the entity was removed from (null if entity had no active presence)

@@ -5008,6 +5008,571 @@ paths:
       x-permissions:
       - role: developer
         states: {}
+  /divine/deity/create:
+    post:
+      summary: Create a new deity
+      description: |
+        Creates a deity entity with domain influences and personality traits.
+        Provisions a divinity currency wallet, a domain power seed, and optionally
+        starts a deity watcher actor via Puppetmaster.
+      operationId: createDeity
+      tags:
+      - Deity Management
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDeityRequest'
+      responses:
+        '200':
+          description: Deity created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeityResponse'
+        '404':
+          description: Game service not found
+        '409':
+          description: Deity with this code already exists for this game service
+  /divine/deity/get:
+    post:
+      summary: Get a deity by ID
+      description: Returns a single deity entity by its unique identifier.
+      operationId: getDeity
+      tags:
+      - Deity Management
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetDeityRequest'
+      responses:
+        '200':
+          description: Deity found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeityResponse'
+        '404':
+          description: Deity not found
+  /divine/deity/get-by-code:
+    post:
+      summary: Get a deity by code within a game service
+      description: Looks up a deity by its unique code within a game service 
+        scope.
+      operationId: getDeityByCode
+      tags:
+      - Deity Management
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetDeityByCodeRequest'
+      responses:
+        '200':
+          description: Deity found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeityResponse'
+        '404':
+          description: Deity not found for this game service and code
+  /divine/deity/list:
+    post:
+      summary: List deities with optional filters
+      description: |
+        Returns a paginated list of deities for a game service, optionally
+        filtered by domain code and status.
+      operationId: listDeities
+      tags:
+      - Deity Management
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListDeitiesRequest'
+      responses:
+        '200':
+          description: Deities listed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListDeitiesResponse'
+  /divine/deity/update:
+    post:
+      summary: Update deity properties
+      description: |
+        Partial update of deity properties. Only non-null fields are applied.
+        Requires a distributed lock on the deity.
+      operationId: updateDeity
+      tags:
+      - Deity Management
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDeityRequest'
+      responses:
+        '200':
+          description: Deity updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeityResponse'
+        '404':
+          description: Deity not found
+        '409':
+          description: Concurrent modification conflict
+  /divine/deity/activate:
+    post:
+      summary: Activate a dormant deity
+      description: |
+        Sets the deity status to Active. If Puppetmaster is available and no
+        watcher actor exists, starts one. Publishes a deity activated event.
+      operationId: activateDeity
+      tags:
+      - Deity Management
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivateDeityRequest'
+      responses:
+        '200':
+          description: Deity activated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeityResponse'
+        '400':
+          description: Deity is already active
+        '404':
+          description: Deity not found
+  /divine/deity/deactivate:
+    post:
+      summary: Deactivate an active deity
+      description: |
+        Sets the deity status to Dormant. Stops the watcher actor if Puppetmaster
+        is available. Clears all attention slots. Publishes a deity dormant event.
+      operationId: deactivateDeity
+      tags:
+      - Deity Management
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeactivateDeityRequest'
+      responses:
+        '200':
+          description: Deity deactivated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeityResponse'
+        '400':
+          description: Deity is already dormant or archived
+        '404':
+          description: Deity not found
+  /divine/deity/delete:
+    post:
+      summary: Delete a deity
+      description: |
+        Permanently deletes a deity and all dependent data. Deactivates the deity
+        if active, revokes all blessings, removes all follower relationships, deletes
+        attention slots, and coordinates cleanup via lib-resource. Publishes a
+        lifecycle deleted event.
+      operationId: deleteDeity
+      tags:
+      - Deity Management
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteDeityRequest'
+      responses:
+        '200':
+          description: Deity deleted
+        '404':
+          description: Deity not found
+  /divine/divinity/get-balance:
+    post:
+      summary: Get a deity's divinity balance
+      description: Returns the current divinity balance for a deity by querying 
+        its currency wallet.
+      operationId: getDivinityBalance
+      tags:
+      - Divinity Economy
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetDivinityBalanceRequest'
+      responses:
+        '200':
+          description: Balance retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DivinityBalanceResponse'
+        '404':
+          description: Deity not found
+  /divine/divinity/credit:
+    post:
+      summary: Credit divinity to a deity
+      description: |
+        Credits divinity to a deity's currency wallet. Used for mortal actions
+        in the deity's domain, direct grants, or other divinity generation sources.
+      operationId: creditDivinity
+      tags:
+      - Divinity Economy
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreditDivinityRequest'
+      responses:
+        '200':
+          description: Divinity credited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DivinityBalanceResponse'
+        '404':
+          description: Deity not found
+  /divine/divinity/debit:
+    post:
+      summary: Debit divinity from a deity
+      description: |
+        Debits divinity from a deity's currency wallet. Used for blessing grants,
+        miracles, or other divinity expenditures. Validates sufficient balance
+        before debiting.
+      operationId: debitDivinity
+      tags:
+      - Divinity Economy
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DebitDivinityRequest'
+      responses:
+        '200':
+          description: Divinity debited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DivinityBalanceResponse'
+        '400':
+          description: Insufficient divinity balance
+        '404':
+          description: Deity not found
+  /divine/divinity/get-history:
+    post:
+      summary: Get divinity transaction history
+      description: Returns paginated transaction history for a deity's divinity 
+        wallet.
+      operationId: getDivinityHistory
+      tags:
+      - Divinity Economy
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetDivinityHistoryRequest'
+      responses:
+        '200':
+          description: History retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DivinityHistoryResponse'
+        '404':
+          description: Deity not found
+  /divine/blessing/grant:
+    post:
+      summary: Grant a blessing from a deity to an entity
+      description: |
+        Orchestrates the full blessing ceremony: validates deity is active, validates
+        target entity exists, checks blessing capacity, calculates divinity cost from tier,
+        debits divinity, grants the blessing via lib-collection (Greater/Supreme) or
+        Status Inventory (Minor/Standard), and records the blessing. Blessings are
+        entity-agnostic -- characters, accounts, deities, or any entity type can receive them.
+      operationId: grantBlessing
+      tags:
+      - Blessing Orchestration
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GrantBlessingRequest'
+      responses:
+        '200':
+          description: Blessing granted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlessingResponse'
+        '400':
+          description: Deity is not active or insufficient divinity
+        '404':
+          description: Deity or target entity not found
+        '409':
+          description: Entity has reached maximum active blessings
+  /divine/blessing/revoke:
+    post:
+      summary: Revoke an active blessing
+      description: |
+        Revokes a blessing. For status-type blessings (Minor/Standard), removes
+        the status item. For permanent blessings (Greater/Supreme), marks as
+        revoked in collection. Updates the blessing record with revocation timestamp.
+      operationId: revokeBlessing
+      tags:
+      - Blessing Orchestration
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevokeBlessingRequest'
+      responses:
+        '200':
+          description: Blessing revoked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlessingResponse'
+        '400':
+          description: Blessing is already revoked
+        '404':
+          description: Blessing not found
+  /divine/blessing/list-by-entity:
+    post:
+      summary: List blessings for an entity
+      description: Returns paginated blessings granted to a specific entity.
+      operationId: listBlessingsByEntity
+      tags:
+      - Blessing Orchestration
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListBlessingsByEntityRequest'
+      responses:
+        '200':
+          description: Blessings listed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListBlessingsResponse'
+  /divine/blessing/list-by-deity:
+    post:
+      summary: List blessings granted by a deity
+      description: Returns paginated blessings granted by a specific deity, 
+        optionally filtered by tier.
+      operationId: listBlessingsByDeity
+      tags:
+      - Blessing Orchestration
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListBlessingsByDeityRequest'
+      responses:
+        '200':
+          description: Blessings listed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListBlessingsResponse'
+  /divine/blessing/get:
+    post:
+      summary: Get a blessing by ID
+      description: Returns a single blessing record by its unique identifier.
+      operationId: getBlessing
+      tags:
+      - Blessing Orchestration
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetBlessingRequest'
+      responses:
+        '200':
+          description: Blessing found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlessingResponse'
+        '404':
+          description: Blessing not found
+  /divine/follower/register:
+    post:
+      summary: Register a character as a follower of a deity
+      description: |
+        Creates a deity-character follower relationship via lib-relationship,
+        increments the deity's follower count, and adds the character to the
+        deity's attention slots if capacity is available.
+      operationId: registerFollower
+      tags:
+      - Follower Management
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterFollowerRequest'
+      responses:
+        '200':
+          description: Follower registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FollowerResponse'
+        '404':
+          description: Deity or character not found
+        '409':
+          description: Character is already a follower of this deity
+  /divine/follower/unregister:
+    post:
+      summary: Unregister a character as a follower
+      description: |
+        Removes the deity-character follower relationship, decrements the
+        deity's follower count, and removes the character from attention slots.
+      operationId: unregisterFollower
+      tags:
+      - Follower Management
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnregisterFollowerRequest'
+      responses:
+        '200':
+          description: Follower unregistered
+        '404':
+          description: Deity, character, or follower relationship not found
+  /divine/follower/get-followers:
+    post:
+      summary: Get followers of a deity
+      description: Returns paginated follower list for a deity by querying 
+        relationships.
+      operationId: getFollowers
+      tags:
+      - Follower Management
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetFollowersRequest'
+      responses:
+        '200':
+          description: Followers listed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListFollowersResponse'
+        '404':
+          description: Deity not found
+  /divine/cleanup-by-character:
+    post:
+      summary: Cleanup divine data for a deleted character
+      description: |
+        Called by lib-resource when a character is deleted. Revokes all active
+        blessings targeting this character (entityType=character), removes follower
+        relationships from all deities, updates follower counts, and clears
+        attention slots.
+      operationId: cleanupByCharacter
+      tags:
+      - Resource Cleanup
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByCharacterRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+  /divine/cleanup-by-game-service:
+    post:
+      summary: Cleanup divine data for a deleted game service
+      description: |
+        Called by lib-resource when a game service is deleted. Deletes all deities
+        for this game service along with their blessings, followers, attention
+        slots, and associated resources.
+      operationId: cleanupByGameService
+      tags:
+      - Resource Cleanup
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByGameServiceRequest'
+      responses:
+        '200':
+          description: Cleanup completed
   /documentation/query:
     post:
       operationId: queryDocumentation
@@ -5765,6 +6330,766 @@ paths:
                 $ref: '#/components/schemas/ReaffirmResponse'
         '400':
           description: Reaffirmation failed
+  /faction/create:
+    post:
+      summary: Create a new faction
+      operationId: createFaction
+      tags:
+      - Faction CRUD
+      description: |
+        Creates a new faction entity and automatically creates a seed via lib-seed
+        with ownerType "faction" and the configured seed type code. The seed starts
+        in the "nascent" phase with no capabilities unlocked.
+
+        The faction code must be unique within the game service scope.
+
+        If parentFactionId is provided, validates that the parent exists, belongs
+        to the same game service and realm, and that the resulting hierarchy depth
+        does not exceed the configured maximum.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFactionRequest'
+      responses:
+        '200':
+          description: Faction created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionResponse'
+        '400':
+          description: Invalid faction data or hierarchy depth exceeded
+        '404':
+          description: Parent faction, game service, or realm not found
+        '409':
+          description: Faction code already exists in this game service
+  /faction/get:
+    post:
+      summary: Get a faction by ID
+      operationId: getFaction
+      tags:
+      - Faction CRUD
+      description: |
+        Retrieves a faction by its unique identifier. Includes the current seed
+        growth phase (denormalized from lib-seed for convenience) and member count.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetFactionRequest'
+      responses:
+        '200':
+          description: Faction retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionResponse'
+        '404':
+          description: Faction not found
+  /faction/get-by-code:
+    post:
+      summary: Get a faction by code
+      operationId: getFactionByCode
+      tags:
+      - Faction CRUD
+      description: |
+        Retrieves a faction by its unique code within a game service scope.
+        Codes are human-readable identifiers like "thieves_guild" or "royal_guard".
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetFactionByCodeRequest'
+      responses:
+        '200':
+          description: Faction retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionResponse'
+        '404':
+          description: Faction not found
+  /faction/list:
+    post:
+      summary: List factions with filters
+      operationId: listFactions
+      tags:
+      - Faction CRUD
+      description: |
+        Returns a paginated list of factions with optional filters by realm,
+        game service, status, and parent faction. Supports cursor-based pagination.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListFactionsRequest'
+      responses:
+        '200':
+          description: Factions retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListFactionsResponse'
+  /faction/update:
+    post:
+      summary: Update a faction
+      operationId: updateFaction
+      tags:
+      - Faction CRUD
+      description: |
+        Updates mutable faction properties (name, description, code). The faction
+        code must remain unique within its game service scope. Cannot change
+        gameServiceId or realmId after creation.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateFactionRequest'
+      responses:
+        '200':
+          description: Faction updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionResponse'
+        '404':
+          description: Faction not found
+        '409':
+          description: Updated code conflicts with existing faction
+  /faction/deprecate:
+    post:
+      summary: Deprecate a faction
+      operationId: deprecateFaction
+      tags:
+      - Faction CRUD
+      description: |
+        Marks a faction as deprecated. Deprecated factions cannot accept new members
+        or define new norms, but existing memberships and norms remain active.
+        Existing norm enforcement continues until the faction is dissolved.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeprecateFactionRequest'
+      responses:
+        '200':
+          description: Faction deprecated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionResponse'
+        '404':
+          description: Faction not found
+        '409':
+          description: Faction is already deprecated or dissolved
+  /faction/undeprecate:
+    post:
+      summary: Reactivate a deprecated faction
+      operationId: undeprecateFaction
+      tags:
+      - Faction CRUD
+      description: Restores a deprecated faction to active status.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UndeprecateFactionRequest'
+      responses:
+        '200':
+          description: Faction reactivated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionResponse'
+        '404':
+          description: Faction not found
+        '409':
+          description: Faction is not in deprecated status
+  /faction/designate-realm-baseline:
+    post:
+      summary: Designate a faction as realm baseline
+      operationId: designateRealmBaseline
+      tags:
+      - Faction CRUD
+      description: |
+        Sets a faction as the realm's baseline cultural faction. The baseline
+        faction provides realm-wide default norms (honor codes, cultural taboos,
+        species instincts) that apply to all characters in the realm unless
+        overridden by more specific faction norms.
+
+        Only one faction per realm can be the baseline. Setting a new baseline
+        clears the previous one. The faction must belong to the specified realm.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DesignateRealmBaselineRequest'
+      responses:
+        '200':
+          description: Faction designated as realm baseline
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionResponse'
+        '404':
+          description: Faction not found
+        '409':
+          description: Faction does not belong to the specified realm
+  /faction/get-realm-baseline:
+    post:
+      summary: Get the realm baseline faction
+      operationId: getRealmBaseline
+      tags:
+      - Faction CRUD
+      description: |
+        Returns the faction designated as the baseline cultural faction for a realm.
+        Returns 404 if no baseline has been designated.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetRealmBaselineRequest'
+      responses:
+        '200':
+          description: Realm baseline faction retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionResponse'
+        '404':
+          description: No baseline faction designated for this realm
+  /faction/member/add:
+    post:
+      summary: Add a character to a faction
+      operationId: addMember
+      tags:
+      - Membership
+      description: |
+        Adds a character as a member of a faction. The faction must be active
+        (not deprecated or dissolved). If no role is specified, the configured
+        default member role is used.
+
+        A character can be a member of multiple factions simultaneously. Duplicate
+        membership (same character + same faction) returns Conflict.
+
+        Publishes a faction.member.added event for downstream consumers.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddMemberRequest'
+      responses:
+        '200':
+          description: Member added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionMemberResponse'
+        '404':
+          description: Faction or character not found
+        '409':
+          description: Character is already a member of this faction, or faction
+            is not active
+  /faction/member/remove:
+    post:
+      summary: Remove a character from a faction
+      operationId: removeMember
+      tags:
+      - Membership
+      description: |
+        Removes a character's membership in a faction. Publishes a
+        faction.member.removed event for downstream consumers.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveMemberRequest'
+      responses:
+        '200':
+          description: Member removed
+        '404':
+          description: Membership not found
+  /faction/member/list:
+    post:
+      summary: List members of a faction
+      operationId: listMembers
+      tags:
+      - Membership
+      description: |
+        Returns a paginated list of members for a faction. Supports filtering
+        by role and cursor-based pagination. Ordered by join date descending.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListMembersRequest'
+      responses:
+        '200':
+          description: Members retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListMembersResponse'
+        '404':
+          description: Faction not found
+  /faction/member/list-by-character:
+    post:
+      summary: List a character's faction memberships
+      operationId: listMembershipsByCharacter
+      tags:
+      - Membership
+      description: |
+        Returns all faction memberships for a character. Used by lib-obligation
+        to determine which guild faction norms apply to a character, and by the
+        ${faction.*} variable provider for ABML behavior expressions.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListMembershipsByCharacterRequest'
+      responses:
+        '200':
+          description: Memberships retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListMembershipsByCharacterResponse'
+  /faction/member/update-role:
+    post:
+      summary: Update a member's role
+      operationId: updateMemberRole
+      tags:
+      - Membership
+      description: |
+        Changes a member's role within a faction. Publishes a
+        faction.member.role-changed event for downstream consumers.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMemberRoleRequest'
+      responses:
+        '200':
+          description: Role updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionMemberResponse'
+        '404':
+          description: Membership not found
+  /faction/member/check:
+    post:
+      summary: Check if a character is a member of a faction
+      operationId: checkMembership
+      tags:
+      - Membership
+      description: |
+        Returns whether a character is currently a member of the specified faction,
+        and if so, their role. Lightweight lookup for permission/capability checks.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckMembershipRequest'
+      responses:
+        '200':
+          description: Membership check result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckMembershipResponse'
+  /faction/territory/claim:
+    post:
+      summary: Claim a location for a faction
+      operationId: claimTerritory
+      tags:
+      - Territory
+      description: |
+        Claims a location as faction territory. Requires the faction's seed to
+        have unlocked the "territory.claim" capability. A location can only have
+        one controlling faction at a time (exclusive claim). If the location is
+        already claimed by another faction, the claim is rejected with Conflict.
+
+        The faction must belong to the same realm as the location.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClaimTerritoryRequest'
+      responses:
+        '200':
+          description: Territory claimed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TerritoryClaimResponse'
+        '403':
+          description: Faction seed lacks territory.claim capability
+        '404':
+          description: Faction or location not found
+        '409':
+          description: Location already claimed by another faction, or realm 
+            mismatch
+  /faction/territory/release:
+    post:
+      summary: Release a territory claim
+      operationId: releaseTerritory
+      tags:
+      - Territory
+      description: |
+        Releases a faction's claim on a location. The territory becomes unclaimed
+        and available for other factions. Publishes a faction.territory.released event.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReleaseTerritoryRequest'
+      responses:
+        '200':
+          description: Territory released
+        '404':
+          description: Territory claim not found
+  /faction/territory/list:
+    post:
+      summary: List territory claims for a faction
+      operationId: listTerritoryClaims
+      tags:
+      - Territory
+      description: |
+        Returns all territory claims for a faction with optional status filtering
+        and cursor-based pagination.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListTerritoryClaimsRequest'
+      responses:
+        '200':
+          description: Territory claims retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListTerritoryClaimsResponse'
+        '404':
+          description: Faction not found
+  /faction/territory/get-controlling:
+    post:
+      summary: Get the controlling faction for a location
+      operationId: getControllingFaction
+      tags:
+      - Territory
+      description: |
+        Returns the faction that currently controls a location. Used by
+        lib-obligation and the norm resolution hierarchy to determine which
+        location faction norms apply at a character's current position.
+
+        Returns 404 if the location has no controlling faction.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetControllingFactionRequest'
+      responses:
+        '200':
+          description: Controlling faction retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ControllingFactionResponse'
+        '404':
+          description: No faction controls this location
+  /faction/norm/define:
+    post:
+      summary: Define a behavioral norm for a faction
+      operationId: defineNorm
+      tags:
+      - Norms
+      description: |
+        Creates a new behavioral norm definition for a faction. Requires the
+        faction's seed to have unlocked the "norm.define" capability (growth
+        threshold must be reached). Higher-severity norms may require additional
+        capabilities (norm.enforce.basic for Standard, norm.enforce.sanctions
+        for Strict).
+
+        Norms are stored as faction configuration and queried by lib-obligation
+        for NPC cognition cost modifiers. They are NOT contract instances --
+        this avoids the scaling problem of 100K NPCs each needing individual
+        contract instances for ambient social rules.
+
+        The violationType is an opaque string that maps to lib-obligation's
+        violation type vocabulary (e.g., "theft", "deception", "violence",
+        "honor_combat"). No separate taxonomy is maintained -- the vocabulary
+        is defined by contract templates and action tag mappings.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DefineNormRequest'
+      responses:
+        '200':
+          description: Norm defined
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NormDefinitionResponse'
+        '403':
+          description: Faction seed lacks required norm capability
+        '404':
+          description: Faction not found
+        '409':
+          description: Faction is not active, or maximum norms per faction 
+            reached
+  /faction/norm/update:
+    post:
+      summary: Update an existing norm
+      operationId: updateNorm
+      tags:
+      - Norms
+      description: |
+        Updates properties of an existing norm definition. The violationType
+        cannot be changed (delete and recreate if needed). Severity changes
+        are subject to capability checks.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateNormRequest'
+      responses:
+        '200':
+          description: Norm updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NormDefinitionResponse'
+        '403':
+          description: Faction seed lacks required capability for new severity
+        '404':
+          description: Norm not found
+  /faction/norm/delete:
+    post:
+      summary: Delete a norm definition
+      operationId: deleteNorm
+      tags:
+      - Norms
+      description: Removes a behavioral norm definition from a faction.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteNormRequest'
+      responses:
+        '200':
+          description: Norm deleted
+        '404':
+          description: Norm not found
+  /faction/norm/list:
+    post:
+      summary: List norms defined by a faction
+      operationId: listNorms
+      tags:
+      - Norms
+      description: |
+        Returns all norm definitions for a faction with optional filtering
+        by severity and scope.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListNormsRequest'
+      responses:
+        '200':
+          description: Norms retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListNormsResponse'
+        '404':
+          description: Faction not found
+  /faction/cleanup-by-character:
+    post:
+      summary: Cleanup faction data for a deleted character
+      operationId: cleanupByCharacter
+      tags:
+      - Resource Cleanup
+      description: |
+        Called by lib-resource cleanup coordination when a character is deleted.
+        Removes all faction memberships for the character. Territory claims and
+        norm definitions are faction-owned, not character-owned, so they remain.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByCharacterRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupByCharacterResponse'
+  /faction/cleanup-by-realm:
+    post:
+      summary: Cleanup faction data for a deleted realm
+      operationId: cleanupByRealm
+      tags:
+      - Resource Cleanup
+      description: |
+        Called by lib-resource cleanup coordination when a realm is deleted.
+        Removes all factions belonging to the realm, including their memberships,
+        territory claims, norm definitions, and associated seeds.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByRealmRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupByRealmResponse'
+  /faction/cleanup-by-location:
+    post:
+      summary: Cleanup territory claims for a deleted location
+      operationId: cleanupByLocation
+      tags:
+      - Resource Cleanup
+      description: |
+        Called by lib-resource cleanup coordination when a location is deleted.
+        Removes all territory claims referencing the location. The faction itself
+        remains intact.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByLocationRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupByLocationResponse'
+  /faction/get-compress-data:
+    post:
+      summary: Get faction data for character archival compression
+      operationId: getCompressData
+      tags:
+      - Compression
+      description: |
+        Called by Resource service during character compression. Returns faction
+        memberships and roles for the character for archival. Norm definitions
+        are faction-owned data and not included in character archives.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCompressDataRequest'
+      responses:
+        '200':
+          description: Compressed data returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FactionArchive'
+        '404':
+          description: No faction data for character
   /game-service/services/list:
     post:
       summary: List all registered game services
@@ -8401,6 +9726,115 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LocationListResponse'
+  /location/report-entity-position:
+    post:
+      summary: Report entity presence at a location
+      description: |
+        Reports that an entity is present at a location. Creates or refreshes an ephemeral
+        presence binding with configurable TTL. Reporters must call this periodically to
+        keep the presence alive. Publishes arrival/departure events only when the entity's
+        location actually changes (pure refreshes are silent).
+
+        The optional previousLocationId provides a caller-hint optimization: if provided
+        and matches the current stored location, only a TTL refresh occurs (no GET needed).
+        If omitted, the service reads the current value to detect location changes.
+      operationId: reportEntityPosition
+      tags:
+      - Location Presence
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportEntityPositionRequest'
+      responses:
+        '200':
+          description: Position reported successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportEntityPositionResponse'
+        '404':
+          description: Location not found
+  /location/get-entity-location:
+    post:
+      summary: Get the current location of an entity
+      description: |
+        Queries where an entity currently is. Returns the entity's location if a
+        non-expired presence binding exists.
+      operationId: getEntityLocation
+      tags:
+      - Location Presence
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetEntityLocationRequest'
+      responses:
+        '200':
+          description: Entity location query result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetEntityLocationResponse'
+  /location/list-entities-at-location:
+    post:
+      summary: List entities currently at a location
+      description: |
+        Queries which entities are currently present at a location. Supports optional
+        entity type filtering and pagination. Results are hydrated from the entity
+        presence store for reporting metadata.
+      operationId: listEntitiesAtLocation
+      tags:
+      - Location Presence
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListEntitiesAtLocationRequest'
+      responses:
+        '200':
+          description: Entity list for the location
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListEntitiesAtLocationResponse'
+  /location/clear-entity-position:
+    post:
+      summary: Remove entity presence from its current location
+      description: |
+        Clears an entity's presence binding, removing it from its current location.
+        Publishes a departure event if the entity was present at a location.
+      operationId: clearEntityPosition
+      tags:
+      - Location Presence
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClearEntityPositionRequest'
+      responses:
+        '200':
+          description: Entity position cleared
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClearEntityPositionResponse'
   /mapping/request-snapshot:
     post:
       summary: Request full snapshot for cold start
@@ -9126,6 +10560,195 @@ paths:
                 $ref: '#/components/schemas/VoiceLeadResponse'
         '400':
           description: Invalid request
+  /obligation/action-mapping/set:
+    post:
+      summary: Create or update an action tag to violation type mapping
+      operationId: setActionMapping
+      tags:
+      - Action Mapping
+      description: |
+        Registers or replaces a mapping from a GOAP action tag to one or more
+        violation type codes. These mappings define how the obligation service
+        connects GOAP planner actions (e.g., tag "steal_food") to contract
+        behavioral clause violation types (e.g., "theft", "dishonesty").
+
+        Mappings are idempotent by tag — setting a mapping for an existing tag
+        replaces the previous mapping entirely.
+
+        By default, action tags are matched 1:1 against violation type codes
+        (tag "theft" matches violation type "theft"). Explicit mappings are only
+        needed when the vocabularies differ or when one action triggers multiple
+        violation types (e.g., "attack_surrendered_enemy" → ["honor_combat", "show_mercy"]).
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetActionMappingRequest'
+      responses:
+        '200':
+          description: Mapping saved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionMappingResponse'
+        '400':
+          description: Invalid mapping data
+  /obligation/action-mapping/list:
+    post:
+      summary: List registered action tag mappings
+      operationId: listActionMappings
+      tags:
+      - Action Mapping
+      description: |
+        Returns all registered action tag to violation type mappings.
+        Supports cursor-based pagination and optional text search.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListActionMappingsRequest'
+      responses:
+        '200':
+          description: Mappings retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListActionMappingsResponse'
+  /obligation/action-mapping/delete:
+    post:
+      summary: Delete an action tag mapping
+      operationId: deleteActionMapping
+      tags:
+      - Action Mapping
+      description: |
+        Removes a registered action tag mapping. After deletion, the tag will
+        fall back to convention-based 1:1 matching (tag name == violation type code).
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteActionMappingRequest'
+      responses:
+        '200':
+          description: Mapping deleted successfully
+        '404':
+          description: No mapping found for this tag
+  /obligation/query-violations:
+    post:
+      summary: Query violation history for a character
+      operationId: queryViolations
+      tags:
+      - Violations
+      description: |
+        Returns the violation history for a character with cursor-based pagination.
+        Supports filtering by contract, violation type, and time range.
+        Ordered by timestamp descending (most recent first).
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryViolationsRequest'
+      responses:
+        '200':
+          description: Violations retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryViolationsResponse'
+  /obligation/invalidate-cache:
+    post:
+      summary: Force obligation cache refresh for a character
+      operationId: invalidateCache
+      tags:
+      - Cache Management
+      description: |
+        Forces a full cache rebuild for a character's obligation manifest.
+        Queries all active contracts for the character, extracts behavioral
+        clauses, and rebuilds the cached obligation state.
+
+        Normally, the cache is maintained automatically via contract lifecycle
+        events. This endpoint is for administrative and debugging purposes.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvalidateCacheRequest'
+      responses:
+        '200':
+          description: Cache refreshed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvalidateCacheResponse'
+  /obligation/get-compress-data:
+    post:
+      summary: Get obligation data for character archival compression
+      operationId: getCompressData
+      tags:
+      - Compression
+      description: |
+        Called by Resource service during character compression.
+        Returns violation history and cached obligation state for archival.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCompressDataRequest'
+      responses:
+        '200':
+          description: Compressed data returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObligationArchive'
+        '404':
+          description: No obligation data for character
+  /obligation/cleanup-by-character:
+    post:
+      summary: Cleanup all obligation data for a deleted character
+      operationId: cleanupByCharacter
+      tags:
+      - Resource Cleanup
+      description: |
+        Called by lib-resource cleanup coordination when a character is deleted.
+        Removes cached obligation manifests and violation history for the
+        specified character. This endpoint is designed for internal
+        service-to-service calls during cascading resource cleanup.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByCharacterRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupByCharacterResponse'
   /puppetmaster/watchers/start:
     post:
       summary: Manually start a regional watcher
@@ -11991,6 +13614,439 @@ paths:
                 $ref: '#/components/schemas/SpeciesListResponse'
         '404':
           description: Realm not found
+  /status/template/create:
+    post:
+      operationId: createStatusTemplate
+      tags:
+      - StatusTemplate
+      summary: Create a status template
+      description: |
+        Create a status template defining a status effect type. Each template has
+        a unique code within its game service, references an item template for
+        inventory placement, and configures stacking behavior and optional contract
+        integration for lifecycle management.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateStatusTemplateRequest'
+      responses:
+        '200':
+          description: Status template created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusTemplateResponse'
+        '400':
+          description: Invalid request (validation error)
+        '404':
+          description: Referenced game service or item template not found
+        '409':
+          description: Duplicate code for this game service, or max templates 
+            exceeded
+  /status/template/get:
+    post:
+      operationId: getStatusTemplate
+      tags:
+      - StatusTemplate
+      summary: Get a status template by ID
+      description: Retrieves a status template by its unique identifier.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetStatusTemplateRequest'
+      responses:
+        '200':
+          description: Status template retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusTemplateResponse'
+        '404':
+          description: Status template not found
+  /status/template/get-by-code:
+    post:
+      operationId: getStatusTemplateByCode
+      tags:
+      - StatusTemplate
+      summary: Get a status template by code
+      description: Retrieves a status template by its game service and unique 
+        code.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetStatusTemplateByCodeRequest'
+      responses:
+        '200':
+          description: Status template retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusTemplateResponse'
+        '404':
+          description: Status template not found
+  /status/template/list:
+    post:
+      operationId: listStatusTemplates
+      tags:
+      - StatusTemplate
+      summary: List status templates
+      description: Paginated list of status templates filtered by game service 
+        with optional category filter.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListStatusTemplatesRequest'
+      responses:
+        '200':
+          description: Status templates retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListStatusTemplatesResponse'
+  /status/template/update:
+    post:
+      operationId: updateStatusTemplate
+      tags:
+      - StatusTemplate
+      summary: Update a status template
+      description: Update mutable fields of a status template. Only non-null 
+        fields in the request are updated.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateStatusTemplateRequest'
+      responses:
+        '200':
+          description: Status template updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusTemplateResponse'
+        '404':
+          description: Status template not found
+  /status/template/seed:
+    post:
+      operationId: seedStatusTemplates
+      tags:
+      - StatusTemplate
+      summary: Bulk seed status templates
+      description: Bulk create status templates from a payload, skipping 
+        duplicates. Validates item template IDs. Returns count of created 
+        templates.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SeedStatusTemplatesRequest'
+      responses:
+        '200':
+          description: Seed completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeedStatusTemplatesResponse'
+        '400':
+          description: Invalid request (validation errors)
+  /status/grant:
+    post:
+      operationId: grantStatus
+      tags:
+      - Status
+      summary: Grant a status effect to an entity
+      description: |
+        Grant a status effect to an entity. Creates an item instance in the entity's
+        status container and optionally creates a contract instance for lifecycle
+        management. Auto-creates the status container (and inventory container) if
+        one does not exist for this entity and game service.
+
+        Stacking behavior is determined by the template:
+        - refresh_duration: resets timer, increments stack count
+        - independent: creates a separate instance per application
+        - increase_intensity: increments stack, resets timer
+        - replace: removes existing, creates new
+        - ignore: rejects if already present
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GrantStatusRequest'
+      responses:
+        '200':
+          description: Status granted successfully (or 
+            stacked/refreshed/replaced)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GrantStatusResponse'
+        '404':
+          description: Status template or game service not found
+        '409':
+          description: Grant rejected (max statuses, stack limit, ignore 
+            behavior, contract/item failure)
+  /status/remove:
+    post:
+      operationId: removeStatus
+      tags:
+      - Status
+      summary: Remove a specific status instance
+      description: |
+        Remove a specific status instance by ID. Destroys the item via lib-item,
+        cancels any associated contract, deletes the instance record, and invalidates
+        the active status cache.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveStatusRequest'
+      responses:
+        '200':
+          description: Status removed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusInstanceResponse'
+        '404':
+          description: Status instance not found
+  /status/remove-by-source:
+    post:
+      operationId: removeBySource
+      tags:
+      - Status
+      summary: Remove all statuses from a source
+      description: Remove all status instances granted by a specific source for 
+        an entity. Used for cascading removal when a source entity is deleted.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveBySourceRequest'
+      responses:
+        '200':
+          description: Statuses removed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RemoveStatusesResponse'
+  /status/remove-by-category:
+    post:
+      operationId: removeByCategory
+      tags:
+      - Status
+      summary: Remove all statuses of a category (cleanse)
+      description: Remove all status instances of a given category for an 
+        entity. Used for cleanse mechanics (remove all debuffs, etc.).
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveByCategoryRequest'
+      responses:
+        '200':
+          description: Statuses cleansed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RemoveStatusesResponse'
+  /status/has:
+    post:
+      operationId: hasStatus
+      tags:
+      - Status
+      summary: Check if an entity has a specific status
+      description: Check if an entity has a specific status template code 
+        active. Returns the status instance ID and stack count if found.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HasStatusRequest'
+      responses:
+        '200':
+          description: Check completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HasStatusResponse'
+  /status/list:
+    post:
+      operationId: listStatuses
+      tags:
+      - Status
+      summary: List active statuses for an entity
+      description: |
+        List active status effects for an entity with optional category filter
+        and seed-derived passive effect inclusion. Merges item-based statuses
+        from cache with seed-derived effects when includePassive is true.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListStatusesRequest'
+      responses:
+        '200':
+          description: Statuses retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListStatusesResponse'
+  /status/get:
+    post:
+      operationId: getStatus
+      tags:
+      - Status
+      summary: Get a specific status instance
+      description: Retrieves a status instance by its unique identifier with 
+        full details including metadata.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetStatusRequest'
+      responses:
+        '200':
+          description: Status instance retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusInstanceResponse'
+        '404':
+          description: Status instance not found
+  /status/effects/get:
+    post:
+      operationId: getEffects
+      tags:
+      - Effects
+      summary: Get unified effects for an entity
+      description: |
+        Get all active effects for an entity including both item-based statuses
+        and seed-derived passive capabilities. Returns a unified view with source
+        attribution via the effectSource field.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetEffectsRequest'
+      responses:
+        '200':
+          description: Effects retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetEffectsResponse'
+  /status/effects/get-seed:
+    post:
+      operationId: getSeedEffects
+      tags:
+      - Effects
+      summary: Get seed-derived passive effects for an entity
+      description: |
+        Get seed-derived passive effects only. Queries ISeedClient for capability
+        manifests across all seeds owned by the entity. Returns capabilities with
+        domain, fidelity, and seed attribution.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetSeedEffectsRequest'
+      responses:
+        '200':
+          description: Seed effects retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SeedEffectsResponse'
+  /status/cleanup-by-owner:
+    post:
+      operationId: cleanupByOwner
+      tags:
+      - Cleanup
+      summary: Remove all statuses and containers for an owner
+      description: |
+        Remove all status containers, instances, and inventory containers for an
+        owner entity. Called by lib-resource cleanup callbacks when a character or
+        account is deleted. Destroys inventory containers (cascades to items),
+        deletes all instance records, and invalidates all caches.
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByOwnerRequest'
+      responses:
+        '200':
+          description: Cleanup completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupResponse'
   /storyline/compose:
     post:
       summary: Compose a storyline plan from archive seeds
@@ -13250,6 +15306,58 @@ components:
         cardinality:
           $ref: '#/components/schemas/EffectCardinality'
           description: How the effect is applied
+    ActionMappingResponse:
+      type: object
+      description: A registered mapping from a GOAP action tag to violation type
+        codes
+      additionalProperties: false
+      required:
+      - tag
+      - violationTypes
+      - createdAt
+      properties:
+        tag:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: The GOAP action tag (e.g., "steal_food", 
+            "deceive_merchant")
+        violationTypes:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 128
+          minItems: 1
+          maxItems: 20
+          description: Violation type codes this tag maps to (e.g., ["theft", 
+            "dishonesty"])
+        description:
+          type: string
+          nullable: true
+          maxLength: 512
+          description: Human-readable description of what this mapping 
+            represents
+        createdAt:
+          type: string
+          format: date-time
+          description: When this mapping was first created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this mapping was last modified
+    ActivateDeityRequest:
+      type: object
+      additionalProperties: false
+      description: Request to activate a dormant deity
+      required:
+      - deityId
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: Deity to activate
     ActivateSeedRequest:
       type: object
       description: Request to activate a seed.
@@ -13579,6 +15687,26 @@ components:
           nullable: true
           additionalProperties: true
           description: Game-specific metadata for this license node
+    AddMemberRequest:
+      type: object
+      description: Request to add a character to a faction
+      additionalProperties: false
+      required:
+      - factionId
+      - characterId
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: Faction to add the character to
+        characterId:
+          type: string
+          format: uuid
+          description: Character to add as a member
+        role:
+          $ref: '#/components/schemas/FactionMemberRole'
+          nullable: true
+          description: Role to assign (null uses configured default)
     AdjacencyMode:
       type: string
       description: |
@@ -15229,6 +17357,120 @@ components:
       - error
       - disabled
       description: Status of a repository binding
+    BlessingResponse:
+      type: object
+      additionalProperties: false
+      description: Full blessing record response
+      required:
+      - blessingId
+      - deityId
+      - entityId
+      - entityType
+      - tier
+      - itemTemplateCode
+      - itemInstanceId
+      - reason
+      - grantedAt
+      - status
+      properties:
+        blessingId:
+          type: string
+          format: uuid
+          description: Unique blessing identifier
+        deityId:
+          type: string
+          format: uuid
+          description: Deity that granted this blessing
+        entityId:
+          type: string
+          format: uuid
+          description: Entity that received this blessing
+        entityType:
+          type: string
+          description: Type of entity that received this blessing
+        tier:
+          $ref: '#/components/schemas/BlessingTier'
+          description: Tier of the blessing
+        itemTemplateCode:
+          type: string
+          description: Item template code for the blessing effect
+        itemInstanceId:
+          type: string
+          format: uuid
+          description: Item or collection entry instance backing this blessing
+        reason:
+          type: string
+          description: Why the blessing was granted
+        grantedAt:
+          type: string
+          format: date-time
+          description: When the blessing was granted
+        revokedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the blessing was revoked (null if still active)
+        status:
+          $ref: '#/components/schemas/BlessingStatus'
+          description: Current status of the blessing
+    BlessingStatus:
+      type: string
+      description: Current status of a granted blessing
+      enum:
+      - active
+      - revoked
+    BlessingSummary:
+      type: object
+      additionalProperties: false
+      description: Compact blessing record for list responses
+      required:
+      - blessingId
+      - deityId
+      - entityId
+      - entityType
+      - tier
+      - itemInstanceId
+      - grantedAt
+      - status
+      properties:
+        blessingId:
+          type: string
+          format: uuid
+          description: Unique identifier for this blessing
+        deityId:
+          type: string
+          format: uuid
+          description: Deity that granted this blessing
+        entityId:
+          type: string
+          format: uuid
+          description: Entity that received this blessing
+        entityType:
+          type: string
+          description: Type of entity that received this blessing
+        tier:
+          $ref: '#/components/schemas/BlessingTier'
+          description: Tier of the blessing
+        itemInstanceId:
+          type: string
+          format: uuid
+          description: Item or collection entry instance backing this blessing
+        grantedAt:
+          type: string
+          format: date-time
+          description: When the blessing was granted
+        status:
+          $ref: '#/components/schemas/BlessingStatus'
+          description: Current status of the blessing
+    BlessingTier:
+      type: string
+      description: Tier of a blessing determining its power, cost, and storage 
+        mechanism
+      enum:
+      - minor
+      - standard
+      - greater
+      - supreme
     BoardNodeState:
       type: object
       description: State of a single license node on a board, including unlock 
@@ -16749,6 +18991,34 @@ components:
         hasPreviousPage:
           type: boolean
           description: Whether there are results before this page
+    CharacterMembershipEntry:
+      type: object
+      description: A character's membership in a faction with faction details
+      additionalProperties: false
+      required:
+      - factionId
+      - factionName
+      - factionCode
+      - role
+      - joinedAt
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: Faction the character belongs to
+        factionName:
+          type: string
+          description: Display name of the faction
+        factionCode:
+          type: string
+          description: Unique code of the faction
+        role:
+          $ref: '#/components/schemas/FactionMemberRole'
+          description: Character's role in this faction
+        joinedAt:
+          type: string
+          format: date-time
+          description: When the character joined this faction
     CharacterPersonalityArchive:
       type: object
       x-archive-type: true
@@ -17098,6 +19368,46 @@ components:
           type: string
           nullable: true
           description: Explanation if not allowed
+    CheckMembershipRequest:
+      type: object
+      description: Request to check faction membership
+      additionalProperties: false
+      required:
+      - factionId
+      - characterId
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: Faction to check membership in
+        characterId:
+          type: string
+          format: uuid
+          description: Character to check
+    CheckMembershipResponse:
+      type: object
+      description: Result of a membership check
+      additionalProperties: false
+      required:
+      - factionId
+      - characterId
+      - isMember
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: Faction that was checked
+        characterId:
+          type: string
+          format: uuid
+          description: Character that was checked
+        isMember:
+          type: boolean
+          description: Whether the character is a member
+        role:
+          $ref: '#/components/schemas/FactionMemberRole'
+          nullable: true
+          description: Member's role (null if not a member)
     CheckReferencesRequest:
       description: Request to check reference count for a character
       type: object
@@ -17294,6 +19604,22 @@ components:
             type: string
           nullable: true
           description: Chord extensions (e.g., "9", "11", "13")
+    ClaimTerritoryRequest:
+      type: object
+      description: Request to claim a location as faction territory
+      additionalProperties: false
+      required:
+      - factionId
+      - locationId
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: Faction claiming the territory
+        locationId:
+          type: string
+          format: uuid
+          description: Location to claim
     ClauseAssetStatus:
       type: object
       description: Status of a single clause's asset requirements
@@ -17461,6 +19787,44 @@ components:
         success:
           type: boolean
           description: Whether the cleanup completed without errors
+    CleanupByGameServiceRequest:
+      type: object
+      additionalProperties: false
+      description: Request to cleanup divine data for a deleted game service 
+        (called by lib-resource)
+      required:
+      - gameServiceId
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service whose divine data to clean up
+    CleanupByLocationRequest:
+      type: object
+      description: Request to cleanup territory claims for a deleted location
+      additionalProperties: false
+      required:
+      - locationId
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: ID of the location that was deleted
+    CleanupByLocationResponse:
+      type: object
+      description: Result of location territory claim cleanup
+      additionalProperties: false
+      required:
+      - claimsRemoved
+      - success
+      properties:
+        claimsRemoved:
+          type: integer
+          minimum: 0
+          description: Number of territory claims removed
+        success:
+          type: boolean
+          description: Whether cleanup completed successfully
     CleanupByOwnerRequest:
       type: object
       description: Request to cleanup all boards for a deleted owner entity
@@ -17495,6 +19859,47 @@ components:
         boardsDeleted:
           type: integer
           description: Number of boards deleted during cleanup
+    CleanupByRealmRequest:
+      type: object
+      description: Request to cleanup faction data for a deleted realm
+      additionalProperties: false
+      required:
+      - realmId
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm that was deleted
+    CleanupByRealmResponse:
+      type: object
+      description: Result of realm faction data cleanup
+      additionalProperties: false
+      required:
+      - factionsRemoved
+      - membershipsRemoved
+      - territoryClaimsRemoved
+      - normsRemoved
+      - success
+      properties:
+        factionsRemoved:
+          type: integer
+          minimum: 0
+          description: Number of factions removed
+        membershipsRemoved:
+          type: integer
+          minimum: 0
+          description: Number of memberships removed across all factions
+        territoryClaimsRemoved:
+          type: integer
+          minimum: 0
+          description: Number of territory claims removed
+        normsRemoved:
+          type: integer
+          minimum: 0
+          description: Number of norm definitions removed
+        success:
+          type: boolean
+          description: Whether cleanup completed successfully
     CleanupCallbackResult:
       type: object
       additionalProperties: false
@@ -17572,6 +19977,54 @@ components:
         Policy for cleanup callback execution.
         BEST_EFFORT: Proceed with deletion even if some callbacks fail
         ALL_REQUIRED: Abort deletion if any callback fails
+    CleanupResponse:
+      type: object
+      description: Result of an owner cleanup operation
+      additionalProperties: false
+      required:
+      - statusesRemoved
+      - containersDeleted
+      properties:
+        statusesRemoved:
+          type: integer
+          description: Number of status instances removed
+        containersDeleted:
+          type: integer
+          description: Number of status containers deleted
+    ClearEntityPositionRequest:
+      description: Request to clear an entity's presence from its current 
+        location
+      type: object
+      additionalProperties: false
+      required:
+      - entityType
+      - entityId
+      properties:
+        entityType:
+          type: string
+          description: Type of entity (opaque string - character, actor, npc, 
+            player, etc.)
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity to clear
+    ClearEntityPositionResponse:
+      description: Result of clearing entity presence
+      type: object
+      additionalProperties: false
+      required:
+      - cleared
+      properties:
+        cleared:
+          type: boolean
+          description: Whether the entity had an active presence that was 
+            cleared
+        previousLocationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Location the entity was removed from (null if entity had 
+            no active presence)
     ClientCapabilitiesResponse:
       description: Response containing the client's capability manifest with 
         available API endpoints and shortcuts
@@ -19560,6 +22013,31 @@ components:
           additionalProperties: true
           nullable: true
           description: Game-specific custom terms
+    ControllingFactionResponse:
+      type: object
+      description: The faction controlling a location
+      additionalProperties: false
+      required:
+      - locationId
+      - faction
+      - claimId
+      - claimedAt
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: Location that is controlled
+        faction:
+          $ref: '#/components/schemas/FactionResponse'
+          description: The controlling faction
+        claimId:
+          type: string
+          format: uuid
+          description: Territory claim record ID
+        claimedAt:
+          type: string
+          format: date-time
+          description: When the territory was claimed
     ConversionStep:
       type: object
       description: A step in the conversion path
@@ -20277,6 +22755,52 @@ components:
           additionalProperties: true
           description: Additional metadata
           nullable: true
+    CreateDeityRequest:
+      type: object
+      additionalProperties: false
+      description: Request to create a new deity entity
+      required:
+      - gameServiceId
+      - code
+      - displayName
+      - description
+      - domains
+      - personalityTraits
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service this deity belongs to
+        code:
+          type: string
+          description: Unique code for this deity within the game service (e.g.,
+            mnemosyne, nexius)
+        displayName:
+          type: string
+          description: Human-readable display name
+        description:
+          type: string
+          description: Description of the deity's nature and role
+        domains:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/DomainInfluence'
+          description: Domain influences (at least one required)
+        personalityTraits:
+          $ref: '#/components/schemas/DeityPersonalityTraits'
+          description: Personality traits influencing behavior decisions
+        maxAttentionSlots:
+          type: integer
+          minimum: 1
+          default: 10
+          description: Maximum characters this deity can actively monitor 
+            simultaneously
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Home realm for this deity (null if not realm-bound)
     CreateEntryTemplateRequest:
       type: object
       description: Request to create a new entry template
@@ -20504,6 +23028,45 @@ components:
           items:
             $ref: '#/components/schemas/PartyToken'
           description: Deposit tokens for each party (full_consent mode)
+    CreateFactionRequest:
+      type: object
+      description: Request to create a new faction
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - name
+      - code
+      - realmId
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service to scope this faction to
+        name:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: Display name for the faction
+        code:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Unique code within the game service (e.g., 
+            "thieves_guild")
+        description:
+          type: string
+          nullable: true
+          maxLength: 2048
+          description: Human-readable description of the faction
+        realmId:
+          type: string
+          format: uuid
+          description: Realm this faction belongs to
+        parentFactionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Parent faction for hierarchy (null for top-level)
     CreateHoldRequest:
       type: object
       description: Request to create an authorization hold
@@ -21327,6 +23890,74 @@ components:
           additionalProperties:
             type: string
           description: Custom key-value metadata for the slot
+    CreateStatusTemplateRequest:
+      type: object
+      description: Request to create a new status template
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - code
+      - displayName
+      - description
+      - category
+      - stackable
+      - itemTemplateId
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service this template is scoped to
+        code:
+          type: string
+          maxLength: 128
+          description: Unique status code within this game service
+        displayName:
+          type: string
+          description: Human-readable display name for this status effect
+        description:
+          type: string
+          description: Detailed description of what this status effect does
+        category:
+          $ref: '#/components/schemas/StatusCategory'
+          description: Classification of this status effect
+        stackable:
+          type: boolean
+          description: Whether this status can stack (multiple applications)
+        maxStacks:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Maximum number of stacks when stackable is true
+        stackBehavior:
+          $ref: '#/components/schemas/StackBehavior'
+          description: How multiple applications interact (defaults to ignore)
+        contractTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Contract template for lifecycle management (null for 
+            simple TTL statuses). When set, granting this status creates a 
+            contract instance with milestones matching the template's defined 
+            structure. The contract template should define milestones for status
+            lifecycle phases (e.g., activation, expiration). Template values 
+            receive the grant request's metadata map, allowing callers to 
+            parameterize contract behavior per grant.
+        itemTemplateId:
+          type: string
+          format: uuid
+          description: Item template used when granting this status as an 
+            inventory item
+        defaultDurationSeconds:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: Default duration in seconds for non-contract TTL 
+            management (null for permanent)
+        iconAssetId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Asset identifier for this status effect's icon
     CreateTemplateRequest:
       type: object
       description: Request to create a scenario template
@@ -21501,6 +24132,38 @@ components:
           format: double
           nullable: true
           description: Amount lost due to wallet cap (cap_and_lose behavior)
+    CreditDivinityRequest:
+      type: object
+      additionalProperties: false
+      description: Request to credit divinity to a deity's wallet
+      required:
+      - deityId
+      - amount
+      - source
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: Deity to credit
+        amount:
+          type: number
+          format: double
+          minimum: 0.0
+          exclusiveMinimum: true
+          description: Amount of divinity to credit (must be positive)
+        source:
+          type: string
+          description: Source of the divinity gain (e.g., mortal_action, 
+            domain_event, manual)
+        sourceEventId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Triggering event identifier if applicable
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description of the credit reason
     CureBreachRequest:
       type: object
       description: Request to cure a breach
@@ -21852,6 +24515,17 @@ components:
           type: string
           nullable: true
           description: Custom scripts to inject at the end of the body
+    DeactivateDeityRequest:
+      type: object
+      additionalProperties: false
+      description: Request to deactivate an active deity
+      required:
+      - deityId
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: Deity to deactivate
     DebitCurrencyRequest:
       type: object
       description: Request to debit currency from a wallet
@@ -21915,6 +24589,38 @@ components:
           type: number
           format: double
           description: Balance after debit
+    DebitDivinityRequest:
+      type: object
+      additionalProperties: false
+      description: Request to debit divinity from a deity's wallet
+      required:
+      - deityId
+      - amount
+      - purpose
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: Deity to debit
+        amount:
+          type: number
+          format: double
+          minimum: 0.0
+          exclusiveMinimum: true
+          description: Amount of divinity to debit (must be positive)
+        purpose:
+          type: string
+          description: Purpose of the expenditure (e.g., blessing_grant, 
+            miracle, intervention)
+        targetCharacterId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Target character if the expenditure is blessing-related
+        description:
+          type: string
+          nullable: true
+          description: Human-readable description of the debit reason
     DeclineMatchRequest:
       type: object
       description: Request to decline a formed match
@@ -21965,6 +24671,166 @@ components:
         acknowledged:
           type: boolean
           description: Whether the decline was processed
+    DefineNormRequest:
+      type: object
+      description: Request to define a behavioral norm for a faction
+      additionalProperties: false
+      required:
+      - factionId
+      - violationType
+      - basePenalty
+      - severity
+      - scope
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: Faction to define the norm for
+        violationType:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Violation type code (e.g., "theft", "deception", 
+            "violence")
+        basePenalty:
+          type: number
+          format: float
+          minimum: 0.0
+          description: Base GOAP cost penalty for violating this norm
+        severity:
+          $ref: '#/components/schemas/NormSeverity'
+          description: Enforcement intensity level
+        scope:
+          $ref: '#/components/schemas/NormScope'
+          description: Whether norm applies to member-only or all interactions
+        description:
+          type: string
+          nullable: true
+          maxLength: 1024
+          description: Human-readable description of the norm
+    DeityPersonalityTraits:
+      type: object
+      additionalProperties: false
+      description: Machine-readable personality traits influencing deity 
+        behavior decisions
+      required:
+      - temperament
+      - attentionBias
+      - generosity
+      - jealousy
+      properties:
+        temperament:
+          type: string
+          description: Primary temperament descriptor (e.g., wrathful, 
+            benevolent, capricious)
+        attentionBias:
+          type: string
+          description: What type of mortal actions draw this deity's attention 
+            (e.g., combat, devotion, craft)
+        generosity:
+          type: number
+          format: double
+          minimum: 0.0
+          maximum: 1.0
+          description: How freely the deity grants blessings (0.0 miserly, 1.0 
+            lavish)
+        jealousy:
+          type: number
+          format: double
+          minimum: 0.0
+          maximum: 1.0
+          description: How possessive the deity is of followers (0.0 tolerant, 
+            1.0 vengeful)
+    DeityResponse:
+      type: object
+      additionalProperties: false
+      description: Full deity entity response
+      required:
+      - deityId
+      - gameServiceId
+      - code
+      - displayName
+      - description
+      - domains
+      - personalityTraits
+      - maxAttentionSlots
+      - status
+      - followerCount
+      - createdAt
+      - updatedAt
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: Unique deity identifier
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service this deity belongs to
+        code:
+          type: string
+          description: Unique code within the game service
+        displayName:
+          type: string
+          description: Human-readable display name
+        description:
+          type: string
+          description: Description of the deity
+        domains:
+          type: array
+          items:
+            $ref: '#/components/schemas/DomainInfluence'
+          description: Domain influences
+        personalityTraits:
+          $ref: '#/components/schemas/DeityPersonalityTraits'
+          description: Personality traits
+        maxAttentionSlots:
+          type: integer
+          description: Maximum characters the deity can actively monitor
+        actorId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Associated actor ID for the deity watcher brain (null if 
+            no watcher started)
+        seedId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Domain power seed ID (null if seed creation failed or 
+            pending)
+        currencyWalletId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Divinity currency wallet ID (null if wallet creation 
+            failed or pending)
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Home realm for this deity (null if not realm-bound)
+        status:
+          $ref: '#/components/schemas/DeityStatus'
+          description: Current lifecycle status
+        followerCount:
+          type: integer
+          description: Number of active followers
+        createdAt:
+          type: string
+          format: date-time
+          description: When the deity was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: When the deity was last updated
+    DeityStatus:
+      type: string
+      description: Lifecycle status of a deity entity
+      enum:
+      - active
+      - dormant
+      - archived
     DeleteAchievementDefinitionRequest:
       type: object
       description: Request to delete an achievement
@@ -21980,6 +24846,18 @@ components:
         achievementId:
           type: string
           description: ID of the achievement to delete
+    DeleteActionMappingRequest:
+      type: object
+      description: Request to delete an action tag mapping
+      additionalProperties: false
+      required:
+      - tag
+      properties:
+        tag:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: The GOAP action tag whose mapping should be deleted
     DeleteActorTemplateRequest:
       type: object
       additionalProperties: false
@@ -22090,6 +24968,17 @@ components:
           type: string
           format: uuid
           description: Collection instance to delete
+    DeleteDeityRequest:
+      type: object
+      additionalProperties: false
+      description: Request to permanently delete a deity and all dependent data
+      required:
+      - deityId
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: Deity to delete
     DeleteEntryTemplateRequest:
       type: object
       description: Request to delete an entry template
@@ -22132,6 +25021,17 @@ components:
           type: string
           format: uuid
           description: Message ID to delete
+    DeleteNormRequest:
+      type: object
+      description: Request to delete a norm definition
+      additionalProperties: false
+      required:
+      - normId
+      properties:
+        normId:
+          type: string
+          format: uuid
+          description: ID of the norm to delete
     DeleteRoomRequest:
       type: object
       additionalProperties: false
@@ -22357,6 +25257,17 @@ components:
           items:
             $ref: '#/components/schemas/PartyToken'
           description: Release tokens (issued when fully funded)
+    DeprecateFactionRequest:
+      type: object
+      description: Request to deprecate a faction
+      additionalProperties: false
+      required:
+      - factionId
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: ID of the faction to deprecate
     DeprecateQuestDefinitionRequest:
       type: object
       description: Request to mark a quest definition as deprecated
@@ -22426,6 +25337,17 @@ components:
           type: string
           format: uuid
           description: Template ID to deprecate
+    DesignateRealmBaselineRequest:
+      type: object
+      description: Request to designate a faction as the realm baseline
+      additionalProperties: false
+      required:
+      - factionId
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: ID of the faction to designate as realm baseline
     DestroyItemInstanceRequest:
       type: object
       description: Request to destroy an item instance
@@ -22570,6 +25492,99 @@ components:
         escrow:
           $ref: '#/components/schemas/EscrowAgreement'
           description: Disputed escrow agreement
+    DivinityBalanceResponse:
+      type: object
+      additionalProperties: false
+      description: Current divinity balance for a deity
+      required:
+      - deityId
+      - balance
+      - currencyCode
+      - walletId
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: Deity this balance belongs to
+        balance:
+          type: number
+          format: double
+          description: Current divinity balance
+        currencyCode:
+          type: string
+          description: Currency code for the divinity type
+        walletId:
+          type: string
+          format: uuid
+          description: Currency wallet ID
+    DivinityHistoryResponse:
+      type: object
+      additionalProperties: false
+      description: Paginated divinity transaction history
+      required:
+      - transactions
+      - totalCount
+      - page
+      - pageSize
+      properties:
+        transactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/DivinityTransaction'
+          description: Transactions in the current page
+        totalCount:
+          type: integer
+          description: Total number of transactions
+        page:
+          type: integer
+          description: Current page number
+        pageSize:
+          type: integer
+          description: Number of results per page
+    DivinityTransaction:
+      type: object
+      additionalProperties: false
+      description: A single divinity transaction record from the currency wallet
+        history
+      required:
+      - transactionId
+      - walletId
+      - amount
+      - transactionType
+      - createdAt
+      properties:
+        transactionId:
+          type: string
+          format: uuid
+          description: Unique transaction identifier
+        walletId:
+          type: string
+          format: uuid
+          description: Wallet the transaction belongs to
+        amount:
+          type: number
+          format: double
+          description: Transaction amount (positive for credits, negative for 
+            debits)
+        transactionType:
+          type: string
+          description: Type of transaction (e.g., mortal_action, blessing_grant,
+            manual_credit)
+        targetType:
+          type: string
+          nullable: true
+          description: Type of entity involved in this transaction (e.g., 
+            character, deity)
+        targetId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Entity ID involved in this transaction (e.g., the blessed
+            character, the rival deity)
+        createdAt:
+          type: string
+          format: date-time
+          description: When the transaction was recorded
     Document:
       description: Complete document with all metadata and content
       type: object
@@ -22728,6 +25743,25 @@ components:
           items:
             type: string
           description: Tags associated with the document
+    DomainInfluence:
+      type: object
+      additionalProperties: false
+      description: A deity's influence in a specific domain with a weight 
+        representing strength
+      required:
+      - domain
+      - weight
+      properties:
+        domain:
+          type: string
+          description: Opaque domain code (e.g., war, knowledge, nature). 
+            Game-defined, not an enum.
+        weight:
+          type: number
+          format: double
+          minimum: 0.0
+          maximum: 1.0
+          description: Strength of influence in this domain (0.0-1.0)
     DomainWeight:
       type: object
       description: Domain name and weight pair for scenario template growth 
@@ -22860,6 +25894,15 @@ components:
         Cardinality for effect application.
         Exclusive: Replaces existing value at key
         Additive: Adds to collection at key
+    EffectSource:
+      type: string
+      description: |
+        Whether an effect comes from a status item or a seed capability.
+        - item_based: temporary effect stored as an item in a status container
+        - seed_derived: passive capability computed from seed growth state
+      enum:
+      - item_based
+      - seed_derived
     EmotionalImpact:
       type: string
       description: How the encounter emotionally affected the character
@@ -23352,6 +26395,30 @@ components:
           type: string
           format: uuid
           description: Template to instantiate for the bond
+    EntityPresenceEntry:
+      description: An entity currently present at a location
+      type: object
+      additionalProperties: false
+      required:
+      - entityType
+      - entityId
+      properties:
+        entityType:
+          type: string
+          description: Type of entity (opaque string)
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity
+        reportedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the presence was last reported
+        reportedBy:
+          type: string
+          nullable: true
+          description: Identifier of the last reporter
     EntityRankResponse:
       type: object
       description: Entity's rank on a leaderboard
@@ -24812,6 +27879,165 @@ components:
           type: integer
           format: int64
           description: Archive size
+    FactionArchive:
+      type: object
+      x-archive-type: true
+      description: |
+        Complete faction membership data for archive storage and storyline SDK consumption.
+        Inherits base archive properties from ResourceArchiveBase.
+        The characterId field equals resourceId for convenience.
+      allOf:
+      - $ref: '#/components/schemas/ResourceArchiveBase'
+      additionalProperties: false
+      required:
+      - characterId
+      - hasMemberships
+      - membershipCount
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character this data belongs to (equals resourceId)
+        hasMemberships:
+          type: boolean
+          description: Whether any faction memberships exist
+        membershipCount:
+          type: integer
+          minimum: 0
+          description: Number of membership records in archive
+        memberships:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/FactionMemberResponse'
+          description: Faction membership records (null if hasMemberships is 
+            false)
+    FactionMemberResponse:
+      type: object
+      description: Faction membership record linking a character to a faction 
+        with a role
+      additionalProperties: false
+      required:
+      - factionId
+      - characterId
+      - role
+      - joinedAt
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: Faction the character belongs to
+        characterId:
+          type: string
+          format: uuid
+          description: Character who is a member
+        role:
+          $ref: '#/components/schemas/FactionMemberRole'
+          description: Member's role in the faction
+        joinedAt:
+          type: string
+          format: date-time
+          description: When the character joined the faction
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the membership was last updated (role change)
+    FactionMemberRole:
+      type: string
+      description: Role hierarchy for faction membership
+      enum:
+      - Leader
+      - Officer
+      - Member
+      - Recruit
+    FactionResponse:
+      type: object
+      description: Complete faction entity with seed growth status
+      additionalProperties: false
+      required:
+      - factionId
+      - gameServiceId
+      - name
+      - code
+      - realmId
+      - isRealmBaseline
+      - status
+      - memberCount
+      - createdAt
+      - updatedAt
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: Unique identifier for the faction
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service this faction belongs to
+        name:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: Display name of the faction
+        code:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Unique code within the game service (e.g., 
+            "thieves_guild")
+        description:
+          type: string
+          nullable: true
+          maxLength: 2048
+          description: Human-readable description of the faction
+        realmId:
+          type: string
+          format: uuid
+          description: Realm this faction belongs to
+        isRealmBaseline:
+          type: boolean
+          description: Whether this faction is the realm's baseline cultural 
+            faction
+        parentFactionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Parent faction in hierarchy (null for top-level factions)
+        seedId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Associated seed for growth tracking (null if seed 
+            creation failed)
+        status:
+          $ref: '#/components/schemas/FactionStatus'
+          description: Current lifecycle status
+        currentPhase:
+          type: string
+          nullable: true
+          maxLength: 64
+          description: Current seed growth phase (denormalized from lib-seed for
+            convenience)
+        memberCount:
+          type: integer
+          minimum: 0
+          description: Current number of members in this faction
+        createdAt:
+          type: string
+          format: date-time
+          description: When this faction was created
+        updatedAt:
+          type: string
+          format: date-time
+          description: When this faction was last updated
+    FactionStatus:
+      type: string
+      description: Lifecycle status of a faction entity
+      enum:
+      - Active
+      - Deprecated
+      - Dissolved
     FailMilestoneRequest:
       type: object
       description: Request to fail a milestone
@@ -24993,6 +28219,32 @@ components:
           items:
             $ref: '#/components/schemas/SpaceCandidate'
           description: Potential placements
+    FollowerResponse:
+      type: object
+      additionalProperties: false
+      description: Follower record linking a character to a deity
+      required:
+      - characterId
+      - deityId
+      - registeredAt
+      - relationshipId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Follower character ID
+        deityId:
+          type: string
+          format: uuid
+          description: Deity being followed
+        registeredAt:
+          type: string
+          format: date-time
+          description: When the follower relationship was created
+        relationshipId:
+          type: string
+          format: uuid
+          description: Underlying relationship record ID from lib-relationship
     FormTemplate:
       description: A musical form structure template
       type: object
@@ -25687,6 +28939,17 @@ components:
           $ref: '#/components/schemas/AutogainInfo'
           nullable: true
           description: Autogain status (null if autogain not enabled)
+    GetBlessingRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get a blessing by ID
+      required:
+      - blessingId
+      properties:
+        blessingId:
+          type: string
+          format: uuid
+          description: Blessing to retrieve
     GetBoardRequest:
       type: object
       description: Request to get a board instance by ID
@@ -26031,6 +29294,17 @@ components:
           type: string
           nullable: true
           description: Template code (provide this or templateId)
+    GetControllingFactionRequest:
+      type: object
+      description: Request to get the controlling faction for a location
+      additionalProperties: false
+      required:
+      - locationId
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: Location to find the controlling faction for
     GetCurrencyDefinitionRequest:
       type: object
       description: Request to get a currency definition
@@ -26055,6 +29329,32 @@ components:
           type: string
           format: uuid
           description: Definition ID to retrieve
+    GetDeityByCodeRequest:
+      type: object
+      additionalProperties: false
+      description: Request to retrieve a deity by code within a game service
+      required:
+      - gameServiceId
+      - code
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service to search within
+        code:
+          type: string
+          description: Deity code to look up
+    GetDeityRequest:
+      type: object
+      additionalProperties: false
+      description: Request to retrieve a deity by ID
+      required:
+      - deityId
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: Unique identifier of the deity to retrieve
     GetDepositStatusRequest:
       type: object
       description: Request to get deposit status for a party
@@ -26104,6 +29404,39 @@ components:
           format: date-time
           nullable: true
           description: Deposit deadline
+    GetDivinityBalanceRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get a deity's divinity balance
+      required:
+      - deityId
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: Deity whose balance to retrieve
+    GetDivinityHistoryRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get divinity transaction history
+      required:
+      - deityId
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: Deity whose history to retrieve
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Page number for pagination
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+          description: Number of results per page
     GetDocumentRequest:
       description: Request to retrieve a specific document by ID or slug
       type: object
@@ -26170,6 +29503,57 @@ components:
           - html
           - none
           description: Format of the content field in the response
+    GetEffectsRequest:
+      type: object
+      description: Request to get unified effects for an entity
+      additionalProperties: false
+      required:
+      - entityId
+      - entityType
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: Entity to get effects for
+        entityType:
+          type: string
+          description: Entity type discriminator
+        includePassive:
+          type: boolean
+          default: true
+          description: Whether to include seed-derived passive effects. Defaults
+            to true because GetEffects is the unified query endpoint designed to
+            return all active effects. Set to false to retrieve only item-based 
+            statuses from this endpoint.
+    GetEffectsResponse:
+      type: object
+      description: Unified view of all active effects for an entity
+      additionalProperties: false
+      required:
+      - entityId
+      - entityType
+      - itemBasedCount
+      - seedDerivedCount
+      - effects
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: Entity these effects belong to
+        entityType:
+          type: string
+          description: Entity type discriminator
+        itemBasedCount:
+          type: integer
+          description: Number of item-based status effects
+        seedDerivedCount:
+          type: integer
+          description: Number of seed-derived passive effects
+        effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusEffectSummary'
+          description: All active effects with source attribution
     GetEncounterTypeRequest:
       type: object
       description: Request to retrieve an encounter type by code
@@ -26211,6 +29595,61 @@ components:
           default: false
           description: Include combat preferences from character-personality 
             service
+    GetEntityLocationRequest:
+      description: Request to query an entity's current location
+      type: object
+      additionalProperties: false
+      required:
+      - entityType
+      - entityId
+      properties:
+        entityType:
+          type: string
+          description: Type of entity (opaque string - character, actor, npc, 
+            player, etc.)
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity to look up
+    GetEntityLocationResponse:
+      description: Result of querying an entity's current location
+      type: object
+      additionalProperties: false
+      required:
+      - found
+      properties:
+        found:
+          type: boolean
+          description: Whether a non-expired presence binding exists for this 
+            entity
+        locationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of the location the entity is currently at
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of the realm the location belongs to
+        entityType:
+          type: string
+          nullable: true
+          description: Type of entity (echoed back)
+        entityId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of the entity (echoed back)
+        reportedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the presence was last reported
+        reportedBy:
+          type: string
+          nullable: true
+          description: Identifier of the last reporter
     GetEntityRankRequest:
       type: object
       description: Request to get an entity's rank
@@ -26337,6 +29776,56 @@ components:
           type: number
           format: double
           description: Target currency rate to base
+    GetFactionByCodeRequest:
+      type: object
+      description: Request to get a faction by code within a game service
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - code
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope for code lookup
+        code:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Faction code to look up
+    GetFactionRequest:
+      type: object
+      description: Request to get a faction by ID
+      additionalProperties: false
+      required:
+      - factionId
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: ID of the faction to retrieve
+    GetFollowersRequest:
+      type: object
+      additionalProperties: false
+      description: Request to get followers of a deity
+      required:
+      - deityId
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: Deity whose followers to list
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Page number for pagination
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+          description: Number of results per page
     GetGameSessionRequest:
       type: object
       description: Request to get a specific game session
@@ -26986,6 +30475,17 @@ components:
           default: 5
           maximum: 50
           description: Entries to show after the entity
+    GetRealmBaselineRequest:
+      type: object
+      description: Request to get the realm baseline faction
+      additionalProperties: false
+      required:
+      - realmId
+      properties:
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm to get the baseline faction for
     GetRealmByCodeRequest:
       description: Request to retrieve a realm by its unique code identifier
       type: object
@@ -27351,6 +30851,21 @@ components:
           type: integer
           nullable: true
           description: Specific season number (null for current)
+    GetSeedEffectsRequest:
+      type: object
+      description: Request to get seed-derived passive effects for an entity
+      additionalProperties: false
+      required:
+      - entityId
+      - entityType
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: Entity to get seed effects for
+        entityType:
+          type: string
+          description: Entity type discriminator
     GetSeedRequest:
       type: object
       description: Request to get a seed by ID.
@@ -27529,6 +31044,38 @@ components:
           type: string
           format: uuid
           description: Unique identifier of the species
+    GetStatusRequest:
+      type: object
+      additionalProperties: false
+      description: Request for service status (currently empty, reserved for 
+        future filters)
+      properties: {}
+    GetStatusTemplateByCodeRequest:
+      type: object
+      description: Request to get a status template by game service and code
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - code
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service the template is scoped to
+        code:
+          type: string
+          description: Unique status code within this game service
+    GetStatusTemplateRequest:
+      type: object
+      description: Request to get a status template by ID
+      additionalProperties: false
+      required:
+      - statusTemplateId
+      properties:
+        statusTemplateId:
+          type: string
+          format: uuid
+          description: Status template identifier
     GetStyleRequest:
       description: Request to get a style definition
       type: object
@@ -27879,6 +31426,40 @@ components:
           type: integer
           default: 100
           description: Planning timeout in milliseconds
+    GrantBlessingRequest:
+      type: object
+      additionalProperties: false
+      description: Request to grant a blessing from a deity to an entity
+      required:
+      - deityId
+      - entityId
+      - entityType
+      - tier
+      - itemTemplateCode
+      - reason
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: Deity granting the blessing
+        entityId:
+          type: string
+          format: uuid
+          description: Entity receiving the blessing
+        entityType:
+          type: string
+          description: Type of entity receiving the blessing (e.g., character, 
+            account, deity)
+        tier:
+          $ref: '#/components/schemas/BlessingTier'
+          description: Tier of the blessing (determines cost and storage 
+            mechanism)
+        itemTemplateCode:
+          type: string
+          description: Item template code for the blessing effect
+        reason:
+          type: string
+          description: Why the deity is granting this blessing
     GrantEntryRequest:
       type: object
       description: Request to grant/unlock an entry in a collection
@@ -27945,6 +31526,108 @@ components:
           type: string
           format: date-time
           description: When the entry was unlocked
+    GrantResult:
+      type: string
+      description: |
+        How a successful status grant was resolved.
+        - granted: new status applied (no prior instance)
+        - stacked: stack count increased on existing instance
+        - refreshed: timer reset on existing instance
+        - replaced: existing instance removed and new one created
+      enum:
+      - granted
+      - stacked
+      - refreshed
+      - replaced
+    GrantStatusRequest:
+      type: object
+      description: Request to grant a status effect to an entity
+      additionalProperties: false
+      required:
+      - entityId
+      - entityType
+      - gameServiceId
+      - statusTemplateCode
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: Entity to receive the status effect
+        entityType:
+          type: string
+          description: Entity type discriminator (e.g., character, account)
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service scope for template lookup
+        statusTemplateCode:
+          type: string
+          description: Status template code to grant
+        sourceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: What granted this status (for cascading removal via 
+            remove-by-source)
+        durationOverrideSeconds:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: Override the template's default duration in seconds
+        metadata:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: "Arbitrary key-value data passed to contract template values
+            and stored on the status instance. Convention for Divine integration -
+            set metadata.blessingTier to the blessing tier string (e.g., minor, standard,
+            greater, supreme) so the Divine service can query active blessings by
+            tier."
+    GrantStatusResponse:
+      type: object
+      description: Result of a successful status grant operation
+      additionalProperties: false
+      required:
+      - statusInstanceId
+      - statusTemplateCode
+      - stackCount
+      - itemInstanceId
+      - grantedAt
+      - grantResult
+      properties:
+        statusInstanceId:
+          type: string
+          format: uuid
+          description: Status instance that was created or updated
+        statusTemplateCode:
+          type: string
+          description: Status template code that was granted
+        stackCount:
+          type: integer
+          description: Current stack count after grant
+        contractInstanceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Contract instance managing this status lifecycle (null if
+            not contract-managed)
+        itemInstanceId:
+          type: string
+          format: uuid
+          description: Item instance created in the status container
+        grantedAt:
+          type: string
+          format: date-time
+          description: When this status was granted
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this status expires (null for permanent statuses)
+        grantResult:
+          $ref: '#/components/schemas/GrantResult'
+          description: How the grant was resolved (granted, stacked, refreshed, 
+            replaced)
     GridPosition:
       type: object
       description: A position on the board grid (zero-indexed)
@@ -28235,6 +31918,44 @@ components:
         encounterCount:
           type: integer
           description: Total number of encounters between them
+    HasStatusRequest:
+      type: object
+      description: Request to check if an entity has a specific status
+      additionalProperties: false
+      required:
+      - entityId
+      - entityType
+      - statusCode
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: Entity to check
+        entityType:
+          type: string
+          description: Entity type discriminator
+        statusCode:
+          type: string
+          description: Status template code to check for
+    HasStatusResponse:
+      type: object
+      description: Result of a status existence check
+      additionalProperties: false
+      required:
+      - hasStatus
+      properties:
+        hasStatus:
+          type: boolean
+          description: Whether the entity has this status active
+        statusInstanceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Status instance ID if found (null if not present)
+        stackCount:
+          type: integer
+          nullable: true
+          description: Current stack count if found (null if not present)
     HazardInfo:
       type: object
       additionalProperties: true
@@ -28584,6 +32305,27 @@ components:
         behaviorId:
           type: string
           description: Unique identifier for the cached behavior to invalidate
+    InvalidateCacheResponse:
+      type: object
+      description: Result of cache invalidation and rebuild
+      additionalProperties: false
+      required:
+      - characterId
+      - obligationsRefreshed
+      - success
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character whose cache was rebuilt
+        obligationsRefreshed:
+          type: integer
+          minimum: 0
+          maximum: 10000
+          description: Number of obligations found and cached
+        success:
+          type: boolean
+          description: Whether the cache rebuild completed successfully
     ItemCategory:
       type: string
       description: Item classification category
@@ -29514,6 +33256,48 @@ components:
           items:
             $ref: '#/components/schemas/AchievementDefinitionResponse'
           description: List of achievement definitions
+    ListActionMappingsRequest:
+      type: object
+      description: Request to list action tag mappings with pagination
+      additionalProperties: false
+      properties:
+        searchTerm:
+          type: string
+          nullable: true
+          maxLength: 256
+          description: Optional text search across tag names and descriptions
+        cursor:
+          type: string
+          nullable: true
+          maxLength: 512
+          description: Pagination cursor from a previous response
+        pageSize:
+          type: integer
+          default: 20
+          minimum: 1
+          maximum: 100
+          description: Number of mappings to return per page
+    ListActionMappingsResponse:
+      type: object
+      description: Paginated list of action tag mappings
+      additionalProperties: false
+      required:
+      - mappings
+      - hasMore
+      properties:
+        mappings:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActionMappingResponse'
+          description: Action tag mappings for this page
+        nextCursor:
+          type: string
+          nullable: true
+          maxLength: 512
+          description: Cursor for the next page (null if no more pages)
+        hasMore:
+          type: boolean
+          description: Whether more pages are available
     ListArchivesRequest:
       description: Request to list available archives for a namespace
       type: object
@@ -29613,6 +33397,82 @@ components:
           items:
             $ref: '#/components/schemas/QuestDefinitionResponse'
           description: Available quest definitions
+    ListBlessingsByDeityRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list blessings granted by a deity
+      required:
+      - deityId
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: Deity whose granted blessings to list
+        tier:
+          $ref: '#/components/schemas/BlessingTier'
+          nullable: true
+          description: Optional tier filter
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Page number for pagination
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+          description: Number of results per page
+    ListBlessingsByEntityRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list blessings for an entity
+      required:
+      - entityId
+      - entityType
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: Entity whose blessings to list
+        entityType:
+          type: string
+          description: Type of entity (e.g., character, account, deity)
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Page number for pagination
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+          description: Number of results per page
+    ListBlessingsResponse:
+      type: object
+      additionalProperties: false
+      description: Paginated list of blessings
+      required:
+      - blessings
+      - totalCount
+      - page
+      - pageSize
+      properties:
+        blessings:
+          type: array
+          items:
+            $ref: '#/components/schemas/BlessingSummary'
+          description: Blessings in the current page
+        totalCount:
+          type: integer
+          description: Total number of matching blessings
+        page:
+          type: integer
+          description: Current page number
+        pageSize:
+          type: integer
+          description: Number of results per page
     ListBoardTemplatesRequest:
       type: object
       description: Request to list board templates with cursor-based pagination
@@ -30041,6 +33901,61 @@ components:
         limit:
           type: integer
           description: Results limit used
+    ListDeitiesRequest:
+      type: object
+      additionalProperties: false
+      description: Request to list deities with optional filters
+      required:
+      - gameServiceId
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service to list deities for
+        domainCode:
+          type: string
+          nullable: true
+          description: Filter by domain code (returns deities with this domain 
+            in their influences)
+        status:
+          $ref: '#/components/schemas/DeityStatus'
+          nullable: true
+          description: Filter by deity status
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Page number for pagination
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+          description: Number of results per page
+    ListDeitiesResponse:
+      type: object
+      additionalProperties: false
+      description: Paginated list of deities
+      required:
+      - deities
+      - totalCount
+      - page
+      - pageSize
+      properties:
+        deities:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeityResponse'
+          description: Deities in the current page
+        totalCount:
+          type: integer
+          description: Total number of matching deities
+        page:
+          type: integer
+          description: Current page number
+        pageSize:
+          type: integer
+          description: Number of results per page
     ListDocumentsRequest:
       description: Request to list documents with optional filtering and 
         pagination
@@ -30156,6 +34071,50 @@ components:
           type: boolean
           default: false
           description: Only return custom types
+    ListEntitiesAtLocationRequest:
+      description: Request to list entities at a specific location
+      type: object
+      additionalProperties: false
+      required:
+      - locationId
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: ID of the location to query
+        entityType:
+          type: string
+          nullable: true
+          description: Optional filter by entity type (opaque string)
+        page:
+          type: integer
+          default: 1
+          description: Page number (1-indexed)
+        pageSize:
+          type: integer
+          default: 50
+          description: Number of entities per page
+    ListEntitiesAtLocationResponse:
+      description: Result of listing entities at a location
+      type: object
+      additionalProperties: false
+      required:
+      - entities
+      - totalCount
+      - locationId
+      properties:
+        entities:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityPresenceEntry'
+          description: Entities currently present at the location
+        totalCount:
+          type: integer
+          description: Total number of entities matching the query
+        locationId:
+          type: string
+          format: uuid
+          description: ID of the queried location
     ListEntryTemplatesRequest:
       type: object
       description: Request to list entry templates with filtering and pagination
@@ -30268,6 +34227,95 @@ components:
         totalCount:
           type: integer
           description: Total count for pagination
+    ListFactionsRequest:
+      type: object
+      description: Request to list factions with filters
+      additionalProperties: false
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by game service
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by realm
+        status:
+          $ref: '#/components/schemas/FactionStatus'
+          nullable: true
+          description: Filter by lifecycle status
+        parentFactionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by parent faction (null returns top-level factions
+            only when isTopLevelOnly is true)
+        isTopLevelOnly:
+          type: boolean
+          default: false
+          description: When true, returns only factions with no parent
+        isRealmBaseline:
+          type: boolean
+          nullable: true
+          description: Filter by realm baseline status
+        cursor:
+          type: string
+          nullable: true
+          maxLength: 512
+          description: Pagination cursor from a previous response
+        pageSize:
+          type: integer
+          default: 20
+          minimum: 1
+          maximum: 100
+          description: Number of factions to return per page
+    ListFactionsResponse:
+      type: object
+      description: Paginated list of factions
+      additionalProperties: false
+      required:
+      - factions
+      - hasMore
+      properties:
+        factions:
+          type: array
+          items:
+            $ref: '#/components/schemas/FactionResponse'
+          description: Factions for this page
+        nextCursor:
+          type: string
+          nullable: true
+          maxLength: 512
+          description: Cursor for the next page (null if no more pages)
+        hasMore:
+          type: boolean
+          description: Whether more pages are available
+    ListFollowersResponse:
+      type: object
+      additionalProperties: false
+      description: Paginated list of deity followers
+      required:
+      - followers
+      - totalCount
+      - page
+      - pageSize
+      properties:
+        followers:
+          type: array
+          items:
+            $ref: '#/components/schemas/FollowerResponse'
+          description: Followers in the current page
+        totalCount:
+          type: integer
+          description: Total number of followers
+        page:
+          type: integer
+          description: Current page number
+        pageSize:
+          type: integer
+          description: Number of results per page
     ListItemTemplatesRequest:
       type: object
       description: Request to list item templates
@@ -30496,6 +34544,122 @@ components:
           maximum: 100
           default: 20
           description: Number of results per page
+    ListMembersRequest:
+      type: object
+      description: Request to list members of a faction
+      additionalProperties: false
+      required:
+      - factionId
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: Faction to list members for
+        role:
+          $ref: '#/components/schemas/FactionMemberRole'
+          nullable: true
+          description: Filter by role
+        cursor:
+          type: string
+          nullable: true
+          maxLength: 512
+          description: Pagination cursor from a previous response
+        pageSize:
+          type: integer
+          default: 20
+          minimum: 1
+          maximum: 100
+          description: Number of members to return per page
+    ListMembersResponse:
+      type: object
+      description: Paginated list of faction members
+      additionalProperties: false
+      required:
+      - members
+      - hasMore
+      properties:
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/FactionMemberResponse'
+          description: Members for this page
+        nextCursor:
+          type: string
+          nullable: true
+          maxLength: 512
+          description: Cursor for the next page (null if no more pages)
+        hasMore:
+          type: boolean
+          description: Whether more pages are available
+    ListMembershipsByCharacterRequest:
+      type: object
+      description: Request to list a character's faction memberships
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character to list memberships for
+        gameServiceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by game service
+    ListMembershipsByCharacterResponse:
+      type: object
+      description: All faction memberships for a character
+      additionalProperties: false
+      required:
+      - characterId
+      - memberships
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character these memberships belong to
+        memberships:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterMembershipEntry'
+          description: All faction memberships for the character
+    ListNormsRequest:
+      type: object
+      description: Request to list norms defined by a faction
+      additionalProperties: false
+      required:
+      - factionId
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: Faction to list norms for
+        severity:
+          $ref: '#/components/schemas/NormSeverity'
+          nullable: true
+          description: Filter by severity level
+        scope:
+          $ref: '#/components/schemas/NormScope'
+          nullable: true
+          description: Filter by scope
+    ListNormsResponse:
+      type: object
+      description: List of norm definitions for a faction
+      additionalProperties: false
+      required:
+      - factionId
+      - norms
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: Faction these norms belong to
+        norms:
+          type: array
+          items:
+            $ref: '#/components/schemas/NormDefinitionResponse'
+          description: All matching norm definitions
     ListParticipantsRequest:
       type: object
       additionalProperties: false
@@ -31389,6 +35553,121 @@ components:
           maximum: 100
           default: 20
           description: Number of items per page
+    ListStatusTemplatesRequest:
+      type: object
+      description: Request to list status templates with filtering and 
+        pagination
+      additionalProperties: false
+      required:
+      - gameServiceId
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Filter by game service
+        category:
+          nullable: true
+          description: Optional filter by status category
+          allOf:
+          - $ref: '#/components/schemas/StatusCategory'
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Page number (one-indexed)
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+          description: Number of items per page
+    ListStatusTemplatesResponse:
+      type: object
+      description: Paginated list of status templates
+      additionalProperties: false
+      required:
+      - templates
+      - totalCount
+      - page
+      - pageSize
+      properties:
+        templates:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusTemplateResponse'
+          description: Status templates in this page
+        totalCount:
+          type: integer
+          description: Total number of templates matching the filter
+        page:
+          type: integer
+          description: Current page number
+        pageSize:
+          type: integer
+          description: Number of items per page
+    ListStatusesRequest:
+      type: object
+      description: Request to list active statuses for an entity
+      additionalProperties: false
+      required:
+      - entityId
+      - entityType
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: Entity to list statuses for
+        entityType:
+          type: string
+          description: Entity type discriminator
+        category:
+          nullable: true
+          description: Optional filter by status category
+          allOf:
+          - $ref: '#/components/schemas/StatusCategory'
+        includePassive:
+          type: boolean
+          default: false
+          description: Whether to include seed-derived passive effects in 
+            results. Defaults to false because ListStatuses is typically used 
+            for UI display of item-based status effects only. Use GetEffects for
+            unified queries that include seed-derived capabilities.
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Page number (one-indexed)
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+          description: Number of items per page
+    ListStatusesResponse:
+      type: object
+      description: Paginated list of active status effects
+      additionalProperties: false
+      required:
+      - statuses
+      - totalCount
+      - page
+      - pageSize
+      properties:
+        statuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusEffectSummary'
+          description: Active status effects (item-based and optionally 
+            seed-derived)
+        totalCount:
+          type: integer
+          description: Total number of effects matching the filter
+        page:
+          type: integer
+          description: Current page number
+        pageSize:
+          type: integer
+          description: Number of items per page
     ListStylesRequest:
       description: Request to list available styles
       type: object
@@ -31476,6 +35755,53 @@ components:
         pageSize:
           type: integer
           description: Items per page
+    ListTerritoryClaimsRequest:
+      type: object
+      description: Request to list territory claims for a faction
+      additionalProperties: false
+      required:
+      - factionId
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: Faction to list claims for
+        status:
+          $ref: '#/components/schemas/TerritoryClaimStatus'
+          nullable: true
+          description: Filter by claim status
+        cursor:
+          type: string
+          nullable: true
+          maxLength: 512
+          description: Pagination cursor from a previous response
+        pageSize:
+          type: integer
+          default: 20
+          minimum: 1
+          maximum: 100
+          description: Number of claims to return per page
+    ListTerritoryClaimsResponse:
+      type: object
+      description: Paginated list of territory claims
+      additionalProperties: false
+      required:
+      - claims
+      - hasMore
+      properties:
+        claims:
+          type: array
+          items:
+            $ref: '#/components/schemas/TerritoryClaimResponse'
+          description: Territory claims for this page
+        nextCursor:
+          type: string
+          nullable: true
+          maxLength: 512
+          description: Cursor for the next page (null if no more pages)
+        hasMore:
+          type: boolean
+          description: Whether more pages are available
     ListUnlockedAchievementsRequest:
       type: object
       description: Request to list unlocked achievements
@@ -33201,6 +37527,71 @@ components:
       - accept_and_alert
       - reject_silent
       default: reject_and_alert
+    NormDefinitionResponse:
+      type: object
+      description: A behavioral norm definition stored in a faction
+      additionalProperties: false
+      required:
+      - normId
+      - factionId
+      - violationType
+      - basePenalty
+      - severity
+      - scope
+      - createdAt
+      properties:
+        normId:
+          type: string
+          format: uuid
+          description: Unique identifier for this norm definition
+        factionId:
+          type: string
+          format: uuid
+          description: Faction that owns this norm
+        violationType:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Violation type code mapping to lib-obligation vocabulary 
+            (e.g., "theft", "deception")
+        basePenalty:
+          type: number
+          format: float
+          minimum: 0.0
+          description: Base GOAP cost penalty for violating this norm
+        severity:
+          $ref: '#/components/schemas/NormSeverity'
+          description: Enforcement intensity level
+        scope:
+          $ref: '#/components/schemas/NormScope'
+          description: Whether norm applies to member-only or all interactions
+        description:
+          type: string
+          nullable: true
+          maxLength: 1024
+          description: Human-readable description of the norm
+        createdAt:
+          type: string
+          format: date-time
+          description: When this norm was defined
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this norm was last updated
+    NormScope:
+      type: string
+      description: Applicability scope for a behavioral norm
+      enum:
+      - Internal
+      - External
+    NormSeverity:
+      type: string
+      description: Enforcement intensity level for a behavioral norm
+      enum:
+      - Advisory
+      - Standard
+      - Strict
     NoteEvent:
       description: A musical note event with timing and pitch
       type: object
@@ -33387,6 +37778,39 @@ components:
       - DEFEND
       - CUSTOM
       description: Type of objective determining progress tracking logic
+    ObligationArchive:
+      type: object
+      x-archive-type: true
+      description: |
+        Complete obligation data for archive storage and storyline SDK consumption.
+        Inherits base archive properties from ResourceArchiveBase.
+        The characterId field equals resourceId for convenience.
+      allOf:
+      - $ref: '#/components/schemas/ResourceArchiveBase'
+      additionalProperties: false
+      required:
+      - characterId
+      - hasViolations
+      - violationCount
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character this data belongs to (equals resourceId)
+        hasViolations:
+          type: boolean
+          description: Whether any violation records exist
+        violationCount:
+          type: integer
+          minimum: 0
+          maximum: 100000
+          description: Number of violation records in archive
+        violations:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/ViolationRecord'
+          description: Violation history records (null if hasViolations=false)
     OnDeleteAction:
       type: string
       enum:
@@ -35499,6 +39923,64 @@ components:
         totalCount:
           type: integer
           description: Total matching results
+    QueryViolationsRequest:
+      type: object
+      description: Request to query violation history for a character
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to query violations for
+        contractId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by specific contract
+        violationType:
+          type: string
+          nullable: true
+          maxLength: 128
+          description: Filter by violation type code
+        since:
+          type: string
+          format: date-time
+          nullable: true
+          description: Only return violations after this timestamp
+        cursor:
+          type: string
+          nullable: true
+          maxLength: 512
+          description: Pagination cursor from a previous response
+        pageSize:
+          type: integer
+          default: 20
+          minimum: 1
+          maximum: 100
+          description: Number of violations to return per page
+    QueryViolationsResponse:
+      type: object
+      description: Paginated violation history for a character
+      additionalProperties: false
+      required:
+      - violations
+      - hasMore
+      properties:
+        violations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ViolationRecord'
+          description: Violation records for this page
+        nextCursor:
+          type: string
+          nullable: true
+          maxLength: 512
+          description: Cursor for the next page (null if no more pages)
+        hasMore:
+          type: boolean
+          description: Whether more pages are available
     QuestArchive:
       type: object
       x-archive-type: true
@@ -36561,6 +41043,22 @@ components:
           type: string
           nullable: true
           description: Error message if failed
+    RegisterFollowerRequest:
+      type: object
+      additionalProperties: false
+      description: Request to register a character as a deity follower
+      required:
+      - deityId
+      - characterId
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: Deity to follow
+        characterId:
+          type: string
+          format: uuid
+          description: Character becoming a follower
     RegisterReferenceRequest:
       type: object
       additionalProperties: false
@@ -37227,6 +41725,62 @@ components:
           type: string
           nullable: true
           description: Error message if failed
+    ReleaseTerritoryRequest:
+      type: object
+      description: Request to release a territory claim
+      additionalProperties: false
+      required:
+      - claimId
+      properties:
+        claimId:
+          type: string
+          format: uuid
+          description: ID of the territory claim to release
+    RemoveByCategoryRequest:
+      type: object
+      description: Request to remove all statuses of a category for an entity 
+        (cleanse)
+      additionalProperties: false
+      required:
+      - entityId
+      - entityType
+      - category
+      - reason
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: Entity to cleanse statuses from
+        entityType:
+          type: string
+          description: Entity type discriminator
+        category:
+          $ref: '#/components/schemas/StatusCategory'
+          description: Category of statuses to remove
+        reason:
+          $ref: '#/components/schemas/StatusRemoveReason'
+          description: Why these statuses are being removed
+    RemoveBySourceRequest:
+      type: object
+      description: Request to remove all statuses from a specific source for an 
+        entity
+      additionalProperties: false
+      required:
+      - entityId
+      - entityType
+      - sourceId
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: Entity to remove statuses from
+        entityType:
+          type: string
+          description: Entity type discriminator
+        sourceId:
+          type: string
+          format: uuid
+          description: Source that originally granted the statuses
     RemoveItemRequest:
       type: object
       description: Request to remove item from container
@@ -37273,6 +41827,47 @@ components:
         code:
           type: string
           description: License code to remove
+    RemoveMemberRequest:
+      type: object
+      description: Request to remove a character from a faction
+      additionalProperties: false
+      required:
+      - factionId
+      - characterId
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: Faction to remove the character from
+        characterId:
+          type: string
+          format: uuid
+          description: Character to remove
+    RemoveStatusRequest:
+      type: object
+      description: Request to remove a specific status instance
+      additionalProperties: false
+      required:
+      - statusInstanceId
+      - reason
+      properties:
+        statusInstanceId:
+          type: string
+          format: uuid
+          description: Status instance to remove
+        reason:
+          $ref: '#/components/schemas/StatusRemoveReason'
+          description: Why this status is being removed
+    RemoveStatusesResponse:
+      type: object
+      description: Result of a bulk status removal operation
+      additionalProperties: false
+      required:
+      - statusesRemoved
+      properties:
+        statusesRemoved:
+          type: integer
+          description: Number of status instances removed
     RenameSlotRequest:
       type: object
       description: Request to rename an existing save slot
@@ -37335,6 +41930,65 @@ components:
           maxLength: 2000
           nullable: true
           description: Breach description
+    ReportEntityPositionRequest:
+      description: Request to report an entity's presence at a location
+      type: object
+      additionalProperties: false
+      required:
+      - entityType
+      - entityId
+      - locationId
+      properties:
+        entityType:
+          type: string
+          description: Type of entity (opaque string - character, actor, npc, 
+            player, etc.)
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity being reported
+        locationId:
+          type: string
+          format: uuid
+          description: ID of the location the entity is at
+        previousLocationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Caller hint for the entity's previous location 
+            (optimization to skip GET on refresh)
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of the realm the location belongs to (included in 
+            arrival events if provided)
+        reportedBy:
+          type: string
+          nullable: true
+          description: Identifier of the reporter (service name or session ID)
+    ReportEntityPositionResponse:
+      description: Result of reporting entity presence
+      type: object
+      additionalProperties: false
+      required:
+      - recorded
+      properties:
+        recorded:
+          type: boolean
+          description: Whether the position was successfully recorded
+        arrivedAt:
+          type: string
+          format: uuid
+          nullable: true
+          description: Location ID the entity arrived at (only set when location
+            changed)
+        departedFrom:
+          type: string
+          format: uuid
+          nullable: true
+          description: Location ID the entity departed from (only set when 
+            location changed)
     ReportProgressRequest:
       type: object
       description: Request to report progress on a quest objective
@@ -37907,6 +42561,21 @@ components:
         restoredFromVersion:
           type: integer
           description: Version number the bundle was restored from
+    RevokeBlessingRequest:
+      type: object
+      additionalProperties: false
+      description: Request to revoke an active blessing
+      required:
+      - blessingId
+      - reason
+      properties:
+        blessingId:
+          type: string
+          format: uuid
+          description: Blessing to revoke
+        reason:
+          type: string
+          description: Why the blessing is being revoked
     RewardDefinition:
       type: object
       description: Reward granted when a quest is completed
@@ -39430,6 +44099,55 @@ components:
           items:
             $ref: '#/components/schemas/LicenseDefinitionResponse'
           description: All created license definitions
+    SeedEffectEntry:
+      type: object
+      description: A single seed-derived passive effect entry
+      additionalProperties: false
+      required:
+      - capabilityCode
+      - domain
+      - fidelity
+      - seedId
+      - seedTypeCode
+      properties:
+        capabilityCode:
+          type: string
+          description: Capability code from the seed's capability manifest
+        domain:
+          type: string
+          description: Seed domain this capability belongs to
+        fidelity:
+          type: number
+          format: float
+          description: Capability fidelity value (0.0 to 1.0)
+        seedId:
+          type: string
+          format: uuid
+          description: Seed providing this capability
+        seedTypeCode:
+          type: string
+          description: Type code of the seed providing this capability
+    SeedEffectsResponse:
+      type: object
+      description: Seed-derived passive effects for an entity
+      additionalProperties: false
+      required:
+      - entityId
+      - entityType
+      - effects
+      properties:
+        entityId:
+          type: string
+          format: uuid
+          description: Entity these effects belong to
+        entityType:
+          type: string
+          description: Entity type discriminator
+        effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeedEffectEntry'
+          description: Seed-derived passive effects
     SeedEntryTemplatesRequest:
       type: object
       description: Request to bulk seed entry templates
@@ -39540,6 +44258,38 @@ components:
       - Active
       - Dormant
       - Archived
+    SeedStatusTemplatesRequest:
+      type: object
+      description: Request to bulk seed status templates for a game service
+      additionalProperties: false
+      required:
+      - gameServiceId
+      - templates
+      properties:
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service to seed templates for (all templates must 
+            belong to this game service)
+        templates:
+          type: array
+          items:
+            $ref: '#/components/schemas/CreateStatusTemplateRequest'
+          description: Status templates to create (duplicates are skipped)
+    SeedStatusTemplatesResponse:
+      type: object
+      description: Result of bulk seed operation
+      additionalProperties: false
+      required:
+      - created
+      - skipped
+      properties:
+        created:
+          type: integer
+          description: Number of status templates successfully created
+        skipped:
+          type: integer
+          description: Number of templates skipped (duplicates)
     SeedTypeResponse:
       type: object
       description: Full seed type definition response.
@@ -39902,6 +44652,33 @@ components:
           items:
             $ref: '#/components/schemas/SessionInfo'
           description: List of active sessions for the account
+    SetActionMappingRequest:
+      type: object
+      description: Request to create or update an action tag mapping
+      additionalProperties: false
+      required:
+      - tag
+      - violationTypes
+      properties:
+        tag:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: The GOAP action tag to map (e.g., "steal_food")
+        violationTypes:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 128
+          minItems: 1
+          maxItems: 20
+          description: Violation type codes this tag should map to
+        description:
+          type: string
+          nullable: true
+          maxLength: 512
+          description: Human-readable description of this mapping
     SetAreaContentConfigRequest:
       type: object
       description: Request to create or update an area content configuration
@@ -40482,6 +45259,21 @@ components:
           type: number
           format: double
           description: Split quantity
+    StackBehavior:
+      type: string
+      description: |
+        How multiple applications of the same status template interact.
+        - refresh_duration: resets timer, preserves or increments stack count
+        - independent: each application is a separate item with own timer
+        - increase_intensity: stacks increase effect magnitude, shared timer reset
+        - replace: new application replaces existing entirely
+        - ignore: cannot apply if already present
+      enum:
+      - refresh_duration
+      - independent
+      - increase_intensity
+      - replace
+      - ignore
     StartEncounterRequest:
       type: object
       additionalProperties: false
@@ -40580,6 +45372,147 @@ components:
           description: All watchers now active for this realm
           items:
             $ref: '#/components/schemas/WatcherInfo'
+    StatusCategory:
+      type: string
+      description: |
+        Classification of status effects for filtering and cleanse targeting.
+        - buff: positive temporary effect (strength boost, speed increase)
+        - debuff: negative temporary effect (poison, slow, weakness)
+        - death: death penalty or incapacitation state
+        - subscription: account-level subscription benefit
+        - event: time-limited event effect (festival bonus, seasonal)
+        - passive: seed-derived passive capability (used in unified queries)
+      enum:
+      - buff
+      - debuff
+      - death
+      - subscription
+      - event
+      - passive
+    StatusEffectSummary:
+      type: object
+      description: Unified summary of an active effect from any source 
+        (item-based or seed-derived)
+      additionalProperties: false
+      required:
+      - statusCode
+      - category
+      - effectSource
+      properties:
+        statusCode:
+          type: string
+          description: Status template code (item-based) or capability code 
+            (seed-derived)
+        category:
+          $ref: '#/components/schemas/StatusCategory'
+          description: Status category for filtering
+        effectSource:
+          $ref: '#/components/schemas/EffectSource'
+          description: Whether this effect is item-based or seed-derived
+        stackCount:
+          type: integer
+          nullable: true
+          description: Current stack count (null for seed-derived effects)
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this effect expires (null for permanent or 
+            seed-derived)
+        fidelity:
+          type: number
+          format: float
+          nullable: true
+          description: Seed capability fidelity value (null for item-based 
+            effects)
+        seedId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Seed providing this effect (null for item-based effects)
+        sourceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: What granted this status (null for seed-derived effects)
+    StatusInstanceResponse:
+      type: object
+      description: Full details of a status instance
+      additionalProperties: false
+      required:
+      - statusInstanceId
+      - entityId
+      - entityType
+      - statusTemplateCode
+      - category
+      - stackCount
+      - itemInstanceId
+      - grantedAt
+      properties:
+        statusInstanceId:
+          type: string
+          format: uuid
+          description: Unique status instance identifier
+        entityId:
+          type: string
+          format: uuid
+          description: Entity this status is applied to
+        entityType:
+          type: string
+          description: Entity type discriminator
+        statusTemplateCode:
+          type: string
+          description: Status template code
+        category:
+          $ref: '#/components/schemas/StatusCategory'
+          description: Status category
+        stackCount:
+          type: integer
+          description: Current stack count
+        sourceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: What granted this status (null if no source tracking)
+        contractInstanceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Contract instance managing lifecycle (null if not 
+            contract-managed)
+        itemInstanceId:
+          type: string
+          format: uuid
+          description: Item instance in the status container
+        grantedAt:
+          type: string
+          format: date-time
+          description: When this status was granted
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this status expires (null for permanent)
+        metadata:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Arbitrary metadata associated with this status instance
+    StatusRemoveReason:
+      type: string
+      description: |
+        Why a status was removed from an entity.
+        - expired: TTL or contract duration elapsed
+        - cleansed: removed by category cleanse mechanic
+        - cancelled: explicitly cancelled by service or admin
+        - source_removed: source entity was deleted (cascading removal)
+        - admin: removed by administrative action
+      enum:
+      - expired
+      - cleansed
+      - cancelled
+      - source_removed
+      - admin
     StatusResponse:
       description: Health and version status information for the website service
       type: object
@@ -40607,6 +45540,80 @@ components:
           type: string
           nullable: true
           description: Message displayed during maintenance mode
+    StatusTemplateResponse:
+      type: object
+      description: Status template with all fields
+      additionalProperties: false
+      required:
+      - statusTemplateId
+      - gameServiceId
+      - code
+      - displayName
+      - description
+      - category
+      - stackable
+      - maxStacks
+      - stackBehavior
+      - itemTemplateId
+      - createdAt
+      properties:
+        statusTemplateId:
+          type: string
+          format: uuid
+          description: Unique status template identifier
+        gameServiceId:
+          type: string
+          format: uuid
+          description: Game service this template is scoped to
+        code:
+          type: string
+          description: Unique status code within this game service
+        displayName:
+          type: string
+          description: Human-readable display name
+        description:
+          type: string
+          description: Detailed description of this status effect
+        category:
+          $ref: '#/components/schemas/StatusCategory'
+          description: Classification of this status effect
+        stackable:
+          type: boolean
+          description: Whether this status can stack
+        maxStacks:
+          type: integer
+          description: Maximum number of stacks
+        stackBehavior:
+          $ref: '#/components/schemas/StackBehavior'
+          description: How multiple applications interact
+        contractTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Contract template for lifecycle management (null if not 
+            contract-managed)
+        itemTemplateId:
+          type: string
+          format: uuid
+          description: Item template used when granting this status
+        defaultDurationSeconds:
+          type: integer
+          nullable: true
+          description: Default duration in seconds (null for permanent statuses)
+        iconAssetId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Asset identifier for this status effect's icon
+        createdAt:
+          type: string
+          format: date-time
+          description: When this template was created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this template was last updated
     SteamVerifyRequest:
       type: object
       description: |
@@ -41315,6 +46322,48 @@ components:
       - unilateral_with_notice
       - unilateral_immediate
       - non_terminable
+    TerritoryClaimResponse:
+      type: object
+      description: A faction's territory claim on a location
+      additionalProperties: false
+      required:
+      - claimId
+      - factionId
+      - locationId
+      - status
+      - claimedAt
+      properties:
+        claimId:
+          type: string
+          format: uuid
+          description: Unique identifier for this territory claim
+        factionId:
+          type: string
+          format: uuid
+          description: Faction that holds this claim
+        locationId:
+          type: string
+          format: uuid
+          description: Location that is claimed
+        status:
+          $ref: '#/components/schemas/TerritoryClaimStatus'
+          description: Current status of the territory claim
+        claimedAt:
+          type: string
+          format: date-time
+          description: When the territory was claimed
+        releasedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the territory was released (null if still active)
+    TerritoryClaimStatus:
+      type: string
+      description: Lifecycle status of a territory claim
+      enum:
+      - Active
+      - Contested
+      - Released
     TerritoryMode:
       type: string
       description: Territory validation mode for constraint checking
@@ -41967,6 +47016,17 @@ components:
           type: string
           format: uuid
           description: Session ID of participant to unban
+    UndeprecateFactionRequest:
+      type: object
+      description: Request to reactivate a deprecated faction
+      additionalProperties: false
+      required:
+      - factionId
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: ID of the faction to reactivate
     UndeprecateSeedTypeRequest:
       type: object
       description: Request to restore a deprecated seed type to active status.
@@ -42178,6 +47238,22 @@ components:
         versionNumber:
           type: integer
           description: Version to unpin
+    UnregisterFollowerRequest:
+      type: object
+      additionalProperties: false
+      description: Request to unregister a character as a deity follower
+      required:
+      - deityId
+      - characterId
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: Deity to unfollow
+        characterId:
+          type: string
+          format: uuid
+          description: Character to remove as follower
     UnregisterReferenceRequest:
       type: object
       additionalProperties: false
@@ -42553,6 +47629,42 @@ components:
           additionalProperties: true
           description: New metadata (replaces existing)
           nullable: true
+    UpdateDeityRequest:
+      type: object
+      additionalProperties: false
+      description: Request to update deity properties (partial update, only 
+        non-null fields applied)
+      required:
+      - deityId
+      properties:
+        deityId:
+          type: string
+          format: uuid
+          description: Deity to update
+        displayName:
+          type: string
+          nullable: true
+          description: Updated display name
+        description:
+          type: string
+          nullable: true
+          description: Updated description
+        domains:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/DomainInfluence'
+          description: Updated domain influences (replaces entire list)
+        personalityTraits:
+          nullable: true
+          description: Updated personality traits
+          allOf:
+          - $ref: '#/components/schemas/DeityPersonalityTraits'
+        maxAttentionSlots:
+          type: integer
+          nullable: true
+          minimum: 1
+          description: Updated maximum attention slots
     UpdateEncounterPhaseRequest:
       type: object
       additionalProperties: false
@@ -42686,6 +47798,35 @@ components:
           type: string
           nullable: true
           description: Updated composer name
+    UpdateFactionRequest:
+      type: object
+      description: Request to update a faction
+      additionalProperties: false
+      required:
+      - factionId
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: ID of the faction to update
+        name:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 256
+          description: New display name (null to keep current)
+        code:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 128
+          description: New code (null to keep current, must be unique within 
+            game service)
+        description:
+          type: string
+          nullable: true
+          maxLength: 2048
+          description: New description (null to keep current)
     UpdateItemTemplateRequest:
       type: object
       description: Request to update mutable fields of an item template
@@ -42880,6 +48021,26 @@ components:
           nullable: true
           additionalProperties: true
           description: Updated game-specific metadata
+    UpdateMemberRoleRequest:
+      type: object
+      description: Request to update a member's role
+      additionalProperties: false
+      required:
+      - factionId
+      - characterId
+      - role
+      properties:
+        factionId:
+          type: string
+          format: uuid
+          description: Faction containing the membership
+        characterId:
+          type: string
+          format: uuid
+          description: Character whose role to update
+        role:
+          $ref: '#/components/schemas/FactionMemberRole'
+          description: New role to assign
     UpdateMfaRequest:
       type: object
       description: Request to update MFA settings for an account
@@ -42915,6 +48076,36 @@ components:
       - increment
       - max
       - min
+    UpdateNormRequest:
+      type: object
+      description: Request to update an existing norm definition
+      additionalProperties: false
+      required:
+      - normId
+      properties:
+        normId:
+          type: string
+          format: uuid
+          description: ID of the norm to update
+        basePenalty:
+          type: number
+          format: float
+          nullable: true
+          minimum: 0.0
+          description: New base penalty (null to keep current)
+        severity:
+          $ref: '#/components/schemas/NormSeverity'
+          nullable: true
+          description: New severity level (null to keep current)
+        scope:
+          $ref: '#/components/schemas/NormScope'
+          nullable: true
+          description: New scope (null to keep current)
+        description:
+          type: string
+          nullable: true
+          maxLength: 1024
+          description: New description (null to keep current)
     UpdatePasswordRequest:
       type: object
       description: Request to update an account password
@@ -43333,6 +48524,62 @@ components:
           description: >
             Updated collection growth mappings. Null means no change,
             empty array removes all mappings.
+    UpdateStatusTemplateRequest:
+      type: object
+      description: Request to update mutable fields of a status template (null 
+        fields are not updated)
+      additionalProperties: false
+      required:
+      - statusTemplateId
+      properties:
+        statusTemplateId:
+          type: string
+          format: uuid
+          description: Status template to update
+        displayName:
+          type: string
+          nullable: true
+          description: Updated display name (null means no change)
+        description:
+          type: string
+          nullable: true
+          description: Updated description (null means no change)
+        category:
+          nullable: true
+          description: Updated status category (null means no change)
+          allOf:
+          - $ref: '#/components/schemas/StatusCategory'
+        stackable:
+          type: boolean
+          nullable: true
+          description: Updated stackable flag (null means no change)
+        maxStacks:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: Updated maximum stack count (null means no change)
+        stackBehavior:
+          nullable: true
+          description: Updated stacking behavior (null means no change)
+          allOf:
+          - $ref: '#/components/schemas/StackBehavior'
+        contractTemplateId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Updated contract template reference (null means no 
+            change)
+        defaultDurationSeconds:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: Updated default duration in seconds (null means no 
+            change)
+        iconAssetId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Updated icon asset reference (null means no change)
     UpdateTemplateRequest:
       type: object
       description: Request to update a template (non-null fields are applied)
@@ -44366,6 +49613,83 @@ components:
           additionalProperties:
             type: string
           description: Custom metadata
+    ViolationRecord:
+      type: object
+      description: Record of a knowing obligation violation by a character
+      additionalProperties: false
+      required:
+      - violationId
+      - characterId
+      - contractId
+      - clauseCode
+      - violationType
+      - actionTag
+      - motivationScore
+      - violationCost
+      - breachReported
+      - timestamp
+      properties:
+        violationId:
+          type: string
+          format: uuid
+          description: Unique identifier for this violation record
+        characterId:
+          type: string
+          format: uuid
+          description: Character who committed the violation
+        contractId:
+          type: string
+          format: uuid
+          description: Contract that was violated
+        clauseCode:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Code of the behavioral clause that was violated
+        violationType:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Violation type code
+        actionTag:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: GOAP action tag that triggered the violation
+        motivationScore:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Goal urgency that overrode the obligation (0.0-1.0)
+        violationCost:
+          type: number
+          format: float
+          minimum: 0.0
+          description: Total violation cost that was accepted
+        breachReported:
+          type: boolean
+          description: Whether a breach was filed with the contract service
+        breachId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Breach record ID from contract service (null if breach 
+            not reported)
+        targetEntityId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Target entity of the violating action (null if no 
+            specific target)
+        targetEntityType:
+          $ref: '#/components/schemas/EntityType'
+          nullable: true
+          description: Entity type of the target
+        timestamp:
+          type: string
+          format: date-time
+          description: When the violation occurred
     VoiceLeadRequest:
       description: Request to apply voice leading to a chord sequence
       type: object
@@ -44679,8 +50003,14 @@ tags:
 - name: Bannou Connect
   description: Real-time communication and WebSocket connection management for 
     Bannou services.
+- name: Bannou Divine
+  description: Pantheon management service (L4 GameFeatures) for deity entities,
+    divinity economy,
 - name: Bannou Documentation
   description: Knowledge base API for AI agents to query documentation.
+- name: Bannou Faction
+  description: Faction management as seed-based living entities (L4 
+    GameFeatures).
 - name: Bannou Game
   description: Registry service for game services that users can subscribe to.
 - name: Bannou Game Session
@@ -44697,6 +50027,9 @@ tags:
   description: Spatial data management service for game worlds.
 - name: Bannou Matchmaking
   description: Matchmaking service for competitive and casual game matching.
+- name: Bannou Obligation
+  description: Contract-aware obligation tracking for NPC cognition (L4 
+    GameFeatures).
 - name: Bannou Puppetmaster
   description: Orchestration service for dynamic behaviors, regional watchers, 
     and encounter coordination.
@@ -44762,6 +50095,9 @@ tags:
     growth domains using configurable rules per seed type. The Seed service is 
     agnostic to what seeds represent -- consumers (lib-gardener for player 
     spirits, lib-actor for dungeon cores, etc.) provide the interpretation.
+- name: Status
+  description: Unified entity effects query layer for temporary contract-managed
+    statuses
 - name: Storyline Composer
   description: Seeded narrative generation from compressed archives using the 
     storyline SDKs.

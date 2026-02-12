@@ -799,7 +799,7 @@ components:
           nullable: true
           description: Target entity of the action for relationship-weighted costs (personality enrichment only)
         targetEntityType:
-          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
           nullable: true
           description: Entity type of the target
 
@@ -897,7 +897,7 @@ components:
           nullable: true
           description: Target entity of the violating action (null if no specific target)
         targetEntityType:
-          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
           nullable: true
           description: Entity type of the target
         timestamp:
@@ -958,7 +958,7 @@ components:
           nullable: true
           description: Target entity of the violating action (e.g., the character stolen from)
         targetEntityType:
-          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          $ref: '../common-api.yaml#/components/schemas/EntityType'
           nullable: true
           description: Entity type of the target
         idempotencyKey:

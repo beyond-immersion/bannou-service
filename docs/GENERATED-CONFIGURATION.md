@@ -441,6 +441,29 @@ This document lists all configuration options defined in Bannou's configuration 
 | `CURRENCY_TRANSACTION_RETENTION_DAYS` | int | `365` | How many days to retain detailed transaction history |
 | `CURRENCY_WALLET_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for wallet-level distributed locks |
 
+### Divine
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `DIVINE_ATTENTION_DECAY_INTERVAL_MINUTES` | int | `60` | Minutes between attention slot decay evaluations for inactiv... |
+| `DIVINE_ATTENTION_IMPRESSION_THRESHOLD` | double | `0.1` | Minimum cumulative impression below which an attention slot ... |
+| `DIVINE_ATTENTION_WORKER_INTERVAL_SECONDS` | int | `60` | Seconds between attention decay worker evaluation cycles |
+| `DIVINE_BLESSING_COLLECTION_TYPE` | string | `divine_blessings` | Collection type code for permanent blessings via lib-collect... |
+| `DIVINE_BLESSING_STATUS_CATEGORY` | string | `divine_blessing` | Status category code for temporary blessings via Status Inve... |
+| `DIVINE_DEFAULT_MAX_ATTENTION_SLOTS` | int | `10` | Default maximum characters a deity can actively monitor simu... |
+| `DIVINE_DEITY_ACTOR_TYPE_CODE` | string | `deity_watcher` | Actor type code used when starting deity watcher actors via ... |
+| `DIVINE_DEITY_SEED_TYPE_CODE` | string | `deity_domain` | Seed type code for deity domain power growth |
+| `DIVINE_DIVINITY_COST_GREATER` | double | `200.0` | Divinity cost for granting a Greater tier blessing |
+| `DIVINE_DIVINITY_COST_MINOR` | double | `10.0` | Divinity cost for granting a Minor tier blessing |
+| `DIVINE_DIVINITY_COST_STANDARD` | double | `50.0` | Divinity cost for granting a Standard tier blessing |
+| `DIVINE_DIVINITY_COST_SUPREME` | double | `1000.0` | Divinity cost for granting a Supreme tier blessing |
+| `DIVINE_DIVINITY_CURRENCY_CODE` | string | `divinity` | Currency code used for divinity economy within each game ser... |
+| `DIVINE_DIVINITY_GENERATION_MULTIPLIER` | double | `1.0` | Global multiplier applied to all divinity generation from mo... |
+| `DIVINE_DIVINITY_GENERATION_WORKER_INTERVAL_SECONDS` | int | `30` | Seconds between divinity generation worker processing cycles |
+| `DIVINE_FOLLOWER_RELATIONSHIP_TYPE_CODE` | string | `deity_follower` | Relationship type code for deity-to-character follower bonds |
+| `DIVINE_MAX_BLESSINGS_PER_ENTITY` | int | `10` | Maximum active blessings an entity can hold simultaneously |
+| `DIVINE_RIVALRY_RELATIONSHIP_TYPE_CODE` | string | `deity_rivalry` | Relationship type code for deity-to-deity rivalry bonds |
+
 ### Documentation
 
 | Environment Variable | Type | Default | Description |
@@ -493,6 +516,19 @@ This document lists all configuration options defined in Bannou's configuration 
 | `ESCROW_MAX_TIMEOUT` | string | `P30D` | Maximum allowed escrow duration (ISO 8601 duration) |
 | `ESCROW_TOKEN_LENGTH` | int | `32` | Token length in bytes (before encoding) |
 | `ESCROW_VALIDATION_CHECK_INTERVAL` | string | `PT5M` | How often to validate held assets (ISO 8601 duration) |
+
+### Faction
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `FACTION_DEFAULT_MEMBER_ROLE` | string | `Member` | Default role assigned to new members when no role is specifi... |
+| `FACTION_DISTRIBUTED_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for distributed lock acquisition on facti... |
+| `FACTION_MAX_HIERARCHY_DEPTH` | int | `5` | Maximum parent/child nesting depth for faction hierarchy |
+| `FACTION_MAX_NORMS_PER_FACTION` | int | `50` | Maximum number of norm definitions per faction |
+| `FACTION_MAX_TERRITORIES_PER_FACTION` | int | `20` | Maximum number of territory claims per faction |
+| `FACTION_NORM_QUERY_CACHE_TTL_SECONDS` | int | `300` | TTL in seconds for cached norm resolution results per charac... |
+| `FACTION_SEED_BULK_PAGE_SIZE` | int | `100` | Page size for bulk seed operations during faction seeding |
+| `FACTION_SEED_TYPE_CODE` | string | `faction` | Which seed type code this service manages for faction growth |
 
 ### Game Session
 
@@ -625,9 +661,13 @@ This document lists all configuration options defined in Bannou's configuration 
 |---------------------|------|---------|-------------|
 | `LOCATION_CACHE_TTL_SECONDS` | int | `3600` | TTL for location cache entries in seconds (locations change ... |
 | `LOCATION_DEFAULT_DESCENDANT_MAX_DEPTH` | int | `10` | Default max depth when listing descendants if not specified ... |
+| `LOCATION_ENTITY_PRESENCE_CLEANUP_INTERVAL_SECONDS` | int | `60` | Interval in seconds between background cleanup cycles for ex... |
+| `LOCATION_ENTITY_PRESENCE_CLEANUP_STARTUP_DELAY_SECONDS` | int | `15` | Delay in seconds before entity presence cleanup worker start... |
+| `LOCATION_ENTITY_PRESENCE_TTL_SECONDS` | int | `30` | Default TTL for entity presence entries in seconds (reporter... |
 | `LOCATION_INDEX_LOCK_TIMEOUT_SECONDS` | int | `5` | Timeout for acquiring distributed locks on index operations ... |
 | `LOCATION_MAX_ANCESTOR_DEPTH` | int | `20` | Maximum depth to traverse when walking ancestor chain (preve... |
 | `LOCATION_MAX_DESCENDANT_DEPTH` | int | `20` | Safety limit for descendant traversal and circular reference... |
+| `LOCATION_MAX_ENTITIES_PER_LOCATION_QUERY` | int | `100` | Maximum entities returned by list-entities-at-location (pagi... |
 
 ### Mapping
 
@@ -777,6 +817,20 @@ This document lists all configuration options defined in Bannou's configuration 
 Final ... |
 | `MUSIC_DENSITY_MINIMUM` | double | `0.4` | Minimum melody density (floor value before energy scaling).
  |
+
+### Obligation
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `OBLIGATION_BREACH_REPORT_ENABLED` | bool | `true` | Whether to auto-report violations as breaches to the contrac... |
+| `OBLIGATION_CACHE_TTL_MINUTES` | int | `10` | TTL in minutes for obligation manifest cache entries per cha... |
+| `OBLIGATION_DEFAULT_PAGE_SIZE` | int | `20` | Default page size for paginated queries |
+| `OBLIGATION_EVALUATION_TIMEOUT_MS` | int | `5000` | Timeout in milliseconds for evaluate-action operations |
+| `OBLIGATION_IDEMPOTENCY_TTL_SECONDS` | int | `86400` | TTL in seconds for violation report idempotency keys |
+| `OBLIGATION_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for distributed locks on obligation cache... |
+| `OBLIGATION_MAX_ACTIVE_CONTRACTS_QUERY` | int | `100` | Maximum number of active contracts to query per character du... |
+| `OBLIGATION_MAX_CONCURRENCY_RETRIES` | int | `3` | Maximum retry attempts for optimistic concurrency conflicts |
+| `OBLIGATION_MAX_OBLIGATIONS_PER_CHARACTER` | int | `200` | Safety limit on cached obligations per character (prevents r... |
 
 ### Orchestrator
 
@@ -985,6 +1039,24 @@ CHECK_ALL (defaul... |
 | `STATE_REDIS_CONNECTION_STRING` | string | `bannou-redis:6379` | Redis connection string (host:port format) for Redis-backed ... |
 | `STATE_USE_INMEMORY` | bool | `false` | Use in-memory storage instead of Redis/MySQL. Data is NOT pe... |
 
+### Status
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `STATUS_CACHE_WARMING_ENABLED` | bool | `false` | Enable proactive cache warming on startup by pre-loading act... |
+| `STATUS_DEFAULT_PAGE_SIZE` | int | `50` | Default page size for paginated queries |
+| `STATUS_DEFAULT_STATUS_DURATION_SECONDS` | int | `60` | Default duration when template has no defaultDurationSeconds... |
+| `STATUS_LOCK_ACQUISITION_TIMEOUT_SECONDS` | int | `5` | Maximum seconds to wait when acquiring a distributed lock be... |
+| `STATUS_LOCK_TIMEOUT_SECONDS` | int | `30` | TTL for distributed locks on status mutations |
+| `STATUS_MAX_CACHED_ENTITIES` | int | `10000` | Maximum number of entity active-status cache entries retaine... |
+| `STATUS_MAX_CONCURRENCY_RETRIES` | int | `3` | ETag-based optimistic concurrency retry attempts for cache u... |
+| `STATUS_MAX_STACKS_PER_STATUS` | int | `10` | Global maximum stack count per status (template maxStacks ta... |
+| `STATUS_MAX_STATUSES_PER_ENTITY` | int | `50` | Maximum concurrent active statuses per entity |
+| `STATUS_MAX_STATUS_TEMPLATES_PER_GAME_SERVICE` | int | `200` | Maximum status template definitions per game service |
+| `STATUS_SEED_EFFECTS_CACHE_TTL_SECONDS` | int | `300` | TTL in seconds for seed-derived effects cache (longer becaus... |
+| `STATUS_SEED_EFFECTS_ENABLED` | bool | `true` | Enable seed-derived passive effects in unified queries (disa... |
+| `STATUS_STATUS_CACHE_TTL_SECONDS` | int | `60` | TTL in seconds for active status cache per entity (short bec... |
+
 ### Storyline
 
 | Environment Variable | Type | Default | Description |
@@ -1082,9 +1154,9 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 820
+- **Total properties**: 872
 - **Required (no default)**: 51
-- **Optional (has default)**: 769
+- **Optional (has default)**: 821
 
 ## Environment Variable Naming Convention
 

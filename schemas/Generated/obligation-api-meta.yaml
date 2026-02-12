@@ -1,0 +1,1606 @@
+openapi: 3.0.0
+info:
+  title: Bannou Obligation Service API
+  description: |
+    Contract-aware obligation tracking for NPC cognition (L4 GameFeatures).
+
+    Provides dynamically-updated action cost modifiers based on active contracts
+    (guild charters, trade agreements, quest oaths). The obligation service is the
+    bridge between the Contract service's behavioral clauses and the GOAP planner's
+    action cost system, enabling NPCs to have "second thoughts" before violating
+    their obligations.
+
+    **Two-Layer Design**: Works standalone with raw contract penalties. When a
+    personality-weighted moral reasoning provider is registered (soft L4 dependency
+    via character-personality), obligation costs are enriched with trait-weighted,
+    location/circumstance-dependent moral reasoning. Without personality enrichment,
+    costs are the unweighted base penalties from contract behavioral clauses.
+
+    **Personality Variables Consumed for Moral Weighting** (when personality provider available):
+    - ${personality.honesty} — Scales theft/deception violation costs (higher honesty = higher cost)
+    - ${personality.loyalty} — Scales betrayal/oath-breaking costs (higher loyalty = higher cost)
+    - ${personality.agreeableness} — Scales social violation costs (higher agreeableness = higher cost)
+    - ${personality.conscientiousness} — General obligation weight multiplier
+    - ${combat.preferred_engagement} — Affects violence-related violation costs
+
+    **Violation Types**: Types are opaque strings auto-recognized from contract behavioral
+    clause definitions. No separate taxonomy is maintained — the vocabulary is defined by
+    contract templates (e.g., "theft", "deception", "violence", "honor_combat"). Action tag
+    mappings bridge GOAP action vocabulary to these contract-defined violation types.
+
+    **Core Flow**:
+    1. Contract activated → obligation service extracts behavioral clauses → caches per-party
+    2. Actor cognition evaluates actions → reads ${obligations.*} variables from provider
+    3. GOAP planner sees modified action costs → selects alternative if cost too high
+    4. If actor proceeds despite cost → report-violation → breach + feedback events
+
+    **Variable Provider**: Implements IVariableProviderFactory providing the
+    ${obligations.*} namespace to Actor (L2) via the Variable Provider Factory pattern:
+    - ${obligations.active_count} — Total active obligations
+    - ${obligations.has_obligations} — Whether any obligations exist
+    - ${obligations.contract_count} — Number of active contracts with behavioral clauses
+    - ${obligations.violation_cost.<type>} — Total cost for a specific violation type
+    - ${obligations.highest_penalty_type} — Violation type with highest total cost
+    - ${obligations.highest_penalty_cost} — The highest single penalty cost
+    - ${obligations.total_obligation_cost} — Sum of all max violation costs
+
+    **POST-Only API Pattern**: This API uses POST for all operations to support zero-copy
+    WebSocket routing. Path parameters are passed in request bodies instead of URLs.
+    See docs/BANNOU_DESIGN.md for architectural rationale.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  x-references:
+  - target: character
+    sourceType: obligation
+    field: characterId
+    onDelete: cascade
+    cleanup:
+      endpoint: /obligation/cleanup-by-character
+      payloadTemplate: '{"characterId": "{{resourceId}}"}'
+  x-compression-callback:
+    resourceType: character
+    sourceType: obligation
+    compressEndpoint: /obligation/get-compress-data
+    compressPayloadTemplate: '{"characterId": "{{resourceId}}"}'
+    priority: 25
+    templateNamespace: obligations
+    description: Obligation violation history and behavioral constraint state
+    decompressEndpoint: /obligation/restore-from-archive
+    decompressPayloadTemplate: '{"characterId": "{{resourceId}}", "data": "{{data}}"}'
+x-service-layer: GameFeatures
+servers:
+- url: http://localhost:5012
+  description: Bannou service endpoint (internal only)
+paths:
+  /obligation/action-mapping/set:
+    post:
+      summary: Create or update an action tag to violation type mapping
+      operationId: setActionMapping
+      tags:
+      - Action Mapping
+      description: |
+        Registers or replaces a mapping from a GOAP action tag to one or more
+        violation type codes. These mappings define how the obligation service
+        connects GOAP planner actions (e.g., tag "steal_food") to contract
+        behavioral clause violation types (e.g., "theft", "dishonesty").
+
+        Mappings are idempotent by tag — setting a mapping for an existing tag
+        replaces the previous mapping entirely.
+
+        By default, action tags are matched 1:1 against violation type codes
+        (tag "theft" matches violation type "theft"). Explicit mappings are only
+        needed when the vocabularies differ or when one action triggers multiple
+        violation types (e.g., "attack_surrendered_enemy" → ["honor_combat", "show_mercy"]).
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetActionMappingRequest'
+      responses:
+        '200':
+          description: Mapping saved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionMappingResponse'
+        '400':
+          description: Invalid mapping data
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SetActionMappingRequest\"\
+        ,\n    \"$defs\": {\n        \"SetActionMappingRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to create or update an action tag mapping\",\n            \"additionalProperties\": false,\n         \
+        \   \"required\": [\n                \"tag\",\n                \"violationTypes\"\n            ],\n            \"\
+        properties\": {\n                \"tag\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
+        : 1,\n                    \"maxLength\": 128,\n                    \"description\": \"The GOAP action tag to map (e.g.,
+        \\\"steal_food\\\")\"\n                },\n                \"violationTypes\": {\n                    \"type\": \"\
+        array\",\n                    \"items\": {\n                        \"type\": \"string\",\n                      \
+        \  \"minLength\": 1,\n                        \"maxLength\": 128\n                    },\n                    \"minItems\"\
+        : 1,\n                    \"maxItems\": 20,\n                    \"description\": \"Violation type codes this tag
+        should map to\"\n                },\n                \"description\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"maxLength\": 512,\n                    \"description\"\
+        : \"Human-readable description of this mapping\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ActionMappingResponse\"\
+        ,\n    \"$defs\": {\n        \"ActionMappingResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"A registered mapping from a GOAP action tag to violation type codes\",\n            \"additionalProperties\":
+        false,\n            \"required\": [\n                \"tag\",\n                \"violationTypes\",\n             \
+        \   \"createdAt\"\n            ],\n            \"properties\": {\n                \"tag\": {\n                   \
+        \ \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 128,\n        \
+        \            \"description\": \"The GOAP action tag (e.g., \\\"steal_food\\\", \\\"deceive_merchant\\\")\"\n     \
+        \           },\n                \"violationTypes\": {\n                    \"type\": \"array\",\n                \
+        \    \"items\": {\n                        \"type\": \"string\",\n                        \"minLength\": 1,\n    \
+        \                    \"maxLength\": 128\n                    },\n                    \"minItems\": 1,\n          \
+        \          \"maxItems\": 20,\n                    \"description\": \"Violation type codes this tag maps to (e.g.,
+        [\\\"theft\\\", \\\"dishonesty\\\"])\"\n                },\n                \"description\": {\n                 \
+        \   \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 512,\n    \
+        \                \"description\": \"Human-readable description of what this mapping represents\"\n               \
+        \ },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"date-time\",\n                    \"description\": \"When this mapping was first created\"\n                },\n\
+        \                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"When this mapping was last modified\"\
+        \n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Create or update an action tag to violation type mapping\",\n    \"description\"\
+        : \"Registers or replaces a mapping from a GOAP action tag to one or more\\nviolation type codes. These mappings define
+        how the obligation service\\nconnects GOAP planner actions (e.g., tag \\\"steal_food\\\") to contract\\nbehavioral
+        clause violation types (e.g., \\\"theft\\\", \\\"dishonesty\\\").\\n\\nMappings are idempotent by tag \\u2014 setting
+        a mapping for an existing tag\\nreplaces the previous mapping entirely.\\n\\nBy default, action tags are matched 1:1
+        against violation type codes\\n(tag \\\"theft\\\" matches violation type \\\"theft\\\"). Explicit mappings are only\\
+        nneeded when the vocabularies differ or when one action triggers multiple\\nviolation types (e.g., \\\"attack_surrendered_enemy\\\
+        \" \\u2192 [\\\"honor_combat\\\", \\\"show_mercy\\\"]).\\n\",\n    \"tags\": [\n        \"Action Mapping\"\n    ],\n\
+        \    \"deprecated\": false,\n    \"operationId\": \"setActionMapping\"\n}"
+  /obligation/action-mapping/list:
+    post:
+      summary: List registered action tag mappings
+      operationId: listActionMappings
+      tags:
+      - Action Mapping
+      description: |
+        Returns all registered action tag to violation type mappings.
+        Supports cursor-based pagination and optional text search.
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListActionMappingsRequest'
+      responses:
+        '200':
+          description: Mappings retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListActionMappingsResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListActionMappingsRequest\"\
+        ,\n    \"$defs\": {\n        \"ListActionMappingsRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to list action tag mappings with pagination\",\n            \"additionalProperties\": false,\n       \
+        \     \"properties\": {\n                \"searchTerm\": {\n                    \"type\": \"string\",\n          \
+        \          \"nullable\": true,\n                    \"maxLength\": 256,\n                    \"description\": \"Optional
+        text search across tag names and descriptions\"\n                },\n                \"cursor\": {\n             \
+        \       \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 512,\n\
+        \                    \"description\": \"Pagination cursor from a previous response\"\n                },\n       \
+        \         \"pageSize\": {\n                    \"type\": \"integer\",\n                    \"default\": 20,\n    \
+        \                \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"description\": \"Number
+        of mappings to return per page\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListActionMappingsResponse\"\
+        ,\n    \"$defs\": {\n        \"ListActionMappingsResponse\": {\n            \"type\": \"object\",\n            \"\
+        description\": \"Paginated list of action tag mappings\",\n            \"additionalProperties\": false,\n        \
+        \    \"required\": [\n                \"mappings\",\n                \"hasMore\"\n            ],\n            \"properties\"\
+        : {\n                \"mappings\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
+        \                        \"$ref\": \"#/$defs/ActionMappingResponse\"\n                    },\n                   \
+        \ \"description\": \"Action tag mappings for this page\"\n                },\n                \"nextCursor\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
+        : 512,\n                    \"description\": \"Cursor for the next page (null if no more pages)\"\n              \
+        \  },\n                \"hasMore\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether more pages are available\"\n                }\n            }\n        },\n        \"ActionMappingResponse\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"A registered mapping from a GOAP action tag
+        to violation type codes\",\n            \"additionalProperties\": false,\n            \"required\": [\n          \
+        \      \"tag\",\n                \"violationTypes\",\n                \"createdAt\"\n            ],\n            \"\
+        properties\": {\n                \"tag\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
+        : 1,\n                    \"maxLength\": 128,\n                    \"description\": \"The GOAP action tag (e.g., \\\
+        \"steal_food\\\", \\\"deceive_merchant\\\")\"\n                },\n                \"violationTypes\": {\n       \
+        \             \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\
+        ,\n                        \"minLength\": 1,\n                        \"maxLength\": 128\n                    },\n\
+        \                    \"minItems\": 1,\n                    \"maxItems\": 20,\n                    \"description\"\
+        : \"Violation type codes this tag maps to (e.g., [\\\"theft\\\", \\\"dishonesty\\\"])\"\n                },\n    \
+        \            \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"maxLength\": 512,\n                    \"description\": \"Human-readable description of what
+        this mapping represents\"\n                },\n                \"createdAt\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When this mapping
+        was first created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
+        description\": \"When this mapping was last modified\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"List registered action tag mappings\",\n    \"description\": \"Returns
+        all registered action tag to violation type mappings.\\nSupports cursor-based pagination and optional text search.\\\
+        n\",\n    \"tags\": [\n        \"Action Mapping\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listActionMappings\"\
+        \n}"
+  /obligation/action-mapping/delete:
+    post:
+      summary: Delete an action tag mapping
+      operationId: deleteActionMapping
+      tags:
+      - Action Mapping
+      description: |
+        Removes a registered action tag mapping. After deletion, the tag will
+        fall back to convention-based 1:1 matching (tag name == violation type code).
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteActionMappingRequest'
+      responses:
+        '200':
+          description: Mapping deleted successfully
+        '404':
+          description: No mapping found for this tag
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/DeleteActionMappingRequest\"\
+        ,\n    \"$defs\": {\n        \"DeleteActionMappingRequest\": {\n            \"type\": \"object\",\n            \"\
+        description\": \"Request to delete an action tag mapping\",\n            \"additionalProperties\": false,\n      \
+        \      \"required\": [\n                \"tag\"\n            ],\n            \"properties\": {\n                \"\
+        tag\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"\
+        maxLength\": 128,\n                    \"description\": \"The GOAP action tag whose mapping should be deleted\"\n\
+        \                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: '{}'
+      x-endpoint-info-json: "{\n    \"summary\": \"Delete an action tag mapping\",\n    \"description\": \"Removes a registered
+        action tag mapping. After deletion, the tag will\\nfall back to convention-based 1:1 matching (tag name == violation
+        type code).\\n\",\n    \"tags\": [\n        \"Action Mapping\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
+        : \"deleteActionMapping\"\n}"
+  /obligation/query:
+    post:
+      summary: Query active obligations for a character
+      operationId: queryObligations
+      tags:
+      - Obligations
+      description: |
+        Returns all active obligations for a character, derived from their active
+        contracts with behavioral clauses. The response includes a pre-computed
+        violation cost map keyed by violation type code.
+
+        Obligations are cached per character and refreshed when contract lifecycle
+        events fire (contract.activated, contract.terminated, etc.). Use
+        forceRefresh to bypass the cache and rebuild from current contract state.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryObligationsRequest'
+      responses:
+        '200':
+          description: Obligations retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryObligationsResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryObligationsRequest\"\
+        ,\n    \"$defs\": {\n        \"QueryObligationsRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to query active obligations for a character\",\n            \"additionalProperties\": false,\n       \
+        \     \"required\": [\n                \"characterId\"\n            ],\n            \"properties\": {\n          \
+        \      \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"description\": \"ID of the character to query obligations for\"\n                },\n     \
+        \           \"forceRefresh\": {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n\
+        \                    \"description\": \"Force cache rebuild from current contract state\"\n                }\n   \
+        \         }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryObligationsResponse\"\
+        ,\n    \"$defs\": {\n        \"QueryObligationsResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Active obligations for a character with pre-computed violation cost map\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"characterId\",\n                \"obligations\",\n      \
+        \          \"violationCostMap\",\n                \"totalActiveContracts\",\n                \"totalObligations\"\
+        ,\n                \"lastRefreshedAt\"\n            ],\n            \"properties\": {\n                \"characterId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"Character these obligations belong to\"\n                },\n                \"obligations\": {\n\
+        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"\
+        #/$defs/ObligationEntry\"\n                    },\n                    \"description\": \"All active obligations for
+        the character\"\n                },\n                \"violationCostMap\": {\n                    \"type\": \"object\"\
+        ,\n                    \"additionalProperties\": {\n                        \"type\": \"number\",\n              \
+        \          \"format\": \"float\"\n                    },\n                    \"description\": \"Pre-computed map
+        of violation type code to total cost across all obligations\"\n                },\n                \"totalActiveContracts\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\"\
+        : 1000,\n                    \"description\": \"Number of active contracts with behavioral clauses\"\n           \
+        \     },\n                \"totalObligations\": {\n                    \"type\": \"integer\",\n                  \
+        \  \"minimum\": 0,\n                    \"maximum\": 10000,\n                    \"description\": \"Total number of
+        individual obligation entries\"\n                },\n                \"lastRefreshedAt\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the
+        obligation cache was last rebuilt\"\n                }\n            }\n        },\n        \"ObligationEntry\": {\n\
+        \            \"type\": \"object\",\n            \"description\": \"A single obligation derived from a behavioral clause
+        in an active contract\",\n            \"additionalProperties\": false,\n            \"required\": [\n            \
+        \    \"contractId\",\n                \"templateCode\",\n                \"clauseCode\",\n                \"violationType\"\
+        ,\n                \"basePenalty\",\n                \"contractRole\"\n            ],\n            \"properties\"\
+        : {\n                \"contractId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"ID of the contract this obligation comes from\"\n            \
+        \    },\n                \"templateCode\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
+        : 1,\n                    \"maxLength\": 128,\n                    \"description\": \"Template code of the source
+        contract\"\n                },\n                \"clauseCode\": {\n                    \"type\": \"string\",\n   \
+        \                 \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"description\"\
+        : \"Code of the behavioral clause defining this obligation\"\n                },\n                \"violationType\"\
+        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
+        : 128,\n                    \"description\": \"Violation type code (e.g., \\\"theft\\\", \\\"deception\\\", \\\"violence\\\
+        \")\"\n                },\n                \"basePenalty\": {\n                    \"type\": \"number\",\n       \
+        \             \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"description\":
+        \"Base GOAP cost penalty for violating this obligation\"\n                },\n                \"description\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
+        : 1024,\n                    \"description\": \"Human-readable description of the obligation\"\n                },\n\
+        \                \"contractRole\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
+        : 1,\n                    \"maxLength\": 128,\n                    \"description\": \"The character's role in the
+        contract (e.g., \\\"member\\\", \\\"merchant\\\")\"\n                },\n                \"effectiveUntil\": {\n \
+        \                   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"When this obligation expires (null if indefinite)\"\n  \
+        \              }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Query active obligations for a character\",\n    \"description\": \"Returns
+        all active obligations for a character, derived from their active\\ncontracts with behavioral clauses. The response
+        includes a pre-computed\\nviolation cost map keyed by violation type code.\\n\\nObligations are cached per character
+        and refreshed when contract lifecycle\\nevents fire (contract.activated, contract.terminated, etc.). Use\\nforceRefresh
+        to bypass the cache and rebuild from current contract state.\\n\",\n    \"tags\": [\n        \"Obligations\"\n   \
+        \ ],\n    \"deprecated\": false,\n    \"operationId\": \"queryObligations\"\n}"
+  /obligation/evaluate-action:
+    post:
+      summary: Evaluate obligation violation costs for proposed actions
+      operationId: evaluateAction
+      tags:
+      - Obligations
+      description: |
+        Non-mutating speculative query. Given a character and a set of GOAP action
+        tags, returns the computed violation costs for each tag based on the
+        character's active obligations.
+
+        Each action tag is resolved to violation types via registered action mappings
+        (or 1:1 convention if no explicit mapping exists), then matched against the
+        character's active obligation clauses.
+
+        When personality enrichment is available (via character-personality provider),
+        costs are weighted by personality traits (honesty, loyalty, agreeableness,
+        conscientiousness) and combat preferences. Without personality enrichment,
+        base penalty costs from contract clauses are returned as-is.
+
+        Faction context is resolved internally via the character's active contracts
+        and locationId (if provided). Contracts encode party roles which implicitly
+        represent faction obligations — no separate factionId is needed.
+
+        This endpoint is primarily for external callers (game servers, debug tools).
+        The actor cognition pipeline reads obligation costs from the Variable Provider
+        cache (${obligations.*}) for performance.
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvaluateActionRequest'
+      responses:
+        '200':
+          description: Evaluation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvaluateActionResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EvaluateActionRequest\"\
+        ,\n    \"$defs\": {\n        \"EvaluateActionRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to evaluate obligation violation costs for proposed GOAP actions\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"characterId\",\n                \"actionTags\"\n        \
+        \    ],\n            \"properties\": {\n                \"characterId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the character whose obligations
+        to evaluate against\"\n                },\n                \"actionTags\": {\n                    \"type\": \"array\"\
+        ,\n                    \"items\": {\n                        \"type\": \"string\",\n                        \"minLength\"\
+        : 1,\n                        \"maxLength\": 128\n                    },\n                    \"minItems\": 1,\n \
+        \                   \"maxItems\": 50,\n                    \"description\": \"GOAP action tags to evaluate (e.g.,
+        [\\\"steal_food\\\", \\\"buy_food\\\", \\\"beg_for_food\\\"])\"\n                },\n                \"locationId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Current location ID for context-dependent moral weighting
+        (personality enrichment only)\"\n                },\n                \"targetEntityId\": {\n                    \"\
+        type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n        \
+        \            \"description\": \"Target entity of the action for relationship-weighted costs (personality enrichment
+        only)\"\n                },\n                \"targetEntityType\": {\n                    \"type\": \"object\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Entity type of the target\"\n   \
+        \             }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EvaluateActionResponse\"\
+        ,\n    \"$defs\": {\n        \"EvaluateActionResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Obligation cost evaluation results for proposed actions\",\n            \"additionalProperties\": false,\n   \
+        \         \"required\": [\n                \"characterId\",\n                \"evaluations\",\n                \"\
+        moralWeightingApplied\"\n            ],\n            \"properties\": {\n                \"characterId\": {\n     \
+        \               \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Character evaluated\"\n                },\n                \"evaluations\": {\n                    \"type\": \"\
+        array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ActionEvaluation\"\n     \
+        \               },\n                    \"description\": \"Per-action evaluation results (one per input tag)\"\n \
+        \               },\n                \"moralWeightingApplied\": {\n                    \"type\": \"boolean\",\n   \
+        \                 \"description\": \"Whether personality-weighted moral reasoning enriched the cost calculations\"\
+        \n                }\n            }\n        },\n        \"ActionEvaluation\": {\n            \"type\": \"object\"\
+        ,\n            \"description\": \"Obligation violation cost evaluation for a single GOAP action tag\",\n         \
+        \   \"additionalProperties\": false,\n            \"required\": [\n                \"actionTag\",\n              \
+        \  \"isViolation\",\n                \"totalViolationCost\",\n                \"obligationDetails\"\n            ],\n\
+        \            \"properties\": {\n                \"actionTag\": {\n                    \"type\": \"string\",\n    \
+        \                \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"description\":
+        \"The GOAP action tag that was evaluated\"\n                },\n                \"isViolation\": {\n             \
+        \       \"type\": \"boolean\",\n                    \"description\": \"Whether this action would violate any active
+        obligation\"\n                },\n                \"totalViolationCost\": {\n                    \"type\": \"number\"\
+        ,\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"description\"\
+        : \"Sum of all weighted violation costs for this action\"\n                },\n                \"obligationDetails\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/ObligationCostDetail\"\n                    },\n                    \"description\": \"Per-obligation
+        breakdown of cost contributions\"\n                }\n            }\n        },\n        \"ObligationCostDetail\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Per-obligation cost contribution for a specific
+        action evaluation\",\n            \"additionalProperties\": false,\n            \"required\": [\n                \"\
+        contractId\",\n                \"templateCode\",\n                \"clauseCode\",\n                \"violationType\"\
+        ,\n                \"basePenalty\",\n                \"weightedPenalty\",\n                \"contractRole\"\n    \
+        \        ],\n            \"properties\": {\n                \"contractId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the contract producing
+        this cost\"\n                },\n                \"templateCode\": {\n                    \"type\": \"string\",\n\
+        \                    \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"description\"\
+        : \"Template code of the source contract\"\n                },\n                \"clauseCode\": {\n              \
+        \      \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 128,\n   \
+        \                 \"description\": \"Code of the violated behavioral clause\"\n                },\n              \
+        \  \"violationType\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n      \
+        \              \"maxLength\": 128,\n                    \"description\": \"Violation type code matched\"\n       \
+        \         },\n                \"basePenalty\": {\n                    \"type\": \"number\",\n                    \"\
+        format\": \"float\",\n                    \"minimum\": 0.0,\n                    \"description\": \"Base penalty from
+        the contract clause\"\n                },\n                \"weightedPenalty\": {\n                    \"type\": \"\
+        number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                   \
+        \ \"description\": \"Penalty after personality-weighted moral reasoning (equals basePenalty when personality enrichment
+        unavailable)\"\n                },\n                \"contractRole\": {\n                    \"type\": \"string\"\
+        ,\n                    \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"description\"\
+        : \"The character's role in the contract\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Evaluate obligation violation costs for proposed actions\",\n    \"description\"\
+        : \"Non-mutating speculative query. Given a character and a set of GOAP action\\ntags, returns the computed violation
+        costs for each tag based on the\\ncharacter's active obligations.\\n\\nEach action tag is resolved to violation types
+        via registered action mappings\\n(or 1:1 convention if no explicit mapping exists), then matched against the\\ncharacter's
+        active obligation clauses.\\n\\nWhen personality enrichment is available (via character-personality provider),\\ncosts
+        are weighted by personality traits (honesty, loyalty, agreeableness,\\nconscientiousness) and combat preferences.
+        Without personality enrichment,\\nbase penalty costs from contract clauses are returned as-is.\\n\\nFaction context
+        is resolved internally via the character's active contracts\\nand locationId (if provided). Contracts encode party
+        roles which implicitly\\nrepresent faction obligations \\u2014 no separate factionId is needed.\\n\\nThis endpoint
+        is primarily for external callers (game servers, debug tools).\\nThe actor cognition pipeline reads obligation costs
+        from the Variable Provider\\ncache (${obligations.*}) for performance.\\n\",\n    \"tags\": [\n        \"Obligations\"\
+        \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"evaluateAction\"\n}"
+  /obligation/report-violation:
+    post:
+      summary: Report a knowing obligation violation
+      operationId: reportViolation
+      tags:
+      - Violations
+      description: |
+        Records that a character knowingly violated an obligation. Called by the
+        actor cognition pipeline when an action marked as "knowing_violation"
+        completes execution.
+
+        This endpoint:
+        1. Saves a violation record to the violation history store
+        2. Reports a breach to lib-contract via /contract/breach/report
+        3. Publishes an obligation.violation.reported event for downstream consumers
+
+        Downstream consumers (character-personality, character-encounter) can
+        subscribe to the violation event to trigger personality drift (OATH_BROKEN
+        experience), encounter memory recording, and other feedback effects.
+
+        Idempotent: duplicate reports for the same violation are rejected (Conflict).
+      x-permissions: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportViolationRequest'
+      responses:
+        '200':
+          description: Violation recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportViolationResponse'
+        '404':
+          description: Contract or obligation not found
+        '409':
+          description: Duplicate violation report (idempotency)
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ReportViolationRequest\"\
+        ,\n    \"$defs\": {\n        \"ReportViolationRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to report a knowing obligation violation\",\n            \"additionalProperties\": false,\n          \
+        \  \"required\": [\n                \"characterId\",\n                \"contractId\",\n                \"clauseCode\"\
+        ,\n                \"violationType\",\n                \"actionTag\",\n                \"motivationScore\",\n    \
+        \            \"violationCost\"\n            ],\n            \"properties\": {\n                \"characterId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"ID of the character who knowingly violated the obligation\"\n                },\n                \"contractId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        description\": \"ID of the contract that was violated\"\n                },\n                \"clauseCode\": {\n \
+        \                   \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
+        : 128,\n                    \"description\": \"Code of the behavioral clause that was violated\"\n               \
+        \ },\n                \"violationType\": {\n                    \"type\": \"string\",\n                    \"minLength\"\
+        : 1,\n                    \"maxLength\": 128,\n                    \"description\": \"Violation type code (e.g., \\\
+        \"theft\\\", \\\"deception\\\")\"\n                },\n                \"actionTag\": {\n                    \"type\"\
+        : \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 128,\n                  \
+        \  \"description\": \"GOAP action tag that triggered the violation (e.g., \\\"steal_food\\\")\"\n                },\n\
+        \                \"motivationScore\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"\
+        description\": \"Goal urgency that overrode the obligation (0.0 = low, 1.0 = survival)\"\n                },\n   \
+        \             \"violationCost\": {\n                    \"type\": \"number\",\n                    \"format\": \"\
+        float\",\n                    \"minimum\": 0.0,\n                    \"description\": \"Total violation cost that
+        was accepted by the actor\"\n                },\n                \"targetEntityId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Target entity of the violating action (e.g., the character stolen from)\"\n            \
+        \    },\n                \"targetEntityType\": {\n                    \"type\": \"object\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Entity type of the target\"\n                },\n      \
+        \          \"idempotencyKey\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"maxLength\": 128,\n                    \"description\": \"Idempotency key to prevent duplicate
+        violation reports\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ReportViolationResponse\"\
+        ,\n    \"$defs\": {\n        \"ReportViolationResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Result of reporting an obligation violation\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"violationId\",\n                \"characterId\",\n                \"breachReported\"\n    \
+        \        ],\n            \"properties\": {\n                \"violationId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the created violation record\"\
+        \n                },\n                \"characterId\": {\n                    \"type\": \"string\",\n            \
+        \        \"format\": \"uuid\",\n                    \"description\": \"Character who committed the violation\"\n \
+        \               },\n                \"breachReported\": {\n                    \"type\": \"boolean\",\n          \
+        \          \"description\": \"Whether a breach was successfully filed with the contract service\"\n              \
+        \  },\n                \"breachId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Breach record ID from
+        contract service (null if not reported or failed)\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Report a knowing obligation violation\",\n    \"description\": \"Records
+        that a character knowingly violated an obligation. Called by the\\nactor cognition pipeline when an action marked
+        as \\\"knowing_violation\\\"\\ncompletes execution.\\n\\nThis endpoint:\\n1. Saves a violation record to the violation
+        history store\\n2. Reports a breach to lib-contract via /contract/breach/report\\n3. Publishes an obligation.violation.reported
+        event for downstream consumers\\n\\nDownstream consumers (character-personality, character-encounter) can\\nsubscribe
+        to the violation event to trigger personality drift (OATH_BROKEN\\nexperience), encounter memory recording, and other
+        feedback effects.\\n\\nIdempotent: duplicate reports for the same violation are rejected (Conflict).\\n\",\n    \"\
+        tags\": [\n        \"Violations\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"reportViolation\"\n}"
+  /obligation/query-violations:
+    post:
+      summary: Query violation history for a character
+      operationId: queryViolations
+      tags:
+      - Violations
+      description: |
+        Returns the violation history for a character with cursor-based pagination.
+        Supports filtering by contract, violation type, and time range.
+        Ordered by timestamp descending (most recent first).
+      x-permissions:
+      - role: user
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryViolationsRequest'
+      responses:
+        '200':
+          description: Violations retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryViolationsResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryViolationsRequest\"\
+        ,\n    \"$defs\": {\n        \"QueryViolationsRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to query violation history for a character\",\n            \"additionalProperties\": false,\n        \
+        \    \"required\": [\n                \"characterId\"\n            ],\n            \"properties\": {\n           \
+        \     \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n \
+        \                   \"description\": \"ID of the character to query violations for\"\n                },\n       \
+        \         \"contractId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Filter by specific contract\"\n \
+        \               },\n                \"violationType\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"maxLength\": 128,\n                    \"description\": \"Filter
+        by violation type code\"\n                },\n                \"since\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
+        description\": \"Only return violations after this timestamp\"\n                },\n                \"cursor\": {\n\
+        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\"\
+        : 512,\n                    \"description\": \"Pagination cursor from a previous response\"\n                },\n\
+        \                \"pageSize\": {\n                    \"type\": \"integer\",\n                    \"default\": 20,\n\
+        \                    \"minimum\": 1,\n                    \"maximum\": 100,\n                    \"description\":
+        \"Number of violations to return per page\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/QueryViolationsResponse\"\
+        ,\n    \"$defs\": {\n        \"QueryViolationsResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Paginated violation history for a character\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"violations\",\n                \"hasMore\"\n            ],\n            \"properties\": {\n\
+        \                \"violations\": {\n                    \"type\": \"array\",\n                    \"items\": {\n \
+        \                       \"$ref\": \"#/$defs/ViolationRecord\"\n                    },\n                    \"description\"\
+        : \"Violation records for this page\"\n                },\n                \"nextCursor\": {\n                   \
+        \ \"type\": \"string\",\n                    \"nullable\": true,\n                    \"maxLength\": 512,\n      \
+        \              \"description\": \"Cursor for the next page (null if no more pages)\"\n                },\n       \
+        \         \"hasMore\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
+        more pages are available\"\n                }\n            }\n        },\n        \"ViolationRecord\": {\n       \
+        \     \"type\": \"object\",\n            \"description\": \"Record of a knowing obligation violation by a character\"\
+        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"violationId\",\n \
+        \               \"characterId\",\n                \"contractId\",\n                \"clauseCode\",\n             \
+        \   \"violationType\",\n                \"actionTag\",\n                \"motivationScore\",\n                \"violationCost\"\
+        ,\n                \"breachReported\",\n                \"timestamp\"\n            ],\n            \"properties\"\
+        : {\n                \"violationId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Unique identifier for this violation record\"\n              \
+        \  },\n                \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Character who committed the violation\"\n                },\n\
+        \                \"contractId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"Contract that was violated\"\n                },\n               \
+        \ \"clauseCode\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n          \
+        \          \"maxLength\": 128,\n                    \"description\": \"Code of the behavioral clause that was violated\"\
+        \n                },\n                \"violationType\": {\n                    \"type\": \"string\",\n          \
+        \          \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"description\": \"Violation
+        type code\"\n                },\n                \"actionTag\": {\n                    \"type\": \"string\",\n   \
+        \                 \"minLength\": 1,\n                    \"maxLength\": 128,\n                    \"description\"\
+        : \"GOAP action tag that triggered the violation\"\n                },\n                \"motivationScore\": {\n \
+        \                   \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"minimum\"\
+        : 0.0,\n                    \"maximum\": 1.0,\n                    \"description\": \"Goal urgency that overrode the
+        obligation (0.0-1.0)\"\n                },\n                \"violationCost\": {\n                    \"type\": \"\
+        number\",\n                    \"format\": \"float\",\n                    \"minimum\": 0.0,\n                   \
+        \ \"description\": \"Total violation cost that was accepted\"\n                },\n                \"breachReported\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether a breach was filed
+        with the contract service\"\n                },\n                \"breachId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                  \
+        \  \"description\": \"Breach record ID from contract service (null if breach not reported)\"\n                },\n\
+        \                \"targetEntityId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Target entity of the
+        violating action (null if no specific target)\"\n                },\n                \"targetEntityType\": {\n   \
+        \                 \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Entity type of the target\"\n                },\n                \"timestamp\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the violation
+        occurred\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Query violation history for a character\",\n    \"description\": \"Returns
+        the violation history for a character with cursor-based pagination.\\nSupports filtering by contract, violation type,
+        and time range.\\nOrdered by timestamp descending (most recent first).\\n\",\n    \"tags\": [\n        \"Violations\"\
+        \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"queryViolations\"\n}"
+  /obligation/invalidate-cache:
+    post:
+      summary: Force obligation cache refresh for a character
+      operationId: invalidateCache
+      tags:
+      - Cache Management
+      description: |
+        Forces a full cache rebuild for a character's obligation manifest.
+        Queries all active contracts for the character, extracts behavioral
+        clauses, and rebuilds the cached obligation state.
+
+        Normally, the cache is maintained automatically via contract lifecycle
+        events. This endpoint is for administrative and debugging purposes.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvalidateCacheRequest'
+      responses:
+        '200':
+          description: Cache refreshed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvalidateCacheResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/InvalidateCacheRequest\"\
+        ,\n    \"$defs\": {\n        \"InvalidateCacheRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to force obligation cache refresh for a character\",\n            \"additionalProperties\": false,\n \
+        \           \"required\": [\n                \"characterId\"\n            ],\n            \"properties\": {\n    \
+        \            \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"ID of the character whose cache to rebuild\"\n                }\n      \
+        \      }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/InvalidateCacheResponse\"\
+        ,\n    \"$defs\": {\n        \"InvalidateCacheResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Result of cache invalidation and rebuild\",\n            \"additionalProperties\": false,\n            \"required\"\
+        : [\n                \"characterId\",\n                \"obligationsRefreshed\",\n                \"success\"\n  \
+        \          ],\n            \"properties\": {\n                \"characterId\": {\n                    \"type\": \"\
+        string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Character whose cache
+        was rebuilt\"\n                },\n                \"obligationsRefreshed\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 0,\n                    \"maximum\": 10000,\n                    \"description\"\
+        : \"Number of obligations found and cached\"\n                },\n                \"success\": {\n               \
+        \     \"type\": \"boolean\",\n                    \"description\": \"Whether the cache rebuild completed successfully\"\
+        \n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Force obligation cache refresh for a character\",\n    \"description\"\
+        : \"Forces a full cache rebuild for a character's obligation manifest.\\nQueries all active contracts for the character,
+        extracts behavioral\\nclauses, and rebuilds the cached obligation state.\\n\\nNormally, the cache is maintained automatically
+        via contract lifecycle\\nevents. This endpoint is for administrative and debugging purposes.\\n\",\n    \"tags\":
+        [\n        \"Cache Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"invalidateCache\"\n}"
+  /obligation/get-compress-data:
+    post:
+      summary: Get obligation data for character archival compression
+      operationId: getCompressData
+      tags:
+      - Compression
+      description: |
+        Called by Resource service during character compression.
+        Returns violation history and cached obligation state for archival.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetCompressDataRequest'
+      responses:
+        '200':
+          description: Compressed data returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObligationArchive'
+        '404':
+          description: No obligation data for character
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetCompressDataRequest\"\
+        ,\n    \"$defs\": {\n        \"GetCompressDataRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to get obligation data for compression\",\n            \"additionalProperties\": false,\n            \"\
+        required\": [\n                \"characterId\"\n            ],\n            \"properties\": {\n                \"\
+        characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n         \
+        \           \"description\": \"ID of the character to get compress data for\"\n                }\n            }\n\
+        \        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ObligationArchive\"\
+        ,\n    \"$defs\": {\n        \"ObligationArchive\": {\n            \"type\": \"object\",\n            \"x-archive-type\"\
+        : true,\n            \"description\": \"Complete obligation data for archive storage and storyline SDK consumption.\\
+        nInherits base archive properties from ResourceArchiveBase.\\nThe characterId field equals resourceId for convenience.\\\
+        n\",\n            \"allOf\": [\n                {\n                    \"type\": \"object\"\n                }\n \
+        \           ],\n            \"additionalProperties\": false,\n            \"required\": [\n                \"characterId\"\
+        ,\n                \"hasViolations\",\n                \"violationCount\"\n            ],\n            \"properties\"\
+        : {\n                \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"Character this data belongs to (equals resourceId)\"\n       \
+        \         },\n                \"hasViolations\": {\n                    \"type\": \"boolean\",\n                 \
+        \   \"description\": \"Whether any violation records exist\"\n                },\n                \"violationCount\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\"\
+        : 100000,\n                    \"description\": \"Number of violation records in archive\"\n                },\n \
+        \               \"violations\": {\n                    \"type\": \"array\",\n                    \"nullable\": true,\n\
+        \                    \"items\": {\n                        \"$ref\": \"#/$defs/ViolationRecord\"\n               \
+        \     },\n                    \"description\": \"Violation history records (null if hasViolations=false)\"\n     \
+        \           }\n            }\n        },\n        \"ViolationRecord\": {\n            \"type\": \"object\",\n    \
+        \        \"description\": \"Record of a knowing obligation violation by a character\",\n            \"additionalProperties\"\
+        : false,\n            \"required\": [\n                \"violationId\",\n                \"characterId\",\n      \
+        \          \"contractId\",\n                \"clauseCode\",\n                \"violationType\",\n                \"\
+        actionTag\",\n                \"motivationScore\",\n                \"violationCost\",\n                \"breachReported\"\
+        ,\n                \"timestamp\"\n            ],\n            \"properties\": {\n                \"violationId\":
+        {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Unique identifier for this violation record\"\n                },\n                \"characterId\": {\n      \
+        \              \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Character who committed the violation\"\n                },\n                \"contractId\": {\n             \
+        \       \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"\
+        Contract that was violated\"\n                },\n                \"clauseCode\": {\n                    \"type\"\
+        : \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\": 128,\n                  \
+        \  \"description\": \"Code of the behavioral clause that was violated\"\n                },\n                \"violationType\"\
+        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
+        : 128,\n                    \"description\": \"Violation type code\"\n                },\n                \"actionTag\"\
+        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
+        : 128,\n                    \"description\": \"GOAP action tag that triggered the violation\"\n                },\n\
+        \                \"motivationScore\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"\
+        description\": \"Goal urgency that overrode the obligation (0.0-1.0)\"\n                },\n                \"violationCost\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"\
+        minimum\": 0.0,\n                    \"description\": \"Total violation cost that was accepted\"\n               \
+        \ },\n                \"breachReported\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether a breach was filed with the contract service\"\n                },\n                \"breachId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Breach record ID from contract service (null if breach not reported)\"\
+        \n                },\n                \"targetEntityId\": {\n                    \"type\": \"string\",\n         \
+        \           \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Target entity of the violating action (null if no specific target)\"\n                },\n                \"targetEntityType\"\
+        : {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Entity type of the target\"\n                },\n                \"timestamp\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the violation
+        occurred\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get obligation data for character archival compression\",\n    \"description\"\
+        : \"Called by Resource service during character compression.\\nReturns violation history and cached obligation state
+        for archival.\\n\",\n    \"tags\": [\n        \"Compression\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
+        : \"getCompressData\"\n}"
+  /obligation/restore-from-archive:
+    post:
+      summary: Restore obligation data from archive
+      operationId: restoreFromArchive
+      tags:
+      - Compression
+      description: |
+        Called by Resource service during character decompression.
+        Restores violation history from archive data. Obligation cache
+        is rebuilt automatically from active contracts, not from archive.
+      x-permissions:
+      - role: admin
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestoreFromArchiveRequest'
+      responses:
+        '200':
+          description: Restoration result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestoreFromArchiveResponse'
+        '400':
+          description: Invalid archive data
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RestoreFromArchiveRequest\"\
+        ,\n    \"$defs\": {\n        \"RestoreFromArchiveRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to restore obligation data from archive\",\n            \"additionalProperties\": false,\n           \
+        \ \"required\": [\n                \"characterId\",\n                \"data\"\n            ],\n            \"properties\"\
+        : {\n                \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"description\": \"ID of the character to restore data for\"\n                },\n\
+        \                \"data\": {\n                    \"type\": \"string\",\n                    \"description\": \"Base64-encoded
+        gzipped ObligationArchive JSON\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RestoreFromArchiveResponse\"\
+        ,\n    \"$defs\": {\n        \"RestoreFromArchiveResponse\": {\n            \"type\": \"object\",\n            \"\
+        description\": \"Result of restoration from archive\",\n            \"additionalProperties\": false,\n           \
+        \ \"required\": [\n                \"characterId\",\n                \"violationsRestored\",\n                \"success\"\
+        \n            ],\n            \"properties\": {\n                \"characterId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Character data was
+        restored for\"\n                },\n                \"violationsRestored\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether violation history was restored\"\n                },\n         \
+        \       \"success\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
+        the restoration completed successfully\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Restore obligation data from archive\",\n    \"description\": \"Called
+        by Resource service during character decompression.\\nRestores violation history from archive data. Obligation cache\\
+        nis rebuilt automatically from active contracts, not from archive.\\n\",\n    \"tags\": [\n        \"Compression\"\
+        \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"restoreFromArchive\"\n}"
+  /obligation/cleanup-by-character:
+    post:
+      summary: Cleanup all obligation data for a deleted character
+      operationId: cleanupByCharacter
+      tags:
+      - Resource Cleanup
+      description: |
+        Called by lib-resource cleanup coordination when a character is deleted.
+        Removes cached obligation manifests and violation history for the
+        specified character. This endpoint is designed for internal
+        service-to-service calls during cascading resource cleanup.
+      x-permissions:
+      - role: developer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CleanupByCharacterRequest'
+      responses:
+        '200':
+          description: Cleanup completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupByCharacterResponse'
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CleanupByCharacterRequest\"\
+        ,\n    \"$defs\": {\n        \"CleanupByCharacterRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to cleanup all obligation data for a deleted character\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"characterId\"\n            ],\n            \"properties\": {\n   \
+        \             \"characterId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"ID of the character that was deleted\"\n                }\n            }\n\
+        \        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/CleanupByCharacterResponse\"\
+        ,\n    \"$defs\": {\n        \"CleanupByCharacterResponse\": {\n            \"type\": \"object\",\n            \"\
+        description\": \"Result of character obligation data cleanup\",\n            \"additionalProperties\": false,\n  \
+        \          \"required\": [\n                \"obligationsRemoved\",\n                \"violationsRemoved\",\n    \
+        \            \"success\"\n            ],\n            \"properties\": {\n                \"obligationsRemoved\": {\n\
+        \                    \"type\": \"integer\",\n                    \"minimum\": 0,\n                    \"maximum\"\
+        : 10000,\n                    \"description\": \"Number of cached obligation entries removed\"\n                },\n\
+        \                \"violationsRemoved\": {\n                    \"type\": \"integer\",\n                    \"minimum\"\
+        : 0,\n                    \"maximum\": 100000,\n                    \"description\": \"Number of violation history
+        records removed\"\n                },\n                \"success\": {\n                    \"type\": \"boolean\",\n\
+        \                    \"description\": \"Whether cleanup completed successfully\"\n                }\n            }\n\
+        \        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Cleanup all obligation data for a deleted character\",\n    \"description\"\
+        : \"Called by lib-resource cleanup coordination when a character is deleted.\\nRemoves cached obligation manifests
+        and violation history for the\\nspecified character. This endpoint is designed for internal\\nservice-to-service calls
+        during cascading resource cleanup.\\n\",\n    \"tags\": [\n        \"Resource Cleanup\"\n    ],\n    \"deprecated\"\
+        : false,\n    \"operationId\": \"cleanupByCharacter\"\n}"
+components:
+  schemas:
+    ActionMappingResponse:
+      type: object
+      description: A registered mapping from a GOAP action tag to violation type codes
+      additionalProperties: false
+      required:
+      - tag
+      - violationTypes
+      - createdAt
+      properties:
+        tag:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: The GOAP action tag (e.g., "steal_food", "deceive_merchant")
+        violationTypes:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 128
+          minItems: 1
+          maxItems: 20
+          description: Violation type codes this tag maps to (e.g., ["theft", "dishonesty"])
+        description:
+          type: string
+          nullable: true
+          maxLength: 512
+          description: Human-readable description of what this mapping represents
+        createdAt:
+          type: string
+          format: date-time
+          description: When this mapping was first created
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this mapping was last modified
+    SetActionMappingRequest:
+      type: object
+      description: Request to create or update an action tag mapping
+      additionalProperties: false
+      required:
+      - tag
+      - violationTypes
+      properties:
+        tag:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: The GOAP action tag to map (e.g., "steal_food")
+        violationTypes:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 128
+          minItems: 1
+          maxItems: 20
+          description: Violation type codes this tag should map to
+        description:
+          type: string
+          nullable: true
+          maxLength: 512
+          description: Human-readable description of this mapping
+    ListActionMappingsRequest:
+      type: object
+      description: Request to list action tag mappings with pagination
+      additionalProperties: false
+      properties:
+        searchTerm:
+          type: string
+          nullable: true
+          maxLength: 256
+          description: Optional text search across tag names and descriptions
+        cursor:
+          type: string
+          nullable: true
+          maxLength: 512
+          description: Pagination cursor from a previous response
+        pageSize:
+          type: integer
+          default: 20
+          minimum: 1
+          maximum: 100
+          description: Number of mappings to return per page
+    ListActionMappingsResponse:
+      type: object
+      description: Paginated list of action tag mappings
+      additionalProperties: false
+      required:
+      - mappings
+      - hasMore
+      properties:
+        mappings:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActionMappingResponse'
+          description: Action tag mappings for this page
+        nextCursor:
+          type: string
+          nullable: true
+          maxLength: 512
+          description: Cursor for the next page (null if no more pages)
+        hasMore:
+          type: boolean
+          description: Whether more pages are available
+    DeleteActionMappingRequest:
+      type: object
+      description: Request to delete an action tag mapping
+      additionalProperties: false
+      required:
+      - tag
+      properties:
+        tag:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: The GOAP action tag whose mapping should be deleted
+    ObligationEntry:
+      type: object
+      description: A single obligation derived from a behavioral clause in an active contract
+      additionalProperties: false
+      required:
+      - contractId
+      - templateCode
+      - clauseCode
+      - violationType
+      - basePenalty
+      - contractRole
+      properties:
+        contractId:
+          type: string
+          format: uuid
+          description: ID of the contract this obligation comes from
+        templateCode:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Template code of the source contract
+        clauseCode:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Code of the behavioral clause defining this obligation
+        violationType:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Violation type code (e.g., "theft", "deception", "violence")
+        basePenalty:
+          type: number
+          format: float
+          minimum: 0.0
+          description: Base GOAP cost penalty for violating this obligation
+        description:
+          type: string
+          nullable: true
+          maxLength: 1024
+          description: Human-readable description of the obligation
+        contractRole:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: The character's role in the contract (e.g., "member", "merchant")
+        effectiveUntil:
+          type: string
+          format: date-time
+          nullable: true
+          description: When this obligation expires (null if indefinite)
+    QueryObligationsRequest:
+      type: object
+      description: Request to query active obligations for a character
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to query obligations for
+        forceRefresh:
+          type: boolean
+          default: false
+          description: Force cache rebuild from current contract state
+    QueryObligationsResponse:
+      type: object
+      description: Active obligations for a character with pre-computed violation cost map
+      additionalProperties: false
+      required:
+      - characterId
+      - obligations
+      - violationCostMap
+      - totalActiveContracts
+      - totalObligations
+      - lastRefreshedAt
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character these obligations belong to
+        obligations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ObligationEntry'
+          description: All active obligations for the character
+        violationCostMap:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+          description: Pre-computed map of violation type code to total cost across all obligations
+        totalActiveContracts:
+          type: integer
+          minimum: 0
+          maximum: 1000
+          description: Number of active contracts with behavioral clauses
+        totalObligations:
+          type: integer
+          minimum: 0
+          maximum: 10000
+          description: Total number of individual obligation entries
+        lastRefreshedAt:
+          type: string
+          format: date-time
+          description: When the obligation cache was last rebuilt
+    ObligationCostDetail:
+      type: object
+      description: Per-obligation cost contribution for a specific action evaluation
+      additionalProperties: false
+      required:
+      - contractId
+      - templateCode
+      - clauseCode
+      - violationType
+      - basePenalty
+      - weightedPenalty
+      - contractRole
+      properties:
+        contractId:
+          type: string
+          format: uuid
+          description: ID of the contract producing this cost
+        templateCode:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Template code of the source contract
+        clauseCode:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Code of the violated behavioral clause
+        violationType:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Violation type code matched
+        basePenalty:
+          type: number
+          format: float
+          minimum: 0.0
+          description: Base penalty from the contract clause
+        weightedPenalty:
+          type: number
+          format: float
+          minimum: 0.0
+          description: Penalty after personality-weighted moral reasoning (equals basePenalty when personality 
+            enrichment unavailable)
+        contractRole:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: The character's role in the contract
+    ActionEvaluation:
+      type: object
+      description: Obligation violation cost evaluation for a single GOAP action tag
+      additionalProperties: false
+      required:
+      - actionTag
+      - isViolation
+      - totalViolationCost
+      - obligationDetails
+      properties:
+        actionTag:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: The GOAP action tag that was evaluated
+        isViolation:
+          type: boolean
+          description: Whether this action would violate any active obligation
+        totalViolationCost:
+          type: number
+          format: float
+          minimum: 0.0
+          description: Sum of all weighted violation costs for this action
+        obligationDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/ObligationCostDetail'
+          description: Per-obligation breakdown of cost contributions
+    EvaluateActionRequest:
+      type: object
+      description: Request to evaluate obligation violation costs for proposed GOAP actions
+      additionalProperties: false
+      required:
+      - characterId
+      - actionTags
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character whose obligations to evaluate against
+        actionTags:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 128
+          minItems: 1
+          maxItems: 50
+          description: GOAP action tags to evaluate (e.g., ["steal_food", "buy_food", "beg_for_food"])
+        locationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Current location ID for context-dependent moral weighting (personality enrichment only)
+        targetEntityId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Target entity of the action for relationship-weighted costs (personality enrichment only)
+        targetEntityType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          nullable: true
+          description: Entity type of the target
+    EvaluateActionResponse:
+      type: object
+      description: Obligation cost evaluation results for proposed actions
+      additionalProperties: false
+      required:
+      - characterId
+      - evaluations
+      - moralWeightingApplied
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character evaluated
+        evaluations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActionEvaluation'
+          description: Per-action evaluation results (one per input tag)
+        moralWeightingApplied:
+          type: boolean
+          description: Whether personality-weighted moral reasoning enriched the cost calculations
+    ViolationRecord:
+      type: object
+      description: Record of a knowing obligation violation by a character
+      additionalProperties: false
+      required:
+      - violationId
+      - characterId
+      - contractId
+      - clauseCode
+      - violationType
+      - actionTag
+      - motivationScore
+      - violationCost
+      - breachReported
+      - timestamp
+      properties:
+        violationId:
+          type: string
+          format: uuid
+          description: Unique identifier for this violation record
+        characterId:
+          type: string
+          format: uuid
+          description: Character who committed the violation
+        contractId:
+          type: string
+          format: uuid
+          description: Contract that was violated
+        clauseCode:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Code of the behavioral clause that was violated
+        violationType:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Violation type code
+        actionTag:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: GOAP action tag that triggered the violation
+        motivationScore:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Goal urgency that overrode the obligation (0.0-1.0)
+        violationCost:
+          type: number
+          format: float
+          minimum: 0.0
+          description: Total violation cost that was accepted
+        breachReported:
+          type: boolean
+          description: Whether a breach was filed with the contract service
+        breachId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Breach record ID from contract service (null if breach not reported)
+        targetEntityId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Target entity of the violating action (null if no specific target)
+        targetEntityType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          nullable: true
+          description: Entity type of the target
+        timestamp:
+          type: string
+          format: date-time
+          description: When the violation occurred
+    ReportViolationRequest:
+      type: object
+      description: Request to report a knowing obligation violation
+      additionalProperties: false
+      required:
+      - characterId
+      - contractId
+      - clauseCode
+      - violationType
+      - actionTag
+      - motivationScore
+      - violationCost
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character who knowingly violated the obligation
+        contractId:
+          type: string
+          format: uuid
+          description: ID of the contract that was violated
+        clauseCode:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Code of the behavioral clause that was violated
+        violationType:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Violation type code (e.g., "theft", "deception")
+        actionTag:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: GOAP action tag that triggered the violation (e.g., "steal_food")
+        motivationScore:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Goal urgency that overrode the obligation (0.0 = low, 1.0 = survival)
+        violationCost:
+          type: number
+          format: float
+          minimum: 0.0
+          description: Total violation cost that was accepted by the actor
+        targetEntityId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Target entity of the violating action (e.g., the character stolen from)
+        targetEntityType:
+          $ref: 'common-api.yaml#/components/schemas/EntityType'
+          nullable: true
+          description: Entity type of the target
+        idempotencyKey:
+          type: string
+          nullable: true
+          maxLength: 128
+          description: Idempotency key to prevent duplicate violation reports
+    ReportViolationResponse:
+      type: object
+      description: Result of reporting an obligation violation
+      additionalProperties: false
+      required:
+      - violationId
+      - characterId
+      - breachReported
+      properties:
+        violationId:
+          type: string
+          format: uuid
+          description: ID of the created violation record
+        characterId:
+          type: string
+          format: uuid
+          description: Character who committed the violation
+        breachReported:
+          type: boolean
+          description: Whether a breach was successfully filed with the contract service
+        breachId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Breach record ID from contract service (null if not reported or failed)
+    QueryViolationsRequest:
+      type: object
+      description: Request to query violation history for a character
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to query violations for
+        contractId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Filter by specific contract
+        violationType:
+          type: string
+          nullable: true
+          maxLength: 128
+          description: Filter by violation type code
+        since:
+          type: string
+          format: date-time
+          nullable: true
+          description: Only return violations after this timestamp
+        cursor:
+          type: string
+          nullable: true
+          maxLength: 512
+          description: Pagination cursor from a previous response
+        pageSize:
+          type: integer
+          default: 20
+          minimum: 1
+          maximum: 100
+          description: Number of violations to return per page
+    QueryViolationsResponse:
+      type: object
+      description: Paginated violation history for a character
+      additionalProperties: false
+      required:
+      - violations
+      - hasMore
+      properties:
+        violations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ViolationRecord'
+          description: Violation records for this page
+        nextCursor:
+          type: string
+          nullable: true
+          maxLength: 512
+          description: Cursor for the next page (null if no more pages)
+        hasMore:
+          type: boolean
+          description: Whether more pages are available
+    InvalidateCacheRequest:
+      type: object
+      description: Request to force obligation cache refresh for a character
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character whose cache to rebuild
+    InvalidateCacheResponse:
+      type: object
+      description: Result of cache invalidation and rebuild
+      additionalProperties: false
+      required:
+      - characterId
+      - obligationsRefreshed
+      - success
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character whose cache was rebuilt
+        obligationsRefreshed:
+          type: integer
+          minimum: 0
+          maximum: 10000
+          description: Number of obligations found and cached
+        success:
+          type: boolean
+          description: Whether the cache rebuild completed successfully
+    CleanupByCharacterRequest:
+      type: object
+      description: Request to cleanup all obligation data for a deleted character
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character that was deleted
+    CleanupByCharacterResponse:
+      type: object
+      description: Result of character obligation data cleanup
+      additionalProperties: false
+      required:
+      - obligationsRemoved
+      - violationsRemoved
+      - success
+      properties:
+        obligationsRemoved:
+          type: integer
+          minimum: 0
+          maximum: 10000
+          description: Number of cached obligation entries removed
+        violationsRemoved:
+          type: integer
+          minimum: 0
+          maximum: 100000
+          description: Number of violation history records removed
+        success:
+          type: boolean
+          description: Whether cleanup completed successfully
+    GetCompressDataRequest:
+      type: object
+      description: Request to get obligation data for compression
+      additionalProperties: false
+      required:
+      - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to get compress data for
+    ObligationArchive:
+      type: object
+      x-archive-type: true
+      description: |
+        Complete obligation data for archive storage and storyline SDK consumption.
+        Inherits base archive properties from ResourceArchiveBase.
+        The characterId field equals resourceId for convenience.
+      allOf:
+      - $ref: './common-api.yaml#/components/schemas/ResourceArchiveBase'
+      additionalProperties: false
+      required:
+      - characterId
+      - hasViolations
+      - violationCount
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character this data belongs to (equals resourceId)
+        hasViolations:
+          type: boolean
+          description: Whether any violation records exist
+        violationCount:
+          type: integer
+          minimum: 0
+          maximum: 100000
+          description: Number of violation records in archive
+        violations:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/ViolationRecord'
+          description: Violation history records (null if hasViolations=false)
+    RestoreFromArchiveRequest:
+      type: object
+      description: Request to restore obligation data from archive
+      additionalProperties: false
+      required:
+      - characterId
+      - data
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID of the character to restore data for
+        data:
+          type: string
+          description: Base64-encoded gzipped ObligationArchive JSON
+    RestoreFromArchiveResponse:
+      type: object
+      description: Result of restoration from archive
+      additionalProperties: false
+      required:
+      - characterId
+      - violationsRestored
+      - success
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: Character data was restored for
+        violationsRestored:
+          type: boolean
+          description: Whether violation history was restored
+        success:
+          type: boolean
+          description: Whether the restoration completed successfully
