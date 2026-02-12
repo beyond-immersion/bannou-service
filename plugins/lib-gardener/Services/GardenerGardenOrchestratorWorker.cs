@@ -35,7 +35,7 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
     /// <summary>
     /// Interval between garden orchestrator evaluation cycles, from configuration.
     /// </summary>
-    private TimeSpan WorkerInterval => TimeSpan.FromMilliseconds(_configuration.VoidTickIntervalMs);
+    private TimeSpan WorkerInterval => TimeSpan.FromMilliseconds(_configuration.GardenTickIntervalMs);
 
     /// <summary>
     /// Startup delay before first cycle, from configuration.
@@ -60,14 +60,14 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
 
     /// <summary>
     /// Main execution loop for the background service.
-    /// Runs at VoidTickIntervalMs after an initial BackgroundServiceStartupDelaySeconds delay.
+    /// Runs at GardenTickIntervalMs after an initial BackgroundServiceStartupDelaySeconds delay.
     /// </summary>
     /// <param name="stoppingToken">Cancellation token for graceful shutdown.</param>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation(
             "Garden orchestrator worker starting, interval: {Interval}ms, startup delay: {Delay}s",
-            _configuration.VoidTickIntervalMs,
+            _configuration.GardenTickIntervalMs,
             _configuration.BackgroundServiceStartupDelaySeconds);
 
         try
@@ -135,7 +135,7 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
         var seedClient = scope.ServiceProvider.GetRequiredService<ISeedClient>();
 
         var gardenStore = stateStoreFactory.GetStore<GardenInstanceModel>(
-            StateStoreDefinitions.GardenerVoidInstances);
+            StateStoreDefinitions.GardenerGardenInstances);
         var poiStore = stateStoreFactory.GetStore<PoiModel>(
             StateStoreDefinitions.GardenerPois);
         var templateStore = stateStoreFactory.GetJsonQueryableStore<ScenarioTemplateModel>(
@@ -143,7 +143,7 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
         var historyStore = stateStoreFactory.GetJsonQueryableStore<ScenarioHistoryModel>(
             StateStoreDefinitions.GardenerScenarioHistory);
         var cacheStore = stateStoreFactory.GetCacheableStore<GardenInstanceModel>(
-            StateStoreDefinitions.GardenerVoidInstances);
+            StateStoreDefinitions.GardenerGardenInstances);
 
         // Get all active garden account IDs from tracking set
         var activeAccountIds = await cacheStore.GetSetAsync<Guid>(
@@ -216,7 +216,7 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
         // Phase 2: Determine if we need new POIs
         var activePoiCount = garden.ActivePoiIds.Count;
         var needsNewPois = garden.NeedsReEvaluation ||
-                           activePoiCount < _configuration.MaxActivePoisPerVoid;
+                           activePoiCount < _configuration.MaxActivePoisPerGarden;
 
         var spawned = 0;
         if (needsNewPois)
@@ -272,7 +272,7 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
                     {
                         EventId = Guid.NewGuid(),
                         Timestamp = DateTimeOffset.UtcNow,
-                        VoidInstanceId = garden.GardenInstanceId,
+                        GardenInstanceId = garden.GardenInstanceId,
                         PoiId = poiId
                     }, cancellationToken: ct);
             }
@@ -307,7 +307,7 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
         DateTimeOffset now,
         CancellationToken ct)
     {
-        var slotsAvailable = _configuration.MaxActivePoisPerVoid - garden.ActivePoiIds.Count;
+        var slotsAvailable = _configuration.MaxActivePoisPerGarden - garden.ActivePoiIds.Count;
         if (slotsAvailable <= 0)
             return 0;
 
@@ -396,7 +396,7 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
                 {
                     EventId = Guid.NewGuid(),
                     Timestamp = DateTimeOffset.UtcNow,
-                    VoidInstanceId = garden.GardenInstanceId,
+                    GardenInstanceId = garden.GardenInstanceId,
                     PoiId = poiId,
                     PoiType = poi.PoiType,
                     ScenarioTemplateId = template.ScenarioTemplateId

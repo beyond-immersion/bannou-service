@@ -66,13 +66,13 @@ This document lists all state store components used in Bannou.
 | `escrow-tokens` | Redis | Escrow | Token hash validation (hashed tokens to escrow/party info) |
 | `game-service-statestore` | MySQL | GameService | Game service registry |
 | `game-session-statestore` | MySQL | GameSession | Game session state and history |
-| `gardener-lock` | Redis | Gardener | Distributed locks for void orchestration and scenario mutations |
+| `gardener-garden-instances` | Redis | Gardener | Active garden instance state per player (ephemeral, TTL-based) |
+| `gardener-lock` | Redis | Gardener | Distributed locks for garden orchestration and scenario mutations |
 | `gardener-phase-config` | MySQL | Gardener | Deployment phase configuration and transition history (durable) |
-| `gardener-pois` | Redis | Gardener | Active POI state within void instances (ephemeral, TTL-based) |
+| `gardener-pois` | Redis | Gardener | Active POI state within garden instances (ephemeral, TTL-based) |
 | `gardener-scenario-history` | MySQL | Gardener | Completed scenario history per player (durable, queryable for cooldown) |
 | `gardener-scenario-instances` | Redis | Gardener | Active scenario instance state (ephemeral, keyed by instance ID) |
 | `gardener-scenario-templates` | MySQL | Gardener | Scenario template definitions (durable, queryable by category/status) |
-| `gardener-void-instances` | Redis | Gardener | Active void instance state per player (ephemeral, TTL-based) |
 | `inventory-container-cache` | Redis | Inventory | Container state and item list cache |
 | `inventory-container-store` | MySQL | Inventory | Container definitions (persistent) |
 | `inventory-lock` | Redis | Inventory | Distributed locks for concurrent modifications |

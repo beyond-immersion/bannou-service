@@ -3,7 +3,7 @@ info:
   title: Gardener Service Configuration
   description: |
     Configuration properties for the Gardener service (L4 GameFeatures).
-    Controls void orchestration, scenario selection algorithm, scenario lifecycle,
+    Controls garden orchestration, scenario selection algorithm, scenario lifecycle,
     bond features, deployment phase defaults, seed integration, and background workers.
 
     **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
@@ -16,24 +16,24 @@ info:
 x-service-configuration:
   properties:
     # =========================================================================
-    # Void Orchestration
+    # Garden Orchestration
     # =========================================================================
 
-    VoidTickIntervalMs:
+    GardenTickIntervalMs:
       type: integer
-      env: GARDENER_VOID_TICK_INTERVAL_MS
+      env: GARDENER_GARDEN_TICK_INTERVAL_MS
       minimum: 1000
       maximum: 60000
       default: 5000
-      description: Milliseconds between void orchestrator evaluation cycles
+      description: Milliseconds between garden orchestrator evaluation cycles
 
-    MaxActivePoisPerVoid:
+    MaxActivePoisPerGarden:
       type: integer
-      env: GARDENER_MAX_ACTIVE_POIS_PER_VOID
+      env: GARDENER_MAX_ACTIVE_POIS_PER_GARDEN
       minimum: 1
       maximum: 50
       default: 8
-      description: Maximum concurrent POIs per player void instance
+      description: Maximum concurrent POIs per player garden instance
 
     PoiDefaultTtlMinutes:
       type: integer
@@ -48,21 +48,21 @@ x-service-configuration:
       format: float
       env: GARDENER_POI_SPAWN_RADIUS_MIN
       default: 50.0
-      description: Minimum distance from player to spawn a POI in void space units
+      description: Minimum distance from player to spawn a POI in garden space units
 
     PoiSpawnRadiusMax:
       type: number
       format: float
       env: GARDENER_POI_SPAWN_RADIUS_MAX
       default: 200.0
-      description: Maximum distance from player to spawn a POI in void space units
+      description: Maximum distance from player to spawn a POI in garden space units
 
     MinPoiSpacing:
       type: number
       format: float
       env: GARDENER_MIN_POI_SPACING
       default: 30.0
-      description: Minimum distance between any two POIs in void space units
+      description: Minimum distance between any two POIs in garden space units
 
     PoiDefaultIntensityRamp:
       type: number
@@ -79,7 +79,7 @@ x-service-configuration:
       env: GARDENER_POI_DEFAULT_TRIGGER_RADIUS
       minimum: 1.0
       default: 15.0
-      description: Default trigger radius for POI proximity detection in void space units
+      description: Default trigger radius for POI proximity detection in garden space units
 
     HesitationDetectionThreshold:
       type: number
@@ -87,7 +87,7 @@ x-service-configuration:
       env: GARDENER_HESITATION_DETECTION_THRESHOLD
       minimum: 0.0
       default: 0.1
-      description: Minimum distance movement for hesitation detection in void space units
+      description: Minimum distance movement for hesitation detection in garden space units
 
     DiversitySeenPenalty:
       type: number
@@ -327,11 +327,11 @@ x-service-configuration:
     # Bond Features
     # =========================================================================
 
-    BondSharedVoidEnabled:
+    BondSharedGardenEnabled:
       type: boolean
-      env: GARDENER_BOND_SHARED_VOID_ENABLED
+      env: GARDENER_BOND_SHARED_GARDEN_ENABLED
       default: true
-      description: Whether bonded players share a void instance with merged POIs
+      description: Whether bonded players share a garden instance with merged POIs
 
     BondScenarioPriority:
       type: number

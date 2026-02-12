@@ -3,20 +3,20 @@
 > **Plugin**: lib-gardener
 > **Schema**: schemas/gardener-api.yaml
 > **Version**: 1.0.0
-> **State Stores**: gardener-void-instances (Redis), gardener-pois (Redis), gardener-scenario-templates (MySQL), gardener-scenario-instances (Redis), gardener-scenario-history (MySQL), gardener-phase-config (MySQL), gardener-lock (Redis)
+> **State Stores**: gardener-garden-instances (Redis), gardener-pois (Redis), gardener-scenario-templates (MySQL), gardener-scenario-instances (Redis), gardener-scenario-history (MySQL), gardener-phase-config (MySQL), gardener-lock (Redis)
 
 ## Overview
 
-Player experience orchestration service (L4 GameFeatures) for void navigation, scenario routing, progressive discovery, and deployment phase management. Gardener is the player-side counterpart to Puppetmaster: where Puppetmaster orchestrates what NPCs experience, Gardener orchestrates what players experience. Players enter a procedural "Void" discovery space, encounter POIs (Points of Interest) driven by a weighted scoring algorithm, and enter scenarios backed by Game Sessions that award Seed growth on completion. Internal-only, never internet-facing.
+Player experience orchestration service (L4 GameFeatures) for garden navigation, scenario routing, progressive discovery, and deployment phase management. Gardener is the player-side counterpart to Puppetmaster: where Puppetmaster orchestrates what NPCs experience, Gardener orchestrates what players experience. Players enter a procedural "Garden" discovery space, encounter POIs (Points of Interest) driven by a weighted scoring algorithm, and enter scenarios backed by Game Sessions that award Seed growth on completion. Internal-only, never internet-facing.
 
 ## Dependencies (What This Plugin Relies On)
 
 | Dependency | Type | Usage |
 |------------|------|-------|
-| lib-state (`IStateStoreFactory`) | L0 Hard | 7 state stores: void instances, POIs, templates, scenarios, history, phase config, locks |
-| lib-state (`IDistributedLockProvider`) | L0 Hard | Distributed locks for void/scenario/template/phase mutations |
-| lib-state (`ICacheableStateStore`) | L0 Hard | Redis set operations for tracking active void and scenario account IDs |
-| lib-messaging (`IMessageBus`) | L0 Hard | Publishing 15 event types across void, POI, scenario, template, bond, and phase domains |
+| lib-state (`IStateStoreFactory`) | L0 Hard | 7 state stores: garden instances, POIs, templates, scenarios, history, phase config, locks |
+| lib-state (`IDistributedLockProvider`) | L0 Hard | Distributed locks for garden/scenario/template/phase mutations |
+| lib-state (`ICacheableStateStore`) | L0 Hard | Redis set operations for tracking active garden and scenario account IDs |
+| lib-messaging (`IMessageBus`) | L0 Hard | Publishing 15 event types across garden, POI, scenario, template, bond, and phase domains |
 | lib-messaging (`IEventConsumer`) | L0 Hard | Registering handlers for `seed.bond.formed`, `seed.activated`, `game-session.deleted` |
 | lib-seed (`ISeedClient`) | L2 Hard | Seed type registration, growth queries, growth recording, bond resolution |
 | lib-game-session (`IGameSessionClient`) | L2 Hard | Creating/cleaning up game sessions backing scenarios |
@@ -30,11 +30,11 @@ Player experience orchestration service (L4 GameFeatures) for void navigation, s
 
 ## State Storage
 
-**Store**: `gardener-void-instances` (Backend: Redis)
+**Store**: `gardener-garden-instances` (Backend: Redis)
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
-| `void:{accountId}` | `GardenInstanceModel` | Active void instance per player: position, velocity, drift metrics, active POI IDs, phase, cached growth phase, bond ID |
+| `garden:{accountId}` | `GardenInstanceModel` | Active garden instance per player: position, velocity, drift metrics, active POI IDs, phase, cached growth phase, bond ID |
 
 **Store**: `gardener-pois` (Backend: Redis)
 
@@ -70,17 +70,17 @@ Player experience orchestration service (L4 GameFeatures) for void navigation, s
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
-| `void:{accountId}` | Lock | Distributed lock for void enter/leave/POI operations |
+| `garden:{accountId}` | Lock | Distributed lock for garden enter/leave/POI operations |
 | `scenario:{accountId}` | Lock | Distributed lock for scenario enter/complete/abandon/chain |
 | `bond-scenario:{bondId}` | Lock | Distributed lock for bond scenario entry |
 | `template:{templateId}` | Lock | Distributed lock for template update/deprecate |
 | `phase` | Lock | Distributed lock for phase config update |
 
-**Tracking Sets** (via `ICacheableStateStore`, stored in `gardener-void-instances` store):
+**Tracking Sets** (via `ICacheableStateStore`, stored in `gardener-garden-instances` store):
 
 | Set Key | Element Type | Purpose |
 |---------|-------------|---------|
-| `gardener:active-voids` | `Guid` (accountId) | Tracks accounts with active void instances for background worker iteration |
+| `gardener:active-gardens` | `Guid` (accountId) | Tracks accounts with active garden instances for background worker iteration |
 | `gardener:active-scenarios` | `Guid` (accountId) | Tracks accounts with active scenarios for lifecycle worker iteration |
 
 ## Events
@@ -92,12 +92,12 @@ Player experience orchestration service (L4 GameFeatures) for void navigation, s
 | `scenario-template.created` | `ScenarioTemplateCreatedEvent` | New scenario template created via `CreateTemplateAsync` |
 | `scenario-template.updated` | `ScenarioTemplateUpdatedEvent` | Template updated or deprecated via `UpdateTemplateAsync`/`DeprecateTemplateAsync` |
 | `scenario-template.deleted` | `ScenarioTemplateDeletedEvent` | Template deleted (lifecycle event, declared in schema but no delete endpoint currently) |
-| `gardener.void.entered` | `GardenerVoidEnteredEvent` | Player enters the void via `EnterVoidAsync` |
-| `gardener.void.left` | `GardenerVoidLeftEvent` | Player leaves the void via `LeaveVoidAsync` |
-| `gardener.poi.spawned` | `GardenerPoiSpawnedEvent` | POI spawned by `GardenerVoidOrchestratorWorker` |
+| `gardener.garden.entered` | `GardenerGardenEnteredEvent` | Player enters the garden via `EnterGardenAsync` |
+| `gardener.garden.left` | `GardenerGardenLeftEvent` | Player leaves the garden via `LeaveGardenAsync` |
+| `gardener.poi.spawned` | `GardenerPoiSpawnedEvent` | POI spawned by `GardenerGardenOrchestratorWorker` |
 | `gardener.poi.entered` | `GardenerPoiEnteredEvent` | Player enters a POI via `InteractWithPoiAsync` or proximity trigger in `UpdatePositionAsync` |
 | `gardener.poi.declined` | `GardenerPoiDeclinedEvent` | Player declines a prompted POI via `DeclinePoiAsync` |
-| `gardener.poi.expired` | `GardenerPoiExpiredEvent` | POI TTL exceeded, expired by `GardenerVoidOrchestratorWorker` |
+| `gardener.poi.expired` | `GardenerPoiExpiredEvent` | POI TTL exceeded, expired by `GardenerGardenOrchestratorWorker` |
 | `gardener.scenario.started` | `GardenerScenarioStartedEvent` | Scenario instance created via `EnterScenarioAsync` |
 | `gardener.scenario.completed` | `GardenerScenarioCompletedEvent` | Scenario completed via `CompleteScenarioAsync` or timed-out by lifecycle worker |
 | `gardener.scenario.abandoned` | `GardenerScenarioAbandonedEvent` | Scenario abandoned via `AbandonScenarioAsync` or detected abandoned by lifecycle worker |
@@ -125,8 +125,8 @@ Player experience orchestration service (L4 GameFeatures) for void navigation, s
 
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
-| `VoidTickIntervalMs` | `GARDENER_VOID_TICK_INTERVAL_MS` | 5000 | Milliseconds between void orchestrator evaluation cycles |
-| `MaxActivePoisPerVoid` | `GARDENER_MAX_ACTIVE_POIS_PER_VOID` | 8 | Maximum concurrent POIs per player void instance |
+| `GardenTickIntervalMs` | `GARDENER_GARDEN_TICK_INTERVAL_MS` | 5000 | Milliseconds between garden orchestrator evaluation cycles |
+| `MaxActivePoisPerGarden` | `GARDENER_MAX_ACTIVE_POIS_PER_GARDEN` | 8 | Maximum concurrent POIs per player garden instance |
 | `PoiDefaultTtlMinutes` | `GARDENER_POI_DEFAULT_TTL_MINUTES` | 10 | Default TTL in minutes for spawned POIs |
 | `PoiSpawnRadiusMin` | `GARDENER_POI_SPAWN_RADIUS_MIN` | 50.0 | Minimum spawn distance from player |
 | `PoiSpawnRadiusMax` | `GARDENER_POI_SPAWN_RADIUS_MAX` | 200.0 | Maximum spawn distance from player |
@@ -160,7 +160,7 @@ Player experience orchestration service (L4 GameFeatures) for void navigation, s
 | `GrowthFullCompletionMinRatio` | `GARDENER_GROWTH_FULL_COMPLETION_MIN_RATIO` | 0.5 | Min time ratio floor for full completion growth |
 | `GrowthPartialMaxRatio` | `GARDENER_GROWTH_PARTIAL_MAX_RATIO` | 0.5 | Max time ratio cap for partial growth |
 | `DefaultEstimatedDurationMinutes` | `GARDENER_DEFAULT_ESTIMATED_DURATION_MINUTES` | 30 | Fallback estimated duration for templates without one |
-| `BondSharedVoidEnabled` | `GARDENER_BOND_SHARED_VOID_ENABLED` | true | Whether bonded players share a void instance |
+| `BondSharedGardenEnabled` | `GARDENER_BOND_SHARED_GARDEN_ENABLED` | true | Whether bonded players share a garden instance |
 | `BondScenarioPriority` | `GARDENER_BOND_SCENARIO_PRIORITY` | 1.5 | Scoring boost multiplier for bond-preferred scenarios |
 | `DefaultPhase` | `GARDENER_DEFAULT_PHASE` | Alpha | Starting deployment phase for new installations |
 | `SeedTypeCode` | `GARDENER_SEED_TYPE_CODE` | guardian | Seed type code this gardener manages |
@@ -183,34 +183,34 @@ Player experience orchestration service (L4 GameFeatures) for void navigation, s
 | `ISeedClient` | Seed type registration, growth queries/recording, bond resolution |
 | `IGameSessionClient` | Game session creation and cleanup |
 | `IServiceProvider` | Soft dependency resolution (`IPuppetmasterClient`) |
-| `GardenerVoidOrchestratorWorker` | Background service: POI expiration, scoring, spawning |
+| `GardenerGardenOrchestratorWorker` | Background service: POI expiration, scoring, spawning |
 | `GardenerScenarioLifecycleWorker` | Background service: timeout/abandon detection |
 | `GardenerSeedEvolutionListener` | Singleton `ISeedEvolutionListener` for growth/phase notifications |
 | `GardenerGrowthCalculation` | Static helper: shared growth award calculation logic |
 
 ## API Endpoints (Implementation Notes)
 
-### Void Management (4 endpoints)
+### Garden Management (4 endpoints)
 
-- **EnterVoidAsync**: Requires active guardian seed (queries via `ISeedClient.GetSeedsByOwnerAsync`). Creates garden instance in Redis, adds to `gardener:active-voids` tracking set. Returns 409 if already in void, 404 if no active seed.
-- **GetVoidStateAsync**: Read-only lookup of garden instance and active POIs.
+- **EnterGardenAsync**: Requires active guardian seed (queries via `ISeedClient.GetSeedsByOwnerAsync`). Creates garden instance in Redis, adds to `gardener:active-gardens` tracking set. Returns 409 if already in garden, 404 if no active seed.
+- **GetGardenStateAsync**: Read-only lookup of garden instance and active POIs.
 - **UpdatePositionAsync**: High-frequency idempotent position update. No distributed lock (intentional -- last-write-wins for acceptable latency). Accumulates drift metrics (total distance, directional bias, hesitation count). Checks proximity triggers on active POIs.
-- **LeaveVoidAsync**: Locked cleanup of all POIs, garden instance, and tracking set entry.
+- **LeaveGardenAsync**: Locked cleanup of all POIs, garden instance, and tracking set entry.
 
 ### POI Interaction (3 endpoints)
 
-- **ListPoisAsync**: Returns all active POIs for the player's void instance.
+- **ListPoisAsync**: Returns all active POIs for the player's garden instance.
 - **InteractWithPoiAsync**: Determines interaction result based on POI trigger mode. Prompted mode returns `ScenarioPrompt` with hardcoded choices `["Enter", "Decline"]` and template display name. Proximity/Interaction/Forced modes return `ScenarioEnter`. Marks POI as Entered.
 - **DeclinePoiAsync**: Marks POI as Declined, adds template to garden's `ScenarioHistory` for diversity scoring, triggers re-evaluation.
 
 ### Scenario Lifecycle (6 endpoints)
 
-- **EnterScenarioAsync**: Validates template active + allowed in phase + global capacity. Creates backing game session via `IGameSessionClient`. Moves player from void tracking to scenario tracking. Cleans up garden instance and all POIs. Optionally notifies Puppetmaster (soft dependency).
+- **EnterScenarioAsync**: Validates template active + allowed in phase + global capacity. Creates backing game session via `IGameSessionClient`. Moves player from garden tracking to scenario tracking. Cleans up garden instance and all POIs. Optionally notifies Puppetmaster (soft dependency).
 - **GetScenarioStateAsync**: Read-only scenario lookup.
 - **CompleteScenarioAsync**: Calculates full growth via `GardenerGrowthCalculation`, awards to all participants via `ISeedClient.RecordGrowthBatchAsync`, writes history to MySQL, cleans up Redis + game session.
 - **AbandonScenarioAsync**: Same as complete but with partial growth calculation and Abandoned status.
 - **ChainScenarioAsync**: Validates chaining rules (template `LeadsTo` list and `MaxChainDepth`). Completes current scenario with growth, creates new chained scenario reusing the same game session. Increments chain depth.
-- **EnterScenarioTogetherAsync** (Bond): Resolves bond participants via `ISeedClient.GetBondAsync` + `GetSeedAsync`. Validates both in void, template supports multiplayer. Creates shared game session and scenario for all participants.
+- **EnterScenarioTogetherAsync** (Bond): Resolves bond participants via `ISeedClient.GetBondAsync` + `GetSeedAsync`. Validates both in garden, template supports multiplayer. Creates shared game session and scenario for all participants.
 
 ### Template Management (6 endpoints)
 
@@ -220,16 +220,16 @@ Standard CRUD on scenario templates with JSON-queryable MySQL storage. Code uniq
 
 - **GetPhaseConfigAsync**: Returns phase config singleton, auto-creates with defaults if missing.
 - **UpdatePhaseConfigAsync**: Locked update of phase config. Publishes `gardener.phase.changed` event only if phase actually changed.
-- **GetPhaseMetricsAsync**: Returns active void/scenario counts from tracking sets and capacity utilization ratio.
+- **GetPhaseMetricsAsync**: Returns active garden/scenario counts from tracking sets and capacity utilization ratio.
 
 ### Bond Features (2 endpoints)
 
 - **EnterScenarioTogetherAsync**: Documented under Scenario Lifecycle above.
-- **GetSharedVoidStateAsync**: Returns merged view of all bond participants' void states (positions and POIs).
+- **GetSharedGardenStateAsync**: Returns merged view of all bond participants' garden states (positions and POIs).
 
 ## Scenario Selection Algorithm
 
-The `GardenerVoidOrchestratorWorker` spawns POIs using a weighted scoring formula:
+The `GardenerGardenOrchestratorWorker` spawns POIs using a weighted scoring formula:
 
 ```
 TotalScore = AffinityWeight * affinity + DiversityWeight * diversity
@@ -250,19 +250,19 @@ If the player has a bond and the template is bond-preferred, score is multiplied
 
 ```
                         ┌──────────────────────────────┐
-                        │     EnterVoidAsync           │
+                        │     EnterGardenAsync           │
                         │  (Creates GardenInstance)    │
                         └──────────┬───────────────────┘
                                    │
                                    ▼
     ┌───────────────────────────────────────────────────────┐
-    │              VOID (Active Garden)                      │
+    │              GARDEN (Active Instance)                   │
     │                                                        │
-    │  void:{accountId} ──── ActivePoiIds ────┐              │
+    │  garden:{accountId} ──── ActivePoiIds ────┐            │
     │  [Redis]               [List<Guid>]     │              │
     │                                         ▼              │
     │  ┌───────────────────────────────────────────┐         │
-    │  │ GardenerVoidOrchestratorWorker (tick)      │         │
+    │  │ GardenerGardenOrchestratorWorker (tick)     │         │
     │  │  1. Expire stale POIs                     │         │
     │  │  2. Score eligible templates               │         │
     │  │  3. Spawn POIs at valid positions          │         │
@@ -297,7 +297,7 @@ If the player has a bond and the template is bond-preferred, score is multiplied
 
 ## Stubs & Unimplemented Features
 
-1. **MinGrowthPhase filtering**: The `GetEligibleTemplatesAsync` method in `GardenerVoidOrchestratorWorker` has a MinGrowthPhase check block (lines 457-465) with an empty body -- the comment says "For now, include all templates where the player has any growth phase." Growth phases are opaque strings without ordinal comparison, so phase ordering would need a lookup table.
+1. **MinGrowthPhase filtering**: The `GetEligibleTemplatesAsync` method in `GardenerGardenOrchestratorWorker` has a MinGrowthPhase check block (lines 457-465) with an empty body -- the comment says "For now, include all templates where the player has any growth phase." Growth phases are opaque strings without ordinal comparison, so phase ordering would need a lookup table.
 
 2. **scenario-template.deleted event**: Declared in the events schema via `x-lifecycle` but no delete endpoint exists in the API. The lifecycle event is generated but never published.
 
@@ -309,11 +309,11 @@ If the player has a bond and the template is bond-preferred, score is multiplied
 
 6. **Analytics integration**: The implementation plan specified `IAnalyticsClient` (L4 soft dependency) for querying milestone data to enrich scenario scoring. This was never implemented -- the `NarrativeWeight` scoring component partially compensates but milestone-based scoring is absent.
 
-7. **Client event schema (gardener-client-events.yaml)**: No client event schema exists for real-time POI push to WebSocket clients. POI spawns, expirations, and trigger events happen server-side only. Clients must poll `GetVoidStateAsync` to discover changes, which defeats the purpose of the void as a responsive discovery space. This is a significant gap for the intended player experience.
+7. **Client event schema (gardener-client-events.yaml)**: No client event schema exists for real-time POI push to WebSocket clients. POI spawns, expirations, and trigger events happen server-side only. Clients must poll `GetGardenStateAsync` to discover changes, which defeats the purpose of the garden as a responsive discovery space. This is a significant gap for the intended player experience.
 
 8. **ConnectivityMode.Persistent has no special handling**: The enum value exists (Alpha, Beta, Release map to Isolated, WorldSlice, Persistent) but the code treats all connectivity modes identically during scenario creation and lifecycle. The vision describes Persistent as "a scenario that doesn't end" -- the release surprise. No code path distinguishes Persistent scenarios from Isolated ones.
 
-9. **Prerequisite validation during scenario entry**: Templates store `Prerequisites` (required domains, required/excluded scenarios) in the model but they are never validated in `EnterScenarioAsync`. A player can enter any scenario regardless of prerequisites. The `VoidOrchestratorWorker.GetEligibleTemplatesAsync` also does not filter by prerequisites.
+9. **Prerequisite validation during scenario entry**: Templates store `Prerequisites` (required domains, required/excluded scenarios) in the model but they are never validated in `EnterScenarioAsync`. A player can enter any scenario regardless of prerequisites. The `GardenerGardenOrchestratorWorker.GetEligibleTemplatesAsync` also does not filter by prerequisites.
 
 10. **Per-template MaxConcurrentInstances enforcement**: Templates store a `MaxConcurrentInstances` value but it is never checked during scenario entry. Only the global `MaxConcurrentScenariosGlobal` is enforced.
 
@@ -329,7 +329,7 @@ If the player has a bond and the template is bond-preferred, score is multiplied
 
 5. **Dialog choice trigger mode**: PLAYER-VISION.md describes four acceptance modes: implicit (proximity), prompted (acknowledge), dialog choices (multiple branching options), and forced. The implementation has Proximity, Interaction, Prompted, and Forced -- but "dialog choices" (presenting multiple distinct branching options beyond Enter/Decline) is missing. Prompted mode only offers binary accept/decline.
 
-6. **Void position binary protocol optimization**: `UpdatePositionAsync` uses POST JSON for high-frequency position updates. PLAYER-VISION.md describes the void as "negligible bandwidth" but JSON POST per tick adds overhead. Binary protocol through Connect would reduce this but was deferred per the plan ("optimize only if latency/throughput becomes a problem").
+6. **Garden position binary protocol optimization**: `UpdatePositionAsync` uses POST JSON for high-frequency position updates. PLAYER-VISION.md describes the garden as "negligible bandwidth" but JSON POST per tick adds overhead. Binary protocol through Connect would reduce this but was deferred per the plan ("optimize only if latency/throughput becomes a problem").
 
 7. **Multi-seed-type support**: `SeedTypeCode` is a single config property (default "guardian"). PLAYER-VISION.md describes multiple seed types (guardian spirit, dungeon master, realm-specific). Each type would need its own Gardener instance or the service would need to manage multiple types. The current architecture supports this (deploy multiple Gardener instances with different `GARDENER_SEED_TYPE_CODE`), but this deployment pattern is undocumented.
 
@@ -345,13 +345,13 @@ If the player has a bond and the template is bond-preferred, score is multiplied
 
 3. **ListTemplatesAsync in-memory phase filtering breaks pagination**: When `DeploymentPhase` filter is provided, templates are filtered in-memory after the database query. The response uses `templateList.Count` instead of `result.TotalCount`, making TotalCount inaccurate relative to page/pageSize. If 100 templates exist but only 10 match the phase filter on page 1, the client sees TotalCount=10 regardless of what's on other pages.
 
-4. **Missing try-catch around CreateGameSessionAsync**: In `EnterScenarioAsync` (line 607) and `EnterScenarioTogetherAsync` (line 1383), `_gameSessionClient.CreateGameSessionAsync` is called without try-catch. If game session creation fails, the exception propagates unhandled. Per error handling tenets, external service calls should be wrapped with `ApiException` distinction. The void tracking set and garden instance may be in an inconsistent state if this call fails mid-operation (garden already deleted, but scenario never created -- player stuck with no void and no scenario). Fix requires try-catch with compensation (restore garden instance on failure) or transactional ordering (create game session before deleting garden).
+4. **Missing try-catch around CreateGameSessionAsync**: In `EnterScenarioAsync` (line 607) and `EnterScenarioTogetherAsync` (line 1383), `_gameSessionClient.CreateGameSessionAsync` is called without try-catch. If game session creation fails, the exception propagates unhandled. Per error handling tenets, external service calls should be wrapped with `ApiException` distinction. The garden tracking set and garden instance may be in an inconsistent state if this call fails mid-operation (garden already deleted, but scenario never created -- player stuck with no garden and no scenario). Fix requires try-catch with compensation (restore garden instance on failure) or transactional ordering (create game session before deleting garden).
 
-5. **EnterVoidAsync has no distributed lock**: Unlike `LeaveVoidAsync`, `InteractWithPoiAsync`, `DeclinePoiAsync`, and all scenario mutation methods, `EnterVoidAsync` does not acquire a distributed lock before checking for an existing garden and creating a new one. Two concurrent calls for the same account could both pass the existence check (line 179-184), both create a garden instance, and both publish `gardener.void.entered` events. The second `SaveAsync` overwrites the first, and the tracking set `AddToSetAsync` is idempotent, but the first call's event would reference a garden that was immediately replaced. Unlike `UpdatePositionAsync` (which intentionally omits the lock for latency on high-frequency calls), `EnterVoidAsync` is a low-frequency operation where a lock would be appropriate.
+5. **EnterGardenAsync has no distributed lock**: Unlike `LeaveGardenAsync`, `InteractWithPoiAsync`, `DeclinePoiAsync`, and all scenario mutation methods, `EnterGardenAsync` does not acquire a distributed lock before checking for an existing garden and creating a new one. Two concurrent calls for the same account could both pass the existence check (line 179-184), both create a garden instance, and both publish `gardener.garden.entered` events. The second `SaveAsync` overwrites the first, and the tracking set `AddToSetAsync` is idempotent, but the first call's event would reference a garden that was immediately replaced. Unlike `UpdatePositionAsync` (which intentionally omits the lock for latency on high-frequency calls), `EnterGardenAsync` is a low-frequency operation where a lock would be appropriate.
 
-6. **Hardcoded query page sizes in VoidOrchestratorWorker (T21 violation)**: `GetEligibleTemplatesAsync` (GardenerVoidOrchestratorWorker.cs:427) queries templates with hardcoded `page: 0, pageSize: 500` and history with `page: 0, pageSize: 200` (line 438). If a deployment has more than 500 active templates or a player has more than 200 history records, excess entries are silently ignored. These limits should be configuration properties per the Configuration-First tenet.
+6. **Hardcoded query page sizes in GardenOrchestratorWorker (T21 violation)**: `GetEligibleTemplatesAsync` (GardenerGardenOrchestratorWorker.cs:427) queries templates with hardcoded `page: 0, pageSize: 500` and history with `page: 0, pageSize: 200` (line 438). If a deployment has more than 500 active templates or a player has more than 200 history records, excess entries are silently ignored. These limits should be configuration properties per the Configuration-First tenet.
 
-7. **Race condition in background worker POI expiry**: `GardenerVoidOrchestratorWorker.ExpireStalePoiAsync` modifies POI state (setting `Status = Expired`) and removes POI IDs from the garden's `ActivePoiIds` list without acquiring a distributed lock for the garden instance. If a player interacts with a POI via `InteractWithPoiAsync` (which does acquire a lock) at the same moment the worker expires it, the worker's unlocked write could overwrite the interaction result. The API and worker operate on the same Redis keys without coordination. Fix requires either acquiring a garden-level lock in the worker's per-garden processing or accepting and documenting last-write-wins semantics for POI state.
+7. **Race condition in background worker POI expiry**: `GardenerGardenOrchestratorWorker.ExpireStalePoiAsync` modifies POI state (setting `Status = Expired`) and removes POI IDs from the garden's `ActivePoiIds` list without acquiring a distributed lock for the garden instance. If a player interacts with a POI via `InteractWithPoiAsync` (which does acquire a lock) at the same moment the worker expires it, the worker's unlocked write could overwrite the interaction result. The API and worker operate on the same Redis keys without coordination. Fix requires either acquiring a garden-level lock in the worker's per-garden processing or accepting and documenting last-write-wins semantics for POI state.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -365,7 +365,7 @@ If the player has a bond and the template is bond-preferred, score is multiplied
 
 5. **ISeedEvolutionListener is a separate singleton class**: `GardenerSeedEvolutionListener` is registered as a Singleton rather than being part of `GardenerService` (which is Scoped). This is required because `ISeedEvolutionListener` must be resolvable from BackgroundService (Singleton) context. Follows the same pattern as `SeedCollectionUnlockListener`.
 
-6. **Tracking sets use GardenCacheStore from void-instances**: The `ActiveVoidsTrackingKey` and `ActiveScenariosTrackingKey` Redis sets use the `ICacheableStateStore<GardenInstanceModel>` backed by the `gardener-void-instances` store. This works because Redis set operations are independent of the store's value type. The tracking sets are separate data structures within the same Redis namespace.
+6. **Tracking sets use GardenCacheStore from garden-instances**: The `ActiveGardensTrackingKey` and `ActiveScenariosTrackingKey` Redis sets use the `ICacheableStateStore<GardenInstanceModel>` backed by the `gardener-garden-instances` store. This works because Redis set operations are independent of the store's value type. The tracking sets are separate data structures within the same Redis namespace.
 
 7. **Chained scenarios reuse the game session**: When `ChainScenarioAsync` transitions to a new scenario, it reuses the previous scenario's `GameSessionId` rather than creating a new game session. This keeps the player in the same session context across the chain.
 
@@ -375,6 +375,47 @@ If the player has a bond and the template is bond-preferred, score is multiplied
 
 2. **DeploymentPhase filter needs MySQL JSON array query**: The `ListTemplatesAsync` in-memory filtering for `AllowedPhases` is a workaround because MySQL JSON path queries don't support "array contains value" natively in the lib-state abstraction. A proper fix requires either extending `IJsonQueryableStateStore` with array-contains semantics or using a different storage pattern (e.g., separate phase-template mapping).
 
+3. **Persistent connectivity mode and the release transition**: PLAYER-VISION.md describes the release as "a scenario that doesn't end, a door that leads to permanent inhabitation." `ConnectivityMode.Persistent` exists as an enum value but has no differentiated code path. Designing this requires answering: What makes a Persistent scenario different from Isolated? Does the player stay in-world indefinitely? Does the garden become a between-sessions lobby? How does the "surprise" transition work without disrupting players mid-scenario?
+
+4. **Content flywheel integration point**: Gardener generates play (scenarios, growth, history) but doesn't contribute to the content side of the flywheel. The architectural question is where the connection point should be: Should scenario completion publish events that Storyline/Puppetmaster consume? Should scenario history records feed into compressed archives via lib-resource? This is a cross-cutting design question that affects multiple services.
+
+5. **Background worker and API lock coordination**: The `GardenerGardenOrchestratorWorker` processes gardens without distributed locks (for throughput), while API endpoints acquire locks for the same garden instances. A design decision is needed: either the worker acquires per-garden locks (safe but slower, limits throughput at scale), or the system accepts eventual consistency between worker and API state (current implicit behavior, needs explicit documentation and edge case analysis).
+
+6. **Plan document superseded**: The original implementation plan (`docs/plans/GARDENER.md`) was superseded by this deep dive and has been deleted. The plan had several inaccuracies: stated 25 endpoints (actual: 23), specified event-based growth awards (actual: direct API via `ISeedClient.RecordGrowthBatchAsync`), listed 5 broadcast event subscriptions (actual: 3 events + DI listener), and named `game-session.ended` (actual: `game-session.deleted`). This deep dive is the authoritative reference.
+
 ## Work Tracking
 
-*(No active work tracking items)*
+### P0 -- Fix Immediately
+
+- [ ] **Bug #1**: Make `webSocketSessionId` nullable in game-session API schema, update Gardener to pass `null` instead of `Guid.Empty`
+- [ ] **Bug #2**: Make `GameServiceId` nullable in seed API schema for cross-game seed types, update Gardener plugin registration
+- [ ] **Bug #3**: Fix `ListTemplatesAsync` pagination -- either compute TotalCount from full filtered set or extend JSON query with array-contains
+- [ ] **Bug #4**: Add try-catch + compensation around `CreateGameSessionAsync` in `EnterScenarioAsync` and `EnterScenarioTogetherAsync`
+- [ ] **Bug #5**: Add distributed lock to `EnterGardenAsync` (low-frequency operation, lock is appropriate)
+- [ ] **Bug #6**: Extract hardcoded query page sizes (500, 200) in `GardenerGardenOrchestratorWorker` to configuration properties
+- [ ] **Bug #7**: Resolve POI expiry race condition -- either add garden-level lock in worker or document last-write-wins acceptance
+
+### P1 -- Complete Before Beta
+
+- [ ] **Stub #9**: Implement prerequisite validation in `EnterScenarioAsync` and `GetEligibleTemplatesAsync`
+- [ ] **Stub #10**: Implement per-template `MaxConcurrentInstances` enforcement during scenario entry
+- [ ] **Stub #1/Design #1**: Implement `MinGrowthPhase` ordinal comparison (requires Seed phase ordering query or local mapping)
+- [ ] **Stub #7**: Create `gardener-client-events.yaml` schema for real-time POI spawn/expire/trigger push to WebSocket clients
+- [ ] **Extension #2**: Write history records for all bond scenario participants, not just primary
+- [ ] **Stub #3**: Implement actual Puppetmaster API call in `EnterScenarioAsync` (not just log)
+
+### P2 -- Feature Gaps
+
+- [ ] **Stub #6**: Add Analytics milestone integration for scenario scoring (`IAnalyticsClient` soft dependency)
+- [ ] **Stub #5**: Add Matchmaking integration for group scenarios (`IMatchmakingClient` soft dependency)
+- [ ] **Extension #1**: Implement scenario history retention policy / cleanup worker
+- [ ] **Stub #8**: Design and implement `ConnectivityMode.Persistent` differentiation for release transition
+- [ ] **Extension #4**: Design content flywheel connection (scenario outcomes feeding Storyline/Puppetmaster)
+- [ ] **Extension #5**: Add dialog choice trigger mode for multi-option branching POIs
+- [ ] **Stub #4**: Wire up `PersistentEntryEnabled` and `GardenMinigamesEnabled` phase config flags to service logic
+
+### P3 -- Documentation & Cleanup
+
+- [x] **Design #6**: Implementation plan (`docs/plans/GARDENER.md`) superseded by this deep dive and deleted
+- [ ] **Stub #2**: Either add template delete endpoint to publish `scenario-template.deleted` or remove lifecycle event from schema
+- [ ] **Extension #7**: Document multi-seed-type deployment pattern (multiple Gardener instances with different `GARDENER_SEED_TYPE_CODE`)

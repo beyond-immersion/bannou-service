@@ -4,7 +4,7 @@ info:
   description: |
     Event subscription and publication declarations for Gardener service.
     Lifecycle events (Created, Updated, Deleted) are auto-generated from x-lifecycle
-    for ScenarioTemplate entities. Custom events cover void navigation, POI interaction,
+    for ScenarioTemplate entities. Custom events cover garden navigation, POI interaction,
     scenario lifecycle, bond scenarios, and deployment phase changes.
 
     **Cross-Service Integration**:
@@ -15,7 +15,7 @@ info:
       and activation tracking.
     - Subscribes to game-session.deleted lifecycle event for scenario cleanup.
 
-    **Topic Naming**: Uses dot-separated format (gardener.void.entered).
+    **Topic Naming**: Uses dot-separated format (gardener.garden.entered).
 
     **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
     1. Read docs/reference/SCHEMA-RULES.md
@@ -46,17 +46,17 @@ info:
     - topic: scenario-template.deleted
       event: ScenarioTemplateDeletedEvent
       description: Published when a scenario template is deleted
-    # Custom events - Void
-    - topic: gardener.void.entered
-      event: GardenerVoidEnteredEvent
-      description: Published when a player enters the void
-    - topic: gardener.void.left
-      event: GardenerVoidLeftEvent
-      description: Published when a player leaves the void
+    # Custom events - Garden
+    - topic: gardener.garden.entered
+      event: GardenerGardenEnteredEvent
+      description: Published when a player enters the garden
+    - topic: gardener.garden.left
+      event: GardenerGardenLeftEvent
+      description: Published when a player leaves the garden
     # Custom events - POI
     - topic: gardener.poi.spawned
       event: GardenerPoiSpawnedEvent
-      description: Published when a POI spawns in a void instance
+      description: Published when a POI spawns in a garden instance
     - topic: gardener.poi.entered
       event: GardenerPoiEnteredEvent
       description: Published when a player enters a POI / triggers a scenario
@@ -115,70 +115,70 @@ components:
     # Custom Published Events (non-lifecycle)
     # =========================================================================
 
-    GardenerVoidEnteredEvent:
+    GardenerGardenEnteredEvent:
       allOf:
         - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
-      description: Published when a player enters the void
+      description: Published when a player enters the garden
       required:
         - accountId
         - seedId
-        - voidInstanceId
+        - gardenInstanceId
       properties:
         accountId:
           type: string
           format: uuid
-          description: Account that entered the void
+          description: Account that entered the garden
         seedId:
           type: string
           format: uuid
-          description: Active seed for this void session
-        voidInstanceId:
+          description: Active seed for this garden session
+        gardenInstanceId:
           type: string
           format: uuid
-          description: Created void instance ID
+          description: Created garden instance ID
 
-    GardenerVoidLeftEvent:
+    GardenerGardenLeftEvent:
       allOf:
         - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
-      description: Published when a player leaves the void
+      description: Published when a player leaves the garden
       required:
         - accountId
-        - voidInstanceId
+        - gardenInstanceId
         - sessionDurationSeconds
       properties:
         accountId:
           type: string
           format: uuid
-          description: Account that left the void
-        voidInstanceId:
+          description: Account that left the garden
+        gardenInstanceId:
           type: string
           format: uuid
-          description: Void instance that was destroyed
+          description: Garden instance that was destroyed
         sessionDurationSeconds:
           type: number
           format: float
-          description: Total void session duration in seconds
+          description: Total garden session duration in seconds
 
     GardenerPoiSpawnedEvent:
       allOf:
         - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
-      description: Published when a POI spawns in a void instance
+      description: Published when a POI spawns in a garden instance
       required:
-        - voidInstanceId
+        - gardenInstanceId
         - poiId
         - poiType
         - scenarioTemplateId
       properties:
-        voidInstanceId:
+        gardenInstanceId:
           type: string
           format: uuid
-          description: Void instance the POI spawned in
+          description: Garden instance the POI spawned in
         poiId:
           type: string
           format: uuid
@@ -246,13 +246,13 @@ components:
       additionalProperties: false
       description: Published when a POI expires without player interaction
       required:
-        - voidInstanceId
+        - gardenInstanceId
         - poiId
       properties:
-        voidInstanceId:
+        gardenInstanceId:
           type: string
           format: uuid
-          description: Void instance the POI was in
+          description: Garden instance the POI was in
         poiId:
           type: string
           format: uuid

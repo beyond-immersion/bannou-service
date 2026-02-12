@@ -6,7 +6,7 @@
 
 The Seed service is a new L2 Game Foundation plugin that provides a generic progressive growth primitive. Seeds are entities that start empty and grow by accumulating metadata from external events, progressively gaining capabilities. They support polymorphic ownership (accounts, actors, realms, characters, relationships), configurable seed types with growth phases and capability rules, and seed-to-seed bonds.
 
-This is the foundational growth primitive described in the [Seed System Guide](../guides/SEED-SYSTEM.md). The Gardener service (L4, separate plan at `docs/plans/GARDENER.md`) will be the first consumer. Three open design questions were deferred to GitHub issues with recommended defaults chosen (decay off, no cross-seed sharing, no cross-type transfer).
+This is the foundational growth primitive described in the [Seed System Guide](../guides/SEED-SYSTEM.md). The Gardener service (L4) is the first consumer -- see the [Gardener Deep Dive](../plugins/GARDENER.md) for implementation details. Three open design questions were deferred to GitHub issues with recommended defaults chosen (decay off, no cross-seed sharing, no cross-type transfer).
 
 **Open question resolutions** *(plans should document any design decisions made during planning)*:
 - Seed types support both API registration at runtime AND configuration-based seeding on startup.

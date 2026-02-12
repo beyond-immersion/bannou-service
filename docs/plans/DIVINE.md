@@ -17,7 +17,7 @@ Gods are **completely distinct from characters** -- there are far more differenc
 
 ### Q2: Puppetmaster Integration -> One-Way Dependency (Divine Calls Puppetmaster)
 
-lib-divine calls into Puppetmaster to spawn/stop deity watcher actors. This avoids circularity -- if Puppetmaster knew about divine directly, divine would still need to know about Puppetmaster anyway. The one-way call mirrors Puppetmaster's own pattern with Actor. lib-divine owns "what a god is" (domain, divinity, blessings, followers). Puppetmaster owns "how a god acts" (watcher lifecycle, behavior execution, event monitoring). lib-divine registers custom ABML action handlers (e.g., `grant_blessing`, `spend_divinity`) that deity behavior documents invoke.
+lib-divine calls into Puppetmaster to start/stop deity watcher actors. This avoids circularity -- if Puppetmaster knew about divine directly, divine would still need to know about Puppetmaster anyway. The one-way call mirrors Puppetmaster's own pattern with Actor. lib-divine owns "what a god is" (domain, divinity, blessings, followers). Puppetmaster owns "how a god acts" (watcher lifecycle, behavior execution, event monitoring). lib-divine registers custom ABML action handlers (e.g., `grant_blessing`, `spend_divinity`) that deity behavior documents invoke.
 
 ### Q3: DanMachi Leveling Gate -> Deferred
 
@@ -681,7 +681,7 @@ All tests use the capture pattern (Callback on mock setups) to verify saved stat
 | `ISeedClient` | L2 | Deity domain power seed creation | Deity created without seed; domain growth tracking disabled |
 | `ICollectionClient` | L4 | Permanent blessing grants (Greater/Supreme tiers, #286) | Permanent blessings unavailable; only temporary blessings work |
 | `IStatusClient` | L4 | Temporary blessing grants (Minor/Standard tiers, #282) | Temporary blessings unavailable; only permanent blessings work |
-| `IPuppetmasterClient` | L4 | Spawn/stop deity watcher actors | Deities have no active behavior; blessings still work via API |
+| `IPuppetmasterClient` | L4 | Start/stop deity watcher actors | Deities have no active behavior; blessings still work via API |
 | `IAnalyticsClient` | L4 | Domain-relevant score queries for divinity generation | Divinity generation from analytics events disabled; manual credit still works |
 
 ---
@@ -727,7 +727,7 @@ All tests use the capture pattern (Callback on mock setups) to verify saved stat
 
 | Interaction | API Call |
 |-------------|----------|
-| Spawn deity watcher on activation | `IPuppetmasterClient.SpawnWatcherAsync` (actorType: config.DeityActorTypeCode, ABML behavior doc) |
+| Start deity watcher on activation | `IPuppetmasterClient.StartWatcherAsync` (actorType: config.DeityActorTypeCode, ABML behavior doc) |
 | Stop deity watcher on deactivation | `IPuppetmasterClient.StopWatcherAsync` |
 
 ### Divine -> Seed (L2, soft in practice)

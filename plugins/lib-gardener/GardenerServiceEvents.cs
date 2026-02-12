@@ -47,7 +47,7 @@ public partial class GardenerService
     /// </summary>
     public async Task HandleSeedBondFormedAsync(SeedBondFormedEvent evt)
     {
-        if (!_configuration.BondSharedVoidEnabled)
+        if (!_configuration.BondSharedGardenEnabled)
         {
             _logger.LogDebug("Bond shared garden disabled, ignoring bond formed event");
             return;

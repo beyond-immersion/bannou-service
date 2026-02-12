@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: Bannou Gardener Service API
   description: |
-    Player experience orchestration service (L4 GameFeatures) for void navigation,
+    Player experience orchestration service (L4 GameFeatures) for garden navigation,
     scenario routing, progressive discovery, and deployment phase management.
     Gardener is the player-side counterpart to Puppetmaster: where Puppetmaster
     orchestrates what NPCs experience, Gardener orchestrates what players experience.
@@ -27,16 +27,16 @@ servers:
 - url: http://localhost:5012
   description: Bannou service endpoint (internal only)
 paths:
-  /gardener/void/enter:
+  /gardener/garden/enter:
     post:
-      summary: Enter the void
+      summary: Enter the garden
       description: |
-        Creates a void instance for the player. Finds or creates the player's
+        Creates a garden instance for the player. Finds or creates the player's
         active guardian seed, initializes drift metrics, and returns the initial
-        void state. First tick of the void orchestrator spawns POIs.
-      operationId: enterVoid
+        garden state. First tick of the garden orchestrator spawns POIs.
+      operationId: enterGarden
       tags:
-      - Void Management
+      - Garden Management
       x-permissions:
       - role: user
         states: {}
@@ -45,91 +45,96 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EnterVoidRequest'
+              $ref: '#/components/schemas/EnterGardenRequest'
       responses:
         '200':
-          description: Void instance created successfully
+          description: Garden instance created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/VoidStateResponse'
+                $ref: '#/components/schemas/GardenStateResponse'
         '404':
           description: No active seed found for account
         '409':
-          description: Player already has an active void instance
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EnterVoidRequest\"\
-        ,\n    \"$defs\": {\n        \"EnterVoidRequest\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Request to enter the void\",\n            \"required\": [\n                \"accountId\",\n                \"\
+          description: Player already has an active garden instance
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EnterGardenRequest\"\
+        ,\n    \"$defs\": {\n        \"EnterGardenRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to enter the garden\",\n            \"required\": [\n                \"accountId\",\n                \"\
         sessionId\"\n            ],\n            \"properties\": {\n                \"accountId\": {\n                   \
         \ \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Account
-        entering the void\"\n                },\n                \"sessionId\": {\n                    \"type\": \"string\"\
+        entering the garden\"\n                },\n                \"sessionId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Current WebSocket session ID\"\
         \n                }\n            }\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/VoidStateResponse\"\
-        ,\n    \"$defs\": {\n        \"VoidStateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Current void instance state for a player\",\n            \"required\": [\n                \"voidInstanceId\",\n\
-        \                \"seedId\",\n                \"accountId\",\n                \"position\",\n                \"activePois\"\
-        \n            ],\n            \"properties\": {\n                \"voidInstanceId\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier
-        for this void instance\"\n                },\n                \"seedId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Active seed for this void session\"\
-        \n                },\n                \"accountId\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"uuid\",\n                    \"description\": \"Account in the void\"\n                },\n \
-        \               \"position\": {\n                    \"$ref\": \"#/$defs/Vec3\",\n                    \"description\"\
-        : \"Current player position\"\n                },\n                \"activePois\": {\n                    \"type\"\
-        : \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/PoiSummary\"\n       \
-        \             },\n                    \"description\": \"Currently active POIs in this void instance\"\n         \
-        \       }\n            }\n        },\n        \"Vec3\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Three-dimensional spatial coordinates in void space\",\n            \"required\": [\n                \"x\",\n\
-        \                \"y\",\n                \"z\"\n            ],\n            \"properties\": {\n                \"\
-        x\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                  \
-        \  \"description\": \"X coordinate in void space units\"\n                },\n                \"y\": {\n         \
-        \           \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\"\
-        : \"Y coordinate in void space units\"\n                },\n                \"z\": {\n                    \"type\"\
-        : \"number\",\n                    \"format\": \"float\",\n                    \"description\": \"Z coordinate in
-        void space units\"\n                }\n            }\n        },\n        \"PoiSummary\": {\n            \"type\"\
-        : \"object\",\n            \"description\": \"POI state summary for client display\",\n            \"required\": [\n\
-        \                \"poiId\",\n                \"position\",\n                \"poiType\",\n                \"triggerMode\"\
-        ,\n                \"triggerRadius\",\n                \"status\"\n            ],\n            \"properties\": {\n\
-        \                \"poiId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"Unique identifier for this POI\"\n                },\n                \"\
-        position\": {\n                    \"$ref\": \"#/$defs/Vec3\",\n                    \"description\": \"POI position
-        in void space\"\n                },\n                \"poiType\": {\n                    \"$ref\": \"#/$defs/PoiType\"\
-        ,\n                    \"description\": \"Sensory presentation type\"\n                },\n                \"visualHint\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Visual hint identifier for client rendering\"\n                },\n                \"audioHint\": {\n        \
-        \            \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\":
-        \"Audio hint identifier for client rendering\"\n                },\n                \"intensityRamp\": {\n       \
-        \             \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\"\
-        : \"Current intensity ramp value (0.0-1.0)\",\n                    \"default\": 0.0\n                },\n        \
-        \        \"triggerMode\": {\n                    \"$ref\": \"#/$defs/TriggerMode\",\n                    \"description\"\
-        : \"How this POI is triggered\"\n                },\n                \"triggerRadius\": {\n                    \"\
-        type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\": \"Trigger radius
-        in void space units\"\n                },\n                \"scenarioTemplateId\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
-        \      \"description\": \"Associated scenario template if this POI leads to a scenario\"\n                },\n   \
-        \             \"status\": {\n                    \"$ref\": \"#/$defs/PoiStatus\",\n                    \"description\"\
-        : \"Current lifecycle status\"\n                }\n            }\n        },\n        \"PoiType\": {\n           \
-        \ \"type\": \"string\",\n            \"enum\": [\n                \"Visual\",\n                \"Auditory\",\n   \
-        \             \"Environmental\",\n                \"Portal\",\n                \"Social\"\n            ],\n      \
-        \      \"description\": \"Sensory presentation type for a point of interest in the void\"\n        },\n        \"\
-        TriggerMode\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Proximity\",\n   \
-        \             \"Interaction\",\n                \"Prompted\",\n                \"Forced\"\n            ],\n      \
-        \      \"description\": \"How a POI is triggered by the player\"\n        },\n        \"PoiStatus\": {\n         \
-        \   \"type\": \"string\",\n            \"enum\": [\n                \"Active\",\n                \"Entered\",\n  \
-        \              \"Declined\",\n                \"Expired\"\n            ],\n            \"description\": \"Current
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GardenStateResponse\"\
+        ,\n    \"$defs\": {\n        \"GardenStateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Current garden instance state for a player\",\n            \"required\": [\n                \"gardenInstanceId\"\
+        ,\n                \"seedId\",\n                \"accountId\",\n                \"position\",\n                \"\
+        activePois\"\n            ],\n            \"properties\": {\n                \"gardenInstanceId\": {\n           \
+        \         \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"\
+        Unique identifier for this garden instance\"\n                },\n                \"seedId\": {\n                \
+        \    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Active
+        seed for this garden session\"\n                },\n                \"accountId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Account in the garden\"\
+        \n                },\n                \"position\": {\n                    \"$ref\": \"#/$defs/Vec3\",\n         \
+        \           \"description\": \"Current player position\"\n                },\n                \"activePois\": {\n\
+        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"\
+        #/$defs/PoiSummary\"\n                    },\n                    \"description\": \"Currently active POIs in this
+        garden instance\"\n                }\n            }\n        },\n        \"Vec3\": {\n            \"type\": \"object\"\
+        ,\n            \"description\": \"Three-dimensional spatial coordinates in garden space\",\n            \"required\"\
+        : [\n                \"x\",\n                \"y\",\n                \"z\"\n            ],\n            \"properties\"\
+        : {\n                \"x\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\"\
+        ,\n                    \"description\": \"X coordinate in garden space units\"\n                },\n             \
+        \   \"y\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n            \
+        \        \"description\": \"Y coordinate in garden space units\"\n                },\n                \"z\": {\n \
+        \                   \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\"\
+        : \"Z coordinate in garden space units\"\n                }\n            }\n        },\n        \"PoiSummary\": {\n\
+        \            \"type\": \"object\",\n            \"description\": \"POI state summary for client display\",\n     \
+        \       \"required\": [\n                \"poiId\",\n                \"position\",\n                \"poiType\",\n\
+        \                \"triggerMode\",\n                \"triggerRadius\",\n                \"status\"\n            ],\n\
+        \            \"properties\": {\n                \"poiId\": {\n                    \"type\": \"string\",\n        \
+        \            \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for this POI\"\n    \
+        \            },\n                \"position\": {\n                    \"$ref\": \"#/$defs/Vec3\",\n              \
+        \      \"description\": \"POI position in garden space\"\n                },\n                \"poiType\": {\n   \
+        \                 \"$ref\": \"#/$defs/PoiType\",\n                    \"description\": \"Sensory presentation type\"\
+        \n                },\n                \"visualHint\": {\n                    \"$ref\": \"#/$defs/ScenarioCategory\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Scenario category hint for client
+        rendering\"\n                },\n                \"audioHint\": {\n                    \"type\": \"string\",\n   \
+        \                 \"nullable\": true,\n                    \"description\": \"Audio hint identifier for client rendering\"\
+        \n                },\n                \"intensityRamp\": {\n                    \"type\": \"number\",\n          \
+        \          \"format\": \"float\",\n                    \"description\": \"Current intensity ramp value (0.0-1.0)\"\
+        ,\n                    \"default\": 0.0\n                },\n                \"triggerMode\": {\n                \
+        \    \"$ref\": \"#/$defs/TriggerMode\",\n                    \"description\": \"How this POI is triggered\"\n    \
+        \            },\n                \"triggerRadius\": {\n                    \"type\": \"number\",\n               \
+        \     \"format\": \"float\",\n                    \"description\": \"Trigger radius in garden space units\"\n    \
+        \            },\n                \"scenarioTemplateId\": {\n                    \"type\": \"string\",\n          \
+        \          \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Associated scenario template if this POI leads to a scenario\"\n                },\n                \"status\": {\n\
+        \                    \"$ref\": \"#/$defs/PoiStatus\",\n                    \"description\": \"Current lifecycle status\"\
+        \n                }\n            }\n        },\n        \"PoiType\": {\n            \"type\": \"string\",\n      \
+        \      \"enum\": [\n                \"Visual\",\n                \"Auditory\",\n                \"Environmental\"\
+        ,\n                \"Portal\",\n                \"Social\"\n            ],\n            \"description\": \"Sensory
+        presentation type for a point of interest in the garden\"\n        },\n        \"ScenarioCategory\": {\n         \
+        \   \"type\": \"string\",\n            \"enum\": [\n                \"Combat\",\n                \"Crafting\",\n \
+        \               \"Social\",\n                \"Trade\",\n                \"Exploration\",\n                \"Magic\"\
+        ,\n                \"Survival\",\n                \"Mixed\",\n                \"Narrative\",\n                \"Tutorial\"\
+        \n            ],\n            \"description\": \"Primary gameplay category for a scenario template\"\n        },\n\
+        \        \"TriggerMode\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Proximity\"\
+        ,\n                \"Interaction\",\n                \"Prompted\",\n                \"Forced\"\n            ],\n \
+        \           \"description\": \"How a POI is triggered by the player\"\n        },\n        \"PoiStatus\": {\n    \
+        \        \"type\": \"string\",\n            \"enum\": [\n                \"Active\",\n                \"Entered\"\
+        ,\n                \"Declined\",\n                \"Expired\"\n            ],\n            \"description\": \"Current
         lifecycle status of a POI\"\n        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Enter the void\",\n    \"description\": \"Creates a void instance for the
-        player. Finds or creates the player's\\nactive guardian seed, initializes drift metrics, and returns the initial\\
-        nvoid state. First tick of the void orchestrator spawns POIs.\\n\",\n    \"tags\": [\n        \"Void Management\"\n\
-        \    ],\n    \"deprecated\": false,\n    \"operationId\": \"enterVoid\"\n}"
-  /gardener/void/get:
+      x-endpoint-info-json: "{\n    \"summary\": \"Enter the garden\",\n    \"description\": \"Creates a garden instance for
+        the player. Finds or creates the player's\\nactive guardian seed, initializes drift metrics, and returns the initial\\
+        ngarden state. First tick of the garden orchestrator spawns POIs.\\n\",\n    \"tags\": [\n        \"Garden Management\"\
+        \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"enterGarden\"\n}"
+  /gardener/garden/get:
     post:
-      summary: Get current void state
-      description: Returns the player's current void instance with active POIs.
-      operationId: getVoidState
+      summary: Get current garden state
+      description: Returns the player's current garden instance with active POIs.
+      operationId: getGardenState
       tags:
-      - Void Management
+      - Garden Management
       x-permissions:
       - role: user
         states: {}
@@ -138,88 +143,93 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/GetVoidStateRequest'
+              $ref: '#/components/schemas/GetGardenStateRequest'
       responses:
         '200':
-          description: Void state retrieved
+          description: Garden state retrieved
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/VoidStateResponse'
+                $ref: '#/components/schemas/GardenStateResponse'
         '404':
-          description: Player is not in the void
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetVoidStateRequest\"\
-        ,\n    \"$defs\": {\n        \"GetVoidStateRequest\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Request to get current void state\",\n            \"required\": [\n                \"accountId\"\n           \
-        \ ],\n            \"properties\": {\n                \"accountId\": {\n                    \"type\": \"string\",\n\
-        \                    \"format\": \"uuid\",\n                    \"description\": \"Account whose void state to retrieve\"\
-        \n                }\n            }\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/VoidStateResponse\"\
-        ,\n    \"$defs\": {\n        \"VoidStateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Current void instance state for a player\",\n            \"required\": [\n                \"voidInstanceId\",\n\
-        \                \"seedId\",\n                \"accountId\",\n                \"position\",\n                \"activePois\"\
-        \n            ],\n            \"properties\": {\n                \"voidInstanceId\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier
-        for this void instance\"\n                },\n                \"seedId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Active seed for this void session\"\
-        \n                },\n                \"accountId\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"uuid\",\n                    \"description\": \"Account in the void\"\n                },\n \
-        \               \"position\": {\n                    \"$ref\": \"#/$defs/Vec3\",\n                    \"description\"\
-        : \"Current player position\"\n                },\n                \"activePois\": {\n                    \"type\"\
-        : \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/PoiSummary\"\n       \
-        \             },\n                    \"description\": \"Currently active POIs in this void instance\"\n         \
-        \       }\n            }\n        },\n        \"Vec3\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Three-dimensional spatial coordinates in void space\",\n            \"required\": [\n                \"x\",\n\
-        \                \"y\",\n                \"z\"\n            ],\n            \"properties\": {\n                \"\
-        x\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                  \
-        \  \"description\": \"X coordinate in void space units\"\n                },\n                \"y\": {\n         \
-        \           \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\"\
-        : \"Y coordinate in void space units\"\n                },\n                \"z\": {\n                    \"type\"\
-        : \"number\",\n                    \"format\": \"float\",\n                    \"description\": \"Z coordinate in
-        void space units\"\n                }\n            }\n        },\n        \"PoiSummary\": {\n            \"type\"\
-        : \"object\",\n            \"description\": \"POI state summary for client display\",\n            \"required\": [\n\
-        \                \"poiId\",\n                \"position\",\n                \"poiType\",\n                \"triggerMode\"\
-        ,\n                \"triggerRadius\",\n                \"status\"\n            ],\n            \"properties\": {\n\
-        \                \"poiId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"Unique identifier for this POI\"\n                },\n                \"\
-        position\": {\n                    \"$ref\": \"#/$defs/Vec3\",\n                    \"description\": \"POI position
-        in void space\"\n                },\n                \"poiType\": {\n                    \"$ref\": \"#/$defs/PoiType\"\
-        ,\n                    \"description\": \"Sensory presentation type\"\n                },\n                \"visualHint\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Visual hint identifier for client rendering\"\n                },\n                \"audioHint\": {\n        \
-        \            \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\":
-        \"Audio hint identifier for client rendering\"\n                },\n                \"intensityRamp\": {\n       \
-        \             \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\"\
-        : \"Current intensity ramp value (0.0-1.0)\",\n                    \"default\": 0.0\n                },\n        \
-        \        \"triggerMode\": {\n                    \"$ref\": \"#/$defs/TriggerMode\",\n                    \"description\"\
-        : \"How this POI is triggered\"\n                },\n                \"triggerRadius\": {\n                    \"\
-        type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\": \"Trigger radius
-        in void space units\"\n                },\n                \"scenarioTemplateId\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
-        \      \"description\": \"Associated scenario template if this POI leads to a scenario\"\n                },\n   \
-        \             \"status\": {\n                    \"$ref\": \"#/$defs/PoiStatus\",\n                    \"description\"\
-        : \"Current lifecycle status\"\n                }\n            }\n        },\n        \"PoiType\": {\n           \
-        \ \"type\": \"string\",\n            \"enum\": [\n                \"Visual\",\n                \"Auditory\",\n   \
-        \             \"Environmental\",\n                \"Portal\",\n                \"Social\"\n            ],\n      \
-        \      \"description\": \"Sensory presentation type for a point of interest in the void\"\n        },\n        \"\
-        TriggerMode\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Proximity\",\n   \
-        \             \"Interaction\",\n                \"Prompted\",\n                \"Forced\"\n            ],\n      \
-        \      \"description\": \"How a POI is triggered by the player\"\n        },\n        \"PoiStatus\": {\n         \
-        \   \"type\": \"string\",\n            \"enum\": [\n                \"Active\",\n                \"Entered\",\n  \
-        \              \"Declined\",\n                \"Expired\"\n            ],\n            \"description\": \"Current
+          description: Player is not in the garden
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetGardenStateRequest\"\
+        ,\n    \"$defs\": {\n        \"GetGardenStateRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to get current garden state\",\n            \"required\": [\n                \"accountId\"\n         \
+        \   ],\n            \"properties\": {\n                \"accountId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Account whose garden state to
+        retrieve\"\n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GardenStateResponse\"\
+        ,\n    \"$defs\": {\n        \"GardenStateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Current garden instance state for a player\",\n            \"required\": [\n                \"gardenInstanceId\"\
+        ,\n                \"seedId\",\n                \"accountId\",\n                \"position\",\n                \"\
+        activePois\"\n            ],\n            \"properties\": {\n                \"gardenInstanceId\": {\n           \
+        \         \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"\
+        Unique identifier for this garden instance\"\n                },\n                \"seedId\": {\n                \
+        \    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Active
+        seed for this garden session\"\n                },\n                \"accountId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Account in the garden\"\
+        \n                },\n                \"position\": {\n                    \"$ref\": \"#/$defs/Vec3\",\n         \
+        \           \"description\": \"Current player position\"\n                },\n                \"activePois\": {\n\
+        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"\
+        #/$defs/PoiSummary\"\n                    },\n                    \"description\": \"Currently active POIs in this
+        garden instance\"\n                }\n            }\n        },\n        \"Vec3\": {\n            \"type\": \"object\"\
+        ,\n            \"description\": \"Three-dimensional spatial coordinates in garden space\",\n            \"required\"\
+        : [\n                \"x\",\n                \"y\",\n                \"z\"\n            ],\n            \"properties\"\
+        : {\n                \"x\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\"\
+        ,\n                    \"description\": \"X coordinate in garden space units\"\n                },\n             \
+        \   \"y\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n            \
+        \        \"description\": \"Y coordinate in garden space units\"\n                },\n                \"z\": {\n \
+        \                   \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\"\
+        : \"Z coordinate in garden space units\"\n                }\n            }\n        },\n        \"PoiSummary\": {\n\
+        \            \"type\": \"object\",\n            \"description\": \"POI state summary for client display\",\n     \
+        \       \"required\": [\n                \"poiId\",\n                \"position\",\n                \"poiType\",\n\
+        \                \"triggerMode\",\n                \"triggerRadius\",\n                \"status\"\n            ],\n\
+        \            \"properties\": {\n                \"poiId\": {\n                    \"type\": \"string\",\n        \
+        \            \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for this POI\"\n    \
+        \            },\n                \"position\": {\n                    \"$ref\": \"#/$defs/Vec3\",\n              \
+        \      \"description\": \"POI position in garden space\"\n                },\n                \"poiType\": {\n   \
+        \                 \"$ref\": \"#/$defs/PoiType\",\n                    \"description\": \"Sensory presentation type\"\
+        \n                },\n                \"visualHint\": {\n                    \"$ref\": \"#/$defs/ScenarioCategory\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Scenario category hint for client
+        rendering\"\n                },\n                \"audioHint\": {\n                    \"type\": \"string\",\n   \
+        \                 \"nullable\": true,\n                    \"description\": \"Audio hint identifier for client rendering\"\
+        \n                },\n                \"intensityRamp\": {\n                    \"type\": \"number\",\n          \
+        \          \"format\": \"float\",\n                    \"description\": \"Current intensity ramp value (0.0-1.0)\"\
+        ,\n                    \"default\": 0.0\n                },\n                \"triggerMode\": {\n                \
+        \    \"$ref\": \"#/$defs/TriggerMode\",\n                    \"description\": \"How this POI is triggered\"\n    \
+        \            },\n                \"triggerRadius\": {\n                    \"type\": \"number\",\n               \
+        \     \"format\": \"float\",\n                    \"description\": \"Trigger radius in garden space units\"\n    \
+        \            },\n                \"scenarioTemplateId\": {\n                    \"type\": \"string\",\n          \
+        \          \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Associated scenario template if this POI leads to a scenario\"\n                },\n                \"status\": {\n\
+        \                    \"$ref\": \"#/$defs/PoiStatus\",\n                    \"description\": \"Current lifecycle status\"\
+        \n                }\n            }\n        },\n        \"PoiType\": {\n            \"type\": \"string\",\n      \
+        \      \"enum\": [\n                \"Visual\",\n                \"Auditory\",\n                \"Environmental\"\
+        ,\n                \"Portal\",\n                \"Social\"\n            ],\n            \"description\": \"Sensory
+        presentation type for a point of interest in the garden\"\n        },\n        \"ScenarioCategory\": {\n         \
+        \   \"type\": \"string\",\n            \"enum\": [\n                \"Combat\",\n                \"Crafting\",\n \
+        \               \"Social\",\n                \"Trade\",\n                \"Exploration\",\n                \"Magic\"\
+        ,\n                \"Survival\",\n                \"Mixed\",\n                \"Narrative\",\n                \"Tutorial\"\
+        \n            ],\n            \"description\": \"Primary gameplay category for a scenario template\"\n        },\n\
+        \        \"TriggerMode\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Proximity\"\
+        ,\n                \"Interaction\",\n                \"Prompted\",\n                \"Forced\"\n            ],\n \
+        \           \"description\": \"How a POI is triggered by the player\"\n        },\n        \"PoiStatus\": {\n    \
+        \        \"type\": \"string\",\n            \"enum\": [\n                \"Active\",\n                \"Entered\"\
+        ,\n                \"Declined\",\n                \"Expired\"\n            ],\n            \"description\": \"Current
         lifecycle status of a POI\"\n        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Get current void state\",\n    \"description\": \"Returns the player's
-        current void instance with active POIs.\",\n    \"tags\": [\n        \"Void Management\"\n    ],\n    \"deprecated\"\
-        : false,\n    \"operationId\": \"getVoidState\"\n}"
-  /gardener/void/update-position:
+      x-endpoint-info-json: "{\n    \"summary\": \"Get current garden state\",\n    \"description\": \"Returns the player's
+        current garden instance with active POIs.\",\n    \"tags\": [\n        \"Garden Management\"\n    ],\n    \"deprecated\"\
+        : false,\n    \"operationId\": \"getGardenState\"\n}"
+  /gardener/garden/update-position:
     post:
-      summary: Update player position in the void
+      summary: Update player position in the garden
       description: |
-        Updates the player's position and velocity in void space. Accumulates
+        Updates the player's position and velocity in garden space. Accumulates
         drift metrics and checks proximity triggers against active POIs.
       operationId: updatePosition
       tags:
-      - Void Management
+      - Garden Management
       x-permissions:
       - role: user
         states: {}
@@ -237,25 +247,25 @@ paths:
               schema:
                 $ref: '#/components/schemas/PositionUpdateResponse'
         '404':
-          description: Player is not in the void
+          description: Player is not in the garden
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UpdatePositionRequest\"\
         ,\n    \"$defs\": {\n        \"UpdatePositionRequest\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Request to update player position in the void\",\n            \"required\": [\n                \"accountId\",\n\
-        \                \"position\",\n                \"velocity\"\n            ],\n            \"properties\": {\n    \
-        \            \"accountId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        : \"Request to update player position in the garden\",\n            \"required\": [\n                \"accountId\"\
+        ,\n                \"position\",\n                \"velocity\"\n            ],\n            \"properties\": {\n  \
+        \              \"accountId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
         ,\n                    \"description\": \"Account whose position to update\"\n                },\n               \
         \ \"position\": {\n                    \"$ref\": \"#/$defs/Vec3\",\n                    \"description\": \"New position
-        in void space\"\n                },\n                \"velocity\": {\n                    \"$ref\": \"#/$defs/Vec3\"\
+        in garden space\"\n                },\n                \"velocity\": {\n                    \"$ref\": \"#/$defs/Vec3\"\
         ,\n                    \"description\": \"Current velocity vector\"\n                }\n            }\n        },\n\
         \        \"Vec3\": {\n            \"type\": \"object\",\n            \"description\": \"Three-dimensional spatial
-        coordinates in void space\",\n            \"required\": [\n                \"x\",\n                \"y\",\n      \
-        \          \"z\"\n            ],\n            \"properties\": {\n                \"x\": {\n                    \"\
+        coordinates in garden space\",\n            \"required\": [\n                \"x\",\n                \"y\",\n    \
+        \            \"z\"\n            ],\n            \"properties\": {\n                \"x\": {\n                    \"\
         type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\": \"X coordinate
-        in void space units\"\n                },\n                \"y\": {\n                    \"type\": \"number\",\n \
-        \                   \"format\": \"float\",\n                    \"description\": \"Y coordinate in void space units\"\
+        in garden space units\"\n                },\n                \"y\": {\n                    \"type\": \"number\",\n\
+        \                    \"format\": \"float\",\n                    \"description\": \"Y coordinate in garden space units\"\
         \n                },\n                \"z\": {\n                    \"type\": \"number\",\n                    \"\
-        format\": \"float\",\n                    \"description\": \"Z coordinate in void space units\"\n                }\n\
-        \            }\n        }\n    }\n}"
+        format\": \"float\",\n                    \"description\": \"Z coordinate in garden space units\"\n              \
+        \  }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/PositionUpdateResponse\"\
         ,\n    \"$defs\": {\n        \"PositionUpdateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response to a position update\",\n            \"required\": [\n                \"acknowledged\"\n            ],\n\
@@ -270,53 +280,57 @@ paths:
         ,\n                \"status\"\n            ],\n            \"properties\": {\n                \"poiId\": {\n     \
         \               \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
         : \"Unique identifier for this POI\"\n                },\n                \"position\": {\n                    \"\
-        $ref\": \"#/$defs/Vec3\",\n                    \"description\": \"POI position in void space\"\n                },\n\
-        \                \"poiType\": {\n                    \"$ref\": \"#/$defs/PoiType\",\n                    \"description\"\
-        : \"Sensory presentation type\"\n                },\n                \"visualHint\": {\n                    \"type\"\
-        : \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Visual hint identifier
-        for client rendering\"\n                },\n                \"audioHint\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Audio hint identifier for client
-        rendering\"\n                },\n                \"intensityRamp\": {\n                    \"type\": \"number\",\n\
-        \                    \"format\": \"float\",\n                    \"description\": \"Current intensity ramp value (0.0-1.0)\"\
-        ,\n                    \"default\": 0.0\n                },\n                \"triggerMode\": {\n                \
-        \    \"$ref\": \"#/$defs/TriggerMode\",\n                    \"description\": \"How this POI is triggered\"\n    \
-        \            },\n                \"triggerRadius\": {\n                    \"type\": \"number\",\n               \
-        \     \"format\": \"float\",\n                    \"description\": \"Trigger radius in void space units\"\n      \
-        \          },\n                \"scenarioTemplateId\": {\n                    \"type\": \"string\",\n            \
-        \        \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Associated
-        scenario template if this POI leads to a scenario\"\n                },\n                \"status\": {\n         \
-        \           \"$ref\": \"#/$defs/PoiStatus\",\n                    \"description\": \"Current lifecycle status\"\n\
-        \                }\n            }\n        },\n        \"Vec3\": {\n            \"type\": \"object\",\n          \
-        \  \"description\": \"Three-dimensional spatial coordinates in void space\",\n            \"required\": [\n      \
-        \          \"x\",\n                \"y\",\n                \"z\"\n            ],\n            \"properties\": {\n\
-        \                \"x\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n\
-        \                    \"description\": \"X coordinate in void space units\"\n                },\n                \"\
-        y\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                  \
-        \  \"description\": \"Y coordinate in void space units\"\n                },\n                \"z\": {\n         \
-        \           \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\"\
-        : \"Z coordinate in void space units\"\n                }\n            }\n        },\n        \"PoiType\": {\n   \
-        \         \"type\": \"string\",\n            \"enum\": [\n                \"Visual\",\n                \"Auditory\"\
+        $ref\": \"#/$defs/Vec3\",\n                    \"description\": \"POI position in garden space\"\n               \
+        \ },\n                \"poiType\": {\n                    \"$ref\": \"#/$defs/PoiType\",\n                    \"description\"\
+        : \"Sensory presentation type\"\n                },\n                \"visualHint\": {\n                    \"$ref\"\
+        : \"#/$defs/ScenarioCategory\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Scenario category hint for client rendering\"\n                },\n                \"audioHint\": {\n            \
+        \        \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Audio
+        hint identifier for client rendering\"\n                },\n                \"intensityRamp\": {\n               \
+        \     \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\": \"Current
+        intensity ramp value (0.0-1.0)\",\n                    \"default\": 0.0\n                },\n                \"triggerMode\"\
+        : {\n                    \"$ref\": \"#/$defs/TriggerMode\",\n                    \"description\": \"How this POI is
+        triggered\"\n                },\n                \"triggerRadius\": {\n                    \"type\": \"number\",\n\
+        \                    \"format\": \"float\",\n                    \"description\": \"Trigger radius in garden space
+        units\"\n                },\n                \"scenarioTemplateId\": {\n                    \"type\": \"string\",\n\
+        \                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Associated scenario template if this POI leads to a scenario\"\n                },\n                \"status\"\
+        : {\n                    \"$ref\": \"#/$defs/PoiStatus\",\n                    \"description\": \"Current lifecycle
+        status\"\n                }\n            }\n        },\n        \"Vec3\": {\n            \"type\": \"object\",\n \
+        \           \"description\": \"Three-dimensional spatial coordinates in garden space\",\n            \"required\"\
+        : [\n                \"x\",\n                \"y\",\n                \"z\"\n            ],\n            \"properties\"\
+        : {\n                \"x\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\"\
+        ,\n                    \"description\": \"X coordinate in garden space units\"\n                },\n             \
+        \   \"y\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n            \
+        \        \"description\": \"Y coordinate in garden space units\"\n                },\n                \"z\": {\n \
+        \                   \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\"\
+        : \"Z coordinate in garden space units\"\n                }\n            }\n        },\n        \"PoiType\": {\n \
+        \           \"type\": \"string\",\n            \"enum\": [\n                \"Visual\",\n                \"Auditory\"\
         ,\n                \"Environmental\",\n                \"Portal\",\n                \"Social\"\n            ],\n \
-        \           \"description\": \"Sensory presentation type for a point of interest in the void\"\n        },\n     \
-        \   \"TriggerMode\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Proximity\"\
-        ,\n                \"Interaction\",\n                \"Prompted\",\n                \"Forced\"\n            ],\n \
-        \           \"description\": \"How a POI is triggered by the player\"\n        },\n        \"PoiStatus\": {\n    \
-        \        \"type\": \"string\",\n            \"enum\": [\n                \"Active\",\n                \"Entered\"\
-        ,\n                \"Declined\",\n                \"Expired\"\n            ],\n            \"description\": \"Current
-        lifecycle status of a POI\"\n        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Update player position in the void\",\n    \"description\": \"Updates the
-        player's position and velocity in void space. Accumulates\\ndrift metrics and checks proximity triggers against active
-        POIs.\\n\",\n    \"tags\": [\n        \"Void Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
+        \           \"description\": \"Sensory presentation type for a point of interest in the garden\"\n        },\n   \
+        \     \"ScenarioCategory\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Combat\"\
+        ,\n                \"Crafting\",\n                \"Social\",\n                \"Trade\",\n                \"Exploration\"\
+        ,\n                \"Magic\",\n                \"Survival\",\n                \"Mixed\",\n                \"Narrative\"\
+        ,\n                \"Tutorial\"\n            ],\n            \"description\": \"Primary gameplay category for a scenario
+        template\"\n        },\n        \"TriggerMode\": {\n            \"type\": \"string\",\n            \"enum\": [\n \
+        \               \"Proximity\",\n                \"Interaction\",\n                \"Prompted\",\n                \"\
+        Forced\"\n            ],\n            \"description\": \"How a POI is triggered by the player\"\n        },\n    \
+        \    \"PoiStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Active\",\n \
+        \               \"Entered\",\n                \"Declined\",\n                \"Expired\"\n            ],\n       \
+        \     \"description\": \"Current lifecycle status of a POI\"\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Update player position in the garden\",\n    \"description\": \"Updates
+        the player's position and velocity in garden space. Accumulates\\ndrift metrics and checks proximity triggers against
+        active POIs.\\n\",\n    \"tags\": [\n        \"Garden Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
         : \"updatePosition\"\n}"
-  /gardener/void/leave:
+  /gardener/garden/leave:
     post:
-      summary: Leave the void
+      summary: Leave the garden
       description: |
-        Cleans up the void instance, all associated POIs, and publishes a
-        void-left event with session duration.
-      operationId: leaveVoid
+        Cleans up the garden instance, all associated POIs, and publishes a
+        garden-left event with session duration.
+      operationId: leaveGarden
       tags:
-      - Void Management
+      - Garden Management
       x-permissions:
       - role: user
         states: {}
@@ -325,37 +339,37 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LeaveVoidRequest'
+              $ref: '#/components/schemas/LeaveGardenRequest'
       responses:
         '200':
-          description: Left the void
+          description: Left the garden
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LeaveVoidResponse'
+                $ref: '#/components/schemas/LeaveGardenResponse'
         '404':
-          description: Player is not in the void
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LeaveVoidRequest\"\
-        ,\n    \"$defs\": {\n        \"LeaveVoidRequest\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Request to leave the void\",\n            \"required\": [\n                \"accountId\"\n            ],\n   \
-        \         \"properties\": {\n                \"accountId\": {\n                    \"type\": \"string\",\n       \
-        \             \"format\": \"uuid\",\n                    \"description\": \"Account leaving the void\"\n         \
-        \       }\n            }\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LeaveVoidResponse\"\
-        ,\n    \"$defs\": {\n        \"LeaveVoidResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Response after leaving the void\",\n            \"required\": [\n                \"accountId\",\n            \
-        \    \"sessionDurationSeconds\"\n            ],\n            \"properties\": {\n                \"accountId\": {\n\
+          description: Player is not in the garden
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LeaveGardenRequest\"\
+        ,\n    \"$defs\": {\n        \"LeaveGardenRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to leave the garden\",\n            \"required\": [\n                \"accountId\"\n            ],\n \
+        \           \"properties\": {\n                \"accountId\": {\n                    \"type\": \"string\",\n     \
+        \               \"format\": \"uuid\",\n                    \"description\": \"Account leaving the garden\"\n     \
+        \           }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LeaveGardenResponse\"\
+        ,\n    \"$defs\": {\n        \"LeaveGardenResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Response after leaving the garden\",\n            \"required\": [\n                \"accountId\",\n          \
+        \      \"sessionDurationSeconds\"\n            ],\n            \"properties\": {\n                \"accountId\": {\n\
         \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Account that left the void\"\n                },\n                \"sessionDurationSeconds\": {\n            \
-        \        \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\": \"\
-        Total duration of the void session in seconds\"\n                }\n            }\n        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Leave the void\",\n    \"description\": \"Cleans up the void instance,
-        all associated POIs, and publishes a\\nvoid-left event with session duration.\\n\",\n    \"tags\": [\n        \"Void
-        Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"leaveVoid\"\n}"
+        : \"Account that left the garden\"\n                },\n                \"sessionDurationSeconds\": {\n          \
+        \          \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\"\
+        : \"Total duration of the garden session in seconds\"\n                }\n            }\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Leave the garden\",\n    \"description\": \"Cleans up the garden instance,
+        all associated POIs, and publishes a\\ngarden-left event with session duration.\\n\",\n    \"tags\": [\n        \"\
+        Garden Management\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"leaveGarden\"\n}"
   /gardener/poi/list:
     post:
       summary: List active POIs
-      description: Returns all active POIs for the player's current void instance.
+      description: Returns all active POIs for the player's current garden instance.
       operationId: listPois
       tags:
       - POI Interaction
@@ -376,7 +390,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ListPoisResponse'
         '404':
-          description: Player is not in the void
+          description: Player is not in the garden
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListPoisRequest\"\
         ,\n    \"$defs\": {\n        \"ListPoisRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to list active POIs\",\n            \"required\": [\n                \"accountId\"\n            ],\n \
@@ -385,10 +399,10 @@ paths:
         \           }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ListPoisResponse\"\
         ,\n    \"$defs\": {\n        \"ListPoisResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"List of active POIs in a void instance\",\n            \"required\": [\n                \"voidInstanceId\",\n\
-        \                \"pois\"\n            ],\n            \"properties\": {\n                \"voidInstanceId\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
-        : \"Void instance these POIs belong to\"\n                },\n                \"pois\": {\n                    \"\
+        : \"List of active POIs in a garden instance\",\n            \"required\": [\n                \"gardenInstanceId\"\
+        ,\n                \"pois\"\n            ],\n            \"properties\": {\n                \"gardenInstanceId\":
+        {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"Garden instance these POIs belong to\"\n                },\n                \"pois\": {\n                    \"\
         type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/PoiSummary\"\n \
         \                   },\n                    \"description\": \"Active POIs\"\n                }\n            }\n \
         \       },\n        \"PoiSummary\": {\n            \"type\": \"object\",\n            \"description\": \"POI state
@@ -397,43 +411,47 @@ paths:
         \      \"status\"\n            ],\n            \"properties\": {\n                \"poiId\": {\n                 \
         \   \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"Unique
         identifier for this POI\"\n                },\n                \"position\": {\n                    \"$ref\": \"#/$defs/Vec3\"\
-        ,\n                    \"description\": \"POI position in void space\"\n                },\n                \"poiType\"\
+        ,\n                    \"description\": \"POI position in garden space\"\n                },\n                \"poiType\"\
         : {\n                    \"$ref\": \"#/$defs/PoiType\",\n                    \"description\": \"Sensory presentation
-        type\"\n                },\n                \"visualHint\": {\n                    \"type\": \"string\",\n       \
-        \             \"nullable\": true,\n                    \"description\": \"Visual hint identifier for client rendering\"\
-        \n                },\n                \"audioHint\": {\n                    \"type\": \"string\",\n              \
-        \      \"nullable\": true,\n                    \"description\": \"Audio hint identifier for client rendering\"\n\
-        \                },\n                \"intensityRamp\": {\n                    \"type\": \"number\",\n           \
-        \         \"format\": \"float\",\n                    \"description\": \"Current intensity ramp value (0.0-1.0)\"\
+        type\"\n                },\n                \"visualHint\": {\n                    \"$ref\": \"#/$defs/ScenarioCategory\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Scenario category hint for client
+        rendering\"\n                },\n                \"audioHint\": {\n                    \"type\": \"string\",\n   \
+        \                 \"nullable\": true,\n                    \"description\": \"Audio hint identifier for client rendering\"\
+        \n                },\n                \"intensityRamp\": {\n                    \"type\": \"number\",\n          \
+        \          \"format\": \"float\",\n                    \"description\": \"Current intensity ramp value (0.0-1.0)\"\
         ,\n                    \"default\": 0.0\n                },\n                \"triggerMode\": {\n                \
         \    \"$ref\": \"#/$defs/TriggerMode\",\n                    \"description\": \"How this POI is triggered\"\n    \
         \            },\n                \"triggerRadius\": {\n                    \"type\": \"number\",\n               \
-        \     \"format\": \"float\",\n                    \"description\": \"Trigger radius in void space units\"\n      \
-        \          },\n                \"scenarioTemplateId\": {\n                    \"type\": \"string\",\n            \
-        \        \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Associated
-        scenario template if this POI leads to a scenario\"\n                },\n                \"status\": {\n         \
-        \           \"$ref\": \"#/$defs/PoiStatus\",\n                    \"description\": \"Current lifecycle status\"\n\
-        \                }\n            }\n        },\n        \"Vec3\": {\n            \"type\": \"object\",\n          \
-        \  \"description\": \"Three-dimensional spatial coordinates in void space\",\n            \"required\": [\n      \
-        \          \"x\",\n                \"y\",\n                \"z\"\n            ],\n            \"properties\": {\n\
+        \     \"format\": \"float\",\n                    \"description\": \"Trigger radius in garden space units\"\n    \
+        \            },\n                \"scenarioTemplateId\": {\n                    \"type\": \"string\",\n          \
+        \          \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Associated scenario template if this POI leads to a scenario\"\n                },\n                \"status\": {\n\
+        \                    \"$ref\": \"#/$defs/PoiStatus\",\n                    \"description\": \"Current lifecycle status\"\
+        \n                }\n            }\n        },\n        \"Vec3\": {\n            \"type\": \"object\",\n         \
+        \   \"description\": \"Three-dimensional spatial coordinates in garden space\",\n            \"required\": [\n   \
+        \             \"x\",\n                \"y\",\n                \"z\"\n            ],\n            \"properties\": {\n\
         \                \"x\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n\
-        \                    \"description\": \"X coordinate in void space units\"\n                },\n                \"\
-        y\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                  \
-        \  \"description\": \"Y coordinate in void space units\"\n                },\n                \"z\": {\n         \
-        \           \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\"\
-        : \"Z coordinate in void space units\"\n                }\n            }\n        },\n        \"PoiType\": {\n   \
-        \         \"type\": \"string\",\n            \"enum\": [\n                \"Visual\",\n                \"Auditory\"\
+        \                    \"description\": \"X coordinate in garden space units\"\n                },\n               \
+        \ \"y\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n              \
+        \      \"description\": \"Y coordinate in garden space units\"\n                },\n                \"z\": {\n   \
+        \                 \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\"\
+        : \"Z coordinate in garden space units\"\n                }\n            }\n        },\n        \"PoiType\": {\n \
+        \           \"type\": \"string\",\n            \"enum\": [\n                \"Visual\",\n                \"Auditory\"\
         ,\n                \"Environmental\",\n                \"Portal\",\n                \"Social\"\n            ],\n \
-        \           \"description\": \"Sensory presentation type for a point of interest in the void\"\n        },\n     \
-        \   \"TriggerMode\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Proximity\"\
-        ,\n                \"Interaction\",\n                \"Prompted\",\n                \"Forced\"\n            ],\n \
-        \           \"description\": \"How a POI is triggered by the player\"\n        },\n        \"PoiStatus\": {\n    \
-        \        \"type\": \"string\",\n            \"enum\": [\n                \"Active\",\n                \"Entered\"\
-        ,\n                \"Declined\",\n                \"Expired\"\n            ],\n            \"description\": \"Current
-        lifecycle status of a POI\"\n        }\n    }\n}"
+        \           \"description\": \"Sensory presentation type for a point of interest in the garden\"\n        },\n   \
+        \     \"ScenarioCategory\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Combat\"\
+        ,\n                \"Crafting\",\n                \"Social\",\n                \"Trade\",\n                \"Exploration\"\
+        ,\n                \"Magic\",\n                \"Survival\",\n                \"Mixed\",\n                \"Narrative\"\
+        ,\n                \"Tutorial\"\n            ],\n            \"description\": \"Primary gameplay category for a scenario
+        template\"\n        },\n        \"TriggerMode\": {\n            \"type\": \"string\",\n            \"enum\": [\n \
+        \               \"Proximity\",\n                \"Interaction\",\n                \"Prompted\",\n                \"\
+        Forced\"\n            ],\n            \"description\": \"How a POI is triggered by the player\"\n        },\n    \
+        \    \"PoiStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Active\",\n \
+        \               \"Entered\",\n                \"Declined\",\n                \"Expired\"\n            ],\n       \
+        \     \"description\": \"Current lifecycle status of a POI\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List active POIs\",\n    \"description\": \"Returns all active POIs for
-        the player's current void instance.\",\n    \"tags\": [\n        \"POI Interaction\"\n    ],\n    \"deprecated\":
-        false,\n    \"operationId\": \"listPois\"\n}"
+        the player's current garden instance.\",\n    \"tags\": [\n        \"POI Interaction\"\n    ],\n    \"deprecated\"\
+        : false,\n    \"operationId\": \"listPois\"\n}"
   /gardener/poi/interact:
     post:
       summary: Interact with a POI
@@ -477,16 +495,19 @@ paths:
         : \"Result of interacting with a POI\",\n            \"required\": [\n                \"poiId\",\n               \
         \ \"result\"\n            ],\n            \"properties\": {\n                \"poiId\": {\n                    \"\
         type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\": \"POI that was
-        interacted with\"\n                },\n                \"result\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Interaction outcome (scenario_prompt, scenario_enter, poi_update, chain_offer)\"\
-        \n                },\n                \"scenarioTemplateId\": {\n                    \"type\": \"string\",\n     \
-        \               \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Associated template ID if result involves a scenario\"\n                },\n                \"promptText\": {\n\
-        \                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Prompt text for prompted POIs\"\n                },\n                \"promptChoices\": {\n                  \
-        \  \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n        \
-        \            },\n                    \"nullable\": true,\n                    \"description\": \"Available choices
-        for prompted POIs\"\n                }\n            }\n        }\n    }\n}"
+        interacted with\"\n                },\n                \"result\": {\n                    \"$ref\": \"#/$defs/PoiInteractionResult\"\
+        ,\n                    \"description\": \"Interaction outcome\"\n                },\n                \"scenarioTemplateId\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Associated template ID if result involves a scenario\"\n\
+        \                },\n                \"promptText\": {\n                    \"type\": \"string\",\n              \
+        \      \"nullable\": true,\n                    \"description\": \"Prompt text for prompted POIs\"\n             \
+        \   },\n                \"promptChoices\": {\n                    \"type\": \"array\",\n                    \"items\"\
+        : {\n                        \"type\": \"string\"\n                    },\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Available choices for prompted POIs\"\n                }\n            }\n\
+        \        },\n        \"PoiInteractionResult\": {\n            \"type\": \"string\",\n            \"enum\": [\n   \
+        \             \"ScenarioPrompt\",\n                \"ScenarioEnter\",\n                \"PoiUpdate\",\n          \
+        \      \"ChainOffer\"\n            ],\n            \"description\": \"Outcome of interacting with a POI\"\n      \
+        \  }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Interact with a POI\",\n    \"description\": \"Triggers interaction with
         a POI. Result depends on the POI's trigger mode:\\nprompted POIs return scenario info with choices, proximity/interaction
         POIs\\nenter the scenario directly.\\n\",\n    \"tags\": [\n        \"POI Interaction\"\n    ],\n    \"deprecated\"\
@@ -495,7 +516,7 @@ paths:
     post:
       summary: Decline a POI
       description: |
-        Marks a POI as declined. The template is added to the void instance's
+        Marks a POI as declined. The template is added to the garden instance's
         scenario history for diversity scoring.
       operationId: declinePoi
       tags:
@@ -537,14 +558,14 @@ paths:
         \                    \"description\": \"Whether the decline was processed\"\n                }\n            }\n  \
         \      }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Decline a POI\",\n    \"description\": \"Marks a POI as declined. The template
-        is added to the void instance's\\nscenario history for diversity scoring.\\n\",\n    \"tags\": [\n        \"POI Interaction\"\
-        \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"declinePoi\"\n}"
+        is added to the garden instance's\\nscenario history for diversity scoring.\\n\",\n    \"tags\": [\n        \"POI
+        Interaction\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"declinePoi\"\n}"
   /gardener/scenario/enter:
     post:
       summary: Enter a scenario
       description: |
         Validates prerequisites, creates a game session, creates a scenario
-        instance, destroys the void instance (player leaves the void), and
+        instance, destroys the garden instance (player leaves the garden), and
         publishes scenario-started events.
       operationId: enterScenario
       tags:
@@ -609,7 +630,7 @@ paths:
         ,\n                \"Completed\",\n                \"Abandoned\"\n            ],\n            \"description\": \"\
         Current lifecycle status of a scenario instance\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Enter a scenario\",\n    \"description\": \"Validates prerequisites, creates
-        a game session, creates a scenario\\ninstance, destroys the void instance (player leaves the void), and\\npublishes
+        a game session, creates a scenario\\ninstance, destroys the garden instance (player leaves the garden), and\\npublishes
         scenario-started events.\\n\",\n    \"tags\": [\n        \"Scenario Lifecycle\"\n    ],\n    \"deprecated\": false,\n\
         \    \"operationId\": \"enterScenario\"\n}"
   /gardener/scenario/get:
@@ -678,7 +699,7 @@ paths:
       summary: Complete a scenario
       description: |
         Calculates and awards growth per domain, closes the game session,
-        writes history, and returns the player to the void.
+        writes history, and returns the player to the garden.
       operationId: completeScenario
       tags:
       - Scenario Lifecycle
@@ -711,17 +732,18 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ScenarioCompletionResponse\"\
         ,\n    \"$defs\": {\n        \"ScenarioCompletionResponse\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Response after completing a scenario\",\n            \"required\": [\n                \"scenarioInstanceId\"\
-        ,\n                \"growthAwarded\",\n                \"returnToVoid\"\n            ],\n            \"properties\"\
+        ,\n                \"growthAwarded\",\n                \"returnToGarden\"\n            ],\n            \"properties\"\
         : {\n                \"scenarioInstanceId\": {\n                    \"type\": \"string\",\n                    \"\
         format\": \"uuid\",\n                    \"description\": \"Completed scenario instance ID\"\n                },\n\
         \                \"growthAwarded\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
         : {\n                        \"type\": \"number\",\n                        \"format\": \"float\"\n              \
         \      },\n                    \"description\": \"Growth awarded per domain\"\n                },\n              \
-        \  \"returnToVoid\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
-        the player should return to the void\"\n                }\n            }\n        }\n    }\n}"
+        \  \"returnToGarden\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
+        the player should return to the garden\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Complete a scenario\",\n    \"description\": \"Calculates and awards growth
-        per domain, closes the game session,\\nwrites history, and returns the player to the void.\\n\",\n    \"tags\": [\n\
-        \        \"Scenario Lifecycle\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"completeScenario\"\n}"
+        per domain, closes the game session,\\nwrites history, and returns the player to the garden.\\n\",\n    \"tags\":
+        [\n        \"Scenario Lifecycle\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"completeScenario\"\n\
+        }"
   /gardener/scenario/abandon:
     post:
       summary: Abandon a scenario
@@ -952,15 +974,15 @@ paths:
         for this scenario\"\n                }\n            }\n        },\n        \"ScenarioContent\": {\n            \"\
         type\": \"object\",\n            \"description\": \"Content references linking a scenario template to game assets\"\
         ,\n            \"properties\": {\n                \"behaviorDocumentId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"ABML behavior document ID for NPC
-        orchestration\"\n                },\n                \"sceneDocumentId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Scene document ID for environment composition\"\n                },\n                \"realmId\": {\n        \
-        \            \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Realm ID where this scenario takes place\"\n                },\n         \
-        \       \"locationCode\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Location code within the realm\"\n                }\n            }\n     \
-        \   }\n    }\n}"
+        : \"ABML behavior document ID for NPC orchestration\"\n                },\n                \"sceneDocumentId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Scene document ID for environment composition\"\n                },\n\
+        \                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Realm ID where this scenario takes
+        place\"\n                },\n                \"locationCode\": {\n                    \"type\": \"string\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Location code within the realm\"\n  \
+        \              }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ScenarioTemplateResponse\"\
         ,\n    \"$defs\": {\n        \"ScenarioTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Full scenario template with all fields\",\n            \"required\": [\n                \"scenarioTemplateId\"\
@@ -1053,17 +1075,18 @@ paths:
         for this scenario\"\n                }\n            }\n        },\n        \"ScenarioContent\": {\n            \"\
         type\": \"object\",\n            \"description\": \"Content references linking a scenario template to game assets\"\
         ,\n            \"properties\": {\n                \"behaviorDocumentId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"ABML behavior document ID for NPC
-        orchestration\"\n                },\n                \"sceneDocumentId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Scene document ID for environment composition\"\n                },\n                \"realmId\": {\n        \
-        \            \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Realm ID where this scenario takes place\"\n                },\n         \
-        \       \"locationCode\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Location code within the realm\"\n                }\n            }\n     \
-        \   },\n        \"TemplateStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n              \
-        \  \"Draft\",\n                \"Active\",\n                \"Deprecated\"\n            ],\n            \"description\"\
-        : \"Current lifecycle status of a scenario template\"\n        }\n    }\n}"
+        : \"ABML behavior document ID for NPC orchestration\"\n                },\n                \"sceneDocumentId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Scene document ID for environment composition\"\n                },\n\
+        \                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Realm ID where this scenario takes
+        place\"\n                },\n                \"locationCode\": {\n                    \"type\": \"string\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Location code within the realm\"\n  \
+        \              }\n            }\n        },\n        \"TemplateStatus\": {\n            \"type\": \"string\",\n  \
+        \          \"enum\": [\n                \"Draft\",\n                \"Active\",\n                \"Deprecated\"\n\
+        \            ],\n            \"description\": \"Current lifecycle status of a scenario template\"\n        }\n   \
+        \ }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a scenario template\",\n    \"description\": \"Creates a new scenario
         template definition.\",\n    \"tags\": [\n        \"Template Management\"\n    ],\n    \"deprecated\": false,\n  \
         \  \"operationId\": \"createTemplate\"\n}"
@@ -1190,17 +1213,18 @@ paths:
         for this scenario\"\n                }\n            }\n        },\n        \"ScenarioContent\": {\n            \"\
         type\": \"object\",\n            \"description\": \"Content references linking a scenario template to game assets\"\
         ,\n            \"properties\": {\n                \"behaviorDocumentId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"ABML behavior document ID for NPC
-        orchestration\"\n                },\n                \"sceneDocumentId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Scene document ID for environment composition\"\n                },\n                \"realmId\": {\n        \
-        \            \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Realm ID where this scenario takes place\"\n                },\n         \
-        \       \"locationCode\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Location code within the realm\"\n                }\n            }\n     \
-        \   },\n        \"TemplateStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n              \
-        \  \"Draft\",\n                \"Active\",\n                \"Deprecated\"\n            ],\n            \"description\"\
-        : \"Current lifecycle status of a scenario template\"\n        }\n    }\n}"
+        : \"ABML behavior document ID for NPC orchestration\"\n                },\n                \"sceneDocumentId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Scene document ID for environment composition\"\n                },\n\
+        \                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Realm ID where this scenario takes
+        place\"\n                },\n                \"locationCode\": {\n                    \"type\": \"string\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Location code within the realm\"\n  \
+        \              }\n            }\n        },\n        \"TemplateStatus\": {\n            \"type\": \"string\",\n  \
+        \          \"enum\": [\n                \"Draft\",\n                \"Active\",\n                \"Deprecated\"\n\
+        \            ],\n            \"description\": \"Current lifecycle status of a scenario template\"\n        }\n   \
+        \ }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get scenario template by ID\",\n    \"description\": \"Returns a scenario
         template by its unique identifier.\",\n    \"tags\": [\n        \"Template Management\"\n    ],\n    \"deprecated\"\
         : false,\n    \"operationId\": \"getTemplate\"\n}"
@@ -1326,17 +1350,18 @@ paths:
         for this scenario\"\n                }\n            }\n        },\n        \"ScenarioContent\": {\n            \"\
         type\": \"object\",\n            \"description\": \"Content references linking a scenario template to game assets\"\
         ,\n            \"properties\": {\n                \"behaviorDocumentId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"ABML behavior document ID for NPC
-        orchestration\"\n                },\n                \"sceneDocumentId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Scene document ID for environment composition\"\n                },\n                \"realmId\": {\n        \
-        \            \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Realm ID where this scenario takes place\"\n                },\n         \
-        \       \"locationCode\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Location code within the realm\"\n                }\n            }\n     \
-        \   },\n        \"TemplateStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n              \
-        \  \"Draft\",\n                \"Active\",\n                \"Deprecated\"\n            ],\n            \"description\"\
-        : \"Current lifecycle status of a scenario template\"\n        }\n    }\n}"
+        : \"ABML behavior document ID for NPC orchestration\"\n                },\n                \"sceneDocumentId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Scene document ID for environment composition\"\n                },\n\
+        \                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Realm ID where this scenario takes
+        place\"\n                },\n                \"locationCode\": {\n                    \"type\": \"string\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Location code within the realm\"\n  \
+        \              }\n            }\n        },\n        \"TemplateStatus\": {\n            \"type\": \"string\",\n  \
+        \          \"enum\": [\n                \"Draft\",\n                \"Active\",\n                \"Deprecated\"\n\
+        \            ],\n            \"description\": \"Current lifecycle status of a scenario template\"\n        }\n   \
+        \ }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get scenario template by code\",\n    \"description\": \"Returns a scenario
         template by its unique code string.\",\n    \"tags\": [\n        \"Template Management\"\n    ],\n    \"deprecated\"\
         : false,\n    \"operationId\": \"getTemplateByCode\"\n}"
@@ -1492,17 +1517,18 @@ paths:
         for this scenario\"\n                }\n            }\n        },\n        \"ScenarioContent\": {\n            \"\
         type\": \"object\",\n            \"description\": \"Content references linking a scenario template to game assets\"\
         ,\n            \"properties\": {\n                \"behaviorDocumentId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"ABML behavior document ID for NPC
-        orchestration\"\n                },\n                \"sceneDocumentId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Scene document ID for environment composition\"\n                },\n                \"realmId\": {\n        \
-        \            \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Realm ID where this scenario takes place\"\n                },\n         \
-        \       \"locationCode\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Location code within the realm\"\n                }\n            }\n     \
-        \   },\n        \"TemplateStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n              \
-        \  \"Draft\",\n                \"Active\",\n                \"Deprecated\"\n            ],\n            \"description\"\
-        : \"Current lifecycle status of a scenario template\"\n        }\n    }\n}"
+        : \"ABML behavior document ID for NPC orchestration\"\n                },\n                \"sceneDocumentId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Scene document ID for environment composition\"\n                },\n\
+        \                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Realm ID where this scenario takes
+        place\"\n                },\n                \"locationCode\": {\n                    \"type\": \"string\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Location code within the realm\"\n  \
+        \              }\n            }\n        },\n        \"TemplateStatus\": {\n            \"type\": \"string\",\n  \
+        \          \"enum\": [\n                \"Draft\",\n                \"Active\",\n                \"Deprecated\"\n\
+        \            ],\n            \"description\": \"Current lifecycle status of a scenario template\"\n        }\n   \
+        \ }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List scenario templates\",\n    \"description\": \"Returns paginated scenario
         templates with optional filters.\",\n    \"tags\": [\n        \"Template Management\"\n    ],\n    \"deprecated\"\
         : false,\n    \"operationId\": \"listTemplates\"\n}"
@@ -1593,15 +1619,16 @@ paths:
         : \"Whether bonded players receive a scoring boost for this scenario\"\n                }\n            }\n       \
         \ },\n        \"ScenarioContent\": {\n            \"type\": \"object\",\n            \"description\": \"Content references
         linking a scenario template to game assets\",\n            \"properties\": {\n                \"behaviorDocumentId\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"ABML behavior document ID for NPC orchestration\"\n                },\n                \"sceneDocumentId\": {\n\
-        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Scene document ID for environment composition\"\n                },\n\
-        \                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Realm ID where this scenario takes
-        place\"\n                },\n                \"locationCode\": {\n                    \"type\": \"string\",\n    \
-        \                \"nullable\": true,\n                    \"description\": \"Location code within the realm\"\n  \
-        \              }\n            }\n        }\n    }\n}"
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"ABML behavior document ID for NPC orchestration\"\n    \
+        \            },\n                \"sceneDocumentId\": {\n                    \"type\": \"string\",\n             \
+        \       \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Scene
+        document ID for environment composition\"\n                },\n                \"realmId\": {\n                  \
+        \  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n   \
+        \                 \"description\": \"Realm ID where this scenario takes place\"\n                },\n            \
+        \    \"locationCode\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n   \
+        \                 \"description\": \"Location code within the realm\"\n                }\n            }\n        }\n\
+        \    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ScenarioTemplateResponse\"\
         ,\n    \"$defs\": {\n        \"ScenarioTemplateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Full scenario template with all fields\",\n            \"required\": [\n                \"scenarioTemplateId\"\
@@ -1694,17 +1721,18 @@ paths:
         for this scenario\"\n                }\n            }\n        },\n        \"ScenarioContent\": {\n            \"\
         type\": \"object\",\n            \"description\": \"Content references linking a scenario template to game assets\"\
         ,\n            \"properties\": {\n                \"behaviorDocumentId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"ABML behavior document ID for NPC
-        orchestration\"\n                },\n                \"sceneDocumentId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Scene document ID for environment composition\"\n                },\n                \"realmId\": {\n        \
-        \            \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Realm ID where this scenario takes place\"\n                },\n         \
-        \       \"locationCode\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Location code within the realm\"\n                }\n            }\n     \
-        \   },\n        \"TemplateStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n              \
-        \  \"Draft\",\n                \"Active\",\n                \"Deprecated\"\n            ],\n            \"description\"\
-        : \"Current lifecycle status of a scenario template\"\n        }\n    }\n}"
+        : \"ABML behavior document ID for NPC orchestration\"\n                },\n                \"sceneDocumentId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Scene document ID for environment composition\"\n                },\n\
+        \                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Realm ID where this scenario takes
+        place\"\n                },\n                \"locationCode\": {\n                    \"type\": \"string\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Location code within the realm\"\n  \
+        \              }\n            }\n        },\n        \"TemplateStatus\": {\n            \"type\": \"string\",\n  \
+        \          \"enum\": [\n                \"Draft\",\n                \"Active\",\n                \"Deprecated\"\n\
+        \            ],\n            \"description\": \"Current lifecycle status of a scenario template\"\n        }\n   \
+        \ }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update scenario template\",\n    \"description\": \"Updates non-null fields
         of an existing template.\",\n    \"tags\": [\n        \"Template Management\"\n    ],\n    \"deprecated\": false,\n\
         \    \"operationId\": \"updateTemplate\"\n}"
@@ -1831,17 +1859,18 @@ paths:
         for this scenario\"\n                }\n            }\n        },\n        \"ScenarioContent\": {\n            \"\
         type\": \"object\",\n            \"description\": \"Content references linking a scenario template to game assets\"\
         ,\n            \"properties\": {\n                \"behaviorDocumentId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"ABML behavior document ID for NPC
-        orchestration\"\n                },\n                \"sceneDocumentId\": {\n                    \"type\": \"string\"\
         ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Scene document ID for environment composition\"\n                },\n                \"realmId\": {\n        \
-        \            \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Realm ID where this scenario takes place\"\n                },\n         \
-        \       \"locationCode\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Location code within the realm\"\n                }\n            }\n     \
-        \   },\n        \"TemplateStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n              \
-        \  \"Draft\",\n                \"Active\",\n                \"Deprecated\"\n            ],\n            \"description\"\
-        : \"Current lifecycle status of a scenario template\"\n        }\n    }\n}"
+        : \"ABML behavior document ID for NPC orchestration\"\n                },\n                \"sceneDocumentId\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Scene document ID for environment composition\"\n                },\n\
+        \                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Realm ID where this scenario takes
+        place\"\n                },\n                \"locationCode\": {\n                    \"type\": \"string\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Location code within the realm\"\n  \
+        \              }\n            }\n        },\n        \"TemplateStatus\": {\n            \"type\": \"string\",\n  \
+        \          \"enum\": [\n                \"Draft\",\n                \"Active\",\n                \"Deprecated\"\n\
+        \            ],\n            \"description\": \"Current lifecycle status of a scenario template\"\n        }\n   \
+        \ }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Deprecate scenario template\",\n    \"description\": \"Sets the template
         status to Deprecated, preventing new instances.\",\n    \"tags\": [\n        \"Template Management\"\n    ],\n   \
         \ \"deprecated\": false,\n    \"operationId\": \"deprecateTemplate\"\n}"
@@ -1875,13 +1904,13 @@ paths:
         ,\n    \"$defs\": {\n        \"PhaseConfigResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Current deployment phase configuration\",\n            \"required\": [\n                \"currentPhase\",\n  \
         \              \"maxConcurrentScenariosGlobal\",\n                \"persistentEntryEnabled\",\n                \"\
-        voidMinigamesEnabled\"\n            ],\n            \"properties\": {\n                \"currentPhase\": {\n     \
-        \               \"$ref\": \"#/$defs/DeploymentPhase\",\n                    \"description\": \"Current deployment
+        gardenMinigamesEnabled\"\n            ],\n            \"properties\": {\n                \"currentPhase\": {\n   \
+        \                 \"$ref\": \"#/$defs/DeploymentPhase\",\n                    \"description\": \"Current deployment
         phase\"\n                },\n                \"maxConcurrentScenariosGlobal\": {\n                    \"type\": \"\
         integer\",\n                    \"description\": \"Maximum total active scenario instances\"\n                },\n\
         \                \"persistentEntryEnabled\": {\n                    \"type\": \"boolean\",\n                    \"\
-        description\": \"Whether persistent world entry is enabled\"\n                },\n                \"voidMinigamesEnabled\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether void minigames are
+        description\": \"Whether persistent world entry is enabled\"\n                },\n                \"gardenMinigamesEnabled\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether garden minigames are
         enabled\"\n                }\n            }\n        },\n        \"DeploymentPhase\": {\n            \"type\": \"\
         string\",\n            \"enum\": [\n                \"Alpha\",\n                \"Beta\",\n                \"Release\"\
         \n            ],\n            \"description\": \"Current deployment phase for scenario availability gating\"\n   \
@@ -1921,9 +1950,9 @@ paths:
         \  \"nullable\": true,\n                    \"description\": \"Updated global scenario capacity\"\n              \
         \  },\n                \"persistentEntryEnabled\": {\n                    \"type\": \"boolean\",\n               \
         \     \"nullable\": true,\n                    \"description\": \"Whether persistent world entry is enabled\"\n  \
-        \              },\n                \"voidMinigamesEnabled\": {\n                    \"type\": \"boolean\",\n     \
-        \               \"nullable\": true,\n                    \"description\": \"Whether void minigames are enabled\"\n\
-        \                }\n            }\n        },\n        \"DeploymentPhase\": {\n            \"type\": \"string\",\n\
+        \              },\n                \"gardenMinigamesEnabled\": {\n                    \"type\": \"boolean\",\n   \
+        \                 \"nullable\": true,\n                    \"description\": \"Whether garden minigames are enabled\"\
+        \n                }\n            }\n        },\n        \"DeploymentPhase\": {\n            \"type\": \"string\",\n\
         \            \"enum\": [\n                \"Alpha\",\n                \"Beta\",\n                \"Release\"\n   \
         \         ],\n            \"description\": \"Current deployment phase for scenario availability gating\"\n       \
         \ }\n    }\n}"
@@ -1931,13 +1960,13 @@ paths:
         ,\n    \"$defs\": {\n        \"PhaseConfigResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Current deployment phase configuration\",\n            \"required\": [\n                \"currentPhase\",\n  \
         \              \"maxConcurrentScenariosGlobal\",\n                \"persistentEntryEnabled\",\n                \"\
-        voidMinigamesEnabled\"\n            ],\n            \"properties\": {\n                \"currentPhase\": {\n     \
-        \               \"$ref\": \"#/$defs/DeploymentPhase\",\n                    \"description\": \"Current deployment
+        gardenMinigamesEnabled\"\n            ],\n            \"properties\": {\n                \"currentPhase\": {\n   \
+        \                 \"$ref\": \"#/$defs/DeploymentPhase\",\n                    \"description\": \"Current deployment
         phase\"\n                },\n                \"maxConcurrentScenariosGlobal\": {\n                    \"type\": \"\
         integer\",\n                    \"description\": \"Maximum total active scenario instances\"\n                },\n\
         \                \"persistentEntryEnabled\": {\n                    \"type\": \"boolean\",\n                    \"\
-        description\": \"Whether persistent world entry is enabled\"\n                },\n                \"voidMinigamesEnabled\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether void minigames are
+        description\": \"Whether persistent world entry is enabled\"\n                },\n                \"gardenMinigamesEnabled\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether garden minigames are
         enabled\"\n                }\n            }\n        },\n        \"DeploymentPhase\": {\n            \"type\": \"\
         string\",\n            \"enum\": [\n                \"Alpha\",\n                \"Beta\",\n                \"Release\"\
         \n            ],\n            \"description\": \"Current deployment phase for scenario availability gating\"\n   \
@@ -1948,7 +1977,7 @@ paths:
   /gardener/phase/get-metrics:
     post:
       summary: Get deployment phase metrics
-      description: Returns current counts of active void instances, scenario instances, and capacity utilization.
+      description: Returns current counts of active garden instances, scenario instances, and capacity utilization.
       operationId: getPhaseMetrics
       tags:
       - Deployment Phase
@@ -1974,11 +2003,11 @@ paths:
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/PhaseMetricsResponse\"\
         ,\n    \"$defs\": {\n        \"PhaseMetricsResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Current deployment phase metrics\",\n            \"required\": [\n                \"currentPhase\",\n        \
-        \        \"activeVoidInstances\",\n                \"activeScenarioInstances\",\n                \"scenarioCapacityUtilization\"\
+        \        \"activeGardenInstances\",\n                \"activeScenarioInstances\",\n                \"scenarioCapacityUtilization\"\
         \n            ],\n            \"properties\": {\n                \"currentPhase\": {\n                    \"$ref\"\
         : \"#/$defs/DeploymentPhase\",\n                    \"description\": \"Current deployment phase\"\n              \
-        \  },\n                \"activeVoidInstances\": {\n                    \"type\": \"integer\",\n                  \
-        \  \"description\": \"Number of currently active void instances\"\n                },\n                \"activeScenarioInstances\"\
+        \  },\n                \"activeGardenInstances\": {\n                    \"type\": \"integer\",\n                \
+        \    \"description\": \"Number of currently active garden instances\"\n                },\n                \"activeScenarioInstances\"\
         : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of currently active
         scenario instances\"\n                },\n                \"scenarioCapacityUtilization\": {\n                   \
         \ \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\": \"Ratio
@@ -1987,14 +2016,14 @@ paths:
         ,\n                \"Release\"\n            ],\n            \"description\": \"Current deployment phase for scenario
         availability gating\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get deployment phase metrics\",\n    \"description\": \"Returns current
-        counts of active void instances, scenario instances, and capacity utilization.\",\n    \"tags\": [\n        \"Deployment
+        counts of active garden instances, scenario instances, and capacity utilization.\",\n    \"tags\": [\n        \"Deployment
         Phase\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getPhaseMetrics\"\n}"
   /gardener/bond/enter-together:
     post:
       summary: Enter a scenario together with a bonded player
       description: |
         Both bonded players enter a shared scenario instance. Validates bond state,
-        both participants' void instances, and template multiplayer support.
+        both participants' garden instances, and template multiplayer support.
       operationId: enterScenarioTogether
       tags:
       - Bond Scenarios
@@ -2015,7 +2044,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ScenarioStateResponse'
         '400':
-          description: One or both participants not in void, or template does not support multiplayer
+          description: One or both participants not in garden, or template does not support multiplayer
         '404':
           description: Bond not found
       x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EnterTogetherRequest\"\
@@ -2054,14 +2083,14 @@ paths:
         ,\n                \"Completed\",\n                \"Abandoned\"\n            ],\n            \"description\": \"\
         Current lifecycle status of a scenario instance\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Enter a scenario together with a bonded player\",\n    \"description\"\
-        : \"Both bonded players enter a shared scenario instance. Validates bond state,\\nboth participants' void instances,
+        : \"Both bonded players enter a shared scenario instance. Validates bond state,\\nboth participants' garden instances,
         and template multiplayer support.\\n\",\n    \"tags\": [\n        \"Bond Scenarios\"\n    ],\n    \"deprecated\":
         false,\n    \"operationId\": \"enterScenarioTogether\"\n}"
-  /gardener/bond/get-shared-void:
+  /gardener/bond/get-shared-garden:
     post:
-      summary: Get shared void state for bonded players
-      description: Returns the merged void state for both bond participants including shared POIs.
-      operationId: getSharedVoidState
+      summary: Get shared garden state for bonded players
+      description: Returns the merged garden state for both bond participants including shared POIs.
+      operationId: getSharedGardenState
       tags:
       - Bond Scenarios
       x-permissions:
@@ -2072,84 +2101,89 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/GetSharedVoidRequest'
+              $ref: '#/components/schemas/GetSharedGardenRequest'
       responses:
         '200':
-          description: Shared void state retrieved
+          description: Shared garden state retrieved
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SharedVoidStateResponse'
+                $ref: '#/components/schemas/SharedGardenStateResponse'
         '404':
-          description: Bond not found or participants not in void
-      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetSharedVoidRequest\"\
-        ,\n    \"$defs\": {\n        \"GetSharedVoidRequest\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Request to get shared void state for bonded players\",\n            \"required\": [\n                \"bondId\"\
+          description: Bond not found or participants not in garden
+      x-request-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/GetSharedGardenRequest\"\
+        ,\n    \"$defs\": {\n        \"GetSharedGardenRequest\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Request to get shared garden state for bonded players\",\n            \"required\": [\n                \"bondId\"\
         \n            ],\n            \"properties\": {\n                \"bondId\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Bond ID to look up shared void
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"Bond ID to look up shared garden
         state\"\n                }\n            }\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SharedVoidStateResponse\"\
-        ,\n    \"$defs\": {\n        \"SharedVoidStateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"Shared void state for bonded players\",\n            \"required\": [\n                \"bondId\",\n          \
-        \      \"participants\",\n                \"sharedPois\"\n            ],\n            \"properties\": {\n        \
-        \        \"bondId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n   \
-        \                 \"description\": \"Bond linking the participants\"\n                },\n                \"participants\"\
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SharedGardenStateResponse\"\
+        ,\n    \"$defs\": {\n        \"SharedGardenStateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Shared garden state for bonded players\",\n            \"required\": [\n                \"bondId\",\n        \
+        \        \"participants\",\n                \"sharedPois\"\n            ],\n            \"properties\": {\n      \
+        \          \"bondId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n \
+        \                   \"description\": \"Bond linking the participants\"\n                },\n                \"participants\"\
         : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\"\
-        : \"#/$defs/BondedPlayerVoidState\"\n                    },\n                    \"description\": \"Per-player void
+        : \"#/$defs/BondedPlayerGardenState\"\n                    },\n                    \"description\": \"Per-player garden
         state\"\n                },\n                \"sharedPois\": {\n                    \"type\": \"array\",\n       \
         \             \"items\": {\n                        \"$ref\": \"#/$defs/PoiSummary\"\n                    },\n   \
         \                 \"description\": \"POIs visible to all bond participants\"\n                }\n            }\n \
-        \       },\n        \"BondedPlayerVoidState\": {\n            \"type\": \"object\",\n            \"description\":
-        \"Per-player void state within a shared bond void\",\n            \"required\": [\n                \"seedId\",\n \
-        \               \"accountId\",\n                \"position\"\n            ],\n            \"properties\": {\n    \
-        \            \"seedId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
-        \                    \"description\": \"Seed ID of the bonded player\"\n                },\n                \"accountId\"\
+        \       },\n        \"BondedPlayerGardenState\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"Per-player garden state within a shared bond garden\",\n            \"required\": [\n                \"seedId\"\
+        ,\n                \"accountId\",\n                \"position\"\n            ],\n            \"properties\": {\n \
+        \               \"seedId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
+        ,\n                    \"description\": \"Seed ID of the bonded player\"\n                },\n                \"accountId\"\
         : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
         description\": \"Account ID of the bonded player\"\n                },\n                \"position\": {\n        \
-        \            \"$ref\": \"#/$defs/Vec3\",\n                    \"description\": \"Player position in shared void space\"\
-        \n                }\n            }\n        },\n        \"Vec3\": {\n            \"type\": \"object\",\n         \
-        \   \"description\": \"Three-dimensional spatial coordinates in void space\",\n            \"required\": [\n     \
-        \           \"x\",\n                \"y\",\n                \"z\"\n            ],\n            \"properties\": {\n\
-        \                \"x\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n\
-        \                    \"description\": \"X coordinate in void space units\"\n                },\n                \"\
-        y\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n                  \
-        \  \"description\": \"Y coordinate in void space units\"\n                },\n                \"z\": {\n         \
-        \           \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\"\
-        : \"Z coordinate in void space units\"\n                }\n            }\n        },\n        \"PoiSummary\": {\n\
+        \            \"$ref\": \"#/$defs/Vec3\",\n                    \"description\": \"Player position in shared garden
+        space\"\n                }\n            }\n        },\n        \"Vec3\": {\n            \"type\": \"object\",\n  \
+        \          \"description\": \"Three-dimensional spatial coordinates in garden space\",\n            \"required\":
+        [\n                \"x\",\n                \"y\",\n                \"z\"\n            ],\n            \"properties\"\
+        : {\n                \"x\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\"\
+        ,\n                    \"description\": \"X coordinate in garden space units\"\n                },\n             \
+        \   \"y\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n            \
+        \        \"description\": \"Y coordinate in garden space units\"\n                },\n                \"z\": {\n \
+        \                   \"type\": \"number\",\n                    \"format\": \"float\",\n                    \"description\"\
+        : \"Z coordinate in garden space units\"\n                }\n            }\n        },\n        \"PoiSummary\": {\n\
         \            \"type\": \"object\",\n            \"description\": \"POI state summary for client display\",\n     \
         \       \"required\": [\n                \"poiId\",\n                \"position\",\n                \"poiType\",\n\
         \                \"triggerMode\",\n                \"triggerRadius\",\n                \"status\"\n            ],\n\
         \            \"properties\": {\n                \"poiId\": {\n                    \"type\": \"string\",\n        \
         \            \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for this POI\"\n    \
         \            },\n                \"position\": {\n                    \"$ref\": \"#/$defs/Vec3\",\n              \
-        \      \"description\": \"POI position in void space\"\n                },\n                \"poiType\": {\n     \
-        \               \"$ref\": \"#/$defs/PoiType\",\n                    \"description\": \"Sensory presentation type\"\
-        \n                },\n                \"visualHint\": {\n                    \"type\": \"string\",\n             \
-        \       \"nullable\": true,\n                    \"description\": \"Visual hint identifier for client rendering\"\n\
-        \                },\n                \"audioHint\": {\n                    \"type\": \"string\",\n               \
-        \     \"nullable\": true,\n                    \"description\": \"Audio hint identifier for client rendering\"\n \
-        \               },\n                \"intensityRamp\": {\n                    \"type\": \"number\",\n            \
-        \        \"format\": \"float\",\n                    \"description\": \"Current intensity ramp value (0.0-1.0)\",\n\
-        \                    \"default\": 0.0\n                },\n                \"triggerMode\": {\n                  \
-        \  \"$ref\": \"#/$defs/TriggerMode\",\n                    \"description\": \"How this POI is triggered\"\n      \
-        \          },\n                \"triggerRadius\": {\n                    \"type\": \"number\",\n                 \
-        \   \"format\": \"float\",\n                    \"description\": \"Trigger radius in void space units\"\n        \
-        \        },\n                \"scenarioTemplateId\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Associated
-        scenario template if this POI leads to a scenario\"\n                },\n                \"status\": {\n         \
-        \           \"$ref\": \"#/$defs/PoiStatus\",\n                    \"description\": \"Current lifecycle status\"\n\
-        \                }\n            }\n        },\n        \"PoiType\": {\n            \"type\": \"string\",\n       \
-        \     \"enum\": [\n                \"Visual\",\n                \"Auditory\",\n                \"Environmental\",\n\
-        \                \"Portal\",\n                \"Social\"\n            ],\n            \"description\": \"Sensory presentation
-        type for a point of interest in the void\"\n        },\n        \"TriggerMode\": {\n            \"type\": \"string\"\
-        ,\n            \"enum\": [\n                \"Proximity\",\n                \"Interaction\",\n                \"Prompted\"\
-        ,\n                \"Forced\"\n            ],\n            \"description\": \"How a POI is triggered by the player\"\
-        \n        },\n        \"PoiStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n             \
-        \   \"Active\",\n                \"Entered\",\n                \"Declined\",\n                \"Expired\"\n      \
-        \      ],\n            \"description\": \"Current lifecycle status of a POI\"\n        }\n    }\n}"
-      x-endpoint-info-json: "{\n    \"summary\": \"Get shared void state for bonded players\",\n    \"description\": \"Returns
-        the merged void state for both bond participants including shared POIs.\",\n    \"tags\": [\n        \"Bond Scenarios\"\
-        \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getSharedVoidState\"\n}"
+        \      \"description\": \"POI position in garden space\"\n                },\n                \"poiType\": {\n   \
+        \                 \"$ref\": \"#/$defs/PoiType\",\n                    \"description\": \"Sensory presentation type\"\
+        \n                },\n                \"visualHint\": {\n                    \"$ref\": \"#/$defs/ScenarioCategory\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Scenario category hint for client
+        rendering\"\n                },\n                \"audioHint\": {\n                    \"type\": \"string\",\n   \
+        \                 \"nullable\": true,\n                    \"description\": \"Audio hint identifier for client rendering\"\
+        \n                },\n                \"intensityRamp\": {\n                    \"type\": \"number\",\n          \
+        \          \"format\": \"float\",\n                    \"description\": \"Current intensity ramp value (0.0-1.0)\"\
+        ,\n                    \"default\": 0.0\n                },\n                \"triggerMode\": {\n                \
+        \    \"$ref\": \"#/$defs/TriggerMode\",\n                    \"description\": \"How this POI is triggered\"\n    \
+        \            },\n                \"triggerRadius\": {\n                    \"type\": \"number\",\n               \
+        \     \"format\": \"float\",\n                    \"description\": \"Trigger radius in garden space units\"\n    \
+        \            },\n                \"scenarioTemplateId\": {\n                    \"type\": \"string\",\n          \
+        \          \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Associated scenario template if this POI leads to a scenario\"\n                },\n                \"status\": {\n\
+        \                    \"$ref\": \"#/$defs/PoiStatus\",\n                    \"description\": \"Current lifecycle status\"\
+        \n                }\n            }\n        },\n        \"PoiType\": {\n            \"type\": \"string\",\n      \
+        \      \"enum\": [\n                \"Visual\",\n                \"Auditory\",\n                \"Environmental\"\
+        ,\n                \"Portal\",\n                \"Social\"\n            ],\n            \"description\": \"Sensory
+        presentation type for a point of interest in the garden\"\n        },\n        \"ScenarioCategory\": {\n         \
+        \   \"type\": \"string\",\n            \"enum\": [\n                \"Combat\",\n                \"Crafting\",\n \
+        \               \"Social\",\n                \"Trade\",\n                \"Exploration\",\n                \"Magic\"\
+        ,\n                \"Survival\",\n                \"Mixed\",\n                \"Narrative\",\n                \"Tutorial\"\
+        \n            ],\n            \"description\": \"Primary gameplay category for a scenario template\"\n        },\n\
+        \        \"TriggerMode\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Proximity\"\
+        ,\n                \"Interaction\",\n                \"Prompted\",\n                \"Forced\"\n            ],\n \
+        \           \"description\": \"How a POI is triggered by the player\"\n        },\n        \"PoiStatus\": {\n    \
+        \        \"type\": \"string\",\n            \"enum\": [\n                \"Active\",\n                \"Entered\"\
+        ,\n                \"Declined\",\n                \"Expired\"\n            ],\n            \"description\": \"Current
+        lifecycle status of a POI\"\n        }\n    }\n}"
+      x-endpoint-info-json: "{\n    \"summary\": \"Get shared garden state for bonded players\",\n    \"description\": \"\
+        Returns the merged garden state for both bond participants including shared POIs.\",\n    \"tags\": [\n        \"\
+        Bond Scenarios\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getSharedGardenState\"\n}"
 components:
   schemas:
     DeploymentPhase:
@@ -2188,7 +2222,7 @@ components:
       - Environmental
       - Portal
       - Social
-      description: Sensory presentation type for a point of interest in the void
+      description: Sensory presentation type for a point of interest in the garden
     TriggerMode:
       type: string
       enum:
@@ -2221,9 +2255,23 @@ components:
       - Active
       - Deprecated
       description: Current lifecycle status of a scenario template
+    PoiInteractionResult:
+      type: string
+      enum:
+      - ScenarioPrompt
+      - ScenarioEnter
+      - PoiUpdate
+      - ChainOffer
+      description: Outcome of interacting with a POI
+    ScenarioParticipantRole:
+      type: string
+      enum:
+      - Primary
+      - Partner
+      description: Role of a participant within a scenario instance
     Vec3:
       type: object
-      description: Three-dimensional spatial coordinates in void space
+      description: Three-dimensional spatial coordinates in garden space
       required:
       - x
       - y
@@ -2232,15 +2280,15 @@ components:
         x:
           type: number
           format: float
-          description: X coordinate in void space units
+          description: X coordinate in garden space units
         y:
           type: number
           format: float
-          description: Y coordinate in void space units
+          description: Y coordinate in garden space units
         z:
           type: number
           format: float
-          description: Z coordinate in void space units
+          description: Z coordinate in garden space units
     PoiSummary:
       type: object
       description: POI state summary for client display
@@ -2258,14 +2306,14 @@ components:
           description: Unique identifier for this POI
         position:
           $ref: '#/components/schemas/Vec3'
-          description: POI position in void space
+          description: POI position in garden space
         poiType:
           $ref: '#/components/schemas/PoiType'
           description: Sensory presentation type
         visualHint:
-          type: string
+          $ref: '#/components/schemas/ScenarioCategory'
           nullable: true
-          description: Visual hint identifier for client rendering
+          description: Scenario category hint for client rendering
         audioHint:
           type: string
           nullable: true
@@ -2281,7 +2329,7 @@ components:
         triggerRadius:
           type: number
           format: float
-          description: Trigger radius in void space units
+          description: Trigger radius in garden space units
         scenarioTemplateId:
           type: string
           format: uuid
@@ -2375,6 +2423,7 @@ components:
       properties:
         behaviorDocumentId:
           type: string
+          format: uuid
           nullable: true
           description: ABML behavior document ID for NPC orchestration
         sceneDocumentId:
@@ -2391,9 +2440,9 @@ components:
           type: string
           nullable: true
           description: Location code within the realm
-    BondedPlayerVoidState:
+    BondedPlayerGardenState:
       type: object
-      description: Per-player void state within a shared bond void
+      description: Per-player garden state within a shared bond garden
       required:
       - seedId
       - accountId
@@ -2409,10 +2458,10 @@ components:
           description: Account ID of the bonded player
         position:
           $ref: '#/components/schemas/Vec3'
-          description: Player position in shared void space
-    EnterVoidRequest:
+          description: Player position in shared garden space
+    EnterGardenRequest:
       type: object
-      description: Request to enter the void
+      description: Request to enter the garden
       required:
       - accountId
       - sessionId
@@ -2420,24 +2469,24 @@ components:
         accountId:
           type: string
           format: uuid
-          description: Account entering the void
+          description: Account entering the garden
         sessionId:
           type: string
           format: uuid
           description: Current WebSocket session ID
-    GetVoidStateRequest:
+    GetGardenStateRequest:
       type: object
-      description: Request to get current void state
+      description: Request to get current garden state
       required:
       - accountId
       properties:
         accountId:
           type: string
           format: uuid
-          description: Account whose void state to retrieve
+          description: Account whose garden state to retrieve
     UpdatePositionRequest:
       type: object
-      description: Request to update player position in the void
+      description: Request to update player position in the garden
       required:
       - accountId
       - position
@@ -2449,20 +2498,20 @@ components:
           description: Account whose position to update
         position:
           $ref: '#/components/schemas/Vec3'
-          description: New position in void space
+          description: New position in garden space
         velocity:
           $ref: '#/components/schemas/Vec3'
           description: Current velocity vector
-    LeaveVoidRequest:
+    LeaveGardenRequest:
       type: object
-      description: Request to leave the void
+      description: Request to leave the garden
       required:
       - accountId
       properties:
         accountId:
           type: string
           format: uuid
-          description: Account leaving the void
+          description: Account leaving the garden
     ListPoisRequest:
       type: object
       description: Request to list active POIs
@@ -2777,10 +2826,10 @@ components:
           type: boolean
           nullable: true
           description: Whether persistent world entry is enabled
-        voidMinigamesEnabled:
+        gardenMinigamesEnabled:
           type: boolean
           nullable: true
-          description: Whether void minigames are enabled
+          description: Whether garden minigames are enabled
     GetPhaseMetricsRequest:
       type: object
       description: Request to get phase metrics
@@ -2800,38 +2849,38 @@ components:
           type: string
           format: uuid
           description: Template to instantiate for the bond
-    GetSharedVoidRequest:
+    GetSharedGardenRequest:
       type: object
-      description: Request to get shared void state for bonded players
+      description: Request to get shared garden state for bonded players
       required:
       - bondId
       properties:
         bondId:
           type: string
           format: uuid
-          description: Bond ID to look up shared void state
-    VoidStateResponse:
+          description: Bond ID to look up shared garden state
+    GardenStateResponse:
       type: object
-      description: Current void instance state for a player
+      description: Current garden instance state for a player
       required:
-      - voidInstanceId
+      - gardenInstanceId
       - seedId
       - accountId
       - position
       - activePois
       properties:
-        voidInstanceId:
+        gardenInstanceId:
           type: string
           format: uuid
-          description: Unique identifier for this void instance
+          description: Unique identifier for this garden instance
         seedId:
           type: string
           format: uuid
-          description: Active seed for this void session
+          description: Active seed for this garden session
         accountId:
           type: string
           format: uuid
-          description: Account in the void
+          description: Account in the garden
         position:
           $ref: '#/components/schemas/Vec3'
           description: Current player position
@@ -2839,7 +2888,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PoiSummary'
-          description: Currently active POIs in this void instance
+          description: Currently active POIs in this garden instance
     PositionUpdateResponse:
       type: object
       description: Response to a position update
@@ -2855,9 +2904,9 @@ components:
             $ref: '#/components/schemas/PoiSummary'
           nullable: true
           description: POIs triggered by proximity to the new position
-    LeaveVoidResponse:
+    LeaveGardenResponse:
       type: object
-      description: Response after leaving the void
+      description: Response after leaving the garden
       required:
       - accountId
       - sessionDurationSeconds
@@ -2865,22 +2914,22 @@ components:
         accountId:
           type: string
           format: uuid
-          description: Account that left the void
+          description: Account that left the garden
         sessionDurationSeconds:
           type: number
           format: float
-          description: Total duration of the void session in seconds
+          description: Total duration of the garden session in seconds
     ListPoisResponse:
       type: object
-      description: List of active POIs in a void instance
+      description: List of active POIs in a garden instance
       required:
-      - voidInstanceId
+      - gardenInstanceId
       - pois
       properties:
-        voidInstanceId:
+        gardenInstanceId:
           type: string
           format: uuid
-          description: Void instance these POIs belong to
+          description: Garden instance these POIs belong to
         pois:
           type: array
           items:
@@ -2898,8 +2947,8 @@ components:
           format: uuid
           description: POI that was interacted with
         result:
-          type: string
-          description: Interaction outcome (scenario_prompt, scenario_enter, poi_update, chain_offer)
+          $ref: '#/components/schemas/PoiInteractionResult'
+          description: Interaction outcome
         scenarioTemplateId:
           type: string
           format: uuid
@@ -2978,7 +3027,7 @@ components:
       required:
       - scenarioInstanceId
       - growthAwarded
-      - returnToVoid
+      - returnToGarden
       properties:
         scenarioInstanceId:
           type: string
@@ -2990,9 +3039,9 @@ components:
             type: number
             format: float
           description: Growth awarded per domain
-        returnToVoid:
+        returnToGarden:
           type: boolean
-          description: Whether the player should return to the void
+          description: Whether the player should return to the garden
     AbandonScenarioResponse:
       type: object
       description: Response after abandoning a scenario
@@ -3128,7 +3177,7 @@ components:
       - currentPhase
       - maxConcurrentScenariosGlobal
       - persistentEntryEnabled
-      - voidMinigamesEnabled
+      - gardenMinigamesEnabled
       properties:
         currentPhase:
           $ref: '#/components/schemas/DeploymentPhase'
@@ -3139,24 +3188,24 @@ components:
         persistentEntryEnabled:
           type: boolean
           description: Whether persistent world entry is enabled
-        voidMinigamesEnabled:
+        gardenMinigamesEnabled:
           type: boolean
-          description: Whether void minigames are enabled
+          description: Whether garden minigames are enabled
     PhaseMetricsResponse:
       type: object
       description: Current deployment phase metrics
       required:
       - currentPhase
-      - activeVoidInstances
+      - activeGardenInstances
       - activeScenarioInstances
       - scenarioCapacityUtilization
       properties:
         currentPhase:
           $ref: '#/components/schemas/DeploymentPhase'
           description: Current deployment phase
-        activeVoidInstances:
+        activeGardenInstances:
           type: integer
-          description: Number of currently active void instances
+          description: Number of currently active garden instances
         activeScenarioInstances:
           type: integer
           description: Number of currently active scenario instances
@@ -3164,9 +3213,9 @@ components:
           type: number
           format: float
           description: Ratio of active scenarios to global capacity (0.0-1.0)
-    SharedVoidStateResponse:
+    SharedGardenStateResponse:
       type: object
-      description: Shared void state for bonded players
+      description: Shared garden state for bonded players
       required:
       - bondId
       - participants
@@ -3179,8 +3228,8 @@ components:
         participants:
           type: array
           items:
-            $ref: '#/components/schemas/BondedPlayerVoidState'
-          description: Per-player void state
+            $ref: '#/components/schemas/BondedPlayerGardenState'
+          description: Per-player garden state
         sharedPois:
           type: array
           items:

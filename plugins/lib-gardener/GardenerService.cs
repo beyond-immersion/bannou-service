@@ -83,7 +83,7 @@ public partial class GardenerService : IGardenerService
     /// </summary>
     internal IStateStore<GardenInstanceModel> GardenStore =>
         _gardenStore ??= _stateStoreFactory.GetStore<GardenInstanceModel>(
-            StateStoreDefinitions.GardenerVoidInstances);
+            StateStoreDefinitions.GardenerGardenInstances);
 
     private IStateStore<PoiModel>? _poiStore;
 
@@ -143,7 +143,7 @@ public partial class GardenerService : IGardenerService
     /// </summary>
     internal ICacheableStateStore<GardenInstanceModel> GardenCacheStore =>
         _gardenCacheStore ??= _stateStoreFactory.GetCacheableStore<GardenInstanceModel>(
-            StateStoreDefinitions.GardenerVoidInstances);
+            StateStoreDefinitions.GardenerGardenInstances);
 
     #endregion
 
@@ -173,8 +173,8 @@ public partial class GardenerService : IGardenerService
     #region Garden Management
 
     /// <inheritdoc />
-    public async Task<(StatusCodes, VoidStateResponse?)> EnterVoidAsync(
-        EnterVoidRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, GardenStateResponse?)> EnterGardenAsync(
+        EnterGardenRequest body, CancellationToken cancellationToken)
     {
         var existing = await GardenStore.GetAsync(GardenKey(body.AccountId), cancellationToken);
         if (existing != null)
@@ -223,13 +223,13 @@ public partial class GardenerService : IGardenerService
             ActiveGardensTrackingKey, body.AccountId, cancellationToken: cancellationToken);
 
         await _messageBus.TryPublishAsync("gardener.garden.entered",
-            new GardenerVoidEnteredEvent
+            new GardenerGardenEnteredEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 AccountId = body.AccountId,
                 SeedId = activeSeed.SeedId,
-                VoidInstanceId = gardenInstanceId
+                GardenInstanceId = gardenInstanceId
             }, cancellationToken: cancellationToken);
 
         _logger.LogInformation(
@@ -240,8 +240,8 @@ public partial class GardenerService : IGardenerService
     }
 
     /// <inheritdoc />
-    public async Task<(StatusCodes, VoidStateResponse?)> GetVoidStateAsync(
-        GetVoidStateRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, GardenStateResponse?)> GetGardenStateAsync(
+        GetGardenStateRequest body, CancellationToken cancellationToken)
     {
         var garden = await GardenStore.GetAsync(GardenKey(body.AccountId), cancellationToken);
         if (garden == null)
@@ -320,8 +320,8 @@ public partial class GardenerService : IGardenerService
     }
 
     /// <inheritdoc />
-    public async Task<(StatusCodes, LeaveVoidResponse?)> LeaveVoidAsync(
-        LeaveVoidRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, LeaveGardenResponse?)> LeaveGardenAsync(
+        LeaveGardenRequest body, CancellationToken cancellationToken)
     {
         await using var lockResult = await _lockProvider.LockAsync(
             StateStoreDefinitions.GardenerLock,
@@ -354,12 +354,12 @@ public partial class GardenerService : IGardenerService
             ActiveGardensTrackingKey, body.AccountId, cancellationToken);
 
         await _messageBus.TryPublishAsync("gardener.garden.left",
-            new GardenerVoidLeftEvent
+            new GardenerGardenLeftEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
                 AccountId = body.AccountId,
-                VoidInstanceId = garden.GardenInstanceId,
+                GardenInstanceId = garden.GardenInstanceId,
                 SessionDurationSeconds = sessionDuration
             }, cancellationToken: cancellationToken);
 
@@ -367,7 +367,7 @@ public partial class GardenerService : IGardenerService
             "Garden instance {GardenInstanceId} ended for account {AccountId}, duration {Duration}s",
             garden.GardenInstanceId, body.AccountId, sessionDuration);
 
-        return (StatusCodes.OK, new LeaveVoidResponse
+        return (StatusCodes.OK, new LeaveGardenResponse
         {
             AccountId = body.AccountId,
             SessionDurationSeconds = sessionDuration
@@ -389,7 +389,7 @@ public partial class GardenerService : IGardenerService
         var pois = await LoadActivePoisAsync(garden, cancellationToken);
         return (StatusCodes.OK, new ListPoisResponse
         {
-            VoidInstanceId = garden.GardenInstanceId,
+            GardenInstanceId = garden.GardenInstanceId,
             Pois = pois.Select(MapToPoiSummary).ToList()
         });
     }
@@ -768,7 +768,7 @@ public partial class GardenerService : IGardenerService
         {
             ScenarioInstanceId = scenario.ScenarioInstanceId,
             GrowthAwarded = growthAwarded,
-            ReturnToVoid = true
+            ReturnToGarden = true
         });
     }
 
@@ -1228,8 +1228,8 @@ public partial class GardenerService : IGardenerService
             config.MaxConcurrentScenariosGlobal = body.MaxConcurrentScenariosGlobal.Value;
         if (body.PersistentEntryEnabled != null)
             config.PersistentEntryEnabled = body.PersistentEntryEnabled.Value;
-        if (body.VoidMinigamesEnabled != null)
-            config.GardenMinigamesEnabled = body.VoidMinigamesEnabled.Value;
+        if (body.GardenMinigamesEnabled != null)
+            config.GardenMinigamesEnabled = body.GardenMinigamesEnabled.Value;
 
         config.UpdatedAt = DateTimeOffset.UtcNow;
         await PhaseStore.SaveAsync(PhaseConfigKey, config, cancellationToken: cancellationToken);
@@ -1274,7 +1274,7 @@ public partial class GardenerService : IGardenerService
         return (StatusCodes.OK, new PhaseMetricsResponse
         {
             CurrentPhase = config.CurrentPhase,
-            ActiveVoidInstances = activeGardenCount,
+            ActiveGardenInstances = activeGardenCount,
             ActiveScenarioInstances = activeScenarioCount,
             ScenarioCapacityUtilization = utilization
         });
@@ -1298,7 +1298,7 @@ public partial class GardenerService : IGardenerService
         if (!lockResult.Success)
             return (StatusCodes.Conflict, null);
 
-        if (!_configuration.BondSharedVoidEnabled)
+        if (!_configuration.BondSharedGardenEnabled)
         {
             _logger.LogDebug("Bond shared garden is disabled");
             return (StatusCodes.BadRequest, null);
@@ -1458,10 +1458,10 @@ public partial class GardenerService : IGardenerService
     }
 
     /// <inheritdoc />
-    public async Task<(StatusCodes, SharedVoidStateResponse?)> GetSharedVoidStateAsync(
-        GetSharedVoidRequest body, CancellationToken cancellationToken)
+    public async Task<(StatusCodes, SharedGardenStateResponse?)> GetSharedGardenStateAsync(
+        GetSharedGardenRequest body, CancellationToken cancellationToken)
     {
-        if (!_configuration.BondSharedVoidEnabled)
+        if (!_configuration.BondSharedGardenEnabled)
             return (StatusCodes.BadRequest, null);
 
         BondResponse bond;
@@ -1485,14 +1485,14 @@ public partial class GardenerService : IGardenerService
         }
 
         var allPois = new List<PoiSummary>();
-        var playerStates = new List<BondedPlayerVoidState>();
+        var playerStates = new List<BondedPlayerGardenState>();
 
         foreach (var accountId in partnerAccountIds)
         {
             var garden = await GardenStore.GetAsync(GardenKey(accountId), cancellationToken);
             if (garden == null) continue;
 
-            playerStates.Add(new BondedPlayerVoidState
+            playerStates.Add(new BondedPlayerGardenState
             {
                 AccountId = accountId,
                 SeedId = garden.SeedId,
@@ -1503,7 +1503,7 @@ public partial class GardenerService : IGardenerService
             allPois.AddRange(pois.Select(MapToPoiSummary));
         }
 
-        return (StatusCodes.OK, new SharedVoidStateResponse
+        return (StatusCodes.OK, new SharedGardenStateResponse
         {
             BondId = body.BondId,
             Participants = playerStates,
@@ -1685,12 +1685,12 @@ public partial class GardenerService : IGardenerService
 
     #region Model Mapping
 
-    private static VoidStateResponse MapToGardenStateResponse(
+    private static GardenStateResponse MapToGardenStateResponse(
         GardenInstanceModel garden, IReadOnlyList<PoiModel> pois)
     {
-        return new VoidStateResponse
+        return new GardenStateResponse
         {
-            VoidInstanceId = garden.GardenInstanceId,
+            GardenInstanceId = garden.GardenInstanceId,
             SeedId = garden.SeedId,
             AccountId = garden.AccountId,
             Position = MapToVec3(garden.Position),
@@ -1771,7 +1771,7 @@ public partial class GardenerService : IGardenerService
             CurrentPhase = config.CurrentPhase,
             MaxConcurrentScenariosGlobal = config.MaxConcurrentScenariosGlobal,
             PersistentEntryEnabled = config.PersistentEntryEnabled,
-            VoidMinigamesEnabled = config.GardenMinigamesEnabled
+            GardenMinigamesEnabled = config.GardenMinigamesEnabled
         };
     }
 

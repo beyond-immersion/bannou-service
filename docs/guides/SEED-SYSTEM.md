@@ -1,9 +1,9 @@
 # Seed System - Progressive Growth for Living Worlds
 
-> **Version**: 1.0
-> **Status**: Seed service implemented; consumers in progress
-> **Location**: `plugins/lib-seed/`, `schemas/seed-*.yaml`
-> **Related**: [Seed Deep Dive](../plugins/SEED.md), [Gardener Plan](../plans/GARDENER.md), [Behavior System](./BEHAVIOR-SYSTEM.md), [Service Hierarchy](../reference/SERVICE-HIERARCHY.md)
+> **Version**: 1.1
+> **Status**: Seed service and Gardener (first consumer) implemented
+> **Location**: `plugins/lib-seed/`, `plugins/lib-gardener/`, `schemas/seed-*.yaml`, `schemas/gardener-*.yaml`
+> **Related**: [Seed Deep Dive](../plugins/SEED.md), [Gardener Deep Dive](../plugins/GARDENER.md), [Behavior System](./BEHAVIOR-SYSTEM.md), [Service Hierarchy](../reference/SERVICE-HIERARCHY.md)
 
 The Seed System provides the foundational growth primitive for Arcadia's progressive mastery model. Seeds are entities that start empty and grow by accumulating metadata across named domains, progressively gaining capabilities at configurable thresholds. They power guardian spirits, dungeon cores, combat archetypes, crafting specializations, and any future system that needs "progressive growth in a role."
 
@@ -15,7 +15,7 @@ The Seed System provides the foundational growth primitive for Arcadia's progres
 2. [Architecture](#2-architecture)
 3. [How Seeds Work](#3-how-seeds-work)
 4. [The Consumer Pattern](#4-the-consumer-pattern)
-5. [Planned Consumers](#5-planned-consumers)
+5. [Consumers](#5-consumers)
 6. [External Growth Contributions](#6-external-growth-contributions)
 7. [The Gardener: Player Experience Orchestration](#7-the-gardener-player-experience-orchestration)
 8. [Capability Push: L4 Consumer Responsibility](#8-capability-push-l4-consumer-responsibility)
@@ -40,7 +40,7 @@ This is analogous to how Item (L2) is a generic data container -- it doesn't kno
                   /      |       \
           Character  Game Session  Relationship
           (L2)       (L2)          (L2)
-                                              ┌── Gardener (L4, planned)
+                                              ┌── Gardener (L4, implemented)
                                               │   Player experience orchestrator
                   Consumers ──────────────────┤── Dungeon plugin (L4, planned)
                   (register types,            │   Dungeon core + master seeds
@@ -118,21 +118,21 @@ Item (L2) is a generic data primitive. Inventory (L2), Escrow (L4), and Save-Loa
 
 ---
 
-## 5. Planned Consumers
+## 5. Consumers
 
-lib-seed is designed to be reused by any system that needs progressive growth tracking. The following table shows known and anticipated consumers:
+lib-seed is designed to be reused by any system that needs progressive growth tracking. The following table shows implemented and anticipated consumers:
 
-| Consumer | Seed Type Code | Seed Owner | Growth Domains | Capability Output |
-|----------|---------------|-----------|----------------|-------------------|
-| **Gardener** (player spirits) | `guardian` | Account | combat.\*, crafting.\*, social.\*, trade.\*, magic.\*, exploration.\* | UX capability modules for client |
-| **Dungeon plugin** (dungeon consciousness) | `dungeon_core` | Actor | mana_reserves.\*, genetic_library.\*, trap_complexity.\*, domain_expansion.\*, memory_depth.\* | Dungeon spawning/trap/manifestation capabilities |
-| **Dungeon plugin** (mastery role) | `dungeon_master` | Character or Actor | perception.\*, command.\*, channeling.\*, coordination.\* | Bond communication/command capabilities |
-| **Combat archetypes** (future) | `warrior`, `mage`, `ranger` | Character | archetype-specific combat domains | Class-specific combat abilities and UX |
-| **Crafting specializations** (future) | `smith`, `alchemist`, `enchanter` | Character | trade-specific technique/material domains | Recipe unlocks, technique mastery |
-| **Governance roles** (future) | `governor`, `guild_leader` | Character or Realm | diplomacy.\*, logistics.\*, taxation.\*, military_command.\* | Political actions and policy capabilities |
-| **Faction system** (future) | `faction` | Realm or character group | military.\*, trade.\*, culture.\* | Faction actions and policies |
-| **Apprenticeship** (future) | `apprenticeship` | Relationship | technique.\*, lore.\*, material_science.\* | Craftable items, teachable skills |
-| **Genetic lineage** (future) | `lineage` | Character household | trait.strength, trait.magical_affinity... | Inheritable character traits |
+| Consumer | Seed Type Code | Seed Owner | Growth Domains | Capability Output | Status |
+|----------|---------------|-----------|----------------|-------------------|--------|
+| **Gardener** (player spirits) | `guardian` | Account | combat.\*, crafting.\*, social.\*, trade.\*, magic.\*, exploration.\* | UX capability modules for client | **Implemented** |
+| **Dungeon plugin** (dungeon consciousness) | `dungeon_core` | Actor | mana_reserves.\*, genetic_library.\*, trap_complexity.\*, domain_expansion.\*, memory_depth.\* | Dungeon spawning/trap/manifestation capabilities | Planned |
+| **Dungeon plugin** (mastery role) | `dungeon_master` | Character or Actor | perception.\*, command.\*, channeling.\*, coordination.\* | Bond communication/command capabilities | Planned |
+| **Combat archetypes** (future) | `warrior`, `mage`, `ranger` | Character | archetype-specific combat domains | Class-specific combat abilities and UX | Future |
+| **Crafting specializations** (future) | `smith`, `alchemist`, `enchanter` | Character | trade-specific technique/material domains | Recipe unlocks, technique mastery | Future |
+| **Governance roles** (future) | `governor`, `guild_leader` | Character or Realm | diplomacy.\*, logistics.\*, taxation.\*, military_command.\* | Political actions and policy capabilities | Future |
+| **Faction system** (future) | `faction` | Realm or character group | military.\*, trade.\*, culture.\* | Faction actions and policies | Future |
+| **Apprenticeship** (future) | `apprenticeship` | Relationship | technique.\*, lore.\*, material_science.\* | Craftable items, teachable skills | Future |
+| **Genetic lineage** (future) | `lineage` | Character household | trait.strength, trait.magical_affinity... | Inheritable character traits | Future |
 
 **Key validation**: The dungeon plugin demonstrates the design's generality by requiring two independent seed types (`dungeon_core` + `dungeon_master`) for a single system. The two seeds grow independently in parallel, connected by a Contract rather than a seed bond. This proves that seeds cleanly model asymmetric role growth within a partnership.
 
@@ -153,7 +153,7 @@ Any service can contribute growth to seeds by calling the Seed service's record 
 | **Behavior** (L4) | `magic.*`, `crafting.*` based on ABML execution context | Actor action completion |
 | **Quest** (L2) | Domain matching quest category | Quest completion |
 | **Collection** (L2) | Domains mapped via seed type `collectionGrowthMappings` | Entry unlock (via `ICollectionUnlockListener` DI pattern) |
-| **Gardener** (L4, planned) | Scenario completion domains from template `domainWeights` | Scenario completion events |
+| **Gardener** (L4) | Scenario completion domains from template `domainWeights` | Scenario completion via `ISeedClient.RecordGrowthBatchAsync` |
 
 Each service knows which domains its data contributes to and calls `seed/growth/record` or `seed/growth/record-batch` with the appropriate domain key and amount. Seed doesn't need to know about any contributing service.
 
@@ -165,7 +165,7 @@ Collection (L2) dispatches entry unlock notifications to `SeedCollectionUnlockLi
 
 ## 7. The Gardener: Player Experience Orchestration
 
-> **Status**: Planned. See [Implementation Plan](../plans/GARDENER.md) for full details.
+> **Status**: Implemented. See [Gardener Deep Dive](../plugins/GARDENER.md) for full implementation details.
 
 Gardener is the first and primary consumer of lib-seed. It is the player-side counterpart to Puppetmaster: where Puppetmaster orchestrates what NPCs experience, Gardener orchestrates what players experience.
 
@@ -173,29 +173,63 @@ Gardener is the first and primary consumer of lib-seed. It is the player-side co
 
 Gardener's responsibilities are entirely player-experience-specific:
 
-- **Void navigation**: Personal ambient spaces between game sessions
-- **POI spawning**: Dynamic points of interest based on seed growth and drift patterns
+- **Garden navigation**: Personal ambient discovery spaces between game sessions (called "gardens" in code, "void" in the vision docs)
+- **POI spawning**: Dynamic points of interest based on seed growth and player drift patterns
 - **Scenario routing**: Isolated sandboxes, world slices, or persistent realm entry
 - **Deployment phase management**: Alpha (isolated) → Beta (world slices) → Release (persistent)
-- **Bond shared void**: Paired players see merged void instances
+- **Bond shared garden**: Paired players see merged garden instances with combined POIs
 
 None of these concepts apply to dungeons, factions, archetypes, or any other seed consumer:
 
 | Consumer | Orchestration | Why It Doesn't Generalize |
 |----------|--------------|--------------------------|
-| **Gardener** | Void/POI/scenario system | Purely player UX; no other system has a "void" |
+| **Gardener** | Garden/POI/scenario system | Purely player UX; no other system has a discovery space |
 | **Dungeon plugin** | ABML cognition + actor state | Dungeon-specific; runs inside Actor runtime |
 | **Combat archetypes** | Class ability gating per character | Character-level; integrated with combat system |
 | **Governance** | Political simulation per realm | Realm-level; integrated with territorial systems |
 
 ### Gardener's Relationship to Seed
 
-Gardener does NOT own seeds. It creates and grows them via lib-seed's API, just as lib-escrow doesn't own currencies or items but orchestrates them via lib-currency and lib-item:
+Gardener does NOT own seeds. It creates and grows them via lib-seed's API, just as lib-escrow doesn't own currencies or items but orchestrates them via lib-currency and lib-item.
 
-- Player first login → Gardener calls `seed/create` with `ownerType="account"`, `seedTypeCode="guardian"`
-- Scenario selection → Gardener calls `seed/growth/get` and `seed/capability/get-manifest`
-- Scenario completion → Gardener calls `seed/growth/record-batch` with domain amounts from template weights
-- Void entry → Gardener calls `seed/get-by-owner` to find the player's active seed
+**API interactions** (Gardener → Seed, L4 → L2 hard dependency):
+
+| Interaction | API Call | When |
+|-------------|----------|------|
+| Register guardian seed type | `ISeedClient.RegisterSeedTypeAsync` | Plugin startup (`OnRunningAsync`) |
+| Find player's active seed | `ISeedClient.GetSeedsByOwnerAsync` with `ownerType = "account"` | Garden entry |
+| Create guardian seed on first entry | `ISeedClient.CreateSeedAsync` with `seedTypeCode = config.SeedTypeCode` | First-ever garden entry |
+| Query growth for scenario scoring | `ISeedClient.GetGrowthAsync` | Garden orchestrator tick (scoring) |
+| Query capability manifest | `ISeedClient.GetCapabilityManifestAsync` | UX module gating |
+| Award growth on scenario completion | `ISeedClient.RecordGrowthBatchAsync` with domain amounts from template weights | Scenario completion/abandon |
+| Resolve bond for shared garden | `ISeedClient.GetBondForSeedAsync`, `ISeedClient.GetBondAsync` | Bond scenario entry, shared garden queries |
+
+**DI listener integration** (Seed → Gardener, in-process notification):
+
+Gardener registers a `GardenerSeedEvolutionListener` as a singleton implementing `ISeedEvolutionListener`. This provides in-process notifications when seeds grow or change phases, without requiring event bus subscriptions for these high-frequency operations:
+
+| Notification | Handler | Action |
+|-------------|---------|--------|
+| `OnGrowthRecordedAsync` | `GardenerSeedEvolutionListener` | Marks garden instance `NeedsReEvaluation = true` for next orchestrator tick |
+| `OnPhaseChangedAsync` | `GardenerSeedEvolutionListener` | Updates `CachedGrowthPhase` on garden instance; marks for re-evaluation |
+| `OnCapabilitiesChangedAsync` | `GardenerSeedEvolutionListener` | No-op (not currently used; will be needed for UX capability push) |
+
+**Event subscriptions** (broadcast events consumed by Gardener):
+
+| Event | Handler | Action |
+|-------|---------|--------|
+| `seed.bond.formed` | `HandleSeedBondFormedAsync` | Updates `BondId` on active garden instances for bond participants |
+| `seed.activated` | `HandleSeedActivatedAsync` | Updates `SeedId` on active garden instance when account's active seed changes |
+
+**Design decision**: Growth and phase changes use the DI listener pattern (fast, local-only) because they are high-frequency events that only need to trigger a re-evaluation flag. Bond formation and seed activation use broadcast events because they are infrequent and the garden instance may be on any node.
+
+### Growth Award Formula
+
+Gardener awards growth on scenario completion using template `domainWeights` multiplied by configurable factors:
+
+- **Full completion**: `amount = domainWeight * GrowthAwardMultiplier * clamp(timeRatio, GrowthFullCompletionMinRatio, GrowthFullCompletionMaxRatio)` where `timeRatio = actualDuration / estimatedDuration`
+- **Partial completion** (abandon/timeout): `amount = domainWeight * GrowthAwardMultiplier * min(timeRatio, GrowthPartialMaxRatio)`
+- Shared helper: `GardenerGrowthCalculation` (static class) encapsulates this logic for use by both `GardenerService` and `GardenerScenarioLifecycleWorker`
 
 ### When to Extract Shared Orchestration
 
@@ -217,25 +251,27 @@ See [#365](https://github.com/BeyondImmersion/bannou-service/issues/365) for des
 
 ## 9. Integration with Other Systems
 
-### Seed → Actor (Variable Provider)
+### Seed → Actor (Variable Provider) -- Implemented
 
-Seed could expose `${seed.*}` variables to the Actor service's behavior system (e.g., `${seed.phase}`, `${seed.capabilities.combat.fidelity}`). This would follow the Variable Provider Factory pattern established by character-personality and character-encounter. See [#361](https://github.com/BeyondImmersion/bannou-service/issues/361).
+Seed exposes `${seed.*}` variables to the Actor service's behavior system via `SeedProviderFactory` (implements `IVariableProviderFactory`). Variables include `${seed.phase}`, `${seed.totalGrowth}`, `${seed.status}`, per-domain growth depths like `${seed.growth.combat}`, and per-capability fidelity like `${seed.capability.combat_awareness}`. Uses `SeedDataCache` (singleton, TTL-based) to avoid per-tick API calls. See [#361](https://github.com/BeyondImmersion/bannou-service/issues/361).
 
 ### Seed Bonds → Connect (Pair Communication)
 
 For bonded seeds, Connect would establish a shared communication channel using the bond ID as the subscription key. The bond exists in lib-seed; the communication channel is managed by Connect. This enables paired players to communicate without needing to unlock in-game social systems. See [#386](https://github.com/BeyondImmersion/bannou-service/issues/386).
 
-### Gardener → Game Session
+### Gardener → Game Session -- Implemented
 
-When a player enters a scenario, Gardener creates a Game Session (matchmade type) with a reservation token. The full service stack becomes available to the scenario instance through the Game Session. For WorldSlice and Persistent modes, the session connects to actual realm state; for Isolated mode, it spins up a sandboxed instance.
+When a player enters a scenario, Gardener creates a Game Session (matchmade type with `"gardener-scenario"` game type) via `IGameSessionClient`. The game session provides the runtime context for the scenario instance. On scenario completion, abandonment, or timeout, Gardener cleans up the game session. For bond scenarios, a single shared game session is created for all participants.
 
-### Gardener → Puppetmaster
+**Current limitation**: All three connectivity modes (Isolated, WorldSlice, Persistent) create game sessions identically. The vision describes WorldSlice as connecting to actual realm state and Persistent as "a scenario that doesn't end" -- neither is differentiated in code yet. See the [Gardener Deep Dive](../plugins/GARDENER.md) Design Consideration #3.
 
-For scenarios involving NPCs, Gardener delegates NPC orchestration to Puppetmaster. Gardener decides WHAT scenario to run; Puppetmaster decides HOW NPCs behave. Clean separation of concerns.
+### Gardener → Puppetmaster -- Stub
 
-### Gardener → Matchmaking
+Gardener resolves `IPuppetmasterClient` (L4 soft dependency) during scenario entry and logs intent to notify Puppetmaster about the scenario's behavior document, but does not actually call any Puppetmaster API. The notification is a log-only stub pending Puppetmaster API design for scenario-driven behavior loading.
 
-For group scenarios, Gardener submits matchmaking tickets to group players into shared scenario instances. Matchmaking handles queuing and acceptance; Gardener handles scenario lifecycle once matched.
+### Gardener → Matchmaking -- Not Yet Implemented
+
+The original design specified `IMatchmakingClient` (L4 soft dependency) for submitting matchmaking tickets when templates have `MinPlayers > 1`. This was not implemented -- group scenarios beyond bond pairs (which use `EnterScenarioTogetherAsync`) have no queueing mechanism. See the [Gardener Deep Dive](../plugins/GARDENER.md) Stub #5.
 
 ---
 
@@ -258,12 +294,17 @@ For group scenarios, Gardener submits matchmaking tickets to group players into 
 
 | Question | Status | Reference |
 |----------|--------|-----------|
-| Void position protocol (POST JSON vs binary) | Deferred | [Gardener Plan](../plans/GARDENER.md) -- start with POST JSON, optimize if needed |
-| Growth phase as gate vs convenience | Resolved | Soft filter with configurable strictness |
+| Garden position protocol (POST JSON vs binary) | Deferred | POST JSON implemented; optimize to binary through Connect only if latency/throughput becomes a problem. See [Gardener Deep Dive](../plugins/GARDENER.md) Extension #6 |
+| Growth phase as gate vs convenience | Resolved | Soft filter with configurable strictness. `MinGrowthPhase` stored on templates but ordinal comparison not yet implemented (phase labels are opaque strings). See [Gardener Deep Dive](../plugins/GARDENER.md) Stub #1 / Design #1 |
+| Growth award calculation formula | Resolved | Time-proportional: `domainWeight * GrowthAwardMultiplier * clamp(timeRatio, minRatio, maxRatio)`. Full completion capped at 1.5x, partial at 0.5x. See `GardenerGrowthCalculation` helper |
 | Orchestration extraction trigger | Deferred | Wait for 3+ consumers with shared logic |
-| Client event pushing for POI updates | Deferred | Requires `gardener-client-events.yaml` |
-| Analytics milestone integration | Deferred | Add when Analytics publishes milestone events |
+| Client event pushing for POI updates | Deferred | No `gardener-client-events.yaml` exists. Clients must poll `GetVoidStateAsync`. See [Gardener Deep Dive](../plugins/GARDENER.md) Stub #7 |
+| Analytics milestone integration | Deferred | Add `IAnalyticsClient` soft dependency when Analytics publishes milestone events. See [Gardener Deep Dive](../plugins/GARDENER.md) Stub #6 |
+| Prerequisite validation | Deferred | Templates store prerequisites but they are never validated during scenario entry or POI selection. See [Gardener Deep Dive](../plugins/GARDENER.md) Stub #9 |
+| Per-template capacity enforcement | Deferred | Templates store `MaxConcurrentInstances` but only global capacity is enforced. See [Gardener Deep Dive](../plugins/GARDENER.md) Stub #10 |
+| Persistent connectivity mode (release transition) | Deferred | `ConnectivityMode.Persistent` exists as an enum but has no differentiated code path. See [Gardener Deep Dive](../plugins/GARDENER.md) Design #3 |
+| Content flywheel connection | Deferred | Scenario outcomes don't feed back into content generation (Storyline/Puppetmaster). See [Gardener Deep Dive](../plugins/GARDENER.md) Extension #4 |
 
 ---
 
-*This guide covers the seed system as a whole. For implementation details of the Seed service itself, see the [Seed Deep Dive](../plugins/SEED.md). For the Gardener implementation plan, see [docs/plans/GARDENER.md](../plans/GARDENER.md).*
+*This guide covers the seed system as a whole. For implementation details of the Seed service itself, see the [Seed Deep Dive](../plugins/SEED.md). For Gardener implementation details, see the [Gardener Deep Dive](../plugins/GARDENER.md).*

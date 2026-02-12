@@ -47,9 +47,9 @@ public static class GardenerPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/gardener/void/enter",
+            Path = "/gardener/garden/enter",
             Method = ServiceEndpointMethod.POST,
-            Description = "enterVoid",
+            Description = "enterGarden",
             Permissions = new List<PermissionRequirement>
             {
                 new PermissionRequirement
@@ -62,9 +62,9 @@ public static class GardenerPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/gardener/void/get",
+            Path = "/gardener/garden/get",
             Method = ServiceEndpointMethod.POST,
-            Description = "getVoidState",
+            Description = "getGardenState",
             Permissions = new List<PermissionRequirement>
             {
                 new PermissionRequirement
@@ -77,7 +77,7 @@ public static class GardenerPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/gardener/void/update-position",
+            Path = "/gardener/garden/update-position",
             Method = ServiceEndpointMethod.POST,
             Description = "updatePosition",
             Permissions = new List<PermissionRequirement>
@@ -92,9 +92,9 @@ public static class GardenerPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/gardener/void/leave",
+            Path = "/gardener/garden/leave",
             Method = ServiceEndpointMethod.POST,
-            Description = "leaveVoid",
+            Description = "leaveGarden",
             Permissions = new List<PermissionRequirement>
             {
                 new PermissionRequirement
@@ -377,9 +377,9 @@ public static class GardenerPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
-            Path = "/gardener/bond/get-shared-void",
+            Path = "/gardener/bond/get-shared-garden",
             Method = ServiceEndpointMethod.POST,
-            Description = "getSharedVoidState",
+            Description = "getSharedGardenState",
             Permissions = new List<PermissionRequirement>
             {
                 new PermissionRequirement

@@ -57,36 +57,36 @@ public partial interface IGardenerClient
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Enter the void
+    /// Enter the garden
     /// </summary>
     /// <remarks>
-    /// Creates a void instance for the player. Finds or creates the player's
+    /// Creates a garden instance for the player. Finds or creates the player's
     /// <br/>active guardian seed, initializes drift metrics, and returns the initial
-    /// <br/>void state. First tick of the void orchestrator spawns POIs.
+    /// <br/>garden state. First tick of the garden orchestrator spawns POIs.
     /// </remarks>
-    /// <returns>Void instance created successfully</returns>
+    /// <returns>Garden instance created successfully</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<VoidStateResponse> EnterVoidAsync(EnterVoidRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<GardenStateResponse> EnterGardenAsync(EnterGardenRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Get current void state
+    /// Get current garden state
     /// </summary>
     /// <remarks>
-    /// Returns the player's current void instance with active POIs.
+    /// Returns the player's current garden instance with active POIs.
     /// </remarks>
-    /// <returns>Void state retrieved</returns>
+    /// <returns>Garden state retrieved</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<VoidStateResponse> GetVoidStateAsync(GetVoidStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<GardenStateResponse> GetGardenStateAsync(GetGardenStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Update player position in the void
+    /// Update player position in the garden
     /// </summary>
     /// <remarks>
-    /// Updates the player's position and velocity in void space. Accumulates
+    /// Updates the player's position and velocity in garden space. Accumulates
     /// <br/>drift metrics and checks proximity triggers against active POIs.
     /// </remarks>
     /// <returns>Position updated</returns>
@@ -96,15 +96,15 @@ public partial interface IGardenerClient
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Leave the void
+    /// Leave the garden
     /// </summary>
     /// <remarks>
-    /// Cleans up the void instance, all associated POIs, and publishes a
-    /// <br/>void-left event with session duration.
+    /// Cleans up the garden instance, all associated POIs, and publishes a
+    /// <br/>garden-left event with session duration.
     /// </remarks>
-    /// <returns>Left the void</returns>
+    /// <returns>Left the garden</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<LeaveVoidResponse> LeaveVoidAsync(LeaveVoidRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<LeaveGardenResponse> LeaveGardenAsync(LeaveGardenRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -112,7 +112,7 @@ public partial interface IGardenerClient
     /// List active POIs
     /// </summary>
     /// <remarks>
-    /// Returns all active POIs for the player's current void instance.
+    /// Returns all active POIs for the player's current garden instance.
     /// </remarks>
     /// <returns>POIs retrieved</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
@@ -138,7 +138,7 @@ public partial interface IGardenerClient
     /// Decline a POI
     /// </summary>
     /// <remarks>
-    /// Marks a POI as declined. The template is added to the void instance's
+    /// Marks a POI as declined. The template is added to the garden instance's
     /// <br/>scenario history for diversity scoring.
     /// </remarks>
     /// <returns>POI declined</returns>
@@ -152,7 +152,7 @@ public partial interface IGardenerClient
     /// </summary>
     /// <remarks>
     /// Validates prerequisites, creates a game session, creates a scenario
-    /// <br/>instance, destroys the void instance (player leaves the void), and
+    /// <br/>instance, destroys the garden instance (player leaves the garden), and
     /// <br/>publishes scenario-started events.
     /// </remarks>
     /// <returns>Scenario entered</returns>
@@ -178,7 +178,7 @@ public partial interface IGardenerClient
     /// </summary>
     /// <remarks>
     /// Calculates and awards growth per domain, closes the game session,
-    /// <br/>writes history, and returns the player to the void.
+    /// <br/>writes history, and returns the player to the garden.
     /// </remarks>
     /// <returns>Scenario completed</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
@@ -313,7 +313,7 @@ public partial interface IGardenerClient
     /// Get deployment phase metrics
     /// </summary>
     /// <remarks>
-    /// Returns current counts of active void instances, scenario instances, and capacity utilization.
+    /// Returns current counts of active garden instances, scenario instances, and capacity utilization.
     /// </remarks>
     /// <returns>Phase metrics retrieved</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
@@ -326,7 +326,7 @@ public partial interface IGardenerClient
     /// </summary>
     /// <remarks>
     /// Both bonded players enter a shared scenario instance. Validates bond state,
-    /// <br/>both participants' void instances, and template multiplayer support.
+    /// <br/>both participants' garden instances, and template multiplayer support.
     /// </remarks>
     /// <returns>Both players entered shared scenario</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
@@ -335,14 +335,14 @@ public partial interface IGardenerClient
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Get shared void state for bonded players
+    /// Get shared garden state for bonded players
     /// </summary>
     /// <remarks>
-    /// Returns the merged void state for both bond participants including shared POIs.
+    /// Returns the merged garden state for both bond participants including shared POIs.
     /// </remarks>
-    /// <returns>Shared void state retrieved</returns>
+    /// <returns>Shared garden state retrieved</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    System.Threading.Tasks.Task<SharedVoidStateResponse> GetSharedVoidStateAsync(GetSharedVoidRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<SharedGardenStateResponse> GetSharedGardenStateAsync(GetSharedGardenRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 }
 
 /// <summary>
@@ -486,24 +486,24 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Enter the void
+    /// Enter the garden
     /// </summary>
     /// <remarks>
-    /// Creates a void instance for the player. Finds or creates the player's
+    /// Creates a garden instance for the player. Finds or creates the player's
     /// <br/>active guardian seed, initializes drift metrics, and returns the initial
-    /// <br/>void state. First tick of the void orchestrator spawns POIs.
+    /// <br/>garden state. First tick of the garden orchestrator spawns POIs.
     /// </remarks>
-    /// <returns>Void instance created successfully</returns>
+    /// <returns>Garden instance created successfully</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<VoidStateResponse> EnterVoidAsync(EnterVoidRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<GardenStateResponse> EnterGardenAsync(EnterGardenRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
-        // Operation Path: "gardener/void/enter"
-        urlBuilder_.Append("gardener/void/enter");
+        // Operation Path: "gardener/garden/enter"
+        urlBuilder_.Append("gardener/garden/enter");
 
         var methodPath_ = urlBuilder_.ToString().TrimStart('/');
         var appId_ = _resolver.GetAppIdForService(ServiceName);
@@ -541,7 +541,7 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
                     var status_ = (int)response_.StatusCode;
                     if (status_ == 200)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<VoidStateResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        var objectResponse_ = await ReadObjectResponseAsync<GardenStateResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
                             throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
@@ -558,7 +558,7 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
                     if (status_ == 409)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("Player already has an active void instance", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Player already has an active garden instance", status_, responseText_, headers_, null);
                     }
                     else
                     {
@@ -583,22 +583,22 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Get current void state
+    /// Get current garden state
     /// </summary>
     /// <remarks>
-    /// Returns the player's current void instance with active POIs.
+    /// Returns the player's current garden instance with active POIs.
     /// </remarks>
-    /// <returns>Void state retrieved</returns>
+    /// <returns>Garden state retrieved</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<VoidStateResponse> GetVoidStateAsync(GetVoidStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<GardenStateResponse> GetGardenStateAsync(GetGardenStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
-        // Operation Path: "gardener/void/get"
-        urlBuilder_.Append("gardener/void/get");
+        // Operation Path: "gardener/garden/get"
+        urlBuilder_.Append("gardener/garden/get");
 
         var methodPath_ = urlBuilder_.ToString().TrimStart('/');
         var appId_ = _resolver.GetAppIdForService(ServiceName);
@@ -636,7 +636,7 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
                     var status_ = (int)response_.StatusCode;
                     if (status_ == 200)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<VoidStateResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        var objectResponse_ = await ReadObjectResponseAsync<GardenStateResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
                             throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
@@ -647,7 +647,7 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
                     if (status_ == 404)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("Player is not in the void", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Player is not in the garden", status_, responseText_, headers_, null);
                     }
                     else
                     {
@@ -672,10 +672,10 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Update player position in the void
+    /// Update player position in the garden
     /// </summary>
     /// <remarks>
-    /// Updates the player's position and velocity in void space. Accumulates
+    /// Updates the player's position and velocity in garden space. Accumulates
     /// <br/>drift metrics and checks proximity triggers against active POIs.
     /// </remarks>
     /// <returns>Position updated</returns>
@@ -687,8 +687,8 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
-        // Operation Path: "gardener/void/update-position"
-        urlBuilder_.Append("gardener/void/update-position");
+        // Operation Path: "gardener/garden/update-position"
+        urlBuilder_.Append("gardener/garden/update-position");
 
         var methodPath_ = urlBuilder_.ToString().TrimStart('/');
         var appId_ = _resolver.GetAppIdForService(ServiceName);
@@ -737,7 +737,7 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
                     if (status_ == 404)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("Player is not in the void", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Player is not in the garden", status_, responseText_, headers_, null);
                     }
                     else
                     {
@@ -762,23 +762,23 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Leave the void
+    /// Leave the garden
     /// </summary>
     /// <remarks>
-    /// Cleans up the void instance, all associated POIs, and publishes a
-    /// <br/>void-left event with session duration.
+    /// Cleans up the garden instance, all associated POIs, and publishes a
+    /// <br/>garden-left event with session duration.
     /// </remarks>
-    /// <returns>Left the void</returns>
+    /// <returns>Left the garden</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<LeaveVoidResponse> LeaveVoidAsync(LeaveVoidRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<LeaveGardenResponse> LeaveGardenAsync(LeaveGardenRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
-        // Operation Path: "gardener/void/leave"
-        urlBuilder_.Append("gardener/void/leave");
+        // Operation Path: "gardener/garden/leave"
+        urlBuilder_.Append("gardener/garden/leave");
 
         var methodPath_ = urlBuilder_.ToString().TrimStart('/');
         var appId_ = _resolver.GetAppIdForService(ServiceName);
@@ -816,7 +816,7 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
                     var status_ = (int)response_.StatusCode;
                     if (status_ == 200)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<LeaveVoidResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        var objectResponse_ = await ReadObjectResponseAsync<LeaveGardenResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
                             throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
@@ -827,7 +827,7 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
                     if (status_ == 404)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("Player is not in the void", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Player is not in the garden", status_, responseText_, headers_, null);
                     }
                     else
                     {
@@ -855,7 +855,7 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
     /// List active POIs
     /// </summary>
     /// <remarks>
-    /// Returns all active POIs for the player's current void instance.
+    /// Returns all active POIs for the player's current garden instance.
     /// </remarks>
     /// <returns>POIs retrieved</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
@@ -916,7 +916,7 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
                     if (status_ == 404)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("Player is not in the void", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Player is not in the garden", status_, responseText_, headers_, null);
                     }
                     else
                     {
@@ -1041,7 +1041,7 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
     /// Decline a POI
     /// </summary>
     /// <remarks>
-    /// Marks a POI as declined. The template is added to the void instance's
+    /// Marks a POI as declined. The template is added to the garden instance's
     /// <br/>scenario history for diversity scoring.
     /// </remarks>
     /// <returns>POI declined</returns>
@@ -1138,7 +1138,7 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
     /// </summary>
     /// <remarks>
     /// Validates prerequisites, creates a game session, creates a scenario
-    /// <br/>instance, destroys the void instance (player leaves the void), and
+    /// <br/>instance, destroys the garden instance (player leaves the garden), and
     /// <br/>publishes scenario-started events.
     /// </remarks>
     /// <returns>Scenario entered</returns>
@@ -1324,7 +1324,7 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
     /// </summary>
     /// <remarks>
     /// Calculates and awards growth per domain, closes the game session,
-    /// <br/>writes history, and returns the player to the void.
+    /// <br/>writes history, and returns the player to the garden.
     /// </remarks>
     /// <returns>Scenario completed</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
@@ -2294,7 +2294,7 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
     /// Get deployment phase metrics
     /// </summary>
     /// <remarks>
-    /// Returns current counts of active void instances, scenario instances, and capacity utilization.
+    /// Returns current counts of active garden instances, scenario instances, and capacity utilization.
     /// </remarks>
     /// <returns>Phase metrics retrieved</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
@@ -2378,7 +2378,7 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
     /// </summary>
     /// <remarks>
     /// Both bonded players enter a shared scenario instance. Validates bond state,
-    /// <br/>both participants' void instances, and template multiplayer support.
+    /// <br/>both participants' garden instances, and template multiplayer support.
     /// </remarks>
     /// <returns>Both players entered shared scenario</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
@@ -2439,7 +2439,7 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
                     if (status_ == 400)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("One or both participants not in void, or template does not support multiplayer", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("One or both participants not in garden, or template does not support multiplayer", status_, responseText_, headers_, null);
                     }
                     else
                     if (status_ == 404)
@@ -2470,22 +2470,22 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
     /// <param name="body">The body parameter.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <summary>
-    /// Get shared void state for bonded players
+    /// Get shared garden state for bonded players
     /// </summary>
     /// <remarks>
-    /// Returns the merged void state for both bond participants including shared POIs.
+    /// Returns the merged garden state for both bond participants including shared POIs.
     /// </remarks>
-    /// <returns>Shared void state retrieved</returns>
+    /// <returns>Shared garden state retrieved</returns>
     /// <exception cref="BeyondImmersion.Bannou.Core.ApiException">A server side error occurred.</exception>
-    public virtual async System.Threading.Tasks.Task<SharedVoidStateResponse> GetSharedVoidStateAsync(GetSharedVoidRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public virtual async System.Threading.Tasks.Task<SharedGardenStateResponse> GetSharedGardenStateAsync(GetSharedGardenRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
         if (body == null)
             throw new System.ArgumentNullException("body");
 
         // Build method path (without base URL - mesh client handles endpoint resolution)
         var urlBuilder_ = new System.Text.StringBuilder();
-        // Operation Path: "gardener/bond/get-shared-void"
-        urlBuilder_.Append("gardener/bond/get-shared-void");
+        // Operation Path: "gardener/bond/get-shared-garden"
+        urlBuilder_.Append("gardener/bond/get-shared-garden");
 
         var methodPath_ = urlBuilder_.ToString().TrimStart('/');
         var appId_ = _resolver.GetAppIdForService(ServiceName);
@@ -2523,7 +2523,7 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
                     var status_ = (int)response_.StatusCode;
                     if (status_ == 200)
                     {
-                        var objectResponse_ = await ReadObjectResponseAsync<SharedVoidStateResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                        var objectResponse_ = await ReadObjectResponseAsync<SharedGardenStateResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
                         if (objectResponse_.Object == null)
                         {
                             throw new BeyondImmersion.Bannou.Core.ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
@@ -2534,7 +2534,7 @@ public partial class GardenerClient : IGardenerClient, BeyondImmersion.BannouSer
                     if (status_ == 404)
                     {
                         string responseText_ = ( response_.Content == null ) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                        throw new BeyondImmersion.Bannou.Core.ApiException("Bond not found or participants not in void", status_, responseText_, headers_, null);
+                        throw new BeyondImmersion.Bannou.Core.ApiException("Bond not found or participants not in garden", status_, responseText_, headers_, null);
                     }
                     else
                     {

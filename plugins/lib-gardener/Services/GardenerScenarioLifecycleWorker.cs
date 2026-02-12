@@ -147,7 +147,7 @@ public class GardenerScenarioLifecycleWorker : BackgroundService
         var historyStore = stateStoreFactory.GetJsonQueryableStore<ScenarioHistoryModel>(
             StateStoreDefinitions.GardenerScenarioHistory);
         var cacheStore = stateStoreFactory.GetCacheableStore<GardenInstanceModel>(
-            StateStoreDefinitions.GardenerVoidInstances);
+            StateStoreDefinitions.GardenerGardenInstances);
 
         // Get all active scenario account IDs from tracking set
         var activeAccountIds = await cacheStore.GetSetAsync<Guid>(

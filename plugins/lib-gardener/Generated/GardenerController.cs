@@ -47,37 +47,37 @@ public interface IGardenerController : BeyondImmersion.BannouService.Controllers
 {
 
     /// <summary>
-    /// Enter the void
+    /// Enter the garden
     /// </summary>
 
     /// <remarks>
-    /// Creates a void instance for the player. Finds or creates the player's
+    /// Creates a garden instance for the player. Finds or creates the player's
     /// <br/>active guardian seed, initializes drift metrics, and returns the initial
-    /// <br/>void state. First tick of the void orchestrator spawns POIs.
+    /// <br/>garden state. First tick of the garden orchestrator spawns POIs.
     /// </remarks>
 
-    /// <returns>Void instance created successfully</returns>
+    /// <returns>Garden instance created successfully</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<VoidStateResponse>> EnterVoidAsync(EnterVoidRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GardenStateResponse>> EnterGardenAsync(EnterGardenRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
-    /// Get current void state
+    /// Get current garden state
     /// </summary>
 
     /// <remarks>
-    /// Returns the player's current void instance with active POIs.
+    /// Returns the player's current garden instance with active POIs.
     /// </remarks>
 
-    /// <returns>Void state retrieved</returns>
+    /// <returns>Garden state retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<VoidStateResponse>> GetVoidStateAsync(GetVoidStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GardenStateResponse>> GetGardenStateAsync(GetGardenStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
-    /// Update player position in the void
+    /// Update player position in the garden
     /// </summary>
 
     /// <remarks>
-    /// Updates the player's position and velocity in void space. Accumulates
+    /// Updates the player's position and velocity in garden space. Accumulates
     /// <br/>drift metrics and checks proximity triggers against active POIs.
     /// </remarks>
 
@@ -86,24 +86,24 @@ public interface IGardenerController : BeyondImmersion.BannouService.Controllers
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PositionUpdateResponse>> UpdatePositionAsync(UpdatePositionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
-    /// Leave the void
+    /// Leave the garden
     /// </summary>
 
     /// <remarks>
-    /// Cleans up the void instance, all associated POIs, and publishes a
-    /// <br/>void-left event with session duration.
+    /// Cleans up the garden instance, all associated POIs, and publishes a
+    /// <br/>garden-left event with session duration.
     /// </remarks>
 
-    /// <returns>Left the void</returns>
+    /// <returns>Left the garden</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LeaveVoidResponse>> LeaveVoidAsync(LeaveVoidRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LeaveGardenResponse>> LeaveGardenAsync(LeaveGardenRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
     /// List active POIs
     /// </summary>
 
     /// <remarks>
-    /// Returns all active POIs for the player's current void instance.
+    /// Returns all active POIs for the player's current garden instance.
     /// </remarks>
 
     /// <returns>POIs retrieved</returns>
@@ -129,7 +129,7 @@ public interface IGardenerController : BeyondImmersion.BannouService.Controllers
     /// </summary>
 
     /// <remarks>
-    /// Marks a POI as declined. The template is added to the void instance's
+    /// Marks a POI as declined. The template is added to the garden instance's
     /// <br/>scenario history for diversity scoring.
     /// </remarks>
 
@@ -143,7 +143,7 @@ public interface IGardenerController : BeyondImmersion.BannouService.Controllers
 
     /// <remarks>
     /// Validates prerequisites, creates a game session, creates a scenario
-    /// <br/>instance, destroys the void instance (player leaves the void), and
+    /// <br/>instance, destroys the garden instance (player leaves the garden), and
     /// <br/>publishes scenario-started events.
     /// </remarks>
 
@@ -169,7 +169,7 @@ public interface IGardenerController : BeyondImmersion.BannouService.Controllers
 
     /// <remarks>
     /// Calculates and awards growth per domain, closes the game session,
-    /// <br/>writes history, and returns the player to the void.
+    /// <br/>writes history, and returns the player to the garden.
     /// </remarks>
 
     /// <returns>Scenario completed</returns>
@@ -304,7 +304,7 @@ public interface IGardenerController : BeyondImmersion.BannouService.Controllers
     /// </summary>
 
     /// <remarks>
-    /// Returns current counts of active void instances, scenario instances, and capacity utilization.
+    /// Returns current counts of active garden instances, scenario instances, and capacity utilization.
     /// </remarks>
 
     /// <returns>Phase metrics retrieved</returns>
@@ -317,7 +317,7 @@ public interface IGardenerController : BeyondImmersion.BannouService.Controllers
 
     /// <remarks>
     /// Both bonded players enter a shared scenario instance. Validates bond state,
-    /// <br/>both participants' void instances, and template multiplayer support.
+    /// <br/>both participants' garden instances, and template multiplayer support.
     /// </remarks>
 
     /// <returns>Both players entered shared scenario</returns>
@@ -325,16 +325,16 @@ public interface IGardenerController : BeyondImmersion.BannouService.Controllers
     System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<ScenarioStateResponse>> EnterScenarioTogetherAsync(EnterTogetherRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
     /// <summary>
-    /// Get shared void state for bonded players
+    /// Get shared garden state for bonded players
     /// </summary>
 
     /// <remarks>
-    /// Returns the merged void state for both bond participants including shared POIs.
+    /// Returns the merged garden state for both bond participants including shared POIs.
     /// </remarks>
 
-    /// <returns>Shared void state retrieved</returns>
+    /// <returns>Shared garden state retrieved</returns>
 
-    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SharedVoidStateResponse>> GetSharedVoidStateAsync(GetSharedVoidRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+    System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SharedGardenStateResponse>> GetSharedGardenStateAsync(GetSharedGardenRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 }
 
@@ -386,42 +386,42 @@ public partial class GardenerController : Microsoft.AspNetCore.Mvc.ControllerBas
     }
 
     /// <summary>
-    /// Enter the void
+    /// Enter the garden
     /// </summary>
     /// <remarks>
-    /// Creates a void instance for the player. Finds or creates the player's
+    /// Creates a garden instance for the player. Finds or creates the player's
     /// <br/>active guardian seed, initializes drift metrics, and returns the initial
-    /// <br/>void state. First tick of the void orchestrator spawns POIs.
+    /// <br/>garden state. First tick of the garden orchestrator spawns POIs.
     /// </remarks>
-    /// <returns>Void instance created successfully</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("gardener/void/enter")]
+    /// <returns>Garden instance created successfully</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("gardener/garden/enter")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<VoidStateResponse>> EnterVoid([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] EnterVoidRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GardenStateResponse>> EnterGarden([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] EnterGardenRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
         try
         {
 
-            var (statusCode, result) = await _implementation.EnterVoidAsync(body, cancellationToken);
+            var (statusCode, result) = await _implementation.EnterGardenAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
         catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<GardenerController>>(HttpContext.RequestServices);
-            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:gardener/void/enter");
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:gardener/garden/enter");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<GardenerController>>(HttpContext.RequestServices);
-            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:gardener/void/enter");
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:gardener/garden/enter");
             var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
             await messageBus_.TryPublishErrorAsync(
                 "gardener",
-                "EnterVoid",
+                "EnterGarden",
                 "unexpected_exception",
                 ex_.Message,
-                endpoint: "post:gardener/void/enter",
+                endpoint: "post:gardener/garden/enter",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
             return StatusCode(500);
@@ -429,40 +429,40 @@ public partial class GardenerController : Microsoft.AspNetCore.Mvc.ControllerBas
     }
 
     /// <summary>
-    /// Get current void state
+    /// Get current garden state
     /// </summary>
     /// <remarks>
-    /// Returns the player's current void instance with active POIs.
+    /// Returns the player's current garden instance with active POIs.
     /// </remarks>
-    /// <returns>Void state retrieved</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("gardener/void/get")]
+    /// <returns>Garden state retrieved</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("gardener/garden/get")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<VoidStateResponse>> GetVoidState([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetVoidStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<GardenStateResponse>> GetGardenState([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetGardenStateRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
         try
         {
 
-            var (statusCode, result) = await _implementation.GetVoidStateAsync(body, cancellationToken);
+            var (statusCode, result) = await _implementation.GetGardenStateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
         catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<GardenerController>>(HttpContext.RequestServices);
-            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:gardener/void/get");
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:gardener/garden/get");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<GardenerController>>(HttpContext.RequestServices);
-            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:gardener/void/get");
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:gardener/garden/get");
             var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
             await messageBus_.TryPublishErrorAsync(
                 "gardener",
-                "GetVoidState",
+                "GetGardenState",
                 "unexpected_exception",
                 ex_.Message,
-                endpoint: "post:gardener/void/get",
+                endpoint: "post:gardener/garden/get",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
             return StatusCode(500);
@@ -470,14 +470,14 @@ public partial class GardenerController : Microsoft.AspNetCore.Mvc.ControllerBas
     }
 
     /// <summary>
-    /// Update player position in the void
+    /// Update player position in the garden
     /// </summary>
     /// <remarks>
-    /// Updates the player's position and velocity in void space. Accumulates
+    /// Updates the player's position and velocity in garden space. Accumulates
     /// <br/>drift metrics and checks proximity triggers against active POIs.
     /// </remarks>
     /// <returns>Position updated</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("gardener/void/update-position")]
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("gardener/garden/update-position")]
 
     public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<PositionUpdateResponse>> UpdatePosition([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] UpdatePositionRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
@@ -491,20 +491,20 @@ public partial class GardenerController : Microsoft.AspNetCore.Mvc.ControllerBas
         catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<GardenerController>>(HttpContext.RequestServices);
-            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:gardener/void/update-position");
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:gardener/garden/update-position");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<GardenerController>>(HttpContext.RequestServices);
-            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:gardener/void/update-position");
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:gardener/garden/update-position");
             var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
             await messageBus_.TryPublishErrorAsync(
                 "gardener",
                 "UpdatePosition",
                 "unexpected_exception",
                 ex_.Message,
-                endpoint: "post:gardener/void/update-position",
+                endpoint: "post:gardener/garden/update-position",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
             return StatusCode(500);
@@ -512,41 +512,41 @@ public partial class GardenerController : Microsoft.AspNetCore.Mvc.ControllerBas
     }
 
     /// <summary>
-    /// Leave the void
+    /// Leave the garden
     /// </summary>
     /// <remarks>
-    /// Cleans up the void instance, all associated POIs, and publishes a
-    /// <br/>void-left event with session duration.
+    /// Cleans up the garden instance, all associated POIs, and publishes a
+    /// <br/>garden-left event with session duration.
     /// </remarks>
-    /// <returns>Left the void</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("gardener/void/leave")]
+    /// <returns>Left the garden</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("gardener/garden/leave")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LeaveVoidResponse>> LeaveVoid([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] LeaveVoidRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<LeaveGardenResponse>> LeaveGarden([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] LeaveGardenRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
         try
         {
 
-            var (statusCode, result) = await _implementation.LeaveVoidAsync(body, cancellationToken);
+            var (statusCode, result) = await _implementation.LeaveGardenAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
         catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<GardenerController>>(HttpContext.RequestServices);
-            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:gardener/void/leave");
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:gardener/garden/leave");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<GardenerController>>(HttpContext.RequestServices);
-            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:gardener/void/leave");
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:gardener/garden/leave");
             var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
             await messageBus_.TryPublishErrorAsync(
                 "gardener",
-                "LeaveVoid",
+                "LeaveGarden",
                 "unexpected_exception",
                 ex_.Message,
-                endpoint: "post:gardener/void/leave",
+                endpoint: "post:gardener/garden/leave",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
             return StatusCode(500);
@@ -557,7 +557,7 @@ public partial class GardenerController : Microsoft.AspNetCore.Mvc.ControllerBas
     /// List active POIs
     /// </summary>
     /// <remarks>
-    /// Returns all active POIs for the player's current void instance.
+    /// Returns all active POIs for the player's current garden instance.
     /// </remarks>
     /// <returns>POIs retrieved</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("gardener/poi/list")]
@@ -641,7 +641,7 @@ public partial class GardenerController : Microsoft.AspNetCore.Mvc.ControllerBas
     /// Decline a POI
     /// </summary>
     /// <remarks>
-    /// Marks a POI as declined. The template is added to the void instance's
+    /// Marks a POI as declined. The template is added to the garden instance's
     /// <br/>scenario history for diversity scoring.
     /// </remarks>
     /// <returns>POI declined</returns>
@@ -684,7 +684,7 @@ public partial class GardenerController : Microsoft.AspNetCore.Mvc.ControllerBas
     /// </summary>
     /// <remarks>
     /// Validates prerequisites, creates a game session, creates a scenario
-    /// <br/>instance, destroys the void instance (player leaves the void), and
+    /// <br/>instance, destroys the garden instance (player leaves the garden), and
     /// <br/>publishes scenario-started events.
     /// </remarks>
     /// <returns>Scenario entered</returns>
@@ -768,7 +768,7 @@ public partial class GardenerController : Microsoft.AspNetCore.Mvc.ControllerBas
     /// </summary>
     /// <remarks>
     /// Calculates and awards growth per domain, closes the game session,
-    /// <br/>writes history, and returns the player to the void.
+    /// <br/>writes history, and returns the player to the garden.
     /// </remarks>
     /// <returns>Scenario completed</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("gardener/scenario/complete")]
@@ -1222,7 +1222,7 @@ public partial class GardenerController : Microsoft.AspNetCore.Mvc.ControllerBas
     /// Get deployment phase metrics
     /// </summary>
     /// <remarks>
-    /// Returns current counts of active void instances, scenario instances, and capacity utilization.
+    /// Returns current counts of active garden instances, scenario instances, and capacity utilization.
     /// </remarks>
     /// <returns>Phase metrics retrieved</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("gardener/phase/get-metrics")]
@@ -1264,7 +1264,7 @@ public partial class GardenerController : Microsoft.AspNetCore.Mvc.ControllerBas
     /// </summary>
     /// <remarks>
     /// Both bonded players enter a shared scenario instance. Validates bond state,
-    /// <br/>both participants' void instances, and template multiplayer support.
+    /// <br/>both participants' garden instances, and template multiplayer support.
     /// </remarks>
     /// <returns>Both players entered shared scenario</returns>
     [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("gardener/bond/enter-together")]
@@ -1302,40 +1302,40 @@ public partial class GardenerController : Microsoft.AspNetCore.Mvc.ControllerBas
     }
 
     /// <summary>
-    /// Get shared void state for bonded players
+    /// Get shared garden state for bonded players
     /// </summary>
     /// <remarks>
-    /// Returns the merged void state for both bond participants including shared POIs.
+    /// Returns the merged garden state for both bond participants including shared POIs.
     /// </remarks>
-    /// <returns>Shared void state retrieved</returns>
-    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("gardener/bond/get-shared-void")]
+    /// <returns>Shared garden state retrieved</returns>
+    [Microsoft.AspNetCore.Mvc.HttpPost, Microsoft.AspNetCore.Mvc.Route("gardener/bond/get-shared-garden")]
 
-    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SharedVoidStateResponse>> GetSharedVoidState([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetSharedVoidRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+    public async System.Threading.Tasks.Task<Microsoft.AspNetCore.Mvc.ActionResult<SharedGardenStateResponse>> GetSharedGardenState([Microsoft.AspNetCore.Mvc.FromBody] [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] GetSharedGardenRequest body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
     {
 
         try
         {
 
-            var (statusCode, result) = await _implementation.GetSharedVoidStateAsync(body, cancellationToken);
+            var (statusCode, result) = await _implementation.GetSharedGardenStateAsync(body, cancellationToken);
             return ConvertToActionResult(statusCode, result);
         }
         catch (BeyondImmersion.Bannou.Core.ApiException ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<GardenerController>>(HttpContext.RequestServices);
-            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:gardener/bond/get-shared-void");
+            Microsoft.Extensions.Logging.LoggerExtensions.LogWarning(logger_, ex_, "Dependency error in {Endpoint}", "post:gardener/bond/get-shared-garden");
             return StatusCode(503);
         }
         catch (System.Exception ex_)
         {
             var logger_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<Microsoft.Extensions.Logging.ILogger<GardenerController>>(HttpContext.RequestServices);
-            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:gardener/bond/get-shared-void");
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger_, ex_, "Unexpected error in {Endpoint}", "post:gardener/bond/get-shared-garden");
             var messageBus_ = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<BeyondImmersion.BannouService.Services.IMessageBus>(HttpContext.RequestServices);
             await messageBus_.TryPublishErrorAsync(
                 "gardener",
-                "GetSharedVoidState",
+                "GetSharedGardenState",
                 "unexpected_exception",
                 ex_.Message,
-                endpoint: "post:gardener/bond/get-shared-void",
+                endpoint: "post:gardener/bond/get-shared-garden",
                 stack: ex_.StackTrace,
                 cancellationToken: cancellationToken);
             return StatusCode(500);

@@ -892,17 +892,17 @@ x-state-stores:
   # Gardener Stores (L4 GameFeatures Service)
   # ============================================================================
 
-  gardener-void-instances:
+  gardener-garden-instances:
     backend: redis
-    prefix: "gardener:void"
+    prefix: "gardener:garden"
     service: Gardener
-    purpose: Active void instance state per player (ephemeral, TTL-based)
+    purpose: Active garden instance state per player (ephemeral, TTL-based)
 
   gardener-pois:
     backend: redis
     prefix: "gardener:poi"
     service: Gardener
-    purpose: Active POI state within void instances (ephemeral, TTL-based)
+    purpose: Active POI state within garden instances (ephemeral, TTL-based)
 
   gardener-scenario-templates:
     backend: mysql
@@ -929,4 +929,4 @@ x-state-stores:
     backend: redis
     prefix: "gardener:lock"
     service: Gardener
-    purpose: Distributed locks for void orchestration and scenario mutations
+    purpose: Distributed locks for garden orchestration and scenario mutations

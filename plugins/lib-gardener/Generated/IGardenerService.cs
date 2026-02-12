@@ -30,14 +30,14 @@ namespace BeyondImmersion.BannouService.Gardener;
 public partial interface IGardenerService : IBannouService
 {
         /// <summary>
-        /// EnterVoid operation
+        /// EnterGarden operation
         /// </summary>
-        Task<(StatusCodes, VoidStateResponse?)> EnterVoidAsync(EnterVoidRequest body, CancellationToken cancellationToken = default(CancellationToken));
+        Task<(StatusCodes, GardenStateResponse?)> EnterGardenAsync(EnterGardenRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
-        /// GetVoidState operation
+        /// GetGardenState operation
         /// </summary>
-        Task<(StatusCodes, VoidStateResponse?)> GetVoidStateAsync(GetVoidStateRequest body, CancellationToken cancellationToken = default(CancellationToken));
+        Task<(StatusCodes, GardenStateResponse?)> GetGardenStateAsync(GetGardenStateRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// UpdatePosition operation
@@ -45,9 +45,9 @@ public partial interface IGardenerService : IBannouService
         Task<(StatusCodes, PositionUpdateResponse?)> UpdatePositionAsync(UpdatePositionRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
-        /// LeaveVoid operation
+        /// LeaveGarden operation
         /// </summary>
-        Task<(StatusCodes, LeaveVoidResponse?)> LeaveVoidAsync(LeaveVoidRequest body, CancellationToken cancellationToken = default(CancellationToken));
+        Task<(StatusCodes, LeaveGardenResponse?)> LeaveGardenAsync(LeaveGardenRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// ListPois operation
@@ -140,8 +140,8 @@ public partial interface IGardenerService : IBannouService
         Task<(StatusCodes, ScenarioStateResponse?)> EnterScenarioTogetherAsync(EnterTogetherRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
-        /// GetSharedVoidState operation
+        /// GetSharedGardenState operation
         /// </summary>
-        Task<(StatusCodes, SharedVoidStateResponse?)> GetSharedVoidStateAsync(GetSharedVoidRequest body, CancellationToken cancellationToken = default(CancellationToken));
+        Task<(StatusCodes, SharedGardenStateResponse?)> GetSharedGardenStateAsync(GetSharedGardenRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
 }

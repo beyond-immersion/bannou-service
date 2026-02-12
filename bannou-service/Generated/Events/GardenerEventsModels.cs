@@ -47,14 +47,14 @@ namespace BeyondImmersion.BannouService.Events;
 using System = global::System;
 
 /// <summary>
-/// Published when a player enters the void
+/// Published when a player enters the garden
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class GardenerVoidEnteredEvent : BaseServiceEvent
+public partial class GardenerGardenEnteredEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Account that entered the void
+    /// Account that entered the garden
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -62,7 +62,7 @@ public partial class GardenerVoidEnteredEvent : BaseServiceEvent
     public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
-    /// Active seed for this void session
+    /// Active seed for this garden session
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seedId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -70,24 +70,24 @@ public partial class GardenerVoidEnteredEvent : BaseServiceEvent
     public System.Guid SeedId { get; set; } = default!;
 
     /// <summary>
-    /// Created void instance ID
+    /// Created garden instance ID
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("voidInstanceId")]
+    [System.Text.Json.Serialization.JsonPropertyName("gardenInstanceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid VoidInstanceId { get; set; } = default!;
+    public System.Guid GardenInstanceId { get; set; } = default!;
 
 }
 
 /// <summary>
-/// Published when a player leaves the void
+/// Published when a player leaves the garden
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class GardenerVoidLeftEvent : BaseServiceEvent
+public partial class GardenerGardenLeftEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Account that left the void
+    /// Account that left the garden
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -95,15 +95,15 @@ public partial class GardenerVoidLeftEvent : BaseServiceEvent
     public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
-    /// Void instance that was destroyed
+    /// Garden instance that was destroyed
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("voidInstanceId")]
+    [System.Text.Json.Serialization.JsonPropertyName("gardenInstanceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid VoidInstanceId { get; set; } = default!;
+    public System.Guid GardenInstanceId { get; set; } = default!;
 
     /// <summary>
-    /// Total void session duration in seconds
+    /// Total garden session duration in seconds
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionDurationSeconds")]
     public float SessionDurationSeconds { get; set; } = default!;
@@ -111,19 +111,19 @@ public partial class GardenerVoidLeftEvent : BaseServiceEvent
 }
 
 /// <summary>
-/// Published when a POI spawns in a void instance
+/// Published when a POI spawns in a garden instance
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class GardenerPoiSpawnedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Void instance the POI spawned in
+    /// Garden instance the POI spawned in
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("voidInstanceId")]
+    [System.Text.Json.Serialization.JsonPropertyName("gardenInstanceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid VoidInstanceId { get; set; } = default!;
+    public System.Guid GardenInstanceId { get; set; } = default!;
 
     /// <summary>
     /// Spawned POI identifier
@@ -226,12 +226,12 @@ public partial class GardenerPoiExpiredEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Void instance the POI was in
+    /// Garden instance the POI was in
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("voidInstanceId")]
+    [System.Text.Json.Serialization.JsonPropertyName("gardenInstanceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid VoidInstanceId { get; set; } = default!;
+    public System.Guid GardenInstanceId { get; set; } = default!;
 
     /// <summary>
     /// POI that expired

@@ -15,16 +15,16 @@ namespace BeyondImmersion.BannouService.Gardener;
 /// </summary>
 public partial class GardenerController
 {
-    #region Meta Endpoints for EnterVoid
+    #region Meta Endpoints for EnterGarden
 
-    private static readonly string _EnterVoid_RequestSchema = """
+    private static readonly string _EnterGarden_RequestSchema = """
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/EnterVoidRequest",
+    "$ref": "#/$defs/EnterGardenRequest",
     "$defs": {
-        "EnterVoidRequest": {
+        "EnterGardenRequest": {
             "type": "object",
-            "description": "Request to enter the void",
+            "description": "Request to enter the garden",
             "required": [
                 "accountId",
                 "sessionId"
@@ -33,7 +33,7 @@ public partial class GardenerController
                 "accountId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Account entering the void"
+                    "description": "Account entering the garden"
                 },
                 "sessionId": {
                     "type": "string",
@@ -46,36 +46,36 @@ public partial class GardenerController
 }
 """;
 
-    private static readonly string _EnterVoid_ResponseSchema = """
+    private static readonly string _EnterGarden_ResponseSchema = """
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/VoidStateResponse",
+    "$ref": "#/$defs/GardenStateResponse",
     "$defs": {
-        "VoidStateResponse": {
+        "GardenStateResponse": {
             "type": "object",
-            "description": "Current void instance state for a player",
+            "description": "Current garden instance state for a player",
             "required": [
-                "voidInstanceId",
+                "gardenInstanceId",
                 "seedId",
                 "accountId",
                 "position",
                 "activePois"
             ],
             "properties": {
-                "voidInstanceId": {
+                "gardenInstanceId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Unique identifier for this void instance"
+                    "description": "Unique identifier for this garden instance"
                 },
                 "seedId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Active seed for this void session"
+                    "description": "Active seed for this garden session"
                 },
                 "accountId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Account in the void"
+                    "description": "Account in the garden"
                 },
                 "position": {
                     "$ref": "#/$defs/Vec3",
@@ -86,13 +86,13 @@ public partial class GardenerController
                     "items": {
                         "$ref": "#/$defs/PoiSummary"
                     },
-                    "description": "Currently active POIs in this void instance"
+                    "description": "Currently active POIs in this garden instance"
                 }
             }
         },
         "Vec3": {
             "type": "object",
-            "description": "Three-dimensional spatial coordinates in void space",
+            "description": "Three-dimensional spatial coordinates in garden space",
             "required": [
                 "x",
                 "y",
@@ -102,17 +102,17 @@ public partial class GardenerController
                 "x": {
                     "type": "number",
                     "format": "float",
-                    "description": "X coordinate in void space units"
+                    "description": "X coordinate in garden space units"
                 },
                 "y": {
                     "type": "number",
                     "format": "float",
-                    "description": "Y coordinate in void space units"
+                    "description": "Y coordinate in garden space units"
                 },
                 "z": {
                     "type": "number",
                     "format": "float",
-                    "description": "Z coordinate in void space units"
+                    "description": "Z coordinate in garden space units"
                 }
             }
         },
@@ -135,16 +135,16 @@ public partial class GardenerController
                 },
                 "position": {
                     "$ref": "#/$defs/Vec3",
-                    "description": "POI position in void space"
+                    "description": "POI position in garden space"
                 },
                 "poiType": {
                     "$ref": "#/$defs/PoiType",
                     "description": "Sensory presentation type"
                 },
                 "visualHint": {
-                    "type": "string",
+                    "$ref": "#/$defs/ScenarioCategory",
                     "nullable": true,
-                    "description": "Visual hint identifier for client rendering"
+                    "description": "Scenario category hint for client rendering"
                 },
                 "audioHint": {
                     "type": "string",
@@ -164,7 +164,7 @@ public partial class GardenerController
                 "triggerRadius": {
                     "type": "number",
                     "format": "float",
-                    "description": "Trigger radius in void space units"
+                    "description": "Trigger radius in garden space units"
                 },
                 "scenarioTemplateId": {
                     "type": "string",
@@ -187,7 +187,23 @@ public partial class GardenerController
                 "Portal",
                 "Social"
             ],
-            "description": "Sensory presentation type for a point of interest in the void"
+            "description": "Sensory presentation type for a point of interest in the garden"
+        },
+        "ScenarioCategory": {
+            "type": "string",
+            "enum": [
+                "Combat",
+                "Crafting",
+                "Social",
+                "Trade",
+                "Exploration",
+                "Magic",
+                "Survival",
+                "Mixed",
+                "Narrative",
+                "Tutorial"
+            ],
+            "description": "Primary gameplay category for a scenario template"
         },
         "TriggerMode": {
             "type": "string",
@@ -213,70 +229,70 @@ public partial class GardenerController
 }
 """;
 
-    private static readonly string _EnterVoid_Info = """
+    private static readonly string _EnterGarden_Info = """
 {
-    "summary": "Enter the void",
-    "description": "Creates a void instance for the player. Finds or creates the player's\nactive guardian seed, initializes drift metrics, and returns the initial\ nvoid state. First tick of the void orchestrator spawns POIs.\n",
+    "summary": "Enter the garden",
+    "description": "Creates a garden instance for the player. Finds or creates the player's\nactive guardian seed, initializes drift metrics, and returns the initial\ ngarden state. First tick of the garden orchestrator spawns POIs.\n",
     "tags": [
-        "Void Management"
+        "Garden Management"
     ],
     "deprecated": false,
-    "operationId": "enterVoid"
+    "operationId": "enterGarden"
 }
 """;
 
-    /// <summary>Returns endpoint information for EnterVoid</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/void/enter/meta/info")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> EnterVoid_MetaInfo()
+    /// <summary>Returns endpoint information for EnterGarden</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/garden/enter/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> EnterGarden_MetaInfo()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
             "Gardener",
             "POST",
-            "/gardener/void/enter",
-            _EnterVoid_Info));
+            "/gardener/garden/enter",
+            _EnterGarden_Info));
 
-    /// <summary>Returns request schema for EnterVoid</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/void/enter/meta/request-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> EnterVoid_MetaRequestSchema()
+    /// <summary>Returns request schema for EnterGarden</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/garden/enter/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> EnterGarden_MetaRequestSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
             "Gardener",
             "POST",
-            "/gardener/void/enter",
+            "/gardener/garden/enter",
             "request-schema",
-            _EnterVoid_RequestSchema));
+            _EnterGarden_RequestSchema));
 
-    /// <summary>Returns response schema for EnterVoid</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/void/enter/meta/response-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> EnterVoid_MetaResponseSchema()
+    /// <summary>Returns response schema for EnterGarden</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/garden/enter/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> EnterGarden_MetaResponseSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
             "Gardener",
             "POST",
-            "/gardener/void/enter",
+            "/gardener/garden/enter",
             "response-schema",
-            _EnterVoid_ResponseSchema));
+            _EnterGarden_ResponseSchema));
 
-    /// <summary>Returns full schema for EnterVoid</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/void/enter/meta/schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> EnterVoid_MetaFullSchema()
+    /// <summary>Returns full schema for EnterGarden</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/garden/enter/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> EnterGarden_MetaFullSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
             "Gardener",
             "POST",
-            "/gardener/void/enter",
-            _EnterVoid_Info,
-            _EnterVoid_RequestSchema,
-            _EnterVoid_ResponseSchema));
+            "/gardener/garden/enter",
+            _EnterGarden_Info,
+            _EnterGarden_RequestSchema,
+            _EnterGarden_ResponseSchema));
 
     #endregion
 
-    #region Meta Endpoints for GetVoidState
+    #region Meta Endpoints for GetGardenState
 
-    private static readonly string _GetVoidState_RequestSchema = """
+    private static readonly string _GetGardenState_RequestSchema = """
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/GetVoidStateRequest",
+    "$ref": "#/$defs/GetGardenStateRequest",
     "$defs": {
-        "GetVoidStateRequest": {
+        "GetGardenStateRequest": {
             "type": "object",
-            "description": "Request to get current void state",
+            "description": "Request to get current garden state",
             "required": [
                 "accountId"
             ],
@@ -284,7 +300,7 @@ public partial class GardenerController
                 "accountId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Account whose void state to retrieve"
+                    "description": "Account whose garden state to retrieve"
                 }
             }
         }
@@ -292,36 +308,36 @@ public partial class GardenerController
 }
 """;
 
-    private static readonly string _GetVoidState_ResponseSchema = """
+    private static readonly string _GetGardenState_ResponseSchema = """
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/VoidStateResponse",
+    "$ref": "#/$defs/GardenStateResponse",
     "$defs": {
-        "VoidStateResponse": {
+        "GardenStateResponse": {
             "type": "object",
-            "description": "Current void instance state for a player",
+            "description": "Current garden instance state for a player",
             "required": [
-                "voidInstanceId",
+                "gardenInstanceId",
                 "seedId",
                 "accountId",
                 "position",
                 "activePois"
             ],
             "properties": {
-                "voidInstanceId": {
+                "gardenInstanceId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Unique identifier for this void instance"
+                    "description": "Unique identifier for this garden instance"
                 },
                 "seedId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Active seed for this void session"
+                    "description": "Active seed for this garden session"
                 },
                 "accountId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Account in the void"
+                    "description": "Account in the garden"
                 },
                 "position": {
                     "$ref": "#/$defs/Vec3",
@@ -332,13 +348,13 @@ public partial class GardenerController
                     "items": {
                         "$ref": "#/$defs/PoiSummary"
                     },
-                    "description": "Currently active POIs in this void instance"
+                    "description": "Currently active POIs in this garden instance"
                 }
             }
         },
         "Vec3": {
             "type": "object",
-            "description": "Three-dimensional spatial coordinates in void space",
+            "description": "Three-dimensional spatial coordinates in garden space",
             "required": [
                 "x",
                 "y",
@@ -348,17 +364,17 @@ public partial class GardenerController
                 "x": {
                     "type": "number",
                     "format": "float",
-                    "description": "X coordinate in void space units"
+                    "description": "X coordinate in garden space units"
                 },
                 "y": {
                     "type": "number",
                     "format": "float",
-                    "description": "Y coordinate in void space units"
+                    "description": "Y coordinate in garden space units"
                 },
                 "z": {
                     "type": "number",
                     "format": "float",
-                    "description": "Z coordinate in void space units"
+                    "description": "Z coordinate in garden space units"
                 }
             }
         },
@@ -381,16 +397,16 @@ public partial class GardenerController
                 },
                 "position": {
                     "$ref": "#/$defs/Vec3",
-                    "description": "POI position in void space"
+                    "description": "POI position in garden space"
                 },
                 "poiType": {
                     "$ref": "#/$defs/PoiType",
                     "description": "Sensory presentation type"
                 },
                 "visualHint": {
-                    "type": "string",
+                    "$ref": "#/$defs/ScenarioCategory",
                     "nullable": true,
-                    "description": "Visual hint identifier for client rendering"
+                    "description": "Scenario category hint for client rendering"
                 },
                 "audioHint": {
                     "type": "string",
@@ -410,7 +426,7 @@ public partial class GardenerController
                 "triggerRadius": {
                     "type": "number",
                     "format": "float",
-                    "description": "Trigger radius in void space units"
+                    "description": "Trigger radius in garden space units"
                 },
                 "scenarioTemplateId": {
                     "type": "string",
@@ -433,7 +449,23 @@ public partial class GardenerController
                 "Portal",
                 "Social"
             ],
-            "description": "Sensory presentation type for a point of interest in the void"
+            "description": "Sensory presentation type for a point of interest in the garden"
+        },
+        "ScenarioCategory": {
+            "type": "string",
+            "enum": [
+                "Combat",
+                "Crafting",
+                "Social",
+                "Trade",
+                "Exploration",
+                "Magic",
+                "Survival",
+                "Mixed",
+                "Narrative",
+                "Tutorial"
+            ],
+            "description": "Primary gameplay category for a scenario template"
         },
         "TriggerMode": {
             "type": "string",
@@ -459,57 +491,57 @@ public partial class GardenerController
 }
 """;
 
-    private static readonly string _GetVoidState_Info = """
+    private static readonly string _GetGardenState_Info = """
 {
-    "summary": "Get current void state",
-    "description": "Returns the player's current void instance with active POIs.",
+    "summary": "Get current garden state",
+    "description": "Returns the player's current garden instance with active POIs.",
     "tags": [
-        "Void Management"
+        "Garden Management"
     ],
     "deprecated": false,
-    "operationId": "getVoidState"
+    "operationId": "getGardenState"
 }
 """;
 
-    /// <summary>Returns endpoint information for GetVoidState</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/void/get/meta/info")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetVoidState_MetaInfo()
+    /// <summary>Returns endpoint information for GetGardenState</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/garden/get/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetGardenState_MetaInfo()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
             "Gardener",
             "POST",
-            "/gardener/void/get",
-            _GetVoidState_Info));
+            "/gardener/garden/get",
+            _GetGardenState_Info));
 
-    /// <summary>Returns request schema for GetVoidState</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/void/get/meta/request-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetVoidState_MetaRequestSchema()
+    /// <summary>Returns request schema for GetGardenState</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/garden/get/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetGardenState_MetaRequestSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
             "Gardener",
             "POST",
-            "/gardener/void/get",
+            "/gardener/garden/get",
             "request-schema",
-            _GetVoidState_RequestSchema));
+            _GetGardenState_RequestSchema));
 
-    /// <summary>Returns response schema for GetVoidState</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/void/get/meta/response-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetVoidState_MetaResponseSchema()
+    /// <summary>Returns response schema for GetGardenState</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/garden/get/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetGardenState_MetaResponseSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
             "Gardener",
             "POST",
-            "/gardener/void/get",
+            "/gardener/garden/get",
             "response-schema",
-            _GetVoidState_ResponseSchema));
+            _GetGardenState_ResponseSchema));
 
-    /// <summary>Returns full schema for GetVoidState</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/void/get/meta/schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetVoidState_MetaFullSchema()
+    /// <summary>Returns full schema for GetGardenState</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/garden/get/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetGardenState_MetaFullSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
             "Gardener",
             "POST",
-            "/gardener/void/get",
-            _GetVoidState_Info,
-            _GetVoidState_RequestSchema,
-            _GetVoidState_ResponseSchema));
+            "/gardener/garden/get",
+            _GetGardenState_Info,
+            _GetGardenState_RequestSchema,
+            _GetGardenState_ResponseSchema));
 
     #endregion
 
@@ -522,7 +554,7 @@ public partial class GardenerController
     "$defs": {
         "UpdatePositionRequest": {
             "type": "object",
-            "description": "Request to update player position in the void",
+            "description": "Request to update player position in the garden",
             "required": [
                 "accountId",
                 "position",
@@ -536,7 +568,7 @@ public partial class GardenerController
                 },
                 "position": {
                     "$ref": "#/$defs/Vec3",
-                    "description": "New position in void space"
+                    "description": "New position in garden space"
                 },
                 "velocity": {
                     "$ref": "#/$defs/Vec3",
@@ -546,7 +578,7 @@ public partial class GardenerController
         },
         "Vec3": {
             "type": "object",
-            "description": "Three-dimensional spatial coordinates in void space",
+            "description": "Three-dimensional spatial coordinates in garden space",
             "required": [
                 "x",
                 "y",
@@ -556,17 +588,17 @@ public partial class GardenerController
                 "x": {
                     "type": "number",
                     "format": "float",
-                    "description": "X coordinate in void space units"
+                    "description": "X coordinate in garden space units"
                 },
                 "y": {
                     "type": "number",
                     "format": "float",
-                    "description": "Y coordinate in void space units"
+                    "description": "Y coordinate in garden space units"
                 },
                 "z": {
                     "type": "number",
                     "format": "float",
-                    "description": "Z coordinate in void space units"
+                    "description": "Z coordinate in garden space units"
                 }
             }
         }
@@ -619,16 +651,16 @@ public partial class GardenerController
                 },
                 "position": {
                     "$ref": "#/$defs/Vec3",
-                    "description": "POI position in void space"
+                    "description": "POI position in garden space"
                 },
                 "poiType": {
                     "$ref": "#/$defs/PoiType",
                     "description": "Sensory presentation type"
                 },
                 "visualHint": {
-                    "type": "string",
+                    "$ref": "#/$defs/ScenarioCategory",
                     "nullable": true,
-                    "description": "Visual hint identifier for client rendering"
+                    "description": "Scenario category hint for client rendering"
                 },
                 "audioHint": {
                     "type": "string",
@@ -648,7 +680,7 @@ public partial class GardenerController
                 "triggerRadius": {
                     "type": "number",
                     "format": "float",
-                    "description": "Trigger radius in void space units"
+                    "description": "Trigger radius in garden space units"
                 },
                 "scenarioTemplateId": {
                     "type": "string",
@@ -664,7 +696,7 @@ public partial class GardenerController
         },
         "Vec3": {
             "type": "object",
-            "description": "Three-dimensional spatial coordinates in void space",
+            "description": "Three-dimensional spatial coordinates in garden space",
             "required": [
                 "x",
                 "y",
@@ -674,17 +706,17 @@ public partial class GardenerController
                 "x": {
                     "type": "number",
                     "format": "float",
-                    "description": "X coordinate in void space units"
+                    "description": "X coordinate in garden space units"
                 },
                 "y": {
                     "type": "number",
                     "format": "float",
-                    "description": "Y coordinate in void space units"
+                    "description": "Y coordinate in garden space units"
                 },
                 "z": {
                     "type": "number",
                     "format": "float",
-                    "description": "Z coordinate in void space units"
+                    "description": "Z coordinate in garden space units"
                 }
             }
         },
@@ -697,7 +729,23 @@ public partial class GardenerController
                 "Portal",
                 "Social"
             ],
-            "description": "Sensory presentation type for a point of interest in the void"
+            "description": "Sensory presentation type for a point of interest in the garden"
+        },
+        "ScenarioCategory": {
+            "type": "string",
+            "enum": [
+                "Combat",
+                "Crafting",
+                "Social",
+                "Trade",
+                "Exploration",
+                "Magic",
+                "Survival",
+                "Mixed",
+                "Narrative",
+                "Tutorial"
+            ],
+            "description": "Primary gameplay category for a scenario template"
         },
         "TriggerMode": {
             "type": "string",
@@ -725,10 +773,10 @@ public partial class GardenerController
 
     private static readonly string _UpdatePosition_Info = """
 {
-    "summary": "Update player position in the void",
-    "description": "Updates the player's position and velocity in void space. Accumulates\ndrift metrics and checks proximity triggers against active POIs.\n",
+    "summary": "Update player position in the garden",
+    "description": "Updates the player's position and velocity in garden space. Accumulates\ndrift metrics and checks proximity triggers against active POIs.\n",
     "tags": [
-        "Void Management"
+        "Garden Management"
     ],
     "deprecated": false,
     "operationId": "updatePosition"
@@ -736,57 +784,57 @@ public partial class GardenerController
 """;
 
     /// <summary>Returns endpoint information for UpdatePosition</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/void/update-position/meta/info")]
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/garden/update-position/meta/info")]
     public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdatePosition_MetaInfo()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
             "Gardener",
             "POST",
-            "/gardener/void/update-position",
+            "/gardener/garden/update-position",
             _UpdatePosition_Info));
 
     /// <summary>Returns request schema for UpdatePosition</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/void/update-position/meta/request-schema")]
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/garden/update-position/meta/request-schema")]
     public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdatePosition_MetaRequestSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
             "Gardener",
             "POST",
-            "/gardener/void/update-position",
+            "/gardener/garden/update-position",
             "request-schema",
             _UpdatePosition_RequestSchema));
 
     /// <summary>Returns response schema for UpdatePosition</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/void/update-position/meta/response-schema")]
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/garden/update-position/meta/response-schema")]
     public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdatePosition_MetaResponseSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
             "Gardener",
             "POST",
-            "/gardener/void/update-position",
+            "/gardener/garden/update-position",
             "response-schema",
             _UpdatePosition_ResponseSchema));
 
     /// <summary>Returns full schema for UpdatePosition</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/void/update-position/meta/schema")]
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/garden/update-position/meta/schema")]
     public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> UpdatePosition_MetaFullSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
             "Gardener",
             "POST",
-            "/gardener/void/update-position",
+            "/gardener/garden/update-position",
             _UpdatePosition_Info,
             _UpdatePosition_RequestSchema,
             _UpdatePosition_ResponseSchema));
 
     #endregion
 
-    #region Meta Endpoints for LeaveVoid
+    #region Meta Endpoints for LeaveGarden
 
-    private static readonly string _LeaveVoid_RequestSchema = """
+    private static readonly string _LeaveGarden_RequestSchema = """
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/LeaveVoidRequest",
+    "$ref": "#/$defs/LeaveGardenRequest",
     "$defs": {
-        "LeaveVoidRequest": {
+        "LeaveGardenRequest": {
             "type": "object",
-            "description": "Request to leave the void",
+            "description": "Request to leave the garden",
             "required": [
                 "accountId"
             ],
@@ -794,7 +842,7 @@ public partial class GardenerController
                 "accountId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Account leaving the void"
+                    "description": "Account leaving the garden"
                 }
             }
         }
@@ -802,14 +850,14 @@ public partial class GardenerController
 }
 """;
 
-    private static readonly string _LeaveVoid_ResponseSchema = """
+    private static readonly string _LeaveGarden_ResponseSchema = """
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/LeaveVoidResponse",
+    "$ref": "#/$defs/LeaveGardenResponse",
     "$defs": {
-        "LeaveVoidResponse": {
+        "LeaveGardenResponse": {
             "type": "object",
-            "description": "Response after leaving the void",
+            "description": "Response after leaving the garden",
             "required": [
                 "accountId",
                 "sessionDurationSeconds"
@@ -818,12 +866,12 @@ public partial class GardenerController
                 "accountId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Account that left the void"
+                    "description": "Account that left the garden"
                 },
                 "sessionDurationSeconds": {
                     "type": "number",
                     "format": "float",
-                    "description": "Total duration of the void session in seconds"
+                    "description": "Total duration of the garden session in seconds"
                 }
             }
         }
@@ -831,57 +879,57 @@ public partial class GardenerController
 }
 """;
 
-    private static readonly string _LeaveVoid_Info = """
+    private static readonly string _LeaveGarden_Info = """
 {
-    "summary": "Leave the void",
-    "description": "Cleans up the void instance, all associated POIs, and publishes a\nvoid-left event with session duration.\n",
+    "summary": "Leave the garden",
+    "description": "Cleans up the garden instance, all associated POIs, and publishes a\ngarden-left event with session duration.\n",
     "tags": [
-        "Void Management"
+        "Garden Management"
     ],
     "deprecated": false,
-    "operationId": "leaveVoid"
+    "operationId": "leaveGarden"
 }
 """;
 
-    /// <summary>Returns endpoint information for LeaveVoid</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/void/leave/meta/info")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> LeaveVoid_MetaInfo()
+    /// <summary>Returns endpoint information for LeaveGarden</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/garden/leave/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> LeaveGarden_MetaInfo()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
             "Gardener",
             "POST",
-            "/gardener/void/leave",
-            _LeaveVoid_Info));
+            "/gardener/garden/leave",
+            _LeaveGarden_Info));
 
-    /// <summary>Returns request schema for LeaveVoid</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/void/leave/meta/request-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> LeaveVoid_MetaRequestSchema()
+    /// <summary>Returns request schema for LeaveGarden</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/garden/leave/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> LeaveGarden_MetaRequestSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
             "Gardener",
             "POST",
-            "/gardener/void/leave",
+            "/gardener/garden/leave",
             "request-schema",
-            _LeaveVoid_RequestSchema));
+            _LeaveGarden_RequestSchema));
 
-    /// <summary>Returns response schema for LeaveVoid</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/void/leave/meta/response-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> LeaveVoid_MetaResponseSchema()
+    /// <summary>Returns response schema for LeaveGarden</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/garden/leave/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> LeaveGarden_MetaResponseSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
             "Gardener",
             "POST",
-            "/gardener/void/leave",
+            "/gardener/garden/leave",
             "response-schema",
-            _LeaveVoid_ResponseSchema));
+            _LeaveGarden_ResponseSchema));
 
-    /// <summary>Returns full schema for LeaveVoid</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/void/leave/meta/schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> LeaveVoid_MetaFullSchema()
+    /// <summary>Returns full schema for LeaveGarden</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/garden/leave/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> LeaveGarden_MetaFullSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
             "Gardener",
             "POST",
-            "/gardener/void/leave",
-            _LeaveVoid_Info,
-            _LeaveVoid_RequestSchema,
-            _LeaveVoid_ResponseSchema));
+            "/gardener/garden/leave",
+            _LeaveGarden_Info,
+            _LeaveGarden_RequestSchema,
+            _LeaveGarden_ResponseSchema));
 
     #endregion
 
@@ -917,16 +965,16 @@ public partial class GardenerController
     "$defs": {
         "ListPoisResponse": {
             "type": "object",
-            "description": "List of active POIs in a void instance",
+            "description": "List of active POIs in a garden instance",
             "required": [
-                "voidInstanceId",
+                "gardenInstanceId",
                 "pois"
             ],
             "properties": {
-                "voidInstanceId": {
+                "gardenInstanceId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Void instance these POIs belong to"
+                    "description": "Garden instance these POIs belong to"
                 },
                 "pois": {
                     "type": "array",
@@ -956,16 +1004,16 @@ public partial class GardenerController
                 },
                 "position": {
                     "$ref": "#/$defs/Vec3",
-                    "description": "POI position in void space"
+                    "description": "POI position in garden space"
                 },
                 "poiType": {
                     "$ref": "#/$defs/PoiType",
                     "description": "Sensory presentation type"
                 },
                 "visualHint": {
-                    "type": "string",
+                    "$ref": "#/$defs/ScenarioCategory",
                     "nullable": true,
-                    "description": "Visual hint identifier for client rendering"
+                    "description": "Scenario category hint for client rendering"
                 },
                 "audioHint": {
                     "type": "string",
@@ -985,7 +1033,7 @@ public partial class GardenerController
                 "triggerRadius": {
                     "type": "number",
                     "format": "float",
-                    "description": "Trigger radius in void space units"
+                    "description": "Trigger radius in garden space units"
                 },
                 "scenarioTemplateId": {
                     "type": "string",
@@ -1001,7 +1049,7 @@ public partial class GardenerController
         },
         "Vec3": {
             "type": "object",
-            "description": "Three-dimensional spatial coordinates in void space",
+            "description": "Three-dimensional spatial coordinates in garden space",
             "required": [
                 "x",
                 "y",
@@ -1011,17 +1059,17 @@ public partial class GardenerController
                 "x": {
                     "type": "number",
                     "format": "float",
-                    "description": "X coordinate in void space units"
+                    "description": "X coordinate in garden space units"
                 },
                 "y": {
                     "type": "number",
                     "format": "float",
-                    "description": "Y coordinate in void space units"
+                    "description": "Y coordinate in garden space units"
                 },
                 "z": {
                     "type": "number",
                     "format": "float",
-                    "description": "Z coordinate in void space units"
+                    "description": "Z coordinate in garden space units"
                 }
             }
         },
@@ -1034,7 +1082,23 @@ public partial class GardenerController
                 "Portal",
                 "Social"
             ],
-            "description": "Sensory presentation type for a point of interest in the void"
+            "description": "Sensory presentation type for a point of interest in the garden"
+        },
+        "ScenarioCategory": {
+            "type": "string",
+            "enum": [
+                "Combat",
+                "Crafting",
+                "Social",
+                "Trade",
+                "Exploration",
+                "Magic",
+                "Survival",
+                "Mixed",
+                "Narrative",
+                "Tutorial"
+            ],
+            "description": "Primary gameplay category for a scenario template"
         },
         "TriggerMode": {
             "type": "string",
@@ -1063,7 +1127,7 @@ public partial class GardenerController
     private static readonly string _ListPois_Info = """
 {
     "summary": "List active POIs",
-    "description": "Returns all active POIs for the player's current void instance.",
+    "description": "Returns all active POIs for the player's current garden instance.",
     "tags": [
         "POI Interaction"
     ],
@@ -1164,8 +1228,8 @@ public partial class GardenerController
                     "description": "POI that was interacted with"
                 },
                 "result": {
-                    "type": "string",
-                    "description": "Interaction outcome (scenario_prompt, scenario_enter, poi_update, chain_offer)"
+                    "$ref": "#/$defs/PoiInteractionResult",
+                    "description": "Interaction outcome"
                 },
                 "scenarioTemplateId": {
                     "type": "string",
@@ -1187,6 +1251,16 @@ public partial class GardenerController
                     "description": "Available choices for prompted POIs"
                 }
             }
+        },
+        "PoiInteractionResult": {
+            "type": "string",
+            "enum": [
+                "ScenarioPrompt",
+                "ScenarioEnter",
+                "PoiUpdate",
+                "ChainOffer"
+            ],
+            "description": "Outcome of interacting with a POI"
         }
     }
 }
@@ -1308,7 +1382,7 @@ public partial class GardenerController
     private static readonly string _DeclinePoi_Info = """
 {
     "summary": "Decline a POI",
-    "description": "Marks a POI as declined. The template is added to the void instance's\nscenario history for diversity scoring.\n",
+    "description": "Marks a POI as declined. The template is added to the garden instance's\nscenario history for diversity scoring.\n",
     "tags": [
         "POI Interaction"
     ],
@@ -1487,7 +1561,7 @@ public partial class GardenerController
     private static readonly string _EnterScenario_Info = """
 {
     "summary": "Enter a scenario",
-    "description": "Validates prerequisites, creates a game session, creates a scenario\ninstance, destroys the void instance (player leaves the void), and\npublishes scenario-started events.\n",
+    "description": "Validates prerequisites, creates a game session, creates a scenario\ninstance, destroys the garden instance (player leaves the garden), and\npublishes scenario-started events.\n",
     "tags": [
         "Scenario Lifecycle"
     ],
@@ -1742,7 +1816,7 @@ public partial class GardenerController
             "required": [
                 "scenarioInstanceId",
                 "growthAwarded",
-                "returnToVoid"
+                "returnToGarden"
             ],
             "properties": {
                 "scenarioInstanceId": {
@@ -1758,9 +1832,9 @@ public partial class GardenerController
                     },
                     "description": "Growth awarded per domain"
                 },
-                "returnToVoid": {
+                "returnToGarden": {
                     "type": "boolean",
-                    "description": "Whether the player should return to the void"
+                    "description": "Whether the player should return to the garden"
                 }
             }
         }
@@ -1771,7 +1845,7 @@ public partial class GardenerController
     private static readonly string _CompleteScenario_Info = """
 {
     "summary": "Complete a scenario",
-    "description": "Calculates and awards growth per domain, closes the game session,\nwrites history, and returns the player to the void.\n",
+    "description": "Calculates and awards growth per domain, closes the game session,\nwrites history, and returns the player to the garden.\n",
     "tags": [
         "Scenario Lifecycle"
     ],
@@ -2355,6 +2429,7 @@ public partial class GardenerController
             "properties": {
                 "behaviorDocumentId": {
                     "type": "string",
+                    "format": "uuid",
                     "nullable": true,
                     "description": "ABML behavior document ID for NPC orchestration"
                 },
@@ -2644,6 +2719,7 @@ public partial class GardenerController
             "properties": {
                 "behaviorDocumentId": {
                     "type": "string",
+                    "format": "uuid",
                     "nullable": true,
                     "description": "ABML behavior document ID for NPC orchestration"
                 },
@@ -3021,6 +3097,7 @@ public partial class GardenerController
             "properties": {
                 "behaviorDocumentId": {
                     "type": "string",
+                    "format": "uuid",
                     "nullable": true,
                     "description": "ABML behavior document ID for NPC orchestration"
                 },
@@ -3397,6 +3474,7 @@ public partial class GardenerController
             "properties": {
                 "behaviorDocumentId": {
                     "type": "string",
+                    "format": "uuid",
                     "nullable": true,
                     "description": "ABML behavior document ID for NPC orchestration"
                 },
@@ -3870,6 +3948,7 @@ public partial class GardenerController
             "properties": {
                 "behaviorDocumentId": {
                     "type": "string",
+                    "format": "uuid",
                     "nullable": true,
                     "description": "ABML behavior document ID for NPC orchestration"
                 },
@@ -4135,6 +4214,7 @@ public partial class GardenerController
             "properties": {
                 "behaviorDocumentId": {
                     "type": "string",
+                    "format": "uuid",
                     "nullable": true,
                     "description": "ABML behavior document ID for NPC orchestration"
                 },
@@ -4424,6 +4504,7 @@ public partial class GardenerController
             "properties": {
                 "behaviorDocumentId": {
                     "type": "string",
+                    "format": "uuid",
                     "nullable": true,
                     "description": "ABML behavior document ID for NPC orchestration"
                 },
@@ -4801,6 +4882,7 @@ public partial class GardenerController
             "properties": {
                 "behaviorDocumentId": {
                     "type": "string",
+                    "format": "uuid",
                     "nullable": true,
                     "description": "ABML behavior document ID for NPC orchestration"
                 },
@@ -4918,7 +5000,7 @@ public partial class GardenerController
                 "currentPhase",
                 "maxConcurrentScenariosGlobal",
                 "persistentEntryEnabled",
-                "voidMinigamesEnabled"
+                "gardenMinigamesEnabled"
             ],
             "properties": {
                 "currentPhase": {
@@ -4933,9 +5015,9 @@ public partial class GardenerController
                     "type": "boolean",
                     "description": "Whether persistent world entry is enabled"
                 },
-                "voidMinigamesEnabled": {
+                "gardenMinigamesEnabled": {
                     "type": "boolean",
-                    "description": "Whether void minigames are enabled"
+                    "description": "Whether garden minigames are enabled"
                 }
             }
         },
@@ -5032,10 +5114,10 @@ public partial class GardenerController
                     "nullable": true,
                     "description": "Whether persistent world entry is enabled"
                 },
-                "voidMinigamesEnabled": {
+                "gardenMinigamesEnabled": {
                     "type": "boolean",
                     "nullable": true,
-                    "description": "Whether void minigames are enabled"
+                    "description": "Whether garden minigames are enabled"
                 }
             }
         },
@@ -5064,7 +5146,7 @@ public partial class GardenerController
                 "currentPhase",
                 "maxConcurrentScenariosGlobal",
                 "persistentEntryEnabled",
-                "voidMinigamesEnabled"
+                "gardenMinigamesEnabled"
             ],
             "properties": {
                 "currentPhase": {
@@ -5079,9 +5161,9 @@ public partial class GardenerController
                     "type": "boolean",
                     "description": "Whether persistent world entry is enabled"
                 },
-                "voidMinigamesEnabled": {
+                "gardenMinigamesEnabled": {
                     "type": "boolean",
-                    "description": "Whether void minigames are enabled"
+                    "description": "Whether garden minigames are enabled"
                 }
             }
         },
@@ -5178,7 +5260,7 @@ public partial class GardenerController
             "description": "Current deployment phase metrics",
             "required": [
                 "currentPhase",
-                "activeVoidInstances",
+                "activeGardenInstances",
                 "activeScenarioInstances",
                 "scenarioCapacityUtilization"
             ],
@@ -5187,9 +5269,9 @@ public partial class GardenerController
                     "$ref": "#/$defs/DeploymentPhase",
                     "description": "Current deployment phase"
                 },
-                "activeVoidInstances": {
+                "activeGardenInstances": {
                     "type": "integer",
-                    "description": "Number of currently active void instances"
+                    "description": "Number of currently active garden instances"
                 },
                 "activeScenarioInstances": {
                     "type": "integer",
@@ -5218,7 +5300,7 @@ public partial class GardenerController
     private static readonly string _GetPhaseMetrics_Info = """
 {
     "summary": "Get deployment phase metrics",
-    "description": "Returns current counts of active void instances, scenario instances, and capacity utilization.",
+    "description": "Returns current counts of active garden instances, scenario instances, and capacity utilization.",
     "tags": [
         "Deployment Phase"
     ],
@@ -5386,7 +5468,7 @@ public partial class GardenerController
     private static readonly string _EnterScenarioTogether_Info = """
 {
     "summary": "Enter a scenario together with a bonded player",
-    "description": "Both bonded players enter a shared scenario instance. Validates bond state,\nboth participants' void instances, and template multiplayer support.\n",
+    "description": "Both bonded players enter a shared scenario instance. Validates bond state,\nboth participants' garden instances, and template multiplayer support.\n",
     "tags": [
         "Bond Scenarios"
     ],
@@ -5437,16 +5519,16 @@ public partial class GardenerController
 
     #endregion
 
-    #region Meta Endpoints for GetSharedVoidState
+    #region Meta Endpoints for GetSharedGardenState
 
-    private static readonly string _GetSharedVoidState_RequestSchema = """
+    private static readonly string _GetSharedGardenState_RequestSchema = """
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/GetSharedVoidRequest",
+    "$ref": "#/$defs/GetSharedGardenRequest",
     "$defs": {
-        "GetSharedVoidRequest": {
+        "GetSharedGardenRequest": {
             "type": "object",
-            "description": "Request to get shared void state for bonded players",
+            "description": "Request to get shared garden state for bonded players",
             "required": [
                 "bondId"
             ],
@@ -5454,7 +5536,7 @@ public partial class GardenerController
                 "bondId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Bond ID to look up shared void state"
+                    "description": "Bond ID to look up shared garden state"
                 }
             }
         }
@@ -5462,14 +5544,14 @@ public partial class GardenerController
 }
 """;
 
-    private static readonly string _GetSharedVoidState_ResponseSchema = """
+    private static readonly string _GetSharedGardenState_ResponseSchema = """
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$ref": "#/$defs/SharedVoidStateResponse",
+    "$ref": "#/$defs/SharedGardenStateResponse",
     "$defs": {
-        "SharedVoidStateResponse": {
+        "SharedGardenStateResponse": {
             "type": "object",
-            "description": "Shared void state for bonded players",
+            "description": "Shared garden state for bonded players",
             "required": [
                 "bondId",
                 "participants",
@@ -5484,9 +5566,9 @@ public partial class GardenerController
                 "participants": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/$defs/BondedPlayerVoidState"
+                        "$ref": "#/$defs/BondedPlayerGardenState"
                     },
-                    "description": "Per-player void state"
+                    "description": "Per-player garden state"
                 },
                 "sharedPois": {
                     "type": "array",
@@ -5497,9 +5579,9 @@ public partial class GardenerController
                 }
             }
         },
-        "BondedPlayerVoidState": {
+        "BondedPlayerGardenState": {
             "type": "object",
-            "description": "Per-player void state within a shared bond void",
+            "description": "Per-player garden state within a shared bond garden",
             "required": [
                 "seedId",
                 "accountId",
@@ -5518,13 +5600,13 @@ public partial class GardenerController
                 },
                 "position": {
                     "$ref": "#/$defs/Vec3",
-                    "description": "Player position in shared void space"
+                    "description": "Player position in shared garden space"
                 }
             }
         },
         "Vec3": {
             "type": "object",
-            "description": "Three-dimensional spatial coordinates in void space",
+            "description": "Three-dimensional spatial coordinates in garden space",
             "required": [
                 "x",
                 "y",
@@ -5534,17 +5616,17 @@ public partial class GardenerController
                 "x": {
                     "type": "number",
                     "format": "float",
-                    "description": "X coordinate in void space units"
+                    "description": "X coordinate in garden space units"
                 },
                 "y": {
                     "type": "number",
                     "format": "float",
-                    "description": "Y coordinate in void space units"
+                    "description": "Y coordinate in garden space units"
                 },
                 "z": {
                     "type": "number",
                     "format": "float",
-                    "description": "Z coordinate in void space units"
+                    "description": "Z coordinate in garden space units"
                 }
             }
         },
@@ -5567,16 +5649,16 @@ public partial class GardenerController
                 },
                 "position": {
                     "$ref": "#/$defs/Vec3",
-                    "description": "POI position in void space"
+                    "description": "POI position in garden space"
                 },
                 "poiType": {
                     "$ref": "#/$defs/PoiType",
                     "description": "Sensory presentation type"
                 },
                 "visualHint": {
-                    "type": "string",
+                    "$ref": "#/$defs/ScenarioCategory",
                     "nullable": true,
-                    "description": "Visual hint identifier for client rendering"
+                    "description": "Scenario category hint for client rendering"
                 },
                 "audioHint": {
                     "type": "string",
@@ -5596,7 +5678,7 @@ public partial class GardenerController
                 "triggerRadius": {
                     "type": "number",
                     "format": "float",
-                    "description": "Trigger radius in void space units"
+                    "description": "Trigger radius in garden space units"
                 },
                 "scenarioTemplateId": {
                     "type": "string",
@@ -5619,7 +5701,23 @@ public partial class GardenerController
                 "Portal",
                 "Social"
             ],
-            "description": "Sensory presentation type for a point of interest in the void"
+            "description": "Sensory presentation type for a point of interest in the garden"
+        },
+        "ScenarioCategory": {
+            "type": "string",
+            "enum": [
+                "Combat",
+                "Crafting",
+                "Social",
+                "Trade",
+                "Exploration",
+                "Magic",
+                "Survival",
+                "Mixed",
+                "Narrative",
+                "Tutorial"
+            ],
+            "description": "Primary gameplay category for a scenario template"
         },
         "TriggerMode": {
             "type": "string",
@@ -5645,57 +5743,57 @@ public partial class GardenerController
 }
 """;
 
-    private static readonly string _GetSharedVoidState_Info = """
+    private static readonly string _GetSharedGardenState_Info = """
 {
-    "summary": "Get shared void state for bonded players",
-    "description": "Returns the merged void state for both bond participants including shared POIs.",
+    "summary": "Get shared garden state for bonded players",
+    "description": "Returns the merged garden state for both bond participants including shared POIs.",
     "tags": [
         "Bond Scenarios"
     ],
     "deprecated": false,
-    "operationId": "getSharedVoidState"
+    "operationId": "getSharedGardenState"
 }
 """;
 
-    /// <summary>Returns endpoint information for GetSharedVoidState</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/bond/get-shared-void/meta/info")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetSharedVoidState_MetaInfo()
+    /// <summary>Returns endpoint information for GetSharedGardenState</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/bond/get-shared-garden/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetSharedGardenState_MetaInfo()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
             "Gardener",
             "POST",
-            "/gardener/bond/get-shared-void",
-            _GetSharedVoidState_Info));
+            "/gardener/bond/get-shared-garden",
+            _GetSharedGardenState_Info));
 
-    /// <summary>Returns request schema for GetSharedVoidState</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/bond/get-shared-void/meta/request-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetSharedVoidState_MetaRequestSchema()
+    /// <summary>Returns request schema for GetSharedGardenState</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/bond/get-shared-garden/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetSharedGardenState_MetaRequestSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
             "Gardener",
             "POST",
-            "/gardener/bond/get-shared-void",
+            "/gardener/bond/get-shared-garden",
             "request-schema",
-            _GetSharedVoidState_RequestSchema));
+            _GetSharedGardenState_RequestSchema));
 
-    /// <summary>Returns response schema for GetSharedVoidState</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/bond/get-shared-void/meta/response-schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetSharedVoidState_MetaResponseSchema()
+    /// <summary>Returns response schema for GetSharedGardenState</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/bond/get-shared-garden/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetSharedGardenState_MetaResponseSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
             "Gardener",
             "POST",
-            "/gardener/bond/get-shared-void",
+            "/gardener/bond/get-shared-garden",
             "response-schema",
-            _GetSharedVoidState_ResponseSchema));
+            _GetSharedGardenState_ResponseSchema));
 
-    /// <summary>Returns full schema for GetSharedVoidState</summary>
-    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/bond/get-shared-void/meta/schema")]
-    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetSharedVoidState_MetaFullSchema()
+    /// <summary>Returns full schema for GetSharedGardenState</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/gardener/bond/get-shared-garden/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> GetSharedGardenState_MetaFullSchema()
         => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
             "Gardener",
             "POST",
-            "/gardener/bond/get-shared-void",
-            _GetSharedVoidState_Info,
-            _GetSharedVoidState_RequestSchema,
-            _GetSharedVoidState_ResponseSchema));
+            "/gardener/bond/get-shared-garden",
+            _GetSharedGardenState_Info,
+            _GetSharedGardenState_RequestSchema,
+            _GetSharedGardenState_ResponseSchema));
 
     #endregion
 }

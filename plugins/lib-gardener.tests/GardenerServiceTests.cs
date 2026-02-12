@@ -13,7 +13,7 @@ using BeyondImmersion.BannouService.TestUtilities;
 namespace BeyondImmersion.BannouService.Gardener.Tests;
 
 /// <summary>
-/// Comprehensive unit tests for the GardenerService covering void management,
+/// Comprehensive unit tests for the GardenerService covering garden management,
 /// scenario lifecycle, template CRUD, phase management, and bond features.
 /// </summary>
 public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration>
@@ -68,7 +68,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
 
         // Wire up state store factory
         _mockStateStoreFactory
-            .Setup(f => f.GetStore<GardenInstanceModel>(StateStoreDefinitions.GardenerVoidInstances))
+            .Setup(f => f.GetStore<GardenInstanceModel>(StateStoreDefinitions.GardenerGardenInstances))
             .Returns(_mockGardenStore.Object);
         _mockStateStoreFactory
             .Setup(f => f.GetStore<PoiModel>(StateStoreDefinitions.GardenerPois))
@@ -86,7 +86,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
             .Setup(f => f.GetStore<DeploymentPhaseConfigModel>(StateStoreDefinitions.GardenerPhaseConfig))
             .Returns(_mockPhaseStore.Object);
         _mockStateStoreFactory
-            .Setup(f => f.GetCacheableStore<GardenInstanceModel>(StateStoreDefinitions.GardenerVoidInstances))
+            .Setup(f => f.GetCacheableStore<GardenInstanceModel>(StateStoreDefinitions.GardenerGardenInstances))
             .Returns(_mockCacheStore.Object);
 
         // Default lock succeeds
@@ -118,9 +118,9 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         Configuration.GrowthAwardMultiplier = 1.0f;
         Configuration.ScenarioTimeoutMinutes = 60;
         Configuration.AbandonDetectionMinutes = 10;
-        Configuration.BondSharedVoidEnabled = true;
+        Configuration.BondSharedGardenEnabled = true;
         Configuration.BondScenarioPriority = 1.5f;
-        Configuration.MaxActivePoisPerVoid = 5;
+        Configuration.MaxActivePoisPerGarden = 5;
         Configuration.PoiDefaultTtlMinutes = 30;
         Configuration.PoiSpawnRadiusMin = 10f;
         Configuration.PoiSpawnRadiusMax = 50f;
@@ -130,7 +130,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         Configuration.NarrativeWeight = 0.3f;
         Configuration.RandomWeight = 0.2f;
         Configuration.RecentScenarioCooldownMinutes = 5;
-        Configuration.VoidTickIntervalMs = 5000;
+        Configuration.GardenTickIntervalMs = 5000;
         Configuration.ScenarioLifecycleWorkerIntervalSeconds = 30;
         Configuration.BackgroundServiceStartupDelaySeconds = 5;
     }
@@ -274,10 +274,10 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
 
     #endregion
 
-    #region EnterVoidAsync
+    #region EnterGardenAsync
 
     [Fact]
-    public async Task EnterVoidAsync_ValidRequest_CreatesGardenAndPublishesEvent()
+    public async Task EnterGardenAsync_ValidRequest_CreatesGardenAndPublishesEvent()
     {
         // Arrange
         var service = CreateService();
@@ -293,8 +293,8 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
             .ReturnsAsync("etag");
 
         // Act
-        var (status, response) = await service.EnterVoidAsync(
-            new EnterVoidRequest { AccountId = _testAccountId, SessionId = _testSessionId },
+        var (status, response) = await service.EnterGardenAsync(
+            new EnterGardenRequest { AccountId = _testAccountId, SessionId = _testSessionId },
             CancellationToken.None);
 
         // Assert - Response
@@ -312,27 +312,27 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
 
         // Assert - Tracking set updated
         _mockCacheStore.Verify(c => c.AddToSetAsync<Guid>(
-            GardenerService.ActiveVoidsTrackingKey, _testAccountId,
+            GardenerService.ActiveGardensTrackingKey, _testAccountId,
             It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()), Times.Once);
 
         // Assert - Event published
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "gardener.void.entered",
-            It.Is<GardenerVoidEnteredEvent>(e =>
+            "gardener.garden.entered",
+            It.Is<GardenerGardenEnteredEvent>(e =>
                 e.AccountId == _testAccountId && e.SeedId == _testSeedId),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
-    public async Task EnterVoidAsync_AlreadyActive_ReturnsConflict()
+    public async Task EnterGardenAsync_AlreadyActive_ReturnsConflict()
     {
         var service = CreateService();
         _mockGardenStore
             .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(CreateTestGarden());
 
-        var (status, response) = await service.EnterVoidAsync(
-            new EnterVoidRequest { AccountId = _testAccountId, SessionId = _testSessionId },
+        var (status, response) = await service.EnterGardenAsync(
+            new EnterGardenRequest { AccountId = _testAccountId, SessionId = _testSessionId },
             CancellationToken.None);
 
         Assert.Equal(StatusCodes.Conflict, status);
@@ -340,14 +340,14 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
     }
 
     [Fact]
-    public async Task EnterVoidAsync_NoActiveSeed_ReturnsNotFound()
+    public async Task EnterGardenAsync_NoActiveSeed_ReturnsNotFound()
     {
         var service = CreateService();
         SetupSeedsForAccount(CreateTestSeedResponse(status: SeedStatus.Dormant));
         SetupPhaseConfig();
 
-        var (status, response) = await service.EnterVoidAsync(
-            new EnterVoidRequest { AccountId = _testAccountId, SessionId = _testSessionId },
+        var (status, response) = await service.EnterGardenAsync(
+            new EnterGardenRequest { AccountId = _testAccountId, SessionId = _testSessionId },
             CancellationToken.None);
 
         Assert.Equal(StatusCodes.NotFound, status);
@@ -356,33 +356,33 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
 
     #endregion
 
-    #region GetVoidStateAsync
+    #region GetGardenStateAsync
 
     [Fact]
-    public async Task GetVoidStateAsync_ExistingGarden_ReturnsState()
+    public async Task GetGardenStateAsync_ExistingGarden_ReturnsState()
     {
         var service = CreateService();
         var garden = CreateTestGarden();
         _mockGardenStore
-            .Setup(s => s.GetAsync($"void:{_testAccountId}", It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync($"garden:{_testAccountId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(garden);
 
-        var (status, response) = await service.GetVoidStateAsync(
-            new GetVoidStateRequest { AccountId = _testAccountId },
+        var (status, response) = await service.GetGardenStateAsync(
+            new GetGardenStateRequest { AccountId = _testAccountId },
             CancellationToken.None);
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.Equal(garden.GardenInstanceId, response.VoidInstanceId);
+        Assert.Equal(garden.GardenInstanceId, response.GardenInstanceId);
     }
 
     [Fact]
-    public async Task GetVoidStateAsync_NoGarden_ReturnsNotFound()
+    public async Task GetGardenStateAsync_NoGarden_ReturnsNotFound()
     {
         var service = CreateService();
 
-        var (status, response) = await service.GetVoidStateAsync(
-            new GetVoidStateRequest { AccountId = _testAccountId },
+        var (status, response) = await service.GetGardenStateAsync(
+            new GetGardenStateRequest { AccountId = _testAccountId },
             CancellationToken.None);
 
         Assert.Equal(StatusCodes.NotFound, status);
@@ -391,10 +391,10 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
 
     #endregion
 
-    #region LeaveVoidAsync
+    #region LeaveGardenAsync
 
     [Fact]
-    public async Task LeaveVoidAsync_ValidRequest_CleansUpAndPublishesEvent()
+    public async Task LeaveGardenAsync_ValidRequest_CleansUpAndPublishesEvent()
     {
         var service = CreateService();
         var garden = CreateTestGarden();
@@ -402,11 +402,11 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         garden.ActivePoiIds.Add(poiId);
 
         _mockGardenStore
-            .Setup(s => s.GetAsync($"void:{_testAccountId}", It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync($"garden:{_testAccountId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(garden);
 
-        var (status, response) = await service.LeaveVoidAsync(
-            new LeaveVoidRequest { AccountId = _testAccountId },
+        var (status, response) = await service.LeaveGardenAsync(
+            new LeaveGardenRequest { AccountId = _testAccountId },
             CancellationToken.None);
 
         // Assert - Response
@@ -421,27 +421,27 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
 
         // Assert - Garden deleted
         _mockGardenStore.Verify(s => s.DeleteAsync(
-            $"void:{_testAccountId}", It.IsAny<CancellationToken>()), Times.Once);
+            $"garden:{_testAccountId}", It.IsAny<CancellationToken>()), Times.Once);
 
         // Assert - Tracking set updated
         _mockCacheStore.Verify(c => c.RemoveFromSetAsync<Guid>(
-            GardenerService.ActiveVoidsTrackingKey, _testAccountId,
+            GardenerService.ActiveGardensTrackingKey, _testAccountId,
             It.IsAny<CancellationToken>()), Times.Once);
 
         // Assert - Event published
         _mockMessageBus.Verify(m => m.TryPublishAsync(
-            "gardener.void.left",
-            It.Is<GardenerVoidLeftEvent>(e => e.AccountId == _testAccountId),
+            "gardener.garden.left",
+            It.Is<GardenerGardenLeftEvent>(e => e.AccountId == _testAccountId),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
-    public async Task LeaveVoidAsync_NoGarden_ReturnsNotFound()
+    public async Task LeaveGardenAsync_NoGarden_ReturnsNotFound()
     {
         var service = CreateService();
 
-        var (status, response) = await service.LeaveVoidAsync(
-            new LeaveVoidRequest { AccountId = _testAccountId },
+        var (status, response) = await service.LeaveGardenAsync(
+            new LeaveGardenRequest { AccountId = _testAccountId },
             CancellationToken.None);
 
         Assert.Equal(StatusCodes.NotFound, status);
@@ -449,7 +449,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
     }
 
     [Fact]
-    public async Task LeaveVoidAsync_LockFailed_ReturnsConflict()
+    public async Task LeaveGardenAsync_LockFailed_ReturnsConflict()
     {
         var service = CreateService();
         var failedLock = new Mock<ILockResponse>();
@@ -460,8 +460,8 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
                 It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(failedLock.Object);
 
-        var (status, response) = await service.LeaveVoidAsync(
-            new LeaveVoidRequest { AccountId = _testAccountId },
+        var (status, response) = await service.LeaveGardenAsync(
+            new LeaveGardenRequest { AccountId = _testAccountId },
             CancellationToken.None);
 
         Assert.Equal(StatusCodes.Conflict, status);
@@ -480,7 +480,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         garden.Position = new Vec3Model { X = 0, Y = 0, Z = 0 };
 
         _mockGardenStore
-            .Setup(s => s.GetAsync($"void:{_testAccountId}", It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync($"garden:{_testAccountId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(garden);
 
         GardenInstanceModel? savedGarden = null;
@@ -521,7 +521,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         garden.Position = new Vec3Model { X = 8, Y = 0, Z = 8 };
 
         _mockGardenStore
-            .Setup(s => s.GetAsync($"void:{_testAccountId}", It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync($"garden:{_testAccountId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(garden);
 
         var poi = new PoiModel
@@ -595,7 +595,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         var poiId = Guid.NewGuid();
 
         _mockGardenStore
-            .Setup(s => s.GetAsync($"void:{_testAccountId}", It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync($"garden:{_testAccountId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(garden);
 
         var poi = CreateTestPoi(garden.GardenInstanceId);
@@ -630,7 +630,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         var poiId = Guid.NewGuid();
 
         _mockGardenStore
-            .Setup(s => s.GetAsync($"void:{_testAccountId}", It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync($"garden:{_testAccountId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(garden);
 
         var poi = CreateTestPoi(garden.GardenInstanceId);
@@ -662,7 +662,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         var poiId = Guid.NewGuid();
 
         _mockGardenStore
-            .Setup(s => s.GetAsync($"void:{_testAccountId}", It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync($"garden:{_testAccountId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(garden);
 
         var poi = CreateTestPoi(garden.GardenInstanceId, status: PoiStatus.Entered);
@@ -690,7 +690,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         var poiId = Guid.NewGuid();
 
         _mockGardenStore
-            .Setup(s => s.GetAsync($"void:{_testAccountId}", It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync($"garden:{_testAccountId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(garden);
 
         var poi = CreateTestPoi(garden.GardenInstanceId);
@@ -749,7 +749,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         var service = CreateService();
         var garden = CreateTestGarden();
         _mockGardenStore
-            .Setup(s => s.GetAsync($"void:{_testAccountId}", It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync($"garden:{_testAccountId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(garden);
 
         var template = CreateTestTemplate();
@@ -790,7 +790,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
 
         // Assert - Tracking sets updated
         _mockCacheStore.Verify(c => c.RemoveFromSetAsync<Guid>(
-            GardenerService.ActiveVoidsTrackingKey, _testAccountId,
+            GardenerService.ActiveGardensTrackingKey, _testAccountId,
             It.IsAny<CancellationToken>()), Times.Once);
         _mockCacheStore.Verify(c => c.AddToSetAsync<Guid>(
             GardenerService.ActiveScenariosTrackingKey, _testAccountId,
@@ -798,7 +798,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
 
         // Assert - Garden cleaned up
         _mockGardenStore.Verify(s => s.DeleteAsync(
-            $"void:{_testAccountId}", It.IsAny<CancellationToken>()), Times.Once);
+            $"garden:{_testAccountId}", It.IsAny<CancellationToken>()), Times.Once);
 
         // Assert - Event published
         _mockMessageBus.Verify(m => m.TryPublishAsync(
@@ -830,7 +830,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
     {
         var service = CreateService();
         _mockGardenStore
-            .Setup(s => s.GetAsync($"void:{_testAccountId}", It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync($"garden:{_testAccountId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(CreateTestGarden());
         _mockScenarioStore
             .Setup(s => s.GetAsync($"scenario:{_testAccountId}", It.IsAny<CancellationToken>()))
@@ -852,7 +852,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
     {
         var service = CreateService();
         _mockGardenStore
-            .Setup(s => s.GetAsync($"void:{_testAccountId}", It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync($"garden:{_testAccountId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(CreateTestGarden());
         SetupPhaseConfig();
 
@@ -872,7 +872,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
     {
         var service = CreateService();
         _mockGardenStore
-            .Setup(s => s.GetAsync($"void:{_testAccountId}", It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync($"garden:{_testAccountId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(CreateTestGarden());
         _mockTemplateStore
             .Setup(s => s.GetAsync($"template:{_testTemplateId}", It.IsAny<CancellationToken>()))
@@ -895,7 +895,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
     {
         var service = CreateService();
         _mockGardenStore
-            .Setup(s => s.GetAsync($"void:{_testAccountId}", It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync($"garden:{_testAccountId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(CreateTestGarden());
 
         var template = CreateTestTemplate();
@@ -957,7 +957,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
         Assert.Equal(scenarioId, response.ScenarioInstanceId);
-        Assert.True(response.ReturnToVoid);
+        Assert.True(response.ReturnToGarden);
         Assert.NotEmpty(response.GrowthAwarded);
         Assert.True(response.GrowthAwarded.ContainsKey("combat.melee"));
 
@@ -1422,7 +1422,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         SetupPhaseConfig();
 
         _mockCacheStore
-            .Setup(c => c.SetCountAsync(GardenerService.ActiveVoidsTrackingKey,
+            .Setup(c => c.SetCountAsync(GardenerService.ActiveGardensTrackingKey,
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(5);
         _mockCacheStore
@@ -1436,7 +1436,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.Equal(5, response.ActiveVoidInstances);
+        Assert.Equal(5, response.ActiveGardenInstances);
         Assert.Equal(3, response.ActiveScenarioInstances);
         Assert.True(response.ScenarioCapacityUtilization > 0);
     }
@@ -1448,7 +1448,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
     [Fact]
     public async Task EnterScenarioTogetherAsync_BondDisabled_ReturnsBadRequest()
     {
-        Configuration.BondSharedVoidEnabled = false;
+        Configuration.BondSharedGardenEnabled = false;
         var service = CreateService();
 
         var (status, _) = await service.EnterScenarioTogetherAsync(
@@ -1499,10 +1499,10 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         garden2.SeedId = partnerSeedId;
 
         _mockGardenStore
-            .Setup(s => s.GetAsync($"void:{_testAccountId}", It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync($"garden:{_testAccountId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(garden1);
         _mockGardenStore
-            .Setup(s => s.GetAsync($"void:{partnerAccountId}", It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync($"garden:{partnerAccountId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(garden2);
 
         var template = CreateTestTemplate();
@@ -1530,7 +1530,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
 
         // Assert - Tracking sets updated for both participants
         _mockCacheStore.Verify(c => c.RemoveFromSetAsync<Guid>(
-            GardenerService.ActiveVoidsTrackingKey, It.IsAny<Guid>(),
+            GardenerService.ActiveGardensTrackingKey, It.IsAny<Guid>(),
             It.IsAny<CancellationToken>()), Times.Exactly(2));
         _mockCacheStore.Verify(c => c.AddToSetAsync<Guid>(
             GardenerService.ActiveScenariosTrackingKey, It.IsAny<Guid>(),
@@ -1546,13 +1546,13 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
     }
 
     [Fact]
-    public async Task GetSharedVoidStateAsync_BondDisabled_ReturnsBadRequest()
+    public async Task GetSharedGardenStateAsync_BondDisabled_ReturnsBadRequest()
     {
-        Configuration.BondSharedVoidEnabled = false;
+        Configuration.BondSharedGardenEnabled = false;
         var service = CreateService();
 
-        var (status, _) = await service.GetSharedVoidStateAsync(
-            new GetSharedVoidRequest { BondId = Guid.NewGuid() },
+        var (status, _) = await service.GetSharedGardenStateAsync(
+            new GetSharedGardenRequest { BondId = Guid.NewGuid() },
             CancellationToken.None);
 
         Assert.Equal(StatusCodes.BadRequest, status);
@@ -1575,7 +1575,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
             .ReturnsAsync(CreateTestSeedResponse());
 
         _mockGardenStore
-            .Setup(s => s.GetAsync($"void:{_testAccountId}", It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync($"garden:{_testAccountId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(garden);
 
         GardenInstanceModel? savedGarden = null;
@@ -1605,7 +1605,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         var garden = CreateTestGarden();
 
         _mockGardenStore
-            .Setup(s => s.GetAsync($"void:{_testAccountId}", It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAsync($"garden:{_testAccountId}", It.IsAny<CancellationToken>()))
             .ReturnsAsync(garden);
 
         GardenInstanceModel? savedGarden = null;
@@ -1635,7 +1635,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
     public async Task SeedEvolutionListener_OnGrowthRecorded_MarksForReEvaluation()
     {
         var garden = CreateTestGarden();
-        var gardenKey = $"void:{_testAccountId}";
+        var gardenKey = $"garden:{_testAccountId}";
 
         _mockGardenStore
             .Setup(s => s.GetAsync(gardenKey, It.IsAny<CancellationToken>()))
@@ -1652,7 +1652,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         // Create the listener with wired-up stores
         var mockStoreFactory = new Mock<IStateStoreFactory>();
         mockStoreFactory
-            .Setup(f => f.GetStore<GardenInstanceModel>(StateStoreDefinitions.GardenerVoidInstances))
+            .Setup(f => f.GetStore<GardenInstanceModel>(StateStoreDefinitions.GardenerGardenInstances))
             .Returns(_mockGardenStore.Object);
 
         var listener = new GardenerSeedEvolutionListener(
@@ -1682,7 +1682,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
     public async Task SeedEvolutionListener_OnPhaseChanged_UpdatesCachedPhase()
     {
         var garden = CreateTestGarden();
-        var gardenKey = $"void:{_testAccountId}";
+        var gardenKey = $"garden:{_testAccountId}";
 
         _mockGardenStore
             .Setup(s => s.GetAsync(gardenKey, It.IsAny<CancellationToken>()))
@@ -1698,7 +1698,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
 
         var mockStoreFactory = new Mock<IStateStoreFactory>();
         mockStoreFactory
-            .Setup(f => f.GetStore<GardenInstanceModel>(StateStoreDefinitions.GardenerVoidInstances))
+            .Setup(f => f.GetStore<GardenInstanceModel>(StateStoreDefinitions.GardenerGardenInstances))
             .Returns(_mockGardenStore.Object);
 
         var listener = new GardenerSeedEvolutionListener(

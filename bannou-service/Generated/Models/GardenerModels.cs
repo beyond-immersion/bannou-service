@@ -127,7 +127,7 @@ public enum ScenarioCategory
 #pragma warning restore CS1591
 
 /// <summary>
-/// Sensory presentation type for a point of interest in the void
+/// Sensory presentation type for a point of interest in the garden
 /// </summary>
 #pragma warning disable CS1591 // Enum members cannot have XML documentation
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -285,26 +285,26 @@ public enum ScenarioParticipantRole
 #pragma warning restore CS1591
 
 /// <summary>
-/// Three-dimensional spatial coordinates in void space
+/// Three-dimensional spatial coordinates in garden space
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class Vec3
 {
 
     /// <summary>
-    /// X coordinate in void space units
+    /// X coordinate in garden space units
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("x")]
     public float X { get; set; } = default!;
 
     /// <summary>
-    /// Y coordinate in void space units
+    /// Y coordinate in garden space units
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("y")]
     public float Y { get; set; } = default!;
 
     /// <summary>
-    /// Z coordinate in void space units
+    /// Z coordinate in garden space units
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("z")]
     public float Z { get; set; } = default!;
@@ -339,7 +339,7 @@ public partial class PoiSummary
     public System.Guid PoiId { get; set; } = default!;
 
     /// <summary>
-    /// POI position in void space
+    /// POI position in garden space
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("position")]
     [System.ComponentModel.DataAnnotations.Required]
@@ -384,7 +384,7 @@ public partial class PoiSummary
     public TriggerMode TriggerMode { get; set; } = default!;
 
     /// <summary>
-    /// Trigger radius in void space units
+    /// Trigger radius in garden space units
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("triggerRadius")]
     public float TriggerRadius { get; set; } = default!;
@@ -622,10 +622,10 @@ public partial class ScenarioContent
 }
 
 /// <summary>
-/// Per-player void state within a shared bond void
+/// Per-player garden state within a shared bond garden
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class BondedPlayerVoidState
+public partial class BondedPlayerGardenState
 {
 
     /// <summary>
@@ -645,7 +645,7 @@ public partial class BondedPlayerVoidState
     public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
-    /// Player position in shared void space
+    /// Player position in shared garden space
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("position")]
     [System.ComponentModel.DataAnnotations.Required]
@@ -667,14 +667,14 @@ public partial class BondedPlayerVoidState
 }
 
 /// <summary>
-/// Request to enter the void
+/// Request to enter the garden
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class EnterVoidRequest
+public partial class EnterGardenRequest
 {
 
     /// <summary>
-    /// Account entering the void
+    /// Account entering the garden
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -704,14 +704,14 @@ public partial class EnterVoidRequest
 }
 
 /// <summary>
-/// Request to get current void state
+/// Request to get current garden state
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class GetVoidStateRequest
+public partial class GetGardenStateRequest
 {
 
     /// <summary>
-    /// Account whose void state to retrieve
+    /// Account whose garden state to retrieve
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -733,7 +733,7 @@ public partial class GetVoidStateRequest
 }
 
 /// <summary>
-/// Request to update player position in the void
+/// Request to update player position in the garden
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class UpdatePositionRequest
@@ -748,7 +748,7 @@ public partial class UpdatePositionRequest
     public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
-    /// New position in void space
+    /// New position in garden space
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("position")]
     [System.ComponentModel.DataAnnotations.Required]
@@ -778,14 +778,14 @@ public partial class UpdatePositionRequest
 }
 
 /// <summary>
-/// Request to leave the void
+/// Request to leave the garden
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class LeaveVoidRequest
+public partial class LeaveGardenRequest
 {
 
     /// <summary>
-    /// Account leaving the void
+    /// Account leaving the garden
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -1505,10 +1505,10 @@ public partial class UpdatePhaseConfigRequest
     public bool? PersistentEntryEnabled { get; set; } = default!;
 
     /// <summary>
-    /// Whether void minigames are enabled
+    /// Whether garden minigames are enabled
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("voidMinigamesEnabled")]
-    public bool? VoidMinigamesEnabled { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("gardenMinigamesEnabled")]
+    public bool? GardenMinigamesEnabled { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -1583,14 +1583,14 @@ public partial class EnterTogetherRequest
 }
 
 /// <summary>
-/// Request to get shared void state for bonded players
+/// Request to get shared garden state for bonded players
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class GetSharedVoidRequest
+public partial class GetSharedGardenRequest
 {
 
     /// <summary>
-    /// Bond ID to look up shared void state
+    /// Bond ID to look up shared garden state
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("bondId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -1612,22 +1612,22 @@ public partial class GetSharedVoidRequest
 }
 
 /// <summary>
-/// Current void instance state for a player
+/// Current garden instance state for a player
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class VoidStateResponse
+public partial class GardenStateResponse
 {
 
     /// <summary>
-    /// Unique identifier for this void instance
+    /// Unique identifier for this garden instance
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("voidInstanceId")]
+    [System.Text.Json.Serialization.JsonPropertyName("gardenInstanceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid VoidInstanceId { get; set; } = default!;
+    public System.Guid GardenInstanceId { get; set; } = default!;
 
     /// <summary>
-    /// Active seed for this void session
+    /// Active seed for this garden session
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seedId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -1635,7 +1635,7 @@ public partial class VoidStateResponse
     public System.Guid SeedId { get; set; } = default!;
 
     /// <summary>
-    /// Account in the void
+    /// Account in the garden
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -1651,7 +1651,7 @@ public partial class VoidStateResponse
     public Vec3 Position { get; set; } = new Vec3();
 
     /// <summary>
-    /// Currently active POIs in this void instance
+    /// Currently active POIs in this garden instance
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("activePois")]
     [System.ComponentModel.DataAnnotations.Required]
@@ -1706,14 +1706,14 @@ public partial class PositionUpdateResponse
 }
 
 /// <summary>
-/// Response after leaving the void
+/// Response after leaving the garden
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class LeaveVoidResponse
+public partial class LeaveGardenResponse
 {
 
     /// <summary>
-    /// Account that left the void
+    /// Account that left the garden
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("accountId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -1721,7 +1721,7 @@ public partial class LeaveVoidResponse
     public System.Guid AccountId { get; set; } = default!;
 
     /// <summary>
-    /// Total duration of the void session in seconds
+    /// Total duration of the garden session in seconds
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("sessionDurationSeconds")]
     public float SessionDurationSeconds { get; set; } = default!;
@@ -1741,19 +1741,19 @@ public partial class LeaveVoidResponse
 }
 
 /// <summary>
-/// List of active POIs in a void instance
+/// List of active POIs in a garden instance
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ListPoisResponse
 {
 
     /// <summary>
-    /// Void instance these POIs belong to
+    /// Garden instance these POIs belong to
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("voidInstanceId")]
+    [System.Text.Json.Serialization.JsonPropertyName("gardenInstanceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid VoidInstanceId { get; set; } = default!;
+    public System.Guid GardenInstanceId { get; set; } = default!;
 
     /// <summary>
     /// Active POIs
@@ -1975,10 +1975,10 @@ public partial class ScenarioCompletionResponse
     public System.Collections.Generic.IDictionary<string, float> GrowthAwarded { get; set; } = new System.Collections.Generic.Dictionary<string, float>();
 
     /// <summary>
-    /// Whether the player should return to the void
+    /// Whether the player should return to the garden
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("returnToVoid")]
-    public bool ReturnToVoid { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("returnToGarden")]
+    public bool ReturnToGarden { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -2268,10 +2268,10 @@ public partial class PhaseConfigResponse
     public bool PersistentEntryEnabled { get; set; } = default!;
 
     /// <summary>
-    /// Whether void minigames are enabled
+    /// Whether garden minigames are enabled
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("voidMinigamesEnabled")]
-    public bool VoidMinigamesEnabled { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("gardenMinigamesEnabled")]
+    public bool GardenMinigamesEnabled { get; set; } = default!;
 
     private System.Collections.Generic.IDictionary<string, object>? _additionalProperties;
 
@@ -2304,10 +2304,10 @@ public partial class PhaseMetricsResponse
     public DeploymentPhase CurrentPhase { get; set; } = default!;
 
     /// <summary>
-    /// Number of currently active void instances
+    /// Number of currently active garden instances
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("activeVoidInstances")]
-    public int ActiveVoidInstances { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("activeGardenInstances")]
+    public int ActiveGardenInstances { get; set; } = default!;
 
     /// <summary>
     /// Number of currently active scenario instances
@@ -2336,10 +2336,10 @@ public partial class PhaseMetricsResponse
 }
 
 /// <summary>
-/// Shared void state for bonded players
+/// Shared garden state for bonded players
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class SharedVoidStateResponse
+public partial class SharedGardenStateResponse
 {
 
     /// <summary>
@@ -2351,12 +2351,12 @@ public partial class SharedVoidStateResponse
     public System.Guid BondId { get; set; } = default!;
 
     /// <summary>
-    /// Per-player void state
+    /// Per-player garden state
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("participants")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<BondedPlayerVoidState> Participants { get; set; } = new System.Collections.ObjectModel.Collection<BondedPlayerVoidState>();
+    public System.Collections.Generic.ICollection<BondedPlayerGardenState> Participants { get; set; } = new System.Collections.ObjectModel.Collection<BondedPlayerGardenState>();
 
     /// <summary>
     /// POIs visible to all bond participants

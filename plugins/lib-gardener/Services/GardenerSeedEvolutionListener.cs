@@ -55,7 +55,7 @@ public class GardenerSeedEvolutionListener : ISeedEvolutionListener
     public async Task OnGrowthRecordedAsync(SeedGrowthNotification notification, CancellationToken ct)
     {
         var gardenStore = _stateStoreFactory.GetStore<GardenInstanceModel>(
-            StateStoreDefinitions.GardenerVoidInstances);
+            StateStoreDefinitions.GardenerGardenInstances);
         var gardenKey = $"garden:{notification.OwnerId}";
 
         var garden = await gardenStore.GetAsync(gardenKey, ct);
@@ -76,7 +76,7 @@ public class GardenerSeedEvolutionListener : ISeedEvolutionListener
     public async Task OnPhaseChangedAsync(SeedPhaseNotification notification, CancellationToken ct)
     {
         var gardenStore = _stateStoreFactory.GetStore<GardenInstanceModel>(
-            StateStoreDefinitions.GardenerVoidInstances);
+            StateStoreDefinitions.GardenerGardenInstances);
         var gardenKey = $"garden:{notification.OwnerId}";
 
         var garden = await gardenStore.GetAsync(gardenKey, ct);

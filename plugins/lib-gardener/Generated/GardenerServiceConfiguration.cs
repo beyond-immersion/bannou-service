@@ -54,18 +54,18 @@ public class GardenerServiceConfiguration : IServiceConfiguration
     public Guid? ForceServiceId { get; set; }
 
     /// <summary>
-    /// Milliseconds between void orchestrator evaluation cycles
-    /// Environment variable: GARDENER_VOID_TICK_INTERVAL_MS
+    /// Milliseconds between garden orchestrator evaluation cycles
+    /// Environment variable: GARDENER_GARDEN_TICK_INTERVAL_MS
     /// </summary>
     [ConfigRange(Minimum = 1000, Maximum = 60000)]
-    public int VoidTickIntervalMs { get; set; } = 5000;
+    public int GardenTickIntervalMs { get; set; } = 5000;
 
     /// <summary>
-    /// Maximum concurrent POIs per player void instance
-    /// Environment variable: GARDENER_MAX_ACTIVE_POIS_PER_VOID
+    /// Maximum concurrent POIs per player garden instance
+    /// Environment variable: GARDENER_MAX_ACTIVE_POIS_PER_GARDEN
     /// </summary>
     [ConfigRange(Minimum = 1, Maximum = 50)]
-    public int MaxActivePoisPerVoid { get; set; } = 8;
+    public int MaxActivePoisPerGarden { get; set; } = 8;
 
     /// <summary>
     /// Default time-to-live in minutes for spawned POIs before expiration
@@ -75,19 +75,19 @@ public class GardenerServiceConfiguration : IServiceConfiguration
     public int PoiDefaultTtlMinutes { get; set; } = 10;
 
     /// <summary>
-    /// Minimum distance from player to spawn a POI in void space units
+    /// Minimum distance from player to spawn a POI in garden space units
     /// Environment variable: GARDENER_POI_SPAWN_RADIUS_MIN
     /// </summary>
     public double PoiSpawnRadiusMin { get; set; } = 50.0;
 
     /// <summary>
-    /// Maximum distance from player to spawn a POI in void space units
+    /// Maximum distance from player to spawn a POI in garden space units
     /// Environment variable: GARDENER_POI_SPAWN_RADIUS_MAX
     /// </summary>
     public double PoiSpawnRadiusMax { get; set; } = 200.0;
 
     /// <summary>
-    /// Minimum distance between any two POIs in void space units
+    /// Minimum distance between any two POIs in garden space units
     /// Environment variable: GARDENER_MIN_POI_SPACING
     /// </summary>
     public double MinPoiSpacing { get; set; } = 30.0;
@@ -100,14 +100,14 @@ public class GardenerServiceConfiguration : IServiceConfiguration
     public double PoiDefaultIntensityRamp { get; set; } = 0.5;
 
     /// <summary>
-    /// Default trigger radius for POI proximity detection in void space units
+    /// Default trigger radius for POI proximity detection in garden space units
     /// Environment variable: GARDENER_POI_DEFAULT_TRIGGER_RADIUS
     /// </summary>
     [ConfigRange(Minimum = 1.0)]
     public double PoiDefaultTriggerRadius { get; set; } = 15.0;
 
     /// <summary>
-    /// Minimum distance movement for hesitation detection in void space units
+    /// Minimum distance movement for hesitation detection in garden space units
     /// Environment variable: GARDENER_HESITATION_DETECTION_THRESHOLD
     /// </summary>
     [ConfigRange(Minimum = 0.0)]
@@ -296,10 +296,10 @@ public class GardenerServiceConfiguration : IServiceConfiguration
     public int DefaultEstimatedDurationMinutes { get; set; } = 30;
 
     /// <summary>
-    /// Whether bonded players share a void instance with merged POIs
-    /// Environment variable: GARDENER_BOND_SHARED_VOID_ENABLED
+    /// Whether bonded players share a garden instance with merged POIs
+    /// Environment variable: GARDENER_BOND_SHARED_GARDEN_ENABLED
     /// </summary>
-    public bool BondSharedVoidEnabled { get; set; } = true;
+    public bool BondSharedGardenEnabled { get; set; } = true;
 
     /// <summary>
     /// Scoring boost multiplier for bond-friendly scenarios when player is bonded
