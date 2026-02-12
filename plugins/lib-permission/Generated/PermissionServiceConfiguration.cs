@@ -74,4 +74,10 @@ public class PermissionServiceConfiguration : IServiceConfiguration
     [ConfigRange(Minimum = 0, Maximum = 604800)]
     public int SessionDataTtlSeconds { get; set; } = 86400;
 
+    /// <summary>
+    /// Ordered role hierarchy from lowest to highest privilege. Index determines priority for permission compilation (comma-separated in env var).
+    /// Environment variable: PERMISSION_ROLE_HIERARCHY
+    /// </summary>
+    public string[] RoleHierarchy { get; set; } = ["anonymous", "user", "developer", "admin"];
+
 }

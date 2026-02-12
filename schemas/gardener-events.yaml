@@ -1,0 +1,455 @@
+openapi: 3.0.3
+info:
+  title: Gardener Service Events
+  description: |
+    Event subscription and publication declarations for Gardener service.
+    Lifecycle events (Created, Updated, Deleted) are auto-generated from x-lifecycle
+    for ScenarioTemplate entities. Custom events cover void navigation, POI interaction,
+    scenario lifecycle, bond scenarios, and deployment phase changes.
+
+    **Cross-Service Integration**:
+    - Implements ISeedEvolutionListener DI provider pattern for growth/phase/capability
+      notifications (in-process, guaranteed delivery). This replaces broadcast event
+      subscriptions for seed.growth.updated and seed.phase.changed.
+    - Subscribes to seed.bond.formed and seed.activated broadcast events for bond
+      and activation tracking.
+    - Subscribes to game-session.deleted lifecycle event for scenario cleanup.
+
+    **Topic Naming**: Uses dot-separated format (gardener.void.entered).
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+  x-event-subscriptions:
+    # Bond events from Seed service (no DI listener pattern for these)
+    - topic: seed.bond.formed
+      event: SeedBondFormedEvent
+      handler: HandleSeedBondFormed
+    - topic: seed.activated
+      event: SeedActivatedEvent
+      handler: HandleSeedActivated
+    # Game session lifecycle from Game Session service
+    - topic: game-session.deleted
+      event: GameSessionDeletedEvent
+      handler: HandleGameSessionDeleted
+  x-event-publications:
+    # Scenario template lifecycle events (auto-generated from x-lifecycle)
+    - topic: scenario-template.created
+      event: ScenarioTemplateCreatedEvent
+      description: Published when a new scenario template is created
+    - topic: scenario-template.updated
+      event: ScenarioTemplateUpdatedEvent
+      description: Published when a scenario template is updated
+    - topic: scenario-template.deleted
+      event: ScenarioTemplateDeletedEvent
+      description: Published when a scenario template is deleted
+    # Custom events - Void
+    - topic: gardener.void.entered
+      event: GardenerVoidEnteredEvent
+      description: Published when a player enters the void
+    - topic: gardener.void.left
+      event: GardenerVoidLeftEvent
+      description: Published when a player leaves the void
+    # Custom events - POI
+    - topic: gardener.poi.spawned
+      event: GardenerPoiSpawnedEvent
+      description: Published when a POI spawns in a void instance
+    - topic: gardener.poi.entered
+      event: GardenerPoiEnteredEvent
+      description: Published when a player enters a POI / triggers a scenario
+    - topic: gardener.poi.declined
+      event: GardenerPoiDeclinedEvent
+      description: Published when a player declines a POI
+    - topic: gardener.poi.expired
+      event: GardenerPoiExpiredEvent
+      description: Published when a POI expires without interaction
+    # Custom events - Scenario
+    - topic: gardener.scenario.started
+      event: GardenerScenarioStartedEvent
+      description: Published when a scenario instance is created
+    - topic: gardener.scenario.completed
+      event: GardenerScenarioCompletedEvent
+      description: Published when a scenario is completed
+    - topic: gardener.scenario.abandoned
+      event: GardenerScenarioAbandonedEvent
+      description: Published when a scenario is abandoned
+    - topic: gardener.scenario.chained
+      event: GardenerScenarioChainedEvent
+      description: Published when a player chains from one scenario to another
+    # Custom events - Bond
+    - topic: gardener.bond.entered-together
+      event: GardenerBondEnteredTogetherEvent
+      description: Published when bonded players enter a scenario together
+    # Custom events - Phase
+    - topic: gardener.phase.changed
+      event: GardenerPhaseChangedEvent
+      description: Published when the deployment phase changes
+
+# Lifecycle events auto-generated from this definition
+# Output: schemas/Generated/gardener-lifecycle-events.yaml
+x-lifecycle:
+  ScenarioTemplate:
+    model:
+      scenarioTemplateId: { type: string, format: uuid, primary: true, required: true, description: "Unique identifier for the scenario template" }
+      code: { type: string, required: true, description: "Unique template code for reference" }
+      displayName: { type: string, required: true, description: "Human-readable template name" }
+      description: { type: string, required: true, description: "Template description" }
+      category: { $ref: 'gardener-api.yaml#/components/schemas/ScenarioCategory', required: true, description: "Primary gameplay category" }
+      connectivityMode: { $ref: 'gardener-api.yaml#/components/schemas/ConnectivityMode', required: true, description: "World connectivity mode" }
+      status: { $ref: 'gardener-api.yaml#/components/schemas/TemplateStatus', required: true, description: "Current lifecycle status" }
+      createdAt: { type: string, format: date-time, required: true, description: "When the template was created" }
+      updatedAt: { type: string, format: date-time, required: true, description: "When the template was last updated" }
+    sensitive: [content]
+
+paths: {}  # Events don't have HTTP paths
+
+# Note: ScenarioTemplateCreatedEvent, ScenarioTemplateUpdatedEvent, ScenarioTemplateDeletedEvent
+# are auto-generated from x-lifecycle. See: schemas/Generated/gardener-lifecycle-events.yaml
+
+components:
+  schemas:
+    # =========================================================================
+    # Custom Published Events (non-lifecycle)
+    # =========================================================================
+
+    GardenerVoidEnteredEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a player enters the void
+      required:
+        - eventId
+        - accountId
+        - seedId
+        - voidInstanceId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        accountId:
+          type: string
+          format: uuid
+          description: Account that entered the void
+        seedId:
+          type: string
+          format: uuid
+          description: Active seed for this void session
+        voidInstanceId:
+          type: string
+          format: uuid
+          description: Created void instance ID
+
+    GardenerVoidLeftEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a player leaves the void
+      required:
+        - eventId
+        - accountId
+        - voidInstanceId
+        - sessionDurationSeconds
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        accountId:
+          type: string
+          format: uuid
+          description: Account that left the void
+        voidInstanceId:
+          type: string
+          format: uuid
+          description: Void instance that was destroyed
+        sessionDurationSeconds:
+          type: number
+          format: float
+          description: Total void session duration in seconds
+
+    GardenerPoiSpawnedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a POI spawns in a void instance
+      required:
+        - eventId
+        - voidInstanceId
+        - poiId
+        - poiType
+        - scenarioTemplateId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        voidInstanceId:
+          type: string
+          format: uuid
+          description: Void instance the POI spawned in
+        poiId:
+          type: string
+          format: uuid
+          description: Spawned POI identifier
+        poiType:
+          $ref: 'gardener-api.yaml#/components/schemas/PoiType'
+          description: Sensory type of the spawned POI
+        scenarioTemplateId:
+          type: string
+          format: uuid
+          description: Scenario template this POI leads to
+
+    GardenerPoiEnteredEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a player enters a POI or triggers a scenario from it
+      required:
+        - eventId
+        - accountId
+        - poiId
+        - scenarioTemplateId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        accountId:
+          type: string
+          format: uuid
+          description: Account that entered the POI
+        poiId:
+          type: string
+          format: uuid
+          description: POI that was entered
+        scenarioTemplateId:
+          type: string
+          format: uuid
+          description: Scenario template associated with the POI
+
+    GardenerPoiDeclinedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a player declines a POI
+      required:
+        - eventId
+        - accountId
+        - poiId
+        - scenarioTemplateId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        accountId:
+          type: string
+          format: uuid
+          description: Account that declined the POI
+        poiId:
+          type: string
+          format: uuid
+          description: POI that was declined
+        scenarioTemplateId:
+          type: string
+          format: uuid
+          description: Scenario template that was declined
+
+    GardenerPoiExpiredEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a POI expires without player interaction
+      required:
+        - eventId
+        - voidInstanceId
+        - poiId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        voidInstanceId:
+          type: string
+          format: uuid
+          description: Void instance the POI was in
+        poiId:
+          type: string
+          format: uuid
+          description: POI that expired
+
+    GardenerScenarioStartedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a scenario instance is created
+      required:
+        - eventId
+        - scenarioInstanceId
+        - scenarioTemplateId
+        - gameSessionId
+        - accountId
+        - seedId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        scenarioInstanceId:
+          type: string
+          format: uuid
+          description: Created scenario instance ID
+        scenarioTemplateId:
+          type: string
+          format: uuid
+          description: Template the instance was created from
+        gameSessionId:
+          type: string
+          format: uuid
+          description: Backing game session ID
+        accountId:
+          type: string
+          format: uuid
+          description: Account that entered the scenario
+        seedId:
+          type: string
+          format: uuid
+          description: Active seed for the entering player
+
+    GardenerScenarioCompletedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a scenario is completed with growth awards
+      required:
+        - eventId
+        - scenarioInstanceId
+        - scenarioTemplateId
+        - accountId
+        - growthAwarded
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        scenarioInstanceId:
+          type: string
+          format: uuid
+          description: Completed scenario instance ID
+        scenarioTemplateId:
+          type: string
+          format: uuid
+          description: Template the instance was created from
+        accountId:
+          type: string
+          format: uuid
+          description: Account that completed the scenario
+        growthAwarded:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+          description: Growth awarded per domain
+
+    GardenerScenarioAbandonedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a scenario is abandoned
+      required:
+        - eventId
+        - scenarioInstanceId
+        - accountId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        scenarioInstanceId:
+          type: string
+          format: uuid
+          description: Abandoned scenario instance ID
+        accountId:
+          type: string
+          format: uuid
+          description: Account that abandoned the scenario
+
+    GardenerScenarioChainedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when a player chains from one scenario to another
+      required:
+        - eventId
+        - previousScenarioInstanceId
+        - newScenarioInstanceId
+        - accountId
+        - chainDepth
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        previousScenarioInstanceId:
+          type: string
+          format: uuid
+          description: Scenario instance that was chained from
+        newScenarioInstanceId:
+          type: string
+          format: uuid
+          description: New scenario instance that was created
+        accountId:
+          type: string
+          format: uuid
+          description: Account chaining scenarios
+        chainDepth:
+          type: integer
+          description: Current chain depth after chaining
+
+    GardenerBondEnteredTogetherEvent:
+      type: object
+      additionalProperties: false
+      description: Published when bonded players enter a scenario together
+      required:
+        - eventId
+        - bondId
+        - scenarioInstanceId
+        - scenarioTemplateId
+        - participants
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        bondId:
+          type: string
+          format: uuid
+          description: Bond linking the participants
+        scenarioInstanceId:
+          type: string
+          format: uuid
+          description: Shared scenario instance ID
+        scenarioTemplateId:
+          type: string
+          format: uuid
+          description: Template the instance was created from
+        participants:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Seed IDs of bond participants entering together
+
+    GardenerPhaseChangedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when the deployment phase changes
+      required:
+        - eventId
+        - previousPhase
+        - newPhase
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        previousPhase:
+          $ref: 'gardener-api.yaml#/components/schemas/DeploymentPhase'
+          description: Phase before the change
+        newPhase:
+          $ref: 'gardener-api.yaml#/components/schemas/DeploymentPhase'
+          description: Phase after the change

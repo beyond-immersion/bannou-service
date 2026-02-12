@@ -175,6 +175,22 @@ public static class StateStoreDefinitions
     /// <summary>Game session state and history</summary>
     public const string GameSession = "game-session-statestore";
 
+    // Gardener Service
+    /// <summary>Distributed locks for void orchestration and scenario mutations</summary>
+    public const string GardenerLock = "gardener-lock";
+    /// <summary>Deployment phase configuration and transition history (durable)</summary>
+    public const string GardenerPhaseConfig = "gardener-phase-config";
+    /// <summary>Active POI state within void instances (ephemeral, TTL-based)</summary>
+    public const string GardenerPois = "gardener-pois";
+    /// <summary>Completed scenario history per player (durable, queryable for cooldown)</summary>
+    public const string GardenerScenarioHistory = "gardener-scenario-history";
+    /// <summary>Active scenario instance state (ephemeral, keyed by instance ID)</summary>
+    public const string GardenerScenarioInstances = "gardener-scenario-instances";
+    /// <summary>Scenario template definitions (durable, queryable by category/status)</summary>
+    public const string GardenerScenarioTemplates = "gardener-scenario-templates";
+    /// <summary>Active void instance state per player (ephemeral, TTL-based)</summary>
+    public const string GardenerVoidInstances = "gardener-void-instances";
+
     // Inventory Service
     /// <summary>Container state and item list cache</summary>
     public const string InventoryContainerCache = "inventory-container-cache";
@@ -443,6 +459,13 @@ public static class StateStoreDefinitions
             [EscrowTokens] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "escrow:token" },
             [GameService] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "game_service_statestore" },
             [GameSession] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "game_session_statestore" },
+            [GardenerLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "gardener:lock" },
+            [GardenerPhaseConfig] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "gardener_phase_config" },
+            [GardenerPois] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "gardener:poi" },
+            [GardenerScenarioHistory] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "gardener_scenario_history" },
+            [GardenerScenarioInstances] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "gardener:scenario" },
+            [GardenerScenarioTemplates] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "gardener_scenario_templates" },
+            [GardenerVoidInstances] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "gardener:void" },
             [InventoryContainerCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "inv:cont" },
             [InventoryContainerStore] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "inventory_container_store" },
             [InventoryLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "inv:lock" },
@@ -587,6 +610,13 @@ public static class StateStoreDefinitions
             [EscrowTokens] = new StoreMetadata("Escrow", "Token hash validation (hashed tokens to escrow/party info)", "redis"),
             [GameService] = new StoreMetadata("GameService", "Game service registry", "mysql"),
             [GameSession] = new StoreMetadata("GameSession", "Game session state and history", "mysql"),
+            [GardenerLock] = new StoreMetadata("Gardener", "Distributed locks for void orchestration and scenario mutations", "redis"),
+            [GardenerPhaseConfig] = new StoreMetadata("Gardener", "Deployment phase configuration and transition history (durable)", "mysql"),
+            [GardenerPois] = new StoreMetadata("Gardener", "Active POI state within void instances (ephemeral, TTL-based)", "redis"),
+            [GardenerScenarioHistory] = new StoreMetadata("Gardener", "Completed scenario history per player (durable, queryable for cooldown)", "mysql"),
+            [GardenerScenarioInstances] = new StoreMetadata("Gardener", "Active scenario instance state (ephemeral, keyed by instance ID)", "redis"),
+            [GardenerScenarioTemplates] = new StoreMetadata("Gardener", "Scenario template definitions (durable, queryable by category/status)", "mysql"),
+            [GardenerVoidInstances] = new StoreMetadata("Gardener", "Active void instance state per player (ephemeral, TTL-based)", "redis"),
             [InventoryContainerCache] = new StoreMetadata("Inventory", "Container state and item list cache", "redis"),
             [InventoryContainerStore] = new StoreMetadata("Inventory", "Container definitions (persistent)", "mysql"),
             [InventoryLock] = new StoreMetadata("Inventory", "Distributed locks for concurrent modifications", "redis"),

@@ -34,7 +34,6 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly IMessageBus _messageBus;
     private readonly IClientEventPublisher _clientEventPublisher;
-    private static readonly string[] ROLE_ORDER = new[] { "anonymous", "user", "developer", "admin" };
 
     // State key patterns
     private const string ACTIVE_SESSIONS_KEY = "active_sessions";
@@ -747,7 +746,7 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
                     var maxRoleByEndpoint = new Dictionary<string, int>();
 
                     // Walk all roles to find the highest required role for each endpoint in this state
-                    foreach (var roleName in ROLE_ORDER)
+                    foreach (var roleName in _configuration.RoleHierarchy)
                     {
                         var matrixKey = string.Format(PERMISSION_MATRIX_KEY, serviceId, stateKey, roleName);
                         var endpoints = await hashSetStore.GetAsync(matrixKey);
@@ -759,7 +758,7 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
 
                         foreach (var endpoint in endpoints)
                         {
-                            var priority = Array.IndexOf(ROLE_ORDER, roleName);
+                            var priority = Array.IndexOf(_configuration.RoleHierarchy, roleName);
                             maxRoleByEndpoint[endpoint] = maxRoleByEndpoint.TryGetValue(endpoint, out var existing)
                                 ? Math.Max(existing, priority)
                                 : priority;
@@ -767,7 +766,7 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
                     }
 
                     // Allow endpoints where session role meets or exceeds highest required
-                    var sessionPriority = Array.IndexOf(ROLE_ORDER, role);
+                    var sessionPriority = Array.IndexOf(_configuration.RoleHierarchy, role);
                     foreach (var kvp in maxRoleByEndpoint)
                     {
                         if (sessionPriority < kvp.Value)
@@ -949,7 +948,7 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
             var serviceStatesKey = string.Format(SERVICE_STATES_KEY, serviceId);
             var registeredStates = await hashSetStore.GetAsync(serviceStatesKey, cancellationToken);
             var states = registeredStates ?? new HashSet<string> { "default" };
-            var roles = ROLE_ORDER;
+            var roles = _configuration.RoleHierarchy;
 
             foreach (var state in states)
             {

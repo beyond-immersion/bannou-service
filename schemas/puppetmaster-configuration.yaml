@@ -39,3 +39,10 @@ x-service-configuration:
       default: 300
       env: PUPPETMASTER_SNAPSHOT_CACHE_TTL_SECONDS
       description: Time-to-live for cached resource snapshots in seconds (used by Event Brain actors)
+    DefaultWatcherTypes:
+      type: array
+      items:
+        type: string
+      default: ["regional"]
+      env: PUPPETMASTER_DEFAULT_WATCHER_TYPES
+      description: Default watcher types to start for each realm (comma-separated in env var)

@@ -321,9 +321,7 @@ public partial class PuppetmasterService : IPuppetmasterService
     {
         _logger.LogInformation("Starting all watchers for realm {RealmId}", body.RealmId);
 
-        // Default watcher types to start for a realm
-        // In the future this could be configurable per realm or game service
-        var defaultWatcherTypes = new[] { "regional" };
+        var defaultWatcherTypes = _configuration.DefaultWatcherTypes;
 
         var watchersStarted = 0;
         var watchersExisted = 0;

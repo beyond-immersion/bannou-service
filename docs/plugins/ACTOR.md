@@ -500,7 +500,9 @@ Actor State Model
 3. **Cross-node encounters**: Encounter coordination across multiple pool nodes for large-scale events.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/390 -->
 4. **Behavior versioning**: Deploy behavior updates with version tracking, enabling rollback without service restart.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/391 -->
 5. **Actor migration**: Move running actors between pool nodes for load balancing without state loss.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/393 -->
 
 ---
 
@@ -520,35 +522,35 @@ No bugs identified.
 
 4. **Encounter event publishing uses discard pattern**: `StartEncounter`/`SetEncounterPhase`/`EndEncounter` use `_ = _messageBus.TryPublishAsync(...)` because the `IActorRunner` interface defines these methods as **synchronous** (`bool` return type). Changing to `Task<bool>` would be a breaking interface change. Note that `TryPublishAsync` still buffers and retries internally if RabbitMQ is unavailable - events WILL be delivered eventually (see MESSAGING.md Quirk #1). The discard means the caller can't await completion or check the return value, but the underlying retry mechanism ensures delivery.
 
+5. **ScheduledEventManager uses in-memory state**: Pending scheduled events stored in `ConcurrentDictionary`, not backed by Redis. Each pool node has its own `ScheduledEventManager` Singleton. This is intentional: scheduled events are ephemeral timers (milliseconds-to-seconds delays) created as side effects of ABML `schedule_event:` action execution. Each actor runs on exactly one node, so its events fire locally. The fired events publish to RabbitMQ for distributed delivery. If a node crashes, the actor itself must be restarted and the behavior loop re-evaluates and re-schedules events as needed.
+
+6. **ActorRegistry is instance-local for bannou mode**: Pool mode uses Redis-backed `ActorPoolManager`, but bannou mode uses in-memory `ConcurrentDictionary`. Bannou mode is designed for single-instance operation — running multiple bannou-mode instances would cause inconsistent actor tracking. Use pool mode for multi-instance deployments.
+
+7. **ScheduledEventManager Timer uses fire-and-forget**: Timer callback `CheckEvents` is synchronous (Timer constraint), so it calls `_ = FireEventAsync(evt)` for due events. `FireEventAsync` wraps all logic in `try-catch(Exception)` with `_logger.LogError`, so exceptions ARE observed and logged. `TryPublishAsync` provides retry buffering for RabbitMQ delivery. The discard means the timer callback can't await completion, but the async method is self-contained with proper error handling.
+
 ### Design Considerations (Requires Planning)
 
-1. **ScheduledEventManager uses in-memory state**: Pending scheduled events stored in `ConcurrentDictionary`. Multi-instance deployments would have divergent event queues. Acceptable for single-instance bannou mode; pool mode distributes actors across nodes.
+1. **ActorRunner._encounter field lacks synchronization**: Field accessed from behavior loop thread and external callers without lock protection. `_statusLock` only protects `_status`.
 
-2. **ActorRegistry is instance-local for bannou mode**: Pool mode uses Redis-backed `ActorPoolManager`, but bannou mode uses in-memory `ConcurrentDictionary`. Bannou mode is designed for single-instance operation.
+2. **Single-threaded behavior loop**: Each ActorRunner runs on single task. CPU-intensive behaviors delay tick processing. `GoapPlanTimeoutMs` (50ms) provides budget.
 
-3. **ScheduledEventManager Timer uses discard pattern**: `CheckEvents` callback discards Tasks via `_ = FireEventAsync()`. If `FireEventAsync` throws, the exception is unobserved (no crash, but no logging). This is a timer callback constraint - the callback must be synchronous. Note: if `FireEventAsync` uses `TryPublishAsync` internally, the retry buffer handles RabbitMQ failures; other exceptions would be lost.
+3. **State persistence is periodic**: Saved every `AutoSaveIntervalSeconds` (60s default). Crash loses up to 60 seconds. Critical state publishes events immediately.
 
-4. **ActorRunner._encounter field lacks synchronization**: Field accessed from behavior loop thread and external callers without lock protection. `_statusLock` only protects `_status`.
+4. **Pool node capacity is self-reported**: No external validation of claimed capacity.
 
-5. **Single-threaded behavior loop**: Each ActorRunner runs on single task. CPU-intensive behaviors delay tick processing. `GoapPlanTimeoutMs` (50ms) provides budget.
+5. **Perception subscription per-character**: 100,000+ actors = 100,000+ RabbitMQ subscriptions. Pool mode distributes.
 
-6. **State persistence is periodic**: Saved every `AutoSaveIntervalSeconds` (60s default). Crash loses up to 60 seconds. Critical state publishes events immediately.
+6. **Memory cleanup is per-tick**: Expired memories scanned each tick. Working memory cleared between perceptions.
 
-7. **Pool node capacity is self-reported**: No external validation of claimed capacity.
+7. **Template index optimistic concurrency**: No retry on conflict - returns immediately. Index may be temporarily inconsistent if TrySave fails.
 
-8. **Perception subscription per-character**: 100,000+ actors = 100,000+ RabbitMQ subscriptions. Pool mode distributes.
+8. **Encounter phase strings unvalidated**: No state machine. ABML behaviors enforce meaningful transitions.
 
-9. **Memory cleanup is per-tick**: Expired memories scanned each tick. Working memory cleared between perceptions.
+9. **Fresh options query waits approximately one tick**: `Task.Delay(DefaultTickIntervalMs)` doesn't synchronize with actual behavior loop.
 
-10. **Template index optimistic concurrency**: No retry on conflict - returns immediately. Index may be temporarily inconsistent if TrySave fails.
+10. **Auto-spawn failure returns NotFound**: True failure reason only logged, not returned to caller.
 
-11. **Encounter phase strings unvalidated**: No state machine. ABML behaviors enforce meaningful transitions.
-
-12. **Fresh options query waits approximately one tick**: `Task.Delay(DefaultTickIntervalMs)` doesn't synchronize with actual behavior loop.
-
-13. **Auto-spawn failure returns NotFound**: True failure reason only logged, not returned to caller.
-
-14. **ListActors nodeId filter not implemented**: Parameter exists but ignored in all modes.
+11. **ListActors nodeId filter not implemented**: Parameter exists but ignored in all modes.
 
 ---
 

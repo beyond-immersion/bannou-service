@@ -78,4 +78,10 @@ public class PuppetmasterServiceConfiguration : IServiceConfiguration
     [ConfigRange(Minimum = 1)]
     public int SnapshotCacheTtlSeconds { get; set; } = 300;
 
+    /// <summary>
+    /// Default watcher types to start for each realm (comma-separated in env var)
+    /// Environment variable: PUPPETMASTER_DEFAULT_WATCHER_TYPES
+    /// </summary>
+    public string[] DefaultWatcherTypes { get; set; } = ["regional"];
+
 }

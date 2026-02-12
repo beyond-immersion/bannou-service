@@ -887,3 +887,46 @@ x-state-stores:
     prefix: "collection:lock"
     service: Collection
     purpose: Distributed locks for collection mutations and grant operations
+
+  # ============================================================================
+  # Gardener Stores (L4 GameFeatures Service)
+  # ============================================================================
+
+  gardener-void-instances:
+    backend: redis
+    prefix: "gardener:void"
+    service: Gardener
+    purpose: Active void instance state per player (ephemeral, TTL-based)
+
+  gardener-pois:
+    backend: redis
+    prefix: "gardener:poi"
+    service: Gardener
+    purpose: Active POI state within void instances (ephemeral, TTL-based)
+
+  gardener-scenario-templates:
+    backend: mysql
+    service: Gardener
+    purpose: Scenario template definitions (durable, queryable by category/status)
+
+  gardener-scenario-instances:
+    backend: redis
+    prefix: "gardener:scenario"
+    service: Gardener
+    purpose: Active scenario instance state (ephemeral, keyed by instance ID)
+
+  gardener-scenario-history:
+    backend: mysql
+    service: Gardener
+    purpose: Completed scenario history per player (durable, queryable for cooldown)
+
+  gardener-phase-config:
+    backend: mysql
+    service: Gardener
+    purpose: Deployment phase configuration and transition history (durable)
+
+  gardener-lock:
+    backend: redis
+    prefix: "gardener:lock"
+    service: Gardener
+    purpose: Distributed locks for void orchestration and scenario mutations

@@ -35,3 +35,10 @@ x-service-configuration:
       minimum: 0
       maximum: 604800
       description: Redis TTL in seconds for session permission data keys (states and compiled permissions). Handles cleanup of orphaned data from sessions that disconnect without proper cleanup. 0 disables Redis TTL. Default 86400 (24 hours). Maximum 604800 (7 days).
+    RoleHierarchy:
+      type: array
+      items:
+        type: string
+      default: ["anonymous", "user", "developer", "admin"]
+      env: PERMISSION_ROLE_HIERARCHY
+      description: Ordered role hierarchy from lowest to highest privilege. Index determines priority for permission compilation (comma-separated in env var).

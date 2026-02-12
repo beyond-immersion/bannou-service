@@ -85,6 +85,7 @@ The Puppetmaster service is a `Singleton` and maintains all state in memory via 
 | `BehaviorCacheTtlSeconds` | `PUPPETMASTER_BEHAVIOR_CACHE_TTL_SECONDS` | 3600 | Time-to-live for cached behavior documents in seconds (1 hour default) |
 | `AssetDownloadTimeoutSeconds` | `PUPPETMASTER_ASSET_DOWNLOAD_TIMEOUT_SECONDS` | 30 | Timeout for downloading behavior YAML from asset service |
 | `SnapshotCacheTtlSeconds` | `PUPPETMASTER_SNAPSHOT_CACHE_TTL_SECONDS` | 300 | Time-to-live for cached resource snapshots in seconds (5 minutes default, used by Event Brain actors) |
+| `DefaultWatcherTypes` | `PUPPETMASTER_DEFAULT_WATCHER_TYPES` | `["regional"]` | Default watcher types to start for each realm (comma-separated in env var) |
 
 ---
 
@@ -436,8 +437,7 @@ When a lifecycle event arrives (e.g., `personality.updated`):
 1. **Watcher-Actor Integration**: The `ActorId` field on `WatcherInfo` is always `null`. The TODO comment at line 213 indicates actor spawning is not yet implemented. Watchers don't actually execute any behavior - they're just registered in memory.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/388 -->
 
-2. **Configurable Default Watcher Types**: `StartWatchersForRealmAsync` hardcodes `defaultWatcherTypes = ["regional"]`. The code comment notes this "could be configurable per realm or game service".
-<!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/389 -->
+2. ~~**Configurable Default Watcher Types**~~: **FIXED** (2026-02-11) - Added `DefaultWatcherTypes` config property (default `["regional"]`). Set via `PUPPETMASTER_DEFAULT_WATCHER_TYPES` env var as comma-separated string. Also added comma-delimited array binding support to `IServiceConfiguration` infrastructure for all plugins.
 
 3. ~~**ResourceSnapshotCache TTL Configuration**~~: **FIXED** (2026-02-11) - Added `SnapshotCacheTtlSeconds` config property (default 300s, minimum 1s). ResourceSnapshotCache now injects `PuppetmasterServiceConfiguration` and uses the config value instead of hardcoded 5-minute TTL.
 
@@ -447,15 +447,13 @@ When a lifecycle event arrives (e.g., `personality.updated`):
 
 1. **Distributed Watcher State**: Move watcher registry to Redis for multi-instance consistency and persistence across restarts.
 
-2. **Watcher Type Configuration**: Allow per-realm or per-game-service configuration of which watcher types should auto-start.
+2. **Behavior Variant Selection**: Support the ABML variant system with fallback chains (e.g., `character-personality:aggressive` → `character-personality:default` → `character-base`).
 
-3. **Behavior Variant Selection**: Support the ABML variant system with fallback chains (e.g., `character-personality:aggressive` → `character-personality:default` → `character-base`).
+3. **Watcher Health Monitoring**: Track watcher execution health, restart failed watchers, expose metrics.
 
-4. **Watcher Health Monitoring**: Track watcher execution health, restart failed watchers, expose metrics.
+4. **Cache Warm-up on Startup**: Pre-load commonly-used behaviors on service startup to reduce first-request latency.
 
-5. **Cache Warm-up on Startup**: Pre-load commonly-used behaviors on service startup to reduce first-request latency.
-
-6. **Realm Deactivation Handling**: Subscribe to realm deactivation/deletion events to automatically stop watchers.
+5. **Realm Deactivation Handling**: Subscribe to realm deactivation/deletion events to automatically stop watchers.
 
 ---
 
@@ -505,3 +503,4 @@ This section tracks active development work. Managed by `/audit-plugin` workflow
 ### Completed
 
 - **ResourceSnapshotCache TTL Configuration** (2026-02-11): Added `SnapshotCacheTtlSeconds` config property to schema, regenerated config class, wired into `ResourceSnapshotCache` constructor. T21 compliance fix.
+- **Configurable Default Watcher Types** (2026-02-11): Issue #389. Added `DefaultWatcherTypes` array config property (default `["regional"]`). Added comma-delimited env var to `string[]` binding support in `IServiceConfiguration` infrastructure. T21 compliance fix.

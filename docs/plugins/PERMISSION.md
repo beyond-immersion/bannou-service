@@ -83,6 +83,7 @@ No traditional topic-based event publications. Capability updates go directly to
 | `MaxConcurrentRecompilations` | int | 50 | 1-500 | `PERMISSION_MAX_CONCURRENT_RECOMPILATIONS` | Bounds parallel session recompilations during service registration |
 | `PermissionCacheTtlSeconds` | int | 0 | 0-86400 | `PERMISSION_CACHE_TTL_SECONDS` | In-memory cache TTL in seconds. 0 disables (cache never expires). Recommended non-zero: 300 (5 min). Safety net against lost RabbitMQ events |
 | `SessionDataTtlSeconds` | int | 86400 | 0-604800 | `PERMISSION_SESSION_DATA_TTL_SECONDS` | Redis TTL for session data keys. Handles orphaned session cleanup. 0 disables. Default 86400 (24h) |
+| `RoleHierarchy` | string[] | `["anonymous", "user", "developer", "admin"]` | - | `PERMISSION_ROLE_HIERARCHY` | Ordered role hierarchy from lowest to highest privilege (comma-separated in env var) |
 
 ---
 
@@ -214,17 +215,18 @@ None identified. Previous extensions were either implemented (Permission TTL →
 
 1. ~~**Inconsistent default role between connection and update paths**~~: **FIXED** (2026-02-11) - Unified all four default-role locations to return `"anonymous"` when roles are null/empty: `DetermineHighestRoleFromEvent` (two returns), `RecompileSessionPermissionsAsync` (`GetValueOrDefault`), and `GetSessionInfoAsync` (`GetValueOrDefault`). Sessions with no roles now consistently get anonymous-level permissions across all code paths.
 
+2. ~~**Static ROLE_ORDER array**~~: **FIXED** (2026-02-11) - Replaced hardcoded `ROLE_ORDER` with `_configuration.RoleHierarchy` config property (default `["anonymous", "user", "developer", "admin"]`). Set via `PERMISSION_ROLE_HIERARCHY` env var as comma-separated string. T21 compliance fix.
+
 ### Intentional Quirks
 
 1. **activeConnections guards publishing**: Capability updates are only published to sessions in the `active_connections` set. Publishing to sessions without WebSocket connections causes RabbitMQ `exchange not_found` errors that crash the channel.
 
 2. **ValidateApiAccess never uses cache**: Unlike `GetCapabilities` which uses the in-memory cache, `ValidateApiAccess` always reads from Redis. This ensures validation uses the latest compiled permissions at the cost of latency.
 
-3. **No cache invalidation on session disconnect**: When a session disconnects, it's removed from `active_connections` but the in-memory cache entry remains until the session is garbage-collected or a new recompilation overwrites it.
+3. **No cache invalidation on session disconnect**: When a session disconnects, it's removed from `active_connections` but the in-memory cache entry remains until the session is garbage-collected or a new recompilation overwrites it. Broader fix planned via `ISessionActivityListener` DI interface with heartbeat-driven TTL refresh. See [GH#392](https://github.com/beyond-immersion/bannou-service/issues/392).
+<!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/392 -->
 
-4. **Static ROLE_ORDER array**: The role hierarchy is hardcoded as `["anonymous", "user", "developer", "admin"]`. Adding new roles requires code changes, not configuration.
-
-5. ~~**GetRegisteredServices endpoint count is approximate**~~: **FIXED** (2026-02-11) - `GetRegisteredServicesAsync` now reads dynamically stored per-service state names from `service-states:{serviceId}` Redis keys instead of using a hardcoded array. States are saved during `RegisterServicePermissionsAsync` from the permission matrix keys. Previously used `["authenticated", "default", "lobby", "in_game"]` which included fake states and missed real ones (voice: `ringing`/`in_room`/`consent_pending`, matchmaking: `in_queue`/`match_pending`, chat: `in_room`).
+4. ~~**GetRegisteredServices endpoint count is approximate**~~: **FIXED** (2026-02-11) - `GetRegisteredServicesAsync` now reads dynamically stored per-service state names from `service-states:{serviceId}` Redis keys instead of using a hardcoded array. States are saved during `RegisterServicePermissionsAsync` from the permission matrix keys. Previously used `["authenticated", "default", "lobby", "in_game"]` which included fake states and missed real ones (voice: `ringing`/`in_room`/`consent_pending`, matchmaking: `in_queue`/`match_pending`, chat: `in_room`).
 
 ### Design Considerations
 
@@ -236,3 +238,4 @@ None active. Previous considerations were either fixed (parallel recompilation v
 
 ### Completed
 - **2026-02-11**: Fixed hardcoded states array in `GetRegisteredServicesAsync`. Now dynamically reads per-service states from Redis, stored during registration.
+- **2026-02-11**: Issue #389. Replaced hardcoded `ROLE_ORDER` with `RoleHierarchy` config property. T21 compliance fix.
