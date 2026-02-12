@@ -9001,13 +9001,13 @@
         }
       }
     },
-    "/gardener/void/enter": {
+    "/gardener/garden/enter": {
       "post": {
-        "summary": "Enter the void",
-        "description": "Creates a void instance for the player. Finds or creates the player's\nactive guardian seed, initializes drift metrics, and returns the initial\nvoid state. First tick of the void orchestrator spawns POIs.\n",
-        "operationId": "enterVoid",
+        "summary": "Enter the garden",
+        "description": "Creates a garden instance for the player. Finds or creates the player's\nactive guardian seed, initializes drift metrics, and returns the initial\ngarden state. First tick of the garden orchestrator spawns POIs.\n",
+        "operationId": "enterGarden",
         "tags": [
-          "Void Management"
+          "Garden Management"
         ],
         "x-permissions": [
           {
@@ -9020,18 +9020,18 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/EnterVoidRequest"
+                "$ref": "#/components/schemas/EnterGardenRequest"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Void instance created successfully",
+            "description": "Garden instance created successfully",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VoidStateResponse"
+                  "$ref": "#/components/schemas/GardenStateResponse"
                 }
               }
             }
@@ -9040,18 +9040,18 @@
             "description": "No active seed found for account"
           },
           "409": {
-            "description": "Player already has an active void instance"
+            "description": "Player already has an active garden instance"
           }
         }
       }
     },
-    "/gardener/void/get": {
+    "/gardener/garden/get": {
       "post": {
-        "summary": "Get current void state",
-        "description": "Returns the player's current void instance with active POIs.",
-        "operationId": "getVoidState",
+        "summary": "Get current garden state",
+        "description": "Returns the player's current garden instance with active POIs.",
+        "operationId": "getGardenState",
         "tags": [
-          "Void Management"
+          "Garden Management"
         ],
         "x-permissions": [
           {
@@ -9064,35 +9064,35 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/GetVoidStateRequest"
+                "$ref": "#/components/schemas/GetGardenStateRequest"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Void state retrieved",
+            "description": "Garden state retrieved",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VoidStateResponse"
+                  "$ref": "#/components/schemas/GardenStateResponse"
                 }
               }
             }
           },
           "404": {
-            "description": "Player is not in the void"
+            "description": "Player is not in the garden"
           }
         }
       }
     },
-    "/gardener/void/update-position": {
+    "/gardener/garden/update-position": {
       "post": {
-        "summary": "Update player position in the void",
-        "description": "Updates the player's position and velocity in void space. Accumulates\ndrift metrics and checks proximity triggers against active POIs.\n",
+        "summary": "Update player position in the garden",
+        "description": "Updates the player's position and velocity in garden space. Accumulates\ndrift metrics and checks proximity triggers against active POIs.\n",
         "operationId": "updatePosition",
         "tags": [
-          "Void Management"
+          "Garden Management"
         ],
         "x-permissions": [
           {
@@ -9122,18 +9122,18 @@
             }
           },
           "404": {
-            "description": "Player is not in the void"
+            "description": "Player is not in the garden"
           }
         }
       }
     },
-    "/gardener/void/leave": {
+    "/gardener/garden/leave": {
       "post": {
-        "summary": "Leave the void",
-        "description": "Cleans up the void instance, all associated POIs, and publishes a\nvoid-left event with session duration.\n",
-        "operationId": "leaveVoid",
+        "summary": "Leave the garden",
+        "description": "Cleans up the garden instance, all associated POIs, and publishes a\ngarden-left event with session duration.\n",
+        "operationId": "leaveGarden",
         "tags": [
-          "Void Management"
+          "Garden Management"
         ],
         "x-permissions": [
           {
@@ -9146,24 +9146,24 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/LeaveVoidRequest"
+                "$ref": "#/components/schemas/LeaveGardenRequest"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Left the void",
+            "description": "Left the garden",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LeaveVoidResponse"
+                  "$ref": "#/components/schemas/LeaveGardenResponse"
                 }
               }
             }
           },
           "404": {
-            "description": "Player is not in the void"
+            "description": "Player is not in the garden"
           }
         }
       }
@@ -9171,7 +9171,7 @@
     "/gardener/poi/list": {
       "post": {
         "summary": "List active POIs",
-        "description": "Returns all active POIs for the player's current void instance.",
+        "description": "Returns all active POIs for the player's current garden instance.",
         "operationId": "listPois",
         "tags": [
           "POI Interaction"
@@ -9204,7 +9204,7 @@
             }
           },
           "404": {
-            "description": "Player is not in the void"
+            "description": "Player is not in the garden"
           }
         }
       }
@@ -9256,7 +9256,7 @@
     "/gardener/poi/decline": {
       "post": {
         "summary": "Decline a POI",
-        "description": "Marks a POI as declined. The template is added to the void instance's\nscenario history for diversity scoring.\n",
+        "description": "Marks a POI as declined. The template is added to the garden instance's\nscenario history for diversity scoring.\n",
         "operationId": "declinePoi",
         "tags": [
           "POI Interaction"
@@ -9300,7 +9300,7 @@
     "/gardener/scenario/enter": {
       "post": {
         "summary": "Enter a scenario",
-        "description": "Validates prerequisites, creates a game session, creates a scenario\ninstance, destroys the void instance (player leaves the void), and\npublishes scenario-started events.\n",
+        "description": "Validates prerequisites, creates a game session, creates a scenario\ninstance, destroys the garden instance (player leaves the garden), and\npublishes scenario-started events.\n",
         "operationId": "enterScenario",
         "tags": [
           "Scenario Lifecycle"
@@ -9385,7 +9385,7 @@
     "/gardener/scenario/complete": {
       "post": {
         "summary": "Complete a scenario",
-        "description": "Calculates and awards growth per domain, closes the game session,\nwrites history, and returns the player to the void.\n",
+        "description": "Calculates and awards growth per domain, closes the game session,\nwrites history, and returns the player to the garden.\n",
         "operationId": "completeScenario",
         "tags": [
           "Scenario Lifecycle"
@@ -9830,7 +9830,7 @@
     "/gardener/phase/get-metrics": {
       "post": {
         "summary": "Get deployment phase metrics",
-        "description": "Returns current counts of active void instances, scenario instances, and capacity utilization.",
+        "description": "Returns current counts of active garden instances, scenario instances, and capacity utilization.",
         "operationId": "getPhaseMetrics",
         "tags": [
           "Deployment Phase"
@@ -9868,7 +9868,7 @@
     "/gardener/bond/enter-together": {
       "post": {
         "summary": "Enter a scenario together with a bonded player",
-        "description": "Both bonded players enter a shared scenario instance. Validates bond state,\nboth participants' void instances, and template multiplayer support.\n",
+        "description": "Both bonded players enter a shared scenario instance. Validates bond state,\nboth participants' garden instances, and template multiplayer support.\n",
         "operationId": "enterScenarioTogether",
         "tags": [
           "Bond Scenarios"
@@ -9901,7 +9901,7 @@
             }
           },
           "400": {
-            "description": "One or both participants not in void, or template does not support multiplayer"
+            "description": "One or both participants not in garden, or template does not support multiplayer"
           },
           "404": {
             "description": "Bond not found"
@@ -9909,11 +9909,11 @@
         }
       }
     },
-    "/gardener/bond/get-shared-void": {
+    "/gardener/bond/get-shared-garden": {
       "post": {
-        "summary": "Get shared void state for bonded players",
-        "description": "Returns the merged void state for both bond participants including shared POIs.",
-        "operationId": "getSharedVoidState",
+        "summary": "Get shared garden state for bonded players",
+        "description": "Returns the merged garden state for both bond participants including shared POIs.",
+        "operationId": "getSharedGardenState",
         "tags": [
           "Bond Scenarios"
         ],
@@ -9928,24 +9928,24 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/GetSharedVoidRequest"
+                "$ref": "#/components/schemas/GetSharedGardenRequest"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Shared void state retrieved",
+            "description": "Shared garden state retrieved",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SharedVoidStateResponse"
+                  "$ref": "#/components/schemas/SharedGardenStateResponse"
                 }
               }
             }
           },
           "404": {
-            "description": "Bond not found or participants not in void"
+            "description": "Bond not found or participants not in garden"
           }
         }
       }
@@ -22790,9 +22790,9 @@
           "Active"
         ]
       },
-      "BondedPlayerVoidState": {
+      "BondedPlayerGardenState": {
         "type": "object",
-        "description": "Per-player void state within a shared bond void",
+        "description": "Per-player garden state within a shared bond garden",
         "required": [
           "seedId",
           "accountId",
@@ -22811,7 +22811,7 @@
           },
           "position": {
             "$ref": "#/components/schemas/Vec3",
-            "description": "Player position in shared void space"
+            "description": "Player position in shared garden space"
           }
         }
       },
@@ -32323,6 +32323,26 @@
           }
         }
       },
+      "EnterGardenRequest": {
+        "type": "object",
+        "description": "Request to enter the garden",
+        "required": [
+          "accountId",
+          "sessionId"
+        ],
+        "properties": {
+          "accountId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Account entering the garden"
+          },
+          "sessionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Current WebSocket session ID"
+          }
+        }
+      },
       "EnterScenarioRequest": {
         "type": "object",
         "description": "Request to enter a scenario",
@@ -32371,26 +32391,6 @@
             "type": "string",
             "format": "uuid",
             "description": "Template to instantiate for the bond"
-          }
-        }
-      },
-      "EnterVoidRequest": {
-        "type": "object",
-        "description": "Request to enter the void",
-        "required": [
-          "accountId",
-          "sessionId"
-        ],
-        "properties": {
-          "accountId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Account entering the void"
-          },
-          "sessionId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Current WebSocket session ID"
           }
         }
       },
@@ -34648,6 +34648,45 @@
         "type": "string",
         "description": "Game service stub name for this session. Use the game service's stubName property (e.g., \"my-game\"). Use \"generic\" for non-game-specific sessions."
       },
+      "GardenStateResponse": {
+        "type": "object",
+        "description": "Current garden instance state for a player",
+        "required": [
+          "gardenInstanceId",
+          "seedId",
+          "accountId",
+          "position",
+          "activePois"
+        ],
+        "properties": {
+          "gardenInstanceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier for this garden instance"
+          },
+          "seedId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Active seed for this garden session"
+          },
+          "accountId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Account in the garden"
+          },
+          "position": {
+            "$ref": "#/components/schemas/Vec3",
+            "description": "Current player position"
+          },
+          "activePois": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PoiSummary"
+            },
+            "description": "Currently active POIs in this garden instance"
+          }
+        }
+      },
       "GenerateCompositionRequest": {
         "description": "Request to generate a complete musical composition",
         "type": "object",
@@ -36097,6 +36136,20 @@
           }
         }
       },
+      "GetGardenStateRequest": {
+        "type": "object",
+        "description": "Request to get current garden state",
+        "required": [
+          "accountId"
+        ],
+        "properties": {
+          "accountId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Account whose garden state to retrieve"
+          }
+        }
+      },
       "GetGlobalSupplyRequest": {
         "type": "object",
         "description": "Request to get global supply stats",
@@ -37467,9 +37520,9 @@
           }
         }
       },
-      "GetSharedVoidRequest": {
+      "GetSharedGardenRequest": {
         "type": "object",
-        "description": "Request to get shared void state for bonded players",
+        "description": "Request to get shared garden state for bonded players",
         "required": [
           "bondId"
         ],
@@ -37477,7 +37530,7 @@
           "bondId": {
             "type": "string",
             "format": "uuid",
-            "description": "Bond ID to look up shared void state"
+            "description": "Bond ID to look up shared garden state"
           }
         }
       },
@@ -37851,20 +37904,6 @@
               "$ref": "#/components/schemas/ValidationRule"
             },
             "description": "Registered rules (empty if none)"
-          }
-        }
-      },
-      "GetVoidStateRequest": {
-        "type": "object",
-        "description": "Request to get current void state",
-        "required": [
-          "accountId"
-        ],
-        "properties": {
-          "accountId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Account whose void state to retrieve"
           }
         }
       },
@@ -39901,6 +39940,40 @@
           }
         }
       },
+      "LeaveGardenRequest": {
+        "type": "object",
+        "description": "Request to leave the garden",
+        "required": [
+          "accountId"
+        ],
+        "properties": {
+          "accountId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Account leaving the garden"
+          }
+        }
+      },
+      "LeaveGardenResponse": {
+        "type": "object",
+        "description": "Response after leaving the garden",
+        "required": [
+          "accountId",
+          "sessionDurationSeconds"
+        ],
+        "properties": {
+          "accountId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Account that left the garden"
+          },
+          "sessionDurationSeconds": {
+            "type": "number",
+            "format": "float",
+            "description": "Total duration of the garden session in seconds"
+          }
+        }
+      },
       "LeaveMatchmakingRequest": {
         "type": "object",
         "description": "Request to leave a matchmaking queue",
@@ -39940,40 +40013,6 @@
             "type": "string",
             "format": "uuid",
             "description": "Room ID to leave"
-          }
-        }
-      },
-      "LeaveVoidRequest": {
-        "type": "object",
-        "description": "Request to leave the void",
-        "required": [
-          "accountId"
-        ],
-        "properties": {
-          "accountId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Account leaving the void"
-          }
-        }
-      },
-      "LeaveVoidResponse": {
-        "type": "object",
-        "description": "Response after leaving the void",
-        "required": [
-          "accountId",
-          "sessionDurationSeconds"
-        ],
-        "properties": {
-          "accountId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Account that left the void"
-          },
-          "sessionDurationSeconds": {
-            "type": "number",
-            "format": "float",
-            "description": "Total duration of the void session in seconds"
           }
         }
       },
@@ -41470,16 +41509,16 @@
       },
       "ListPoisResponse": {
         "type": "object",
-        "description": "List of active POIs in a void instance",
+        "description": "List of active POIs in a garden instance",
         "required": [
-          "voidInstanceId",
+          "gardenInstanceId",
           "pois"
         ],
         "properties": {
-          "voidInstanceId": {
+          "gardenInstanceId": {
             "type": "string",
             "format": "uuid",
-            "description": "Void instance these POIs belong to"
+            "description": "Garden instance these POIs belong to"
           },
           "pois": {
             "type": "array",
@@ -45775,7 +45814,7 @@
           "currentPhase",
           "maxConcurrentScenariosGlobal",
           "persistentEntryEnabled",
-          "voidMinigamesEnabled"
+          "gardenMinigamesEnabled"
         ],
         "properties": {
           "currentPhase": {
@@ -45790,9 +45829,9 @@
             "type": "boolean",
             "description": "Whether persistent world entry is enabled"
           },
-          "voidMinigamesEnabled": {
+          "gardenMinigamesEnabled": {
             "type": "boolean",
-            "description": "Whether void minigames are enabled"
+            "description": "Whether garden minigames are enabled"
           }
         }
       },
@@ -45801,7 +45840,7 @@
         "description": "Current deployment phase metrics",
         "required": [
           "currentPhase",
-          "activeVoidInstances",
+          "activeGardenInstances",
           "activeScenarioInstances",
           "scenarioCapacityUtilization"
         ],
@@ -45810,9 +45849,9 @@
             "$ref": "#/components/schemas/DeploymentPhase",
             "description": "Current deployment phase"
           },
-          "activeVoidInstances": {
+          "activeGardenInstances": {
             "type": "integer",
-            "description": "Number of currently active void instances"
+            "description": "Number of currently active garden instances"
           },
           "activeScenarioInstances": {
             "type": "integer",
@@ -46125,8 +46164,8 @@
             "description": "POI that was interacted with"
           },
           "result": {
-            "type": "string",
-            "description": "Interaction outcome (scenario_prompt, scenario_enter, poi_update, chain_offer)"
+            "$ref": "#/components/schemas/PoiInteractionResult",
+            "description": "Interaction outcome"
           },
           "scenarioTemplateId": {
             "type": "string",
@@ -46148,6 +46187,16 @@
             "description": "Available choices for prompted POIs"
           }
         }
+      },
+      "PoiInteractionResult": {
+        "type": "string",
+        "enum": [
+          "ScenarioPrompt",
+          "ScenarioEnter",
+          "PoiUpdate",
+          "ChainOffer"
+        ],
+        "description": "Outcome of interacting with a POI"
       },
       "PoiStatus": {
         "type": "string",
@@ -46178,16 +46227,16 @@
           },
           "position": {
             "$ref": "#/components/schemas/Vec3",
-            "description": "POI position in void space"
+            "description": "POI position in garden space"
           },
           "poiType": {
             "$ref": "#/components/schemas/PoiType",
             "description": "Sensory presentation type"
           },
           "visualHint": {
-            "type": "string",
+            "$ref": "#/components/schemas/ScenarioCategory",
             "nullable": true,
-            "description": "Visual hint identifier for client rendering"
+            "description": "Scenario category hint for client rendering"
           },
           "audioHint": {
             "type": "string",
@@ -46207,7 +46256,7 @@
           "triggerRadius": {
             "type": "number",
             "format": "float",
-            "description": "Trigger radius in void space units"
+            "description": "Trigger radius in garden space units"
           },
           "scenarioTemplateId": {
             "type": "string",
@@ -46230,7 +46279,7 @@
           "Portal",
           "Social"
         ],
-        "description": "Sensory presentation type for a point of interest in the void"
+        "description": "Sensory presentation type for a point of interest in the garden"
       },
       "Position3D": {
         "type": "object",
@@ -51169,7 +51218,7 @@
         "required": [
           "scenarioInstanceId",
           "growthAwarded",
-          "returnToVoid"
+          "returnToGarden"
         ],
         "properties": {
           "scenarioInstanceId": {
@@ -51185,9 +51234,9 @@
             },
             "description": "Growth awarded per domain"
           },
-          "returnToVoid": {
+          "returnToGarden": {
             "type": "boolean",
-            "description": "Whether the player should return to the void"
+            "description": "Whether the player should return to the garden"
           }
         }
       },
@@ -51197,6 +51246,7 @@
         "properties": {
           "behaviorDocumentId": {
             "type": "string",
+            "format": "uuid",
             "nullable": true,
             "description": "ABML behavior document ID for NPC orchestration"
           },
@@ -53186,9 +53236,9 @@
           }
         }
       },
-      "SharedVoidStateResponse": {
+      "SharedGardenStateResponse": {
         "type": "object",
-        "description": "Shared void state for bonded players",
+        "description": "Shared garden state for bonded players",
         "required": [
           "bondId",
           "participants",
@@ -53203,9 +53253,9 @@
           "participants": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/BondedPlayerVoidState"
+              "$ref": "#/components/schemas/BondedPlayerGardenState"
             },
-            "description": "Per-player void state"
+            "description": "Per-player garden state"
           },
           "sharedPois": {
             "type": "array",
@@ -56928,16 +56978,16 @@
             "nullable": true,
             "description": "Whether persistent world entry is enabled"
           },
-          "voidMinigamesEnabled": {
+          "gardenMinigamesEnabled": {
             "type": "boolean",
             "nullable": true,
-            "description": "Whether void minigames are enabled"
+            "description": "Whether garden minigames are enabled"
           }
         }
       },
       "UpdatePositionRequest": {
         "type": "object",
-        "description": "Request to update player position in the void",
+        "description": "Request to update player position in the garden",
         "required": [
           "accountId",
           "position",
@@ -56951,7 +57001,7 @@
           },
           "position": {
             "$ref": "#/components/schemas/Vec3",
-            "description": "New position in void space"
+            "description": "New position in garden space"
           },
           "velocity": {
             "$ref": "#/components/schemas/Vec3",
@@ -58441,7 +58491,7 @@
       },
       "Vec3": {
         "type": "object",
-        "description": "Three-dimensional spatial coordinates in void space",
+        "description": "Three-dimensional spatial coordinates in garden space",
         "required": [
           "x",
           "y",
@@ -58451,17 +58501,17 @@
           "x": {
             "type": "number",
             "format": "float",
-            "description": "X coordinate in void space units"
+            "description": "X coordinate in garden space units"
           },
           "y": {
             "type": "number",
             "format": "float",
-            "description": "Y coordinate in void space units"
+            "description": "Y coordinate in garden space units"
           },
           "z": {
             "type": "number",
             "format": "float",
-            "description": "Z coordinate in void space units"
+            "description": "Z coordinate in garden space units"
           }
         }
       },
@@ -58886,45 +58936,6 @@
           }
         }
       },
-      "VoidStateResponse": {
-        "type": "object",
-        "description": "Current void instance state for a player",
-        "required": [
-          "voidInstanceId",
-          "seedId",
-          "accountId",
-          "position",
-          "activePois"
-        ],
-        "properties": {
-          "voidInstanceId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Unique identifier for this void instance"
-          },
-          "seedId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Active seed for this void session"
-          },
-          "accountId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Account in the void"
-          },
-          "position": {
-            "$ref": "#/components/schemas/Vec3",
-            "description": "Current player position"
-          },
-          "activePois": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PoiSummary"
-            },
-            "description": "Currently active POIs in this void instance"
-          }
-        }
-      },
       "VolumeShape": {
         "type": "string",
         "description": "Shape of a volume node for spatial bounds",
@@ -59174,7 +59185,7 @@
     },
     {
       "name": "Bannou Gardener",
-      "description": "Player experience orchestration service (L4 GameFeatures) for void navigation,"
+      "description": "Player experience orchestration service (L4 GameFeatures) for garden navigation,"
     },
     {
       "name": "Bannou Leaderboard",

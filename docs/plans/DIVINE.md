@@ -250,11 +250,37 @@ x-service-configuration:
       default: divinity
       description: Currency code used for divinity economy within each game service
 
-    DefaultDivinityPerBlessingTier:
-      type: string
-      env: DIVINE_DEFAULT_DIVINITY_PER_BLESSING_TIER
-      default: "10,50,200,1000"
-      description: Comma-separated divinity costs for Minor,Standard,Greater,Supreme blessing tiers
+    DivinityCostMinor:
+      type: number
+      format: float
+      env: DIVINE_DIVINITY_COST_MINOR
+      minimum: 0.0
+      default: 10.0
+      description: Divinity cost for granting a Minor tier blessing
+
+    DivinityCostStandard:
+      type: number
+      format: float
+      env: DIVINE_DIVINITY_COST_STANDARD
+      minimum: 0.0
+      default: 50.0
+      description: Divinity cost for granting a Standard tier blessing
+
+    DivinityCostGreater:
+      type: number
+      format: float
+      env: DIVINE_DIVINITY_COST_GREATER
+      minimum: 0.0
+      default: 200.0
+      description: Divinity cost for granting a Greater tier blessing
+
+    DivinityCostSupreme:
+      type: number
+      format: float
+      env: DIVINE_DIVINITY_COST_SUPREME
+      minimum: 0.0
+      default: 1000.0
+      description: Divinity cost for granting a Supreme tier blessing
 
     DivinityGenerationMultiplier:
       type: number
@@ -327,7 +353,7 @@ x-service-configuration:
       type: string
       env: DIVINE_DEITY_ACTOR_TYPE_CODE
       default: deity_watcher
-      description: Actor type code used when spawning deity watcher actors via Puppetmaster
+      description: Actor type code used when starting deity watcher actors via Puppetmaster
 
     # Background workers
     AttentionWorkerIntervalSeconds:
@@ -521,13 +547,13 @@ Partial class with `[BannouService("divine", typeof(IDivineService), lifetime: S
 - `IRelationshipClient` - follower/rivalry bond management (L2 hard dependency)
 - `ICharacterClient` - validate character existence (L2 hard dependency)
 - `IGameServiceClient` - validate game service existence (L2 hard dependency)
+- `ISeedClient` - deity domain power seed management (L2 hard dependency)
+- `ICollectionClient` - permanent blessing grants via lib-collection (#286) (L2 hard dependency)
 - `IServiceProvider` - for optional L4 soft dependencies
 
 **Soft dependencies** (resolved at runtime via `IServiceProvider`, null-checked):
-- `ISeedClient` - deity domain power seed management (L2, deferred seed creation is acceptable)
-- `ICollectionClient` - permanent blessing grants via lib-collection (#286) (L4)
 - `IStatusClient` - temporary blessing grants via Status Inventory (#282) (L4)
-- `IPuppetmasterClient` - spawn deity watcher actors (L4)
+- `IPuppetmasterClient` - start/stop deity watcher actors (L4)
 - `IAnalyticsClient` - query domain-relevant score data (L4)
 
 **Store initialization** (in constructor):
@@ -541,18 +567,18 @@ Partial class with `[BannouService("divine", typeof(IDivineService), lifetime: S
 
 | Method | Key Logic |
 |--------|-----------|
-| `CreateDeityAsync` | Validate gameServiceId via `IGameServiceClient`. Validate code uniqueness per game service. Create DeityModel in MySQL. Create divinity currency wallet via `ICurrencyClient`. Optionally create deity domain seed via `ISeedClient`. Optionally spawn deity watcher actor via `IPuppetmasterClient`. Save walletId/seedId/actorId back to DeityModel. Publish lifecycle created event. |
+| `CreateDeityAsync` | Validate gameServiceId via `IGameServiceClient`. Validate code uniqueness per game service. Create DeityModel in MySQL. Create divinity currency wallet via `ICurrencyClient`. Create deity domain seed via `ISeedClient`. Optionally start deity watcher actor via `IPuppetmasterClient` (soft). Save walletId/seedId/actorId back to DeityModel. Publish lifecycle created event. |
 | `GetDeityAsync` | Load from MySQL by ID. 404 if not found. |
 | `GetDeityByCodeAsync` | JSON query by gameServiceId + code. 404 if not found. |
 | `ListDeitiesAsync` | Paged JSON query with optional filters (gameServiceId required, domain, status). |
 | `UpdateDeityAsync` | Lock, load, validate, update non-null fields. Publish lifecycle updated event. |
-| `ActivateDeityAsync` | Lock, load, set status Active. If actorId is null and Puppetmaster available, spawn watcher. Publish `divine.deity.activated` event. |
+| `ActivateDeityAsync` | Lock, load, set status Active. If actorId is null and Puppetmaster available, start watcher. Publish `divine.deity.activated` event. |
 | `DeactivateDeityAsync` | Lock, load, set status Dormant. If Puppetmaster available, stop watcher. Clear attention slots. Publish `divine.deity.dormant` event. |
 | `GetDivinityBalanceAsync` | Load deity, get walletId, call `ICurrencyClient.GetBalanceAsync`. |
 | `CreditDivinityAsync` | Validate deity exists. Call `ICurrencyClient.CreditAsync` on deity's wallet. Publish `divine.divinity.credited` event. |
 | `DebitDivinityAsync` | Validate deity exists. Validate sufficient balance via `ICurrencyClient.GetBalanceAsync`. Call `ICurrencyClient.DebitAsync`. Publish `divine.divinity.debited` event. |
 | `GetDivinityHistoryAsync` | Load deity, get walletId, call `ICurrencyClient.GetTransactionHistoryAsync`. |
-| `GrantBlessingAsync` | Lock deity. Validate deity is Active. Validate character exists via `ICharacterClient`. Validate character blessing count < `MaxBlessingsPerCharacter`. Calculate divinity cost from tier using `DefaultDivinityPerBlessingTier` config. Debit divinity from deity wallet. **For Greater/Supreme blessings**: grant permanent unlock via lib-collection (#286) pattern. **For Minor/Standard blessings**: grant status item via Status Inventory (#282) pattern with contract-based duration. Create BlessingModel in MySQL linking to the granted item/status. Publish `divine.blessing.granted` event. |
+| `GrantBlessingAsync` | Lock deity. Validate deity is Active. Validate character exists via `ICharacterClient`. Validate character blessing count < `MaxBlessingsPerCharacter`. Calculate divinity cost from tier using per-tier config properties (`DivinityCostMinor`/`Standard`/`Greater`/`Supreme`). Debit divinity from deity wallet. **For Greater/Supreme blessings**: grant permanent unlock via lib-collection (#286) pattern. **For Minor/Standard blessings**: grant status item via Status Inventory (#282) pattern with contract-based duration. Create BlessingModel in MySQL linking to the granted item/status. Publish `divine.blessing.granted` event. |
 | `RevokeBlessingAsync` | Lock. Load blessing record. For status-type blessings: remove status item (triggers contract cleanup). For permanent blessings: mark as revoked in collection. Mark BlessingModel as Revoked with timestamp. Publish `divine.blessing.revoked` event. |
 | `ListBlessingsByCharacterAsync` | Paged JSON query on `divine-blessings` by characterId. |
 | `ListBlessingsByDeityAsync` | Paged JSON query on `divine-blessings` by deityId, optional tier filter. |
@@ -641,7 +667,7 @@ All tests use the capture pattern (Callback on mock setups) to verify saved stat
 |------|--------|
 | `schemas/divine-api.yaml` | Create (~18 endpoints across 4 groups) |
 | `schemas/divine-events.yaml` | Create (lifecycle + 2 subscriptions + 8 custom events) |
-| `schemas/divine-configuration.yaml` | Create (14 configuration properties) |
+| `schemas/divine-configuration.yaml` | Create (17 configuration properties) |
 | `schemas/state-stores.yaml` | Modify (add 5 divine stores) |
 | `plugins/lib-divine/DivineService.cs` | Fill in (auto-generated template) |
 | `plugins/lib-divine/DivineServiceModels.cs` | Fill in (auto-generated template) |
@@ -673,13 +699,13 @@ All tests use the capture pattern (Callback on mock setups) to verify saved stat
 | `IRelationshipClient` | L2 | Follower bonds (deity-character), rivalry bonds (deity-deity) |
 | `ICharacterClient` | L2 | Validate character existence for blessings and followers |
 | `IGameServiceClient` | L2 | Validate game service existence for deity scoping |
+| `ISeedClient` | L2 | Deity domain power seed creation and growth tracking |
+| `ICollectionClient` | L2 | Permanent blessing grants (Greater/Supreme tiers, #286) |
 
 ### Soft Dependencies (runtime resolution -- graceful degradation)
 
 | Dependency | Layer | Usage | Behavior When Missing |
 |------------|-------|-------|-----------------------|
-| `ISeedClient` | L2 | Deity domain power seed creation | Deity created without seed; domain growth tracking disabled |
-| `ICollectionClient` | L4 | Permanent blessing grants (Greater/Supreme tiers, #286) | Permanent blessings unavailable; only temporary blessings work |
 | `IStatusClient` | L4 | Temporary blessing grants (Minor/Standard tiers, #282) | Temporary blessings unavailable; only permanent blessings work |
 | `IPuppetmasterClient` | L4 | Start/stop deity watcher actors | Deities have no active behavior; blessings still work via API |
 | `IAnalyticsClient` | L4 | Domain-relevant score queries for divinity generation | Divinity generation from analytics events disabled; manual credit still works |
@@ -698,7 +724,7 @@ All tests use the capture pattern (Callback on mock setups) to verify saved stat
 | Debit divinity for blessing grants | `ICurrencyClient.DebitAsync` |
 | Query divinity transaction history | `ICurrencyClient.GetTransactionHistoryAsync` |
 
-### Divine -> Collection (L4, soft dependency -- #286)
+### Divine -> Collection (L2, hard dependency -- #286)
 
 | Interaction | API Call |
 |-------------|----------|
@@ -730,7 +756,7 @@ All tests use the capture pattern (Callback on mock setups) to verify saved stat
 | Start deity watcher on activation | `IPuppetmasterClient.StartWatcherAsync` (actorType: config.DeityActorTypeCode, ABML behavior doc) |
 | Stop deity watcher on deactivation | `IPuppetmasterClient.StopWatcherAsync` |
 
-### Divine -> Seed (L2, soft in practice)
+### Divine -> Seed (L2, hard dependency)
 
 | Interaction | API Call |
 |-------------|----------|
@@ -777,7 +803,7 @@ These are smaller questions that should be resolved during implementation, not b
 
 1. **Blessing item/status template management**: Does lib-divine create templates on startup or expect them to pre-exist? Recommendation: Create them in `OnRunningAsync` if missing. Greater/Supreme tiers create collection entry templates (#286); Minor/Standard tiers create status templates (#282).
 
-2. **Divinity cost scaling**: Start with flat costs per tier from `DefaultDivinityPerBlessingTier` config. Add scaling (by follower count, realm conditions, etc.) in a follow-up.
+2. **Divinity cost scaling**: Start with flat costs per tier from `DivinityCostMinor`/`Standard`/`Greater`/`Supreme` config properties. Add scaling (by follower count, realm conditions, etc.) in a follow-up.
 
 3. **Attention slot semantics**: Start internal-only (god "notices" characters for behavior purposes). Add client events in follow-up if players should see divine attention.
 

@@ -519,23 +519,46 @@ This document lists all configuration options defined in Bannou's configuration 
 | `GARDENER_AFFINITY_WEIGHT` | double | `0.4` | Weight for domain affinity in scenario scoring algorithm |
 | `GARDENER_BACKGROUND_SERVICE_STARTUP_DELAY_SECONDS` | int | `5` | Seconds to wait before starting background workers after ser... |
 | `GARDENER_BOND_SCENARIO_PRIORITY` | double | `1.5` | Scoring boost multiplier for bond-friendly scenarios when pl... |
-| `GARDENER_BOND_SHARED_VOID_ENABLED` | bool | `true` | Whether bonded players share a void instance with merged POI... |
+| `GARDENER_BOND_SHARED_GARDEN_ENABLED` | bool | `true` | Whether bonded players share a garden instance with merged P... |
+| `GARDENER_DEFAULT_ESTIMATED_DURATION_MINUTES` | int | `30` | Fallback estimated duration for templates without an explici... |
 | `GARDENER_DEFAULT_PHASE` | string | `Alpha` | Starting deployment phase for new installations |
+| `GARDENER_DIRECTED_DISTANCE_THRESHOLD` | double | `200.0` | Minimum total drift distance to classify a player as directe... |
+| `GARDENER_DIRECTED_MAX_HESITATION_RATIO` | double | `0.15` | Maximum hesitation ratio to classify a player as directed |
+| `GARDENER_DISTRIBUTED_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for distributed lock acquisition on garde... |
+| `GARDENER_DIVERSITY_SEEN_PENALTY` | double | `0.2` | Diversity score multiplier for recently completed scenarios ... |
 | `GARDENER_DIVERSITY_WEIGHT` | double | `0.3` | Weight for category diversity in scenario scoring algorithm |
+| `GARDENER_EXPLORATION_DISTANCE_THRESHOLD` | double | `500.0` | Minimum total drift distance to classify a player as explori... |
+| `GARDENER_EXPLORATION_MAX_HESITATION_RATIO` | double | `0.3` | Maximum hesitation ratio to still classify a player as explo... |
+| `GARDENER_GARDEN_TICK_INTERVAL_MS` | int | `5000` | Milliseconds between garden orchestrator evaluation cycles |
 | `GARDENER_GROWTH_AWARD_MULTIPLIER` | double | `1.0` | Global multiplier applied to all growth awards from scenario... |
-| `GARDENER_MAX_ACTIVE_POIS_PER_VOID` | int | `8` | Maximum concurrent POIs per player void instance |
+| `GARDENER_GROWTH_FULL_COMPLETION_MAX_RATIO` | double | `1.5` | Maximum time ratio cap for full completion growth (overtime ... |
+| `GARDENER_GROWTH_FULL_COMPLETION_MIN_RATIO` | double | `0.5` | Minimum time ratio floor for full completion growth (speed-r... |
+| `GARDENER_GROWTH_PARTIAL_MAX_RATIO` | double | `0.5` | Maximum time ratio cap for abandoned/timed-out scenario grow... |
+| `GARDENER_HESITANT_HESITATION_THRESHOLD` | double | `0.6` | Minimum hesitation ratio to classify a player as hesitant |
+| `GARDENER_HESITATION_DETECTION_THRESHOLD` | double | `0.1` | Minimum distance movement for hesitation detection in garden... |
+| `GARDENER_HESITATION_RATIO_NORMALIZATION_FACTOR` | double | `10.0` | Divisor for normalizing hesitation count to a ratio against ... |
+| `GARDENER_MAX_ACTIVE_POIS_PER_GARDEN` | int | `8` | Maximum concurrent POIs per player garden instance |
 | `GARDENER_MAX_CONCURRENT_SCENARIOS_GLOBAL` | int | `1000` | Maximum total active scenario instances across all players |
-| `GARDENER_MIN_POI_SPACING` | double | `30.0` | Minimum distance between any two POIs in void space units |
+| `GARDENER_MIN_POI_SPACING` | double | `30.0` | Minimum distance between any two POIs in garden space units |
+| `GARDENER_NARRATIVE_SCORE_HIGH` | double | `0.9` | Narrative score for strongest category-pattern match (e.g. e... |
+| `GARDENER_NARRATIVE_SCORE_LOW` | double | `0.4` | Narrative score for weak category-pattern match (e.g. explor... |
+| `GARDENER_NARRATIVE_SCORE_MEDIUM` | double | `0.6` | Narrative score for moderate category-pattern match (e.g. ex... |
+| `GARDENER_NARRATIVE_SCORE_MEDIUM_HIGH` | double | `0.7` | Narrative score for good category-pattern match (e.g. explor... |
+| `GARDENER_NARRATIVE_SCORE_NEUTRAL` | double | `0.5` | Baseline narrative score when no player drift pattern is det... |
 | `GARDENER_NARRATIVE_WEIGHT` | double | `0.2` | Weight for drift-pattern narrative response in scenario scor... |
+| `GARDENER_POI_DEFAULT_INTENSITY_RAMP` | double | `0.5` | Default initial intensity ramp value for spawned POIs (0.0-1... |
+| `GARDENER_POI_DEFAULT_TRIGGER_RADIUS` | double | `15.0` | Default trigger radius for POI proximity detection in garden... |
 | `GARDENER_POI_DEFAULT_TTL_MINUTES` | int | `10` | Default time-to-live in minutes for spawned POIs before expi... |
-| `GARDENER_POI_SPAWN_RADIUS_MAX` | double | `200.0` | Maximum distance from player to spawn a POI in void space un... |
-| `GARDENER_POI_SPAWN_RADIUS_MIN` | double | `50.0` | Minimum distance from player to spawn a POI in void space un... |
+| `GARDENER_POI_POSITION_MAX_RETRIES` | int | `10` | Maximum rejection sampling attempts when generating a valid ... |
+| `GARDENER_POI_SPAWN_RADIUS_MAX` | double | `200.0` | Maximum distance from player to spawn a POI in garden space ... |
+| `GARDENER_POI_SPAWN_RADIUS_MIN` | double | `50.0` | Minimum distance from player to spawn a POI in garden space ... |
+| `GARDENER_POI_VERTICAL_DAMPENING_FACTOR` | double | `0.3` | Y-axis scale factor for POI vertical distribution relative t... |
+| `GARDENER_PROXIMITY_TRIGGER_MAX_HESITATION_RATIO` | double | `0.2` | Maximum hesitation ratio for proximity-based POI trigger mod... |
 | `GARDENER_RANDOM_WEIGHT` | double | `0.1` | Weight for randomness and discovery in scenario scoring |
 | `GARDENER_RECENT_SCENARIO_COOLDOWN_MINUTES` | int | `30` | Minutes before a completed scenario can be re-offered to the... |
 | `GARDENER_SCENARIO_LIFECYCLE_WORKER_INTERVAL_SECONDS` | int | `30` | Seconds between scenario lifecycle worker evaluation cycles |
 | `GARDENER_SCENARIO_TIMEOUT_MINUTES` | int | `60` | Maximum scenario duration before forced completion in minute... |
 | `GARDENER_SEED_TYPE_CODE` | string | `guardian` | Which seed type code this gardener manages for player spirit... |
-| `GARDENER_VOID_TICK_INTERVAL_MS` | int | `5000` | Milliseconds between void orchestrator evaluation cycles |
 
 ### Inventory
 
@@ -938,6 +961,7 @@ CHECK_ALL (defaul... |
 | `SEED_GROWTH_DECAY_ENABLED` | bool | `false` | Global toggle for growth domain decay. Per-type overrides ca... |
 | `SEED_GROWTH_DECAY_RATE_PER_DAY` | double | `0.01` | Global daily decay rate applied to unused growth domains. Pe... |
 | `SEED_MAX_SEED_TYPES_PER_GAME_SERVICE` | int | `50` | Maximum number of seed types that can be registered per game... |
+| `SEED_SEED_DATA_CACHE_TTL_SECONDS` | int | `60` | TTL in seconds for the seed data cache used by the variable ... |
 
 ### Species
 
@@ -1056,9 +1080,9 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 794
+- **Total properties**: 818
 - **Required (no default)**: 51
-- **Optional (has default)**: 743
+- **Optional (has default)**: 767
 
 ## Environment Variable Naming Convention
 

@@ -216,7 +216,7 @@ public class GardenerGardenOrchestratorWorker : BackgroundService
         // Phase 2: Determine if we need new POIs
         var activePoiCount = garden.ActivePoiIds.Count;
         var needsNewPois = garden.NeedsReEvaluation ||
-                           activePoiCount < _configuration.MaxActivePoisPerGarden;
+                            activePoiCount < _configuration.MaxActivePoisPerGarden;
 
         var spawned = 0;
         if (needsNewPois)

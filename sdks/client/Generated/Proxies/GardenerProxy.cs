@@ -27,43 +27,43 @@ public sealed class GardenerProxy
     }
 
     /// <summary>
-    /// Enter the void
+    /// Enter the garden
     /// </summary>
     /// <param name="request">The request payload.</param>
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>ApiResponse containing VoidStateResponse on success.</returns>
-    public Task<ApiResponse<VoidStateResponse>> EnterVoidAsync(
-        EnterVoidRequest request,
+    /// <returns>ApiResponse containing GardenStateResponse on success.</returns>
+    public Task<ApiResponse<GardenStateResponse>> EnterGardenAsync(
+        EnterGardenRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
         CancellationToken cancellationToken = default)
     {
-        return _client.InvokeAsync<EnterVoidRequest, VoidStateResponse>(
-            "/gardener/void/enter", request, channel, timeout, cancellationToken);
+        return _client.InvokeAsync<EnterGardenRequest, GardenStateResponse>(
+            "/gardener/garden/enter", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
-    /// Get current void state
+    /// Get current garden state
     /// </summary>
     /// <param name="request">The request payload.</param>
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>ApiResponse containing VoidStateResponse on success.</returns>
-    public Task<ApiResponse<VoidStateResponse>> GetVoidStateAsync(
-        GetVoidStateRequest request,
+    /// <returns>ApiResponse containing GardenStateResponse on success.</returns>
+    public Task<ApiResponse<GardenStateResponse>> GetGardenStateAsync(
+        GetGardenStateRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
         CancellationToken cancellationToken = default)
     {
-        return _client.InvokeAsync<GetVoidStateRequest, VoidStateResponse>(
-            "/gardener/void/get", request, channel, timeout, cancellationToken);
+        return _client.InvokeAsync<GetGardenStateRequest, GardenStateResponse>(
+            "/gardener/garden/get", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
-    /// Update player position in the void
+    /// Update player position in the garden
     /// </summary>
     /// <param name="request">The request payload.</param>
     /// <param name="channel">Message channel for ordering (default 0).</param>
@@ -77,25 +77,25 @@ public sealed class GardenerProxy
         CancellationToken cancellationToken = default)
     {
         return _client.InvokeAsync<UpdatePositionRequest, PositionUpdateResponse>(
-            "/gardener/void/update-position", request, channel, timeout, cancellationToken);
+            "/gardener/garden/update-position", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
-    /// Leave the void
+    /// Leave the garden
     /// </summary>
     /// <param name="request">The request payload.</param>
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>ApiResponse containing LeaveVoidResponse on success.</returns>
-    public Task<ApiResponse<LeaveVoidResponse>> LeaveVoidAsync(
-        LeaveVoidRequest request,
+    /// <returns>ApiResponse containing LeaveGardenResponse on success.</returns>
+    public Task<ApiResponse<LeaveGardenResponse>> LeaveGardenAsync(
+        LeaveGardenRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
         CancellationToken cancellationToken = default)
     {
-        return _client.InvokeAsync<LeaveVoidRequest, LeaveVoidResponse>(
-            "/gardener/void/leave", request, channel, timeout, cancellationToken);
+        return _client.InvokeAsync<LeaveGardenRequest, LeaveGardenResponse>(
+            "/gardener/garden/leave", request, channel, timeout, cancellationToken);
     }
 
     /// <summary>
@@ -423,20 +423,20 @@ public sealed class GardenerProxy
     }
 
     /// <summary>
-    /// Get shared void state for bonded players
+    /// Get shared garden state for bonded players
     /// </summary>
     /// <param name="request">The request payload.</param>
     /// <param name="channel">Message channel for ordering (default 0).</param>
     /// <param name="timeout">Request timeout.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>ApiResponse containing SharedVoidStateResponse on success.</returns>
-    public Task<ApiResponse<SharedVoidStateResponse>> GetSharedVoidStateAsync(
-        GetSharedVoidRequest request,
+    /// <returns>ApiResponse containing SharedGardenStateResponse on success.</returns>
+    public Task<ApiResponse<SharedGardenStateResponse>> GetSharedGardenStateAsync(
+        GetSharedGardenRequest request,
         ushort channel = 0,
         TimeSpan? timeout = null,
         CancellationToken cancellationToken = default)
     {
-        return _client.InvokeAsync<GetSharedVoidRequest, SharedVoidStateResponse>(
-            "/gardener/bond/get-shared-void", request, channel, timeout, cancellationToken);
+        return _client.InvokeAsync<GetSharedGardenRequest, SharedGardenStateResponse>(
+            "/gardener/bond/get-shared-garden", request, channel, timeout, cancellationToken);
     }
 }

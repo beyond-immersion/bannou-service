@@ -4586,7 +4586,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/gardener/void/enter': {
+  '/gardener/garden/enter': {
     parameters: {
       query?: never;
       header?: never;
@@ -4596,19 +4596,19 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Enter the void
-     * @description Creates a void instance for the player. Finds or creates the player's
+     * Enter the garden
+     * @description Creates a garden instance for the player. Finds or creates the player's
      *     active guardian seed, initializes drift metrics, and returns the initial
-     *     void state. First tick of the void orchestrator spawns POIs.
+     *     garden state. First tick of the garden orchestrator spawns POIs.
      */
-    post: operations['enterVoid'];
+    post: operations['enterGarden'];
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
     trace?: never;
   };
-  '/gardener/void/get': {
+  '/gardener/garden/get': {
     parameters: {
       query?: never;
       header?: never;
@@ -4618,17 +4618,17 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Get current void state
-     * @description Returns the player's current void instance with active POIs.
+     * Get current garden state
+     * @description Returns the player's current garden instance with active POIs.
      */
-    post: operations['getVoidState'];
+    post: operations['getGardenState'];
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
     trace?: never;
   };
-  '/gardener/void/update-position': {
+  '/gardener/garden/update-position': {
     parameters: {
       query?: never;
       header?: never;
@@ -4638,8 +4638,8 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Update player position in the void
-     * @description Updates the player's position and velocity in void space. Accumulates
+     * Update player position in the garden
+     * @description Updates the player's position and velocity in garden space. Accumulates
      *     drift metrics and checks proximity triggers against active POIs.
      */
     post: operations['updatePosition'];
@@ -4649,7 +4649,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/gardener/void/leave': {
+  '/gardener/garden/leave': {
     parameters: {
       query?: never;
       header?: never;
@@ -4659,11 +4659,11 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Leave the void
-     * @description Cleans up the void instance, all associated POIs, and publishes a
-     *     void-left event with session duration.
+     * Leave the garden
+     * @description Cleans up the garden instance, all associated POIs, and publishes a
+     *     garden-left event with session duration.
      */
-    post: operations['leaveVoid'];
+    post: operations['leaveGarden'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4681,7 +4681,7 @@ export interface paths {
     put?: never;
     /**
      * List active POIs
-     * @description Returns all active POIs for the player's current void instance.
+     * @description Returns all active POIs for the player's current garden instance.
      */
     post: operations['listPois'];
     delete?: never;
@@ -4723,7 +4723,7 @@ export interface paths {
     put?: never;
     /**
      * Decline a POI
-     * @description Marks a POI as declined. The template is added to the void instance's
+     * @description Marks a POI as declined. The template is added to the garden instance's
      *     scenario history for diversity scoring.
      */
     post: operations['declinePoi'];
@@ -4745,7 +4745,7 @@ export interface paths {
     /**
      * Enter a scenario
      * @description Validates prerequisites, creates a game session, creates a scenario
-     *     instance, destroys the void instance (player leaves the void), and
+     *     instance, destroys the garden instance (player leaves the garden), and
      *     publishes scenario-started events.
      */
     post: operations['enterScenario'];
@@ -4787,7 +4787,7 @@ export interface paths {
     /**
      * Complete a scenario
      * @description Calculates and awards growth per domain, closes the game session,
-     *     writes history, and returns the player to the void.
+     *     writes history, and returns the player to the garden.
      */
     post: operations['completeScenario'];
     delete?: never;
@@ -5010,7 +5010,7 @@ export interface paths {
     put?: never;
     /**
      * Get deployment phase metrics
-     * @description Returns current counts of active void instances, scenario instances, and capacity utilization.
+     * @description Returns current counts of active garden instances, scenario instances, and capacity utilization.
      */
     post: operations['getPhaseMetrics'];
     delete?: never;
@@ -5031,7 +5031,7 @@ export interface paths {
     /**
      * Enter a scenario together with a bonded player
      * @description Both bonded players enter a shared scenario instance. Validates bond state,
-     *     both participants' void instances, and template multiplayer support.
+     *     both participants' garden instances, and template multiplayer support.
      */
     post: operations['enterScenarioTogether'];
     delete?: never;
@@ -5040,7 +5040,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/gardener/bond/get-shared-void': {
+  '/gardener/bond/get-shared-garden': {
     parameters: {
       query?: never;
       header?: never;
@@ -5050,10 +5050,10 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Get shared void state for bonded players
-     * @description Returns the merged void state for both bond participants including shared POIs.
+     * Get shared garden state for bonded players
+     * @description Returns the merged garden state for both bond participants including shared POIs.
      */
-    post: operations['getSharedVoidState'];
+    post: operations['getSharedGardenState'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11772,8 +11772,8 @@ export interface components {
      * @enum {string}
      */
     BondStatus: 'PendingConfirmation' | 'Active';
-    /** @description Per-player void state within a shared bond void */
-    BondedPlayerVoidState: {
+    /** @description Per-player garden state within a shared bond garden */
+    BondedPlayerGardenState: {
       /**
        * Format: uuid
        * @description Seed ID of the bonded player
@@ -11784,7 +11784,7 @@ export interface components {
        * @description Account ID of the bonded player
        */
       accountId: string;
-      /** @description Player position in shared void space */
+      /** @description Player position in shared garden space */
       position: components['schemas']['Vec3'];
     };
     /** @description An axis-aligned bounding box in 3D space */
@@ -16778,6 +16778,19 @@ export interface components {
       /** @description Combat preferences (included if includeCombatPreferences=true) */
       combatPreferences?: components['schemas']['CombatPreferencesSnapshot'];
     };
+    /** @description Request to enter the garden */
+    EnterGardenRequest: {
+      /**
+       * Format: uuid
+       * @description Account entering the garden
+       */
+      accountId: string;
+      /**
+       * Format: uuid
+       * @description Current WebSocket session ID
+       */
+      sessionId: string;
+    };
     /** @description Request to enter a scenario */
     EnterScenarioRequest: {
       /**
@@ -16810,19 +16823,6 @@ export interface components {
        * @description Template to instantiate for the bond
        */
       scenarioTemplateId: string;
-    };
-    /** @description Request to enter the void */
-    EnterVoidRequest: {
-      /**
-       * Format: uuid
-       * @description Account entering the void
-       */
-      accountId: string;
-      /**
-       * Format: uuid
-       * @description Current WebSocket session ID
-       */
-      sessionId: string;
     };
     /** @description Entity's rank on a leaderboard */
     EntityRankResponse: {
@@ -18104,6 +18104,28 @@ export interface components {
     };
     /** @description Game service stub name for this session. Use the game service's stubName property (e.g., "my-game"). Use "generic" for non-game-specific sessions. */
     GameType: string;
+    /** @description Current garden instance state for a player */
+    GardenStateResponse: {
+      /**
+       * Format: uuid
+       * @description Unique identifier for this garden instance
+       */
+      gardenInstanceId: string;
+      /**
+       * Format: uuid
+       * @description Active seed for this garden session
+       */
+      seedId: string;
+      /**
+       * Format: uuid
+       * @description Account in the garden
+       */
+      accountId: string;
+      /** @description Current player position */
+      position: components['schemas']['Vec3'];
+      /** @description Currently active POIs in this garden instance */
+      activePois: components['schemas']['PoiSummary'][];
+    };
     /** @description Request to generate a complete musical composition */
     GenerateCompositionRequest: {
       /**
@@ -18871,6 +18893,14 @@ export interface components {
        */
       sessionId: string;
     };
+    /** @description Request to get current garden state */
+    GetGardenStateRequest: {
+      /**
+       * Format: uuid
+       * @description Account whose garden state to retrieve
+       */
+      accountId: string;
+    };
     /** @description Request to get global supply stats */
     GetGlobalSupplyRequest: {
       /**
@@ -19614,11 +19644,11 @@ export interface components {
       /** @description Stub name of the service to retrieve (null if using serviceId) */
       stubName?: string | null;
     };
-    /** @description Request to get shared void state for bonded players */
-    GetSharedVoidRequest: {
+    /** @description Request to get shared garden state for bonded players */
+    GetSharedGardenRequest: {
       /**
        * Format: uuid
-       * @description Bond ID to look up shared void state
+       * @description Bond ID to look up shared garden state
        */
       bondId: string;
     };
@@ -19803,14 +19833,6 @@ export interface components {
       sceneType: components['schemas']['SceneType'];
       /** @description Registered rules (empty if none) */
       rules?: components['schemas']['ValidationRule'][];
-    };
-    /** @description Request to get current void state */
-    GetVoidStateRequest: {
-      /**
-       * Format: uuid
-       * @description Account whose void state to retrieve
-       */
-      accountId: string;
     };
     /** @description Request to get a wallet */
     GetWalletRequest: {
@@ -20946,6 +20968,27 @@ export interface components {
       /** @description Game type being left. Determines which lobby to leave. Provided by shortcut system. */
       gameType: string;
     };
+    /** @description Request to leave the garden */
+    LeaveGardenRequest: {
+      /**
+       * Format: uuid
+       * @description Account leaving the garden
+       */
+      accountId: string;
+    };
+    /** @description Response after leaving the garden */
+    LeaveGardenResponse: {
+      /**
+       * Format: uuid
+       * @description Account that left the garden
+       */
+      accountId: string;
+      /**
+       * Format: float
+       * @description Total duration of the garden session in seconds
+       */
+      sessionDurationSeconds: number;
+    };
     /** @description Request to leave a matchmaking queue */
     LeaveMatchmakingRequest: {
       /**
@@ -20971,27 +21014,6 @@ export interface components {
        * @description Room ID to leave
        */
       roomId: string;
-    };
-    /** @description Request to leave the void */
-    LeaveVoidRequest: {
-      /**
-       * Format: uuid
-       * @description Account leaving the void
-       */
-      accountId: string;
-    };
-    /** @description Response after leaving the void */
-    LeaveVoidResponse: {
-      /**
-       * Format: uuid
-       * @description Account that left the void
-       */
-      accountId: string;
-      /**
-       * Format: float
-       * @description Total duration of the void session in seconds
-       */
-      sessionDurationSeconds: number;
     };
     /** @description License definition with all fields */
     LicenseDefinitionResponse: {
@@ -21738,13 +21760,13 @@ export interface components {
        */
       accountId: string;
     };
-    /** @description List of active POIs in a void instance */
+    /** @description List of active POIs in a garden instance */
     ListPoisResponse: {
       /**
        * Format: uuid
-       * @description Void instance these POIs belong to
+       * @description Garden instance these POIs belong to
        */
-      voidInstanceId: string;
+      gardenInstanceId: string;
       /** @description Active POIs */
       pois: components['schemas']['PoiSummary'][];
     };
@@ -23978,15 +24000,15 @@ export interface components {
       maxConcurrentScenariosGlobal: number;
       /** @description Whether persistent world entry is enabled */
       persistentEntryEnabled: boolean;
-      /** @description Whether void minigames are enabled */
-      voidMinigamesEnabled: boolean;
+      /** @description Whether garden minigames are enabled */
+      gardenMinigamesEnabled: boolean;
     };
     /** @description Current deployment phase metrics */
     PhaseMetricsResponse: {
       /** @description Current deployment phase */
       currentPhase: components['schemas']['DeploymentPhase'];
-      /** @description Number of currently active void instances */
-      activeVoidInstances: number;
+      /** @description Number of currently active garden instances */
+      activeGardenInstances: number;
       /** @description Number of currently active scenario instances */
       activeScenarioInstances: number;
       /**
@@ -24152,8 +24174,8 @@ export interface components {
        * @description POI that was interacted with
        */
       poiId: string;
-      /** @description Interaction outcome (scenario_prompt, scenario_enter, poi_update, chain_offer) */
-      result: string;
+      /** @description Interaction outcome */
+      result: components['schemas']['PoiInteractionResult'];
       /**
        * Format: uuid
        * @description Associated template ID if result involves a scenario
@@ -24164,6 +24186,11 @@ export interface components {
       /** @description Available choices for prompted POIs */
       promptChoices?: string[] | null;
     };
+    /**
+     * @description Outcome of interacting with a POI
+     * @enum {string}
+     */
+    PoiInteractionResult: 'ScenarioPrompt' | 'ScenarioEnter' | 'PoiUpdate' | 'ChainOffer';
     /**
      * @description Current lifecycle status of a POI
      * @enum {string}
@@ -24176,12 +24203,12 @@ export interface components {
        * @description Unique identifier for this POI
        */
       poiId: string;
-      /** @description POI position in void space */
+      /** @description POI position in garden space */
       position: components['schemas']['Vec3'];
       /** @description Sensory presentation type */
       poiType: components['schemas']['PoiType'];
-      /** @description Visual hint identifier for client rendering */
-      visualHint?: string | null;
+      /** @description Scenario category hint for client rendering */
+      visualHint?: components['schemas']['ScenarioCategory'];
       /** @description Audio hint identifier for client rendering */
       audioHint?: string | null;
       /**
@@ -24194,7 +24221,7 @@ export interface components {
       triggerMode: components['schemas']['TriggerMode'];
       /**
        * Format: float
-       * @description Trigger radius in void space units
+       * @description Trigger radius in garden space units
        */
       triggerRadius: number;
       /**
@@ -24206,7 +24233,7 @@ export interface components {
       status: components['schemas']['PoiStatus'];
     };
     /**
-     * @description Sensory presentation type for a point of interest in the void
+     * @description Sensory presentation type for a point of interest in the garden
      * @enum {string}
      */
     PoiType: 'Visual' | 'Auditory' | 'Environmental' | 'Portal' | 'Social';
@@ -26752,12 +26779,15 @@ export interface components {
       growthAwarded: {
         [key: string]: number;
       };
-      /** @description Whether the player should return to the void */
-      returnToVoid: boolean;
+      /** @description Whether the player should return to the garden */
+      returnToGarden: boolean;
     };
     /** @description Content references linking a scenario template to game assets */
     ScenarioContent: {
-      /** @description ABML behavior document ID for NPC orchestration */
+      /**
+       * Format: uuid
+       * @description ABML behavior document ID for NPC orchestration
+       */
       behaviorDocumentId?: string | null;
       /**
        * Format: uuid
@@ -27803,15 +27833,15 @@ export interface components {
       /** @description Number of template values set */
       valueCount?: number;
     };
-    /** @description Shared void state for bonded players */
-    SharedVoidStateResponse: {
+    /** @description Shared garden state for bonded players */
+    SharedGardenStateResponse: {
       /**
        * Format: uuid
        * @description Bond linking the participants
        */
       bondId: string;
-      /** @description Per-player void state */
-      participants: components['schemas']['BondedPlayerVoidState'][];
+      /** @description Per-player garden state */
+      participants: components['schemas']['BondedPlayerGardenState'][];
       /** @description POIs visible to all bond participants */
       sharedPois: components['schemas']['PoiSummary'][];
     };
@@ -29675,17 +29705,17 @@ export interface components {
       maxConcurrentScenariosGlobal?: number | null;
       /** @description Whether persistent world entry is enabled */
       persistentEntryEnabled?: boolean | null;
-      /** @description Whether void minigames are enabled */
-      voidMinigamesEnabled?: boolean | null;
+      /** @description Whether garden minigames are enabled */
+      gardenMinigamesEnabled?: boolean | null;
     };
-    /** @description Request to update player position in the void */
+    /** @description Request to update player position in the garden */
     UpdatePositionRequest: {
       /**
        * Format: uuid
        * @description Account whose position to update
        */
       accountId: string;
-      /** @description New position in void space */
+      /** @description New position in garden space */
       position: components['schemas']['Vec3'];
       /** @description Current velocity vector */
       velocity: components['schemas']['Vec3'];
@@ -30379,21 +30409,21 @@ export interface components {
       /** @description Full JSON Schema string for complex Custom format validation */
       jsonSchema?: string | null;
     };
-    /** @description Three-dimensional spatial coordinates in void space */
+    /** @description Three-dimensional spatial coordinates in garden space */
     Vec3: {
       /**
        * Format: float
-       * @description X coordinate in void space units
+       * @description X coordinate in garden space units
        */
       x: number;
       /**
        * Format: float
-       * @description Y coordinate in void space units
+       * @description Y coordinate in garden space units
        */
       y: number;
       /**
        * Format: float
-       * @description Z coordinate in void space units
+       * @description Z coordinate in garden space units
        */
       z: number;
     };
@@ -30606,28 +30636,6 @@ export interface components {
       symbol: components['schemas']['ChordSymbol'];
       /** @description Pitches from lowest to highest voice */
       pitches: components['schemas']['Pitch'][];
-    };
-    /** @description Current void instance state for a player */
-    VoidStateResponse: {
-      /**
-       * Format: uuid
-       * @description Unique identifier for this void instance
-       */
-      voidInstanceId: string;
-      /**
-       * Format: uuid
-       * @description Active seed for this void session
-       */
-      seedId: string;
-      /**
-       * Format: uuid
-       * @description Account in the void
-       */
-      accountId: string;
-      /** @description Current player position */
-      position: components['schemas']['Vec3'];
-      /** @description Currently active POIs in this void instance */
-      activePois: components['schemas']['PoiSummary'][];
     };
     /**
      * @description Shape of a volume node for spatial bounds
@@ -37488,7 +37496,7 @@ export interface operations {
       };
     };
   };
-  enterVoid: {
+  enterGarden: {
     parameters: {
       query?: never;
       header?: never;
@@ -37497,17 +37505,17 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['EnterVoidRequest'];
+        'application/json': components['schemas']['EnterGardenRequest'];
       };
     };
     responses: {
-      /** @description Void instance created successfully */
+      /** @description Garden instance created successfully */
       200: {
         headers: {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['VoidStateResponse'];
+          'application/json': components['schemas']['GardenStateResponse'];
         };
       };
       /** @description No active seed found for account */
@@ -37517,7 +37525,7 @@ export interface operations {
         };
         content?: never;
       };
-      /** @description Player already has an active void instance */
+      /** @description Player already has an active garden instance */
       409: {
         headers: {
           [name: string]: unknown;
@@ -37526,7 +37534,7 @@ export interface operations {
       };
     };
   };
-  getVoidState: {
+  getGardenState: {
     parameters: {
       query?: never;
       header?: never;
@@ -37535,20 +37543,20 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['GetVoidStateRequest'];
+        'application/json': components['schemas']['GetGardenStateRequest'];
       };
     };
     responses: {
-      /** @description Void state retrieved */
+      /** @description Garden state retrieved */
       200: {
         headers: {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['VoidStateResponse'];
+          'application/json': components['schemas']['GardenStateResponse'];
         };
       };
-      /** @description Player is not in the void */
+      /** @description Player is not in the garden */
       404: {
         headers: {
           [name: string]: unknown;
@@ -37579,7 +37587,7 @@ export interface operations {
           'application/json': components['schemas']['PositionUpdateResponse'];
         };
       };
-      /** @description Player is not in the void */
+      /** @description Player is not in the garden */
       404: {
         headers: {
           [name: string]: unknown;
@@ -37588,7 +37596,7 @@ export interface operations {
       };
     };
   };
-  leaveVoid: {
+  leaveGarden: {
     parameters: {
       query?: never;
       header?: never;
@@ -37597,20 +37605,20 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['LeaveVoidRequest'];
+        'application/json': components['schemas']['LeaveGardenRequest'];
       };
     };
     responses: {
-      /** @description Left the void */
+      /** @description Left the garden */
       200: {
         headers: {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['LeaveVoidResponse'];
+          'application/json': components['schemas']['LeaveGardenResponse'];
         };
       };
-      /** @description Player is not in the void */
+      /** @description Player is not in the garden */
       404: {
         headers: {
           [name: string]: unknown;
@@ -37641,7 +37649,7 @@ export interface operations {
           'application/json': components['schemas']['ListPoisResponse'];
         };
       };
-      /** @description Player is not in the void */
+      /** @description Player is not in the garden */
       404: {
         headers: {
           [name: string]: unknown;
@@ -38168,7 +38176,7 @@ export interface operations {
           'application/json': components['schemas']['ScenarioStateResponse'];
         };
       };
-      /** @description One or both participants not in void, or template does not support multiplayer */
+      /** @description One or both participants not in garden, or template does not support multiplayer */
       400: {
         headers: {
           [name: string]: unknown;
@@ -38184,7 +38192,7 @@ export interface operations {
       };
     };
   };
-  getSharedVoidState: {
+  getSharedGardenState: {
     parameters: {
       query?: never;
       header?: never;
@@ -38193,20 +38201,20 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['GetSharedVoidRequest'];
+        'application/json': components['schemas']['GetSharedGardenRequest'];
       };
     };
     responses: {
-      /** @description Shared void state retrieved */
+      /** @description Shared garden state retrieved */
       200: {
         headers: {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['SharedVoidStateResponse'];
+          'application/json': components['schemas']['SharedGardenStateResponse'];
         };
       };
-      /** @description Bond not found or participants not in void */
+      /** @description Bond not found or participants not in garden */
       404: {
         headers: {
           [name: string]: unknown;

@@ -1,10 +1,10 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Events;
-using BeyondImmersion.BannouService.Gardener;
 using BeyondImmersion.BannouService.GameSession;
+using BeyondImmersion.BannouService.Gardener;
 using BeyondImmersion.BannouService.Messaging;
-using BeyondImmersion.BannouService.Seed;
 using BeyondImmersion.BannouService.Providers;
+using BeyondImmersion.BannouService.Seed;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using BeyondImmersion.BannouService.Testing;
@@ -150,18 +150,18 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
 
     private SeedResponse CreateTestSeedResponse(
         SeedStatus status = SeedStatus.Active, string? growthPhase = null) => new()
-    {
-        SeedId = _testSeedId,
-        OwnerId = _testAccountId,
-        OwnerType = "account",
-        SeedTypeCode = "guardian",
-        GrowthPhase = growthPhase ?? "nascent",
-        Status = status,
-        BondId = null,
-        DisplayName = "Test Guardian",
-        GameServiceId = Guid.NewGuid(),
-        CreatedAt = DateTimeOffset.UtcNow.AddDays(-1)
-    };
+        {
+            SeedId = _testSeedId,
+            OwnerId = _testAccountId,
+            OwnerType = "account",
+            SeedTypeCode = "guardian",
+            GrowthPhase = growthPhase ?? "nascent",
+            Status = status,
+            BondId = null,
+            DisplayName = "Test Guardian",
+            GameServiceId = Guid.NewGuid(),
+            CreatedAt = DateTimeOffset.UtcNow.AddDays(-1)
+        };
 
     private GardenInstanceModel CreateTestGarden(Guid? accountId = null) => new()
     {
@@ -177,36 +177,36 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
 
     private ScenarioTemplateModel CreateTestTemplate(
         string code = "combat-01", TemplateStatus status = TemplateStatus.Active) => new()
-    {
-        ScenarioTemplateId = _testTemplateId,
-        Code = code,
-        DisplayName = "Test Scenario",
-        Description = "A test scenario",
-        Category = ScenarioCategory.Combat,
-        ConnectivityMode = ConnectivityMode.Isolated,
-        DomainWeights = new List<DomainWeightModel>
+        {
+            ScenarioTemplateId = _testTemplateId,
+            Code = code,
+            DisplayName = "Test Scenario",
+            Description = "A test scenario",
+            Category = ScenarioCategory.Combat,
+            ConnectivityMode = ConnectivityMode.Isolated,
+            DomainWeights = new List<DomainWeightModel>
         {
             new() { Domain = "combat.melee", Weight = 1.0f },
             new() { Domain = "combat.tactics", Weight = 0.5f }
         },
-        AllowedPhases = new List<DeploymentPhase>(),
-        Status = status,
-        CreatedAt = DateTimeOffset.UtcNow.AddDays(-7),
-        UpdatedAt = DateTimeOffset.UtcNow.AddDays(-7)
-    };
+            AllowedPhases = new List<DeploymentPhase>(),
+            Status = status,
+            CreatedAt = DateTimeOffset.UtcNow.AddDays(-7),
+            UpdatedAt = DateTimeOffset.UtcNow.AddDays(-7)
+        };
 
     private ScenarioInstanceModel CreateTestScenario(
         ScenarioStatus status = ScenarioStatus.Active) => new()
-    {
-        ScenarioInstanceId = Guid.NewGuid(),
-        ScenarioTemplateId = _testTemplateId,
-        GameSessionId = _testGameSessionId,
-        ConnectivityMode = ConnectivityMode.Isolated,
-        Status = status,
-        CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-5),
-        LastActivityAt = DateTimeOffset.UtcNow.AddMinutes(-1),
-        ChainDepth = 0,
-        Participants = new List<ScenarioParticipantModel>
+        {
+            ScenarioInstanceId = Guid.NewGuid(),
+            ScenarioTemplateId = _testTemplateId,
+            GameSessionId = _testGameSessionId,
+            ConnectivityMode = ConnectivityMode.Isolated,
+            Status = status,
+            CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-5),
+            LastActivityAt = DateTimeOffset.UtcNow.AddMinutes(-1),
+            ChainDepth = 0,
+            Participants = new List<ScenarioParticipantModel>
         {
             new()
             {
@@ -217,7 +217,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
                 Role = ScenarioParticipantRole.Primary
             }
         }
-    };
+        };
 
     private PoiModel CreateTestPoi(Guid gardenInstanceId, PoiStatus status = PoiStatus.Active) => new()
     {

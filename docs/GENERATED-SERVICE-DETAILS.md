@@ -137,9 +137,7 @@ Hybrid lobby/matchmade game session management (L2 GameFoundation) with subscrip
 
 **Version**: 1.0.0 | **Schema**: `schemas/gardener-api.yaml` | **Endpoints**: 23 | **Deep Dive**: [docs/plugins/GARDENER.md](plugins/GARDENER.md)
 
-Player experience orchestration service (L4 GameFeatures) for void navigation,
-scenario routing, progressive discovery, and deployment phase management.
-Gardener is the player-side counterpart to P...
+Player experience orchestration service (L4 GameFeatures) for garden navigation, scenario routing, progressive discovery, and deployment phase management. Gardener is the player-side counterpart to Puppetmaster: where Puppetmaster orchestrates what NPCs experience, Gardener orchestrates what players experience. Players enter a procedural "Garden" discovery space, encounter POIs (Points of Interest) driven by a weighted scoring algorithm, and enter scenarios backed by Game Sessions that award Seed growth on completion. Internal-only, never internet-facing.
 
 ## Inventory {#inventory}
 

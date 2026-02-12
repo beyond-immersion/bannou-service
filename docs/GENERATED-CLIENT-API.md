@@ -1031,14 +1031,14 @@ Minimal game session management for games.
 
 **Proxy**: `client.Gardener` | **Version**: 1.0.0
 
-Player experience orchestration service (L4 GameFeatures) for void navigation, scenario routing, progressive discovery, and deployment phase manage...
+Player experience orchestration service (L4 GameFeatures) for garden navigation, scenario routing, progressive discovery, and deployment phase mana...
 
 ### Bond Scenarios
 
 | Method | Request | Response | Summary |
 |--------|---------|----------|---------|
 | `EnterscenariotogetherAsync` | `EnterTogetherRequest` | `ScenarioStateResponse` | Enter a scenario together with a bonded player |
-| `GetSharedvoidstateAsync` | `GetSharedVoidRequest` | `SharedVoidStateResponse` | Get shared void state for bonded players |
+| `GetSharedgardenstateAsync` | `GetSharedGardenRequest` | `SharedGardenStateResponse` | Get shared garden state for bonded players |
 
 ### Deployment Phase
 
@@ -1047,6 +1047,15 @@ Player experience orchestration service (L4 GameFeatures) for void navigation, s
 | `GetPhaseconfigAsync` | `GetPhaseConfigRequest` | `PhaseConfigResponse` | Get deployment phase configuration |
 | `UpdatePhaseconfigAsync` | `UpdatePhaseConfigRequest` | `PhaseConfigResponse` | Update deployment phase configuration |
 | `GetPhasemetricsAsync` | `GetPhaseMetricsRequest` | `PhaseMetricsResponse` | Get deployment phase metrics |
+
+### Garden Management
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `EntergardenAsync` | `EnterGardenRequest` | `GardenStateResponse` | Enter the garden |
+| `GetGardenstateAsync` | `GetGardenStateRequest` | `GardenStateResponse` | Get current garden state |
+| `UpdatePositionAsync` | `UpdatePositionRequest` | `PositionUpdateResponse` | Update player position in the garden |
+| `LeavegardenAsync` | `LeaveGardenRequest` | `LeaveGardenResponse` | Leave the garden |
 
 ### POI Interaction
 
@@ -1076,15 +1085,6 @@ Player experience orchestration service (L4 GameFeatures) for void navigation, s
 | `ListTemplatesAsync` | `ListTemplatesRequest` | `ListTemplatesResponse` | List scenario templates |
 | `UpdateTemplateAsync` | `UpdateTemplateRequest` | `ScenarioTemplateResponse` | Update scenario template |
 | `DeprecatetemplateAsync` | `DeprecateTemplateRequest` | `ScenarioTemplateResponse` | Deprecate scenario template |
-
-### Void Management
-
-| Method | Request | Response | Summary |
-|--------|---------|----------|---------|
-| `EntervoidAsync` | `EnterVoidRequest` | `VoidStateResponse` | Enter the void |
-| `GetVoidstateAsync` | `GetVoidStateRequest` | `VoidStateResponse` | Get current void state |
-| `UpdatePositionAsync` | `UpdatePositionRequest` | `PositionUpdateResponse` | Update player position in the void |
-| `LeavevoidAsync` | `LeaveVoidRequest` | `LeaveVoidResponse` | Leave the void |
 
 ---
 

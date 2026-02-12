@@ -946,42 +946,46 @@ public partial class GameSessionService : IGameSessionService
         }
 
         // Clear game-session:in_game state via Permission service
-        try
+        // Skip when WebSocketSessionId is null (server-side cleanup with no real session)
+        if (body.WebSocketSessionId.HasValue)
         {
-            await _permissionClient.ClearSessionStateAsync(new Permission.ClearSessionStateRequest
+            try
             {
-                SessionId = body.WebSocketSessionId,
-                ServiceId = "game-session"
-            }, cancellationToken);
-        }
-        catch (ApiException ex)
-        {
-            // Permission service returned an error - continue anyway, state cleaned up on session expiry
-            _logger.LogWarning(ex, "Permission service error clearing session state for {SessionId}: {StatusCode}",
-                body.WebSocketSessionId, ex.StatusCode);
-            await _messageBus.TryPublishErrorAsync(
-                "game-session",
-                "ClearSessionState",
-                "api_exception",
-                ex.Message,
-                dependency: "permission",
-                endpoint: "post:/permission/clear-session-state",
-                details: new { SessionId = body.WebSocketSessionId, StatusCode = ex.StatusCode },
-                stack: ex.StackTrace);
-        }
-        catch (Exception ex)
-        {
-            // Unexpected error - continue anyway, state cleaned up on session expiry
-            _logger.LogError(ex, "Failed to clear session state for {SessionId} during leave", body.WebSocketSessionId);
-            await _messageBus.TryPublishErrorAsync(
-                "game-session",
-                "ClearSessionState",
-                ex.GetType().Name,
-                ex.Message,
-                dependency: "permission",
-                endpoint: "post:/permission/clear-session-state",
-                details: new { SessionId = body.WebSocketSessionId },
-                stack: ex.StackTrace);
+                await _permissionClient.ClearSessionStateAsync(new Permission.ClearSessionStateRequest
+                {
+                    SessionId = body.WebSocketSessionId.Value,
+                    ServiceId = "game-session"
+                }, cancellationToken);
+            }
+            catch (ApiException ex)
+            {
+                // Permission service returned an error - continue anyway, state cleaned up on session expiry
+                _logger.LogWarning(ex, "Permission service error clearing session state for {SessionId}: {StatusCode}",
+                    body.WebSocketSessionId.Value, ex.StatusCode);
+                await _messageBus.TryPublishErrorAsync(
+                    "game-session",
+                    "ClearSessionState",
+                    "api_exception",
+                    ex.Message,
+                    dependency: "permission",
+                    endpoint: "post:/permission/clear-session-state",
+                    details: new { SessionId = body.WebSocketSessionId.Value, StatusCode = ex.StatusCode },
+                    stack: ex.StackTrace);
+            }
+            catch (Exception ex)
+            {
+                // Unexpected error - continue anyway, state cleaned up on session expiry
+                _logger.LogError(ex, "Failed to clear session state for {SessionId} during leave", body.WebSocketSessionId.Value);
+                await _messageBus.TryPublishErrorAsync(
+                    "game-session",
+                    "ClearSessionState",
+                    ex.GetType().Name,
+                    ex.Message,
+                    dependency: "permission",
+                    endpoint: "post:/permission/clear-session-state",
+                    details: new { SessionId = body.WebSocketSessionId.Value },
+                    stack: ex.StackTrace);
+            }
         }
 
         model.Players.Remove(leavingPlayer);

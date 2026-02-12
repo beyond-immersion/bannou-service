@@ -108,6 +108,8 @@ public static class EventSubscriptionRegistration
 
         // From puppetmaster-events.yaml
         EventSubscriptionRegistry.Register<RealmCreatedEvent>("realm.created");
+        EventSubscriptionRegistry.Register<RealmDeletedEvent>("realm.deleted");
+        EventSubscriptionRegistry.Register<RealmUpdatedEvent>("realm.updated");
         EventSubscriptionRegistry.Register<BehaviorUpdatedEvent>("behavior.updated");
         EventSubscriptionRegistry.Register<ActorInstanceDeletedEvent>("actor.instance.deleted");
 

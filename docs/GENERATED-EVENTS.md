@@ -306,17 +306,17 @@ This document lists all events defined in Bannou's event schemas.
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
 | `GardenerBondEnteredTogetherEvent` | Custom | `gardener-bond-entered-together` | Published when bonded players enter a scenario tog... |
+| `GardenerGardenEnteredEvent` | Custom | `gardener-garden-entered` | Published when a player enters the garden |
+| `GardenerGardenLeftEvent` | Custom | `gardener-garden-left` | Published when a player leaves the garden |
 | `GardenerPhaseChangedEvent` | Custom | `gardener-phase-changed` | Published when the deployment phase changes |
 | `GardenerPoiDeclinedEvent` | Custom | `gardener-poi-declined` | Published when a player declines a POI |
 | `GardenerPoiEnteredEvent` | Custom | `gardener-poi-entered` | Published when a player enters a POI or triggers a... |
 | `GardenerPoiExpiredEvent` | Expiration | `gardener-poi.expired` | Published when a POI expires without player intera... |
-| `GardenerPoiSpawnedEvent` | Custom | `gardener-poi-spawned` | Published when a POI spawns in a void instance |
+| `GardenerPoiSpawnedEvent` | Custom | `gardener-poi-spawned` | Published when a POI spawns in a garden instance |
 | `GardenerScenarioAbandonedEvent` | Custom | `gardener-scenario-abandoned` | Published when a scenario is abandoned |
 | `GardenerScenarioChainedEvent` | Custom | `gardener-scenario-chained` | Published when a player chains from one scenario t... |
 | `GardenerScenarioCompletedEvent` | Custom | `gardener-scenario-completed` | Published when a scenario is completed with growth... |
 | `GardenerScenarioStartedEvent` | Custom | `gardener-scenario-started` | Published when a scenario instance is created |
-| `GardenerVoidEnteredEvent` | Custom | `gardener-void-entered` | Published when a player enters the void |
-| `GardenerVoidLeftEvent` | Custom | `gardener-void-left` | Published when a player leaves the void |
 
 ### Inventory
 

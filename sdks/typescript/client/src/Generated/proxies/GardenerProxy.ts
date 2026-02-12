@@ -25,19 +25,19 @@ export class GardenerProxy {
   }
 
   /**
-   * Enter the void
+   * Enter the garden
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async enterVoidAsync(
-    request: Schemas['EnterVoidRequest'],
+  async enterGardenAsync(
+    request: Schemas['EnterGardenRequest'],
     channel: number = 0,
     timeout?: number
-  ): Promise<ApiResponse<Schemas['VoidStateResponse']>> {
-    return this.client.invokeAsync<Schemas['EnterVoidRequest'], Schemas['VoidStateResponse']>(
-      '/gardener/void/enter',
+  ): Promise<ApiResponse<Schemas['GardenStateResponse']>> {
+    return this.client.invokeAsync<Schemas['EnterGardenRequest'], Schemas['GardenStateResponse']>(
+      '/gardener/garden/enter',
       request,
       channel,
       timeout
@@ -45,27 +45,25 @@ export class GardenerProxy {
   }
 
   /**
-   * Get current void state
+   * Get current garden state
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getVoidStateAsync(
-    request: Schemas['GetVoidStateRequest'],
+  async getGardenStateAsync(
+    request: Schemas['GetGardenStateRequest'],
     channel: number = 0,
     timeout?: number
-  ): Promise<ApiResponse<Schemas['VoidStateResponse']>> {
-    return this.client.invokeAsync<Schemas['GetVoidStateRequest'], Schemas['VoidStateResponse']>(
-      '/gardener/void/get',
-      request,
-      channel,
-      timeout
-    );
+  ): Promise<ApiResponse<Schemas['GardenStateResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['GetGardenStateRequest'],
+      Schemas['GardenStateResponse']
+    >('/gardener/garden/get', request, channel, timeout);
   }
 
   /**
-   * Update player position in the void
+   * Update player position in the garden
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
    * @param timeout - Request timeout in milliseconds.
@@ -79,23 +77,23 @@ export class GardenerProxy {
     return this.client.invokeAsync<
       Schemas['UpdatePositionRequest'],
       Schemas['PositionUpdateResponse']
-    >('/gardener/void/update-position', request, channel, timeout);
+    >('/gardener/garden/update-position', request, channel, timeout);
   }
 
   /**
-   * Leave the void
+   * Leave the garden
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async leaveVoidAsync(
-    request: Schemas['LeaveVoidRequest'],
+  async leaveGardenAsync(
+    request: Schemas['LeaveGardenRequest'],
     channel: number = 0,
     timeout?: number
-  ): Promise<ApiResponse<Schemas['LeaveVoidResponse']>> {
-    return this.client.invokeAsync<Schemas['LeaveVoidRequest'], Schemas['LeaveVoidResponse']>(
-      '/gardener/void/leave',
+  ): Promise<ApiResponse<Schemas['LeaveGardenResponse']>> {
+    return this.client.invokeAsync<Schemas['LeaveGardenRequest'], Schemas['LeaveGardenResponse']>(
+      '/gardener/garden/leave',
       request,
       channel,
       timeout
@@ -431,20 +429,20 @@ export class GardenerProxy {
   }
 
   /**
-   * Get shared void state for bonded players
+   * Get shared garden state for bonded players
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).
    * @param timeout - Request timeout in milliseconds.
    * @returns ApiResponse containing the response on success.
    */
-  async getSharedVoidStateAsync(
-    request: Schemas['GetSharedVoidRequest'],
+  async getSharedGardenStateAsync(
+    request: Schemas['GetSharedGardenRequest'],
     channel: number = 0,
     timeout?: number
-  ): Promise<ApiResponse<Schemas['SharedVoidStateResponse']>> {
+  ): Promise<ApiResponse<Schemas['SharedGardenStateResponse']>> {
     return this.client.invokeAsync<
-      Schemas['GetSharedVoidRequest'],
-      Schemas['SharedVoidStateResponse']
-    >('/gardener/bond/get-shared-void', request, channel, timeout);
+      Schemas['GetSharedGardenRequest'],
+      Schemas['SharedGardenStateResponse']
+    >('/gardener/bond/get-shared-garden', request, channel, timeout);
   }
 }

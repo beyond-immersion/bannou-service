@@ -382,15 +382,12 @@ public class GardenerScenarioLifecycleWorker : BackgroundService
         {
             try
             {
-                // IMPLEMENTATION TENETS: Guid.Empty is a sentinel (no-sentinel violation);
-                // game-session schema requires non-nullable webSocketSessionId but
-                // server-side leave has no real session. Needs game-session schema fix.
                 await gameSessionClient.LeaveGameSessionByIdAsync(
                     new LeaveGameSessionByIdRequest
                     {
                         GameSessionId = scenario.GameSessionId,
                         AccountId = participant.AccountId,
-                        WebSocketSessionId = Guid.Empty
+                        WebSocketSessionId = null
                     }, ct);
             }
             catch (ApiException ex)

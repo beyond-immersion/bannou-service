@@ -66,7 +66,7 @@ public class GardenerServicePlugin : StandardServicePlugin<IGardenerService>
             await seedClient.RegisterSeedTypeAsync(new RegisterSeedTypeRequest
             {
                 SeedTypeCode = configuration.SeedTypeCode,
-                GameServiceId = Guid.Empty, // Gardener is cross-game; resolved at runtime
+                GameServiceId = null,
                 DisplayName = "Guardian Spirit",
                 Description = "Player guardian spirit that grows through garden exploration and scenario completion",
                 MaxPerOwner = 1,

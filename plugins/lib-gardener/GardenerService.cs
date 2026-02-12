@@ -1056,8 +1056,12 @@ public partial class GardenerService : IGardenerService
             conditions.Add(new QueryCondition { Path = "$.Category", Operator = QueryOperator.Equals, Value = body.Category.Value.ToString() });
 
         if (body.ConnectivityMode != null)
-            conditions.Add(new QueryCondition { Path = "$.ConnectivityMode", Operator = QueryOperator.Equals,
-                Value = body.ConnectivityMode.Value.ToString() });
+            conditions.Add(new QueryCondition
+            {
+                Path = "$.ConnectivityMode",
+                Operator = QueryOperator.Equals,
+                Value = body.ConnectivityMode.Value.ToString()
+            });
 
         if (body.Status != null)
             conditions.Add(new QueryCondition { Path = "$.Status", Operator = QueryOperator.Equals, Value = body.Status.Value.ToString() });
@@ -1663,15 +1667,12 @@ public partial class GardenerService : IGardenerService
         {
             try
             {
-                // IMPLEMENTATION TENETS: Guid.Empty is a sentinel (T26 violation);
-                // game-session schema requires non-nullable webSocketSessionId but
-                // server-side leave has no real session. Needs game-session schema fix.
                 await _gameSessionClient.LeaveGameSessionByIdAsync(
                     new LeaveGameSessionByIdRequest
                     {
                         GameSessionId = scenario.GameSessionId,
                         AccountId = participant.AccountId,
-                        WebSocketSessionId = Guid.Empty
+                        WebSocketSessionId = null
                     }, ct);
             }
             catch (ApiException ex)
