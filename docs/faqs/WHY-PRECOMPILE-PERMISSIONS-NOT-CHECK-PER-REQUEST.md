@@ -34,14 +34,14 @@ With precompilation, this entire calculation happens **once** when the session s
 
 Precompilation enables a **push** model for permission changes. When something changes that affects a session's permissions, the Permission service recompiles and pushes the updated manifest immediately:
 
-| Trigger | What Changes | Who Recompiles |
-|---------|-------------|----------------|
-| User authenticates | Roles added (anonymous -> user) | Permission recompiles on `session.connected` |
-| Admin grants role | New role added to session | Permission recompiles on `session.updated` from Auth |
-| Player joins game | `in_game` state set | Permission recompiles on `session-state-changed` from GameSession |
-| Player enters match | `in_match` state set | Permission recompiles on `session-state-changed` from Matchmaking |
-| Player starts voice call | `in_call` state set | Permission recompiles on `session-state-changed` from Voice |
-| New service deploys | New endpoints registered | Permission recompiles on `service-registered` |
+| Trigger | What Changes | How Permission Learns |
+|---------|-------------|----------------------|
+| User authenticates | Roles added (anonymous -> user) | Permission recompiles on `session.connected` event (L1 broadcast) |
+| Admin grants role | New role added to session | Permission recompiles on `session.updated` event from Auth (L1 broadcast) |
+| Player joins game | `in_game` state set | GameSession calls `UpdateSessionStateAsync` directly (L2→L1 API call) |
+| Player enters match | `in_match` state set | Matchmaking calls `UpdateSessionStateAsync` directly (L4→L1 API call) |
+| Player starts voice call | `in_call` state set | Voice calls `UpdateSessionStateAsync` directly (L3→L1 API call) |
+| New service deploys | New endpoints registered | DI-based `IPermissionRegistry` at startup (no events -- compile-time discovery) |
 
 Each of these triggers exactly one recompilation for the affected session(s). Between triggers, every message for that session uses the precompiled manifest with zero permission overhead.
 
@@ -69,10 +69,8 @@ Services declare their permission requirements in their OpenAPI schema using the
 /account/get:
   post:
     x-permissions:
-      - state: authenticated
-        roles: [user, admin]
       - state: in_game
-        roles: [user]
+        role: user
 ```
 
 On startup, each service pushes its permission matrix directly to the Permission service via the `IPermissionRegistry` DI interface. PluginLoader resolves the registry and calls each service's generated `RegisterServicePermissionsAsync` method. The Permission service builds the matrix in Redis and hashes the registration data for idempotent change detection. If a service restarts and pushes the same matrix, Permission detects no change and skips recompilation.

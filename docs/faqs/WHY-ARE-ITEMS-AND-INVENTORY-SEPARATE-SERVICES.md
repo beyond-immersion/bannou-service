@@ -34,10 +34,6 @@ The intuitive argument for merging is: "Items are always in inventories, and inv
 
 If Item and Inventory were one service, all of these consumers would need to import the combined service even though they only use half of it. Escrow does not care about container constraint models. Loot tables do not care about grid placement.
 
-### Inventories Exist Without Items (Conceptually)
-
-A container's constraint model -- how much it can hold, what categories it accepts, how deep it can nest -- is defined independently of the items that might go in it. A character's equipment slots are defined by the container (6 slots: head, chest, legs, feet, hands, weapon) regardless of whether any items are equipped.
-
 ### Different Mutation Patterns
 
 Item mutations are about the item itself: changing durability, modifying stats, adjusting quantity. These are fine-grained updates to individual instances.
@@ -58,8 +54,6 @@ The strongest argument for separation is that both services are reused by L4 ser
 | **License** | License nodes as item instances | License boards as containers |
 | **Collection** | Entry templates as item definitions | Collection instances as containers |
 | **Save-Load** | May snapshot item state | May snapshot container state |
-
-License (L4) and Collection (L2) both independently discovered the "items in containers" pattern and composed the two L2 services to build their own semantics on top. If Item and Inventory were merged, these higher-layer services would inherit the full complexity of the combined service when they only need a subset.
 
 This is the "Unix philosophy" applied to game services: Item does one thing (manages what things are), Inventory does one thing (manages where things are), and higher-layer services compose them.
 

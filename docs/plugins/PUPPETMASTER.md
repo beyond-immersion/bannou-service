@@ -18,10 +18,12 @@ The Puppetmaster service (L4 GameFeatures) orchestrates dynamic behaviors, regio
 | Dependency | Usage |
 |------------|-------|
 | lib-messaging (`IMessageBus`) | Publishing watcher and behavior invalidation events |
+| lib-messaging (`IMessageSubscriber`) | Dynamic subscriptions to lifecycle event topics for watch system |
+| lib-actor (`IActorClient`) | Injecting perceptions into actors (watch notifications, behavior hot-reload) - resolved via `IServiceScopeFactory` |
 | lib-asset (`IAssetClient`) | Downloading ABML YAML documents via pre-signed URLs |
 | lib-resource (`IResourceClient`) | Loading resource snapshots for Event Brain actors |
-| `IEventConsumer` | Registering handlers for realm lifecycle events |
-| `IServiceScopeFactory` | Creating scopes to resolve scoped service clients |
+| `IEventConsumer` | Registering handlers for realm lifecycle, behavior, and actor deletion events |
+| `IServiceScopeFactory` | Creating scopes to resolve scoped service clients (`IActorClient`, `IResourceClient`) |
 | `IHttpClientFactory` | Downloading YAML content from asset download URLs |
 
 ---
@@ -47,6 +49,8 @@ The Puppetmaster service is a `Singleton` and maintains all state in memory via 
 | `_activeWatchers[watcherId]` | `WatcherInfo` | Active regional watcher instances |
 | `_watchersByRealmAndType[(realmId, watcherType)]` | `Guid` | Secondary index for fast realm-filtered lookups |
 | `_cache[resourceType:resourceId]` (ResourceSnapshotCache) | `CacheEntry` | Cached resource snapshots with TTL |
+| `_actorWatches[actorId][resourceKey]` (WatchRegistry) | `WatchEntry` | Per-actor watch subscriptions (actor→resources index) |
+| `_resourceWatchers[resourceKey][actorId]` (WatchRegistry) | `byte` | Per-resource watching actors (resource→actors index) |
 
 **Important**: Watcher state is **not persisted**. If the service restarts, all watchers are lost. This is by design for the current phase - persistent watcher state will require distributed state in a future phase.
 
@@ -68,6 +72,8 @@ The Puppetmaster service is a `Singleton` and maintains all state in memory via 
 |-------|---------|--------|
 | `realm.created` | `HandleRealmCreatedAsync` | Auto-starts regional watchers for newly created active realms |
 | `behavior.updated` | `HandleBehaviorUpdatedAsync` | Invalidates cached behavior document by AssetId, then paginates through all running actors via `IActorClient` to inject behavior_updated perceptions for hot-reload |
+| `actor.instance.deleted` | `HandleActorDeletedAsync` | Cleans up all watches in `WatchRegistry` for the deleted actor |
+| *(dynamic lifecycle topics)* | `HandleLifecycleEventAsync` | Subscribed via `IMessageSubscriber.SubscribeDynamicRawAsync` to all topics from `ResourceEventMapping`. Dispatches `WatchPerception` events to actors watching the affected resource. |
 
 ---
 
@@ -88,8 +94,11 @@ The Puppetmaster service is a `Singleton` and maintains all state in memory via 
 | `ILogger<PuppetmasterService>` | Structured logging |
 | `PuppetmasterServiceConfiguration` | Typed configuration access |
 | `IMessageBus` | Event publishing |
+| `IMessageSubscriber` | Dynamic subscriptions to lifecycle event topics |
 | `IBehaviorDocumentCache` | Behavior document caching (in-memory) |
 | `IEventConsumer` | Event handler registration for pub/sub fan-out |
+| `WatchRegistry` | Dual-indexed in-memory watch subscription registry |
+| `ResourceEventMapping` | Maps resource types to lifecycle event topics (loaded from generated `ResourceEventMappings.All`) |
 | `BehaviorDocumentCache` | Implementation of `IBehaviorDocumentCache` |
 | `DynamicBehaviorProvider` | `IBehaviorDocumentProvider` implementation (priority 100) |
 | `ResourceSnapshotCache` | `IResourceSnapshotCache` implementation for Event Brain actors |
@@ -99,6 +108,8 @@ The Puppetmaster service is a `Singleton` and maintains all state in memory via 
 | `SpawnWatcherHandler` | `IActionHandler` for `spawn_watcher:` ABML action - spawns regional watchers |
 | `StopWatcherHandler` | `IActionHandler` for `stop_watcher:` ABML action - stops regional watchers |
 | `ListWatchersHandler` | `IActionHandler` for `list_watchers:` ABML action - queries active watchers |
+| `WatchHandler` | `IActionHandler` for `watch:` ABML action - registers resource change watches |
+| `UnwatchHandler` | `IActionHandler` for `unwatch:` ABML action - removes resource change watches |
 
 ---
 
@@ -266,6 +277,44 @@ Queries active watchers with optional filtering.
 - Client-side filters by `watcher_type` since API only supports realm filter
 - Result is a list of `WatcherInfo` objects with `watcherId`, `realmId`, `watcherType`, `startedAt`, `behaviorRef`, and `actorId` properties
 
+### watch
+
+Registers a resource change watch in the `WatchRegistry`. When the watched resource is modified (via lifecycle events matching the optional sources filter), the Puppetmaster service injects a `WatchPerception` into the actor's bounded perception channel.
+
+**YAML Syntax**:
+```yaml
+- watch:
+    resource_type: character          # Required - resource type to watch
+    resource_id: ${target_id}         # Required - expression evaluating to GUID
+    sources:                          # Optional - filter to specific source types
+      - character-personality
+      - character-history
+    on_change: handle_update          # Optional - flow to invoke on change (default: queued perception)
+```
+
+**Implementation Notes**:
+- Requires actor context (`ActorId` must be present in execution context)
+- `resource_id` is evaluated at runtime via `ValueEvaluator` - must resolve to a valid GUID
+- `sources` filter limits which lifecycle event source types trigger notifications (null = all sources match)
+- Duplicate watches on the same resource overwrite the previous entry (idempotent)
+- Watches are stored in-memory in `WatchRegistry` and lost on service restart
+
+### unwatch
+
+Removes a resource change watch from the `WatchRegistry`.
+
+**YAML Syntax**:
+```yaml
+- unwatch:
+    resource_type: character          # Required - resource type to stop watching
+    resource_id: ${target_id}         # Required - expression evaluating to GUID
+```
+
+**Implementation Notes**:
+- Requires actor context (`ActorId` must be present in execution context)
+- Returns success even if the watch doesn't exist (idempotent no-op)
+- Deletion events auto-unwatch affected resources, so explicit unwatch is not needed for deleted resources
+
 ---
 
 ## API Endpoints (Implementation Notes)
@@ -328,9 +377,11 @@ The Puppetmaster plugin includes a watch system for subscribing to resource chan
 
 | Component | Role |
 |-----------|------|
-| `ResourceEventMapping` | Maps resource types to their lifecycle event topics |
-| `WatchRegistry` | Manages watch subscriptions and event routing |
-| `WatchPerception` | Perception events for watch-based observations |
+| `ResourceEventMapping` | Maps resource types to their lifecycle event topics (loaded from generated `ResourceEventMappings.All`) |
+| `WatchRegistry` | Dual-indexed in-memory registry: `actor→{resourceKey→WatchEntry}` and `resource→{actorId}` for bidirectional lookup |
+| `WatchPerception` | Perception payload injected into actor channels: `watch:resource_changed` (urgency 0.7) and `watch:resource_deleted` (urgency 0.9) |
+| `WatchHandler` | ABML `watch:` action handler - registers watches in `WatchRegistry` |
+| `UnwatchHandler` | ABML `unwatch:` action handler - removes watches from `WatchRegistry` |
 
 ### Resource Event Mapping
 
@@ -365,6 +416,18 @@ PersonalityUpdatedEvent:
 
 The `generate-resource-mappings.py` script scans all event schemas and generates `bannou-service/Generated/ResourceEventMappings.cs` with the complete mapping registry.
 
+### Watch Dispatch Flow
+
+When a lifecycle event arrives (e.g., `personality.updated`):
+
+1. `HandleLifecycleEventAsync` receives raw JSON via `IMessageSubscriber`
+2. Looks up all source types for the topic via `ResourceEventMapping`
+3. Extracts the resource ID from the event data using the configured field name
+4. Queries `WatchRegistry.GetWatchers()` for actors watching that resource
+5. For change events: checks `HasMatchingWatch()` against the actor's sources filter
+6. For deletion events: notifies all watchers regardless of source filter, then auto-unwatches
+7. Injects a `WatchPerception` into the actor's bounded channel via `IActorClient.InjectPerceptionAsync`
+
 ---
 
 ## Stubs & Unimplemented Features
@@ -397,7 +460,7 @@ The `generate-resource-mappings.py` script scans all event schemas and generates
 
 ### Bugs (Fix Immediately)
 
-*None currently identified.*
+1. **`actor.instance.deleted` subscription not declared in events schema**: The subscription is registered manually in `RegisterEventConsumers` via `IEventConsumer` but is NOT declared in `x-event-subscriptions` in `puppetmaster-events.yaml`. This is a schema-code mismatch violating schema-first development. Fix: add `actor.instance.deleted` to the schema's `x-event-subscriptions` list.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -409,9 +472,13 @@ The `generate-resource-mappings.py` script scans all event schemas and generates
 
 4. **Lazy TTL eviction for behavior cache**: Expired cache entries are removed on access, not proactively via background cleanup. This matches the `ResourceSnapshotCache` pattern and avoids background task overhead for a cache that's typically small.
 
-5. **ResourceSnapshotCache uses `GetService<T>()` not constructor injection**: Because `IResourceClient` is an optional L1 dependency and the cache is a singleton, it resolves the client via service scope at runtime. This is the correct pattern per SERVICE-HIERARCHY.md.
+5. **ResourceSnapshotCache uses `GetRequiredService<IResourceClient>()` via scope**: Because the cache is a Singleton and `IResourceClient` is Scoped, it cannot use constructor injection. Instead it creates a scope and calls `GetRequiredService<IResourceClient>()` - which correctly fails fast if the Resource service (L1) is unavailable, per the hard dependency pattern for L0/L1/L2 dependencies.
 
 6. **Event handler doesn't stop watchers on realm deletion**: The service only subscribes to `realm.created`, not `realm.deleted`. Watchers for deleted realms continue running until manually stopped or service restart.
+
+7. **Dynamic lifecycle subscriptions bypass `IEventConsumer`**: The `SubscribeToLifecycleEvents` method uses `IMessageSubscriber.SubscribeDynamicRawAsync()` directly because the subscribed topics are determined at runtime from `ResourceEventMapping`, not statically known at schema time. This is intentional - `IEventConsumer` requires compile-time event type registration.
+
+8. **`IActorClient` uses soft dependency pattern despite being L2 (hard dependency from L4)**: Both `InjectWatchPerceptionAsync` and `HandleBehaviorUpdatedAsync` resolve `IActorClient` via `GetService<T>()` with null check instead of `GetRequiredService<T>()`. Actor is L2 (GameFoundation), which per the hierarchy is a hard dependency from L4. The soft pattern is used because these are event handlers that may fire during startup before Actor is fully available, but this diverges from the documented hard dependency pattern.
 
 ### Design Considerations (Requires Planning)
 
@@ -431,9 +498,3 @@ The `generate-resource-mappings.py` script scans all event schemas and generates
 ## Work Tracking
 
 This section tracks active development work. Managed by `/audit-plugin` workflow.
-
-### Completed
-
-- **2026-02-06**: Issue #304 - Added `x-resource-mapping` schema extension for resource event discovery. Resource mappings are now auto-generated from schema annotations instead of hardcoded in `ResourceEventMapping.cs`. Added `resource_mapping` config to `x-lifecycle` for lifecycle events and `x-resource-mapping` extension for non-lifecycle events.
-- **2026-02-06**: Issue #298 - Added `spawn_watcher`, `stop_watcher`, and `list_watchers` ABML actions for Puppetmaster self-orchestration. Replaced forbidden generic `api_call` with purpose-built handlers.
-- **2026-02-11**: Issue #380 - Added `behavior.updated` event subscription (moved from lib-actor). Puppetmaster now owns behavior cache invalidation and actor hot-reload notification, eliminating Actor's L4 hierarchy violation.

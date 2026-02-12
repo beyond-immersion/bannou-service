@@ -32,6 +32,7 @@ Redis-backed RBAC permission system (L1 AppFoundation) for WebSocket services. M
 | lib-game-session | Calls `IPermissionClient.UpdateSessionStateAsync` to set `in_game` state when players join/leave |
 | lib-matchmaking | Calls `IPermissionClient.UpdateSessionStateAsync` to set `in_match` state during matchmaking |
 | lib-voice | Calls `IPermissionClient.UpdateSessionStateAsync` to set voice call states (`ringing`, `in_call`) |
+| lib-chat | Calls `IPermissionClient.UpdateSessionStateAsync` for chat room state management |
 | All services (via generated permission registration) | Register their x-permissions matrix on startup via `IPermissionRegistry` DI interface |
 
 ---
@@ -49,7 +50,7 @@ Redis-backed RBAC permission system (L1 AppFoundation) for WebSocket services. M
 | `session:{sessionId}:states` | `Dictionary<string, string>` | Per-session state map (role, service states) |
 | `session:{sessionId}:permissions` | `Dictionary<string, object>` | Compiled permission set (service -> endpoint list + version) |
 | `permissions:{service}:{state}:{role}` | `HashSet<string>` | Permission matrix entries (allowed endpoints for combination) |
-| `permission_versions` | `Dictionary<string, string>` | Service version tracking |
+| `permission_versions:{serviceId}` | `Dictionary<string, string>` | Per-service version tracking (contains `version` key) |
 | `permission_hash:{serviceId}` | `string` | SHA-256 hash for idempotent registration detection |
 
 ---
@@ -94,6 +95,7 @@ No traditional topic-based event publications. Capability updates go directly to
 | `IMessageBus` | Scoped (injected) | Error event publishing |
 | `IClientEventPublisher` | Scoped (injected) | Session-specific capability push |
 | `IEventConsumer` | Scoped (injected) | Event handler registration |
+| `IPermissionRegistry` | Singleton (via plugin) | Push-based permission registration interface (backed by PermissionService singleton, registered in PermissionServicePlugin) |
 
 Service lifetime is **Singleton** (shared across all requests).
 
@@ -201,14 +203,7 @@ None. The service is feature-complete for its scope.
 
 ## Potential Extensions
 
-1. ~~**Permission TTL**~~: **FIXED** (2026-02-08) - Added `PermissionCacheTtlSeconds` (in-memory cache TTL, default 0 = disabled) and `SessionDataTtlSeconds` (Redis key TTL for orphaned session cleanup, default 86400 = 24h). On cache TTL expiry, refreshes from Redis (not full recompilation). See [#198](https://github.com/beyond-immersion/bannou-service/issues/198).
-<!-- AUDIT:FIXED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/198 -->
-2. ~~**Fine-grained caching**~~: **CLOSED** — Per-service caching provides no invalidation benefit (all triggers operate at session level) and would increase memory ~40x. Per-session is the correct granularity. Additionally, Connect's local event-driven cache is the actual hot path, making Permission's in-memory cache secondary. See [#209](https://github.com/beyond-immersion/bannou-service/issues/209).
-<!-- AUDIT:CLOSED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/209 -->
-3. ~~**Permission delegation**~~: **CLOSED** — The existing state-based permission system (`UpdateSessionState` with arbitrary states registered via x-permissions) already handles all proposed delegation use cases. Adding a parallel delegation mechanism would create unnecessary complexity. See [#234](https://github.com/beyond-immersion/bannou-service/issues/234).
-<!-- AUDIT:CLOSED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/234 -->
-4. ~~**Audit trail**~~: **CLOSED (mis-scoped)** — Connect owns the hot-path validation (local cache, not Permission API). Permission changes are already event-driven via `SessionCapabilitiesEvent`. Denial auditing is a Connect concern. Storage/retention/queries are Analytics (L4) concerns. See [#235](https://github.com/beyond-immersion/bannou-service/issues/235).
-<!-- AUDIT:CLOSED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/235 -->
+None identified. Previous extensions were either implemented (Permission TTL → config properties) or rejected as unnecessary (fine-grained caching, permission delegation, audit trail).
 
 ---
 
@@ -216,7 +211,7 @@ None. The service is feature-complete for its scope.
 
 ### Bugs
 
-None identified.
+1. **Inconsistent default role between connection and update paths**: `DetermineHighestPriorityRole` (used by `HandleSessionConnectedAsync`) returns `"anonymous"` when roles is null/empty, but `DetermineHighestRoleFromEvent` (used by `HandleSessionUpdatedAsync`) returns `"user"` for the same input. A session connecting with no roles gets `anonymous` permissions, but a subsequent `session.updated` event with no roles would upgrade it to `user` without an explicit role assignment.
 
 ### Intentional Quirks
 
@@ -228,21 +223,14 @@ None identified.
 
 4. **Static ROLE_ORDER array**: The role hierarchy is hardcoded as `["anonymous", "user", "developer", "admin"]`. Adding new roles requires code changes, not configuration.
 
+5. **GetRegisteredServices endpoint count is approximate**: `GetRegisteredServicesAsync` uses a hardcoded array of states `["authenticated", "default", "lobby", "in_game"]` and roles `["user", "admin", "anonymous"]` when scanning for unique endpoints per service. This misses the `"developer"` role and any custom states registered by services, so the reported `endpointCount` may undercount.
+
 ### Design Considerations
 
-1. ~~**Full session recompilation on service registration**~~: **FIXED** (2026-02-08) - Replaced sequential recompilation with `SemaphoreSlim`-bounded parallel `Task.WhenAll`. Configurable via `MaxConcurrentRecompilations` (default: 50, range: 1-500). Includes timing metrics in registration log. See [#236](https://github.com/beyond-immersion/bannou-service/issues/236).
-<!-- AUDIT:FIXED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/236 -->
-
-2. ~~**Permission matrix stored as individual keys**~~: **CLOSED** — 480 Redis keys with ~320 reads per recompilation (~3ms) is well within Redis capacity (100K+ ops/sec). The current simple key strategy is correct. Not on the hot message path (Connect validates locally). See [#237](https://github.com/beyond-immersion/bannou-service/issues/237).
-<!-- AUDIT:CLOSED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/237 -->
-
-3. ~~**Read-modify-write on session sets**~~: **FIXED** - All three tracking sets (`activeConnections`, `activeSessions`, `registered_services`) now use `ICacheableStateStore<string>` atomic set operations (`SADD`/`SREM`/`SISMEMBER`/`SMEMBERS`), eliminating the read-modify-write race condition. The distributed lock and its 3 config properties were removed entirely.
-<!-- AUDIT:FIXED:2026-02-08:https://github.com/beyond-immersion/bannou-service/issues/248 -->
+None active. Previous considerations were either fixed (parallel recompilation via `SemaphoreSlim`, atomic set operations via `ICacheableStateStore`) or closed as non-issues (individual key strategy is correct at current scale).
 
 ---
 
 ## Work Tracking
 
-### Completed
-- **2026-02-08**: Issue #198 - Permission TTL: in-memory cache TTL (`PermissionCacheTtlSeconds`) and Redis session data TTL (`SessionDataTtlSeconds`)
-- **2026-02-08**: Issue #236 - Parallel session recompilation with configurable concurrency (`MaxConcurrentRecompilations`)
+No active work items.
