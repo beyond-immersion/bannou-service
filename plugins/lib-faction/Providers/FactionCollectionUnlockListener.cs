@@ -4,11 +4,9 @@
 // Part of the Collection->Seed growth pipeline for faction entities.
 // =============================================================================
 
-using BeyondImmersion.BannouService.Generated.Models;
-using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Providers;
+using BeyondImmersion.BannouService.Seed;
 using BeyondImmersion.BannouService.Services;
-using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Faction.Providers;
@@ -114,29 +112,32 @@ public class FactionCollectionUnlockListener : ICollectionUnlockListener
             }
 
             // Extract domain from faction tags (e.g., "faction:culture" -> domain "culture")
-            var domains = new Dictionary<string, float>();
+            var growthEntries = new Dictionary<string, float>();
             foreach (var tag in factionTags)
             {
                 var domain = tag.Length > "faction:".Length
                     ? tag["faction:".Length..]
                     : "general";
                 // Base growth amount per collection unlock contribution
-                domains[domain] = domains.GetValueOrDefault(domain, 0f) + 1.0f;
+                growthEntries[domain] = growthEntries.GetValueOrDefault(domain, 0f) + 1.0f;
             }
 
             try
             {
-                await _seedClient.RecordGrowthAsync(new RecordGrowthRequest
+                await _seedClient.RecordGrowthBatchAsync(new RecordGrowthBatchRequest
                 {
                     SeedId = faction.SeedId.Value,
-                    Domains = domains,
+                    Entries = growthEntries.Select(kvp => new GrowthEntry
+                    {
+                        Domain = kvp.Key,
+                        Amount = kvp.Value,
+                    }).ToList(),
                     Source = "collection",
-                    CrossPollinate = false
                 }, ct);
 
                 _logger.LogDebug(
                     "Recorded faction growth for faction {FactionId} seed {SeedId} from character {CharacterId} collection unlock: {DomainCount} domains",
-                    faction.FactionId, faction.SeedId, notification.OwnerId, domains.Count);
+                    faction.FactionId, faction.SeedId, notification.OwnerId, growthEntries.Count);
             }
             catch (Exception ex)
             {

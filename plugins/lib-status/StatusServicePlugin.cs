@@ -1,5 +1,7 @@
+using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Providers;
+using BeyondImmersion.BannouService.Resource;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -28,18 +30,18 @@ public class StatusServicePlugin : StandardServicePlugin<IStatusService>
     }
 
     /// <inheritdoc />
-    protected override async Task OnRunningAsync(CancellationToken cancellationToken)
+    protected override async Task OnRunningAsync()
     {
-        await base.OnRunningAsync(cancellationToken);
+        await base.OnRunningAsync();
 
-        await RegisterResourceCleanupCallbacksAsync(cancellationToken);
+        await RegisterResourceCleanupCallbacksAsync();
     }
 
     /// <summary>
     /// Registers cleanup callbacks with lib-resource for entity types that can have statuses.
     /// When a character is deleted, lib-resource calls our cleanup endpoint to remove all status data.
     /// </summary>
-    private async Task RegisterResourceCleanupCallbacksAsync(CancellationToken cancellationToken)
+    private async Task RegisterResourceCleanupCallbacksAsync()
     {
         var resourceClient = ServiceProvider.GetService<IResourceClient>();
         if (resourceClient == null)
@@ -64,7 +66,7 @@ public class StatusServicePlugin : StandardServicePlugin<IStatusService>
                     PayloadTemplate = "{\"ownerType\": \"character\", \"ownerId\": \"{{resourceId}}\"}",
                     Description = "Cleanup status effects and containers for deleted character"
                 },
-                cancellationToken);
+                CancellationToken.None);
         }
         catch (ApiException ex)
         {

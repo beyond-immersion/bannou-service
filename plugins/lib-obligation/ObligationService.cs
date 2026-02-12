@@ -135,18 +135,18 @@ public partial class ObligationService : IObligationService
     {
         _logger.LogDebug("Listing action mappings, search={SearchTerm}", body.SearchTerm);
 
-        var pageSize = body.PageSize ?? _configuration.DefaultPageSize;
+        var pageSize = body.PageSize;
         var offset = DecodeCursor(body.Cursor);
 
         var conditions = new List<QueryCondition>
         {
             // Type discriminator: only action mapping records
-            new("$.Tag", QueryOperator.Exists, null)
+            new QueryCondition { Path = "$.Tag", Operator = QueryOperator.Exists, Value = true }
         };
 
         if (!string.IsNullOrEmpty(body.SearchTerm))
         {
-            conditions.Add(new QueryCondition("$.Tag", QueryOperator.Contains, body.SearchTerm));
+            conditions.Add(new QueryCondition { Path = "$.Tag", Operator = QueryOperator.Contains, Value = body.SearchTerm });
         }
 
         var result = await _actionMappingJsonStore.JsonQueryPagedAsync(
@@ -194,7 +194,7 @@ public partial class ObligationService : IObligationService
         await _actionMappingStore.DeleteAsync(key, cancellationToken);
         _logger.LogInformation("Action mapping deleted for tag {Tag}", body.Tag);
 
-        return StatusCodes.NoContent;
+        return StatusCodes.OK;
     }
 
     // ========================================================================
@@ -362,7 +362,7 @@ public partial class ObligationService : IObligationService
                     ContractId = body.ContractId,
                     BreachingEntityId = body.CharacterId,
                     BreachingEntityType = EntityType.Character,
-                    BreachType = BreachType.Term_violation,
+                    BreachType = BreachType.TermViolation,
                     BreachedTermOrMilestone = body.ClauseCode,
                     Description = $"Knowing violation of {body.ViolationType} obligation (action: {body.ActionTag})"
                 }, cancellationToken);
@@ -404,7 +404,7 @@ public partial class ObligationService : IObligationService
             await _idempotencyStore.SaveAsync(
                 body.IdempotencyKey,
                 new IdempotencyEntry { ViolationId = violationId },
-                new StateOptions { Ttl = TimeSpan.FromSeconds(_configuration.IdempotencyTtlSeconds) },
+                new StateOptions { Ttl = _configuration.IdempotencyTtlSeconds },
                 cancellationToken);
         }
 
@@ -456,29 +456,27 @@ public partial class ObligationService : IObligationService
     {
         _logger.LogDebug("Querying violations for character {CharacterId}", body.CharacterId);
 
-        var pageSize = body.PageSize ?? _configuration.DefaultPageSize;
+        var pageSize = body.PageSize;
         var offset = DecodeCursor(body.Cursor);
 
         var conditions = new List<QueryCondition>
         {
-            new("$.CharacterId", QueryOperator.Equals, body.CharacterId.ToString())
+            new QueryCondition { Path = "$.CharacterId", Operator = QueryOperator.Equals, Value = body.CharacterId.ToString() }
         };
 
         if (body.ContractId.HasValue)
         {
-            conditions.Add(new QueryCondition("$.ContractId", QueryOperator.Equals,
-                body.ContractId.Value.ToString()));
+            conditions.Add(new QueryCondition { Path = "$.ContractId", Operator = QueryOperator.Equals, Value = body.ContractId.Value.ToString() });
         }
 
         if (!string.IsNullOrEmpty(body.ViolationType))
         {
-            conditions.Add(new QueryCondition("$.ViolationType", QueryOperator.Equals, body.ViolationType));
+            conditions.Add(new QueryCondition { Path = "$.ViolationType", Operator = QueryOperator.Equals, Value = body.ViolationType });
         }
 
         if (body.Since.HasValue)
         {
-            conditions.Add(new QueryCondition("$.Timestamp", QueryOperator.GreaterThanOrEqual,
-                body.Since.Value.ToString("O")));
+            conditions.Add(new QueryCondition { Path = "$.Timestamp", Operator = QueryOperator.GreaterThanOrEqual, Value = body.Since.Value.ToString("O") });
         }
 
         var result = await _violationJsonStore.JsonQueryPagedAsync(
@@ -540,7 +538,7 @@ public partial class ObligationService : IObligationService
         // Query and remove violations
         var violationConditions = new List<QueryCondition>
         {
-            new("$.CharacterId", QueryOperator.Equals, body.CharacterId.ToString())
+            new QueryCondition { Path = "$.CharacterId", Operator = QueryOperator.Equals, Value = body.CharacterId.ToString() }
         };
 
         var violations = await _violationJsonStore.JsonQueryPagedAsync(
@@ -580,7 +578,7 @@ public partial class ObligationService : IObligationService
 
         var conditions = new List<QueryCondition>
         {
-            new("$.CharacterId", QueryOperator.Equals, body.CharacterId.ToString())
+            new QueryCondition { Path = "$.CharacterId", Operator = QueryOperator.Equals, Value = body.CharacterId.ToString() }
         };
 
         var result = await _violationJsonStore.JsonQueryPagedAsync(
@@ -668,6 +666,7 @@ public partial class ObligationService : IObligationService
         Guid characterId, string trigger, CancellationToken ct)
     {
         await using var lockResponse = await _lockProvider.LockAsync(
+            storeName: StateStoreDefinitions.ObligationLock,
             resourceId: $"cache:{characterId}",
             lockOwner: Guid.NewGuid().ToString(),
             expiryInSeconds: _configuration.LockTimeoutSeconds,
@@ -771,7 +770,7 @@ public partial class ObligationService : IObligationService
         await _cacheStore.SaveAsync(
             characterId.ToString(),
             manifest,
-            new StateOptions { Ttl = TimeSpan.FromMinutes(_configuration.CacheTtlMinutes) },
+            new StateOptions { Ttl = _configuration.CacheTtlMinutes * 60 },
             ct);
 
         // Publish cache rebuilt event (observability)
@@ -804,11 +803,14 @@ public partial class ObligationService : IObligationService
     {
         if (terms?.CustomTerms == null) return new();
 
-        if (!terms.CustomTerms.TryGetValue("behavioral_clauses", out var clausesObj))
+        // CustomTerms is typed as object? in generated code; arrives as JsonElement after deserialization
+        if (terms.CustomTerms is not JsonElement customTermsElement)
             return new();
 
-        // CustomTerms values arrive as JsonElement from JSON deserialization
-        if (clausesObj is not JsonElement element)
+        if (customTermsElement.ValueKind != JsonValueKind.Object)
+            return new();
+
+        if (!customTermsElement.TryGetProperty("behavioral_clauses", out var element))
             return new();
 
         if (element.ValueKind != JsonValueKind.Array)

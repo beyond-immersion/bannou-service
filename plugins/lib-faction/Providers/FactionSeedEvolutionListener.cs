@@ -4,10 +4,9 @@
 // Updates faction's currentPhase and status based on seed evolution.
 // =============================================================================
 
-using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
-using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Faction.Providers;
@@ -111,7 +110,7 @@ public class FactionSeedEvolutionListener : ISeedEvolutionListener
 
         await _messageBus.TryPublishAsync(
             "faction.updated",
-            new Generated.Events.FactionUpdatedEvent
+            new FactionUpdatedEvent
             {
                 EventId = Guid.NewGuid(),
                 Timestamp = DateTimeOffset.UtcNow,
@@ -121,8 +120,8 @@ public class FactionSeedEvolutionListener : ISeedEvolutionListener
                 Code = faction.Code,
                 RealmId = faction.RealmId,
                 IsRealmBaseline = faction.IsRealmBaseline,
-                ParentFactionId = faction.ParentFactionId,
-                SeedId = faction.SeedId,
+                ParentFactionId = faction.ParentFactionId.GetValueOrDefault(),
+                SeedId = faction.SeedId.GetValueOrDefault(),
                 Status = faction.Status,
                 CurrentPhase = notification.NewPhase,
                 MemberCount = faction.MemberCount,

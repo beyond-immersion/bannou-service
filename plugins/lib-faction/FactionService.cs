@@ -1,13 +1,14 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
-using BeyondImmersion.Bannou.Core;
-using BeyondImmersion.BannouService.Generated.Events;
-using BeyondImmersion.BannouService.Generated.Models;
-using BeyondImmersion.BannouService.Locking;
-using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.GameService;
+using BeyondImmersion.BannouService.Location;
+using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Resource;
+using BeyondImmersion.BannouService.Seed;
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
-using BeyondImmersion.BannouService.State.Query;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -172,10 +173,8 @@ public partial class FactionService : IFactionService
 
         try
         {
-            var (status, manifest) = await _seedClient.GetCapabilityManifestAsync(
+            var manifest = await _seedClient.GetCapabilityManifestAsync(
                 new GetCapabilityManifestRequest { SeedId = seedId.Value }, ct);
-
-            if (status != StatusCodes.OK || manifest == null) return false;
 
             return manifest.Capabilities.Any(c => c.CapabilityCode == capabilityCode);
         }
@@ -202,10 +201,10 @@ public partial class FactionService : IFactionService
             Code = model.Code,
             RealmId = model.RealmId,
             IsRealmBaseline = model.IsRealmBaseline,
-            ParentFactionId = model.ParentFactionId,
-            SeedId = model.SeedId,
+            ParentFactionId = model.ParentFactionId.GetValueOrDefault(),
+            SeedId = model.SeedId.GetValueOrDefault(),
             Status = model.Status,
-            CurrentPhase = model.CurrentPhase,
+            CurrentPhase = model.CurrentPhase ?? string.Empty,
             MemberCount = model.MemberCount,
             CreatedAt = model.CreatedAt,
             UpdatedAt = model.UpdatedAt,
@@ -229,10 +228,10 @@ public partial class FactionService : IFactionService
             Code = model.Code,
             RealmId = model.RealmId,
             IsRealmBaseline = model.IsRealmBaseline,
-            ParentFactionId = model.ParentFactionId,
-            SeedId = model.SeedId,
+            ParentFactionId = model.ParentFactionId.GetValueOrDefault(),
+            SeedId = model.SeedId.GetValueOrDefault(),
             Status = model.Status,
-            CurrentPhase = model.CurrentPhase,
+            CurrentPhase = model.CurrentPhase ?? string.Empty,
             MemberCount = model.MemberCount,
             CreatedAt = model.CreatedAt,
             UpdatedAt = model.UpdatedAt,
@@ -261,17 +260,19 @@ public partial class FactionService : IFactionService
         // Query members of this faction to invalidate their norm caches
         var memberConditions = new List<QueryCondition>
         {
-            new("$.FactionId", QueryOperator.Exists),
-            new("$.FactionId", QueryOperator.Equals, factionId.ToString()),
+            new QueryCondition { Path = "$.FactionId", Operator = QueryOperator.Exists },
+            new QueryCondition { Path = "$.FactionId", Operator = QueryOperator.Equals, Value = factionId.ToString() },
         };
         var memberQuery = _stateStoreFactory.GetJsonQueryableStore<FactionMemberModel>(
             StateStoreDefinitions.FactionMembership);
 
-        string? cursor = null;
+        var offset = 0;
+        var pageSize = _configuration.SeedBulkPageSize;
+        bool hasMore;
         do
         {
             var members = await memberQuery.JsonQueryPagedAsync(
-                memberConditions, _configuration.SeedBulkPageSize, cursor, ct);
+                memberConditions, offset, pageSize, cancellationToken: ct);
 
             foreach (var member in members.Items)
             {
@@ -279,8 +280,9 @@ public partial class FactionService : IFactionService
                 await _normCacheStore.DeleteAsync(NormCacheKey(member.Value.CharacterId, null), ct);
             }
 
-            cursor = members.NextCursor;
-        } while (cursor != null);
+            offset += pageSize;
+            hasMore = members.HasMore;
+        } while (hasMore);
     }
 
     /// <summary>
@@ -310,9 +312,8 @@ public partial class FactionService : IFactionService
         // Validate game service exists
         try
         {
-            var (gsStatus, _) = await _gameServiceClient.GetGameServiceAsync(
-                new GetGameServiceRequest { GameServiceId = body.GameServiceId }, cancellationToken);
-            if (gsStatus != StatusCodes.OK) return (StatusCodes.BadRequest, null);
+            await _gameServiceClient.GetServiceAsync(
+                new GetServiceRequest { ServiceId = body.GameServiceId }, cancellationToken);
         }
         catch (ApiException ex)
         {
@@ -323,9 +324,8 @@ public partial class FactionService : IFactionService
         // Validate realm exists
         try
         {
-            var (realmStatus, _) = await _realmClient.GetRealmAsync(
-                new GetRealmRequest { RealmId = body.RealmId }, cancellationToken);
-            if (realmStatus != StatusCodes.OK) return (StatusCodes.BadRequest, null);
+            await _realmClient.RealmExistsAsync(
+                new RealmExistsRequest { RealmId = body.RealmId }, cancellationToken);
         }
         catch (ApiException ex)
         {
@@ -364,11 +364,11 @@ public partial class FactionService : IFactionService
         var now = DateTimeOffset.UtcNow;
         var factionId = Guid.NewGuid();
 
-        // Create seed for faction growth tracking
-        Guid? seedId = null;
+        // Create seed for faction growth tracking (L2 hard dependency - must succeed)
+        Guid seedId;
         try
         {
-            var (seedStatus, seedResponse) = await _seedClient.CreateSeedAsync(new CreateSeedRequest
+            var seedResponse = await _seedClient.CreateSeedAsync(new CreateSeedRequest
             {
                 OwnerId = factionId,
                 OwnerType = "faction",
@@ -377,23 +377,21 @@ public partial class FactionService : IFactionService
                 DisplayName = body.Name,
             }, cancellationToken);
 
-            if (seedStatus == StatusCodes.OK && seedResponse != null)
-            {
-                seedId = seedResponse.SeedId;
-            }
-            else
-            {
-                _logger.LogWarning("Seed creation returned {Status} for faction {FactionId}", seedStatus, factionId);
-            }
+            seedId = seedResponse.SeedId;
         }
         catch (ApiException ex)
         {
-            _logger.LogWarning(ex, "Seed creation failed for faction {FactionId}, continuing without seed", factionId);
+            _logger.LogWarning(ex, "Seed creation failed for faction {FactionId}", factionId);
+            return ((StatusCodes)ex.StatusCode, null);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected failure during seed creation for faction {FactionId}", factionId);
             await _messageBus.TryPublishErrorAsync(
-                "faction", "CreateFaction", "seed_creation_failed",
-                $"Seed creation failed for faction {factionId}, continuing without seed",
-                dependency: "seed", endpoint: "post:/faction/create",
+                "faction", "CreateFaction", ex.GetType().Name,
+                ex.Message, dependency: "seed", endpoint: "post:/faction/create",
                 details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
+            return (StatusCodes.InternalServerError, null);
         }
 
         var model = new FactionModel
@@ -458,36 +456,36 @@ public partial class FactionService : IFactionService
 
         var conditions = new List<QueryCondition>
         {
-            new("$.FactionId", QueryOperator.Exists),
+            new QueryCondition { Path = "$.FactionId", Operator = QueryOperator.Exists },
         };
 
         if (body.GameServiceId.HasValue)
-            conditions.Add(new("$.GameServiceId", QueryOperator.Equals, body.GameServiceId.Value.ToString()));
+            conditions.Add(new QueryCondition { Path = "$.GameServiceId", Operator = QueryOperator.Equals, Value = body.GameServiceId.Value.ToString() });
 
         if (body.RealmId.HasValue)
-            conditions.Add(new("$.RealmId", QueryOperator.Equals, body.RealmId.Value.ToString()));
+            conditions.Add(new QueryCondition { Path = "$.RealmId", Operator = QueryOperator.Equals, Value = body.RealmId.Value.ToString() });
 
         if (body.Status.HasValue)
-            conditions.Add(new("$.Status", QueryOperator.Equals, body.Status.Value.ToString()));
+            conditions.Add(new QueryCondition { Path = "$.Status", Operator = QueryOperator.Equals, Value = body.Status.Value.ToString() });
 
         if (body.ParentFactionId.HasValue)
-            conditions.Add(new("$.ParentFactionId", QueryOperator.Equals, body.ParentFactionId.Value.ToString()));
+            conditions.Add(new QueryCondition { Path = "$.ParentFactionId", Operator = QueryOperator.Equals, Value = body.ParentFactionId.Value.ToString() });
 
         if (body.IsTopLevelOnly)
-            conditions.Add(new("$.ParentFactionId", QueryOperator.NotExists));
+            conditions.Add(new QueryCondition { Path = "$.ParentFactionId", Operator = QueryOperator.NotExists });
 
         if (body.IsRealmBaseline.HasValue)
-            conditions.Add(new("$.IsRealmBaseline", QueryOperator.Equals, body.IsRealmBaseline.Value.ToString().ToLowerInvariant()));
+            conditions.Add(new QueryCondition { Path = "$.IsRealmBaseline", Operator = QueryOperator.Equals, Value = body.IsRealmBaseline.Value.ToString().ToLowerInvariant() });
 
         var result = await _factionQueryStore.JsonQueryPagedAsync(
-            conditions, body.PageSize, body.Cursor, cancellationToken);
+            conditions, body.Offset, body.PageSize, cancellationToken: cancellationToken);
 
         var factions = result.Items.Select(r => MapToResponse(r.Value)).ToList();
 
         return (StatusCodes.OK, new ListFactionsResponse
         {
             Factions = factions,
-            NextCursor = result.NextCursor,
+            TotalCount = result.TotalCount,
             HasMore = result.HasMore,
         });
     }
@@ -500,6 +498,7 @@ public partial class FactionService : IFactionService
         _logger.LogDebug("Updating faction {FactionId}", body.FactionId);
 
         await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.FactionLock,
             resourceId: $"faction:{body.FactionId}",
             lockOwner: Guid.NewGuid().ToString(),
             expiryInSeconds: _configuration.DistributedLockTimeoutSeconds,
@@ -560,6 +559,7 @@ public partial class FactionService : IFactionService
         _logger.LogDebug("Deprecating faction {FactionId}", body.FactionId);
 
         await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.FactionLock,
             resourceId: $"faction:{body.FactionId}",
             lockOwner: Guid.NewGuid().ToString(),
             expiryInSeconds: _configuration.DistributedLockTimeoutSeconds,
@@ -590,6 +590,7 @@ public partial class FactionService : IFactionService
         _logger.LogDebug("Undeprecating faction {FactionId}", body.FactionId);
 
         await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.FactionLock,
             resourceId: $"faction:{body.FactionId}",
             lockOwner: Guid.NewGuid().ToString(),
             expiryInSeconds: _configuration.DistributedLockTimeoutSeconds,
@@ -620,6 +621,7 @@ public partial class FactionService : IFactionService
         _logger.LogDebug("Deleting faction {FactionId}", body.FactionId);
 
         await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.FactionLock,
             resourceId: $"faction:{body.FactionId}",
             lockOwner: Guid.NewGuid().ToString(),
             expiryInSeconds: _configuration.DistributedLockTimeoutSeconds,
@@ -632,21 +634,23 @@ public partial class FactionService : IFactionService
         // Cascade: remove all members (paginated to handle large factions)
         var memberConditions = new List<QueryCondition>
         {
-            new("$.FactionId", QueryOperator.Exists),
-            new("$.FactionId", QueryOperator.Equals, body.FactionId.ToString()),
+            new QueryCondition { Path = "$.FactionId", Operator = QueryOperator.Exists },
+            new QueryCondition { Path = "$.FactionId", Operator = QueryOperator.Equals, Value = body.FactionId.ToString() },
         };
         var memberQuery = _stateStoreFactory.GetJsonQueryableStore<FactionMemberModel>(StateStoreDefinitions.FactionMembership);
-        string? memberCursor = null;
+        var memberOffset = 0;
+        bool memberHasMore;
         do
         {
             var members = await memberQuery.JsonQueryPagedAsync(
-                memberConditions, _configuration.SeedBulkPageSize, memberCursor, cancellationToken);
+                memberConditions, memberOffset, _configuration.SeedBulkPageSize, cancellationToken: cancellationToken);
             foreach (var member in members.Items)
             {
                 await RemoveMemberInternalAsync(member.Value.FactionId, member.Value.CharacterId, cancellationToken);
             }
-            memberCursor = members.NextCursor;
-        } while (memberCursor != null);
+            memberOffset += _configuration.SeedBulkPageSize;
+            memberHasMore = members.HasMore;
+        } while (memberHasMore);
 
         // Cascade: release all territory claims
         var claimList = await _territoryListStore.GetAsync(FactionClaimsKey(body.FactionId), cancellationToken);
@@ -689,10 +693,10 @@ public partial class FactionService : IFactionService
             Code = model.Code,
             RealmId = model.RealmId,
             IsRealmBaseline = model.IsRealmBaseline,
-            ParentFactionId = model.ParentFactionId,
-            SeedId = model.SeedId,
+            ParentFactionId = model.ParentFactionId.GetValueOrDefault(),
+            SeedId = model.SeedId.GetValueOrDefault(),
             Status = model.Status,
-            CurrentPhase = model.CurrentPhase,
+            CurrentPhase = model.CurrentPhase ?? string.Empty,
             MemberCount = model.MemberCount,
             CreatedAt = model.CreatedAt,
             UpdatedAt = model.UpdatedAt,
@@ -700,7 +704,7 @@ public partial class FactionService : IFactionService
         await _messageBus.TryPublishAsync("faction.deleted", deletedEvt, cancellationToken: cancellationToken);
 
         _logger.LogInformation("Deleted faction {FactionId}", body.FactionId);
-        return StatusCodes.NoContent;
+        return StatusCodes.OK;
     }
 
     // ========================================================================
@@ -732,10 +736,10 @@ public partial class FactionService : IFactionService
             var now = DateTimeOffset.UtcNow;
             var factionId = Guid.NewGuid();
 
-            Guid? seedId = null;
+            Guid seedId;
             try
             {
-                var (seedStatus, seedResponse) = await _seedClient.CreateSeedAsync(new CreateSeedRequest
+                var seedResponse = await _seedClient.CreateSeedAsync(new CreateSeedRequest
                 {
                     OwnerId = factionId,
                     OwnerType = "faction",
@@ -744,12 +748,25 @@ public partial class FactionService : IFactionService
                     DisplayName = def.Name,
                 }, cancellationToken);
 
-                if (seedStatus == StatusCodes.OK && seedResponse != null)
-                    seedId = seedResponse.SeedId;
+                seedId = seedResponse.SeedId;
             }
             catch (ApiException ex)
             {
                 _logger.LogWarning(ex, "Seed creation failed during faction seeding for {Code}", def.Code);
+                errors.Add($"Seed creation failed for faction '{def.Code}': {ex.StatusCode}");
+                failed++;
+                continue;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected failure during seed creation for faction {Code}", def.Code);
+                await _messageBus.TryPublishErrorAsync(
+                    "faction", "SeedFactions", ex.GetType().Name,
+                    ex.Message, dependency: "seed", endpoint: "post:/faction/seed",
+                    details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
+                errors.Add($"Unexpected seed creation failure for faction '{def.Code}'");
+                failed++;
+                continue;
             }
 
             var model = new FactionModel
@@ -784,7 +801,7 @@ public partial class FactionService : IFactionService
         {
             if (!createdFactions.TryGetValue(def.Code, out var child)) continue;
 
-            if (createdFactions.TryGetValue(def.ParentCode, out var parent))
+            if (def.ParentCode != null && createdFactions.TryGetValue(def.ParentCode, out var parent))
             {
                 child.ParentFactionId = parent.FactionId;
                 child.UpdatedAt = DateTimeOffset.UtcNow;
@@ -823,6 +840,7 @@ public partial class FactionService : IFactionService
         _logger.LogDebug("Designating faction {FactionId} as realm baseline", body.FactionId);
 
         await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.FactionLock,
             resourceId: $"faction:{body.FactionId}",
             lockOwner: Guid.NewGuid().ToString(),
             expiryInSeconds: _configuration.DistributedLockTimeoutSeconds,
@@ -837,11 +855,11 @@ public partial class FactionService : IFactionService
         // Find and clear previous baseline for this realm
         var baselineConditions = new List<QueryCondition>
         {
-            new("$.FactionId", QueryOperator.Exists),
-            new("$.RealmId", QueryOperator.Equals, model.RealmId.ToString()),
-            new("$.IsRealmBaseline", QueryOperator.Equals, "true"),
+            new QueryCondition { Path = "$.FactionId", Operator = QueryOperator.Exists },
+            new QueryCondition { Path = "$.RealmId", Operator = QueryOperator.Equals, Value = model.RealmId.ToString() },
+            new QueryCondition { Path = "$.IsRealmBaseline", Operator = QueryOperator.Equals, Value = "true" },
         };
-        var results = await _factionQueryStore.JsonQueryPagedAsync(baselineConditions, 10, null, cancellationToken);
+        var results = await _factionQueryStore.JsonQueryPagedAsync(baselineConditions, 0, 10, cancellationToken: cancellationToken);
         foreach (var existing in results.Items)
         {
             if (existing.Value.FactionId != model.FactionId)
@@ -888,11 +906,11 @@ public partial class FactionService : IFactionService
 
         var conditions = new List<QueryCondition>
         {
-            new("$.FactionId", QueryOperator.Exists),
-            new("$.RealmId", QueryOperator.Equals, body.RealmId.ToString()),
-            new("$.IsRealmBaseline", QueryOperator.Equals, "true"),
+            new QueryCondition { Path = "$.FactionId", Operator = QueryOperator.Exists },
+            new QueryCondition { Path = "$.RealmId", Operator = QueryOperator.Equals, Value = body.RealmId.ToString() },
+            new QueryCondition { Path = "$.IsRealmBaseline", Operator = QueryOperator.Equals, Value = "true" },
         };
-        var results = await _factionQueryStore.JsonQueryPagedAsync(conditions, 1, null, cancellationToken);
+        var results = await _factionQueryStore.JsonQueryPagedAsync(conditions, 0, 1, cancellationToken: cancellationToken);
 
         if (results.Items.Count == 0) return (StatusCodes.NotFound, null);
 
@@ -911,6 +929,7 @@ public partial class FactionService : IFactionService
         _logger.LogDebug("Adding member {CharacterId} to faction {FactionId}", body.CharacterId, body.FactionId);
 
         await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.FactionLock,
             resourceId: $"membership:{body.FactionId}:{body.CharacterId}",
             lockOwner: Guid.NewGuid().ToString(),
             expiryInSeconds: _configuration.DistributedLockTimeoutSeconds,
@@ -965,17 +984,12 @@ public partial class FactionService : IFactionService
                 ResourceType = "character",
                 ResourceId = body.CharacterId,
                 SourceType = "faction",
-                SourceId = body.FactionId,
+                SourceId = body.FactionId.ToString(),
             }, cancellationToken);
         }
         catch (ApiException ex)
         {
             _logger.LogWarning(ex, "Failed to register resource reference for character {CharacterId}", body.CharacterId);
-            await _messageBus.TryPublishErrorAsync(
-                "faction", "AddMember", "resource_reference_failed",
-                $"Failed to register resource reference for character {body.CharacterId}",
-                dependency: "resource", endpoint: "post:/faction/add-member",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
         }
 
         var evt = new FactionMemberAddedEvent
@@ -1002,6 +1016,7 @@ public partial class FactionService : IFactionService
         _logger.LogDebug("Removing member {CharacterId} from faction {FactionId}", body.CharacterId, body.FactionId);
 
         await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.FactionLock,
             resourceId: $"membership:{body.FactionId}:{body.CharacterId}",
             lockOwner: Guid.NewGuid().ToString(),
             expiryInSeconds: _configuration.DistributedLockTimeoutSeconds,
@@ -1047,7 +1062,7 @@ public partial class FactionService : IFactionService
         await InvalidateNormCacheForCharacterAsync(characterId, ct);
 
         _logger.LogInformation("Removed member {CharacterId} from faction {FactionId}", characterId, factionId);
-        return StatusCodes.NoContent;
+        return StatusCodes.OK;
     }
 
     /// <summary>
@@ -1059,22 +1074,22 @@ public partial class FactionService : IFactionService
 
         var conditions = new List<QueryCondition>
         {
-            new("$.FactionId", QueryOperator.Exists),
-            new("$.FactionId", QueryOperator.Equals, body.FactionId.ToString()),
+            new QueryCondition { Path = "$.FactionId", Operator = QueryOperator.Exists },
+            new QueryCondition { Path = "$.FactionId", Operator = QueryOperator.Equals, Value = body.FactionId.ToString() },
         };
 
         if (body.Role.HasValue)
-            conditions.Add(new("$.Role", QueryOperator.Equals, body.Role.Value.ToString()));
+            conditions.Add(new QueryCondition { Path = "$.Role", Operator = QueryOperator.Equals, Value = body.Role.Value.ToString() });
 
         var queryStore = _stateStoreFactory.GetJsonQueryableStore<FactionMemberModel>(StateStoreDefinitions.FactionMembership);
-        var result = await queryStore.JsonQueryPagedAsync(conditions, body.PageSize, body.Cursor, cancellationToken);
+        var result = await queryStore.JsonQueryPagedAsync(conditions, body.Offset, body.PageSize, cancellationToken: cancellationToken);
 
         var members = result.Items.Select(r => MapToMemberResponse(r.Value)).ToList();
 
         return (StatusCodes.OK, new ListMembersResponse
         {
             Members = members,
-            NextCursor = result.NextCursor,
+            TotalCount = result.TotalCount,
             HasMore = result.HasMore,
         });
     }
@@ -1126,6 +1141,7 @@ public partial class FactionService : IFactionService
             body.CharacterId, body.FactionId, body.Role);
 
         await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.FactionLock,
             resourceId: $"membership:{body.FactionId}:{body.CharacterId}",
             lockOwner: Guid.NewGuid().ToString(),
             expiryInSeconds: _configuration.DistributedLockTimeoutSeconds,
@@ -1199,6 +1215,7 @@ public partial class FactionService : IFactionService
         _logger.LogDebug("Faction {FactionId} claiming territory at location {LocationId}", body.FactionId, body.LocationId);
 
         await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.FactionLock,
             resourceId: $"territory:{body.LocationId}",
             lockOwner: Guid.NewGuid().ToString(),
             expiryInSeconds: _configuration.DistributedLockTimeoutSeconds,
@@ -1219,9 +1236,8 @@ public partial class FactionService : IFactionService
         // Validate location exists
         try
         {
-            var (locStatus, _) = await _locationClient.GetLocationAsync(
-                new GetLocationRequest { LocationId = body.LocationId }, cancellationToken);
-            if (locStatus != StatusCodes.OK) return (StatusCodes.BadRequest, null);
+            await _locationClient.LocationExistsAsync(
+                new LocationExistsRequest { LocationId = body.LocationId }, cancellationToken);
         }
         catch (ApiException ex)
         {
@@ -1265,17 +1281,12 @@ public partial class FactionService : IFactionService
                 ResourceType = "location",
                 ResourceId = body.LocationId,
                 SourceType = "faction",
-                SourceId = body.FactionId,
+                SourceId = body.FactionId.ToString(),
             }, cancellationToken);
         }
         catch (ApiException ex)
         {
             _logger.LogWarning(ex, "Failed to register resource reference for location {LocationId}", body.LocationId);
-            await _messageBus.TryPublishErrorAsync(
-                "faction", "ClaimTerritory", "resource_reference_failed",
-                $"Failed to register resource reference for location {body.LocationId}",
-                dependency: "resource", endpoint: "post:/faction/claim-territory",
-                details: null, stack: ex.StackTrace, cancellationToken: cancellationToken);
         }
 
         var evt = new FactionTerritoryClaimedEvent
@@ -1304,6 +1315,7 @@ public partial class FactionService : IFactionService
         if (claim == null) return StatusCodes.NotFound;
 
         await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.FactionLock,
             resourceId: $"territory:{claim.LocationId}",
             lockOwner: Guid.NewGuid().ToString(),
             expiryInSeconds: _configuration.DistributedLockTimeoutSeconds,
@@ -1341,7 +1353,7 @@ public partial class FactionService : IFactionService
         await InvalidateNormCacheForFactionAsync(claim.FactionId, ct);
 
         _logger.LogInformation("Released territory claim {ClaimId} at location {LocationId}", claim.ClaimId, claim.LocationId);
-        return StatusCodes.NoContent;
+        return StatusCodes.OK;
     }
 
     /// <summary>
@@ -1353,22 +1365,22 @@ public partial class FactionService : IFactionService
 
         var conditions = new List<QueryCondition>
         {
-            new("$.FactionId", QueryOperator.Exists),
-            new("$.FactionId", QueryOperator.Equals, body.FactionId.ToString()),
+            new QueryCondition { Path = "$.FactionId", Operator = QueryOperator.Exists },
+            new QueryCondition { Path = "$.FactionId", Operator = QueryOperator.Equals, Value = body.FactionId.ToString() },
         };
 
         if (body.Status.HasValue)
-            conditions.Add(new("$.Status", QueryOperator.Equals, body.Status.Value.ToString()));
+            conditions.Add(new QueryCondition { Path = "$.Status", Operator = QueryOperator.Equals, Value = body.Status.Value.ToString() });
 
         var queryStore = _stateStoreFactory.GetJsonQueryableStore<TerritoryClaimModel>(StateStoreDefinitions.FactionTerritory);
-        var result = await queryStore.JsonQueryPagedAsync(conditions, body.PageSize, body.Cursor, cancellationToken);
+        var result = await queryStore.JsonQueryPagedAsync(conditions, body.Offset, body.PageSize, cancellationToken: cancellationToken);
 
         var claims = result.Items.Select(r => MapToClaimResponse(r.Value)).ToList();
 
         return (StatusCodes.OK, new ListTerritoryClaimsResponse
         {
             Claims = claims,
-            NextCursor = result.NextCursor,
+            TotalCount = result.TotalCount,
             HasMore = result.HasMore,
         });
     }
@@ -1408,6 +1420,7 @@ public partial class FactionService : IFactionService
             body.FactionId, body.ViolationType);
 
         await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.FactionLock,
             resourceId: $"norm:{body.FactionId}",
             lockOwner: Guid.NewGuid().ToString(),
             expiryInSeconds: _configuration.DistributedLockTimeoutSeconds,
@@ -1480,6 +1493,7 @@ public partial class FactionService : IFactionService
         if (norm == null) return (StatusCodes.NotFound, null);
 
         await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.FactionLock,
             resourceId: $"norm:{norm.FactionId}",
             lockOwner: Guid.NewGuid().ToString(),
             expiryInSeconds: _configuration.DistributedLockTimeoutSeconds,
@@ -1545,6 +1559,7 @@ public partial class FactionService : IFactionService
         if (norm == null) return StatusCodes.NotFound;
 
         await using var lockResponse = await _lockProvider.LockAsync(
+            StateStoreDefinitions.FactionLock,
             resourceId: $"norm:{norm.FactionId}",
             lockOwner: Guid.NewGuid().ToString(),
             expiryInSeconds: _configuration.DistributedLockTimeoutSeconds,
@@ -1572,7 +1587,7 @@ public partial class FactionService : IFactionService
         await InvalidateNormCacheForFactionAsync(norm.FactionId, cancellationToken);
 
         _logger.LogInformation("Deleted norm {NormId}", body.NormId);
-        return StatusCodes.NoContent;
+        return StatusCodes.OK;
     }
 
     /// <summary>
@@ -1770,13 +1785,13 @@ public partial class FactionService : IFactionService
         }
 
         // 3. Realm baseline faction norms - LOWEST PRIORITY
-        var baselineConditions = new List<QueryCondition>
+        var baselineConditions2 = new List<QueryCondition>
         {
-            new("$.FactionId", QueryOperator.Exists),
-            new("$.RealmId", QueryOperator.Equals, body.RealmId.ToString()),
-            new("$.IsRealmBaseline", QueryOperator.Equals, "true"),
+            new QueryCondition { Path = "$.FactionId", Operator = QueryOperator.Exists },
+            new QueryCondition { Path = "$.RealmId", Operator = QueryOperator.Equals, Value = body.RealmId.ToString() },
+            new QueryCondition { Path = "$.IsRealmBaseline", Operator = QueryOperator.Equals, Value = "true" },
         };
-        var baselineResults = await _factionQueryStore.JsonQueryPagedAsync(baselineConditions, 1, null, cancellationToken);
+        var baselineResults = await _factionQueryStore.JsonQueryPagedAsync(baselineConditions2, 0, 1, cancellationToken: cancellationToken);
         if (baselineResults.Items.Count > 0)
         {
             var baselineFaction = baselineResults.Items[0].Value;
@@ -1838,7 +1853,7 @@ public partial class FactionService : IFactionService
         if (_configuration.NormQueryCacheTtlSeconds > 0)
         {
             await _normCacheStore.SaveAsync(cacheKey, cacheModel,
-                new StateOptions { Ttl = TimeSpan.FromSeconds(_configuration.NormQueryCacheTtlSeconds) },
+                new StateOptions { Ttl = _configuration.NormQueryCacheTtlSeconds },
                 cancellationToken: cancellationToken);
         }
 
@@ -1921,15 +1936,16 @@ public partial class FactionService : IFactionService
 
         var conditions = new List<QueryCondition>
         {
-            new("$.FactionId", QueryOperator.Exists),
-            new("$.RealmId", QueryOperator.Equals, body.RealmId.ToString()),
+            new QueryCondition { Path = "$.FactionId", Operator = QueryOperator.Exists },
+            new QueryCondition { Path = "$.RealmId", Operator = QueryOperator.Equals, Value = body.RealmId.ToString() },
         };
 
-        string? cursor = null;
+        var cleanupOffset = 0;
+        bool cleanupHasMore;
         do
         {
             var results = await _factionQueryStore.JsonQueryPagedAsync(
-                conditions, _configuration.SeedBulkPageSize, cursor, cancellationToken);
+                conditions, cleanupOffset, _configuration.SeedBulkPageSize, cancellationToken: cancellationToken);
 
             foreach (var result in results.Items)
             {
@@ -1948,8 +1964,9 @@ public partial class FactionService : IFactionService
                 factionsRemoved++;
             }
 
-            cursor = results.NextCursor;
-        } while (cursor != null);
+            cleanupOffset += _configuration.SeedBulkPageSize;
+            cleanupHasMore = results.HasMore;
+        } while (cleanupHasMore);
 
         _logger.LogInformation("Cleaned up {Factions} factions for realm {RealmId}", factionsRemoved, body.RealmId);
 

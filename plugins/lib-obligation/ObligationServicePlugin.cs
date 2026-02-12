@@ -65,6 +65,7 @@ public class ObligationServicePlugin : BaseBannouPlugin
             }
 
             Logger?.LogInformation("Obligation service started");
+            await Task.CompletedTask;
             return true;
         }
         catch (Exception ex)

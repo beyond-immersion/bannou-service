@@ -1,5 +1,3 @@
-using BeyondImmersion.BannouService.Generated.Models;
-
 namespace BeyondImmersion.BannouService.Faction;
 
 /// <summary>

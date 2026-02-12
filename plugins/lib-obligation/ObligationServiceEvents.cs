@@ -1,3 +1,5 @@
+using BeyondImmersion.Bannou.Core;
+using BeyondImmersion.BannouService.Contract;
 using BeyondImmersion.BannouService.Events;
 using Microsoft.Extensions.Logging;
 
@@ -67,9 +69,9 @@ public partial class ObligationService
                     "Failed to rebuild obligation cache for character {CharacterId} on contract activation {ContractId}",
                     characterId, evt.ContractId);
                 await _messageBus.TryPublishErrorAsync(
-                    "obligation", "cache_rebuild_failed",
-                    $"Failed to rebuild cache for character {characterId} on contract.activated",
-                    ex);
+                    "obligation", "cache_rebuild",
+                    "cache_rebuild_failed",
+                    $"Failed to rebuild cache for character {characterId} on contract.activated: {ex.Message}");
             }
         }
     }
@@ -98,9 +100,9 @@ public partial class ObligationService
                     "Failed to rebuild obligation cache for character {CharacterId} on contract termination {ContractId}",
                     characterId, evt.ContractId);
                 await _messageBus.TryPublishErrorAsync(
-                    "obligation", "cache_rebuild_failed",
-                    $"Failed to rebuild cache for character {characterId} on contract.terminated",
-                    ex);
+                    "obligation", "cache_rebuild",
+                    "cache_rebuild_failed",
+                    $"Failed to rebuild cache for character {characterId} on contract.terminated: {ex.Message}");
             }
         }
     }
@@ -133,9 +135,9 @@ public partial class ObligationService
                     "Failed to rebuild obligation cache for character {CharacterId} on contract fulfillment {ContractId}",
                     characterId, evt.ContractId);
                 await _messageBus.TryPublishErrorAsync(
-                    "obligation", "cache_rebuild_failed",
-                    $"Failed to rebuild cache for character {characterId} on contract.fulfilled",
-                    ex);
+                    "obligation", "cache_rebuild",
+                    "cache_rebuild_failed",
+                    $"Failed to rebuild cache for character {characterId} on contract.fulfilled: {ex.Message}");
             }
         }
     }
@@ -164,9 +166,9 @@ public partial class ObligationService
                     "Failed to rebuild obligation cache for character {CharacterId} on contract expiry {ContractId}",
                     characterId, evt.ContractId);
                 await _messageBus.TryPublishErrorAsync(
-                    "obligation", "cache_rebuild_failed",
-                    $"Failed to rebuild cache for character {characterId} on contract.expired",
-                    ex);
+                    "obligation", "cache_rebuild",
+                    "cache_rebuild_failed",
+                    $"Failed to rebuild cache for character {characterId} on contract.expired: {ex.Message}");
             }
         }
     }

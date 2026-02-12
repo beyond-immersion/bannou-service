@@ -1,4 +1,5 @@
 using BeyondImmersion.BannouService.Providers;
+using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.Logging;
 
@@ -53,7 +54,7 @@ public class StatusSeedEvolutionListener : ISeedEvolutionListener
     /// <summary>
     /// No-op: growth recorded does not change capabilities, so no cache invalidation needed.
     /// </summary>
-    public async Task OnGrowthRecordedAsync(SeedGrowthNotification notification)
+    public async Task OnGrowthRecordedAsync(SeedGrowthNotification notification, CancellationToken ct)
     {
         await Task.CompletedTask;
     }
@@ -61,7 +62,7 @@ public class StatusSeedEvolutionListener : ISeedEvolutionListener
     /// <summary>
     /// Phase changes may unlock or change capabilities; invalidate seed effects cache.
     /// </summary>
-    public async Task OnPhaseChangedAsync(SeedPhaseNotification notification)
+    public async Task OnPhaseChangedAsync(SeedPhaseNotification notification, CancellationToken ct)
     {
         if (!_configuration.SeedEffectsEnabled)
         {
@@ -74,7 +75,7 @@ public class StatusSeedEvolutionListener : ISeedEvolutionListener
     /// <summary>
     /// Capability changes directly affect seed-derived effects; invalidate cache.
     /// </summary>
-    public async Task OnCapabilitiesChangedAsync(SeedCapabilityNotification notification)
+    public async Task OnCapabilitiesChangedAsync(SeedCapabilityNotification notification, CancellationToken ct)
     {
         if (!_configuration.SeedEffectsEnabled)
         {

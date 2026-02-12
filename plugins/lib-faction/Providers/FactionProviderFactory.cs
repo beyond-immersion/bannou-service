@@ -7,7 +7,6 @@
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
-using BeyondImmersion.BannouService.State;
 
 namespace BeyondImmersion.BannouService.Faction.Providers;
 
@@ -115,7 +114,7 @@ public sealed class FactionProvider : IVariableProvider
     /// Creates a new FactionProvider with the given faction data.
     /// </summary>
     /// <param name="factions">Faction snapshots for this character.</param>
-    public FactionProvider(IReadOnlyList<FactionSnapshot> factions)
+    internal FactionProvider(IReadOnlyList<FactionSnapshot> factions)
     {
         _factions = factions.ToList();
         _factionsByCode = new Dictionary<string, FactionSnapshot>(StringComparer.OrdinalIgnoreCase);
