@@ -252,6 +252,11 @@ public partial class GardenerService : IGardenerService
     }
 
     /// <inheritdoc />
+    /// <remarks>
+    /// No distributed lock: UpdatePosition is high-frequency (every tick) and idempotent
+    /// (last-write-wins). A distributed lock would add unacceptable latency.
+    /// Per IMPLEMENTATION TENETS multi-instance safety.
+    /// </remarks>
     public async Task<(StatusCodes, PositionUpdateResponse?)> UpdatePositionAsync(
         UpdatePositionRequest body, CancellationToken cancellationToken)
     {
@@ -272,7 +277,7 @@ public partial class GardenerService : IGardenerService
         garden.DriftMetrics.DirectionalBiasZ += garden.Position.Z - oldPosition.Z;
 
         // Hesitation detection: if velocity is very low or direction reversed
-        if (distance < 0.1f)
+        if (distance < (float)_configuration.HesitationDetectionThreshold)
             garden.DriftMetrics.HesitationCount++;
 
         // Check proximity triggers against active POIs
@@ -393,6 +398,16 @@ public partial class GardenerService : IGardenerService
     public async Task<(StatusCodes, PoiInteractionResponse?)> InteractWithPoiAsync(
         InteractWithPoiRequest body, CancellationToken cancellationToken)
     {
+        await using var lockResult = await _lockProvider.LockAsync(
+            StateStoreDefinitions.GardenerLock,
+            $"void:{body.AccountId}",
+            Guid.NewGuid().ToString(),
+            30,
+            cancellationToken);
+
+        if (!lockResult.Success)
+            return (StatusCodes.Conflict, null);
+
         var garden = await GardenStore.GetAsync(GardenKey(body.AccountId), cancellationToken);
         if (garden == null)
             return (StatusCodes.NotFound, null);
@@ -468,6 +483,16 @@ public partial class GardenerService : IGardenerService
     public async Task<(StatusCodes, DeclinePoiResponse?)> DeclinePoiAsync(
         DeclinePoiRequest body, CancellationToken cancellationToken)
     {
+        await using var lockResult = await _lockProvider.LockAsync(
+            StateStoreDefinitions.GardenerLock,
+            $"void:{body.AccountId}",
+            Guid.NewGuid().ToString(),
+            30,
+            cancellationToken);
+
+        if (!lockResult.Success)
+            return (StatusCodes.Conflict, null);
+
         var garden = await GardenStore.GetAsync(GardenKey(body.AccountId), cancellationToken);
         if (garden == null)
             return (StatusCodes.NotFound, null);
@@ -516,6 +541,16 @@ public partial class GardenerService : IGardenerService
     public async Task<(StatusCodes, ScenarioStateResponse?)> EnterScenarioAsync(
         EnterScenarioRequest body, CancellationToken cancellationToken)
     {
+        await using var lockResult = await _lockProvider.LockAsync(
+            StateStoreDefinitions.GardenerLock,
+            $"scenario:{body.AccountId}",
+            Guid.NewGuid().ToString(),
+            30,
+            cancellationToken);
+
+        if (!lockResult.Success)
+            return (StatusCodes.Conflict, null);
+
         var garden = await GardenStore.GetAsync(GardenKey(body.AccountId), cancellationToken);
         if (garden == null)
         {
@@ -945,6 +980,22 @@ public partial class GardenerService : IGardenerService
 
         await TemplateStore.SaveAsync(TemplateKey(templateId), template, cancellationToken: cancellationToken);
 
+        await _messageBus.TryPublishAsync("scenario-template.created",
+            new ScenarioTemplateCreatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                ScenarioTemplateId = template.ScenarioTemplateId,
+                Code = template.Code,
+                DisplayName = template.DisplayName,
+                Description = template.Description,
+                Category = template.Category,
+                ConnectivityMode = template.ConnectivityMode,
+                Status = template.Status,
+                CreatedAt = now,
+                UpdatedAt = now
+            }, cancellationToken: cancellationToken);
+
         _logger.LogInformation(
             "Created scenario template {TemplateId} with code {Code}", templateId, body.Code);
 
@@ -1063,6 +1114,22 @@ public partial class GardenerService : IGardenerService
         template.UpdatedAt = DateTimeOffset.UtcNow;
         await TemplateStore.SaveAsync(TemplateKey(body.ScenarioTemplateId), template, cancellationToken: cancellationToken);
 
+        await _messageBus.TryPublishAsync("scenario-template.updated",
+            new ScenarioTemplateUpdatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                ScenarioTemplateId = template.ScenarioTemplateId,
+                Code = template.Code,
+                DisplayName = template.DisplayName,
+                Description = template.Description,
+                Category = template.Category,
+                ConnectivityMode = template.ConnectivityMode,
+                Status = template.Status,
+                CreatedAt = template.CreatedAt,
+                UpdatedAt = template.UpdatedAt
+            }, cancellationToken: cancellationToken);
+
         _logger.LogInformation(
             "Updated scenario template {TemplateId}", body.ScenarioTemplateId);
 
@@ -1091,6 +1158,22 @@ public partial class GardenerService : IGardenerService
         template.Status = TemplateStatus.Deprecated;
         template.UpdatedAt = DateTimeOffset.UtcNow;
         await TemplateStore.SaveAsync(TemplateKey(body.ScenarioTemplateId), template, cancellationToken: cancellationToken);
+
+        await _messageBus.TryPublishAsync("scenario-template.updated",
+            new ScenarioTemplateUpdatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                ScenarioTemplateId = template.ScenarioTemplateId,
+                Code = template.Code,
+                DisplayName = template.DisplayName,
+                Description = template.Description,
+                Category = template.Category,
+                ConnectivityMode = template.ConnectivityMode,
+                Status = template.Status,
+                CreatedAt = template.CreatedAt,
+                UpdatedAt = template.UpdatedAt
+            }, cancellationToken: cancellationToken);
 
         _logger.LogInformation(
             "Deprecated scenario template {TemplateId} ({Code})",
@@ -1194,6 +1277,16 @@ public partial class GardenerService : IGardenerService
     public async Task<(StatusCodes, ScenarioStateResponse?)> EnterScenarioTogetherAsync(
         EnterTogetherRequest body, CancellationToken cancellationToken)
     {
+        await using var lockResult = await _lockProvider.LockAsync(
+            StateStoreDefinitions.GardenerLock,
+            $"bond-scenario:{body.BondId}",
+            Guid.NewGuid().ToString(),
+            30,
+            cancellationToken);
+
+        if (!lockResult.Success)
+            return (StatusCodes.Conflict, null);
+
         if (!_configuration.BondSharedVoidEnabled)
         {
             _logger.LogDebug("Bond shared void is disabled");
@@ -1440,35 +1533,18 @@ public partial class GardenerService : IGardenerService
         bool fullCompletion,
         CancellationToken ct)
     {
-        var growthAwarded = new Dictionary<string, float>();
+        var growthAwarded = GardenerGrowthCalculation.CalculateGrowth(
+            scenario, template, _configuration.GrowthAwardMultiplier, fullCompletion,
+            (float)_configuration.GrowthFullCompletionMaxRatio,
+            (float)_configuration.GrowthFullCompletionMinRatio,
+            (float)_configuration.GrowthPartialMaxRatio,
+            _configuration.DefaultEstimatedDurationMinutes);
 
-        if (template?.DomainWeights == null || template.DomainWeights.Count == 0)
+        if (growthAwarded.Count == 0)
             return growthAwarded;
 
-        var durationMinutes = (float)(DateTimeOffset.UtcNow - scenario.CreatedAt).TotalMinutes;
-        var estimatedMinutes = template.EstimatedDurationMinutes ?? 30;
-
-        float timeRatio;
-        if (fullCompletion)
-        {
-            // Full completion: time-proportional, capped at 1.5x
-            timeRatio = MathF.Min(durationMinutes / estimatedMinutes, 1.5f);
-            // Minimum of 0.5x for very fast completions
-            timeRatio = MathF.Max(timeRatio, 0.5f);
-        }
-        else
-        {
-            // Partial (abandoned): proportional to time spent, capped at 0.5x
-            timeRatio = MathF.Min(durationMinutes / estimatedMinutes, 0.5f);
-        }
-
-        var entries = new List<GrowthEntry>();
-        foreach (var dw in template.DomainWeights)
-        {
-            var amount = (float)(dw.Weight * _configuration.GrowthAwardMultiplier * timeRatio);
-            growthAwarded[dw.Domain] = amount;
-            entries.Add(new GrowthEntry { Domain = dw.Domain, Amount = amount });
-        }
+        var entries = growthAwarded.Select(kvp =>
+            new GrowthEntry { Domain = kvp.Key, Amount = kvp.Value }).ToList();
 
         // Award growth for primary participant via batch API (per FOUNDATION TENETS)
         var primaryParticipant = scenario.Participants.FirstOrDefault();

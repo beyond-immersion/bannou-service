@@ -433,32 +433,19 @@ public class GardenerScenarioLifecycleWorker : BackgroundService
     }
 
     /// <summary>
-    /// Calculates partial growth awards for a timed-out or abandoned scenario.
-    /// Partial growth is proportional to time spent relative to estimated duration,
-    /// capped at 0.5x the full amount.
+    /// Calculates partial growth awards for a timed-out or abandoned scenario
+    /// using the shared growth calculation logic.
     /// </summary>
     private Dictionary<string, float> CalculatePartialGrowth(
         ScenarioInstanceModel scenario,
         ScenarioTemplateModel? template)
     {
-        var growth = new Dictionary<string, float>();
-
-        if (template?.DomainWeights == null || template.DomainWeights.Count == 0)
-            return growth;
-
-        var durationMinutes = (float)(DateTimeOffset.UtcNow - scenario.CreatedAt).TotalMinutes;
-        var estimatedMinutes = template.EstimatedDurationMinutes ?? 30;
-
-        // Partial growth: proportional to time spent, capped at 0.5x
-        var timeRatio = MathF.Min(durationMinutes / estimatedMinutes, 0.5f);
-
-        foreach (var dw in template.DomainWeights)
-        {
-            var amount = dw.Weight * (float)_configuration.GrowthAwardMultiplier * timeRatio;
-            growth[dw.Domain] = amount;
-        }
-
-        return growth;
+        return GardenerGrowthCalculation.CalculateGrowth(
+            scenario, template, _configuration.GrowthAwardMultiplier, fullCompletion: false,
+            (float)_configuration.GrowthFullCompletionMaxRatio,
+            (float)_configuration.GrowthFullCompletionMinRatio,
+            (float)_configuration.GrowthPartialMaxRatio,
+            _configuration.DefaultEstimatedDurationMinutes);
     }
 
     /// <summary>

@@ -1,6 +1,8 @@
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Providers;
+using BeyondImmersion.BannouService.Seed;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace BeyondImmersion.BannouService.Gardener;
 
@@ -17,6 +19,8 @@ namespace BeyondImmersion.BannouService.Gardener;
 /// </remarks>
 public class GardenerServicePlugin : StandardServicePlugin<IGardenerService>
 {
+    private IServiceProvider? _serviceProvider;
+
     /// <inheritdoc />
     public override string PluginName => "gardener";
 
@@ -42,5 +46,59 @@ public class GardenerServicePlugin : StandardServicePlugin<IGardenerService>
         // Register background workers as hosted services
         services.AddHostedService<GardenerVoidOrchestratorWorker>();
         services.AddHostedService<GardenerScenarioLifecycleWorker>();
+    }
+
+    /// <inheritdoc />
+    public override void Configure(IServiceProvider serviceProvider)
+    {
+        base.Configure(serviceProvider);
+        _serviceProvider = serviceProvider;
+    }
+
+    /// <summary>
+    /// Running phase - registers the guardian seed type with the Seed service.
+    /// ISeedClient is L2 (hard dependency per SERVICE HIERARCHY).
+    /// </summary>
+    protected override async Task OnRunningAsync()
+    {
+        await base.OnRunningAsync();
+
+        var serviceProvider = _serviceProvider
+            ?? throw new InvalidOperationException("ServiceProvider not available during OnRunningAsync");
+
+        var seedClient = serviceProvider.GetRequiredService<ISeedClient>();
+        var configuration = serviceProvider.GetRequiredService<GardenerServiceConfiguration>();
+
+        try
+        {
+            await seedClient.RegisterSeedTypeAsync(new RegisterSeedTypeRequest
+            {
+                SeedTypeCode = configuration.SeedTypeCode,
+                GameServiceId = Guid.Empty, // Gardener is cross-game; resolved at runtime
+                DisplayName = "Guardian Spirit",
+                Description = "Player guardian spirit that grows through void exploration and scenario completion",
+                MaxPerOwner = 1,
+                AllowedOwnerTypes = new List<string> { "account" },
+                GrowthPhases = new List<GrowthPhaseDefinition>
+                {
+                    new() { PhaseCode = "nascent", DisplayName = "Nascent", MinTotalGrowth = 0 },
+                    new() { PhaseCode = "awakening", DisplayName = "Awakening", MinTotalGrowth = 100 },
+                    new() { PhaseCode = "attuned", DisplayName = "Attuned", MinTotalGrowth = 500 },
+                    new() { PhaseCode = "resonant", DisplayName = "Resonant", MinTotalGrowth = 2000 },
+                    new() { PhaseCode = "transcendent", DisplayName = "Transcendent", MinTotalGrowth = 10000 }
+                },
+                BondCardinality = 1,
+                BondPermanent = true
+            }, CancellationToken.None);
+
+            Logger?.LogInformation(
+                "Registered guardian seed type with code {SeedTypeCode}", configuration.SeedTypeCode);
+        }
+        catch (ApiException ex) when (ex.StatusCode == 409)
+        {
+            // Already registered from a previous startup - expected
+            Logger?.LogDebug(
+                "Guardian seed type {SeedTypeCode} already registered", configuration.SeedTypeCode);
+        }
     }
 }

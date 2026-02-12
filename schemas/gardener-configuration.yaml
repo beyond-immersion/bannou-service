@@ -64,6 +64,149 @@ x-service-configuration:
       default: 30.0
       description: Minimum distance between any two POIs in void space units
 
+    PoiDefaultIntensityRamp:
+      type: number
+      format: float
+      env: GARDENER_POI_DEFAULT_INTENSITY_RAMP
+      minimum: 0.0
+      maximum: 1.0
+      default: 0.5
+      description: Default initial intensity ramp value for spawned POIs (0.0-1.0)
+
+    PoiDefaultTriggerRadius:
+      type: number
+      format: float
+      env: GARDENER_POI_DEFAULT_TRIGGER_RADIUS
+      minimum: 1.0
+      default: 15.0
+      description: Default trigger radius for POI proximity detection in void space units
+
+    HesitationDetectionThreshold:
+      type: number
+      format: float
+      env: GARDENER_HESITATION_DETECTION_THRESHOLD
+      minimum: 0.0
+      default: 0.1
+      description: Minimum distance movement for hesitation detection in void space units
+
+    DiversitySeenPenalty:
+      type: number
+      format: float
+      env: GARDENER_DIVERSITY_SEEN_PENALTY
+      minimum: 0.0
+      maximum: 1.0
+      default: 0.2
+      description: Diversity score multiplier for recently completed scenarios (0 = never reoffered, 1 = no penalty)
+
+    ExplorationDistanceThreshold:
+      type: number
+      format: float
+      env: GARDENER_EXPLORATION_DISTANCE_THRESHOLD
+      minimum: 0.0
+      default: 500.0
+      description: Minimum total drift distance to classify a player as exploring
+
+    HesitantHesitationThreshold:
+      type: number
+      format: float
+      env: GARDENER_HESITANT_HESITATION_THRESHOLD
+      minimum: 0.0
+      maximum: 1.0
+      default: 0.6
+      description: Minimum hesitation ratio to classify a player as hesitant
+
+    ExplorationMaxHesitationRatio:
+      type: number
+      format: float
+      env: GARDENER_EXPLORATION_MAX_HESITATION_RATIO
+      minimum: 0.0
+      maximum: 1.0
+      default: 0.3
+      description: Maximum hesitation ratio to still classify a player as exploring
+
+    DirectedDistanceThreshold:
+      type: number
+      format: float
+      env: GARDENER_DIRECTED_DISTANCE_THRESHOLD
+      minimum: 0.0
+      default: 200.0
+      description: Minimum total drift distance to classify a player as directed
+
+    DirectedMaxHesitationRatio:
+      type: number
+      format: float
+      env: GARDENER_DIRECTED_MAX_HESITATION_RATIO
+      minimum: 0.0
+      maximum: 1.0
+      default: 0.15
+      description: Maximum hesitation ratio to classify a player as directed
+
+    ProximityTriggerMaxHesitationRatio:
+      type: number
+      format: float
+      env: GARDENER_PROXIMITY_TRIGGER_MAX_HESITATION_RATIO
+      minimum: 0.0
+      maximum: 1.0
+      default: 0.2
+      description: Maximum hesitation ratio for proximity-based POI trigger mode selection
+
+    HesitationRatioNormalizationFactor:
+      type: number
+      format: float
+      env: GARDENER_HESITATION_RATIO_NORMALIZATION_FACTOR
+      minimum: 1.0
+      default: 10.0
+      description: Divisor for normalizing hesitation count to a ratio against distance
+
+    # =========================================================================
+    # Narrative Scoring Tiers
+    # =========================================================================
+
+    NarrativeScoreHigh:
+      type: number
+      format: float
+      env: GARDENER_NARRATIVE_SCORE_HIGH
+      minimum: 0.0
+      maximum: 1.0
+      default: 0.9
+      description: Narrative score for strongest category-pattern match (e.g. exploring player + exploration scenario)
+
+    NarrativeScoreMediumHigh:
+      type: number
+      format: float
+      env: GARDENER_NARRATIVE_SCORE_MEDIUM_HIGH
+      minimum: 0.0
+      maximum: 1.0
+      default: 0.7
+      description: Narrative score for good category-pattern match (e.g. exploring player + narrative scenario)
+
+    NarrativeScoreMedium:
+      type: number
+      format: float
+      env: GARDENER_NARRATIVE_SCORE_MEDIUM
+      minimum: 0.0
+      maximum: 1.0
+      default: 0.6
+      description: Narrative score for moderate category-pattern match (e.g. exploring player + mixed scenario)
+
+    NarrativeScoreLow:
+      type: number
+      format: float
+      env: GARDENER_NARRATIVE_SCORE_LOW
+      minimum: 0.0
+      maximum: 1.0
+      default: 0.4
+      description: Narrative score for weak category-pattern match (e.g. exploring player + combat scenario)
+
+    NarrativeScoreNeutral:
+      type: number
+      format: float
+      env: GARDENER_NARRATIVE_SCORE_NEUTRAL
+      minimum: 0.0
+      maximum: 1.0
+      default: 0.5
+      description: Baseline narrative score when no player drift pattern is detected
+
     # =========================================================================
     # Scenario Selection Algorithm Weights
     # =========================================================================
@@ -146,6 +289,39 @@ x-service-configuration:
       minimum: 0.0
       default: 1.0
       description: Global multiplier applied to all growth awards from scenario completion
+
+    GrowthFullCompletionMaxRatio:
+      type: number
+      format: float
+      env: GARDENER_GROWTH_FULL_COMPLETION_MAX_RATIO
+      minimum: 0.1
+      default: 1.5
+      description: Maximum time ratio cap for full completion growth (overtime bonus cap)
+
+    GrowthFullCompletionMinRatio:
+      type: number
+      format: float
+      env: GARDENER_GROWTH_FULL_COMPLETION_MIN_RATIO
+      minimum: 0.0
+      maximum: 1.0
+      default: 0.5
+      description: Minimum time ratio floor for full completion growth (speed-run minimum)
+
+    GrowthPartialMaxRatio:
+      type: number
+      format: float
+      env: GARDENER_GROWTH_PARTIAL_MAX_RATIO
+      minimum: 0.0
+      maximum: 1.0
+      default: 0.5
+      description: Maximum time ratio cap for abandoned/timed-out scenario growth
+
+    DefaultEstimatedDurationMinutes:
+      type: integer
+      env: GARDENER_DEFAULT_ESTIMATED_DURATION_MINUTES
+      minimum: 1
+      default: 30
+      description: Fallback estimated duration for templates without an explicit value
 
     # =========================================================================
     # Bond Features

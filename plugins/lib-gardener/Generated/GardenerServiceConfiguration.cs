@@ -93,6 +93,118 @@ public class GardenerServiceConfiguration : IServiceConfiguration
     public double MinPoiSpacing { get; set; } = 30.0;
 
     /// <summary>
+    /// Default initial intensity ramp value for spawned POIs (0.0-1.0)
+    /// Environment variable: GARDENER_POI_DEFAULT_INTENSITY_RAMP
+    /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
+    public double PoiDefaultIntensityRamp { get; set; } = 0.5;
+
+    /// <summary>
+    /// Default trigger radius for POI proximity detection in void space units
+    /// Environment variable: GARDENER_POI_DEFAULT_TRIGGER_RADIUS
+    /// </summary>
+    [ConfigRange(Minimum = 1.0)]
+    public double PoiDefaultTriggerRadius { get; set; } = 15.0;
+
+    /// <summary>
+    /// Minimum distance movement for hesitation detection in void space units
+    /// Environment variable: GARDENER_HESITATION_DETECTION_THRESHOLD
+    /// </summary>
+    [ConfigRange(Minimum = 0.0)]
+    public double HesitationDetectionThreshold { get; set; } = 0.1;
+
+    /// <summary>
+    /// Diversity score multiplier for recently completed scenarios (0 = never reoffered, 1 = no penalty)
+    /// Environment variable: GARDENER_DIVERSITY_SEEN_PENALTY
+    /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
+    public double DiversitySeenPenalty { get; set; } = 0.2;
+
+    /// <summary>
+    /// Minimum total drift distance to classify a player as exploring
+    /// Environment variable: GARDENER_EXPLORATION_DISTANCE_THRESHOLD
+    /// </summary>
+    [ConfigRange(Minimum = 0.0)]
+    public double ExplorationDistanceThreshold { get; set; } = 500.0;
+
+    /// <summary>
+    /// Minimum hesitation ratio to classify a player as hesitant
+    /// Environment variable: GARDENER_HESITANT_HESITATION_THRESHOLD
+    /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
+    public double HesitantHesitationThreshold { get; set; } = 0.6;
+
+    /// <summary>
+    /// Maximum hesitation ratio to still classify a player as exploring
+    /// Environment variable: GARDENER_EXPLORATION_MAX_HESITATION_RATIO
+    /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
+    public double ExplorationMaxHesitationRatio { get; set; } = 0.3;
+
+    /// <summary>
+    /// Minimum total drift distance to classify a player as directed
+    /// Environment variable: GARDENER_DIRECTED_DISTANCE_THRESHOLD
+    /// </summary>
+    [ConfigRange(Minimum = 0.0)]
+    public double DirectedDistanceThreshold { get; set; } = 200.0;
+
+    /// <summary>
+    /// Maximum hesitation ratio to classify a player as directed
+    /// Environment variable: GARDENER_DIRECTED_MAX_HESITATION_RATIO
+    /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
+    public double DirectedMaxHesitationRatio { get; set; } = 0.15;
+
+    /// <summary>
+    /// Maximum hesitation ratio for proximity-based POI trigger mode selection
+    /// Environment variable: GARDENER_PROXIMITY_TRIGGER_MAX_HESITATION_RATIO
+    /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
+    public double ProximityTriggerMaxHesitationRatio { get; set; } = 0.2;
+
+    /// <summary>
+    /// Divisor for normalizing hesitation count to a ratio against distance
+    /// Environment variable: GARDENER_HESITATION_RATIO_NORMALIZATION_FACTOR
+    /// </summary>
+    [ConfigRange(Minimum = 1.0)]
+    public double HesitationRatioNormalizationFactor { get; set; } = 10.0;
+
+    /// <summary>
+    /// Narrative score for strongest category-pattern match (e.g. exploring player + exploration scenario)
+    /// Environment variable: GARDENER_NARRATIVE_SCORE_HIGH
+    /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
+    public double NarrativeScoreHigh { get; set; } = 0.9;
+
+    /// <summary>
+    /// Narrative score for good category-pattern match (e.g. exploring player + narrative scenario)
+    /// Environment variable: GARDENER_NARRATIVE_SCORE_MEDIUM_HIGH
+    /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
+    public double NarrativeScoreMediumHigh { get; set; } = 0.7;
+
+    /// <summary>
+    /// Narrative score for moderate category-pattern match (e.g. exploring player + mixed scenario)
+    /// Environment variable: GARDENER_NARRATIVE_SCORE_MEDIUM
+    /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
+    public double NarrativeScoreMedium { get; set; } = 0.6;
+
+    /// <summary>
+    /// Narrative score for weak category-pattern match (e.g. exploring player + combat scenario)
+    /// Environment variable: GARDENER_NARRATIVE_SCORE_LOW
+    /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
+    public double NarrativeScoreLow { get; set; } = 0.4;
+
+    /// <summary>
+    /// Baseline narrative score when no player drift pattern is detected
+    /// Environment variable: GARDENER_NARRATIVE_SCORE_NEUTRAL
+    /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
+    public double NarrativeScoreNeutral { get; set; } = 0.5;
+
+    /// <summary>
     /// Weight for domain affinity in scenario scoring algorithm
     /// Environment variable: GARDENER_AFFINITY_WEIGHT
     /// </summary>
@@ -154,6 +266,34 @@ public class GardenerServiceConfiguration : IServiceConfiguration
     /// </summary>
     [ConfigRange(Minimum = 0.0)]
     public double GrowthAwardMultiplier { get; set; } = 1.0;
+
+    /// <summary>
+    /// Maximum time ratio cap for full completion growth (overtime bonus cap)
+    /// Environment variable: GARDENER_GROWTH_FULL_COMPLETION_MAX_RATIO
+    /// </summary>
+    [ConfigRange(Minimum = 0.1)]
+    public double GrowthFullCompletionMaxRatio { get; set; } = 1.5;
+
+    /// <summary>
+    /// Minimum time ratio floor for full completion growth (speed-run minimum)
+    /// Environment variable: GARDENER_GROWTH_FULL_COMPLETION_MIN_RATIO
+    /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
+    public double GrowthFullCompletionMinRatio { get; set; } = 0.5;
+
+    /// <summary>
+    /// Maximum time ratio cap for abandoned/timed-out scenario growth
+    /// Environment variable: GARDENER_GROWTH_PARTIAL_MAX_RATIO
+    /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
+    public double GrowthPartialMaxRatio { get; set; } = 0.5;
+
+    /// <summary>
+    /// Fallback estimated duration for templates without an explicit value
+    /// Environment variable: GARDENER_DEFAULT_ESTIMATED_DURATION_MINUTES
+    /// </summary>
+    [ConfigRange(Minimum = 1)]
+    public int DefaultEstimatedDurationMinutes { get; set; } = 30;
 
     /// <summary>
     /// Whether bonded players share a void instance with merged POIs

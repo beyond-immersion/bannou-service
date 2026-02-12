@@ -376,9 +376,9 @@ public class GardenerVoidOrchestratorWorker : BackgroundService
                 ScenarioTemplateId = template.ScenarioTemplateId,
                 VisualHint = template.Category,
                 AudioHint = template.Category == ScenarioCategory.Narrative ? "whisper" : null,
-                IntensityRamp = 0.5f,
+                IntensityRamp = (float)_configuration.PoiDefaultIntensityRamp,
                 TriggerMode = SelectTriggerMode(garden.DriftMetrics),
-                TriggerRadius = 15f,
+                TriggerRadius = (float)_configuration.PoiDefaultTriggerRadius,
                 SpawnedAt = now,
                 ExpiresAt = now.AddMinutes(_configuration.PoiDefaultTtlMinutes),
                 Status = PoiStatus.Active
@@ -495,7 +495,7 @@ public class GardenerVoidOrchestratorWorker : BackgroundService
 
             // Diversity: penalize recently seen templates
             float diversityScore = garden.ScenarioHistory.Contains(template.ScenarioTemplateId)
-                ? 0.2f : 1.0f;
+                ? (float)_configuration.DiversitySeenPenalty : 1.0f;
 
             // Narrative: match drift patterns to scenario types
             float narrativeScore = ComputeNarrativeScore(garden.DriftMetrics, template);
@@ -537,25 +537,33 @@ public class GardenerVoidOrchestratorWorker : BackgroundService
     /// hesitant players score higher on guided/tutorial templates;
     /// directed players score higher on combat/challenge templates.
     /// </summary>
-    private static float ComputeNarrativeScore(DriftMetricsModel drift, ScenarioTemplateModel template)
+    private float ComputeNarrativeScore(DriftMetricsModel drift, ScenarioTemplateModel template)
     {
         if (drift.TotalDistance <= 0)
-            return 0.5f;
+            return (float)_configuration.NarrativeScoreNeutral;
 
-        // Compute movement characterization
-        var hesitationRatio = drift.HesitationCount / MathF.Max(drift.TotalDistance / 10f, 1f);
-        var isExploring = drift.TotalDistance > 500f && hesitationRatio < 0.3f;
-        var isHesitant = hesitationRatio > 0.6f;
-        var isDirected = drift.TotalDistance > 200f && hesitationRatio < 0.15f;
+        // Compute movement characterization using configured thresholds
+        var hesitationRatio = drift.HesitationCount /
+            MathF.Max(drift.TotalDistance / (float)_configuration.HesitationRatioNormalizationFactor, 1f);
+        var isExploring = drift.TotalDistance > (float)_configuration.ExplorationDistanceThreshold
+            && hesitationRatio < (float)_configuration.ExplorationMaxHesitationRatio;
+        var isHesitant = hesitationRatio > (float)_configuration.HesitantHesitationThreshold;
+        var isDirected = drift.TotalDistance > (float)_configuration.DirectedDistanceThreshold
+            && hesitationRatio < (float)_configuration.DirectedMaxHesitationRatio;
+
+        var high = (float)_configuration.NarrativeScoreHigh;
+        var mediumHigh = (float)_configuration.NarrativeScoreMediumHigh;
+        var medium = (float)_configuration.NarrativeScoreMedium;
+        var low = (float)_configuration.NarrativeScoreLow;
 
         if (isExploring)
         {
             return template.Category switch
             {
-                ScenarioCategory.Exploration => 0.9f,
-                ScenarioCategory.Narrative => 0.7f,
-                ScenarioCategory.Mixed => 0.6f,
-                _ => 0.4f
+                ScenarioCategory.Exploration => high,
+                ScenarioCategory.Narrative => mediumHigh,
+                ScenarioCategory.Mixed => medium,
+                _ => low
             };
         }
 
@@ -563,10 +571,10 @@ public class GardenerVoidOrchestratorWorker : BackgroundService
         {
             return template.Category switch
             {
-                ScenarioCategory.Tutorial => 0.9f,
-                ScenarioCategory.Social => 0.7f,
-                ScenarioCategory.Crafting => 0.6f,
-                _ => 0.4f
+                ScenarioCategory.Tutorial => high,
+                ScenarioCategory.Social => mediumHigh,
+                ScenarioCategory.Crafting => medium,
+                _ => low
             };
         }
 
@@ -574,14 +582,14 @@ public class GardenerVoidOrchestratorWorker : BackgroundService
         {
             return template.Category switch
             {
-                ScenarioCategory.Combat => 0.9f,
-                ScenarioCategory.Survival => 0.7f,
-                ScenarioCategory.Magic => 0.6f,
-                _ => 0.4f
+                ScenarioCategory.Combat => high,
+                ScenarioCategory.Survival => mediumHigh,
+                ScenarioCategory.Magic => medium,
+                _ => low
             };
         }
 
-        return 0.5f;
+        return (float)_configuration.NarrativeScoreNeutral;
     }
 
     /// <summary>
@@ -659,17 +667,17 @@ public class GardenerVoidOrchestratorWorker : BackgroundService
     /// Players with high hesitation get Prompted mode; idle players get Forced;
     /// active explorers get Proximity; default is Interaction.
     /// </summary>
-    private static TriggerMode SelectTriggerMode(DriftMetricsModel drift)
+    private TriggerMode SelectTriggerMode(DriftMetricsModel drift)
     {
         if (drift.TotalDistance <= 0)
             return TriggerMode.Forced;
 
         var hesitationRatio = drift.HesitationCount / MathF.Max(drift.TotalDistance / 10f, 1f);
 
-        if (hesitationRatio > 0.6f)
+        if (hesitationRatio > (float)_configuration.HesitantHesitationThreshold)
             return TriggerMode.Prompted;
 
-        if (drift.TotalDistance > 500f && hesitationRatio < 0.2f)
+        if (drift.TotalDistance > (float)_configuration.ExplorationDistanceThreshold && hesitationRatio < 0.2f)
             return TriggerMode.Proximity;
 
         return TriggerMode.Interaction;

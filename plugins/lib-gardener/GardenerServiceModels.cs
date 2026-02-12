@@ -670,3 +670,62 @@ internal class ScenarioScore
     /// </summary>
     public float RandomScore { get; set; }
 }
+
+/// <summary>
+/// Shared growth calculation logic used by both GardenerService and
+/// GardenerScenarioLifecycleWorker to ensure consistent growth awards.
+/// </summary>
+internal static class GardenerGrowthCalculation
+{
+    /// <summary>
+    /// Calculates growth amounts per domain for a scenario based on time spent.
+    /// </summary>
+    /// <param name="scenario">The scenario instance to calculate growth for.</param>
+    /// <param name="template">The scenario template with domain weights.</param>
+    /// <param name="growthMultiplier">Global growth award multiplier from configuration.</param>
+    /// <param name="fullCompletion">True for completed scenarios, false for abandoned/timed-out.</param>
+    /// <param name="fullCompletionMaxRatio">Maximum time ratio cap for full completion (from configuration).</param>
+    /// <param name="fullCompletionMinRatio">Minimum time ratio floor for full completion (from configuration).</param>
+    /// <param name="partialMaxRatio">Maximum time ratio cap for partial completion (from configuration).</param>
+    /// <param name="defaultEstimatedDurationMinutes">Fallback estimated duration when template has none (from configuration).</param>
+    /// <returns>Dictionary of domain to growth amount.</returns>
+    public static Dictionary<string, float> CalculateGrowth(
+        ScenarioInstanceModel scenario,
+        ScenarioTemplateModel? template,
+        double growthMultiplier,
+        bool fullCompletion,
+        float fullCompletionMaxRatio,
+        float fullCompletionMinRatio,
+        float partialMaxRatio,
+        int defaultEstimatedDurationMinutes)
+    {
+        var growth = new Dictionary<string, float>();
+
+        if (template?.DomainWeights == null || template.DomainWeights.Count == 0)
+            return growth;
+
+        var durationMinutes = (float)(DateTimeOffset.UtcNow - scenario.CreatedAt).TotalMinutes;
+        var estimatedMinutes = template.EstimatedDurationMinutes ?? defaultEstimatedDurationMinutes;
+
+        float timeRatio;
+        if (fullCompletion)
+        {
+            // Full completion: time-proportional with configured caps
+            timeRatio = MathF.Min(durationMinutes / estimatedMinutes, fullCompletionMaxRatio);
+            timeRatio = MathF.Max(timeRatio, fullCompletionMinRatio);
+        }
+        else
+        {
+            // Partial (abandoned/timeout): proportional to time spent with configured cap
+            timeRatio = MathF.Min(durationMinutes / estimatedMinutes, partialMaxRatio);
+        }
+
+        foreach (var dw in template.DomainWeights)
+        {
+            var amount = (float)(dw.Weight * growthMultiplier * timeRatio);
+            growth[dw.Domain] = amount;
+        }
+
+        return growth;
+    }
+}
