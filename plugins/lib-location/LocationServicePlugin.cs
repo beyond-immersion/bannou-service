@@ -1,6 +1,9 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Contract;
+using BeyondImmersion.BannouService.Location.Caching;
+using BeyondImmersion.BannouService.Location.Providers;
 using BeyondImmersion.BannouService.Plugins;
+using BeyondImmersion.BannouService.Providers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -17,11 +20,18 @@ public class LocationServicePlugin : StandardServicePlugin<ILocationService>
     public override string DisplayName => "Location Service";
 
     /// <summary>
-    /// Registers background services for entity presence cleanup.
+    /// Registers background services, caches, and variable provider factories.
     /// </summary>
     public override void ConfigureServices(IServiceCollection services)
     {
         services.AddHostedService<EntityPresenceCleanupWorker>();
+
+        // Register location context cache (singleton for cross-request caching)
+        services.AddSingleton<ILocationDataCache, LocationDataCache>();
+
+        // Register variable provider factory for Actor to discover via DI
+        // This enables dependency inversion: Actor (L2) consumes providers without coupling to Location
+        services.AddSingleton<IVariableProviderFactory, LocationContextProviderFactory>();
     }
 
     /// <summary>

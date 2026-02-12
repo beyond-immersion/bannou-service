@@ -48,3 +48,17 @@ internal class EntityPresenceModel
     public DateTimeOffset ReportedAt { get; set; }
     public string? ReportedBy { get; set; }
 }
+
+/// <summary>
+/// Cached location context data for ABML variable provider resolution.
+/// Contains pre-resolved physical facts about the location a character occupies.
+/// </summary>
+public record LocationContextData(
+    string Zone,
+    string Name,
+    string? Region,
+    LocationType Type,
+    int Depth,
+    string Realm,
+    List<string> NearbyPois,
+    int EntityCount);

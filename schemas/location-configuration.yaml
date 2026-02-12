@@ -67,3 +67,17 @@ x-service-configuration:
       minimum: 10
       maximum: 1000
       env: LOCATION_MAX_ENTITIES_PER_LOCATION_QUERY
+    ContextCacheTtlSeconds:
+      type: integer
+      description: TTL for location context provider cache entries in seconds, distinct from the main location CacheTtlSeconds (spatial context for ABML variable resolution)
+      default: 10
+      minimum: 1
+      maximum: 300
+      env: LOCATION_CONTEXT_CACHE_TTL_SECONDS
+    ContextNearbyPoisLimit:
+      type: integer
+      description: Maximum number of sibling locations to include in the nearby_pois ABML variable for the location context provider
+      default: 50
+      minimum: 1
+      maximum: 200
+      env: LOCATION_CONTEXT_NEARBY_POIS_LIMIT

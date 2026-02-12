@@ -111,4 +111,18 @@ public class LocationServiceConfiguration : IServiceConfiguration
     [ConfigRange(Minimum = 10, Maximum = 1000)]
     public int MaxEntitiesPerLocationQuery { get; set; } = 100;
 
+    /// <summary>
+    /// TTL for location context provider cache entries in seconds, distinct from the main location CacheTtlSeconds (spatial context for ABML variable resolution)
+    /// Environment variable: LOCATION_CONTEXT_CACHE_TTL_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 300)]
+    public int ContextCacheTtlSeconds { get; set; } = 10;
+
+    /// <summary>
+    /// Maximum number of sibling locations to include in the nearby_pois ABML variable for the location context provider
+    /// Environment variable: LOCATION_CONTEXT_NEARBY_POIS_LIMIT
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 200)]
+    public int ContextNearbyPoisLimit { get; set; } = 50;
+
 }
