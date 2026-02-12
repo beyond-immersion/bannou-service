@@ -52,6 +52,7 @@ Redis-backed RBAC permission system (L1 AppFoundation) for WebSocket services. M
 | `permissions:{service}:{state}:{role}` | `HashSet<string>` | Permission matrix entries (allowed endpoints for combination) |
 | `permission_versions:{serviceId}` | `Dictionary<string, string>` | Per-service version tracking (contains `version` key) |
 | `permission_hash:{serviceId}` | `string` | SHA-256 hash for idempotent registration detection |
+| `service-states:{serviceId}` | `HashSet<string>` | Set of state names registered by each service (for dynamic endpoint discovery) |
 
 ---
 
@@ -223,7 +224,7 @@ None identified. Previous extensions were either implemented (Permission TTL →
 
 4. **Static ROLE_ORDER array**: The role hierarchy is hardcoded as `["anonymous", "user", "developer", "admin"]`. Adding new roles requires code changes, not configuration.
 
-5. **GetRegisteredServices endpoint count is approximate**: `GetRegisteredServicesAsync` uses `ROLE_ORDER` for roles but a hardcoded array of states `["authenticated", "default", "lobby", "in_game"]` when scanning for unique endpoints per service. Custom states registered by services may be missed, so the reported `endpointCount` may undercount. *(Previously also missed the "developer" role — fixed 2026-02-11 by using `ROLE_ORDER` instead of a hardcoded roles subset.)*
+5. ~~**GetRegisteredServices endpoint count is approximate**~~: **FIXED** (2026-02-11) - `GetRegisteredServicesAsync` now reads dynamically stored per-service state names from `service-states:{serviceId}` Redis keys instead of using a hardcoded array. States are saved during `RegisterServicePermissionsAsync` from the permission matrix keys. Previously used `["authenticated", "default", "lobby", "in_game"]` which included fake states and missed real ones (voice: `ringing`/`in_room`/`consent_pending`, matchmaking: `in_queue`/`match_pending`, chat: `in_room`).
 
 ### Design Considerations
 
@@ -233,4 +234,5 @@ None active. Previous considerations were either fixed (parallel recompilation v
 
 ## Work Tracking
 
-No active work items.
+### Completed
+- **2026-02-11**: Fixed hardcoded states array in `GetRegisteredServicesAsync`. Now dynamically reads per-service states from Redis, stored during registration.

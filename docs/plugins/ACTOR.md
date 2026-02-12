@@ -498,6 +498,7 @@ Actor State Model
 2. **Memory decay**: Gradual relevance decay for memories over time (not just TTL expiry).
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/387 -->
 3. **Cross-node encounters**: Encounter coordination across multiple pool nodes for large-scale events.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/390 -->
 4. **Behavior versioning**: Deploy behavior updates with version tracking, enabling rollback without service restart.
 5. **Actor migration**: Move running actors between pool nodes for load balancing without state loss.
 

@@ -46,6 +46,7 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
     private const string PERMISSION_MATRIX_KEY = "permissions:{0}:{1}:{2}"; // service:state:role
     private const string PERMISSION_VERSION_KEY = "permission_versions";
     private const string PERMISSION_HASH_KEY = "permission_hash:{0}"; // Stores hash of service permission data for idempotent registration
+    private const string SERVICE_STATES_KEY = "service-states:{0}"; // Stores set of states registered by a service (for endpoint discovery)
 
     // Cache for compiled permissions (in-memory cache with lib-state backing)
     private readonly ConcurrentDictionary<string, CapabilityResponse> _sessionCapabilityCache;
@@ -327,6 +328,11 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
                     await hashSetStore.SaveAsync(matrixKey, existingEndpoints, cancellationToken: cancellationToken);
                 }
             }
+
+            // Store the set of states this service registered for dynamic endpoint discovery
+            // (replaces hardcoded state list in GetRegisteredServicesAsync)
+            var serviceStatesKey = string.Format(SERVICE_STATES_KEY, body.ServiceId);
+            await hashSetStore.SaveAsync(serviceStatesKey, new HashSet<string>(body.Permissions.Keys), cancellationToken: cancellationToken);
         }
         else
         {
@@ -939,9 +945,10 @@ public partial class PermissionService : IPermissionService, IPermissionRegistry
             var endpointCount = 0;
             var uniqueEndpoints = new HashSet<string>();
 
-            // Check common states and all roles from ROLE_ORDER
-            // States are approximate (custom states from services may be missed)
-            var states = new[] { "authenticated", "default", "lobby", "in_game" };
+            // Read the actual states this service registered (stored during RegisterServicePermissionsAsync)
+            var serviceStatesKey = string.Format(SERVICE_STATES_KEY, serviceId);
+            var registeredStates = await hashSetStore.GetAsync(serviceStatesKey, cancellationToken);
+            var states = registeredStates ?? new HashSet<string> { "default" };
             var roles = ROLE_ORDER;
 
             foreach (var state in states)

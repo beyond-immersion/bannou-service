@@ -437,6 +437,7 @@ When a lifecycle event arrives (e.g., `personality.updated`):
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/388 -->
 
 2. **Configurable Default Watcher Types**: `StartWatchersForRealmAsync` hardcodes `defaultWatcherTypes = ["regional"]`. The code comment notes this "could be configurable per realm or game service".
+<!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/389 -->
 
 3. ~~**ResourceSnapshotCache TTL Configuration**~~: **FIXED** (2026-02-11) - Added `SnapshotCacheTtlSeconds` config property (default 300s, minimum 1s). ResourceSnapshotCache now injects `PuppetmasterServiceConfiguration` and uses the config value instead of hardcoded 5-minute TTL.
 
