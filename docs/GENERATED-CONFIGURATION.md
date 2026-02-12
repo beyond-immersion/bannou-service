@@ -511,6 +511,32 @@ This document lists all configuration options defined in Bannou's configuration 
 | `GAME_SESSION_SUBSCRIBER_SESSION_RETRY_MAX_ATTEMPTS` | int | `3` | Maximum retry attempts for optimistic concurrency on subscri... |
 | `GAME_SESSION_SUPPORTED_GAME_SERVICES` | string | `generic` | Comma-separated list of supported game service stub names (e... |
 
+### Gardener
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `GARDENER_ABANDON_DETECTION_MINUTES` | int | `5` | Minutes without player input before scenario is marked aband... |
+| `GARDENER_AFFINITY_WEIGHT` | double | `0.4` | Weight for domain affinity in scenario scoring algorithm |
+| `GARDENER_BACKGROUND_SERVICE_STARTUP_DELAY_SECONDS` | int | `5` | Seconds to wait before starting background workers after ser... |
+| `GARDENER_BOND_SCENARIO_PRIORITY` | double | `1.5` | Scoring boost multiplier for bond-friendly scenarios when pl... |
+| `GARDENER_BOND_SHARED_VOID_ENABLED` | bool | `true` | Whether bonded players share a void instance with merged POI... |
+| `GARDENER_DEFAULT_PHASE` | string | `Alpha` | Starting deployment phase for new installations |
+| `GARDENER_DIVERSITY_WEIGHT` | double | `0.3` | Weight for category diversity in scenario scoring algorithm |
+| `GARDENER_GROWTH_AWARD_MULTIPLIER` | double | `1.0` | Global multiplier applied to all growth awards from scenario... |
+| `GARDENER_MAX_ACTIVE_POIS_PER_VOID` | int | `8` | Maximum concurrent POIs per player void instance |
+| `GARDENER_MAX_CONCURRENT_SCENARIOS_GLOBAL` | int | `1000` | Maximum total active scenario instances across all players |
+| `GARDENER_MIN_POI_SPACING` | double | `30.0` | Minimum distance between any two POIs in void space units |
+| `GARDENER_NARRATIVE_WEIGHT` | double | `0.2` | Weight for drift-pattern narrative response in scenario scor... |
+| `GARDENER_POI_DEFAULT_TTL_MINUTES` | int | `10` | Default time-to-live in minutes for spawned POIs before expi... |
+| `GARDENER_POI_SPAWN_RADIUS_MAX` | double | `200.0` | Maximum distance from player to spawn a POI in void space un... |
+| `GARDENER_POI_SPAWN_RADIUS_MIN` | double | `50.0` | Minimum distance from player to spawn a POI in void space un... |
+| `GARDENER_RANDOM_WEIGHT` | double | `0.1` | Weight for randomness and discovery in scenario scoring |
+| `GARDENER_RECENT_SCENARIO_COOLDOWN_MINUTES` | int | `30` | Minutes before a completed scenario can be re-offered to the... |
+| `GARDENER_SCENARIO_LIFECYCLE_WORKER_INTERVAL_SECONDS` | int | `30` | Seconds between scenario lifecycle worker evaluation cycles |
+| `GARDENER_SCENARIO_TIMEOUT_MINUTES` | int | `60` | Maximum scenario duration before forced completion in minute... |
+| `GARDENER_SEED_TYPE_CODE` | string | `guardian` | Which seed type code this gardener manages for player spirit... |
+| `GARDENER_VOID_TICK_INTERVAL_MS` | int | `5000` | Milliseconds between void orchestrator evaluation cycles |
+
 ### Inventory
 
 | Environment Variable | Type | Default | Description |
@@ -765,6 +791,7 @@ Final ... |
 |---------------------|------|---------|-------------|
 | `PERMISSION_CACHE_TTL_SECONDS` | int | `0` | In-memory permission cache TTL in seconds. Cached capabiliti... |
 | `PERMISSION_MAX_CONCURRENT_RECOMPILATIONS` | int | `50` | Maximum number of concurrent session recompilations during s... |
+| `PERMISSION_ROLE_HIERARCHY` | string[] | `['anonymous', 'user', 'developer', 'admin']` | Ordered role hierarchy from lowest to highest privilege. Ind... |
 | `PERMISSION_SESSION_DATA_TTL_SECONDS` | int | `86400` | Redis TTL in seconds for session permission data keys (state... |
 
 ### Puppetmaster
@@ -774,6 +801,8 @@ Final ... |
 | `PUPPETMASTER_ASSET_DOWNLOAD_TIMEOUT_SECONDS` | int | `30` | Timeout for downloading behavior YAML from asset service |
 | `PUPPETMASTER_BEHAVIOR_CACHE_MAX_SIZE` | int | `1000` | Maximum number of behavior documents to cache in memory |
 | `PUPPETMASTER_BEHAVIOR_CACHE_TTL_SECONDS` | int | `3600` | Time-to-live for cached behavior documents in seconds |
+| `PUPPETMASTER_DEFAULT_WATCHER_TYPES` | string[] | `['regional']` | Default watcher types to start for each realm (comma-separat... |
+| `PUPPETMASTER_SNAPSHOT_CACHE_TTL_SECONDS` | int | `300` | Time-to-live for cached resource snapshots in seconds (used ... |
 
 ### Quest
 
@@ -1027,9 +1056,9 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 770
+- **Total properties**: 794
 - **Required (no default)**: 51
-- **Optional (has default)**: 719
+- **Optional (has default)**: 743
 
 ## Environment Variable Naming Convention
 

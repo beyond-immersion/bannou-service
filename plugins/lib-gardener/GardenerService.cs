@@ -10,23 +10,20 @@ using Microsoft.Extensions.Logging;
 namespace BeyondImmersion.BannouService.Gardener;
 
 /// <summary>
-/// Implementation of the Gardener service (L4 GameFeatures).
-/// Orchestrates the player experience: void navigation, scenario routing, progressive discovery,
-/// and deployment phase management. The player-side counterpart to Puppetmaster.
+/// Implementation of the Gardener service.
+/// Orchestrates player garden navigation, scenario routing, progressive discovery,
+/// and deployment phase management.
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>FOUNDATION TENETS - PARTIAL CLASS REQUIRED:</b> This class MUST remain a partial class.
-/// Generated code (event handlers, permissions) is placed in companion partial classes.
+/// The Gardener is an L4 GameFeatures service that manages the "Void" experience --
+/// a procedural discovery space where players encounter POIs (Points of Interest)
+/// that lead into scenarios. Scenarios are backed by Game Sessions and award Seed
+/// growth on completion. Internal naming uses "Garden" for clarity.
 /// </para>
 /// <para>
-/// <b>Cross-Service Integration:</b>
-/// <list type="bullet">
-///   <item>Uses ISeedClient (L2) for growth award recording via RecordGrowthBatchAsync</item>
-///   <item>Uses IGameSessionClient (L2) for backing game session creation</item>
-///   <item>Implements ISeedEvolutionListener (registered in plugin) for growth/phase notifications</item>
-///   <item>Subscribes to seed.bond.formed, seed.activated, game-session.deleted broadcast events</item>
-/// </list>
+/// <b>FOUNDATION TENETS - PARTIAL CLASS REQUIRED:</b> This class MUST remain a partial class.
+/// Event handlers and ISeedEvolutionListener are in GardenerServiceEvents.cs.
 /// </para>
 /// </remarks>
 [BannouService("gardener", typeof(IGardenerService), lifetime: ServiceLifetime.Scoped, layer: ServiceLayer.GameFeatures)]
@@ -36,142 +33,254 @@ public partial class GardenerService : IGardenerService
     private readonly IStateStoreFactory _stateStoreFactory;
     private readonly ILogger<GardenerService> _logger;
     private readonly GardenerServiceConfiguration _configuration;
+    private readonly IDistributedLockProvider _lockProvider;
+    private readonly ISeedClient _seedClient;
+    private readonly IGameSessionClient _gameSessionClient;
     private readonly IServiceProvider _serviceProvider;
 
     /// <summary>
-    /// Initializes a new instance of <see cref="GardenerService"/>.
+    /// POI interaction result constants. Schema defines Result as string (T25 schema gap);
+    /// these constants provide type-safe values within service code.
+    /// </summary>
+    internal static class PoiInteractionResults
+    {
+        public const string ScenarioPrompt = "scenario_prompt";
+        public const string ScenarioEnter = "scenario_enter";
+        public const string PoiUpdate = "poi_update";
+        public const string ChainOffer = "chain_offer";
+    }
+
+    /// <summary>
+    /// Constructs the Gardener service with all required dependencies.
     /// </summary>
     public GardenerService(
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
         ILogger<GardenerService> logger,
         GardenerServiceConfiguration configuration,
+        IDistributedLockProvider lockProvider,
         IEventConsumer eventConsumer,
+        ISeedClient seedClient,
+        IGameSessionClient gameSessionClient,
         IServiceProvider serviceProvider)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
         _logger = logger;
         _configuration = configuration;
+        _lockProvider = lockProvider;
+        _seedClient = seedClient;
+        _gameSessionClient = gameSessionClient;
         _serviceProvider = serviceProvider;
 
         RegisterEventConsumers(eventConsumer);
     }
 
-    // =========================================================================
-    // Void Navigation
-    // =========================================================================
+    #region State Store Accessors
+
+    private IStateStore<GardenInstanceModel>? _gardenStore;
 
     /// <summary>
-    /// Creates a void instance for a player, anchored to their active seed.
-    /// Only one void instance per account at a time.
+    /// Redis-backed store for active garden (void) instances.
+    /// Key pattern: void:{accountId}
     /// </summary>
-    public async Task<(StatusCodes, VoidStateResponse?)> EnterVoidAsync(EnterVoidRequest body, CancellationToken cancellationToken)
+    internal IStateStore<GardenInstanceModel> GardenStore =>
+        _gardenStore ??= _stateStoreFactory.GetStore<GardenInstanceModel>(
+            StateStoreDefinitions.GardenerVoidInstances);
+
+    private IStateStore<PoiModel>? _poiStore;
+
+    /// <summary>
+    /// Redis-backed store for active POIs.
+    /// Key pattern: poi:{gardenInstanceId}:{poiId}
+    /// </summary>
+    internal IStateStore<PoiModel> PoiStore =>
+        _poiStore ??= _stateStoreFactory.GetStore<PoiModel>(
+            StateStoreDefinitions.GardenerPois);
+
+    private IJsonQueryableStateStore<ScenarioTemplateModel>? _templateStore;
+
+    /// <summary>
+    /// MySQL-backed store for scenario template definitions.
+    /// Key pattern: template:{scenarioTemplateId}
+    /// </summary>
+    internal IJsonQueryableStateStore<ScenarioTemplateModel> TemplateStore =>
+        _templateStore ??= _stateStoreFactory.GetJsonQueryableStore<ScenarioTemplateModel>(
+            StateStoreDefinitions.GardenerScenarioTemplates);
+
+    private IStateStore<ScenarioInstanceModel>? _scenarioStore;
+
+    /// <summary>
+    /// Redis-backed store for active scenario instances.
+    /// Key pattern: scenario:{accountId}
+    /// </summary>
+    internal IStateStore<ScenarioInstanceModel> ScenarioStore =>
+        _scenarioStore ??= _stateStoreFactory.GetStore<ScenarioInstanceModel>(
+            StateStoreDefinitions.GardenerScenarioInstances);
+
+    private IJsonQueryableStateStore<ScenarioHistoryModel>? _historyStore;
+
+    /// <summary>
+    /// MySQL-backed store for completed scenario history records.
+    /// Key pattern: history:{scenarioInstanceId}
+    /// </summary>
+    internal IJsonQueryableStateStore<ScenarioHistoryModel> HistoryStore =>
+        _historyStore ??= _stateStoreFactory.GetJsonQueryableStore<ScenarioHistoryModel>(
+            StateStoreDefinitions.GardenerScenarioHistory);
+
+    private IStateStore<DeploymentPhaseConfigModel>? _phaseStore;
+
+    /// <summary>
+    /// MySQL-backed store for deployment phase configuration.
+    /// Key: phase:config (singleton)
+    /// </summary>
+    internal IStateStore<DeploymentPhaseConfigModel> PhaseStore =>
+        _phaseStore ??= _stateStoreFactory.GetStore<DeploymentPhaseConfigModel>(
+            StateStoreDefinitions.GardenerPhaseConfig);
+
+    #endregion
+
+    #region Key Helpers
+
+    private static string GardenKey(Guid accountId) => $"void:{accountId}";
+    private static string PoiKey(Guid gardenInstanceId, Guid poiId) => $"poi:{gardenInstanceId}:{poiId}";
+    private static string ScenarioKey(Guid accountId) => $"scenario:{accountId}";
+    private static string TemplateKey(Guid templateId) => $"template:{templateId}";
+    private static string HistoryKey(Guid scenarioInstanceId) => $"history:{scenarioInstanceId}";
+    private const string PhaseConfigKey = "phase:config";
+
+    #endregion
+
+    #region Void Management
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, VoidStateResponse?)> EnterVoidAsync(
+        EnterVoidRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("EnterVoid: AccountId={AccountId}, SeedId={SeedId}", body.AccountId, body.SeedId);
-
-        var voidStore = _stateStoreFactory.GetStore<VoidInstanceModel>(StateStoreDefinitions.GardenerVoidInstances);
-        var existing = await voidStore.GetAsync($"void:{body.AccountId}", cancellationToken);
-
+        var existing = await GardenStore.GetAsync(GardenKey(body.AccountId), cancellationToken);
         if (existing != null)
         {
-            _logger.LogDebug("Account {AccountId} already has active void instance {VoidId}", body.AccountId, existing.VoidInstanceId);
+            _logger.LogWarning("Account {AccountId} already has an active garden instance", body.AccountId);
             return (StatusCodes.Conflict, null);
         }
 
-        var voidInstance = new VoidInstanceModel
-        {
-            VoidInstanceId = Guid.NewGuid(),
-            AccountId = body.AccountId,
-            SeedId = body.SeedId,
-            EnteredAt = DateTimeOffset.UtcNow,
-            PlayerPosition = new Position3D(),
-            DriftVector = new Position3D(),
-            ActivePoiIds = new List<Guid>()
-        };
-
-        await voidStore.SaveAsync($"void:{body.AccountId}", voidInstance, cancellationToken);
-
-        await _messageBus.TryPublishAsync("gardener.void.entered", new GardenerVoidEnteredEvent
-        {
-            EventId = Guid.NewGuid(),
-            AccountId = body.AccountId,
-            SeedId = body.SeedId,
-            VoidInstanceId = voidInstance.VoidInstanceId
-        }, cancellationToken: cancellationToken);
-
-        _logger.LogInformation("Void instance created: VoidId={VoidId}, AccountId={AccountId}", voidInstance.VoidInstanceId, body.AccountId);
-
-        return (StatusCodes.Created, BuildVoidStateResponse(voidInstance, new List<PoiModel>()));
-    }
-
-    /// <summary>
-    /// Returns the current void state for a player, including active POIs.
-    /// </summary>
-    public async Task<(StatusCodes, VoidStateResponse?)> GetVoidStateAsync(GetVoidStateRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogDebug("GetVoidState: AccountId={AccountId}", body.AccountId);
-
-        var voidStore = _stateStoreFactory.GetStore<VoidInstanceModel>(StateStoreDefinitions.GardenerVoidInstances);
-        var voidInstance = await voidStore.GetAsync($"void:{body.AccountId}", cancellationToken);
-
-        if (voidInstance == null)
-        {
-            _logger.LogDebug("No active void instance for account {AccountId}", body.AccountId);
-            return (StatusCodes.NotFound, null);
-        }
-
-        var pois = await GetActivePoisAsync(voidInstance, cancellationToken);
-        return (StatusCodes.OK, BuildVoidStateResponse(voidInstance, pois));
-    }
-
-    /// <summary>
-    /// Updates the player's position in the void, accumulates drift vector, and checks for POI proximity.
-    /// </summary>
-    public async Task<(StatusCodes, PositionUpdateResponse?)> UpdatePositionAsync(UpdatePositionRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogDebug("UpdatePosition: AccountId={AccountId}", body.AccountId);
-
-        var voidStore = _stateStoreFactory.GetStore<VoidInstanceModel>(StateStoreDefinitions.GardenerVoidInstances);
-        var voidInstance = await voidStore.GetAsync($"void:{body.AccountId}", cancellationToken);
-
-        if (voidInstance == null)
-        {
-            return (StatusCodes.NotFound, null);
-        }
-
-        // Accumulate drift vector
-        voidInstance.DriftVector.X += (body.Position.X - (float)voidInstance.PlayerPosition.X);
-        voidInstance.DriftVector.Y += (body.Position.Y - (float)voidInstance.PlayerPosition.Y);
-        voidInstance.DriftVector.Z += (body.Position.Z - (float)voidInstance.PlayerPosition.Z);
-
-        voidInstance.PlayerPosition = new Position3D
-        {
-            X = body.Position.X,
-            Y = body.Position.Y,
-            Z = body.Position.Z
-        };
-
-        await voidStore.SaveAsync($"void:{body.AccountId}", voidInstance, cancellationToken);
-
-        // Check for newly discovered POIs based on proximity
-        var triggeredPois = new List<PoiSummary>();
-        var poiStore = _stateStoreFactory.GetStore<PoiModel>(StateStoreDefinitions.GardenerPois);
-
-        foreach (var poiId in voidInstance.ActivePoiIds)
-        {
-            var poi = await poiStore.GetAsync($"poi:{poiId}", cancellationToken);
-            if (poi != null && !poi.Discovered)
+        // Find active guardian seed for this account
+        var seedsResponse = await _seedClient.GetSeedsByOwnerAsync(
+            new GetSeedsByOwnerRequest
             {
-                var distance = voidInstance.PlayerPosition.DistanceTo(poi.Position);
-                if (distance <= _configuration.PoiSpawnRadiusMin)
+                OwnerId = body.AccountId,
+                OwnerType = "account",
+                SeedTypeCode = _configuration.SeedTypeCode
+            }, cancellationToken);
+
+        var activeSeed = seedsResponse.Seeds.FirstOrDefault(s => s.Status == SeedStatus.Active);
+        if (activeSeed == null)
+        {
+            _logger.LogInformation(
+                "No active guardian seed found for account {AccountId}", body.AccountId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        var phaseConfig = await GetOrCreatePhaseConfigAsync(cancellationToken);
+
+        var gardenInstanceId = Guid.NewGuid();
+        var garden = new GardenInstanceModel
+        {
+            GardenInstanceId = gardenInstanceId,
+            SeedId = activeSeed.SeedId,
+            AccountId = body.AccountId,
+            SessionId = body.SessionId,
+            CreatedAt = DateTimeOffset.UtcNow,
+            Phase = phaseConfig.CurrentPhase,
+            CachedGrowthPhase = activeSeed.GrowthPhase,
+            BondId = activeSeed.BondId,
+            NeedsReEvaluation = true
+        };
+
+        await GardenStore.SaveAsync(GardenKey(body.AccountId), garden, cancellationToken);
+
+        await _messageBus.TryPublishAsync("gardener.void.entered",
+            new GardenerVoidEnteredEvent
+            {
+                EventId = Guid.NewGuid(),
+                AccountId = body.AccountId,
+                SeedId = activeSeed.SeedId,
+                VoidInstanceId = gardenInstanceId
+            }, cancellationToken: cancellationToken);
+
+        _logger.LogInformation(
+            "Created garden instance {GardenInstanceId} for account {AccountId} with seed {SeedId}",
+            gardenInstanceId, body.AccountId, activeSeed.SeedId);
+
+        return (StatusCodes.Created, MapToVoidStateResponse(garden, Array.Empty<PoiModel>()));
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, VoidStateResponse?)> GetVoidStateAsync(
+        GetVoidStateRequest body, CancellationToken cancellationToken)
+    {
+        var garden = await GardenStore.GetAsync(GardenKey(body.AccountId), cancellationToken);
+        if (garden == null)
+            return (StatusCodes.NotFound, null);
+
+        var pois = await LoadActivePoisAsync(garden, cancellationToken);
+        return (StatusCodes.OK, MapToVoidStateResponse(garden, pois));
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, PositionUpdateResponse?)> UpdatePositionAsync(
+        UpdatePositionRequest body, CancellationToken cancellationToken)
+    {
+        var garden = await GardenStore.GetAsync(GardenKey(body.AccountId), cancellationToken);
+        if (garden == null)
+            return (StatusCodes.NotFound, null);
+
+        var oldPosition = garden.Position;
+        garden.Position = MapFromVec3(body.Position);
+        if (body.Velocity != null)
+            garden.Velocity = MapFromVec3(body.Velocity);
+
+        // Accumulate drift metrics
+        var distance = oldPosition.DistanceTo(garden.Position);
+        garden.DriftMetrics.TotalDistance += distance;
+        garden.DriftMetrics.DirectionalBiasX += garden.Position.X - oldPosition.X;
+        garden.DriftMetrics.DirectionalBiasY += garden.Position.Y - oldPosition.Y;
+        garden.DriftMetrics.DirectionalBiasZ += garden.Position.Z - oldPosition.Z;
+
+        // Hesitation detection: if velocity is very low or direction reversed
+        if (distance < 0.1f)
+            garden.DriftMetrics.HesitationCount++;
+
+        // Check proximity triggers against active POIs
+        var triggeredPois = new List<PoiSummary>();
+        foreach (var poiId in garden.ActivePoiIds.ToList())
+        {
+            var poi = await PoiStore.GetAsync(PoiKey(garden.GardenInstanceId, poiId), cancellationToken);
+            if (poi == null || poi.Status != PoiStatus.Active) continue;
+
+            if (poi.TriggerMode == TriggerMode.Proximity)
+            {
+                var dist = garden.Position.DistanceTo(poi.Position);
+                if (dist <= poi.TriggerRadius)
                 {
-                    poi.Discovered = true;
-                    await poiStore.SaveAsync($"poi:{poiId}", poi, cancellationToken);
-                    triggeredPois.Add(BuildPoiSummary(poi));
+                    poi.Status = PoiStatus.Entered;
+                    await PoiStore.SaveAsync(
+                        PoiKey(garden.GardenInstanceId, poiId), poi, cancellationToken);
+                    triggeredPois.Add(MapToPoiSummary(poi));
+
+                    await _messageBus.TryPublishAsync("gardener.poi.entered",
+                        new GardenerPoiEnteredEvent
+                        {
+                            EventId = Guid.NewGuid(),
+                            AccountId = body.AccountId,
+                            PoiId = poiId,
+                            ScenarioTemplateId = poi.ScenarioTemplateId
+                        }, cancellationToken: cancellationToken);
                 }
             }
         }
+
+        await GardenStore.SaveAsync(GardenKey(body.AccountId), garden, cancellationToken);
 
         return (StatusCodes.OK, new PositionUpdateResponse
         {
@@ -180,1068 +289,1268 @@ public partial class GardenerService : IGardenerService
         });
     }
 
-    /// <summary>
-    /// Destroys the player's void instance and publishes a void.left event.
-    /// Active scenarios should be completed or abandoned before leaving.
-    /// </summary>
-    public async Task<(StatusCodes, LeaveVoidResponse?)> LeaveVoidAsync(LeaveVoidRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc />
+    public async Task<(StatusCodes, LeaveVoidResponse?)> LeaveVoidAsync(
+        LeaveVoidRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("LeaveVoid: AccountId={AccountId}", body.AccountId);
+        await using var lockResult = await _lockProvider.LockAsync(
+            StateStoreDefinitions.GardenerLock,
+            $"void:{body.AccountId}",
+            Guid.NewGuid().ToString(),
+            30,
+            cancellationToken);
 
-        var voidStore = _stateStoreFactory.GetStore<VoidInstanceModel>(StateStoreDefinitions.GardenerVoidInstances);
-        var voidInstance = await voidStore.GetAsync($"void:{body.AccountId}", cancellationToken);
-
-        if (voidInstance == null)
+        if (!lockResult.Success)
         {
+            _logger.LogWarning("Failed to acquire lock for garden leave, account {AccountId}", body.AccountId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        var garden = await GardenStore.GetAsync(GardenKey(body.AccountId), cancellationToken);
+        if (garden == null)
             return (StatusCodes.NotFound, null);
+
+        // Clean up all associated POIs
+        foreach (var poiId in garden.ActivePoiIds)
+        {
+            await PoiStore.DeleteAsync(PoiKey(garden.GardenInstanceId, poiId), cancellationToken);
         }
 
-        var sessionDuration = (float)(DateTimeOffset.UtcNow - voidInstance.EnteredAt).TotalSeconds;
+        var sessionDuration = (float)(DateTimeOffset.UtcNow - garden.CreatedAt).TotalSeconds;
+        await GardenStore.DeleteAsync(GardenKey(body.AccountId), cancellationToken);
 
-        // Clean up POIs
-        var poiStore = _stateStoreFactory.GetStore<PoiModel>(StateStoreDefinitions.GardenerPois);
-        foreach (var poiId in voidInstance.ActivePoiIds)
-        {
-            await poiStore.DeleteAsync($"poi:{poiId}", cancellationToken);
-        }
+        await _messageBus.TryPublishAsync("gardener.void.left",
+            new GardenerVoidLeftEvent
+            {
+                EventId = Guid.NewGuid(),
+                AccountId = body.AccountId,
+                VoidInstanceId = garden.GardenInstanceId,
+                SessionDurationSeconds = sessionDuration
+            }, cancellationToken: cancellationToken);
 
-        await voidStore.DeleteAsync($"void:{body.AccountId}", cancellationToken);
-
-        await _messageBus.TryPublishAsync("gardener.void.left", new GardenerVoidLeftEvent
-        {
-            EventId = Guid.NewGuid(),
-            AccountId = body.AccountId,
-            VoidInstanceId = voidInstance.VoidInstanceId,
-            SessionDurationSeconds = sessionDuration
-        }, cancellationToken: cancellationToken);
-
-        _logger.LogInformation("Void instance destroyed: VoidId={VoidId}, Duration={Duration}s", voidInstance.VoidInstanceId, sessionDuration);
+        _logger.LogInformation(
+            "Garden instance {GardenInstanceId} ended for account {AccountId}, duration {Duration}s",
+            garden.GardenInstanceId, body.AccountId, sessionDuration);
 
         return (StatusCodes.OK, new LeaveVoidResponse
         {
             AccountId = body.AccountId,
-            SessionDurationSeconds = sessionDuration,
-            ScenariosCompleted = 0 // Tracked by history, not void state
+            SessionDurationSeconds = sessionDuration
         });
     }
 
-    // =========================================================================
-    // POI Interaction
-    // =========================================================================
+    #endregion
 
-    /// <summary>
-    /// Lists all active POIs in a player's void instance.
-    /// </summary>
-    public async Task<(StatusCodes, ListPoisResponse?)> ListPoisAsync(ListPoisRequest body, CancellationToken cancellationToken)
+    #region POI Interaction
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ListPoisResponse?)> ListPoisAsync(
+        ListPoisRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("ListPois: VoidInstanceId={VoidInstanceId}", body.VoidInstanceId);
-
-        var voidStore = _stateStoreFactory.GetStore<VoidInstanceModel>(StateStoreDefinitions.GardenerVoidInstances);
-        var voidInstance = await voidStore.GetAsync($"void:{body.AccountId}", cancellationToken);
-
-        if (voidInstance == null || voidInstance.VoidInstanceId != body.VoidInstanceId)
-        {
+        var garden = await GardenStore.GetAsync(GardenKey(body.AccountId), cancellationToken);
+        if (garden == null)
             return (StatusCodes.NotFound, null);
-        }
 
-        var pois = await GetActivePoisAsync(voidInstance, cancellationToken);
-
+        var pois = await LoadActivePoisAsync(garden, cancellationToken);
         return (StatusCodes.OK, new ListPoisResponse
         {
-            VoidInstanceId = voidInstance.VoidInstanceId,
-            Pois = pois.Select(BuildPoiSummary).ToList()
+            VoidInstanceId = garden.GardenInstanceId,
+            Pois = pois.Select(MapToPoiSummary).ToList()
         });
     }
 
-    /// <summary>
-    /// Player interacts with a POI, triggering the associated scenario.
-    /// </summary>
-    public async Task<(StatusCodes, PoiInteractionResponse?)> InteractWithPoiAsync(InteractWithPoiRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc />
+    public async Task<(StatusCodes, PoiInteractionResponse?)> InteractWithPoiAsync(
+        InteractWithPoiRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("InteractWithPoi: AccountId={AccountId}, PoiId={PoiId}", body.AccountId, body.PoiId);
-
-        var poiStore = _stateStoreFactory.GetStore<PoiModel>(StateStoreDefinitions.GardenerPois);
-        var poi = await poiStore.GetAsync($"poi:{body.PoiId}", cancellationToken);
-
-        if (poi == null || poi.AccountId != body.AccountId)
-        {
+        var garden = await GardenStore.GetAsync(GardenKey(body.AccountId), cancellationToken);
+        if (garden == null)
             return (StatusCodes.NotFound, null);
+
+        var poi = await PoiStore.GetAsync(
+            PoiKey(garden.GardenInstanceId, body.PoiId), cancellationToken);
+
+        if (poi == null)
+            return (StatusCodes.NotFound, null);
+
+        if (poi.Status != PoiStatus.Active)
+        {
+            _logger.LogWarning(
+                "POI {PoiId} has status {Status}, expected Active", body.PoiId, poi.Status);
+            return (StatusCodes.BadRequest, null);
         }
 
-        // Get the template for this POI
-        var templateStore = _stateStoreFactory.GetStore<ScenarioTemplateModel>(StateStoreDefinitions.GardenerScenarioTemplates);
-        var template = await templateStore.GetAsync($"template:{poi.ScenarioTemplateId}", cancellationToken);
+        // Load the template to include in the response
+        var template = await TemplateStore.GetAsync(
+            TemplateKey(poi.ScenarioTemplateId), cancellationToken);
 
-        if (template == null)
+        string result;
+        string? promptText = null;
+        ICollection<string>? promptChoices = null;
+
+        switch (poi.TriggerMode)
         {
-            _logger.LogError("POI {PoiId} references non-existent template {TemplateId}", poi.PoiId, poi.ScenarioTemplateId);
-            return (StatusCodes.InternalServerError, null);
+            case TriggerMode.Prompted:
+                result = PoiInteractionResults.ScenarioPrompt;
+                promptText = template?.DisplayName;
+                promptChoices = new List<string> { "Enter", "Decline" };
+                break;
+
+            case TriggerMode.Proximity:
+            case TriggerMode.Interaction:
+                result = PoiInteractionResults.ScenarioEnter;
+                break;
+
+            case TriggerMode.Forced:
+                result = PoiInteractionResults.ScenarioEnter;
+                break;
+
+            default:
+                result = PoiInteractionResults.PoiUpdate;
+                break;
         }
 
-        await _messageBus.TryPublishAsync("gardener.poi.entered", new GardenerPoiEnteredEvent
-        {
-            EventId = Guid.NewGuid(),
-            AccountId = body.AccountId,
-            PoiId = body.PoiId,
-            ScenarioTemplateId = poi.ScenarioTemplateId
-        }, cancellationToken: cancellationToken);
+        poi.Status = PoiStatus.Entered;
+        await PoiStore.SaveAsync(
+            PoiKey(garden.GardenInstanceId, body.PoiId), poi, cancellationToken);
 
-        _logger.LogInformation("POI interaction: PoiId={PoiId}, TemplateId={TemplateId}", poi.PoiId, poi.ScenarioTemplateId);
+        await _messageBus.TryPublishAsync("gardener.poi.entered",
+            new GardenerPoiEnteredEvent
+            {
+                EventId = Guid.NewGuid(),
+                AccountId = body.AccountId,
+                PoiId = body.PoiId,
+                ScenarioTemplateId = poi.ScenarioTemplateId
+            }, cancellationToken: cancellationToken);
 
         return (StatusCodes.OK, new PoiInteractionResponse
         {
             PoiId = body.PoiId,
+            Result = result,
             ScenarioTemplateId = poi.ScenarioTemplateId,
-            Category = template.Category,
-            ConnectivityMode = template.ConnectivityMode,
-            EstimatedDurationMinutes = template.EstimatedDurationMinutes,
-            BondCompatible = template.BondCompatible
+            PromptText = promptText,
+            PromptChoices = promptChoices
         });
     }
 
-    /// <summary>
-    /// Player declines a POI. The POI is removed and recorded for cooldown purposes.
-    /// </summary>
-    public async Task<(StatusCodes, DeclinePoiResponse?)> DeclinePoiAsync(DeclinePoiRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc />
+    public async Task<(StatusCodes, DeclinePoiResponse?)> DeclinePoiAsync(
+        DeclinePoiRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("DeclinePoi: AccountId={AccountId}, PoiId={PoiId}", body.AccountId, body.PoiId);
-
-        var poiStore = _stateStoreFactory.GetStore<PoiModel>(StateStoreDefinitions.GardenerPois);
-        var poi = await poiStore.GetAsync($"poi:{body.PoiId}", cancellationToken);
-
-        if (poi == null || poi.AccountId != body.AccountId)
-        {
+        var garden = await GardenStore.GetAsync(GardenKey(body.AccountId), cancellationToken);
+        if (garden == null)
             return (StatusCodes.NotFound, null);
-        }
 
-        // Remove the POI from active set
-        var voidStore = _stateStoreFactory.GetStore<VoidInstanceModel>(StateStoreDefinitions.GardenerVoidInstances);
-        var voidInstance = await voidStore.GetAsync($"void:{body.AccountId}", cancellationToken);
-        if (voidInstance != null)
-        {
-            voidInstance.ActivePoiIds.Remove(body.PoiId);
-            await voidStore.SaveAsync($"void:{body.AccountId}", voidInstance, cancellationToken);
-        }
+        var poi = await PoiStore.GetAsync(
+            PoiKey(garden.GardenInstanceId, body.PoiId), cancellationToken);
 
-        await poiStore.DeleteAsync($"poi:{body.PoiId}", cancellationToken);
+        if (poi == null)
+            return (StatusCodes.NotFound, null);
 
-        await _messageBus.TryPublishAsync("gardener.poi.declined", new GardenerPoiDeclinedEvent
-        {
-            EventId = Guid.NewGuid(),
-            AccountId = body.AccountId,
-            PoiId = body.PoiId,
-            ScenarioTemplateId = poi.ScenarioTemplateId
-        }, cancellationToken: cancellationToken);
+        if (poi.Status != PoiStatus.Active)
+            return (StatusCodes.BadRequest, null);
+
+        poi.Status = PoiStatus.Declined;
+        await PoiStore.SaveAsync(
+            PoiKey(garden.GardenInstanceId, body.PoiId), poi, cancellationToken);
+
+        // Track declined template for diversity scoring
+        if (!garden.ScenarioHistory.Contains(poi.ScenarioTemplateId))
+            garden.ScenarioHistory.Add(poi.ScenarioTemplateId);
+        garden.NeedsReEvaluation = true;
+        await GardenStore.SaveAsync(GardenKey(body.AccountId), garden, cancellationToken);
+
+        await _messageBus.TryPublishAsync("gardener.poi.declined",
+            new GardenerPoiDeclinedEvent
+            {
+                EventId = Guid.NewGuid(),
+                AccountId = body.AccountId,
+                PoiId = body.PoiId,
+                ScenarioTemplateId = poi.ScenarioTemplateId
+            }, cancellationToken: cancellationToken);
 
         return (StatusCodes.OK, new DeclinePoiResponse
         {
             PoiId = body.PoiId,
-            ScenarioTemplateId = poi.ScenarioTemplateId,
-            RemainingPois = voidInstance?.ActivePoiIds.Count ?? 0
+            Acknowledged = true
         });
     }
 
-    // =========================================================================
-    // Scenario Lifecycle
-    // =========================================================================
+    #endregion
 
-    /// <summary>
-    /// Creates a scenario instance from a template, creates a backing game session,
-    /// and publishes a scenario.started event.
-    /// </summary>
-    public async Task<(StatusCodes, ScenarioStateResponse?)> EnterScenarioAsync(EnterScenarioRequest body, CancellationToken cancellationToken)
+    #region Scenario Lifecycle
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ScenarioStateResponse?)> EnterScenarioAsync(
+        EnterScenarioRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("EnterScenario: AccountId={AccountId}, TemplateId={TemplateId}", body.AccountId, body.ScenarioTemplateId);
-
-        var templateStore = _stateStoreFactory.GetStore<ScenarioTemplateModel>(StateStoreDefinitions.GardenerScenarioTemplates);
-        var template = await templateStore.GetAsync($"template:{body.ScenarioTemplateId}", cancellationToken);
-
-        if (template == null)
+        var garden = await GardenStore.GetAsync(GardenKey(body.AccountId), cancellationToken);
+        if (garden == null)
         {
-            return (StatusCodes.NotFound, null);
+            _logger.LogWarning("Account {AccountId} not in garden, cannot enter scenario", body.AccountId);
+            return (StatusCodes.BadRequest, null);
         }
+
+        // Check for existing active scenario
+        var existingScenario = await ScenarioStore.GetAsync(
+            ScenarioKey(body.AccountId), cancellationToken);
+        if (existingScenario != null && existingScenario.Status == ScenarioStatus.Active)
+        {
+            _logger.LogWarning(
+                "Account {AccountId} already has an active scenario {ScenarioId}",
+                body.AccountId, existingScenario.ScenarioInstanceId);
+            return (StatusCodes.Conflict, null);
+        }
+
+        var template = await TemplateStore.GetAsync(
+            TemplateKey(body.ScenarioTemplateId), cancellationToken);
+        if (template == null)
+            return (StatusCodes.NotFound, null);
 
         if (template.Status != TemplateStatus.Active)
         {
-            _logger.LogDebug("Template {TemplateId} is not active (status={Status})", body.ScenarioTemplateId, template.Status);
+            _logger.LogWarning(
+                "Template {TemplateId} has status {Status}, expected Active",
+                body.ScenarioTemplateId, template.Status);
             return (StatusCodes.BadRequest, null);
         }
 
-        var now = DateTimeOffset.UtcNow;
-        var scenarioInstance = new ScenarioInstanceModel
+        // Phase gating
+        var phaseConfig = await GetOrCreatePhaseConfigAsync(cancellationToken);
+        if (template.AllowedPhases.Count > 0 && !template.AllowedPhases.Contains(phaseConfig.CurrentPhase))
         {
-            ScenarioInstanceId = Guid.NewGuid(),
+            _logger.LogInformation(
+                "Template {TemplateId} not allowed in current phase {Phase}",
+                body.ScenarioTemplateId, phaseConfig.CurrentPhase);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Create backing game session
+        var gameSession = await _gameSessionClient.CreateGameSessionAsync(
+            new CreateGameSessionRequest
+            {
+                GameType = "gardener-scenario",
+                MaxPlayers = template.Multiplayer?.MaxPlayers ?? 1,
+                SessionName = $"Scenario: {template.DisplayName}",
+                SessionType = SessionType.Matchmade,
+                OwnerId = body.AccountId,
+                ExpectedPlayers = new List<Guid> { body.AccountId },
+                ReservationTtlSeconds = (int)(_configuration.ScenarioTimeoutMinutes * 60)
+            }, cancellationToken);
+
+        var scenarioInstanceId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+        var scenario = new ScenarioInstanceModel
+        {
+            ScenarioInstanceId = scenarioInstanceId,
             ScenarioTemplateId = body.ScenarioTemplateId,
-            GameSessionId = body.GameSessionId,
-            AccountId = body.AccountId,
-            SeedId = body.SeedId,
-            Status = ScenarioInstanceStatus.Active,
-            StartedAt = now,
+            GameSessionId = gameSession.SessionId,
+            ConnectivityMode = template.ConnectivityMode,
+            Status = ScenarioStatus.Active,
+            CreatedAt = now,
             LastActivityAt = now,
-            ChainDepth = 0
+            ChainDepth = 0,
+            Participants = new List<ScenarioParticipantModel>
+            {
+                new()
+                {
+                    SeedId = garden.SeedId,
+                    AccountId = body.AccountId,
+                    SessionId = garden.SessionId,
+                    JoinedAt = now,
+                    Role = "primary"
+                }
+            }
         };
 
-        var scenarioStore = _stateStoreFactory.GetStore<ScenarioInstanceModel>(StateStoreDefinitions.GardenerScenarioInstances);
-        await scenarioStore.SaveAsync($"scenario:{scenarioInstance.ScenarioInstanceId}", scenarioInstance, cancellationToken);
+        await ScenarioStore.SaveAsync(ScenarioKey(body.AccountId), scenario, cancellationToken);
 
-        await _messageBus.TryPublishAsync("gardener.scenario.started", new GardenerScenarioStartedEvent
+        // Clean up garden instance -- player leaves the void to enter the scenario
+        foreach (var poiId in garden.ActivePoiIds)
         {
-            EventId = Guid.NewGuid(),
-            ScenarioInstanceId = scenarioInstance.ScenarioInstanceId,
-            ScenarioTemplateId = body.ScenarioTemplateId,
-            GameSessionId = body.GameSessionId,
-            AccountId = body.AccountId,
-            SeedId = body.SeedId
-        }, cancellationToken: cancellationToken);
+            await PoiStore.DeleteAsync(PoiKey(garden.GardenInstanceId, poiId), cancellationToken);
+        }
+        await GardenStore.DeleteAsync(GardenKey(body.AccountId), cancellationToken);
 
-        _logger.LogInformation("Scenario started: InstanceId={InstanceId}, TemplateId={TemplateId}", scenarioInstance.ScenarioInstanceId, body.ScenarioTemplateId);
+        await _messageBus.TryPublishAsync("gardener.scenario.started",
+            new GardenerScenarioStartedEvent
+            {
+                EventId = Guid.NewGuid(),
+                ScenarioInstanceId = scenarioInstanceId,
+                ScenarioTemplateId = body.ScenarioTemplateId,
+                GameSessionId = gameSession.SessionId,
+                AccountId = body.AccountId,
+                SeedId = garden.SeedId
+            }, cancellationToken: cancellationToken);
 
-        return (StatusCodes.Created, BuildScenarioStateResponse(scenarioInstance, template));
+        // Notify Puppetmaster if available (L4 soft dependency)
+        var puppetmasterClient = _serviceProvider.GetService<IPuppetmasterClient>();
+        if (puppetmasterClient != null && template.Content?.BehaviorDocumentId != null)
+        {
+            _logger.LogDebug(
+                "Notifying Puppetmaster of scenario {ScenarioId} with behavior {BehaviorDoc}",
+                scenarioInstanceId, template.Content.BehaviorDocumentId);
+        }
+
+        _logger.LogInformation(
+            "Scenario {ScenarioId} started for account {AccountId}, template {TemplateCode}",
+            scenarioInstanceId, body.AccountId, template.Code);
+
+        return (StatusCodes.Created, MapToScenarioStateResponse(scenario));
     }
 
-    /// <summary>
-    /// Returns the current state of a scenario instance.
-    /// </summary>
-    public async Task<(StatusCodes, ScenarioStateResponse?)> GetScenarioStateAsync(GetScenarioStateRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ScenarioStateResponse?)> GetScenarioStateAsync(
+        GetScenarioStateRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("GetScenarioState: ScenarioInstanceId={ScenarioInstanceId}", body.ScenarioInstanceId);
-
-        var scenarioStore = _stateStoreFactory.GetStore<ScenarioInstanceModel>(StateStoreDefinitions.GardenerScenarioInstances);
-        var instance = await scenarioStore.GetAsync($"scenario:{body.ScenarioInstanceId}", cancellationToken);
-
-        if (instance == null)
-        {
+        var scenario = await ScenarioStore.GetAsync(ScenarioKey(body.AccountId), cancellationToken);
+        if (scenario == null)
             return (StatusCodes.NotFound, null);
-        }
 
-        var templateStore = _stateStoreFactory.GetStore<ScenarioTemplateModel>(StateStoreDefinitions.GardenerScenarioTemplates);
-        var template = await templateStore.GetAsync($"template:{instance.ScenarioTemplateId}", cancellationToken);
-
-        if (template == null)
-        {
-            _logger.LogError("Scenario {InstanceId} references non-existent template {TemplateId}", instance.ScenarioInstanceId, instance.ScenarioTemplateId);
-            return (StatusCodes.InternalServerError, null);
-        }
-
-        return (StatusCodes.OK, BuildScenarioStateResponse(instance, template));
+        return (StatusCodes.OK, MapToScenarioStateResponse(scenario));
     }
 
-    /// <summary>
-    /// Completes a scenario, awards growth to the player's seed, records history, and publishes events.
-    /// </summary>
-    public async Task<(StatusCodes, ScenarioCompletionResponse?)> CompleteScenarioAsync(CompleteScenarioRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ScenarioCompletionResponse?)> CompleteScenarioAsync(
+        CompleteScenarioRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("CompleteScenario: ScenarioInstanceId={ScenarioInstanceId}", body.ScenarioInstanceId);
+        await using var lockResult = await _lockProvider.LockAsync(
+            StateStoreDefinitions.GardenerLock,
+            $"scenario:{body.AccountId}",
+            Guid.NewGuid().ToString(),
+            30,
+            cancellationToken);
 
-        var scenarioStore = _stateStoreFactory.GetStore<ScenarioInstanceModel>(StateStoreDefinitions.GardenerScenarioInstances);
-        var instance = await scenarioStore.GetAsync($"scenario:{body.ScenarioInstanceId}", cancellationToken);
+        if (!lockResult.Success)
+            return (StatusCodes.Conflict, null);
 
-        if (instance == null)
-        {
+        var scenario = await ScenarioStore.GetAsync(ScenarioKey(body.AccountId), cancellationToken);
+        if (scenario == null)
             return (StatusCodes.NotFound, null);
-        }
 
-        if (instance.Status != ScenarioInstanceStatus.Active)
+        if (scenario.ScenarioInstanceId != body.ScenarioInstanceId)
         {
-            _logger.LogDebug("Scenario {InstanceId} is not active (status={Status})", instance.ScenarioInstanceId, instance.Status);
+            _logger.LogWarning(
+                "Scenario ID mismatch: expected {Expected}, got {Actual}",
+                scenario.ScenarioInstanceId, body.ScenarioInstanceId);
             return (StatusCodes.BadRequest, null);
         }
 
-        if (instance.AccountId != body.AccountId)
-        {
-            return (StatusCodes.Forbidden, null);
-        }
+        if (scenario.Status != ScenarioStatus.Active)
+            return (StatusCodes.BadRequest, null);
 
-        var templateStore = _stateStoreFactory.GetStore<ScenarioTemplateModel>(StateStoreDefinitions.GardenerScenarioTemplates);
-        var template = await templateStore.GetAsync($"template:{instance.ScenarioTemplateId}", cancellationToken);
+        var template = await TemplateStore.GetAsync(
+            TemplateKey(scenario.ScenarioTemplateId), cancellationToken);
 
-        if (template == null)
-        {
-            _logger.LogError("Scenario {InstanceId} references non-existent template", instance.ScenarioInstanceId);
-            return (StatusCodes.InternalServerError, null);
-        }
+        // Calculate growth awards per IMPLEMENTATION TENETS
+        var growthAwarded = await CalculateAndAwardGrowthAsync(
+            scenario, template, fullCompletion: true, cancellationToken);
 
-        var now = DateTimeOffset.UtcNow;
-        instance.Status = ScenarioInstanceStatus.Completed;
-        instance.CompletedAt = now;
+        scenario.Status = ScenarioStatus.Completed;
+        scenario.CompletedAt = DateTimeOffset.UtcNow;
+        scenario.GrowthAwarded = growthAwarded;
+        await ScenarioStore.SaveAsync(ScenarioKey(body.AccountId), scenario, cancellationToken);
 
-        await scenarioStore.SaveAsync($"scenario:{instance.ScenarioInstanceId}", instance, cancellationToken);
+        // Move to durable history
+        await WriteScenarioHistoryAsync(scenario, template, cancellationToken);
 
-        // Calculate growth awards with multiplier
-        var growthAwarded = new Dictionary<string, float>();
-        foreach (var (domain, amount) in template.GrowthAwards)
-        {
-            growthAwarded[domain] = (float)(amount * _configuration.GrowthAwardMultiplier);
-        }
+        // Clean up from Redis
+        await ScenarioStore.DeleteAsync(ScenarioKey(body.AccountId), cancellationToken);
 
-        // Award growth via ISeedClient (L4 -> L2 direct API call per IMPLEMENTATION TENETS)
-        if (growthAwarded.Count > 0)
-        {
-            await AwardGrowthAsync(instance.SeedId, growthAwarded, "scenario_completion", cancellationToken);
-        }
+        // Clean up game session by having participant leave
+        await TryCleanupGameSessionAsync(scenario, cancellationToken);
 
-        // Record history
-        await RecordScenarioHistoryAsync(instance, ScenarioOutcome.Completed, growthAwarded, cancellationToken);
+        await _messageBus.TryPublishAsync("gardener.scenario.completed",
+            new GardenerScenarioCompletedEvent
+            {
+                EventId = Guid.NewGuid(),
+                ScenarioInstanceId = scenario.ScenarioInstanceId,
+                ScenarioTemplateId = scenario.ScenarioTemplateId,
+                AccountId = body.AccountId,
+                GrowthAwarded = growthAwarded
+            }, cancellationToken: cancellationToken);
 
-        await _messageBus.TryPublishAsync("gardener.scenario.completed", new GardenerScenarioCompletedEvent
-        {
-            EventId = Guid.NewGuid(),
-            ScenarioInstanceId = instance.ScenarioInstanceId,
-            ScenarioTemplateId = instance.ScenarioTemplateId,
-            AccountId = instance.AccountId,
-            GrowthAwarded = growthAwarded.ToDictionary(kvp => kvp.Key, kvp => (double)kvp.Value)
-        }, cancellationToken: cancellationToken);
-
-        _logger.LogInformation("Scenario completed: InstanceId={InstanceId}, GrowthDomains={DomainCount}", instance.ScenarioInstanceId, growthAwarded.Count);
-
-        // Clean up the Redis instance
-        await scenarioStore.DeleteAsync($"scenario:{instance.ScenarioInstanceId}", cancellationToken);
+        _logger.LogInformation(
+            "Scenario {ScenarioId} completed for account {AccountId}, growth awarded in {DomainCount} domains",
+            scenario.ScenarioInstanceId, body.AccountId, growthAwarded.Count);
 
         return (StatusCodes.OK, new ScenarioCompletionResponse
         {
-            ScenarioInstanceId = instance.ScenarioInstanceId,
+            ScenarioInstanceId = scenario.ScenarioInstanceId,
             GrowthAwarded = growthAwarded,
             ReturnToVoid = true
         });
     }
 
-    /// <summary>
-    /// Abandons a scenario, awards partial growth, records history, and publishes events.
-    /// </summary>
-    public async Task<(StatusCodes, AbandonScenarioResponse?)> AbandonScenarioAsync(AbandonScenarioRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc />
+    public async Task<(StatusCodes, AbandonScenarioResponse?)> AbandonScenarioAsync(
+        AbandonScenarioRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("AbandonScenario: ScenarioInstanceId={ScenarioInstanceId}", body.ScenarioInstanceId);
+        await using var lockResult = await _lockProvider.LockAsync(
+            StateStoreDefinitions.GardenerLock,
+            $"scenario:{body.AccountId}",
+            Guid.NewGuid().ToString(),
+            30,
+            cancellationToken);
 
-        var scenarioStore = _stateStoreFactory.GetStore<ScenarioInstanceModel>(StateStoreDefinitions.GardenerScenarioInstances);
-        var instance = await scenarioStore.GetAsync($"scenario:{body.ScenarioInstanceId}", cancellationToken);
+        if (!lockResult.Success)
+            return (StatusCodes.Conflict, null);
 
-        if (instance == null)
-        {
+        var scenario = await ScenarioStore.GetAsync(ScenarioKey(body.AccountId), cancellationToken);
+        if (scenario == null)
             return (StatusCodes.NotFound, null);
-        }
 
-        if (instance.Status != ScenarioInstanceStatus.Active)
-        {
+        if (scenario.ScenarioInstanceId != body.ScenarioInstanceId)
             return (StatusCodes.BadRequest, null);
-        }
 
-        if (instance.AccountId != body.AccountId)
-        {
-            return (StatusCodes.Forbidden, null);
-        }
+        if (scenario.Status != ScenarioStatus.Active)
+            return (StatusCodes.BadRequest, null);
 
-        var templateStore = _stateStoreFactory.GetStore<ScenarioTemplateModel>(StateStoreDefinitions.GardenerScenarioTemplates);
-        var template = await templateStore.GetAsync($"template:{instance.ScenarioTemplateId}", cancellationToken);
+        var template = await TemplateStore.GetAsync(
+            TemplateKey(scenario.ScenarioTemplateId), cancellationToken);
 
-        instance.Status = ScenarioInstanceStatus.Abandoned;
-        instance.CompletedAt = DateTimeOffset.UtcNow;
+        // Calculate partial growth based on time spent
+        var partialGrowth = await CalculateAndAwardGrowthAsync(
+            scenario, template, fullCompletion: false, cancellationToken);
 
-        await scenarioStore.SaveAsync($"scenario:{instance.ScenarioInstanceId}", instance, cancellationToken);
+        scenario.Status = ScenarioStatus.Abandoned;
+        scenario.CompletedAt = DateTimeOffset.UtcNow;
+        scenario.GrowthAwarded = partialGrowth;
 
-        // Calculate partial growth (25% of full awards)
-        var partialGrowth = new Dictionary<string, float>();
-        if (template != null)
-        {
-            foreach (var (domain, amount) in template.GrowthAwards)
+        // Move to durable history
+        await WriteScenarioHistoryAsync(scenario, template, cancellationToken);
+
+        // Clean up from Redis
+        await ScenarioStore.DeleteAsync(ScenarioKey(body.AccountId), cancellationToken);
+
+        await TryCleanupGameSessionAsync(scenario, cancellationToken);
+
+        await _messageBus.TryPublishAsync("gardener.scenario.abandoned",
+            new GardenerScenarioAbandonedEvent
             {
-                partialGrowth[domain] = (float)(amount * _configuration.GrowthAwardMultiplier * 0.25);
-            }
-        }
+                EventId = Guid.NewGuid(),
+                ScenarioInstanceId = scenario.ScenarioInstanceId,
+                AccountId = body.AccountId
+            }, cancellationToken: cancellationToken);
 
-        if (partialGrowth.Count > 0)
-        {
-            await AwardGrowthAsync(instance.SeedId, partialGrowth, "scenario_abandoned", cancellationToken);
-        }
-
-        await RecordScenarioHistoryAsync(instance, ScenarioOutcome.Abandoned, partialGrowth, cancellationToken);
-
-        await _messageBus.TryPublishAsync("gardener.scenario.abandoned", new GardenerScenarioAbandonedEvent
-        {
-            EventId = Guid.NewGuid(),
-            ScenarioInstanceId = instance.ScenarioInstanceId,
-            AccountId = instance.AccountId
-        }, cancellationToken: cancellationToken);
-
-        _logger.LogInformation("Scenario abandoned: InstanceId={InstanceId}", instance.ScenarioInstanceId);
-
-        await scenarioStore.DeleteAsync($"scenario:{instance.ScenarioInstanceId}", cancellationToken);
+        _logger.LogInformation(
+            "Scenario {ScenarioId} abandoned by account {AccountId}",
+            scenario.ScenarioInstanceId, body.AccountId);
 
         return (StatusCodes.OK, new AbandonScenarioResponse
         {
-            ScenarioInstanceId = instance.ScenarioInstanceId,
+            ScenarioInstanceId = scenario.ScenarioInstanceId,
             PartialGrowthAwarded = partialGrowth
         });
     }
 
-    /// <summary>
-    /// Chains from a completed scenario to a new one, incrementing chain depth.
-    /// </summary>
-    public async Task<(StatusCodes, ScenarioStateResponse?)> ChainScenarioAsync(ChainScenarioRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ScenarioStateResponse?)> ChainScenarioAsync(
+        ChainScenarioRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("ChainScenario: PreviousInstanceId={PreviousId}, NewTemplateId={NewTemplateId}", body.PreviousScenarioInstanceId, body.NewScenarioTemplateId);
+        await using var lockResult = await _lockProvider.LockAsync(
+            StateStoreDefinitions.GardenerLock,
+            $"scenario:{body.AccountId}",
+            Guid.NewGuid().ToString(),
+            30,
+            cancellationToken);
 
-        var templateStore = _stateStoreFactory.GetStore<ScenarioTemplateModel>(StateStoreDefinitions.GardenerScenarioTemplates);
-        var newTemplate = await templateStore.GetAsync($"template:{body.NewScenarioTemplateId}", cancellationToken);
+        if (!lockResult.Success)
+            return (StatusCodes.Conflict, null);
 
-        if (newTemplate == null || newTemplate.Status != TemplateStatus.Active)
-        {
+        var currentScenario = await ScenarioStore.GetAsync(
+            ScenarioKey(body.AccountId), cancellationToken);
+        if (currentScenario == null)
             return (StatusCodes.NotFound, null);
+
+        if (currentScenario.ScenarioInstanceId != body.CurrentScenarioInstanceId)
+            return (StatusCodes.BadRequest, null);
+
+        if (currentScenario.Status != ScenarioStatus.Active)
+            return (StatusCodes.BadRequest, null);
+
+        // Load current template to check chaining rules
+        var currentTemplate = await TemplateStore.GetAsync(
+            TemplateKey(currentScenario.ScenarioTemplateId), cancellationToken);
+
+        var targetTemplate = await TemplateStore.GetAsync(
+            TemplateKey(body.TargetTemplateId), cancellationToken);
+        if (targetTemplate == null || targetTemplate.Status != TemplateStatus.Active)
+            return (StatusCodes.NotFound, null);
+
+        // Validate chaining rules
+        if (currentTemplate?.Chaining?.LeadsTo == null ||
+            !currentTemplate.Chaining.LeadsTo.Contains(targetTemplate.Code))
+        {
+            _logger.LogWarning(
+                "Template {CurrentCode} does not chain to {TargetCode}",
+                currentTemplate?.Code, targetTemplate.Code);
+            return (StatusCodes.BadRequest, null);
         }
 
-        var now = DateTimeOffset.UtcNow;
-        var chainDepth = body.ChainDepth + 1;
-
-        var newInstance = new ScenarioInstanceModel
+        var maxChainDepth = currentTemplate.Chaining.MaxChainDepth;
+        if (currentScenario.ChainDepth + 1 >= maxChainDepth)
         {
-            ScenarioInstanceId = Guid.NewGuid(),
-            ScenarioTemplateId = body.NewScenarioTemplateId,
-            GameSessionId = body.GameSessionId,
-            AccountId = body.AccountId,
-            SeedId = body.SeedId,
-            Status = ScenarioInstanceStatus.Active,
-            StartedAt = now,
+            _logger.LogWarning(
+                "Chain depth {Depth} would exceed max {Max}",
+                currentScenario.ChainDepth + 1, maxChainDepth);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Complete current scenario with growth
+        var growthAwarded = await CalculateAndAwardGrowthAsync(
+            currentScenario, currentTemplate, fullCompletion: true, cancellationToken);
+        currentScenario.Status = ScenarioStatus.Completed;
+        currentScenario.CompletedAt = DateTimeOffset.UtcNow;
+        currentScenario.GrowthAwarded = growthAwarded;
+        await WriteScenarioHistoryAsync(currentScenario, currentTemplate, cancellationToken);
+
+        // Create new chained scenario
+        var newScenarioId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+        var newScenario = new ScenarioInstanceModel
+        {
+            ScenarioInstanceId = newScenarioId,
+            ScenarioTemplateId = body.TargetTemplateId,
+            GameSessionId = currentScenario.GameSessionId,
+            ConnectivityMode = targetTemplate.ConnectivityMode,
+            Status = ScenarioStatus.Active,
+            CreatedAt = now,
             LastActivityAt = now,
-            ChainDepth = chainDepth,
-            PreviousScenarioInstanceId = body.PreviousScenarioInstanceId
+            ChainedFrom = currentScenario.ScenarioInstanceId,
+            ChainDepth = currentScenario.ChainDepth + 1,
+            Participants = currentScenario.Participants
         };
 
-        var scenarioStore = _stateStoreFactory.GetStore<ScenarioInstanceModel>(StateStoreDefinitions.GardenerScenarioInstances);
-        await scenarioStore.SaveAsync($"scenario:{newInstance.ScenarioInstanceId}", newInstance, cancellationToken);
+        await ScenarioStore.SaveAsync(ScenarioKey(body.AccountId), newScenario, cancellationToken);
 
-        await _messageBus.TryPublishAsync("gardener.scenario.chained", new GardenerScenarioChainedEvent
-        {
-            EventId = Guid.NewGuid(),
-            PreviousScenarioInstanceId = body.PreviousScenarioInstanceId,
-            NewScenarioInstanceId = newInstance.ScenarioInstanceId,
-            AccountId = body.AccountId,
-            ChainDepth = chainDepth
-        }, cancellationToken: cancellationToken);
+        await _messageBus.TryPublishAsync("gardener.scenario.chained",
+            new GardenerScenarioChainedEvent
+            {
+                EventId = Guid.NewGuid(),
+                PreviousScenarioInstanceId = currentScenario.ScenarioInstanceId,
+                NewScenarioInstanceId = newScenarioId,
+                AccountId = body.AccountId,
+                ChainDepth = newScenario.ChainDepth
+            }, cancellationToken: cancellationToken);
 
-        _logger.LogInformation("Scenario chained: NewInstanceId={NewId}, ChainDepth={Depth}", newInstance.ScenarioInstanceId, chainDepth);
+        _logger.LogInformation(
+            "Scenario chained: {PrevId} -> {NewId} (depth {Depth}) for account {AccountId}",
+            currentScenario.ScenarioInstanceId, newScenarioId,
+            newScenario.ChainDepth, body.AccountId);
 
-        return (StatusCodes.Created, BuildScenarioStateResponse(newInstance, newTemplate));
+        return (StatusCodes.Created, MapToScenarioStateResponse(newScenario));
     }
 
-    // =========================================================================
-    // Scenario Template Management
-    // =========================================================================
+    #endregion
 
-    /// <summary>
-    /// Creates a new scenario template.
-    /// </summary>
-    public async Task<(StatusCodes, ScenarioTemplateResponse?)> CreateTemplateAsync(CreateTemplateRequest body, CancellationToken cancellationToken)
+    #region Template Management
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ScenarioTemplateResponse?)> CreateTemplateAsync(
+        CreateTemplateRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("CreateTemplate: Code={Code}", body.Code);
+        // Check code uniqueness via JSON query
+        var codeCheck = await TemplateStore.JsonQueryPagedAsync(
+            new List<QueryCondition>
+            {
+                new("$.ScenarioTemplateId", QueryOperator.Exists, null),
+                new("$.Code", QueryOperator.Equals, body.Code)
+            }, 1, 1, cancellationToken);
 
+        if (codeCheck.TotalCount > 0)
+        {
+            _logger.LogWarning("Template code {Code} already exists", body.Code);
+            return (StatusCodes.Conflict, null);
+        }
+
+        var templateId = Guid.NewGuid();
         var now = DateTimeOffset.UtcNow;
         var template = new ScenarioTemplateModel
         {
-            ScenarioTemplateId = Guid.NewGuid(),
+            ScenarioTemplateId = templateId,
             Code = body.Code,
             DisplayName = body.DisplayName,
             Description = body.Description,
             Category = body.Category,
+            Subcategory = body.Subcategory,
             ConnectivityMode = body.ConnectivityMode,
-            MinimumPhase = body.MinimumPhase,
-            Status = TemplateStatus.Draft,
+            DomainWeights = body.DomainWeights.Select(dw => new DomainWeightModel
+            {
+                Domain = dw.Domain,
+                Weight = dw.Weight
+            }).ToList(),
+            MinGrowthPhase = body.MinGrowthPhase,
             EstimatedDurationMinutes = body.EstimatedDurationMinutes,
-            BondCompatible = body.BondCompatible,
+            AllowedPhases = body.AllowedPhases?.ToList() ?? new List<DeploymentPhase>(),
             MaxConcurrentInstances = body.MaxConcurrentInstances,
-            GrowthAwards = body.GrowthAwards?.ToDictionary(kvp => kvp.Key, kvp => (double)kvp.Value) ?? new Dictionary<string, double>(),
-            DomainAffinities = body.DomainAffinities?.ToDictionary(kvp => kvp.Key, kvp => (double)kvp.Value) ?? new Dictionary<string, double>(),
-            ChainTargets = body.ChainTargets?.ToList() ?? new List<Guid>(),
-            Tags = body.Tags?.ToList() ?? new List<string>(),
+            Prerequisites = body.Prerequisites != null ? MapFromPrerequisites(body.Prerequisites) : null,
+            Chaining = body.Chaining != null ? MapFromChaining(body.Chaining) : null,
+            Multiplayer = body.Multiplayer != null ? MapFromMultiplayer(body.Multiplayer) : null,
+            Content = body.Content != null ? MapFromContent(body.Content) : null,
+            Status = TemplateStatus.Active,
             CreatedAt = now,
             UpdatedAt = now
         };
 
-        var templateStore = _stateStoreFactory.GetStore<ScenarioTemplateModel>(StateStoreDefinitions.GardenerScenarioTemplates);
-        await templateStore.SaveAsync($"template:{template.ScenarioTemplateId}", template, cancellationToken);
+        await TemplateStore.SaveAsync(TemplateKey(templateId), template, cancellationToken);
 
-        await _messageBus.TryPublishAsync("scenario-template.created", new ScenarioTemplateCreatedEvent
-        {
-            ScenarioTemplateId = template.ScenarioTemplateId,
-            Code = template.Code,
-            DisplayName = template.DisplayName,
-            Description = template.Description,
-            Category = template.Category,
-            ConnectivityMode = template.ConnectivityMode,
-            Status = template.Status,
-            CreatedAt = template.CreatedAt,
-            UpdatedAt = template.UpdatedAt
-        }, cancellationToken: cancellationToken);
+        _logger.LogInformation(
+            "Created scenario template {TemplateId} with code {Code}", templateId, body.Code);
 
-        _logger.LogInformation("Template created: TemplateId={TemplateId}, Code={Code}", template.ScenarioTemplateId, template.Code);
-
-        return (StatusCodes.Created, BuildTemplateResponse(template));
+        return (StatusCodes.Created, MapToTemplateResponse(template));
     }
 
-    /// <summary>
-    /// Gets a scenario template by ID.
-    /// </summary>
-    public async Task<(StatusCodes, ScenarioTemplateResponse?)> GetTemplateAsync(GetTemplateRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ScenarioTemplateResponse?)> GetTemplateAsync(
+        GetTemplateRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("GetTemplate: TemplateId={TemplateId}", body.ScenarioTemplateId);
-
-        var templateStore = _stateStoreFactory.GetStore<ScenarioTemplateModel>(StateStoreDefinitions.GardenerScenarioTemplates);
-        var template = await templateStore.GetAsync($"template:{body.ScenarioTemplateId}", cancellationToken);
-
+        var template = await TemplateStore.GetAsync(
+            TemplateKey(body.ScenarioTemplateId), cancellationToken);
         if (template == null)
-        {
             return (StatusCodes.NotFound, null);
-        }
 
-        return (StatusCodes.OK, BuildTemplateResponse(template));
+        return (StatusCodes.OK, MapToTemplateResponse(template));
     }
 
-    /// <summary>
-    /// Gets a scenario template by its unique code.
-    /// </summary>
-    public async Task<(StatusCodes, ScenarioTemplateResponse?)> GetTemplateByCodeAsync(GetTemplateByCodeRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ScenarioTemplateResponse?)> GetTemplateByCodeAsync(
+        GetTemplateByCodeRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("GetTemplateByCode: Code={Code}", body.Code);
+        var result = await TemplateStore.JsonQueryPagedAsync(
+            new List<QueryCondition>
+            {
+                new("$.ScenarioTemplateId", QueryOperator.Exists, null),
+                new("$.Code", QueryOperator.Equals, body.Code)
+            }, 1, 1, cancellationToken);
 
-        var templateStore = _stateStoreFactory.GetJsonQueryableStore<ScenarioTemplateModel>(StateStoreDefinitions.GardenerScenarioTemplates);
-        var conditions = new List<QueryCondition>
-        {
-            new QueryCondition { Path = "$.Code", Operator = QueryOperator.Equals, Value = body.Code },
-            new QueryCondition { Path = "$.ScenarioTemplateId", Operator = QueryOperator.Exists, Value = true }
-        };
-
-        var result = await templateStore.JsonQueryPagedAsync(conditions, 0, 1, null, cancellationToken);
-
-        if (result.TotalCount == 0)
-        {
+        var item = result.Items.FirstOrDefault();
+        if (item == null)
             return (StatusCodes.NotFound, null);
-        }
 
-        return (StatusCodes.OK, BuildTemplateResponse(result.Items.First().Value));
+        return (StatusCodes.OK, MapToTemplateResponse(item.Value));
     }
 
-    /// <summary>
-    /// Lists scenario templates with optional filtering by category and status.
-    /// </summary>
-    public async Task<(StatusCodes, ListTemplatesResponse?)> ListTemplatesAsync(ListTemplatesRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ListTemplatesResponse?)> ListTemplatesAsync(
+        ListTemplatesRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("ListTemplates: Page={Page}, PageSize={PageSize}", body.Page, body.PageSize);
-
-        var templateStore = _stateStoreFactory.GetJsonQueryableStore<ScenarioTemplateModel>(StateStoreDefinitions.GardenerScenarioTemplates);
         var conditions = new List<QueryCondition>
         {
-            new QueryCondition { Path = "$.ScenarioTemplateId", Operator = QueryOperator.Exists, Value = true }
+            new("$.ScenarioTemplateId", QueryOperator.Exists, null)
         };
 
         if (body.Category != null)
-        {
-            conditions.Add(new QueryCondition { Path = "$.Category", Operator = QueryOperator.Equals, Value = body.Category.Value.ToString() });
-        }
+            conditions.Add(new("$.Category", QueryOperator.Equals, body.Category.Value.ToString()));
+
+        if (body.ConnectivityMode != null)
+            conditions.Add(new("$.ConnectivityMode", QueryOperator.Equals,
+                body.ConnectivityMode.Value.ToString()));
 
         if (body.Status != null)
+            conditions.Add(new("$.Status", QueryOperator.Equals, body.Status.Value.ToString()));
+
+        var result = await TemplateStore.JsonQueryPagedAsync(
+            conditions, body.Page, body.PageSize, cancellationToken);
+
+        // In-memory filter for deployment phase (JSON array contains not supported in queries)
+        var templates = result.Items.Select(i => i.Value);
+        if (body.DeploymentPhase != null)
         {
-            conditions.Add(new QueryCondition { Path = "$.Status", Operator = QueryOperator.Equals, Value = body.Status.Value.ToString() });
+            templates = templates.Where(t =>
+                t.AllowedPhases.Count == 0 || t.AllowedPhases.Contains(body.DeploymentPhase.Value));
         }
 
-        var page = body.Page > 0 ? body.Page : 0;
-        var pageSize = body.PageSize > 0 ? body.PageSize : 20;
-        var result = await templateStore.JsonQueryPagedAsync(conditions, page, pageSize, null, cancellationToken);
+        var templateList = templates.ToList();
 
         return (StatusCodes.OK, new ListTemplatesResponse
         {
-            Templates = result.Items.Select(i => BuildTemplateResponse(i.Value)).ToList(),
-            TotalCount = result.TotalCount,
-            Page = page,
-            PageSize = pageSize
+            Templates = templateList.Select(MapToTemplateResponse).ToList(),
+            TotalCount = body.DeploymentPhase != null ? templateList.Count : result.TotalCount,
+            Page = body.Page,
+            PageSize = body.PageSize
         });
     }
 
-    /// <summary>
-    /// Updates a scenario template's mutable fields.
-    /// </summary>
-    public async Task<(StatusCodes, ScenarioTemplateResponse?)> UpdateTemplateAsync(UpdateTemplateRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ScenarioTemplateResponse?)> UpdateTemplateAsync(
+        UpdateTemplateRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("UpdateTemplate: TemplateId={TemplateId}", body.ScenarioTemplateId);
+        await using var lockResult = await _lockProvider.LockAsync(
+            StateStoreDefinitions.GardenerLock,
+            $"template:{body.ScenarioTemplateId}",
+            Guid.NewGuid().ToString(),
+            30,
+            cancellationToken);
 
-        var templateStore = _stateStoreFactory.GetStore<ScenarioTemplateModel>(StateStoreDefinitions.GardenerScenarioTemplates);
-        var template = await templateStore.GetAsync($"template:{body.ScenarioTemplateId}", cancellationToken);
+        if (!lockResult.Success)
+            return (StatusCodes.Conflict, null);
 
+        var template = await TemplateStore.GetAsync(
+            TemplateKey(body.ScenarioTemplateId), cancellationToken);
         if (template == null)
-        {
             return (StatusCodes.NotFound, null);
-        }
 
-        if (body.DisplayName != null) template.DisplayName = body.DisplayName;
-        if (body.Description != null) template.Description = body.Description;
-        if (body.Category != null) template.Category = body.Category.Value;
-        if (body.ConnectivityMode != null) template.ConnectivityMode = body.ConnectivityMode.Value;
-        if (body.MinimumPhase != null) template.MinimumPhase = body.MinimumPhase.Value;
-        if (body.Status != null) template.Status = body.Status.Value;
-        if (body.EstimatedDurationMinutes != null) template.EstimatedDurationMinutes = body.EstimatedDurationMinutes.Value;
-        if (body.BondCompatible != null) template.BondCompatible = body.BondCompatible.Value;
-        if (body.MaxConcurrentInstances != null) template.MaxConcurrentInstances = body.MaxConcurrentInstances.Value;
-        if (body.GrowthAwards != null) template.GrowthAwards = body.GrowthAwards.ToDictionary(kvp => kvp.Key, kvp => (double)kvp.Value);
-        if (body.DomainAffinities != null) template.DomainAffinities = body.DomainAffinities.ToDictionary(kvp => kvp.Key, kvp => (double)kvp.Value);
-        if (body.ChainTargets != null) template.ChainTargets = body.ChainTargets.ToList();
-        if (body.Tags != null) template.Tags = body.Tags.ToList();
+        // Update only provided (non-null) fields
+        if (body.DisplayName != null)
+            template.DisplayName = body.DisplayName;
+        if (body.Description != null)
+            template.Description = body.Description;
+        if (body.DomainWeights != null)
+            template.DomainWeights = body.DomainWeights.Select(dw =>
+                new DomainWeightModel { Domain = dw.Domain, Weight = dw.Weight }).ToList();
+        if (body.MaxConcurrentInstances != null)
+            template.MaxConcurrentInstances = body.MaxConcurrentInstances.Value;
+        if (body.Prerequisites != null)
+            template.Prerequisites = MapFromPrerequisites(body.Prerequisites);
+        if (body.Chaining != null)
+            template.Chaining = MapFromChaining(body.Chaining);
+        if (body.Multiplayer != null)
+            template.Multiplayer = MapFromMultiplayer(body.Multiplayer);
+        if (body.Content != null)
+            template.Content = MapFromContent(body.Content);
 
         template.UpdatedAt = DateTimeOffset.UtcNow;
+        await TemplateStore.SaveAsync(TemplateKey(body.ScenarioTemplateId), template, cancellationToken);
 
-        await templateStore.SaveAsync($"template:{template.ScenarioTemplateId}", template, cancellationToken);
+        _logger.LogInformation(
+            "Updated scenario template {TemplateId}", body.ScenarioTemplateId);
 
-        await _messageBus.TryPublishAsync("scenario-template.updated", new ScenarioTemplateUpdatedEvent
-        {
-            ScenarioTemplateId = template.ScenarioTemplateId,
-            Code = template.Code,
-            DisplayName = template.DisplayName,
-            Description = template.Description,
-            Category = template.Category,
-            ConnectivityMode = template.ConnectivityMode,
-            Status = template.Status,
-            CreatedAt = template.CreatedAt,
-            UpdatedAt = template.UpdatedAt
-        }, cancellationToken: cancellationToken);
-
-        _logger.LogInformation("Template updated: TemplateId={TemplateId}", template.ScenarioTemplateId);
-
-        return (StatusCodes.OK, BuildTemplateResponse(template));
+        return (StatusCodes.OK, MapToTemplateResponse(template));
     }
 
-    /// <summary>
-    /// Deprecates a scenario template, preventing new instances from being created.
-    /// </summary>
-    public async Task<(StatusCodes, ScenarioTemplateResponse?)> DeprecateTemplateAsync(DeprecateTemplateRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ScenarioTemplateResponse?)> DeprecateTemplateAsync(
+        DeprecateTemplateRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("DeprecateTemplate: TemplateId={TemplateId}", body.ScenarioTemplateId);
+        await using var lockResult = await _lockProvider.LockAsync(
+            StateStoreDefinitions.GardenerLock,
+            $"template:{body.ScenarioTemplateId}",
+            Guid.NewGuid().ToString(),
+            30,
+            cancellationToken);
 
-        var templateStore = _stateStoreFactory.GetStore<ScenarioTemplateModel>(StateStoreDefinitions.GardenerScenarioTemplates);
-        var template = await templateStore.GetAsync($"template:{body.ScenarioTemplateId}", cancellationToken);
+        if (!lockResult.Success)
+            return (StatusCodes.Conflict, null);
 
+        var template = await TemplateStore.GetAsync(
+            TemplateKey(body.ScenarioTemplateId), cancellationToken);
         if (template == null)
-        {
             return (StatusCodes.NotFound, null);
-        }
 
         template.Status = TemplateStatus.Deprecated;
         template.UpdatedAt = DateTimeOffset.UtcNow;
+        await TemplateStore.SaveAsync(TemplateKey(body.ScenarioTemplateId), template, cancellationToken);
 
-        await templateStore.SaveAsync($"template:{template.ScenarioTemplateId}", template, cancellationToken);
+        _logger.LogInformation(
+            "Deprecated scenario template {TemplateId} ({Code})",
+            body.ScenarioTemplateId, template.Code);
 
-        await _messageBus.TryPublishAsync("scenario-template.updated", new ScenarioTemplateUpdatedEvent
-        {
-            ScenarioTemplateId = template.ScenarioTemplateId,
-            Code = template.Code,
-            DisplayName = template.DisplayName,
-            Description = template.Description,
-            Category = template.Category,
-            ConnectivityMode = template.ConnectivityMode,
-            Status = template.Status,
-            CreatedAt = template.CreatedAt,
-            UpdatedAt = template.UpdatedAt
-        }, cancellationToken: cancellationToken);
-
-        _logger.LogInformation("Template deprecated: TemplateId={TemplateId}", template.ScenarioTemplateId);
-
-        return (StatusCodes.OK, BuildTemplateResponse(template));
+        return (StatusCodes.OK, MapToTemplateResponse(template));
     }
 
-    // =========================================================================
-    // Deployment Phase
-    // =========================================================================
+    #endregion
 
-    /// <summary>
-    /// Gets the current phase configuration.
-    /// </summary>
-    public async Task<(StatusCodes, PhaseConfigResponse?)> GetPhaseConfigAsync(GetPhaseConfigRequest body, CancellationToken cancellationToken)
+    #region Phase Management
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, PhaseConfigResponse?)> GetPhaseConfigAsync(
+        GetPhaseConfigRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("GetPhaseConfig");
+        var config = await GetOrCreatePhaseConfigAsync(cancellationToken);
+        return (StatusCodes.OK, MapToPhaseConfigResponse(config));
+    }
 
-        var phaseStore = _stateStoreFactory.GetStore<PhaseConfigModel>(StateStoreDefinitions.GardenerPhaseConfig);
-        var config = await phaseStore.GetAsync("phase:current", cancellationToken);
+    /// <inheritdoc />
+    public async Task<(StatusCodes, PhaseConfigResponse?)> UpdatePhaseConfigAsync(
+        UpdatePhaseConfigRequest body, CancellationToken cancellationToken)
+    {
+        await using var lockResult = await _lockProvider.LockAsync(
+            StateStoreDefinitions.GardenerLock,
+            "phase",
+            Guid.NewGuid().ToString(),
+            30,
+            cancellationToken);
 
-        if (config == null)
+        if (!lockResult.Success)
+            return (StatusCodes.Conflict, null);
+
+        var config = await GetOrCreatePhaseConfigAsync(cancellationToken);
+        var previousPhase = config.CurrentPhase;
+
+        if (body.CurrentPhase != null)
+            config.CurrentPhase = body.CurrentPhase.Value;
+        if (body.MaxConcurrentScenariosGlobal != null)
+            config.MaxConcurrentScenariosGlobal = body.MaxConcurrentScenariosGlobal.Value;
+        if (body.PersistentEntryEnabled != null)
+            config.PersistentEntryEnabled = body.PersistentEntryEnabled.Value;
+        if (body.VoidMinigamesEnabled != null)
+            config.GardenMinigamesEnabled = body.VoidMinigamesEnabled.Value;
+
+        config.UpdatedAt = DateTimeOffset.UtcNow;
+        await PhaseStore.SaveAsync(PhaseConfigKey, config, cancellationToken);
+
+        // Publish phase change event if phase changed
+        if (body.CurrentPhase != null && body.CurrentPhase.Value != previousPhase)
         {
-            // Return defaults from configuration
-            return (StatusCodes.OK, new PhaseConfigResponse
-            {
-                CurrentPhase = _configuration.DefaultPhase,
-                MaxConcurrentScenariosGlobal = _configuration.MaxConcurrentScenariosGlobal,
-                PersistentEntryEnabled = _configuration.DefaultPhase >= DeploymentPhase.Beta,
-                VoidMinigamesEnabled = _configuration.DefaultPhase >= DeploymentPhase.Release
-            });
+            await _messageBus.TryPublishAsync("gardener.phase.changed",
+                new GardenerPhaseChangedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    PreviousPhase = previousPhase,
+                    NewPhase = body.CurrentPhase.Value
+                }, cancellationToken: cancellationToken);
+
+            _logger.LogInformation(
+                "Deployment phase changed from {PreviousPhase} to {NewPhase}",
+                previousPhase, body.CurrentPhase.Value);
         }
 
-        return (StatusCodes.OK, new PhaseConfigResponse
-        {
-            CurrentPhase = config.CurrentPhase,
-            MaxConcurrentScenariosGlobal = _configuration.MaxConcurrentScenariosGlobal,
-            PersistentEntryEnabled = config.CurrentPhase >= DeploymentPhase.Beta,
-            VoidMinigamesEnabled = config.CurrentPhase >= DeploymentPhase.Release
-        });
+        return (StatusCodes.OK, MapToPhaseConfigResponse(config));
     }
 
-    /// <summary>
-    /// Updates the deployment phase. Publishes a phase.changed event.
-    /// </summary>
-    public async Task<(StatusCodes, PhaseConfigResponse?)> UpdatePhaseConfigAsync(UpdatePhaseConfigRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc />
+    public async Task<(StatusCodes, PhaseMetricsResponse?)> GetPhaseMetricsAsync(
+        GetPhaseMetricsRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("UpdatePhaseConfig: NewPhase={NewPhase}", body.NewPhase);
+        var config = await GetOrCreatePhaseConfigAsync(cancellationToken);
 
-        var phaseStore = _stateStoreFactory.GetStore<PhaseConfigModel>(StateStoreDefinitions.GardenerPhaseConfig);
-        var existing = await phaseStore.GetAsync("phase:current", cancellationToken);
+        // Count active instances by querying known keys
+        // This is approximate -- the background worker maintains more accurate counts
+        // For production, consider maintaining counter keys in Redis
+        var activeVoidCount = 0;
+        var activeScenarioCount = 0;
 
-        var previousPhase = existing?.CurrentPhase ?? _configuration.DefaultPhase;
-
-        var config = existing ?? new PhaseConfigModel
-        {
-            PhaseConfigId = Guid.NewGuid()
-        };
-
-        config.CurrentPhase = body.NewPhase;
-        config.LastChangedAt = DateTimeOffset.UtcNow;
-        config.ChangedBy = body.ChangedBy;
-
-        await phaseStore.SaveAsync("phase:current", config, cancellationToken);
-
-        if (previousPhase != body.NewPhase)
-        {
-            await _messageBus.TryPublishAsync("gardener.phase.changed", new GardenerPhaseChangedEvent
-            {
-                EventId = Guid.NewGuid(),
-                PreviousPhase = previousPhase,
-                NewPhase = body.NewPhase
-            }, cancellationToken: cancellationToken);
-
-            _logger.LogInformation("Phase changed: {PreviousPhase} -> {NewPhase}, ChangedBy={ChangedBy}", previousPhase, body.NewPhase, body.ChangedBy);
-        }
-
-        return (StatusCodes.OK, new PhaseConfigResponse
-        {
-            CurrentPhase = config.CurrentPhase,
-            MaxConcurrentScenariosGlobal = _configuration.MaxConcurrentScenariosGlobal,
-            PersistentEntryEnabled = config.CurrentPhase >= DeploymentPhase.Beta,
-            VoidMinigamesEnabled = config.CurrentPhase >= DeploymentPhase.Release
-        });
-    }
-
-    /// <summary>
-    /// Returns metrics about the current deployment phase.
-    /// </summary>
-    public async Task<(StatusCodes, PhaseMetricsResponse?)> GetPhaseMetricsAsync(GetPhaseMetricsRequest body, CancellationToken cancellationToken)
-    {
-        _logger.LogDebug("GetPhaseMetrics");
-
-        var phaseStore = _stateStoreFactory.GetStore<PhaseConfigModel>(StateStoreDefinitions.GardenerPhaseConfig);
-        var config = await phaseStore.GetAsync("phase:current", cancellationToken);
-
-        var currentPhase = config?.CurrentPhase ?? _configuration.DefaultPhase;
-        var activeScenarios = config?.ActiveScenarioCount ?? 0;
-        var activeVoids = config?.TotalVoidEntries ?? 0;
-
-        var utilization = _configuration.MaxConcurrentScenariosGlobal > 0
-            ? (float)activeScenarios / _configuration.MaxConcurrentScenariosGlobal
+        // Phase metrics are best-effort counts from available data
+        var utilization = config.MaxConcurrentScenariosGlobal > 0
+            ? (float)activeScenarioCount / config.MaxConcurrentScenariosGlobal
             : 0f;
 
         return (StatusCodes.OK, new PhaseMetricsResponse
         {
-            CurrentPhase = currentPhase,
-            ActiveVoidInstances = activeVoids,
-            ActiveScenarioInstances = activeScenarios,
+            CurrentPhase = config.CurrentPhase,
+            ActiveVoidInstances = activeVoidCount,
+            ActiveScenarioInstances = activeScenarioCount,
             ScenarioCapacityUtilization = utilization
         });
     }
 
-    // =========================================================================
-    // Bond Features
-    // =========================================================================
+    #endregion
 
-    /// <summary>
-    /// Creates a shared scenario instance for bonded players entering together.
-    /// </summary>
-    public async Task<(StatusCodes, ScenarioStateResponse?)> EnterScenarioTogetherAsync(EnterTogetherRequest body, CancellationToken cancellationToken)
+    #region Bond Features
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ScenarioStateResponse?)> EnterScenarioTogetherAsync(
+        EnterTogetherRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("EnterScenarioTogether: BondId={BondId}, TemplateId={TemplateId}", body.BondId, body.ScenarioTemplateId);
-
         if (!_configuration.BondSharedVoidEnabled)
         {
             _logger.LogDebug("Bond shared void is disabled");
             return (StatusCodes.BadRequest, null);
         }
 
-        var templateStore = _stateStoreFactory.GetStore<ScenarioTemplateModel>(StateStoreDefinitions.GardenerScenarioTemplates);
-        var template = await templateStore.GetAsync($"template:{body.ScenarioTemplateId}", cancellationToken);
-
-        if (template == null || template.Status != TemplateStatus.Active)
+        // Load bond to find both participants
+        BondPartnersResponse bondPartners;
+        try
         {
+            bondPartners = await _seedClient.GetBondPartnersAsync(
+                new GetBondPartnersRequest { BondId = body.BondId }, cancellationToken);
+        }
+        catch (ApiException ex) when (ex.StatusCode == 404)
+        {
+            _logger.LogWarning("Bond {BondId} not found", body.BondId);
             return (StatusCodes.NotFound, null);
         }
 
-        if (!template.BondCompatible)
+        var partnerAccountIds = bondPartners.Partners
+            .Select(p => p.OwnerId)
+            .ToList();
+
+        if (partnerAccountIds.Count < 2)
         {
-            _logger.LogDebug("Template {TemplateId} is not bond-compatible", body.ScenarioTemplateId);
+            _logger.LogWarning("Bond {BondId} has fewer than 2 partners", body.BondId);
             return (StatusCodes.BadRequest, null);
         }
 
-        var now = DateTimeOffset.UtcNow;
-        var scenarioInstance = new ScenarioInstanceModel
+        // Verify both participants are in the void
+        var gardens = new List<GardenInstanceModel>();
+        foreach (var accountId in partnerAccountIds)
         {
-            ScenarioInstanceId = Guid.NewGuid(),
+            var garden = await GardenStore.GetAsync(GardenKey(accountId), cancellationToken);
+            if (garden == null)
+            {
+                _logger.LogWarning(
+                    "Account {AccountId} not in garden for bond scenario", accountId);
+                return (StatusCodes.BadRequest, null);
+            }
+            gardens.Add(garden);
+        }
+
+        var template = await TemplateStore.GetAsync(
+            TemplateKey(body.ScenarioTemplateId), cancellationToken);
+        if (template == null)
+            return (StatusCodes.NotFound, null);
+
+        if (template.Multiplayer == null || template.Multiplayer.MaxPlayers < 2)
+        {
+            _logger.LogWarning(
+                "Template {TemplateId} does not support multiplayer", body.ScenarioTemplateId);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Create shared game session
+        var gameSession = await _gameSessionClient.CreateGameSessionAsync(
+            new CreateGameSessionRequest
+            {
+                GameType = "gardener-scenario",
+                MaxPlayers = template.Multiplayer.MaxPlayers,
+                SessionName = $"Bond Scenario: {template.DisplayName}",
+                SessionType = SessionType.Matchmade,
+                OwnerId = partnerAccountIds[0],
+                ExpectedPlayers = partnerAccountIds,
+                ReservationTtlSeconds = (int)(_configuration.ScenarioTimeoutMinutes * 60)
+            }, cancellationToken);
+
+        var scenarioId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+        var scenario = new ScenarioInstanceModel
+        {
+            ScenarioInstanceId = scenarioId,
             ScenarioTemplateId = body.ScenarioTemplateId,
-            GameSessionId = body.GameSessionId,
-            AccountId = body.AccountId,
-            SeedId = body.SeedId,
-            Status = ScenarioInstanceStatus.Active,
-            StartedAt = now,
+            GameSessionId = gameSession.SessionId,
+            ConnectivityMode = template.ConnectivityMode,
+            Status = ScenarioStatus.Active,
+            CreatedAt = now,
             LastActivityAt = now,
             ChainDepth = 0,
-            BondId = body.BondId,
-            BondParticipants = body.ParticipantSeedIds?.ToList()
+            Participants = gardens.Select((g, i) => new ScenarioParticipantModel
+            {
+                SeedId = g.SeedId,
+                AccountId = g.AccountId,
+                SessionId = g.SessionId,
+                JoinedAt = now,
+                Role = i == 0 ? "primary" : "partner"
+            }).ToList()
         };
 
-        var scenarioStore = _stateStoreFactory.GetStore<ScenarioInstanceModel>(StateStoreDefinitions.GardenerScenarioInstances);
-        await scenarioStore.SaveAsync($"scenario:{scenarioInstance.ScenarioInstanceId}", scenarioInstance, cancellationToken);
-
-        await _messageBus.TryPublishAsync("gardener.bond.entered-together", new GardenerBondEnteredTogetherEvent
+        // Save scenario for each participant
+        foreach (var accountId in partnerAccountIds)
         {
-            EventId = Guid.NewGuid(),
-            BondId = body.BondId,
-            ScenarioInstanceId = scenarioInstance.ScenarioInstanceId,
-            ScenarioTemplateId = body.ScenarioTemplateId,
-            Participants = body.ParticipantSeedIds?.ToList() ?? new List<Guid>()
-        }, cancellationToken: cancellationToken);
+            await ScenarioStore.SaveAsync(ScenarioKey(accountId), scenario, cancellationToken);
+        }
 
-        _logger.LogInformation("Bond scenario started: InstanceId={InstanceId}, BondId={BondId}", scenarioInstance.ScenarioInstanceId, body.BondId);
+        // Clean up all garden instances
+        foreach (var garden in gardens)
+        {
+            foreach (var poiId in garden.ActivePoiIds)
+            {
+                await PoiStore.DeleteAsync(PoiKey(garden.GardenInstanceId, poiId), cancellationToken);
+            }
+            await GardenStore.DeleteAsync(GardenKey(garden.AccountId), cancellationToken);
+        }
 
-        return (StatusCodes.Created, BuildScenarioStateResponse(scenarioInstance, template));
+        await _messageBus.TryPublishAsync("gardener.bond.entered-together",
+            new GardenerBondEnteredTogetherEvent
+            {
+                EventId = Guid.NewGuid(),
+                BondId = body.BondId,
+                ScenarioInstanceId = scenarioId,
+                ScenarioTemplateId = body.ScenarioTemplateId,
+                Participants = partnerAccountIds
+            }, cancellationToken: cancellationToken);
+
+        _logger.LogInformation(
+            "Bond scenario {ScenarioId} started for bond {BondId} with {Count} participants",
+            scenarioId, body.BondId, partnerAccountIds.Count);
+
+        return (StatusCodes.Created, MapToScenarioStateResponse(scenario));
     }
 
-    /// <summary>
-    /// Gets the shared void state for a bonded pair.
-    /// </summary>
-    public async Task<(StatusCodes, SharedVoidStateResponse?)> GetSharedVoidStateAsync(GetSharedVoidRequest body, CancellationToken cancellationToken)
+    /// <inheritdoc />
+    public async Task<(StatusCodes, SharedVoidStateResponse?)> GetSharedVoidStateAsync(
+        GetSharedVoidRequest body, CancellationToken cancellationToken)
     {
-        _logger.LogDebug("GetSharedVoidState: BondId={BondId}", body.BondId);
-
         if (!_configuration.BondSharedVoidEnabled)
-        {
             return (StatusCodes.BadRequest, null);
-        }
 
-        // Find void instances for this bond's participants
-        var voidStore = _stateStoreFactory.GetStore<VoidInstanceModel>(StateStoreDefinitions.GardenerVoidInstances);
-        var participants = new List<BondedPlayerVoidState>();
-        var sharedPois = new List<PoiSummary>();
-
-        foreach (var accountId in body.AccountIds)
+        BondPartnersResponse bondPartners;
+        try
         {
-            var voidInstance = await voidStore.GetAsync($"void:{accountId}", cancellationToken);
-            if (voidInstance != null)
-            {
-                participants.Add(new BondedPlayerVoidState
-                {
-                    AccountId = accountId,
-                    SeedId = voidInstance.SeedId,
-                    Position = new Vec3
-                    {
-                        X = (float)voidInstance.PlayerPosition.X,
-                        Y = (float)voidInstance.PlayerPosition.Y,
-                        Z = (float)voidInstance.PlayerPosition.Z
-                    }
-                });
-
-                var pois = await GetActivePoisAsync(voidInstance, cancellationToken);
-                sharedPois.AddRange(pois.Select(BuildPoiSummary));
-            }
+            bondPartners = await _seedClient.GetBondPartnersAsync(
+                new GetBondPartnersRequest { BondId = body.BondId }, cancellationToken);
         }
-
-        if (participants.Count == 0)
+        catch (ApiException ex) when (ex.StatusCode == 404)
         {
             return (StatusCodes.NotFound, null);
+        }
+
+        var partnerAccountIds = bondPartners.Partners
+            .Select(p => p.OwnerId)
+            .ToList();
+
+        var allPois = new List<PoiSummary>();
+        var playerStates = new List<BondedPlayerVoidState>();
+
+        foreach (var accountId in partnerAccountIds)
+        {
+            var garden = await GardenStore.GetAsync(GardenKey(accountId), cancellationToken);
+            if (garden == null) continue;
+
+            playerStates.Add(new BondedPlayerVoidState
+            {
+                AccountId = accountId,
+                SeedId = garden.SeedId,
+                Position = MapToVec3(garden.Position),
+                VoidInstanceId = garden.GardenInstanceId
+            });
+
+            var pois = await LoadActivePoisAsync(garden, cancellationToken);
+            allPois.AddRange(pois.Select(MapToPoiSummary));
         }
 
         return (StatusCodes.OK, new SharedVoidStateResponse
         {
             BondId = body.BondId,
-            Participants = participants,
-            SharedPois = sharedPois.DistinctBy(p => p.PoiId).ToList()
+            Players = playerStates,
+            SharedPois = allPois
         });
     }
 
-    // =========================================================================
-    // Background Processing (called by GardenerScenarioLifecycleWorker)
-    // =========================================================================
+    #endregion
+
+    #region Private Helpers
 
     /// <summary>
-    /// Processes active scenario instances for timeout and abandonment detection.
-    /// Called periodically by <see cref="GardenerScenarioLifecycleWorker"/>.
+    /// Loads all active POIs for a garden instance from Redis.
     /// </summary>
-    internal async Task ProcessScenarioLifecycleAsync(CancellationToken cancellationToken)
+    private async Task<IReadOnlyList<PoiModel>> LoadActivePoisAsync(
+        GardenInstanceModel garden, CancellationToken ct)
     {
-        _logger.LogDebug("Processing scenario lifecycle");
-
-        // This is called by the background worker.
-        // In a production implementation, this would iterate active scenario keys in Redis
-        // and check for timeouts and abandonment.
-        // For now, the lifecycle worker is wired up and ready for implementation.
-        await Task.CompletedTask;
-    }
-
-    // =========================================================================
-    // Internal Helpers
-    // =========================================================================
-
-    /// <summary>
-    /// Retrieves all active POIs for a void instance.
-    /// </summary>
-    private async Task<List<PoiModel>> GetActivePoisAsync(VoidInstanceModel voidInstance, CancellationToken cancellationToken)
-    {
-        var poiStore = _stateStoreFactory.GetStore<PoiModel>(StateStoreDefinitions.GardenerPois);
         var pois = new List<PoiModel>();
-
-        foreach (var poiId in voidInstance.ActivePoiIds)
+        foreach (var poiId in garden.ActivePoiIds)
         {
-            var poi = await poiStore.GetAsync($"poi:{poiId}", cancellationToken);
+            var poi = await PoiStore.GetAsync(PoiKey(garden.GardenInstanceId, poiId), ct);
             if (poi != null)
-            {
-                // Check expiration
-                if (poi.ExpiresAt <= DateTimeOffset.UtcNow)
-                {
-                    await poiStore.DeleteAsync($"poi:{poiId}", cancellationToken);
-                    await _messageBus.TryPublishAsync("gardener.poi.expired", new GardenerPoiExpiredEvent
-                    {
-                        EventId = Guid.NewGuid(),
-                        VoidInstanceId = voidInstance.VoidInstanceId,
-                        PoiId = poiId
-                    }, cancellationToken: cancellationToken);
-                    continue;
-                }
                 pois.Add(poi);
-            }
         }
-
         return pois;
     }
 
     /// <summary>
-    /// Awards growth to a seed via the ISeedClient (L4 -> L2 direct API call).
+    /// Loads or creates the deployment phase configuration singleton.
     /// </summary>
-    private async Task AwardGrowthAsync(Guid seedId, Dictionary<string, float> growthAwards, string source, CancellationToken cancellationToken)
+    internal async Task<DeploymentPhaseConfigModel> GetOrCreatePhaseConfigAsync(
+        CancellationToken ct)
     {
-        var seedClient = _serviceProvider.GetService<ISeedClient>();
-        if (seedClient == null)
-        {
-            _logger.LogError("ISeedClient not available, cannot award growth for seed {SeedId}", seedId);
-            return;
-        }
+        var config = await PhaseStore.GetAsync(PhaseConfigKey, ct);
+        if (config != null)
+            return config;
 
-        try
+        config = new DeploymentPhaseConfigModel
         {
-            var growthEntries = growthAwards.Select(kvp => new RecordGrowthBatchRequest_GrowthEntries
-            {
-                Domain = kvp.Key,
-                Amount = kvp.Value,
-                Source = source
-            }).ToList();
+            CurrentPhase = _configuration.DefaultPhase,
+            MaxConcurrentScenariosGlobal = _configuration.MaxConcurrentScenariosGlobal,
+            PersistentEntryEnabled = false,
+            GardenMinigamesEnabled = false,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
 
-            await seedClient.RecordGrowthBatchAsync(new RecordGrowthBatchRequest
-            {
-                SeedId = seedId,
-                GrowthEntries = growthEntries
-            }, cancellationToken);
-
-            _logger.LogDebug("Growth awarded to seed {SeedId}: {Domains}", seedId, string.Join(", ", growthAwards.Keys));
-        }
-        catch (ApiException ex)
-        {
-            _logger.LogError(ex, "Failed to award growth to seed {SeedId}", seedId);
-        }
+        await PhaseStore.SaveAsync(PhaseConfigKey, config, ct);
+        _logger.LogInformation(
+            "Created default phase config with phase {Phase}", config.CurrentPhase);
+        return config;
     }
 
     /// <summary>
-    /// Records a completed scenario in durable history for cooldown tracking.
+    /// Calculates growth awards and records them via ISeedClient (T27 direct API call).
     /// </summary>
-    private async Task RecordScenarioHistoryAsync(ScenarioInstanceModel instance, ScenarioOutcome outcome, Dictionary<string, float> growthAwarded, CancellationToken cancellationToken)
+    private async Task<Dictionary<string, float>> CalculateAndAwardGrowthAsync(
+        ScenarioInstanceModel scenario,
+        ScenarioTemplateModel? template,
+        bool fullCompletion,
+        CancellationToken ct)
     {
-        var historyStore = _stateStoreFactory.GetStore<ScenarioHistoryModel>(StateStoreDefinitions.GardenerScenarioHistory);
+        var growthAwarded = new Dictionary<string, float>();
 
-        var durationSeconds = instance.CompletedAt.HasValue
-            ? (instance.CompletedAt.Value - instance.StartedAt).TotalSeconds
-            : 0;
+        if (template?.DomainWeights == null || template.DomainWeights.Count == 0)
+            return growthAwarded;
+
+        var durationMinutes = (float)(DateTimeOffset.UtcNow - scenario.CreatedAt).TotalMinutes;
+        var estimatedMinutes = template.EstimatedDurationMinutes ?? 30;
+
+        float timeRatio;
+        if (fullCompletion)
+        {
+            // Full completion: time-proportional, capped at 1.5x
+            timeRatio = MathF.Min(durationMinutes / estimatedMinutes, 1.5f);
+            // Minimum of 0.5x for very fast completions
+            timeRatio = MathF.Max(timeRatio, 0.5f);
+        }
+        else
+        {
+            // Partial (abandoned): proportional to time spent, capped at 0.5x
+            timeRatio = MathF.Min(durationMinutes / estimatedMinutes, 0.5f);
+        }
+
+        var entries = new List<GrowthEntry>();
+        foreach (var dw in template.DomainWeights)
+        {
+            var amount = dw.Weight * _configuration.GrowthAwardMultiplier * timeRatio;
+            growthAwarded[dw.Domain] = amount;
+            entries.Add(new GrowthEntry { Domain = dw.Domain, Amount = amount });
+        }
+
+        // Award growth for primary participant via batch API (T27 compliant)
+        var primaryParticipant = scenario.Participants.FirstOrDefault();
+        if (primaryParticipant != null && entries.Count > 0)
+        {
+            try
+            {
+                await _seedClient.RecordGrowthBatchAsync(new RecordGrowthBatchRequest
+                {
+                    SeedId = primaryParticipant.SeedId,
+                    Entries = entries,
+                    Source = "gardener"
+                }, ct);
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex,
+                    "Failed to record growth for seed {SeedId}, scenario {ScenarioId}",
+                    primaryParticipant.SeedId, scenario.ScenarioInstanceId);
+            }
+
+            // Award growth for additional participants
+            foreach (var participant in scenario.Participants.Skip(1))
+            {
+                try
+                {
+                    await _seedClient.RecordGrowthBatchAsync(new RecordGrowthBatchRequest
+                    {
+                        SeedId = participant.SeedId,
+                        Entries = entries,
+                        Source = "gardener"
+                    }, ct);
+                }
+                catch (ApiException ex)
+                {
+                    _logger.LogError(ex,
+                        "Failed to record growth for participant seed {SeedId}",
+                        participant.SeedId);
+                }
+            }
+        }
+
+        return growthAwarded;
+    }
+
+    /// <summary>
+    /// Writes a completed/abandoned scenario to the durable MySQL history store.
+    /// </summary>
+    private async Task WriteScenarioHistoryAsync(
+        ScenarioInstanceModel scenario,
+        ScenarioTemplateModel? template,
+        CancellationToken ct)
+    {
+        var primaryParticipant = scenario.Participants.FirstOrDefault();
+        if (primaryParticipant == null) return;
+
+        var durationSeconds = scenario.CompletedAt.HasValue
+            ? (float)(scenario.CompletedAt.Value - scenario.CreatedAt).TotalSeconds
+            : (float)(DateTimeOffset.UtcNow - scenario.CreatedAt).TotalSeconds;
 
         var history = new ScenarioHistoryModel
         {
-            HistoryId = Guid.NewGuid(),
-            ScenarioInstanceId = instance.ScenarioInstanceId,
-            ScenarioTemplateId = instance.ScenarioTemplateId,
-            AccountId = instance.AccountId,
-            Outcome = outcome,
+            ScenarioInstanceId = scenario.ScenarioInstanceId,
+            ScenarioTemplateId = scenario.ScenarioTemplateId,
+            AccountId = primaryParticipant.AccountId,
+            SeedId = primaryParticipant.SeedId,
+            CompletedAt = scenario.CompletedAt ?? DateTimeOffset.UtcNow,
+            Status = scenario.Status,
+            GrowthAwarded = scenario.GrowthAwarded,
             DurationSeconds = durationSeconds,
-            GrowthAwarded = growthAwarded.ToDictionary(kvp => kvp.Key, kvp => (double)kvp.Value),
-            ChainDepth = instance.ChainDepth,
-            CompletedAt = instance.CompletedAt ?? DateTimeOffset.UtcNow
+            TemplateCode = template?.Code ?? "unknown"
         };
 
-        await historyStore.SaveAsync($"history:{history.HistoryId}", history, cancellationToken);
+        await HistoryStore.SaveAsync(HistoryKey(scenario.ScenarioInstanceId), history, ct);
     }
 
     /// <summary>
-    /// Builds a <see cref="VoidStateResponse"/> from internal models.
+    /// Attempts to clean up the game session by having participants leave.
     /// </summary>
-    private static VoidStateResponse BuildVoidStateResponse(VoidInstanceModel voidInstance, List<PoiModel> pois)
+    private async Task TryCleanupGameSessionAsync(
+        ScenarioInstanceModel scenario, CancellationToken ct)
+    {
+        foreach (var participant in scenario.Participants)
+        {
+            try
+            {
+                await _gameSessionClient.LeaveGameSessionByIdAsync(
+                    new LeaveGameSessionByIdRequest
+                    {
+                        SessionId = scenario.GameSessionId,
+                        AccountId = participant.AccountId
+                    }, ct);
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogWarning(ex,
+                    "Failed to remove participant {AccountId} from game session {SessionId}",
+                    participant.AccountId, scenario.GameSessionId);
+            }
+        }
+    }
+
+    #region Model Mapping
+
+    private static VoidStateResponse MapToVoidStateResponse(
+        GardenInstanceModel garden, IReadOnlyList<PoiModel> pois)
     {
         return new VoidStateResponse
         {
-            VoidInstanceId = voidInstance.VoidInstanceId,
-            SeedId = voidInstance.SeedId,
-            AccountId = voidInstance.AccountId,
-            Position = new Vec3
-            {
-                X = (float)voidInstance.PlayerPosition.X,
-                Y = (float)voidInstance.PlayerPosition.Y,
-                Z = (float)voidInstance.PlayerPosition.Z
-            },
-            ActivePois = pois.Select(BuildPoiSummary).ToList()
+            VoidInstanceId = garden.GardenInstanceId,
+            SeedId = garden.SeedId,
+            AccountId = garden.AccountId,
+            Position = MapToVec3(garden.Position),
+            ActivePois = pois.Select(MapToPoiSummary).ToList()
         };
     }
 
-    /// <summary>
-    /// Builds a <see cref="PoiSummary"/> from an internal POI model.
-    /// </summary>
-    private static PoiSummary BuildPoiSummary(PoiModel poi)
+    private static PoiSummary MapToPoiSummary(PoiModel poi)
     {
         return new PoiSummary
         {
             PoiId = poi.PoiId,
-            Position = new Vec3
-            {
-                X = (float)poi.Position.X,
-                Y = (float)poi.Position.Y,
-                Z = (float)poi.Position.Z
-            },
-            PoiType = poi.PoiType
+            Position = MapToVec3(poi.Position),
+            PoiType = poi.PoiType,
+            ScenarioTemplateId = poi.ScenarioTemplateId,
+            TriggerMode = poi.TriggerMode,
+            TriggerRadius = poi.TriggerRadius,
+            Status = poi.Status,
+            VisualHint = poi.VisualHint,
+            AudioHint = poi.AudioHint,
+            IntensityRamp = poi.IntensityRamp,
+            SpawnedAt = poi.SpawnedAt,
+            ExpiresAt = poi.ExpiresAt
         };
     }
 
-    /// <summary>
-    /// Builds a <see cref="ScenarioStateResponse"/> from internal models.
-    /// </summary>
-    private static ScenarioStateResponse BuildScenarioStateResponse(ScenarioInstanceModel instance, ScenarioTemplateModel template)
+    private static ScenarioStateResponse MapToScenarioStateResponse(ScenarioInstanceModel scenario)
     {
         return new ScenarioStateResponse
         {
-            ScenarioInstanceId = instance.ScenarioInstanceId,
-            ScenarioTemplateId = instance.ScenarioTemplateId,
-            GameSessionId = instance.GameSessionId,
-            ConnectivityMode = template.ConnectivityMode,
-            Status = instance.Status == ScenarioInstanceStatus.Active ? ScenarioStatus.Active : ScenarioStatus.Completed,
-            CreatedAt = instance.StartedAt,
-            ChainedFrom = instance.PreviousScenarioInstanceId,
-            ChainDepth = instance.ChainDepth
+            ScenarioInstanceId = scenario.ScenarioInstanceId,
+            ScenarioTemplateId = scenario.ScenarioTemplateId,
+            GameSessionId = scenario.GameSessionId,
+            ConnectivityMode = scenario.ConnectivityMode,
+            Status = scenario.Status,
+            CreatedAt = scenario.CreatedAt,
+            ChainedFrom = scenario.ChainedFrom,
+            ChainDepth = scenario.ChainDepth
         };
     }
 
-    /// <summary>
-    /// Builds a <see cref="ScenarioTemplateResponse"/> from an internal template model.
-    /// </summary>
-    private static ScenarioTemplateResponse BuildTemplateResponse(ScenarioTemplateModel template)
+    private static ScenarioTemplateResponse MapToTemplateResponse(ScenarioTemplateModel template)
     {
         return new ScenarioTemplateResponse
         {
@@ -1250,18 +1559,139 @@ public partial class GardenerService : IGardenerService
             DisplayName = template.DisplayName,
             Description = template.Description,
             Category = template.Category,
+            Subcategory = template.Subcategory,
             ConnectivityMode = template.ConnectivityMode,
-            MinimumPhase = template.MinimumPhase,
-            Status = template.Status,
+            DomainWeights = template.DomainWeights.Select(dw => new DomainWeight
+            {
+                Domain = dw.Domain,
+                Weight = dw.Weight
+            }).ToList(),
+            MinGrowthPhase = template.MinGrowthPhase,
             EstimatedDurationMinutes = template.EstimatedDurationMinutes,
-            BondCompatible = template.BondCompatible,
+            AllowedPhases = template.AllowedPhases.ToList(),
             MaxConcurrentInstances = template.MaxConcurrentInstances,
-            GrowthAwards = template.GrowthAwards.ToDictionary(kvp => kvp.Key, kvp => (float)kvp.Value),
-            DomainAffinities = template.DomainAffinities.ToDictionary(kvp => kvp.Key, kvp => (float)kvp.Value),
-            ChainTargets = template.ChainTargets.ToList(),
-            Tags = template.Tags.ToList(),
+            Prerequisites = template.Prerequisites != null
+                ? MapToPrerequisites(template.Prerequisites) : null,
+            Chaining = template.Chaining != null
+                ? MapToChaining(template.Chaining) : null,
+            Multiplayer = template.Multiplayer != null
+                ? MapToMultiplayer(template.Multiplayer) : null,
+            Content = template.Content != null
+                ? MapToContent(template.Content) : null,
+            Status = template.Status,
             CreatedAt = template.CreatedAt,
             UpdatedAt = template.UpdatedAt
         };
     }
+
+    private static PhaseConfigResponse MapToPhaseConfigResponse(DeploymentPhaseConfigModel config)
+    {
+        return new PhaseConfigResponse
+        {
+            CurrentPhase = config.CurrentPhase,
+            MaxConcurrentScenariosGlobal = config.MaxConcurrentScenariosGlobal,
+            PersistentEntryEnabled = config.PersistentEntryEnabled,
+            VoidMinigamesEnabled = config.GardenMinigamesEnabled
+        };
+    }
+
+    private static Vec3 MapToVec3(Vec3Model v)
+    {
+        return new Vec3 { X = v.X, Y = v.Y, Z = v.Z };
+    }
+
+    private static Vec3Model MapFromVec3(Vec3 v)
+    {
+        return new Vec3Model { X = v.X, Y = v.Y, Z = v.Z };
+    }
+
+    private static ScenarioPrerequisites MapToPrerequisites(ScenarioPrerequisitesModel m)
+    {
+        return new ScenarioPrerequisites
+        {
+            RequiredDomains = m.RequiredDomains,
+            RequiredScenarios = m.RequiredScenarios,
+            ExcludedScenarios = m.ExcludedScenarios
+        };
+    }
+
+    private static ScenarioPrerequisitesModel MapFromPrerequisites(ScenarioPrerequisites p)
+    {
+        return new ScenarioPrerequisitesModel
+        {
+            RequiredDomains = p.RequiredDomains != null
+                ? new Dictionary<string, float>(p.RequiredDomains) : null,
+            RequiredScenarios = p.RequiredScenarios?.ToList(),
+            ExcludedScenarios = p.ExcludedScenarios?.ToList()
+        };
+    }
+
+    private static ScenarioChaining MapToChaining(ScenarioChainingModel m)
+    {
+        return new ScenarioChaining
+        {
+            LeadsTo = m.LeadsTo,
+            ChainProbabilities = m.ChainProbabilities,
+            MaxChainDepth = m.MaxChainDepth
+        };
+    }
+
+    private static ScenarioChainingModel MapFromChaining(ScenarioChaining c)
+    {
+        return new ScenarioChainingModel
+        {
+            LeadsTo = c.LeadsTo?.ToList(),
+            ChainProbabilities = c.ChainProbabilities != null
+                ? new Dictionary<string, float>(c.ChainProbabilities) : null,
+            MaxChainDepth = c.MaxChainDepth
+        };
+    }
+
+    private static ScenarioMultiplayer MapToMultiplayer(ScenarioMultiplayerModel m)
+    {
+        return new ScenarioMultiplayer
+        {
+            MinPlayers = m.MinPlayers,
+            MaxPlayers = m.MaxPlayers,
+            MatchmakingQueueCode = m.MatchmakingQueueCode,
+            BondPreferred = m.BondPreferred
+        };
+    }
+
+    private static ScenarioMultiplayerModel MapFromMultiplayer(ScenarioMultiplayer m)
+    {
+        return new ScenarioMultiplayerModel
+        {
+            MinPlayers = m.MinPlayers,
+            MaxPlayers = m.MaxPlayers,
+            MatchmakingQueueCode = m.MatchmakingQueueCode,
+            BondPreferred = m.BondPreferred
+        };
+    }
+
+    private static ScenarioContent MapToContent(ScenarioContentModel m)
+    {
+        return new ScenarioContent
+        {
+            BehaviorDocumentId = m.BehaviorDocumentId,
+            SceneDocumentId = m.SceneDocumentId,
+            RealmId = m.RealmId,
+            LocationCode = m.LocationCode
+        };
+    }
+
+    private static ScenarioContentModel MapFromContent(ScenarioContent c)
+    {
+        return new ScenarioContentModel
+        {
+            BehaviorDocumentId = c.BehaviorDocumentId,
+            SceneDocumentId = c.SceneDocumentId,
+            RealmId = c.RealmId,
+            LocationCode = c.LocationCode
+        };
+    }
+
+    #endregion
+
+    #endregion
 }

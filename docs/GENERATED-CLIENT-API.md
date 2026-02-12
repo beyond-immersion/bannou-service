@@ -29,6 +29,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Escrow Service API](#escrow) | `client.Escrow` | 22 | Full-custody orchestration layer for multi-party asset excha... |
 | [Bannou Game Service API](#game-service) | `client.GameService` | 5 | Registry service for game services that users can subscribe ... |
 | [Bannou Game Session Service API](#game-session) | `client.GameSession` | 11 | Minimal game session management for games. |
+| [Bannou Gardener Service API](#gardener) | `client.Gardener` | 23 | Player experience orchestration service (L4 GameFeatures) fo... |
 | [Inventory Service API](#inventory) | `client.Inventory` | 16 | Container and inventory management service for games. |
 | [Item Service API](#item) | `client.Item` | 16 | Item template and instance management service. |
 | [Bannou Leaderboard Service API](#leaderboard) | `client.Leaderboard` | 12 | Real-time leaderboard management using Redis Sorted Sets for... |
@@ -1023,6 +1024,67 @@ Minimal game session management for games.
 | Method | Request | Response | Summary |
 |--------|---------|----------|---------|
 | `PublishjoinshortcutAsync` | `PublishJoinShortcutRequest` | `PublishJoinShortcutResponse` | Publish join shortcut for matchmade session |
+
+---
+
+## Bannou Gardener Service API {#gardener}
+
+**Proxy**: `client.Gardener` | **Version**: 1.0.0
+
+Player experience orchestration service (L4 GameFeatures) for void navigation, scenario routing, progressive discovery, and deployment phase manage...
+
+### Bond Scenarios
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `EnterscenariotogetherAsync` | `EnterTogetherRequest` | `ScenarioStateResponse` | Enter a scenario together with a bonded player |
+| `GetSharedvoidstateAsync` | `GetSharedVoidRequest` | `SharedVoidStateResponse` | Get shared void state for bonded players |
+
+### Deployment Phase
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetPhaseconfigAsync` | `GetPhaseConfigRequest` | `PhaseConfigResponse` | Get deployment phase configuration |
+| `UpdatePhaseconfigAsync` | `UpdatePhaseConfigRequest` | `PhaseConfigResponse` | Update deployment phase configuration |
+| `GetPhasemetricsAsync` | `GetPhaseMetricsRequest` | `PhaseMetricsResponse` | Get deployment phase metrics |
+
+### POI Interaction
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `ListPoisAsync` | `ListPoisRequest` | `ListPoisResponse` | List active POIs |
+| `InteractwithpoiAsync` | `InteractWithPoiRequest` | `PoiInteractionResponse` | Interact with a POI |
+| `DeclinepoiAsync` | `DeclinePoiRequest` | `DeclinePoiResponse` | Decline a POI |
+
+### Scenario Lifecycle
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `EnterscenarioAsync` | `EnterScenarioRequest` | `ScenarioStateResponse` | Enter a scenario |
+| `GetScenariostateAsync` | `GetScenarioStateRequest` | `ScenarioStateResponse` | Get current scenario state |
+| `CompletescenarioAsync` | `CompleteScenarioRequest` | `ScenarioCompletionResponse` | Complete a scenario |
+| `AbandonscenarioAsync` | `AbandonScenarioRequest` | `AbandonScenarioResponse` | Abandon a scenario |
+| `ChainscenarioAsync` | `ChainScenarioRequest` | `ScenarioStateResponse` | Chain to another scenario |
+
+### Template Management
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `CreateTemplateAsync` | `CreateTemplateRequest` | `ScenarioTemplateResponse` | Create a scenario template |
+| `GetTemplateAsync` | `GetTemplateRequest` | `ScenarioTemplateResponse` | Get scenario template by ID |
+| `GetTemplatebycodeAsync` | `GetTemplateByCodeRequest` | `ScenarioTemplateResponse` | Get scenario template by code |
+| `ListTemplatesAsync` | `ListTemplatesRequest` | `ListTemplatesResponse` | List scenario templates |
+| `UpdateTemplateAsync` | `UpdateTemplateRequest` | `ScenarioTemplateResponse` | Update scenario template |
+| `DeprecatetemplateAsync` | `DeprecateTemplateRequest` | `ScenarioTemplateResponse` | Deprecate scenario template |
+
+### Void Management
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `EntervoidAsync` | `EnterVoidRequest` | `VoidStateResponse` | Enter the void |
+| `GetVoidstateAsync` | `GetVoidStateRequest` | `VoidStateResponse` | Get current void state |
+| `UpdatePositionAsync` | `UpdatePositionRequest` | `PositionUpdateResponse` | Update player position in the void |
+| `LeavevoidAsync` | `LeaveVoidRequest` | `LeaveVoidResponse` | Leave the void |
 
 ---
 
@@ -2117,8 +2179,8 @@ Public-facing website service for registration, information, and account managem
 
 ## Summary
 
-- **Total services**: 48
-- **Total methods**: 718
+- **Total services**: 49
+- **Total methods**: 741
 
 ---
 

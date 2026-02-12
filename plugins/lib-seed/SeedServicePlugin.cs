@@ -1,5 +1,7 @@
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Providers;
+using BeyondImmersion.BannouService.Seed.Caching;
+using BeyondImmersion.BannouService.Seed.Providers;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -40,6 +42,13 @@ public class SeedServicePlugin : BaseBannouPlugin
 
         // Register Collection→Seed DI provider for in-process growth notifications
         services.AddSingleton<ICollectionUnlockListener, SeedCollectionUnlockListener>();
+
+        // Register seed data cache (singleton for cross-request caching)
+        services.AddSingleton<ISeedDataCache, SeedDataCache>();
+
+        // Register variable provider factory for Actor to discover via DI
+        // Enables dependency inversion: Actor (L2) consumes providers without knowing about Seed (L2)
+        services.AddSingleton<IVariableProviderFactory, SeedProviderFactory>();
 
         Logger?.LogDebug("Service dependencies configured");
     }

@@ -34,6 +34,7 @@ public partial class BannouClient
     private EscrowProxy? _escrow;
     private GameServiceProxy? _gameService;
     private GameSessionProxy? _gameSession;
+    private GardenerProxy? _gardener;
     private InventoryProxy? _inventory;
     private ItemProxy? _item;
     private LeaderboardProxy? _leaderboard;
@@ -182,6 +183,12 @@ public partial class BannouClient
     /// </summary>
     public GameSessionProxy GameSession =>
         _gameSession ??= new GameSessionProxy(this);
+
+    /// <summary>
+    /// Gets the typed proxy for Bannou Gardener Service API operations.
+    /// </summary>
+    public GardenerProxy Gardener =>
+        _gardener ??= new GardenerProxy(this);
 
     /// <summary>
     /// Gets the typed proxy for Inventory Service API operations.

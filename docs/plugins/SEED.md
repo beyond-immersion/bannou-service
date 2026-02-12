@@ -29,6 +29,7 @@ Generic progressive growth primitive (L2 GameFoundation) for game entities. Seed
 
 | Dependent | Relationship |
 |-----------|-------------|
+| lib-actor (L2) | Actor discovers `SeedProviderFactory` via `IEnumerable<IVariableProviderFactory>` DI injection; creates `SeedProvider` instances per character for ABML behavior execution (`${seed.*}` variables) |
 | lib-collection (L2) | Collection dispatches entry unlock notifications to `SeedCollectionUnlockListener` via `ICollectionUnlockListener` DI interface; listener matches entry tags against seed type `collectionGrowthMappings` to drive growth |
 | lib-gardener (planned, L4) | First consumer -- creates `guardian` seeds for player accounts, contributes growth, queries capability manifests for UX module gating, manages seed bonds as the pair system |
 | Dungeon plugin (planned, L4) | Will create `dungeon_core` and `dungeon_master` seeds for actor/character entities |
@@ -116,6 +117,7 @@ No event subscriptions. The Collection→Seed growth pipeline uses the `ICollect
 | `MaxSeedTypesPerGameService` | `SEED_MAX_SEED_TYPES_PER_GAME_SERVICE` | `50` | Maximum number of seed type definitions per game service |
 | `DefaultMaxSeedsPerOwner` | `SEED_DEFAULT_MAX_SEEDS_PER_OWNER` | `3` | Default per-owner seed limit when seed type's `MaxPerOwner` is 0 |
 | `BondStrengthGrowthRate` | `SEED_BOND_STRENGTH_GROWTH_RATE` | `0.1` | Rate at which bond strength increases per unit of shared growth recorded |
+| `SeedDataCacheTtlSeconds` | `SEED_SEED_DATA_CACHE_TTL_SECONDS` | `60` | TTL in seconds for the seed data cache used by the variable provider factory (range: 5-3600) |
 | `DefaultQueryPageSize` | `SEED_DEFAULT_QUERY_PAGE_SIZE` | `100` | Default page size for queries that do not expose pagination parameters (`GetSeedsByOwnerAsync`, `ListSeedTypesAsync`, `RecomputeSeedsForTypeAsync`) |
 
 ---
@@ -131,6 +133,8 @@ No event subscriptions. The Collection→Seed growth pipeline uses the `ICollect
 | `IDistributedLockProvider` | Distributed locks for mutation operations |
 | `SeedCollectionUnlockListener` | Implements `ICollectionUnlockListener` (registered as singleton); matches entry tags against seed type `collectionGrowthMappings` to drive growth |
 | `IGameServiceClient` | Validates game service existence during seed creation and type registration |
+| `ISeedDataCache` / `SeedDataCache` | Singleton cache for character seed data (seeds, growth, capabilities) used by the variable provider factory; TTL-based expiration with `ConcurrentDictionary`; loads via `ISeedClient` through mesh |
+| `SeedProviderFactory` | Implements `IVariableProviderFactory` to provide `${seed.*}` variables to the Actor service's behavior system; creates `SeedProvider` instances from cached data |
 | `SeedDecayWorkerService` | Background `HostedService` that periodically applies exponential decay to growth domains; disabled when `GrowthDecayEnabled` is false |
 
 ---
@@ -251,9 +255,6 @@ Manifest version is monotonically incremented from the previous cached version.
 
 ## Potential Extensions
 
-- **Variable Provider Factory**: Seed could expose `${seed.*}` variables to the Actor service's behavior system (e.g., `${seed.phase}`, `${seed.capabilities.combat.fidelity}`). This would follow the same pattern as character-personality and character-encounter providers.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/361 -->
-
 - **Bond dissolution endpoint**: No endpoint exists to dissolve or break a bond. The `BondPermanent` flag on seed type definitions implies some bonds should be dissolvable, but no dissolution flow is implemented. Would need to handle clearing `BondId` on participant seeds, emitting a dissolution event, and respecting the permanence flag.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/362 -->
 
@@ -301,4 +302,4 @@ Manifest version is monotonically incremented from the previous cached version.
 
 ## Work Tracking
 
-*(No active work items.)*
+- [#361](https://github.com/beyond-immersion/bannou-service/issues/361) - Variable provider factory for Actor behavior system (implemented: `SeedProviderFactory`, `SeedProvider`, `SeedDataCache`)

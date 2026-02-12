@@ -4586,6 +4586,480 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/gardener/void/enter': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Enter the void
+     * @description Creates a void instance for the player. Finds or creates the player's
+     *     active guardian seed, initializes drift metrics, and returns the initial
+     *     void state. First tick of the void orchestrator spawns POIs.
+     */
+    post: operations['enterVoid'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/gardener/void/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get current void state
+     * @description Returns the player's current void instance with active POIs.
+     */
+    post: operations['getVoidState'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/gardener/void/update-position': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Update player position in the void
+     * @description Updates the player's position and velocity in void space. Accumulates
+     *     drift metrics and checks proximity triggers against active POIs.
+     */
+    post: operations['updatePosition'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/gardener/void/leave': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Leave the void
+     * @description Cleans up the void instance, all associated POIs, and publishes a
+     *     void-left event with session duration.
+     */
+    post: operations['leaveVoid'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/gardener/poi/list': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List active POIs
+     * @description Returns all active POIs for the player's current void instance.
+     */
+    post: operations['listPois'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/gardener/poi/interact': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Interact with a POI
+     * @description Triggers interaction with a POI. Result depends on the POI's trigger mode:
+     *     prompted POIs return scenario info with choices, proximity/interaction POIs
+     *     enter the scenario directly.
+     */
+    post: operations['interactWithPoi'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/gardener/poi/decline': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Decline a POI
+     * @description Marks a POI as declined. The template is added to the void instance's
+     *     scenario history for diversity scoring.
+     */
+    post: operations['declinePoi'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/gardener/scenario/enter': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Enter a scenario
+     * @description Validates prerequisites, creates a game session, creates a scenario
+     *     instance, destroys the void instance (player leaves the void), and
+     *     publishes scenario-started events.
+     */
+    post: operations['enterScenario'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/gardener/scenario/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get current scenario state
+     * @description Returns the player's active scenario instance.
+     */
+    post: operations['getScenarioState'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/gardener/scenario/complete': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Complete a scenario
+     * @description Calculates and awards growth per domain, closes the game session,
+     *     writes history, and returns the player to the void.
+     */
+    post: operations['completeScenario'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/gardener/scenario/abandon': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Abandon a scenario
+     * @description Awards partial growth proportional to time spent, cleans up the
+     *     game session, and writes history.
+     */
+    post: operations['abandonScenario'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/gardener/scenario/chain': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Chain to another scenario
+     * @description Completes the current scenario with growth awards and immediately
+     *     creates a new scenario instance from the target template. Validates
+     *     chaining rules (leadsTo list, max chain depth).
+     */
+    post: operations['chainScenario'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/gardener/template/create': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Create a scenario template
+     * @description Creates a new scenario template definition.
+     */
+    post: operations['createTemplate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/gardener/template/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get scenario template by ID
+     * @description Returns a scenario template by its unique identifier.
+     */
+    post: operations['getTemplate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/gardener/template/get-by-code': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get scenario template by code
+     * @description Returns a scenario template by its unique code string.
+     */
+    post: operations['getTemplateByCode'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/gardener/template/list': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List scenario templates
+     * @description Returns paginated scenario templates with optional filters.
+     */
+    post: operations['listTemplates'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/gardener/template/update': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Update scenario template
+     * @description Updates non-null fields of an existing template.
+     */
+    post: operations['updateTemplate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/gardener/template/deprecate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Deprecate scenario template
+     * @description Sets the template status to Deprecated, preventing new instances.
+     */
+    post: operations['deprecateTemplate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/gardener/phase/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get deployment phase configuration
+     * @description Returns the current deployment phase configuration. Creates defaults if none exists.
+     */
+    post: operations['getPhaseConfig'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/gardener/phase/update': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Update deployment phase configuration
+     * @description Updates non-null fields of the phase configuration. Publishes phase-changed event if phase changes.
+     */
+    post: operations['updatePhaseConfig'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/gardener/phase/get-metrics': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get deployment phase metrics
+     * @description Returns current counts of active void instances, scenario instances, and capacity utilization.
+     */
+    post: operations['getPhaseMetrics'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/gardener/bond/enter-together': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Enter a scenario together with a bonded player
+     * @description Both bonded players enter a shared scenario instance. Validates bond state,
+     *     both participants' void instances, and template multiplayer support.
+     */
+    post: operations['enterScenarioTogether'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/gardener/bond/get-shared-void': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get shared void state for bonded players
+     * @description Returns the merged void state for both bond participants including shared POIs.
+     */
+    post: operations['getSharedVoidState'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/inventory/container/create': {
     parameters: {
       query?: never;
@@ -9521,6 +9995,31 @@ export interface components {
        */
       questorCharacterId: string;
     };
+    /** @description Request to abandon a scenario */
+    AbandonScenarioRequest: {
+      /**
+       * Format: uuid
+       * @description Account abandoning the scenario
+       */
+      accountId: string;
+      /**
+       * Format: uuid
+       * @description Scenario instance to abandon
+       */
+      scenarioInstanceId: string;
+    };
+    /** @description Response after abandoning a scenario */
+    AbandonScenarioResponse: {
+      /**
+       * Format: uuid
+       * @description Abandoned scenario instance ID
+       */
+      scenarioInstanceId: string;
+      /** @description Partial growth awarded based on time spent */
+      partialGrowthAwarded: {
+        [key: string]: number;
+      };
+    };
     /** @description Request to accept a formed match */
     AcceptMatchRequest: {
       /**
@@ -11273,6 +11772,21 @@ export interface components {
      * @enum {string}
      */
     BondStatus: 'PendingConfirmation' | 'Active';
+    /** @description Per-player void state within a shared bond void */
+    BondedPlayerVoidState: {
+      /**
+       * Format: uuid
+       * @description Seed ID of the bonded player
+       */
+      seedId: string;
+      /**
+       * Format: uuid
+       * @description Account ID of the bonded player
+       */
+      accountId: string;
+      /** @description Player position in shared void space */
+      position: components['schemas']['Vec3'];
+    };
     /** @description An axis-aligned bounding box in 3D space */
     Bounds: {
       /** @description Minimum corner (lowest x, y, z values) */
@@ -11824,6 +12338,24 @@ export interface components {
        * @description Completion percentage for this category
        */
       percentage: number;
+    };
+    /** @description Request to chain from one scenario to another */
+    ChainScenarioRequest: {
+      /**
+       * Format: uuid
+       * @description Account chaining scenarios
+       */
+      accountId: string;
+      /**
+       * Format: uuid
+       * @description Currently active scenario instance
+       */
+      currentScenarioInstanceId: string;
+      /**
+       * Format: uuid
+       * @description Template to chain into
+       */
+      targetTemplateId: string;
     };
     /**
      * @description Compressed archive of a dead character.
@@ -13014,6 +13546,19 @@ export interface components {
         [key: string]: unknown;
       } | null;
     };
+    /** @description Request to complete a scenario */
+    CompleteScenarioRequest: {
+      /**
+       * Format: uuid
+       * @description Account completing the scenario
+       */
+      accountId: string;
+      /**
+       * Format: uuid
+       * @description Scenario instance to complete
+       */
+      scenarioInstanceId: string;
+    };
     /** @description Request to finalize an upload and trigger asset processing */
     CompleteUploadRequest: {
       /**
@@ -13288,6 +13833,11 @@ export interface components {
       /** @description Content hash of asset in this bundle */
       contentHash: string;
     };
+    /**
+     * @description How a scenario instance connects to the broader game world
+     * @enum {string}
+     */
+    ConnectivityMode: 'Isolated' | 'WorldSlice' | 'Persistent';
     /** @description Request to record party consent for release or refund */
     ConsentRequest: {
       /**
@@ -14902,6 +15452,45 @@ export interface components {
         [key: string]: string;
       } | null;
     };
+    /** @description Request to create a scenario template */
+    CreateTemplateRequest: {
+      /** @description Unique template code for reference */
+      code: string;
+      /** @description Human-readable template name */
+      displayName: string;
+      /** @description Template description */
+      description: string;
+      /** @description Primary gameplay category */
+      category: components['schemas']['ScenarioCategory'];
+      /** @description Optional subcategory within the primary category */
+      subcategory?: string | null;
+      /** @description Growth domain weights awarded on completion */
+      domainWeights: components['schemas']['DomainWeight'][];
+      /** @description Minimum seed growth phase for soft-gating scenario availability */
+      minGrowthPhase?: string | null;
+      /**
+       * @description How this scenario connects to the game world
+       * @default Isolated
+       */
+      connectivityMode: components['schemas']['ConnectivityMode'];
+      /** @description Deployment phases in which this template is available */
+      allowedPhases: components['schemas']['DeploymentPhase'][];
+      /**
+       * @description Maximum concurrent active instances of this template
+       * @default 100
+       */
+      maxConcurrentInstances: number;
+      /** @description Estimated scenario duration in minutes */
+      estimatedDurationMinutes?: number | null;
+      /** @description Requirements that must be met before entering */
+      prerequisites?: components['schemas']['ScenarioPrerequisites'];
+      /** @description Chaining configuration */
+      chaining?: components['schemas']['ScenarioChaining'];
+      /** @description Multiplayer support configuration */
+      multiplayer?: components['schemas']['ScenarioMultiplayer'];
+      /** @description Game content references */
+      content?: components['schemas']['ScenarioContent'];
+    };
     /** @description Request to create a new wallet */
     CreateWalletRequest: {
       /**
@@ -15310,6 +15899,29 @@ export interface components {
        */
       matchId: string;
     };
+    /** @description Request to decline a POI */
+    DeclinePoiRequest: {
+      /**
+       * Format: uuid
+       * @description Account declining the POI
+       */
+      accountId: string;
+      /**
+       * Format: uuid
+       * @description POI to decline
+       */
+      poiId: string;
+    };
+    /** @description Response after declining a POI */
+    DeclinePoiResponse: {
+      /**
+       * Format: uuid
+       * @description POI that was declined
+       */
+      poiId: string;
+      /** @description Whether the decline was processed */
+      acknowledged: boolean;
+    };
     /** @description Request to delete an achievement */
     DeleteAchievementDefinitionRequest: {
       /**
@@ -15526,6 +16138,11 @@ export interface components {
      * @enum {string}
      */
     DeltaAlgorithm: 'JSON_PATCH' | 'BSDIFF' | 'XDELTA';
+    /**
+     * @description Current deployment phase for scenario availability gating
+     * @enum {string}
+     */
+    DeploymentPhase: 'Alpha' | 'Beta' | 'Release';
     /** @description Request to deposit assets into an escrow */
     DepositRequest: {
       /**
@@ -15595,6 +16212,14 @@ export interface components {
       gameServiceId: string;
       /** @description Optional reason for deprecation (for audit purposes). */
       reason?: string | null;
+    };
+    /** @description Request to deprecate a template */
+    DeprecateTemplateRequest: {
+      /**
+       * Format: uuid
+       * @description Template ID to deprecate
+       */
+      scenarioTemplateId: string;
     };
     /** @description Request to destroy an item instance */
     DestroyItemInstanceRequest: {
@@ -15784,6 +16409,16 @@ export interface components {
       voiceSummary?: string | null;
       /** @description Tags associated with the document */
       tags?: string[];
+    };
+    /** @description Domain name and weight pair for scenario template growth weighting */
+    DomainWeight: {
+      /** @description Growth domain path (e.g. combat.melee, exploration.caves) */
+      domain: string;
+      /**
+       * Format: float
+       * @description Weight applied to this domain on scenario completion
+       */
+      weight: number;
     };
     /** @description Download details for a specific game client version and platform */
     DownloadInfo: {
@@ -16142,6 +16777,52 @@ export interface components {
       familyTree?: components['schemas']['FamilyTreeResponse'];
       /** @description Combat preferences (included if includeCombatPreferences=true) */
       combatPreferences?: components['schemas']['CombatPreferencesSnapshot'];
+    };
+    /** @description Request to enter a scenario */
+    EnterScenarioRequest: {
+      /**
+       * Format: uuid
+       * @description Account entering the scenario
+       */
+      accountId: string;
+      /**
+       * Format: uuid
+       * @description Template to instantiate
+       */
+      scenarioTemplateId: string;
+      /**
+       * Format: uuid
+       * @description POI that triggered this scenario entry, if any
+       */
+      poiId?: string | null;
+      /** @description Selected prompt choice for prompted POIs */
+      promptChoice?: string | null;
+    };
+    /** @description Request for bonded players to enter a scenario together */
+    EnterTogetherRequest: {
+      /**
+       * Format: uuid
+       * @description Bond ID linking the participants
+       */
+      bondId: string;
+      /**
+       * Format: uuid
+       * @description Template to instantiate for the bond
+       */
+      scenarioTemplateId: string;
+    };
+    /** @description Request to enter the void */
+    EnterVoidRequest: {
+      /**
+       * Format: uuid
+       * @description Account entering the void
+       */
+      accountId: string;
+      /**
+       * Format: uuid
+       * @description Current WebSocket session ID
+       */
+      sessionId: string;
     };
     /** @description Entity's rank on a leaderboard */
     EntityRankResponse: {
@@ -18556,6 +19237,10 @@ export interface components {
        */
       characterId: string;
     };
+    /** @description Request to get deployment phase configuration */
+    GetPhaseConfigRequest: Record<string, never>;
+    /** @description Request to get phase metrics */
+    GetPhaseMetricsRequest: Record<string, never>;
     /** @description Request to retrieve a cached plan */
     GetPlanRequest: {
       /**
@@ -18820,6 +19505,14 @@ export interface components {
       /** @description Total count for pagination */
       totalCount: number;
     };
+    /** @description Request to get current scenario state */
+    GetScenarioStateRequest: {
+      /**
+       * Format: uuid
+       * @description Account whose scenario state to retrieve
+       */
+      accountId: string;
+    };
     /** @description Request to retrieve a scene */
     GetSceneRequest: {
       /**
@@ -18921,6 +19614,14 @@ export interface components {
       /** @description Stub name of the service to retrieve (null if using serviceId) */
       stubName?: string | null;
     };
+    /** @description Request to get shared void state for bonded players */
+    GetSharedVoidRequest: {
+      /**
+       * Format: uuid
+       * @description Bond ID to look up shared void state
+       */
+      bondId: string;
+    };
     /** @description Request to retrieve metadata for a specific save slot */
     GetSlotRequest: {
       /** @description Game identifier for namespace isolation */
@@ -18988,6 +19689,19 @@ export interface components {
        * @description ID of the subscription to retrieve
        */
       subscriptionId: string;
+    };
+    /** @description Request to get a template by code */
+    GetTemplateByCodeRequest: {
+      /** @description Template code to look up */
+      code: string;
+    };
+    /** @description Request to get a template by ID */
+    GetTemplateRequest: {
+      /**
+       * Format: uuid
+       * @description Template ID to retrieve
+       */
+      scenarioTemplateId: string;
     };
     /** @description Request to get top leaderboard entries */
     GetTopRanksRequest: {
@@ -19089,6 +19803,14 @@ export interface components {
       sceneType: components['schemas']['SceneType'];
       /** @description Registered rules (empty if none) */
       rules?: components['schemas']['ValidationRule'][];
+    };
+    /** @description Request to get current void state */
+    GetVoidStateRequest: {
+      /**
+       * Format: uuid
+       * @description Account whose void state to retrieve
+       */
+      accountId: string;
     };
     /** @description Request to get a wallet */
     GetWalletRequest: {
@@ -19660,6 +20382,19 @@ export interface components {
       queued: boolean;
       /** @description Current depth of the perception queue */
       queueDepth: number;
+    };
+    /** @description Request to interact with a POI */
+    InteractWithPoiRequest: {
+      /**
+       * Format: uuid
+       * @description Account interacting with the POI
+       */
+      accountId: string;
+      /**
+       * Format: uuid
+       * @description POI to interact with
+       */
+      poiId: string;
     };
     /** @description Melodic interval preference weights */
     IntervalPreferences: {
@@ -20236,6 +20971,27 @@ export interface components {
        * @description Room ID to leave
        */
       roomId: string;
+    };
+    /** @description Request to leave the void */
+    LeaveVoidRequest: {
+      /**
+       * Format: uuid
+       * @description Account leaving the void
+       */
+      accountId: string;
+    };
+    /** @description Response after leaving the void */
+    LeaveVoidResponse: {
+      /**
+       * Format: uuid
+       * @description Account that left the void
+       */
+      accountId: string;
+      /**
+       * Format: float
+       * @description Total duration of the void session in seconds
+       */
+      sessionDurationSeconds: number;
     };
     /** @description License definition with all fields */
     LicenseDefinitionResponse: {
@@ -20974,6 +21730,24 @@ export interface components {
       /** @description Total matching plans */
       totalCount: number;
     };
+    /** @description Request to list active POIs */
+    ListPoisRequest: {
+      /**
+       * Format: uuid
+       * @description Account whose POIs to list
+       */
+      accountId: string;
+    };
+    /** @description List of active POIs in a void instance */
+    ListPoisResponse: {
+      /**
+       * Format: uuid
+       * @description Void instance these POIs belong to
+       */
+      voidInstanceId: string;
+      /** @description Active POIs */
+      pois: components['schemas']['PoiSummary'][];
+    };
     /** @description Request to list quest definitions with optional filtering */
     ListQuestDefinitionsRequest: {
       /**
@@ -21546,6 +22320,38 @@ export interface components {
       styles: components['schemas']['StyleSummary'][];
       /** @description Total number of styles matching filter */
       total: number;
+    };
+    /** @description Request to list templates with optional filters */
+    ListTemplatesRequest: {
+      /** @description Filter by category */
+      category?: components['schemas']['ScenarioCategory'];
+      /** @description Filter by connectivity mode */
+      connectivityMode?: components['schemas']['ConnectivityMode'];
+      /** @description Filter by deployment phase availability */
+      deploymentPhase?: components['schemas']['DeploymentPhase'];
+      /** @description Filter by template status */
+      status?: components['schemas']['TemplateStatus'];
+      /**
+       * @description Page number (1-based)
+       * @default 1
+       */
+      page: number;
+      /**
+       * @description Items per page
+       * @default 50
+       */
+      pageSize: number;
+    };
+    /** @description Paginated list of scenario templates */
+    ListTemplatesResponse: {
+      /** @description Templates on this page */
+      templates: components['schemas']['ScenarioTemplateResponse'][];
+      /** @description Total number of matching templates */
+      totalCount: number;
+      /** @description Current page number */
+      page: number;
+      /** @description Items per page */
+      pageSize: number;
     };
     /** @description Request to list unlocked achievements */
     ListUnlockedAchievementsRequest: {
@@ -23164,6 +23970,31 @@ export interface components {
       /** @description The character's perspective on the encounter */
       perspective: components['schemas']['EncounterPerspectiveModel'];
     };
+    /** @description Current deployment phase configuration */
+    PhaseConfigResponse: {
+      /** @description Current deployment phase */
+      currentPhase: components['schemas']['DeploymentPhase'];
+      /** @description Maximum total active scenario instances */
+      maxConcurrentScenariosGlobal: number;
+      /** @description Whether persistent world entry is enabled */
+      persistentEntryEnabled: boolean;
+      /** @description Whether void minigames are enabled */
+      voidMinigamesEnabled: boolean;
+    };
+    /** @description Current deployment phase metrics */
+    PhaseMetricsResponse: {
+      /** @description Current deployment phase */
+      currentPhase: components['schemas']['DeploymentPhase'];
+      /** @description Number of currently active void instances */
+      activeVoidInstances: number;
+      /** @description Number of currently active scenario instances */
+      activeScenarioInstances: number;
+      /**
+       * Format: float
+       * @description Ratio of active scenarios to global capacity (0.0-1.0)
+       */
+      scenarioCapacityUtilization: number;
+    };
     /** @description Phase position constraints from Save the Cat beat timing (SDK type) */
     PhasePosition: {
       /**
@@ -23314,6 +24145,71 @@ export interface components {
      * @enum {string}
      */
     PlayerRole: 'player' | 'spectator' | 'moderator';
+    /** @description Result of interacting with a POI */
+    PoiInteractionResponse: {
+      /**
+       * Format: uuid
+       * @description POI that was interacted with
+       */
+      poiId: string;
+      /** @description Interaction outcome (scenario_prompt, scenario_enter, poi_update, chain_offer) */
+      result: string;
+      /**
+       * Format: uuid
+       * @description Associated template ID if result involves a scenario
+       */
+      scenarioTemplateId?: string | null;
+      /** @description Prompt text for prompted POIs */
+      promptText?: string | null;
+      /** @description Available choices for prompted POIs */
+      promptChoices?: string[] | null;
+    };
+    /**
+     * @description Current lifecycle status of a POI
+     * @enum {string}
+     */
+    PoiStatus: 'Active' | 'Entered' | 'Declined' | 'Expired';
+    /** @description POI state summary for client display */
+    PoiSummary: {
+      /**
+       * Format: uuid
+       * @description Unique identifier for this POI
+       */
+      poiId: string;
+      /** @description POI position in void space */
+      position: components['schemas']['Vec3'];
+      /** @description Sensory presentation type */
+      poiType: components['schemas']['PoiType'];
+      /** @description Visual hint identifier for client rendering */
+      visualHint?: string | null;
+      /** @description Audio hint identifier for client rendering */
+      audioHint?: string | null;
+      /**
+       * Format: float
+       * @description Current intensity ramp value (0.0-1.0)
+       * @default 0
+       */
+      intensityRamp: number;
+      /** @description How this POI is triggered */
+      triggerMode: components['schemas']['TriggerMode'];
+      /**
+       * Format: float
+       * @description Trigger radius in void space units
+       */
+      triggerRadius: number;
+      /**
+       * Format: uuid
+       * @description Associated scenario template if this POI leads to a scenario
+       */
+      scenarioTemplateId?: string | null;
+      /** @description Current lifecycle status */
+      status: components['schemas']['PoiStatus'];
+    };
+    /**
+     * @description Sensory presentation type for a point of interest in the void
+     * @enum {string}
+     */
+    PoiType: 'Visual' | 'Auditory' | 'Environmental' | 'Portal' | 'Social';
     /** @description 3D position in world coordinates */
     Position3D: {
       /**
@@ -23331,6 +24227,13 @@ export interface components {
        * @description Z coordinate
        */
       z: number;
+    };
+    /** @description Response to a position update */
+    PositionUpdateResponse: {
+      /** @description Whether the position update was processed */
+      acknowledged: boolean;
+      /** @description POIs triggered by proximity to the new position */
+      triggeredPois?: components['schemas']['PoiSummary'][] | null;
     };
     /** @description Pre-configured API call to execute on contract events */
     PreboundApi: {
@@ -25809,6 +26712,66 @@ export interface components {
        */
       uploadPending?: boolean;
     };
+    /**
+     * @description Primary gameplay category for a scenario template
+     * @enum {string}
+     */
+    ScenarioCategory:
+      | 'Combat'
+      | 'Crafting'
+      | 'Social'
+      | 'Trade'
+      | 'Exploration'
+      | 'Magic'
+      | 'Survival'
+      | 'Mixed'
+      | 'Narrative'
+      | 'Tutorial';
+    /** @description Chaining configuration for linking scenarios together */
+    ScenarioChaining: {
+      /** @description Template codes this scenario can chain into */
+      leadsTo?: string[] | null;
+      /** @description Per-code probability weights for chain selection */
+      chainProbabilities?: {
+        [key: string]: number;
+      } | null;
+      /**
+       * @description Maximum chain depth allowed from the initial scenario
+       * @default 3
+       */
+      maxChainDepth: number;
+    };
+    /** @description Response after completing a scenario */
+    ScenarioCompletionResponse: {
+      /**
+       * Format: uuid
+       * @description Completed scenario instance ID
+       */
+      scenarioInstanceId: string;
+      /** @description Growth awarded per domain */
+      growthAwarded: {
+        [key: string]: number;
+      };
+      /** @description Whether the player should return to the void */
+      returnToVoid: boolean;
+    };
+    /** @description Content references linking a scenario template to game assets */
+    ScenarioContent: {
+      /** @description ABML behavior document ID for NPC orchestration */
+      behaviorDocumentId?: string | null;
+      /**
+       * Format: uuid
+       * @description Scene document ID for environment composition
+       */
+      sceneDocumentId?: string | null;
+      /**
+       * Format: uuid
+       * @description Realm ID where this scenario takes place
+       */
+      realmId?: string | null;
+      /** @description Location code within the realm */
+      locationCode?: string | null;
+    };
     /** @description A scenario definition template that can be triggered when conditions are met */
     ScenarioDefinition: {
       /**
@@ -25950,6 +26913,20 @@ export interface components {
        */
       completedAt?: string | null;
     };
+    /** @description Multiplayer configuration for group scenarios */
+    ScenarioMultiplayer: {
+      /** @description Minimum number of players required */
+      minPlayers: number;
+      /** @description Maximum number of players allowed */
+      maxPlayers: number;
+      /** @description Matchmaking queue code for automatic grouping */
+      matchmakingQueueCode?: string | null;
+      /**
+       * @description Whether bonded players receive a scoring boost for this scenario
+       * @default false
+       */
+      bondPreferred: boolean;
+    };
     /** @description A state mutation to apply during scenario execution */
     ScenarioMutation: {
       /** @description Type of mutation to apply */
@@ -25992,6 +26969,17 @@ export interface components {
       /** @description Hint for behavior/GOAP system */
       actionHint?: string | null;
     };
+    /** @description Prerequisite requirements for entering a scenario */
+    ScenarioPrerequisites: {
+      /** @description Minimum growth depth per domain (domain path to minimum depth) */
+      requiredDomains?: {
+        [key: string]: number;
+      } | null;
+      /** @description Scenario template codes that must be completed first */
+      requiredScenarios?: string[] | null;
+      /** @description Scenario template codes that disqualify the player */
+      excludedScenarios?: string[] | null;
+    };
     /** @description Quest to spawn on scenario completion */
     ScenarioQuestHook: {
       /** @description Quest definition code to spawn */
@@ -26006,15 +26994,98 @@ export interface components {
         [key: string]: string;
       } | null;
     };
+    /** @description Current state of a scenario instance */
+    ScenarioStateResponse: {
+      /**
+       * Format: uuid
+       * @description Unique identifier for this scenario instance
+       */
+      scenarioInstanceId: string;
+      /**
+       * Format: uuid
+       * @description Template this instance was created from
+       */
+      scenarioTemplateId: string;
+      /**
+       * Format: uuid
+       * @description Backing game session ID
+       */
+      gameSessionId: string;
+      /** @description How this scenario connects to the game world */
+      connectivityMode: components['schemas']['ConnectivityMode'];
+      /** @description Current lifecycle status */
+      status: components['schemas']['ScenarioStatus'];
+      /**
+       * Format: date-time
+       * @description When this instance was created
+       */
+      createdAt: string;
+      /**
+       * Format: uuid
+       * @description Previous scenario instance if this was chained
+       */
+      chainedFrom?: string | null;
+      /**
+       * @description Current chain depth from the initial scenario
+       * @default 0
+       */
+      chainDepth: number;
+    };
     /**
-     * @description Current status of a scenario execution instance.
-     *     Active: Scenario is currently executing
-     *     Completed: Scenario finished successfully
-     *     Failed: Scenario failed during execution
-     *     Cancelled: Scenario was cancelled externally
+     * @description Current lifecycle status of a scenario instance
      * @enum {string}
      */
-    ScenarioStatus: 'Active' | 'Completed' | 'Failed' | 'Cancelled';
+    ScenarioStatus: 'Initializing' | 'Active' | 'Completing' | 'Completed' | 'Abandoned';
+    /** @description Full scenario template with all fields */
+    ScenarioTemplateResponse: {
+      /**
+       * Format: uuid
+       * @description Unique identifier for this template
+       */
+      scenarioTemplateId: string;
+      /** @description Unique template code */
+      code: string;
+      /** @description Human-readable name */
+      displayName: string;
+      /** @description Template description */
+      description: string;
+      /** @description Primary gameplay category */
+      category: components['schemas']['ScenarioCategory'];
+      /** @description Subcategory within the primary category */
+      subcategory?: string | null;
+      /** @description Growth domain weights */
+      domainWeights: components['schemas']['DomainWeight'][];
+      /** @description Minimum seed growth phase */
+      minGrowthPhase?: string | null;
+      /** @description World connectivity mode */
+      connectivityMode: components['schemas']['ConnectivityMode'];
+      /** @description Deployment phases where this template is available */
+      allowedPhases: components['schemas']['DeploymentPhase'][];
+      /** @description Maximum concurrent active instances */
+      maxConcurrentInstances: number;
+      /** @description Estimated scenario duration in minutes */
+      estimatedDurationMinutes?: number | null;
+      /** @description Entry requirements */
+      prerequisites?: components['schemas']['ScenarioPrerequisites'];
+      /** @description Chaining configuration */
+      chaining?: components['schemas']['ScenarioChaining'];
+      /** @description Multiplayer support */
+      multiplayer?: components['schemas']['ScenarioMultiplayer'];
+      /** @description Content references */
+      content?: components['schemas']['ScenarioContent'];
+      /** @description Current lifecycle status */
+      status: components['schemas']['TemplateStatus'];
+      /**
+       * Format: date-time
+       * @description When this template was created
+       */
+      createdAt: string;
+      /**
+       * Format: date-time
+       * @description When this template was last updated
+       */
+      updatedAt: string;
+    };
     /** @description A complete scene document with hierarchical node structure */
     Scene: {
       /**
@@ -26731,6 +27802,18 @@ export interface components {
       contractId: string;
       /** @description Number of template values set */
       valueCount?: number;
+    };
+    /** @description Shared void state for bonded players */
+    SharedVoidStateResponse: {
+      /**
+       * Format: uuid
+       * @description Bond linking the participants
+       */
+      bondId: string;
+      /** @description Per-player void state */
+      participants: components['schemas']['BondedPlayerVoidState'][];
+      /** @description POIs visible to all bond participants */
+      sharedPois: components['schemas']['PoiSummary'][];
     };
     /** @description Global website configuration including branding, languages, and integrations */
     SiteSettings: {
@@ -27505,6 +28588,11 @@ export interface components {
      * @enum {string}
      */
     SyncTrigger: 'manual' | 'scheduled';
+    /**
+     * @description Current lifecycle status of a scenario template
+     * @enum {string}
+     */
+    TemplateStatus: 'Draft' | 'Active' | 'Deprecated';
     /** @description A tempo change event */
     TempoEvent: {
       /** @description Tick position */
@@ -27971,6 +29059,11 @@ export interface components {
       | 'TimeOfDay'
       | 'WorldState'
       | 'Custom';
+    /**
+     * @description How a POI is triggered by the player
+     * @enum {string}
+     */
+    TriggerMode: 'Proximity' | 'Interaction' | 'Prompted' | 'Forced';
     /** @description A style-specific tune type definition */
     TuneType: {
       /** @description Tune type name (e.g., "reel", "jig") */
@@ -28574,6 +29667,29 @@ export interface components {
       /** @description New pre-hashed password from Auth service */
       passwordHash: string;
     };
+    /** @description Request to update deployment phase configuration (non-null fields applied) */
+    UpdatePhaseConfigRequest: {
+      /** @description New deployment phase */
+      currentPhase?: components['schemas']['DeploymentPhase'];
+      /** @description Updated global scenario capacity */
+      maxConcurrentScenariosGlobal?: number | null;
+      /** @description Whether persistent world entry is enabled */
+      persistentEntryEnabled?: boolean | null;
+      /** @description Whether void minigames are enabled */
+      voidMinigamesEnabled?: boolean | null;
+    };
+    /** @description Request to update player position in the void */
+    UpdatePositionRequest: {
+      /**
+       * Format: uuid
+       * @description Account whose position to update
+       */
+      accountId: string;
+      /** @description New position in void space */
+      position: components['schemas']['Vec3'];
+      /** @description Current velocity vector */
+      velocity: components['schemas']['Vec3'];
+    };
     /** @description Request to update an account profile */
     UpdateProfileRequest: {
       /**
@@ -28765,6 +29881,30 @@ export interface components {
       sameOwnerGrowthMultiplier?: number | null;
       /** @description Updated collection growth mappings. Null means no change, empty array removes all mappings. */
       collectionGrowthMappings?: components['schemas']['CollectionGrowthMapping'][] | null;
+    };
+    /** @description Request to update a template (non-null fields are applied) */
+    UpdateTemplateRequest: {
+      /**
+       * Format: uuid
+       * @description Template ID to update
+       */
+      scenarioTemplateId: string;
+      /** @description Updated display name */
+      displayName?: string | null;
+      /** @description Updated description */
+      description?: string | null;
+      /** @description Updated domain weights */
+      domainWeights?: components['schemas']['DomainWeight'][] | null;
+      /** @description Updated max concurrent instances */
+      maxConcurrentInstances?: number | null;
+      /** @description Updated prerequisites */
+      prerequisites?: components['schemas']['ScenarioPrerequisites'];
+      /** @description Updated chaining configuration */
+      chaining?: components['schemas']['ScenarioChaining'];
+      /** @description Updated multiplayer configuration */
+      multiplayer?: components['schemas']['ScenarioMultiplayer'];
+      /** @description Updated content references */
+      content?: components['schemas']['ScenarioContent'];
     };
     /** @description Request to update email verification status */
     UpdateVerificationRequest: {
@@ -29239,6 +30379,24 @@ export interface components {
       /** @description Full JSON Schema string for complex Custom format validation */
       jsonSchema?: string | null;
     };
+    /** @description Three-dimensional spatial coordinates in void space */
+    Vec3: {
+      /**
+       * Format: float
+       * @description X coordinate in void space units
+       */
+      x: number;
+      /**
+       * Format: float
+       * @description Y coordinate in void space units
+       */
+      y: number;
+      /**
+       * Format: float
+       * @description Z coordinate in void space units
+       */
+      z: number;
+    };
     /** @description A point or direction in 3D space */
     Vector3: {
       /**
@@ -29448,6 +30606,28 @@ export interface components {
       symbol: components['schemas']['ChordSymbol'];
       /** @description Pitches from lowest to highest voice */
       pitches: components['schemas']['Pitch'][];
+    };
+    /** @description Current void instance state for a player */
+    VoidStateResponse: {
+      /**
+       * Format: uuid
+       * @description Unique identifier for this void instance
+       */
+      voidInstanceId: string;
+      /**
+       * Format: uuid
+       * @description Active seed for this void session
+       */
+      seedId: string;
+      /**
+       * Format: uuid
+       * @description Account in the void
+       */
+      accountId: string;
+      /** @description Current player position */
+      position: components['schemas']['Vec3'];
+      /** @description Currently active POIs in this void instance */
+      activePois: components['schemas']['PoiSummary'][];
     };
     /**
      * @description Shape of a volume node for spatial bounds
@@ -36300,6 +37480,733 @@ export interface operations {
         content?: never;
       };
       /** @description Game session not found or player not in session */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  enterVoid: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['EnterVoidRequest'];
+      };
+    };
+    responses: {
+      /** @description Void instance created successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['VoidStateResponse'];
+        };
+      };
+      /** @description No active seed found for account */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Player already has an active void instance */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  getVoidState: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetVoidStateRequest'];
+      };
+    };
+    responses: {
+      /** @description Void state retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['VoidStateResponse'];
+        };
+      };
+      /** @description Player is not in the void */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  updatePosition: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdatePositionRequest'];
+      };
+    };
+    responses: {
+      /** @description Position updated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PositionUpdateResponse'];
+        };
+      };
+      /** @description Player is not in the void */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  leaveVoid: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['LeaveVoidRequest'];
+      };
+    };
+    responses: {
+      /** @description Left the void */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LeaveVoidResponse'];
+        };
+      };
+      /** @description Player is not in the void */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  listPois: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListPoisRequest'];
+      };
+    };
+    responses: {
+      /** @description POIs retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListPoisResponse'];
+        };
+      };
+      /** @description Player is not in the void */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  interactWithPoi: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['InteractWithPoiRequest'];
+      };
+    };
+    responses: {
+      /** @description Interaction result */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PoiInteractionResponse'];
+        };
+      };
+      /** @description POI is expired or already interacted with */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description POI not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  declinePoi: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DeclinePoiRequest'];
+      };
+    };
+    responses: {
+      /** @description POI declined */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DeclinePoiResponse'];
+        };
+      };
+      /** @description POI is not in Active status */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description POI not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  enterScenario: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['EnterScenarioRequest'];
+      };
+    };
+    responses: {
+      /** @description Scenario entered */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ScenarioStateResponse'];
+        };
+      };
+      /** @description Prerequisites not met or invalid template */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Global scenario capacity reached */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  getScenarioState: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetScenarioStateRequest'];
+      };
+    };
+    responses: {
+      /** @description Scenario state retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ScenarioStateResponse'];
+        };
+      };
+      /** @description No active scenario */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  completeScenario: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CompleteScenarioRequest'];
+      };
+    };
+    responses: {
+      /** @description Scenario completed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ScenarioCompletionResponse'];
+        };
+      };
+      /** @description Scenario instance not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  abandonScenario: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AbandonScenarioRequest'];
+      };
+    };
+    responses: {
+      /** @description Scenario abandoned */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AbandonScenarioResponse'];
+        };
+      };
+      /** @description Scenario instance not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  chainScenario: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ChainScenarioRequest'];
+      };
+    };
+    responses: {
+      /** @description Chained to new scenario */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ScenarioStateResponse'];
+        };
+      };
+      /** @description Chaining rules not met or max chain depth exceeded */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Current scenario or target template not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  createTemplate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateTemplateRequest'];
+      };
+    };
+    responses: {
+      /** @description Template created */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ScenarioTemplateResponse'];
+        };
+      };
+      /** @description Template with this code already exists */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  getTemplate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetTemplateRequest'];
+      };
+    };
+    responses: {
+      /** @description Template retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ScenarioTemplateResponse'];
+        };
+      };
+      /** @description Template not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  getTemplateByCode: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetTemplateByCodeRequest'];
+      };
+    };
+    responses: {
+      /** @description Template retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ScenarioTemplateResponse'];
+        };
+      };
+      /** @description Template not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  listTemplates: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListTemplatesRequest'];
+      };
+    };
+    responses: {
+      /** @description Templates listed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListTemplatesResponse'];
+        };
+      };
+    };
+  };
+  updateTemplate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateTemplateRequest'];
+      };
+    };
+    responses: {
+      /** @description Template updated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ScenarioTemplateResponse'];
+        };
+      };
+      /** @description Template not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  deprecateTemplate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DeprecateTemplateRequest'];
+      };
+    };
+    responses: {
+      /** @description Template deprecated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ScenarioTemplateResponse'];
+        };
+      };
+      /** @description Template not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  getPhaseConfig: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetPhaseConfigRequest'];
+      };
+    };
+    responses: {
+      /** @description Phase config retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PhaseConfigResponse'];
+        };
+      };
+    };
+  };
+  updatePhaseConfig: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdatePhaseConfigRequest'];
+      };
+    };
+    responses: {
+      /** @description Phase config updated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PhaseConfigResponse'];
+        };
+      };
+    };
+  };
+  getPhaseMetrics: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetPhaseMetricsRequest'];
+      };
+    };
+    responses: {
+      /** @description Phase metrics retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PhaseMetricsResponse'];
+        };
+      };
+    };
+  };
+  enterScenarioTogether: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['EnterTogetherRequest'];
+      };
+    };
+    responses: {
+      /** @description Both players entered shared scenario */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ScenarioStateResponse'];
+        };
+      };
+      /** @description One or both participants not in void, or template does not support multiplayer */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Bond not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  getSharedVoidState: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetSharedVoidRequest'];
+      };
+    };
+    responses: {
+      /** @description Shared void state retrieved */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SharedVoidStateResponse'];
+        };
+      };
+      /** @description Bond not found or participants not in void */
       404: {
         headers: {
           [name: string]: unknown;

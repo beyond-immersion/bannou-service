@@ -71,3 +71,10 @@ x-service-configuration:
       env: SEED_DEFAULT_QUERY_PAGE_SIZE
       default: 100
       description: Default page size for queries that do not expose pagination parameters
+    seedDataCacheTtlSeconds:
+      type: integer
+      env: SEED_SEED_DATA_CACHE_TTL_SECONDS
+      default: 60
+      minimum: 5
+      maximum: 3600
+      description: TTL in seconds for the seed data cache used by the variable provider factory

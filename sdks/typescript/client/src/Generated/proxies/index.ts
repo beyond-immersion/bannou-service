@@ -23,6 +23,7 @@ export { CurrencyProxy } from './CurrencyProxy.js';
 export { DocumentationProxy } from './DocumentationProxy.js';
 export { EscrowProxy } from './EscrowProxy.js';
 export { GameServiceProxy } from './GameServiceProxy.js';
+export { GardenerProxy } from './GardenerProxy.js';
 export { GoapProxy } from './GoapProxy.js';
 export { InventoryProxy } from './InventoryProxy.js';
 export { ItemProxy } from './ItemProxy.js';

@@ -25,6 +25,7 @@ using BeyondImmersion.BannouService.Documentation;
 using BeyondImmersion.BannouService.Escrow;
 using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.GameSession;
+using BeyondImmersion.BannouService.Gardener;
 using BeyondImmersion.BannouService.Inventory;
 using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Leaderboard;
@@ -160,6 +161,11 @@ public partial interface IServiceNavigator
     /// Gets the GameSession service client.
     /// </summary>
     IGameSessionClient GameSession { get; }
+
+    /// <summary>
+    /// Gets the Gardener service client.
+    /// </summary>
+    IGardenerClient Gardener { get; }
 
     /// <summary>
     /// Gets the Inventory service client.

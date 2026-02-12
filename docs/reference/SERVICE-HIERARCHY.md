@@ -88,8 +88,6 @@ These are infrastructure plugins that load before all other plugins and provide 
 3. **messaging** (1) - Depends on state being available
 4. **mesh** (2) - May depend on messaging for events
 
-**Why Telemetry is Optional but L0**: Telemetry provides the `ITelemetryProvider` interface that state, messaging, and mesh use for instrumentation. When disabled, these infrastructure plugins receive a `NullTelemetryProvider` (all methods are no-ops). This graceful degradation allows telemetry to be optional while still being foundational when enabled.
-
 **Rules**:
 - Every plugin implicitly depends on Layer 0
 - Layer 0 components have no dependencies on any service layer
@@ -295,15 +293,7 @@ servers:
     layer: ServiceLayer.GameFoundation)]
 ```
 
-**Valid layer values**:
-- `Infrastructure` (L0) - Infrastructure plugins only
-- `AppFoundation` (L1) - account, auth, connect, permission, contract, resource
-- `GameFoundation` (L2) - realm, character, species, location, etc.
-- `AppFeatures` (L3) - asset, orchestrator, documentation, website
-- `GameFeatures` (L4) - actor, behavior, matchmaking, etc. (default if omitted)
-- `Extensions` (L5) - Third-party plugins and meta-services
-
-See [SCHEMA-RULES.md](SCHEMA-RULES.md#x-service-layer-service-hierarchy-layer) for complete documentation.
+**Valid layer values**: `Infrastructure` (L0), `AppFoundation` (L1), `GameFoundation` (L2), `AppFeatures` (L3), `GameFeatures` (L4, default if omitted), `Extensions` (L5). See [SCHEMA-RULES.md](SCHEMA-RULES.md#x-service-layer-service-hierarchy-layer) for complete documentation and the [Quick Reference](#quick-reference-all-services-by-layer) for which services belong to each layer.
 
 **Plugin Load Order**: PluginLoader reads the `ServiceLayer` from each service's `[BannouService]` attribute and sorts plugins accordingly:
 1. L0 plugins first (with internal ordering: telemetry → state → messaging → mesh)
@@ -351,34 +341,9 @@ BANNOU_ENABLE_GAME_FEATURES=true    # L4
 
 A common need is determining if a foundational entity (like Character) can be safely deleted by checking if higher-layer services still reference it. This creates a tension with the hierarchy rules.
 
-### The Wrong Way (Dependency Inversion)
+### Wrong Ways
 
-```csharp
-// IN CHARACTER SERVICE (L2) - FORBIDDEN!
-public class CharacterService
-{
-    private readonly IActorClient _actorClient;           // NO! Actor is L4
-    private readonly ICharacterEncounterClient _encounter; // NO! Encounter is L4
-
-    public async Task<bool> CanDeleteCharacter(Guid id)
-    {
-        // Character shouldn't know about its consumers!
-        var actors = await _actorClient.ListActorsAsync(...);
-        var encounters = await _encounterClient.QueryByCharacterAsync(...);
-    }
-}
-```
-
-### Also Wrong (Subscribing to Higher-Layer Events)
-
-```yaml
-# character-events.yaml - STILL WRONG!
-x-event-subscriptions:
-  - topic: actor.created        # Character now "knows about" Actor - VIOLATION
-  - topic: encounter.created    # Character now "knows about" Encounter - VIOLATION
-```
-
-Even with events, if Character subscribes to `actor.created`, Character has a dependency on Actor's event schema. The dependency is inverted.
+**Direct dependency** (L2 injecting L4 clients) and **subscribing to higher-layer events** (Character subscribing to `actor.created`) are both forbidden — even event subscriptions create a dependency on the higher-layer's event schema.
 
 ### The Right Way (Foundational Service Defines Its Own Contract)
 
@@ -393,22 +358,7 @@ x-event-subscriptions:
     event: CharacterReferenceRegisteredEvent
   - topic: character.reference.unregistered
     event: CharacterReferenceUnregisteredEvent
-
-components:
-  schemas:
-    CharacterReferenceRegisteredEvent:
-      type: object
-      required: [characterId, sourceType, sourceId]
-      properties:
-        characterId:
-          type: string
-          format: uuid
-        sourceType:
-          type: string
-          description: Type of entity holding the reference (e.g., "actor", "encounter")
-        sourceId:
-          type: string
-          format: uuid
+# CharacterReferenceRegisteredEvent has: characterId, sourceType, sourceId
 ```
 
 **Step 2: Higher-layer services publish to the foundational service's topic**
@@ -476,26 +426,7 @@ When a foundational service (L2) needs data from higher-layer services (L4) at r
 
 ### The Actor Runtime Example
 
-The Actor service (L2) executes behavior models that need character data - personality traits, combat preferences, encounter history. These are owned by L4 services (character-personality, character-encounter). How does Actor get this data without depending on L4?
-
-### The Wrong Way (Layer Violation)
-
-```csharp
-// IN ACTOR SERVICE (L2) - FORBIDDEN!
-public class ActorRunner
-{
-    private readonly ICharacterPersonalityClient _personalityClient;  // NO! L4
-    private readonly ICharacterEncounterClient _encounterClient;      // NO! L4
-
-    public async Task<float> GetPersonalityTrait(Guid characterId, string trait)
-    {
-        // Actor depends on L4 services - VIOLATION
-        var response = await _personalityClient.GetPersonalityAsync(...);
-    }
-}
-```
-
-### The Right Way (Interface Inversion)
+The Actor service (L2) executes behavior models that need character data (personality, combat preferences, encounter history) owned by L4 services. Injecting L4 clients would be a hierarchy violation. Instead, use interface inversion.
 
 **Step 1: Foundational service defines the interface it needs**
 
@@ -659,39 +590,7 @@ public record PrerequisiteResult(
 | **Dynamic** | `magic` | Magic (L4) | Provider factory |
 | **Dynamic** | `achievement` | Achievement (L4) | Provider factory |
 
-### L4 Implementation Example
-
-```csharp
-// In lib-skills (L4)
-public class SkillPrerequisiteProviderFactory : IPrerequisiteProviderFactory
-{
-    public string ProviderName => "skill";
-
-    public async Task<PrerequisiteResult> CheckAsync(
-        Guid characterId, string code,
-        IReadOnlyDictionary<string, object?> parameters, CancellationToken ct)
-    {
-        var current = await _skillStore.GetLevelAsync(characterId, code, ct);
-        var required = (int)(parameters.GetValueOrDefault("level") ?? 1);
-
-        return new PrerequisiteResult(
-            current >= required,
-            current < required ? $"Requires {code} level {required}" : null,
-            current, required);
-    }
-}
-
-// DI registration
-services.AddSingleton<IPrerequisiteProviderFactory, SkillPrerequisiteProviderFactory>();
-```
-
-### Key Insight
-
-Both patterns (Variable Provider and Prerequisite Provider) follow the same principle:
-- L2 service defines interface in shared code
-- L4 services implement and register via DI
-- L2 service discovers implementations via `IEnumerable<TFactory>` injection
-- Graceful degradation when providers are missing
+L4 implementation follows the same pattern as Variable Provider Factory: implement the interface, register via `services.AddSingleton<IPrerequisiteProviderFactory, SkillPrerequisiteProviderFactory>()`, and Quest discovers providers via `IEnumerable<IPrerequisiteProviderFactory>` injection with graceful degradation.
 
 ---
 
@@ -706,25 +605,6 @@ The DI inversion patterns above come in two forms: **Providers** (pull) and **Li
 | **DI Provider** (pull) | L4 data → L2 consumer | **Always safe** | Consumer initiates request on whichever node needs data. The provider runs co-located but reads from distributed state. |
 | **DI Listener** (push) | L2 notification → L4 consumer | **Local-only fan-out** | Producer calls co-located listeners after a mutation. Only listeners on the node that processed the API request are called. Other nodes are NOT notified. |
 | **Events** (IMessageBus) | Broadcast | **Always safe** | RabbitMQ delivers to all subscribers on all nodes. Genuine distributed fan-out. |
-
-### Why Providers Are Always Safe
-
-Provider patterns (IVariableProviderFactory, IPrerequisiteProviderFactory, IBehaviorDocumentProvider, ISeededResourceProvider) are **pull-based**. The consumer initiates the call on the node where the data is needed. Even though the provider implementation runs locally (same process), it reads from distributed state stores (Redis/MySQL). There is no node-affinity problem because every node can pull the same data.
-
-```
-Node A: ActorRunner calls IVariableProviderFactory → reads from Redis → gets latest data ✓
-Node B: ActorRunner calls IVariableProviderFactory → reads from Redis → gets latest data ✓
-```
-
-### Why Listeners Are Local-Only
-
-Listener patterns (ISeedEvolutionListener, ICollectionUnlockListener) are **push-based**. The producing service (Seed, Collection) calls listeners after a mutation. But DI only knows about services registered in the **same process**. In a distributed deployment:
-
-```
-Node A processes seed growth API → dispatches to co-located listeners → ✓ local listeners fire
-Node B has same listeners registered → NOT called → ✗ no notification
-Node C has same listeners registered → NOT called → ✗ no notification
-```
 
 ### The Safety Test
 
@@ -813,11 +693,7 @@ if (contractClient == null)
 }
 ```
 
-This pattern is **forbidden** because:
-1. The hierarchy **guarantees** Contract (L1) is running when Location (L2) runs
-2. If Contract is somehow unavailable, that's a deployment configuration error
-3. Silent degradation means the error goes unnoticed until something breaks mysteriously
-4. Failing fast at startup gives a clear error message and prevents partial operation
+This pattern is **forbidden** because the hierarchy guarantees L1 is running when L2 runs. Silent degradation hides deployment configuration errors — fail fast at startup instead.
 
 ### Soft Dependencies (L3, L4)
 
@@ -852,13 +728,8 @@ public async Task DoSomethingAsync(...)
 
 ### Why This Distinction Matters
 
-1. **L0/L1/L2 are deployment prerequisites** - The hierarchy says "if L2 is enabled, L1 MUST be enabled". A missing L1 dependency in an L2 service is a deployment bug.
-
-2. **L3/L4 are truly optional** - These can be disabled independently. An L4 service should work (with reduced features) even if other L4 services are off.
-
-3. **Fail-fast catches errors early** - A deployment error caught at startup with "IContractClient not registered" is infinitely better than discovering hours later that territory validation silently never worked.
-
-4. **Silent degradation hides bugs** - If your logs show "Contract not available, skipping territory registration" as a debug message, you might never notice that a critical feature is broken.
+- **L0/L1/L2 are deployment prerequisites** — a missing dependency is a deployment bug. Fail-fast at startup gives a clear error instead of silent partial operation.
+- **L3/L4 are truly optional** — these can be disabled independently. Silent degradation is expected and correct for optional services.
 
 ---
 
@@ -896,15 +767,7 @@ The `ServiceHierarchyValidator` in `test-utilities/` provides automated hierarch
 3. **Analyzes constructors**: Finds all `I*Client` parameters (service client dependencies)
 4. **Checks violations**: Verifies each dependency is in an allowed layer
 
-**Validation Rules**:
-```
-L0 Infrastructure  → Cannot depend on any service clients
-L1 AppFoundation   → Can depend on L0, L1
-L2 GameFoundation  → Can depend on L0, L1, L2
-L3 AppFeatures     → Can depend on L0, L1, L3 (NOT L2 - separate branch!)
-L4 GameFeatures    → Can depend on L0, L1, L2, L3, L4
-L5 Extensions      → Can depend on everything
-```
+Validation rules match the [Dependency Rules Summary](#dependency-rules-summary) table.
 
 **Usage in Unit Tests**:
 ```csharp
@@ -961,14 +824,11 @@ Discuss with the team before violating the hierarchy. Document any approved exce
 | Date | Version | Changes |
 |------|---------|---------|
 | 2026-02-01 | 1.0 | Initial version with 7 sub-layers |
-| 2026-02-02 | 2.0 | Simplified to 5-layer model with domain separation (app/game) and optionality (foundation/feature) |
-| 2026-02-03 | 2.1 | Moved telemetry from L3 to L0 as optional infrastructure; removed mesh/messaging/state from L3 (they're L0); removed testing from L3 (it's shared test infra, not a service); clarified L0 plugins load first |
-| 2026-02-03 | 2.2 | Added "Dependency Handling Patterns" section: L0/L1/L2 dependencies must be hard (constructor injection, fail at startup); L3/L4 may be soft (graceful degradation). This prevents silent degradation that hides deployment configuration errors. |
-| 2026-02-03 | 2.3 | Added schema-first layer declaration via `x-service-layer` in API schemas. Added `ServiceLayer` enum to `BannouServiceAttribute`. PluginLoader now sorts by layer for deterministic cross-layer dependency resolution. Added L5 (Extensions) layer for third-party plugins. |
-| 2026-02-03 | 2.4 | Added ServiceHierarchyValidator documentation. Updated to reflect layer-based loading is now implemented (not future). Updated diagram to show 6 layers including L5 Extensions. Removed outdated "Current Limitation" notes. |
-| 2026-02-06 | 2.5 | Moved Actor from L4 to L2 (Game Foundation). Added Variable Provider Factory pattern documentation for how L2 services can receive data from L4 services without hierarchy violations. |
-| 2026-02-11 | 2.6 | Moved Collection from L4 to L2 (Game Foundation). Collection's dependencies are all L2 (Inventory, Item, GameService) and it provides foundational content unlock infrastructure consumed by L4 services via the ICollectionUnlockListener DI provider pattern. |
-| 2026-02-11 | 2.7 | Added "DI Provider vs Listener: Distributed Safety" section documenting the fundamental distinction between pull-based Providers (always distributed-safe) and push-based Listeners (local-only fan-out). Includes safety test, pattern classification table, and rules for when each is appropriate. |
+| 2026-02-02 | 2.0 | Simplified to 5-layer model with domain/optionality separation |
+| 2026-02-03 | 2.1–2.4 | Telemetry to L0; dependency handling patterns (hard vs soft); schema-first layer declaration with `x-service-layer`; L5 Extensions layer; ServiceHierarchyValidator; layer-based plugin loading |
+| 2026-02-06 | 2.5 | Moved Actor from L4 to L2. Added Variable Provider Factory pattern. |
+| 2026-02-11 | 2.6 | Moved Collection from L4 to L2 (ICollectionUnlockListener DI pattern). |
+| 2026-02-11 | 2.7 | Added "DI Provider vs Listener: Distributed Safety" section. |
 
 ---
 

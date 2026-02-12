@@ -76,6 +76,11 @@ public static class EventSubscriptionRegistration
         EventSubscriptionRegistry.Register<SessionReconnectedEvent>("session.reconnected");
         EventSubscriptionRegistry.Register<SubscriptionUpdatedEvent>("subscription.updated");
 
+        // From gardener-events.yaml
+        EventSubscriptionRegistry.Register<SeedBondFormedEvent>("seed.bond.formed");
+        EventSubscriptionRegistry.Register<SeedActivatedEvent>("seed.activated");
+        EventSubscriptionRegistry.Register<GameSessionDeletedEvent>("game-session.deleted");
+
         // From leaderboard-events.yaml
         EventSubscriptionRegistry.Register<AnalyticsScoreUpdatedEvent>("analytics.score.updated");
         EventSubscriptionRegistry.Register<AnalyticsRatingUpdatedEvent>("analytics.rating.updated");
@@ -104,6 +109,7 @@ public static class EventSubscriptionRegistration
         // From puppetmaster-events.yaml
         EventSubscriptionRegistry.Register<RealmCreatedEvent>("realm.created");
         EventSubscriptionRegistry.Register<BehaviorUpdatedEvent>("behavior.updated");
+        EventSubscriptionRegistry.Register<ActorInstanceDeletedEvent>("actor.instance.deleted");
 
         // From quest-events.yaml
         EventSubscriptionRegistry.Register<ContractMilestoneCompletedEvent>("contract.milestone.completed");

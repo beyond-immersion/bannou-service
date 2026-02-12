@@ -110,7 +110,14 @@ public sealed class ActorRunner : IActorRunner
     public int PerceptionQueueDepth => _perceptionQueue.Reader.Count;
 
     /// <inheritdoc/>
-    public Guid? CurrentEncounterId => _encounter?.EncounterId;
+    public Guid? CurrentEncounterId
+    {
+        get
+        {
+            var encounter = _encounter;
+            return encounter?.EncounterId;
+        }
+    }
 
     /// <summary>
     /// Creates a new actor runner instance.
@@ -295,6 +302,9 @@ public sealed class ActorRunner : IActorRunner
     /// <inheritdoc/>
     public ActorStateSnapshot GetStateSnapshot()
     {
+        // Capture encounter reference to prevent TOCTOU race with EndEncounter
+        var encounter = _encounter;
+
         return new ActorStateSnapshot
         {
             ActorId = ActorId,
@@ -310,7 +320,7 @@ public sealed class ActorRunner : IActorRunner
             Goals = _state.GetGoals(),
             Memories = _state.GetAllMemories(),
             WorkingMemory = _state.GetAllWorkingMemory(),
-            Encounter = _encounter
+            Encounter = encounter
         };
     }
 
@@ -320,11 +330,12 @@ public sealed class ActorRunner : IActorRunner
         if (_disposed)
             return false;
 
-        // Cannot start a new encounter if one is already active
-        if (_encounter != null)
+        // Capture to local to prevent TOCTOU race
+        var existingEncounter = _encounter;
+        if (existingEncounter != null)
         {
             _logger.LogWarning("Actor {ActorId} attempted to start encounter {EncounterId} but encounter {ActiveEncounterId} is already active",
-                ActorId, encounterId, _encounter.EncounterId);
+                ActorId, encounterId, existingEncounter.EncounterId);
             return false;
         }
 
@@ -358,14 +369,16 @@ public sealed class ActorRunner : IActorRunner
     /// <inheritdoc/>
     public bool SetEncounterPhase(string phase)
     {
-        if (_disposed || _encounter == null)
+        // Capture to local to prevent TOCTOU race with EndEncounter
+        var encounter = _encounter;
+        if (_disposed || encounter == null)
             return false;
 
-        var oldPhase = _encounter.Phase;
-        _encounter.Phase = phase;
+        var oldPhase = encounter.Phase;
+        encounter.Phase = phase;
 
         _logger.LogDebug("Actor {ActorId} encounter {EncounterId} phase changed: {OldPhase} -> {NewPhase}",
-            ActorId, _encounter.EncounterId, oldPhase, phase);
+            ActorId, encounter.EncounterId, oldPhase, phase);
 
         // Publish phase changed event (fire-and-forget: sync interface method)
         _ = _messageBus.TryPublishAsync(ENCOUNTER_PHASE_CHANGED_TOPIC, new ActorEncounterPhaseChangedEvent
@@ -373,7 +386,7 @@ public sealed class ActorRunner : IActorRunner
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
             ActorId = ActorId,
-            EncounterId = _encounter.EncounterId,
+            EncounterId = encounter.EncounterId,
             PreviousPhase = oldPhase,
             NewPhase = phase
         });
@@ -384,12 +397,14 @@ public sealed class ActorRunner : IActorRunner
     /// <inheritdoc/>
     public bool EndEncounter()
     {
-        if (_disposed || _encounter == null)
+        // Capture to local to prevent TOCTOU race with behavior loop reads
+        var encounter = _encounter;
+        if (_disposed || encounter == null)
             return false;
 
-        var encounterId = _encounter.EncounterId;
-        var finalPhase = _encounter.Phase;
-        var duration = DateTimeOffset.UtcNow - _encounter.StartedAt;
+        var encounterId = encounter.EncounterId;
+        var finalPhase = encounter.Phase;
+        var duration = DateTimeOffset.UtcNow - encounter.StartedAt;
         _encounter = null;
 
         _logger.LogInformation("Actor {ActorId} ended encounter {EncounterId} (duration: {Duration})",
@@ -760,16 +775,18 @@ public sealed class ActorRunner : IActorRunner
         scope.SetValue("perceptions", CollectCurrentPerceptions());
 
         // Encounter state for Event Brain actors
-        if (_encounter != null)
+        // Capture to local to prevent TOCTOU race with EndEncounter on API thread
+        var encounter = _encounter;
+        if (encounter != null)
         {
             scope.SetValue("encounter", new Dictionary<string, object?>
             {
-                ["id"] = _encounter.EncounterId,
-                ["type"] = _encounter.EncounterType,
-                ["participants"] = _encounter.Participants.Select(p => p.ToString()).ToList(),
-                ["phase"] = _encounter.Phase,
-                ["started_at"] = _encounter.StartedAt.ToString("o"),
-                ["data"] = _encounter.Data
+                ["id"] = encounter.EncounterId,
+                ["type"] = encounter.EncounterType,
+                ["participants"] = encounter.Participants.Select(p => p.ToString()).ToList(),
+                ["phase"] = encounter.Phase,
+                ["started_at"] = encounter.StartedAt.ToString("o"),
+                ["data"] = encounter.Data
             });
         }
         else

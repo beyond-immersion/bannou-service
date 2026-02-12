@@ -5,346 +5,667 @@ namespace BeyondImmersion.BannouService.Gardener;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Contains storage models for state stores, cache entries, and internal DTOs.
-/// These are NOT exposed via the API and are NOT generated from schemas.
+/// Storage models, cache entries, and internal DTOs used exclusively by this service.
+/// NOT exposed via the API and NOT generated from schemas.
 /// </para>
 /// <para>
 /// <b>IMPLEMENTATION TENETS - Type Safety:</b> Internal models MUST use proper C# types
-/// (enums, Guids, DateTimeOffset) - never string representations.
+/// (enums, Guids, DateTimeOffset) - never string representations. "JSON requires strings"
+/// is FALSE - BannouJson handles serialization correctly.
 /// </para>
 /// </remarks>
 public partial class GardenerService
 {
-    // Partial class anchor for internal models below.
+    // Models defined at namespace level below.
 }
 
 // ============================================================================
-// VOID INSTANCE MODELS
+// INTERNAL DATA MODELS
 // ============================================================================
 
 /// <summary>
-/// Storage model for an active void instance (Redis, keyed by accountId).
+/// Internal storage model for an active garden (void) instance.
+/// Stored in Redis with key pattern: void:{accountId}
 /// </summary>
-internal class VoidInstanceModel
+internal class GardenInstanceModel
 {
-    /// <summary>Unique void instance identifier.</summary>
-    public Guid VoidInstanceId { get; set; }
+    /// <summary>
+    /// Unique identifier for this garden instance.
+    /// </summary>
+    public Guid GardenInstanceId { get; set; }
 
-    /// <summary>Account that owns this void.</summary>
-    public Guid AccountId { get; set; }
-
-    /// <summary>Active seed driving this void session.</summary>
+    /// <summary>
+    /// The active seed driving this garden session.
+    /// </summary>
     public Guid SeedId { get; set; }
 
-    /// <summary>When the player entered the void.</summary>
-    public DateTimeOffset EnteredAt { get; set; }
-
-    /// <summary>Player's current position in void space.</summary>
-    public Position3D PlayerPosition { get; set; } = new();
-
-    /// <summary>Accumulated drift vector for narrative analysis.</summary>
-    public Position3D DriftVector { get; set; } = new();
-
-    /// <summary>IDs of active POIs in this void instance.</summary>
-    public List<Guid> ActivePoiIds { get; set; } = new();
-
-    /// <summary>Bond ID if player is bonded and sharing void, null otherwise.</summary>
-    public Guid? BondId { get; set; }
-
-    /// <summary>Bonded partner's seed ID if sharing void, null otherwise.</summary>
-    public Guid? BondedSeedId { get; set; }
-}
-
-// ============================================================================
-// POI MODELS
-// ============================================================================
-
-/// <summary>
-/// Storage model for a POI in a void instance (Redis, keyed by poiId).
-/// </summary>
-internal class PoiModel
-{
-    /// <summary>Unique POI identifier.</summary>
-    public Guid PoiId { get; set; }
-
-    /// <summary>Void instance this POI belongs to.</summary>
-    public Guid VoidInstanceId { get; set; }
-
-    /// <summary>Account that owns the parent void instance.</summary>
+    /// <summary>
+    /// Account that owns this garden instance.
+    /// </summary>
     public Guid AccountId { get; set; }
 
-    /// <summary>Sensory type of this POI.</summary>
-    public PoiType PoiType { get; set; }
+    /// <summary>
+    /// Connect session ID for this garden session.
+    /// </summary>
+    public Guid SessionId { get; set; }
 
-    /// <summary>Scenario template this POI leads to.</summary>
-    public Guid ScenarioTemplateId { get; set; }
-
-    /// <summary>Position in void space.</summary>
-    public Position3D Position { get; set; } = new();
-
-    /// <summary>When this POI was spawned.</summary>
-    public DateTimeOffset SpawnedAt { get; set; }
-
-    /// <summary>When this POI expires.</summary>
-    public DateTimeOffset ExpiresAt { get; set; }
-
-    /// <summary>Whether the player has been notified of this POI.</summary>
-    public bool Discovered { get; set; }
-
-    /// <summary>Score from the scenario selection algorithm.</summary>
-    public double SelectionScore { get; set; }
-}
-
-// ============================================================================
-// SCENARIO TEMPLATE STORAGE MODEL
-// ============================================================================
-
-/// <summary>
-/// Storage model for scenario templates (MySQL, durable).
-/// </summary>
-internal class ScenarioTemplateModel
-{
-    /// <summary>Unique template identifier.</summary>
-    public Guid ScenarioTemplateId { get; set; }
-
-    /// <summary>Unique code for reference lookups.</summary>
-    public string Code { get; set; } = string.Empty;
-
-    /// <summary>Human-readable display name.</summary>
-    public string DisplayName { get; set; } = string.Empty;
-
-    /// <summary>Template description.</summary>
-    public string Description { get; set; } = string.Empty;
-
-    /// <summary>Primary gameplay category.</summary>
-    public ScenarioCategory Category { get; set; }
-
-    /// <summary>World connectivity mode.</summary>
-    public ConnectivityMode ConnectivityMode { get; set; }
-
-    /// <summary>Minimum deployment phase required.</summary>
-    public DeploymentPhase MinimumPhase { get; set; }
-
-    /// <summary>Current lifecycle status.</summary>
-    public TemplateStatus Status { get; set; }
-
-    /// <summary>Estimated duration in minutes.</summary>
-    public int EstimatedDurationMinutes { get; set; }
-
-    /// <summary>Whether bonded players can enter together.</summary>
-    public bool BondCompatible { get; set; }
-
-    /// <summary>Maximum simultaneous instances of this template.</summary>
-    public int MaxConcurrentInstances { get; set; }
-
-    /// <summary>Growth domains and amounts awarded on completion.</summary>
-    public Dictionary<string, double> GrowthAwards { get; set; } = new();
-
-    /// <summary>Domain affinities for scoring (domain name to weight).</summary>
-    public Dictionary<string, double> DomainAffinities { get; set; } = new();
-
-    /// <summary>Optional template IDs that can chain from this scenario.</summary>
-    public List<Guid> ChainTargets { get; set; } = new();
-
-    /// <summary>Optional content tags for metadata.</summary>
-    public List<string> Tags { get; set; } = new();
-
-    /// <summary>When the template was created.</summary>
+    /// <summary>
+    /// When this garden instance was created.
+    /// </summary>
     public DateTimeOffset CreatedAt { get; set; }
 
-    /// <summary>When the template was last updated.</summary>
-    public DateTimeOffset UpdatedAt { get; set; }
-}
+    /// <summary>
+    /// Current player position in garden space.
+    /// </summary>
+    public Vec3Model Position { get; set; } = new();
 
-// ============================================================================
-// SCENARIO INSTANCE MODELS
-// ============================================================================
+    /// <summary>
+    /// Current player velocity in garden space.
+    /// </summary>
+    public Vec3Model Velocity { get; set; } = new();
 
-/// <summary>
-/// Storage model for an active scenario instance (Redis, keyed by scenarioInstanceId).
-/// </summary>
-internal class ScenarioInstanceModel
-{
-    /// <summary>Unique instance identifier.</summary>
-    public Guid ScenarioInstanceId { get; set; }
+    /// <summary>
+    /// IDs of currently active POIs in this garden.
+    /// </summary>
+    public List<Guid> ActivePoiIds { get; set; } = new();
 
-    /// <summary>Template this instance was created from.</summary>
-    public Guid ScenarioTemplateId { get; set; }
+    /// <summary>
+    /// Current deployment phase for scenario gating.
+    /// </summary>
+    public DeploymentPhase Phase { get; set; }
 
-    /// <summary>Backing game session ID.</summary>
-    public Guid GameSessionId { get; set; }
+    /// <summary>
+    /// Recently visited scenario template IDs for diversity scoring.
+    /// </summary>
+    public List<Guid> ScenarioHistory { get; set; } = new();
 
-    /// <summary>Account playing this scenario.</summary>
-    public Guid AccountId { get; set; }
+    /// <summary>
+    /// Drift metrics accumulated during this garden session.
+    /// </summary>
+    public DriftMetricsModel DriftMetrics { get; set; } = new();
 
-    /// <summary>Active seed for the entering player.</summary>
-    public Guid SeedId { get; set; }
+    /// <summary>
+    /// Whether this instance needs re-evaluation on the next orchestrator tick.
+    /// </summary>
+    public bool NeedsReEvaluation { get; set; }
 
-    /// <summary>Current scenario status.</summary>
-    public ScenarioInstanceStatus Status { get; set; }
+    /// <summary>
+    /// Current seed growth phase label (cached from Seed service).
+    /// </summary>
+    public string? CachedGrowthPhase { get; set; }
 
-    /// <summary>When the scenario started.</summary>
-    public DateTimeOffset StartedAt { get; set; }
-
-    /// <summary>When the last player input was received.</summary>
-    public DateTimeOffset LastActivityAt { get; set; }
-
-    /// <summary>When the scenario completed (null if still active).</summary>
-    public DateTimeOffset? CompletedAt { get; set; }
-
-    /// <summary>Chain depth (0 for initial, increments on each chain).</summary>
-    public int ChainDepth { get; set; }
-
-    /// <summary>Previous scenario instance if this was chained, null otherwise.</summary>
-    public Guid? PreviousScenarioInstanceId { get; set; }
-
-    /// <summary>Bond ID if this is a bond scenario, null otherwise.</summary>
+    /// <summary>
+    /// Bond ID if this player has an active bond, for shared garden logic.
+    /// </summary>
     public Guid? BondId { get; set; }
-
-    /// <summary>Participants if bond scenario (seed IDs).</summary>
-    public List<Guid>? BondParticipants { get; set; }
-}
-
-// ============================================================================
-// SCENARIO HISTORY MODEL
-// ============================================================================
-
-/// <summary>
-/// Storage model for completed scenario history (MySQL, durable, queryable for cooldown).
-/// </summary>
-internal class ScenarioHistoryModel
-{
-    /// <summary>Unique history entry identifier.</summary>
-    public Guid HistoryId { get; set; }
-
-    /// <summary>Original scenario instance ID.</summary>
-    public Guid ScenarioInstanceId { get; set; }
-
-    /// <summary>Template that was used.</summary>
-    public Guid ScenarioTemplateId { get; set; }
-
-    /// <summary>Account that played the scenario.</summary>
-    public Guid AccountId { get; set; }
-
-    /// <summary>How the scenario ended.</summary>
-    public ScenarioOutcome Outcome { get; set; }
-
-    /// <summary>Duration of the scenario in seconds.</summary>
-    public double DurationSeconds { get; set; }
-
-    /// <summary>Growth awarded per domain.</summary>
-    public Dictionary<string, double> GrowthAwarded { get; set; } = new();
-
-    /// <summary>Chain depth at completion.</summary>
-    public int ChainDepth { get; set; }
-
-    /// <summary>When the scenario was completed.</summary>
-    public DateTimeOffset CompletedAt { get; set; }
-}
-
-// ============================================================================
-// PHASE CONFIG MODEL
-// ============================================================================
-
-/// <summary>
-/// Storage model for deployment phase configuration (MySQL, durable).
-/// </summary>
-internal class PhaseConfigModel
-{
-    /// <summary>Configuration entry identifier.</summary>
-    public Guid PhaseConfigId { get; set; }
-
-    /// <summary>Current deployment phase.</summary>
-    public DeploymentPhase CurrentPhase { get; set; }
-
-    /// <summary>When the phase was last changed.</summary>
-    public DateTimeOffset LastChangedAt { get; set; }
-
-    /// <summary>Who or what triggered the phase change.</summary>
-    public string ChangedBy { get; set; } = string.Empty;
-
-    /// <summary>Total active scenario count at last check.</summary>
-    public int ActiveScenarioCount { get; set; }
-
-    /// <summary>Total unique players who have entered void.</summary>
-    public int TotalVoidEntries { get; set; }
-
-    /// <summary>Total completed scenarios across all players.</summary>
-    public int TotalCompletedScenarios { get; set; }
-}
-
-// ============================================================================
-// INTERNAL ENUMS (not in API schema)
-// ============================================================================
-
-/// <summary>
-/// Internal status for scenario instances.
-/// </summary>
-internal enum ScenarioInstanceStatus
-{
-    /// <summary>Scenario is active and in progress.</summary>
-    Active,
-
-    /// <summary>Scenario completed successfully.</summary>
-    Completed,
-
-    /// <summary>Scenario was abandoned by the player.</summary>
-    Abandoned,
-
-    /// <summary>Scenario timed out.</summary>
-    TimedOut
 }
 
 /// <summary>
-/// Outcome of a completed scenario for history tracking.
+/// Three-dimensional spatial coordinates for internal use.
 /// </summary>
-internal enum ScenarioOutcome
+internal class Vec3Model
 {
-    /// <summary>Player completed the scenario successfully.</summary>
-    Completed,
+    /// <summary>
+    /// X coordinate in garden space units.
+    /// </summary>
+    public float X { get; set; }
 
-    /// <summary>Player abandoned the scenario.</summary>
-    Abandoned,
+    /// <summary>
+    /// Y coordinate in garden space units.
+    /// </summary>
+    public float Y { get; set; }
 
-    /// <summary>Scenario timed out without completion.</summary>
-    TimedOut
-}
+    /// <summary>
+    /// Z coordinate in garden space units.
+    /// </summary>
+    public float Z { get; set; }
 
-// ============================================================================
-// HELPER TYPES
-// ============================================================================
-
-/// <summary>
-/// Internal 3D position record for void space coordinates.
-/// </summary>
-internal class Position3D
-{
-    /// <summary>X coordinate in void space.</summary>
-    public double X { get; set; }
-
-    /// <summary>Y coordinate in void space.</summary>
-    public double Y { get; set; }
-
-    /// <summary>Z coordinate in void space.</summary>
-    public double Z { get; set; }
-
-    /// <summary>Calculates distance to another position.</summary>
-    public double DistanceTo(Position3D other)
+    /// <summary>
+    /// Calculates the Euclidean distance to another point.
+    /// </summary>
+    public float DistanceTo(Vec3Model other)
     {
         var dx = X - other.X;
         var dy = Y - other.Y;
         var dz = Z - other.Z;
-        return Math.Sqrt(dx * dx + dy * dy + dz * dz);
+        return MathF.Sqrt(dx * dx + dy * dy + dz * dz);
     }
 }
 
 /// <summary>
-/// Scored scenario template candidate from the selection algorithm.
+/// Drift metrics tracking player movement patterns for narrative scoring.
 /// </summary>
-internal record ScoredTemplate(
-    ScenarioTemplateModel Template,
-    double Score,
-    double AffinityScore,
-    double DiversityScore,
-    double NarrativeScore,
-    double RandomScore);
+internal class DriftMetricsModel
+{
+    /// <summary>
+    /// Total distance traveled during this garden session.
+    /// </summary>
+    public float TotalDistance { get; set; }
+
+    /// <summary>
+    /// Accumulated directional bias on X axis.
+    /// </summary>
+    public float DirectionalBiasX { get; set; }
+
+    /// <summary>
+    /// Accumulated directional bias on Y axis.
+    /// </summary>
+    public float DirectionalBiasY { get; set; }
+
+    /// <summary>
+    /// Accumulated directional bias on Z axis.
+    /// </summary>
+    public float DirectionalBiasZ { get; set; }
+
+    /// <summary>
+    /// Number of times the player stopped moving or reversed direction.
+    /// </summary>
+    public int HesitationCount { get; set; }
+
+    /// <summary>
+    /// Detected engagement pattern (e.g., "exploring", "hesitant", "directed").
+    /// </summary>
+    public string? EngagementPattern { get; set; }
+}
+
+/// <summary>
+/// Internal storage model for a point of interest in a garden.
+/// Stored in Redis with key pattern: poi:{gardenInstanceId}:{poiId}
+/// </summary>
+internal class PoiModel
+{
+    /// <summary>
+    /// Unique identifier for this POI.
+    /// </summary>
+    public Guid PoiId { get; set; }
+
+    /// <summary>
+    /// Garden instance this POI belongs to.
+    /// </summary>
+    public Guid GardenInstanceId { get; set; }
+
+    /// <summary>
+    /// Position in garden space.
+    /// </summary>
+    public Vec3Model Position { get; set; } = new();
+
+    /// <summary>
+    /// Sensory presentation type.
+    /// </summary>
+    public PoiType PoiType { get; set; }
+
+    /// <summary>
+    /// Scenario template this POI leads to.
+    /// </summary>
+    public Guid ScenarioTemplateId { get; set; }
+
+    /// <summary>
+    /// Visual hint identifier for client rendering.
+    /// </summary>
+    public string VisualHint { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Audio hint identifier for client rendering.
+    /// </summary>
+    public string? AudioHint { get; set; }
+
+    /// <summary>
+    /// Current intensity ramp (0.0-1.0).
+    /// </summary>
+    public float IntensityRamp { get; set; }
+
+    /// <summary>
+    /// How this POI is triggered by the player.
+    /// </summary>
+    public TriggerMode TriggerMode { get; set; }
+
+    /// <summary>
+    /// Trigger radius in garden space units.
+    /// </summary>
+    public float TriggerRadius { get; set; }
+
+    /// <summary>
+    /// When this POI was spawned.
+    /// </summary>
+    public DateTimeOffset SpawnedAt { get; set; }
+
+    /// <summary>
+    /// When this POI expires. Null means no expiration.
+    /// </summary>
+    public DateTimeOffset? ExpiresAt { get; set; }
+
+    /// <summary>
+    /// Current lifecycle status.
+    /// </summary>
+    public PoiStatus Status { get; set; }
+}
+
+/// <summary>
+/// Internal storage model for a scenario template definition.
+/// Stored in MySQL with key pattern: template:{scenarioTemplateId}
+/// </summary>
+internal class ScenarioTemplateModel
+{
+    /// <summary>
+    /// Unique identifier for this template.
+    /// </summary>
+    public Guid ScenarioTemplateId { get; set; }
+
+    /// <summary>
+    /// Human-readable unique code.
+    /// </summary>
+    public string Code { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Display name for this template.
+    /// </summary>
+    public string DisplayName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Detailed description of this scenario.
+    /// </summary>
+    public string Description { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Primary gameplay category.
+    /// </summary>
+    public ScenarioCategory Category { get; set; }
+
+    /// <summary>
+    /// Optional subcategory refinement.
+    /// </summary>
+    public string? Subcategory { get; set; }
+
+    /// <summary>
+    /// How this scenario connects to the game world.
+    /// </summary>
+    public ConnectivityMode ConnectivityMode { get; set; }
+
+    /// <summary>
+    /// Domain weights for growth awards on completion.
+    /// </summary>
+    public List<DomainWeightModel> DomainWeights { get; set; } = new();
+
+    /// <summary>
+    /// Minimum seed growth phase required to access this scenario.
+    /// </summary>
+    public string? MinGrowthPhase { get; set; }
+
+    /// <summary>
+    /// Estimated duration in minutes for this scenario.
+    /// </summary>
+    public int? EstimatedDurationMinutes { get; set; }
+
+    /// <summary>
+    /// Prerequisite requirements for entering this scenario.
+    /// </summary>
+    public ScenarioPrerequisitesModel? Prerequisites { get; set; }
+
+    /// <summary>
+    /// Chaining configuration for linking scenarios.
+    /// </summary>
+    public ScenarioChainingModel? Chaining { get; set; }
+
+    /// <summary>
+    /// Multiplayer configuration for group scenarios.
+    /// </summary>
+    public ScenarioMultiplayerModel? Multiplayer { get; set; }
+
+    /// <summary>
+    /// Content references linking to game assets.
+    /// </summary>
+    public ScenarioContentModel? Content { get; set; }
+
+    /// <summary>
+    /// Deployment phases during which this template is available.
+    /// </summary>
+    public List<DeploymentPhase> AllowedPhases { get; set; } = new();
+
+    /// <summary>
+    /// Maximum concurrent instances of this template allowed globally.
+    /// </summary>
+    public int MaxConcurrentInstances { get; set; }
+
+    /// <summary>
+    /// Current lifecycle status of this template.
+    /// </summary>
+    public TemplateStatus Status { get; set; }
+
+    /// <summary>
+    /// When this template was created.
+    /// </summary>
+    public DateTimeOffset CreatedAt { get; set; }
+
+    /// <summary>
+    /// When this template was last updated.
+    /// </summary>
+    public DateTimeOffset UpdatedAt { get; set; }
+}
+
+/// <summary>
+/// Domain and weight pair for internal storage.
+/// </summary>
+internal class DomainWeightModel
+{
+    /// <summary>
+    /// Growth domain path (e.g. "combat.melee").
+    /// </summary>
+    public string Domain { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Weight applied to this domain on scenario completion.
+    /// </summary>
+    public float Weight { get; set; }
+}
+
+/// <summary>
+/// Prerequisite requirements for internal storage.
+/// </summary>
+internal class ScenarioPrerequisitesModel
+{
+    /// <summary>
+    /// Minimum growth depth per domain.
+    /// </summary>
+    public Dictionary<string, float>? RequiredDomains { get; set; }
+
+    /// <summary>
+    /// Scenario template codes that must be completed first.
+    /// </summary>
+    public List<string>? RequiredScenarios { get; set; }
+
+    /// <summary>
+    /// Scenario template codes that disqualify the player.
+    /// </summary>
+    public List<string>? ExcludedScenarios { get; set; }
+}
+
+/// <summary>
+/// Chaining configuration for internal storage.
+/// </summary>
+internal class ScenarioChainingModel
+{
+    /// <summary>
+    /// Template codes this scenario can chain into.
+    /// </summary>
+    public List<string>? LeadsTo { get; set; }
+
+    /// <summary>
+    /// Per-code probability weights for chain selection.
+    /// </summary>
+    public Dictionary<string, float>? ChainProbabilities { get; set; }
+
+    /// <summary>
+    /// Maximum chain depth from the initial scenario.
+    /// </summary>
+    public int MaxChainDepth { get; set; } = 3;
+}
+
+/// <summary>
+/// Multiplayer configuration for internal storage.
+/// </summary>
+internal class ScenarioMultiplayerModel
+{
+    /// <summary>
+    /// Minimum number of players required.
+    /// </summary>
+    public int MinPlayers { get; set; }
+
+    /// <summary>
+    /// Maximum number of players allowed.
+    /// </summary>
+    public int MaxPlayers { get; set; }
+
+    /// <summary>
+    /// Matchmaking queue code for automatic grouping.
+    /// </summary>
+    public string? MatchmakingQueueCode { get; set; }
+
+    /// <summary>
+    /// Whether bonded players receive a scoring boost.
+    /// </summary>
+    public bool BondPreferred { get; set; }
+}
+
+/// <summary>
+/// Content references for internal storage.
+/// </summary>
+internal class ScenarioContentModel
+{
+    /// <summary>
+    /// ABML behavior document ID for NPC orchestration.
+    /// </summary>
+    public string? BehaviorDocumentId { get; set; }
+
+    /// <summary>
+    /// Scene document ID for environment composition.
+    /// </summary>
+    public Guid? SceneDocumentId { get; set; }
+
+    /// <summary>
+    /// Realm ID where this scenario takes place.
+    /// </summary>
+    public Guid? RealmId { get; set; }
+
+    /// <summary>
+    /// Location code within the realm.
+    /// </summary>
+    public string? LocationCode { get; set; }
+}
+
+/// <summary>
+/// Internal storage model for an active scenario instance.
+/// Stored in Redis with key pattern: scenario:{accountId}
+/// </summary>
+internal class ScenarioInstanceModel
+{
+    /// <summary>
+    /// Unique identifier for this scenario instance.
+    /// </summary>
+    public Guid ScenarioInstanceId { get; set; }
+
+    /// <summary>
+    /// Template this instance was created from.
+    /// </summary>
+    public Guid ScenarioTemplateId { get; set; }
+
+    /// <summary>
+    /// Backing game session ID.
+    /// </summary>
+    public Guid GameSessionId { get; set; }
+
+    /// <summary>
+    /// Participants in this scenario.
+    /// </summary>
+    public List<ScenarioParticipantModel> Participants { get; set; } = new();
+
+    /// <summary>
+    /// Connectivity mode for this instance.
+    /// </summary>
+    public ConnectivityMode ConnectivityMode { get; set; }
+
+    /// <summary>
+    /// Current lifecycle status.
+    /// </summary>
+    public ScenarioStatus Status { get; set; }
+
+    /// <summary>
+    /// When this scenario was created.
+    /// </summary>
+    public DateTimeOffset CreatedAt { get; set; }
+
+    /// <summary>
+    /// When this scenario was completed or abandoned.
+    /// </summary>
+    public DateTimeOffset? CompletedAt { get; set; }
+
+    /// <summary>
+    /// Growth awarded per domain on completion.
+    /// </summary>
+    public Dictionary<string, float>? GrowthAwarded { get; set; }
+
+    /// <summary>
+    /// ID of the scenario this was chained from, if any.
+    /// </summary>
+    public Guid? ChainedFrom { get; set; }
+
+    /// <summary>
+    /// Current chain depth (0 = root scenario).
+    /// </summary>
+    public int ChainDepth { get; set; }
+
+    /// <summary>
+    /// Last time a participant performed an action in this scenario.
+    /// </summary>
+    public DateTimeOffset LastActivityAt { get; set; }
+}
+
+/// <summary>
+/// A participant in a scenario instance.
+/// </summary>
+internal class ScenarioParticipantModel
+{
+    /// <summary>
+    /// Seed ID of the participant.
+    /// </summary>
+    public Guid SeedId { get; set; }
+
+    /// <summary>
+    /// Account ID of the participant.
+    /// </summary>
+    public Guid AccountId { get; set; }
+
+    /// <summary>
+    /// Connect session ID of the participant.
+    /// </summary>
+    public Guid SessionId { get; set; }
+
+    /// <summary>
+    /// When this participant joined the scenario.
+    /// </summary>
+    public DateTimeOffset JoinedAt { get; set; }
+
+    /// <summary>
+    /// Role of this participant in the scenario.
+    /// </summary>
+    public string? Role { get; set; }
+}
+
+/// <summary>
+/// Internal storage model for completed scenario history records.
+/// Stored in MySQL with key pattern: history:{scenarioInstanceId}
+/// </summary>
+internal class ScenarioHistoryModel
+{
+    /// <summary>
+    /// Scenario instance ID.
+    /// </summary>
+    public Guid ScenarioInstanceId { get; set; }
+
+    /// <summary>
+    /// Template this scenario was created from.
+    /// </summary>
+    public Guid ScenarioTemplateId { get; set; }
+
+    /// <summary>
+    /// Account that participated.
+    /// </summary>
+    public Guid AccountId { get; set; }
+
+    /// <summary>
+    /// Seed that participated.
+    /// </summary>
+    public Guid SeedId { get; set; }
+
+    /// <summary>
+    /// When this scenario completed or was abandoned.
+    /// </summary>
+    public DateTimeOffset CompletedAt { get; set; }
+
+    /// <summary>
+    /// Final status (Completed or Abandoned).
+    /// </summary>
+    public ScenarioStatus Status { get; set; }
+
+    /// <summary>
+    /// Growth awarded per domain.
+    /// </summary>
+    public Dictionary<string, float>? GrowthAwarded { get; set; }
+
+    /// <summary>
+    /// Total duration of the scenario in seconds.
+    /// </summary>
+    public float DurationSeconds { get; set; }
+
+    /// <summary>
+    /// Template code for cooldown tracking via JSON queries.
+    /// </summary>
+    public string TemplateCode { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Internal storage model for deployment phase configuration.
+/// Stored in MySQL with key: phase:config (singleton).
+/// </summary>
+internal class DeploymentPhaseConfigModel
+{
+    /// <summary>
+    /// Current deployment phase.
+    /// </summary>
+    public DeploymentPhase CurrentPhase { get; set; }
+
+    /// <summary>
+    /// Maximum concurrent scenarios globally.
+    /// </summary>
+    public int MaxConcurrentScenariosGlobal { get; set; }
+
+    /// <summary>
+    /// Whether persistent garden entry is enabled.
+    /// </summary>
+    public bool PersistentEntryEnabled { get; set; }
+
+    /// <summary>
+    /// Whether garden minigames are enabled.
+    /// </summary>
+    public bool GardenMinigamesEnabled { get; set; }
+
+    /// <summary>
+    /// When this configuration was last updated.
+    /// </summary>
+    public DateTimeOffset UpdatedAt { get; set; }
+}
+
+/// <summary>
+/// Intermediate scoring result for the scenario selection algorithm.
+/// </summary>
+internal class ScenarioScore
+{
+    /// <summary>
+    /// Template being scored.
+    /// </summary>
+    public Guid ScenarioTemplateId { get; set; }
+
+    /// <summary>
+    /// Combined total score.
+    /// </summary>
+    public float TotalScore { get; set; }
+
+    /// <summary>
+    /// Score from domain affinity matching.
+    /// </summary>
+    public float AffinityScore { get; set; }
+
+    /// <summary>
+    /// Score from category diversity.
+    /// </summary>
+    public float DiversityScore { get; set; }
+
+    /// <summary>
+    /// Score from drift-pattern narrative response.
+    /// </summary>
+    public float NarrativeScore { get; set; }
+
+    /// <summary>
+    /// Score from randomness for discovery.
+    /// </summary>
+    public float RandomScore { get; set; }
+}

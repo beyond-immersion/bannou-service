@@ -343,6 +343,12 @@ scripts/generate-all-services.sh               # † Regenerate ALL services (sl
 # Unit Testing (the ONLY test command Claude should run)
 make test                      # Run unit tests (dotnet test)
 
+# Model Shape Inspection (for understanding service models without loading full schemas)
+# Prints compact model shapes (~6x smaller than schemas or generated C# code).
+# Use this INSTEAD of reading *Models.cs or *-api.yaml when you need to understand
+# all models for a service. Format: * = required, ? = nullable, = val = default.
+make print-models PLUGIN="character"     # Print all model shapes for a service
+
 # Assembly Inspection (for understanding external APIs)
 make inspect-type TYPE="IChannel" PKG="RabbitMQ.Client"
 make inspect-method METHOD="IChannel.BasicPublishAsync" PKG="RabbitMQ.Client"

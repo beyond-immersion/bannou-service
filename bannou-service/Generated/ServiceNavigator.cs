@@ -29,6 +29,7 @@ using BeyondImmersion.BannouService.Documentation;
 using BeyondImmersion.BannouService.Escrow;
 using BeyondImmersion.BannouService.GameService;
 using BeyondImmersion.BannouService.GameSession;
+using BeyondImmersion.BannouService.Gardener;
 using BeyondImmersion.BannouService.Inventory;
 using BeyondImmersion.BannouService.Item;
 using BeyondImmersion.BannouService.Leaderboard;
@@ -102,6 +103,7 @@ public partial class ServiceNavigator : IServiceNavigator
     private readonly IEscrowClient _escrow;
     private readonly IGameServiceClient _gameService;
     private readonly IGameSessionClient _gameSession;
+    private readonly IGardenerClient _gardener;
     private readonly IInventoryClient _inventory;
     private readonly IItemClient _item;
     private readonly ILeaderboardClient _leaderboard;
@@ -160,6 +162,7 @@ public partial class ServiceNavigator : IServiceNavigator
         IEscrowClient escrow,
         IGameServiceClient gameService,
         IGameSessionClient gameSession,
+        IGardenerClient gardener,
         IInventoryClient inventory,
         IItemClient item,
         ILeaderboardClient leaderboard,
@@ -214,6 +217,7 @@ public partial class ServiceNavigator : IServiceNavigator
         _escrow = escrow;
         _gameService = gameService;
         _gameSession = gameSession;
+        _gardener = gardener;
         _inventory = inventory;
         _item = item;
         _leaderboard = leaderboard;
@@ -347,6 +351,9 @@ public partial class ServiceNavigator : IServiceNavigator
 
     /// <inheritdoc />
     public IGameSessionClient GameSession => _gameSession;
+
+    /// <inheritdoc />
+    public IGardenerClient Gardener => _gardener;
 
     /// <inheritdoc />
     public IInventoryClient Inventory => _inventory;

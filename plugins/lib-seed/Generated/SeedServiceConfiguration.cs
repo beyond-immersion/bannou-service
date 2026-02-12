@@ -115,4 +115,11 @@ public class SeedServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int DefaultQueryPageSize { get; set; } = 100;
 
+    /// <summary>
+    /// TTL in seconds for the seed data cache used by the variable provider factory
+    /// Environment variable: SEED_SEED_DATA_CACHE_TTL_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 5, Maximum = 3600)]
+    public int SeedDataCacheTtlSeconds { get; set; } = 60;
+
 }

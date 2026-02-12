@@ -87,6 +87,16 @@ inspect-search: ## Search for types. Usage: make inspect-search PATTERN="*Connec
 inspect-list: ## List all types in a package. Usage: make inspect-list PKG="RabbitMQ.Client"
 	@dotnet run --project tools/bannou-inspect -- list-types --package "$(PKG)"
 
+# =============================================================================
+# MODEL SHAPE INSPECTOR
+# =============================================================================
+# Print compact model shapes (~6x smaller than schemas or generated C# code).
+# Useful for understanding all models for a service without loading full files.
+# =============================================================================
+
+print-models: ## Print compact model shapes. Usage: make print-models PLUGIN="character"
+	@python3 scripts/print-model-shapes.py "$(PLUGIN)"
+
 build-compose: ## Build Docker containers (all services)
 	if [ ! -f .env ]; then touch .env; fi
 	docker compose --env-file ./.env \

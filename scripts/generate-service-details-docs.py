@@ -184,22 +184,7 @@ def generate_markdown(services: dict, docs_dir: Path) -> str:
         "",
         "This document provides a compact reference of all Bannou services.",
         "",
-        "## Service Overview",
-        "",
-        "| Service | Version | Endpoints | Description |",
-        "|---------|---------|-----------|-------------|",
     ]
-
-    # Overview table
-    for service_key in sorted(services.keys()):
-        svc = services[service_key]
-        endpoint_count = len(svc['endpoints'])
-        desc_short = svc['description'][:60] + '...' if len(svc['description']) > 60 else svc['description']
-        lines.append(f"| [{svc['display_name']}](#{service_key}) | {svc['version']} | {endpoint_count} | {desc_short} |")
-
-    lines.append("")
-    lines.append("---")
-    lines.append("")
 
     # Detailed sections for each service
     total_endpoints = 0
@@ -210,7 +195,8 @@ def generate_markdown(services: dict, docs_dir: Path) -> str:
         lines.append(f"## {svc['display_name']} {{#{service_key}}}")
         lines.append("")
         deep_dive_file = service_key.upper() + '.md'
-        lines.append(f"**Version**: {svc['version']} | **Schema**: `schemas/{svc['source_file']}` | **Deep Dive**: [docs/plugins/{deep_dive_file}](plugins/{deep_dive_file})")
+        endpoint_count = len(svc['endpoints'])
+        lines.append(f"**Version**: {svc['version']} | **Schema**: `schemas/{svc['source_file']}` | **Endpoints**: {endpoint_count} | **Deep Dive**: [docs/plugins/{deep_dive_file}](plugins/{deep_dive_file})")
         lines.append("")
 
         # Use deep dive overview if available, otherwise fall back to schema description
@@ -220,8 +206,6 @@ def generate_markdown(services: dict, docs_dir: Path) -> str:
         elif svc['description']:
             lines.append(svc['description'])
 
-        lines.append("")
-        lines.append("---")
         lines.append("")
 
     # Summary

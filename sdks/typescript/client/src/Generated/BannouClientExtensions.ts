@@ -32,6 +32,7 @@ import { CurrencyProxy } from './proxies/CurrencyProxy.js';
 import { DocumentationProxy } from './proxies/DocumentationProxy.js';
 import { EscrowProxy } from './proxies/EscrowProxy.js';
 import { GameServiceProxy } from './proxies/GameServiceProxy.js';
+import { GardenerProxy } from './proxies/GardenerProxy.js';
 import { GoapProxy } from './proxies/GoapProxy.js';
 import { InventoryProxy } from './proxies/InventoryProxy.js';
 import { ItemProxy } from './proxies/ItemProxy.js';
@@ -84,6 +85,7 @@ interface ProxyCache {
   documentation?: DocumentationProxy;
   escrow?: EscrowProxy;
   gameService?: GameServiceProxy;
+  gardener?: GardenerProxy;
   goap?: GoapProxy;
   inventory?: InventoryProxy;
   item?: ItemProxy;
@@ -350,6 +352,18 @@ Object.defineProperty(BannouClient.prototype, 'gameService', {
   get(this: BannouClientWithCache): GameServiceProxy {
     const cache = (this[PROXY_CACHE] ??= {});
     return (cache.gameService ??= new GameServiceProxy(this));
+  },
+  configurable: true,
+  enumerable: true,
+});
+
+/**
+ * Add lazy-initialized gardener proxy property to BannouClient.
+ */
+Object.defineProperty(BannouClient.prototype, 'gardener', {
+  get(this: BannouClientWithCache): GardenerProxy {
+    const cache = (this[PROXY_CACHE] ??= {});
+    return (cache.gardener ??= new GardenerProxy(this));
   },
   configurable: true,
   enumerable: true,
@@ -750,6 +764,10 @@ declare module '../BannouClient.js' {
      * Typed proxy for GameService API endpoints.
      */
     readonly gameService: GameServiceProxy;
+    /**
+     * Typed proxy for Gardener API endpoints.
+     */
+    readonly gardener: GardenerProxy;
     /**
      * Typed proxy for Goap API endpoints.
      */

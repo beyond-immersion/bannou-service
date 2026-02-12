@@ -528,29 +528,29 @@ No bugs identified.
 
 7. **ScheduledEventManager Timer uses fire-and-forget**: Timer callback `CheckEvents` is synchronous (Timer constraint), so it calls `_ = FireEventAsync(evt)` for due events. `FireEventAsync` wraps all logic in `try-catch(Exception)` with `_logger.LogError`, so exceptions ARE observed and logged. `TryPublishAsync` provides retry buffering for RabbitMQ delivery. The discard means the timer callback can't await completion, but the async method is self-contained with proper error handling.
 
+8. **Single-threaded behavior loop by design**: Each ActorRunner runs its behavior loop on a single task (sequential: perceptions → behavior tick → state publish → persistence → sleep). CPU-intensive behaviors delay tick processing but do not block other actors. `GoapPlanTimeoutMs` (50ms default) is passed to the GOAP planner as a budget hint via the behavior scope — it is NOT enforced as a hard timeout by ActorRunner. If planning exceeds the budget, the tick runs long and the sleep phase is skipped to compensate. This design simplifies state management (no concurrent access to actor state) and matches the one-brain-per-NPC model.
+
 ### Design Considerations (Requires Planning)
 
-1. **ActorRunner._encounter field lacks synchronization**: Field accessed from behavior loop thread and external callers without lock protection. `_statusLock` only protects `_status`.
+1. ~~**ActorRunner._encounter field lacks synchronization**~~: **FIXED** (2026-02-11) - All `_encounter` access points now use local variable capture to prevent TOCTOU NullReferenceException. Reference reads are atomic per ECMA-334; capturing to a local before accessing properties prevents the race between EndEncounter (nulling `_encounter`) and the behavior loop (reading encounter properties). No lock needed — the pattern avoids contention on the behavior loop hot path.
 
-2. **Single-threaded behavior loop**: Each ActorRunner runs on single task. CPU-intensive behaviors delay tick processing. `GoapPlanTimeoutMs` (50ms) provides budget.
+2. **State persistence is periodic**: Saved every `AutoSaveIntervalSeconds` (60s default). Crash loses up to 60 seconds. Critical state publishes events immediately.
 
-3. **State persistence is periodic**: Saved every `AutoSaveIntervalSeconds` (60s default). Crash loses up to 60 seconds. Critical state publishes events immediately.
+3. **Pool node capacity is self-reported**: No external validation of claimed capacity.
 
-4. **Pool node capacity is self-reported**: No external validation of claimed capacity.
+4. **Perception subscription per-character**: 100,000+ actors = 100,000+ RabbitMQ subscriptions. Pool mode distributes.
 
-5. **Perception subscription per-character**: 100,000+ actors = 100,000+ RabbitMQ subscriptions. Pool mode distributes.
+5. **Memory cleanup is per-tick**: Expired memories scanned each tick. Working memory cleared between perceptions.
 
-6. **Memory cleanup is per-tick**: Expired memories scanned each tick. Working memory cleared between perceptions.
+6. **Template index optimistic concurrency**: No retry on conflict - returns immediately. Index may be temporarily inconsistent if TrySave fails.
 
-7. **Template index optimistic concurrency**: No retry on conflict - returns immediately. Index may be temporarily inconsistent if TrySave fails.
+7. **Encounter phase strings unvalidated**: No state machine. ABML behaviors enforce meaningful transitions.
 
-8. **Encounter phase strings unvalidated**: No state machine. ABML behaviors enforce meaningful transitions.
+8. **Fresh options query waits approximately one tick**: `Task.Delay(DefaultTickIntervalMs)` doesn't synchronize with actual behavior loop.
 
-9. **Fresh options query waits approximately one tick**: `Task.Delay(DefaultTickIntervalMs)` doesn't synchronize with actual behavior loop.
+9. **Auto-spawn failure returns NotFound**: True failure reason only logged, not returned to caller.
 
-10. **Auto-spawn failure returns NotFound**: True failure reason only logged, not returned to caller.
-
-11. **ListActors nodeId filter not implemented**: Parameter exists but ignored in all modes.
+10. **ListActors nodeId filter not implemented**: Parameter exists but ignored in all modes.
 
 ---
 
@@ -558,7 +558,7 @@ No bugs identified.
 
 ### Completed
 
-(No pending items — all completed changes have been absorbed into document content.)
+- (2026-02-11) Moved "Single-threaded behavior loop" from Design Considerations to Intentional Quirks (#8) with improved documentation clarifying GoapPlanTimeoutMs is a budget hint, not an enforced timeout.
 
 ### Implementation Gaps
 
