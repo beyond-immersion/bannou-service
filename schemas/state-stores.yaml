@@ -930,3 +930,35 @@ x-state-stores:
     prefix: "gardener:lock"
     service: Gardener
     purpose: Distributed locks for garden orchestration and scenario mutations
+
+  # =========================================================================
+  # Divine (L4 GameFeatures)
+  # =========================================================================
+
+  divine-deities:
+    backend: mysql
+    service: Divine
+    purpose: Deity entity records (durable, queryable by game service, domain, status)
+
+  divine-blessings:
+    backend: mysql
+    service: Divine
+    purpose: Blessing grant records linking deities to characters via items (durable, queryable)
+
+  divine-attention:
+    backend: redis
+    prefix: "divine:attention"
+    service: Divine
+    purpose: Active attention slot tracking per deity (ephemeral, high-frequency reads)
+
+  divine-divinity-events:
+    backend: redis
+    prefix: "divine:divevt"
+    service: Divine
+    purpose: Pending divinity generation events awaiting batch processing (ephemeral queue)
+
+  divine-lock:
+    backend: redis
+    prefix: "divine:lock"
+    service: Divine
+    purpose: Distributed locks for deity and blessing mutations
