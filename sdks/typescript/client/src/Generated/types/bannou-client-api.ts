@@ -4959,6 +4959,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/gardener/template/delete': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Delete scenario template
+     * @description Permanently deletes a scenario template. Template must be in Deprecated status before deletion. Publishes a scenario-template.deleted lifecycle event.
+     */
+    post: operations['deleteTemplate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/gardener/phase/get': {
     parameters: {
       query?: never;
@@ -6431,6 +6451,29 @@ export interface paths {
      *     Returns true if location exists and is not deprecated, false otherwise.
      */
     post: operations['locationExists'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/location/query/by-position': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Find locations containing a spatial position
+     * @description Given a Position3D and realmId, returns all locations whose bounds contain
+     *     that position, ordered by depth descending (most specific first). Only
+     *     locations with spatial bounds data are considered. A position is "in" a
+     *     location if it falls within the location's axis-aligned bounding box.
+     */
+    post: operations['queryLocationsByPosition'];
     delete?: never;
     options?: never;
     head?: never;
@@ -11787,6 +11830,39 @@ export interface components {
       /** @description Player position in shared garden space */
       position: components['schemas']['Vec3'];
     };
+    /** @description Axis-aligned bounding box in world coordinates (meters, Y-up, right-handed) */
+    BoundingBox3D: {
+      /**
+       * Format: float
+       * @description Minimum X bound in world space
+       */
+      minX: number;
+      /**
+       * Format: float
+       * @description Minimum Y bound in world space
+       */
+      minY: number;
+      /**
+       * Format: float
+       * @description Minimum Z bound in world space
+       */
+      minZ: number;
+      /**
+       * Format: float
+       * @description Maximum X bound in world space
+       */
+      maxX: number;
+      /**
+       * Format: float
+       * @description Maximum Y bound in world space
+       */
+      maxY: number;
+      /**
+       * Format: float
+       * @description Maximum Z bound in world space
+       */
+      maxZ: number;
+    };
     /** @description An axis-aligned bounding box in 3D space */
     Bounds: {
       /** @description Minimum corner (lowest x, y, z values) */
@@ -11794,6 +11870,11 @@ export interface components {
       /** @description Maximum corner (highest x, y, z values) */
       max: components['schemas']['Position3D'];
     };
+    /**
+     * @description Precision level of spatial bounds for a location
+     * @enum {string}
+     */
+    BoundsPrecision: 'exact' | 'approximate' | 'none';
     /** @description Breach record details */
     BreachResponse: {
       /**
@@ -14381,6 +14462,11 @@ export interface components {
        */
       rate: number;
     };
+    /**
+     * @description How this location's coordinate system relates to its parent
+     * @enum {string}
+     */
+    CoordinateMode: 'inherit' | 'local' | 'portal';
     /** @description 3D spatial coordinates representing a position in the game world */
     Coordinates: {
       /** @description X coordinate position */
@@ -15414,9 +15500,9 @@ export interface components {
       seedTypeCode: string;
       /**
        * Format: uuid
-       * @description Game service this seed is scoped to.
+       * @description Game service this seed is scoped to. Null for cross-game seed types that are not scoped to any single game service.
        */
-      gameServiceId: string;
+      gameServiceId?: string | null;
       /** @description Human-readable name. Auto-generated if omitted. */
       displayName?: string | null;
       /** @description Seed-type-specific initial metadata. */
@@ -15473,8 +15559,8 @@ export interface components {
        * @default Isolated
        */
       connectivityMode: components['schemas']['ConnectivityMode'];
-      /** @description Deployment phases in which this template is available */
-      allowedPhases: components['schemas']['DeploymentPhase'][];
+      /** @description Deployment phases in which this template is available. Null or empty means available in all phases. */
+      allowedPhases?: components['schemas']['DeploymentPhase'][] | null;
       /**
        * @description Maximum concurrent active instances of this template
        * @default 100
@@ -16075,9 +16161,9 @@ export interface components {
       seedTypeCode: string;
       /**
        * Format: uuid
-       * @description The game service scope.
+       * @description The game service scope. Null for cross-game seed types.
        */
-      gameServiceId: string;
+      gameServiceId?: string | null;
     };
     /** @description Request to permanently delete a save slot and all its versions */
     DeleteSlotRequest: {
@@ -16104,6 +16190,14 @@ export interface components {
        * @description Storage freed in bytes
        */
       bytesFreed: number;
+    };
+    /** @description Request to permanently delete a deprecated template */
+    DeleteTemplateRequest: {
+      /**
+       * Format: uuid
+       * @description Template ID to delete
+       */
+      scenarioTemplateId: string;
     };
     /** @description Request to permanently delete a specific save version */
     DeleteVersionRequest: {
@@ -16207,9 +16301,9 @@ export interface components {
       seedTypeCode: string;
       /**
        * Format: uuid
-       * @description The game service scope.
+       * @description The game service scope. Null for cross-game seed types.
        */
-      gameServiceId: string;
+      gameServiceId?: string | null;
       /** @description Optional reason for deprecation (for audit purposes). */
       reason?: string | null;
     };
@@ -19600,9 +19694,9 @@ export interface components {
       seedTypeCode: string;
       /**
        * Format: uuid
-       * @description The game service scope.
+       * @description The game service scope. Null for cross-game seed types.
        */
-      gameServiceId: string;
+      gameServiceId?: string | null;
     };
     /** @description Request to get seeds by owner. */
     GetSeedsByOwnerRequest: {
@@ -20939,9 +21033,9 @@ export interface components {
     LeaveGameSessionByIdRequest: {
       /**
        * Format: uuid
-       * @description WebSocket session ID of the client leaving.
+       * @description WebSocket session ID of the client leaving. Null for server-side cleanup operations (e.g., scenario lifecycle worker) where no real WebSocket session exists.
        */
-      webSocketSessionId: string;
+      webSocketSessionId?: string | null;
       /**
        * Format: uuid
        * @description Account ID of the player leaving.
@@ -22171,13 +22265,13 @@ export interface components {
       /** @description Latest schema version */
       latestVersion?: string | null;
     };
-    /** @description Request to list seed types for a game service. */
+    /** @description Request to list seed types, optionally filtered by game service. */
     ListSeedTypesRequest: {
       /**
        * Format: uuid
-       * @description Game service to list seed types for.
+       * @description Game service to filter seed types for. Null returns cross-game types.
        */
-      gameServiceId: string;
+      gameServiceId?: string | null;
       /**
        * @description Whether to include deprecated seed types in the response.
        * @default false
@@ -22570,6 +22664,14 @@ export interface components {
       deprecatedAt?: string | null;
       /** @description Optional reason for deprecation */
       deprecationReason?: string | null;
+      /** @description Optional spatial extent in world coordinates */
+      bounds?: components['schemas']['BoundingBox3D'] | null;
+      /** @description Precision level of spatial bounds */
+      boundsPrecision?: components['schemas']['BoundsPrecision'];
+      /** @description How this location's coordinate system relates to its parent */
+      coordinateMode?: components['schemas']['CoordinateMode'];
+      /** @description Origin point for local or inherited coordinate systems */
+      localOrigin?: components['schemas']['Position3D'] | null;
       /** @description Additional metadata for the location (JSON) */
       metadata?: {
         [key: string]: unknown;
@@ -24237,21 +24339,21 @@ export interface components {
      * @enum {string}
      */
     PoiType: 'Visual' | 'Auditory' | 'Environmental' | 'Portal' | 'Social';
-    /** @description 3D position in world coordinates */
+    /** @description Position in world coordinates (meters, Y-up, right-handed) */
     Position3D: {
       /**
        * Format: float
-       * @description X coordinate
+       * @description X coordinate in world space (meters)
        */
       x: number;
       /**
        * Format: float
-       * @description Y coordinate (typically vertical)
+       * @description Y coordinate (up axis) in world space (meters)
        */
       y: number;
       /**
        * Format: float
-       * @description Z coordinate
+       * @description Z coordinate in world space (meters)
        */
       z: number;
     };
@@ -24808,6 +24910,28 @@ export interface components {
       items: components['schemas']['QueryResultItem'][];
       /** @description Total matching */
       totalCount: number;
+    };
+    /** @description Request to find all locations containing a spatial position */
+    QueryLocationsByPositionRequest: {
+      /** @description Position to query in world coordinates */
+      position: components['schemas']['Position3D'];
+      /**
+       * Format: uuid
+       * @description Realm to search within
+       */
+      realmId: string;
+      /** @description Maximum hierarchy depth to search (null for all depths) */
+      maxDepth?: number | null;
+      /**
+       * @description Page number for pagination (1-indexed)
+       * @default 1
+       */
+      page: number;
+      /**
+       * @description Number of results per page
+       * @default 20
+       */
+      pageSize: number;
     };
     /** @description Query objects by type */
     QueryObjectsByTypeRequest: {
@@ -25737,9 +25861,9 @@ export interface components {
       seedTypeCode: string;
       /**
        * Format: uuid
-       * @description Game service this type is scoped to.
+       * @description Game service this type is scoped to. Null for cross-game seed types that are not scoped to any single game service.
        */
-      gameServiceId: string;
+      gameServiceId?: string | null;
       /** @description Human-readable name. */
       displayName: string;
       /** @description Description of what this seed type represents. */
@@ -27089,7 +27213,7 @@ export interface components {
       minGrowthPhase?: string | null;
       /** @description World connectivity mode */
       connectivityMode: components['schemas']['ConnectivityMode'];
-      /** @description Deployment phases where this template is available */
+      /** @description Deployment phases where this template is available. Always contains explicit values (never empty). */
       allowedPhases: components['schemas']['DeploymentPhase'][];
       /** @description Maximum concurrent active instances */
       maxConcurrentInstances: number;
@@ -27514,9 +27638,9 @@ export interface components {
       seedTypeCode: string;
       /**
        * Format: uuid
-       * @description Game service this seed is scoped to.
+       * @description Game service this seed is scoped to. Null for cross-game seed types.
        */
-      gameServiceId: string;
+      gameServiceId?: string | null;
       /**
        * Format: date-time
        * @description When the seed was created.
@@ -27568,9 +27692,9 @@ export interface components {
       seedTypeCode: string;
       /**
        * Format: uuid
-       * @description Game service scope.
+       * @description Game service scope. Null for cross-game seed types.
        */
-      gameServiceId: string;
+      gameServiceId?: string | null;
       /** @description Human-readable name. */
       displayName: string;
       /** @description Type description. */
@@ -29126,9 +29250,9 @@ export interface components {
       seedTypeCode: string;
       /**
        * Format: uuid
-       * @description The game service scope.
+       * @description The game service scope. Null for cross-game seed types.
        */
-      gameServiceId: string;
+      gameServiceId?: string | null;
     };
     /** @description Request to unlock a contract from guardian custody */
     UnlockContractRequest: {
@@ -29884,9 +30008,9 @@ export interface components {
       seedTypeCode: string;
       /**
        * Format: uuid
-       * @description The game service scope.
+       * @description The game service scope. Null for cross-game seed types.
        */
-      gameServiceId: string;
+      gameServiceId?: string | null;
       /** @description New display name. */
       displayName?: string | null;
       /** @description New description. */
@@ -38082,6 +38206,44 @@ export interface operations {
       };
     };
   };
+  deleteTemplate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DeleteTemplateRequest'];
+      };
+    };
+    responses: {
+      /** @description Template deleted */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ScenarioTemplateResponse'];
+        };
+      };
+      /** @description Template not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Template is not in Deprecated status */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   getPhaseConfig: {
     parameters: {
       query?: never;
@@ -40344,6 +40506,30 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['LocationExistsResponse'];
+        };
+      };
+    };
+  };
+  queryLocationsByPosition: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['QueryLocationsByPositionRequest'];
+      };
+    };
+    responses: {
+      /** @description Locations containing the position */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LocationListResponse'];
         };
       };
     };

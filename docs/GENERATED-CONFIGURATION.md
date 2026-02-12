@@ -556,7 +556,9 @@ This document lists all configuration options defined in Bannou's configuration 
 | `GARDENER_PROXIMITY_TRIGGER_MAX_HESITATION_RATIO` | double | `0.2` | Maximum hesitation ratio for proximity-based POI trigger mod... |
 | `GARDENER_RANDOM_WEIGHT` | double | `0.1` | Weight for randomness and discovery in scenario scoring |
 | `GARDENER_RECENT_SCENARIO_COOLDOWN_MINUTES` | int | `30` | Minutes before a completed scenario can be re-offered to the... |
+| `GARDENER_SCENARIO_HISTORY_QUERY_PAGE_SIZE` | int | `200` | Maximum number of scenario history records to load per orche... |
 | `GARDENER_SCENARIO_LIFECYCLE_WORKER_INTERVAL_SECONDS` | int | `30` | Seconds between scenario lifecycle worker evaluation cycles |
+| `GARDENER_SCENARIO_TEMPLATE_QUERY_PAGE_SIZE` | int | `500` | Maximum number of scenario templates to load per orchestrato... |
 | `GARDENER_SCENARIO_TIMEOUT_MINUTES` | int | `60` | Maximum scenario duration before forced completion in minute... |
 | `GARDENER_SEED_TYPE_CODE` | string | `guardian` | Which seed type code this gardener manages for player spirit... |
 
@@ -1080,9 +1082,9 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 818
+- **Total properties**: 820
 - **Required (no default)**: 51
-- **Optional (has default)**: 767
+- **Optional (has default)**: 769
 
 ## Environment Variable Naming Convention
 

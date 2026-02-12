@@ -29,12 +29,12 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Escrow Service API](#escrow) | `client.Escrow` | 22 | Full-custody orchestration layer for multi-party asset excha... |
 | [Bannou Game Service API](#game-service) | `client.GameService` | 5 | Registry service for game services that users can subscribe ... |
 | [Bannou Game Session Service API](#game-session) | `client.GameSession` | 11 | Minimal game session management for games. |
-| [Bannou Gardener Service API](#gardener) | `client.Gardener` | 23 | Player experience orchestration service (L4 GameFeatures) fo... |
+| [Bannou Gardener Service API](#gardener) | `client.Gardener` | 24 | Player experience orchestration service (L4 GameFeatures) fo... |
 | [Inventory Service API](#inventory) | `client.Inventory` | 16 | Container and inventory management service for games. |
 | [Item Service API](#item) | `client.Item` | 16 | Item template and instance management service. |
 | [Bannou Leaderboard Service API](#leaderboard) | `client.Leaderboard` | 12 | Real-time leaderboard management using Redis Sorted Sets for... |
 | [License Service API](#license) | `client.License` | 20 | Grid-based progression boards via itemized contracts. |
-| [Bannou Location Service API](#location) | `client.Location` | 19 | Location management service for game worlds. |
+| [Bannou Location Service API](#location) | `client.Location` | 20 | Location management service for game worlds. |
 | [Bannou Mapping Service API](#mapping) | `client.Mapping` | 18 | Spatial data management service for game worlds. |
 | [Bannou Matchmaking Service API](#matchmaking) | `client.Matchmaking` | 11 | Matchmaking service for competitive and casual game matching... |
 | [Bannou Mesh Service API](#mesh) | `client.Mesh` | 8 | Native service mesh plugin providing direct service-to-servi... |
@@ -1085,6 +1085,7 @@ Player experience orchestration service (L4 GameFeatures) for garden navigation,
 | `ListTemplatesAsync` | `ListTemplatesRequest` | `ListTemplatesResponse` | List scenario templates |
 | `UpdateTemplateAsync` | `UpdateTemplateRequest` | `ScenarioTemplateResponse` | Update scenario template |
 | `DeprecatetemplateAsync` | `DeprecateTemplateRequest` | `ScenarioTemplateResponse` | Deprecate scenario template |
+| `DeleteTemplateAsync` | `DeleteTemplateRequest` | `ScenarioTemplateResponse` | Delete scenario template |
 
 ---
 
@@ -1279,6 +1280,7 @@ Location management service for game worlds.
 | `ValidateTerritoryAsync` | `ValidateTerritoryRequest` | `ValidateTerritoryResponse` | Validate location against territory boundaries |
 | `GetLocationdescendantsAsync` | `GetLocationDescendantsRequest` | `LocationListResponse` | Get all descendants of a location |
 | `LocationexistsAsync` | `LocationExistsRequest` | `LocationExistsResponse` | Check if location exists and is active |
+| `QuerylocationsbypositionAsync` | `QueryLocationsByPositionRequest` | `LocationListResponse` | Find locations containing a spatial position |
 
 ### Location Admin
 
@@ -2180,7 +2182,7 @@ Public-facing website service for registration, information, and account managem
 ## Summary
 
 - **Total services**: 49
-- **Total methods**: 741
+- **Total methods**: 743
 
 ---
 

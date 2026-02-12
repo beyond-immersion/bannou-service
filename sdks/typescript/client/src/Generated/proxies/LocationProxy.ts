@@ -205,4 +205,22 @@ export class LocationProxy {
       Schemas['LocationExistsResponse']
     >('/location/exists', request, channel, timeout);
   }
+
+  /**
+   * Find locations containing a spatial position
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async queryLocationsByPositionAsync(
+    request: Schemas['QueryLocationsByPositionRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['LocationListResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['QueryLocationsByPositionRequest'],
+      Schemas['LocationListResponse']
+    >('/location/query/by-position', request, channel, timeout);
+  }
 }

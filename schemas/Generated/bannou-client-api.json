@@ -9751,6 +9751,50 @@
         }
       }
     },
+    "/gardener/template/delete": {
+      "post": {
+        "summary": "Delete scenario template",
+        "description": "Permanently deletes a scenario template. Template must be in Deprecated status before deletion. Publishes a scenario-template.deleted lifecycle event.",
+        "operationId": "deleteTemplate",
+        "tags": [
+          "Template Management"
+        ],
+        "x-permissions": [
+          {
+            "role": "developer",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteTemplateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Template deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioTemplateResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Template not found"
+          },
+          "409": {
+            "description": "Template is not in Deprecated status"
+          }
+        }
+      }
+    },
     "/gardener/phase/get": {
       "post": {
         "summary": "Get deployment phase configuration",
@@ -12648,6 +12692,44 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/LocationExistsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/location/query/by-position": {
+      "post": {
+        "summary": "Find locations containing a spatial position",
+        "description": "Given a Position3D and realmId, returns all locations whose bounds contain\nthat position, ordered by depth descending (most specific first). Only\nlocations with spatial bounds data are considered. A position is \"in\" a\nlocation if it falls within the location's axis-aligned bounding box.\n",
+        "operationId": "queryLocationsByPosition",
+        "tags": [
+          "Location"
+        ],
+        "x-permissions": [
+          {
+            "role": "user",
+            "states": {}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QueryLocationsByPositionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Locations containing the position",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocationListResponse"
                 }
               }
             }
@@ -22815,6 +22897,51 @@
           }
         }
       },
+      "BoundingBox3D": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Axis-aligned bounding box in world coordinates (meters, Y-up, right-handed)",
+        "required": [
+          "minX",
+          "minY",
+          "minZ",
+          "maxX",
+          "maxY",
+          "maxZ"
+        ],
+        "properties": {
+          "minX": {
+            "type": "number",
+            "format": "float",
+            "description": "Minimum X bound in world space"
+          },
+          "minY": {
+            "type": "number",
+            "format": "float",
+            "description": "Minimum Y bound in world space"
+          },
+          "minZ": {
+            "type": "number",
+            "format": "float",
+            "description": "Minimum Z bound in world space"
+          },
+          "maxX": {
+            "type": "number",
+            "format": "float",
+            "description": "Maximum X bound in world space"
+          },
+          "maxY": {
+            "type": "number",
+            "format": "float",
+            "description": "Maximum Y bound in world space"
+          },
+          "maxZ": {
+            "type": "number",
+            "format": "float",
+            "description": "Maximum Z bound in world space"
+          }
+        }
+      },
       "Bounds": {
         "type": "object",
         "description": "An axis-aligned bounding box in 3D space",
@@ -22832,6 +22959,15 @@
             "description": "Maximum corner (highest x, y, z values)"
           }
         }
+      },
+      "BoundsPrecision": {
+        "type": "string",
+        "description": "Precision level of spatial bounds for a location",
+        "enum": [
+          "exact",
+          "approximate",
+          "none"
+        ]
       },
       "BreachResponse": {
         "type": "object",
@@ -27731,6 +27867,15 @@
           }
         }
       },
+      "CoordinateMode": {
+        "type": "string",
+        "description": "How this location's coordinate system relates to its parent",
+        "enum": [
+          "inherit",
+          "local",
+          "portal"
+        ]
+      },
       "Coordinates": {
         "type": "object",
         "additionalProperties": false,
@@ -29730,8 +29875,7 @@
         "required": [
           "ownerId",
           "ownerType",
-          "seedTypeCode",
-          "gameServiceId"
+          "seedTypeCode"
         ],
         "properties": {
           "ownerId": {
@@ -29750,7 +29894,8 @@
           "gameServiceId": {
             "type": "string",
             "format": "uuid",
-            "description": "Game service this seed is scoped to."
+            "nullable": true,
+            "description": "Game service this seed is scoped to. Null for cross-game seed types that are not scoped to any single game service."
           },
           "displayName": {
             "type": "string",
@@ -29853,8 +29998,7 @@
           "displayName",
           "description",
           "category",
-          "domainWeights",
-          "allowedPhases"
+          "domainWeights"
         ],
         "properties": {
           "code": {
@@ -29897,10 +30041,11 @@
           },
           "allowedPhases": {
             "type": "array",
+            "nullable": true,
             "items": {
               "$ref": "#/components/schemas/DeploymentPhase"
             },
-            "description": "Deployment phases in which this template is available"
+            "description": "Deployment phases in which this template is available. Null or empty means available in all phases."
           },
           "maxConcurrentInstances": {
             "type": "integer",
@@ -30918,8 +31063,7 @@
         "description": "Request to hard-delete a deprecated seed type with no remaining non-archived seeds.",
         "additionalProperties": false,
         "required": [
-          "seedTypeCode",
-          "gameServiceId"
+          "seedTypeCode"
         ],
         "properties": {
           "seedTypeCode": {
@@ -30929,7 +31073,8 @@
           "gameServiceId": {
             "type": "string",
             "format": "uuid",
-            "description": "The game service scope."
+            "nullable": true,
+            "description": "The game service scope. Null for cross-game seed types."
           }
         }
       },
@@ -30986,6 +31131,20 @@
             "type": "integer",
             "format": "int64",
             "description": "Storage freed in bytes"
+          }
+        }
+      },
+      "DeleteTemplateRequest": {
+        "type": "object",
+        "description": "Request to permanently delete a deprecated template",
+        "required": [
+          "scenarioTemplateId"
+        ],
+        "properties": {
+          "scenarioTemplateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Template ID to delete"
           }
         }
       },
@@ -31182,8 +31341,7 @@
         "description": "Request to deprecate a seed type, preventing new seed creation.",
         "additionalProperties": false,
         "required": [
-          "seedTypeCode",
-          "gameServiceId"
+          "seedTypeCode"
         ],
         "properties": {
           "seedTypeCode": {
@@ -31193,7 +31351,8 @@
           "gameServiceId": {
             "type": "string",
             "format": "uuid",
-            "description": "The game service scope."
+            "nullable": true,
+            "description": "The game service scope. Null for cross-game seed types."
           },
           "reason": {
             "type": "string",
@@ -37437,8 +37596,7 @@
         "type": "object",
         "description": "Request to get a seed type definition.",
         "required": [
-          "seedTypeCode",
-          "gameServiceId"
+          "seedTypeCode"
         ],
         "properties": {
           "seedTypeCode": {
@@ -37448,7 +37606,8 @@
           "gameServiceId": {
             "type": "string",
             "format": "uuid",
-            "description": "The game service scope."
+            "nullable": true,
+            "description": "The game service scope. Null for cross-game seed types."
           }
         }
       },
@@ -39892,7 +40051,6 @@
         "description": "Request to leave a specific game session by ID",
         "additionalProperties": false,
         "required": [
-          "webSocketSessionId",
           "accountId",
           "gameSessionId"
         ],
@@ -39900,7 +40058,8 @@
           "webSocketSessionId": {
             "type": "string",
             "format": "uuid",
-            "description": "WebSocket session ID of the client leaving."
+            "nullable": true,
+            "description": "WebSocket session ID of the client leaving. Null for server-side cleanup operations (e.g., scenario lifecycle worker) where no real WebSocket session exists."
           },
           "accountId": {
             "type": "string",
@@ -42318,15 +42477,13 @@
       },
       "ListSeedTypesRequest": {
         "type": "object",
-        "description": "Request to list seed types for a game service.",
-        "required": [
-          "gameServiceId"
-        ],
+        "description": "Request to list seed types, optionally filtered by game service.",
         "properties": {
           "gameServiceId": {
             "type": "string",
             "format": "uuid",
-            "description": "Game service to list seed types for."
+            "nullable": true,
+            "description": "Game service to filter seed types for. Null returns cross-game types."
           },
           "includeDeprecated": {
             "type": "boolean",
@@ -43106,6 +43263,40 @@
             "type": "string",
             "nullable": true,
             "description": "Optional reason for deprecation"
+          },
+          "bounds": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoundingBox3D"
+              }
+            ],
+            "nullable": true,
+            "description": "Optional spatial extent in world coordinates"
+          },
+          "boundsPrecision": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoundsPrecision"
+              }
+            ],
+            "description": "Precision level of spatial bounds"
+          },
+          "coordinateMode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CoordinateMode"
+              }
+            ],
+            "description": "How this location's coordinate system relates to its parent"
+          },
+          "localOrigin": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Position3D"
+              }
+            ],
+            "nullable": true,
+            "description": "Origin point for local or inherited coordinate systems"
           },
           "metadata": {
             "type": "object",
@@ -46284,7 +46475,7 @@
       "Position3D": {
         "type": "object",
         "additionalProperties": false,
-        "description": "3D position in world coordinates",
+        "description": "Position in world coordinates (meters, Y-up, right-handed)",
         "required": [
           "x",
           "y",
@@ -46294,17 +46485,17 @@
           "x": {
             "type": "number",
             "format": "float",
-            "description": "X coordinate"
+            "description": "X coordinate in world space (meters)"
           },
           "y": {
             "type": "number",
             "format": "float",
-            "description": "Y coordinate (typically vertical)"
+            "description": "Y coordinate (up axis) in world space (meters)"
           },
           "z": {
             "type": "number",
             "format": "float",
-            "description": "Z coordinate"
+            "description": "Z coordinate in world space (meters)"
           }
         }
       },
@@ -47455,6 +47646,45 @@
           "totalCount": {
             "type": "integer",
             "description": "Total matching"
+          }
+        }
+      },
+      "QueryLocationsByPositionRequest": {
+        "description": "Request to find all locations containing a spatial position",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "position",
+          "realmId"
+        ],
+        "properties": {
+          "position": {
+            "$ref": "#/components/schemas/Position3D",
+            "description": "Position to query in world coordinates"
+          },
+          "realmId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Realm to search within"
+          },
+          "maxDepth": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true,
+            "description": "Maximum hierarchy depth to search (null for all depths)"
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1,
+            "description": "Page number for pagination (1-indexed)"
+          },
+          "pageSize": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 20,
+            "description": "Number of results per page"
           }
         }
       },
@@ -49279,7 +49509,6 @@
         "description": "Request to register a new seed type definition.",
         "required": [
           "seedTypeCode",
-          "gameServiceId",
           "displayName",
           "description",
           "maxPerOwner",
@@ -49296,7 +49525,8 @@
           "gameServiceId": {
             "type": "string",
             "format": "uuid",
-            "description": "Game service this type is scoped to."
+            "nullable": true,
+            "description": "Game service this type is scoped to. Null for cross-game seed types that are not scoped to any single game service."
           },
           "displayName": {
             "type": "string",
@@ -51860,7 +52090,7 @@
             "items": {
               "$ref": "#/components/schemas/DeploymentPhase"
             },
-            "description": "Deployment phases where this template is available"
+            "description": "Deployment phases where this template is available. Always contains explicit values (never empty)."
           },
           "maxConcurrentInstances": {
             "type": "integer",
@@ -52612,7 +52842,6 @@
           "ownerId",
           "ownerType",
           "seedTypeCode",
-          "gameServiceId",
           "createdAt",
           "growthPhase",
           "totalGrowth",
@@ -52641,7 +52870,8 @@
           "gameServiceId": {
             "type": "string",
             "format": "uuid",
-            "description": "Game service this seed is scoped to."
+            "nullable": true,
+            "description": "Game service this seed is scoped to. Null for cross-game seed types."
           },
           "createdAt": {
             "type": "string",
@@ -52711,7 +52941,6 @@
         "description": "Full seed type definition response.",
         "required": [
           "seedTypeCode",
-          "gameServiceId",
           "displayName",
           "description",
           "maxPerOwner",
@@ -52729,7 +52958,8 @@
           "gameServiceId": {
             "type": "string",
             "format": "uuid",
-            "description": "Game service scope."
+            "nullable": true,
+            "description": "Game service scope. Null for cross-game seed types."
           },
           "displayName": {
             "type": "string",
@@ -55735,8 +55965,7 @@
         "description": "Request to restore a deprecated seed type to active status.",
         "additionalProperties": false,
         "required": [
-          "seedTypeCode",
-          "gameServiceId"
+          "seedTypeCode"
         ],
         "properties": {
           "seedTypeCode": {
@@ -55746,7 +55975,8 @@
           "gameServiceId": {
             "type": "string",
             "format": "uuid",
-            "description": "The game service scope."
+            "nullable": true,
+            "description": "The game service scope. Null for cross-game seed types."
           }
         }
       },
@@ -57404,8 +57634,7 @@
         "type": "object",
         "description": "Request to update a seed type definition.",
         "required": [
-          "seedTypeCode",
-          "gameServiceId"
+          "seedTypeCode"
         ],
         "properties": {
           "seedTypeCode": {
@@ -57415,7 +57644,8 @@
           "gameServiceId": {
             "type": "string",
             "format": "uuid",
-            "description": "The game service scope."
+            "nullable": true,
+            "description": "The game service scope. Null for cross-game seed types."
           },
           "displayName": {
             "type": "string",

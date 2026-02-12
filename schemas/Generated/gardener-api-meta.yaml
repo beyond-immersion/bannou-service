@@ -893,49 +893,50 @@ paths:
         ,\n    \"$defs\": {\n        \"CreateTemplateRequest\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Request to create a scenario template\",\n            \"required\": [\n                \"code\",\n           \
         \     \"displayName\",\n                \"description\",\n                \"category\",\n                \"domainWeights\"\
-        ,\n                \"allowedPhases\"\n            ],\n            \"properties\": {\n                \"code\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"Unique template code for reference\"\
-        \n                },\n                \"displayName\": {\n                    \"type\": \"string\",\n            \
-        \        \"description\": \"Human-readable template name\"\n                },\n                \"description\": {\n\
-        \                    \"type\": \"string\",\n                    \"description\": \"Template description\"\n      \
-        \          },\n                \"category\": {\n                    \"$ref\": \"#/$defs/ScenarioCategory\",\n    \
-        \                \"description\": \"Primary gameplay category\"\n                },\n                \"subcategory\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Optional subcategory within the primary category\"\n                },\n                \"domainWeights\": {\n\
-        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"\
-        #/$defs/DomainWeight\"\n                    },\n                    \"description\": \"Growth domain weights awarded
-        on completion\"\n                },\n                \"minGrowthPhase\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Minimum seed growth phase for soft-gating
-        scenario availability\"\n                },\n                \"connectivityMode\": {\n                    \"$ref\"\
-        : \"#/$defs/ConnectivityMode\",\n                    \"description\": \"How this scenario connects to the game world\"\
-        ,\n                    \"default\": \"Isolated\"\n                },\n                \"allowedPhases\": {\n     \
-        \               \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/DeploymentPhase\"\
-        \n                    },\n                    \"description\": \"Deployment phases in which this template is available\"\
-        \n                },\n                \"maxConcurrentInstances\": {\n                    \"type\": \"integer\",\n\
-        \                    \"default\": 100,\n                    \"description\": \"Maximum concurrent active instances
-        of this template\"\n                },\n                \"estimatedDurationMinutes\": {\n                    \"type\"\
-        : \"integer\",\n                    \"nullable\": true,\n                    \"description\": \"Estimated scenario
-        duration in minutes\"\n                },\n                \"prerequisites\": {\n                    \"$ref\": \"\
-        #/$defs/ScenarioPrerequisites\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Requirements that must be met before entering\"\n                },\n                \"chaining\": {\n           \
-        \         \"$ref\": \"#/$defs/ScenarioChaining\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"Chaining configuration\"\n                },\n                \"multiplayer\": {\n              \
-        \      \"$ref\": \"#/$defs/ScenarioMultiplayer\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"Multiplayer support configuration\"\n                },\n                \"content\": {\n       \
-        \             \"$ref\": \"#/$defs/ScenarioContent\",\n                    \"nullable\": true,\n                  \
-        \  \"description\": \"Game content references\"\n                }\n            }\n        },\n        \"ScenarioCategory\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Combat\",\n                \"Crafting\"\
-        ,\n                \"Social\",\n                \"Trade\",\n                \"Exploration\",\n                \"Magic\"\
-        ,\n                \"Survival\",\n                \"Mixed\",\n                \"Narrative\",\n                \"Tutorial\"\
-        \n            ],\n            \"description\": \"Primary gameplay category for a scenario template\"\n        },\n\
-        \        \"DomainWeight\": {\n            \"type\": \"object\",\n            \"description\": \"Domain name and weight
-        pair for scenario template growth weighting\",\n            \"required\": [\n                \"domain\",\n       \
-        \         \"weight\"\n            ],\n            \"properties\": {\n                \"domain\": {\n             \
-        \       \"type\": \"string\",\n                    \"description\": \"Growth domain path (e.g. combat.melee, exploration.caves)\"\
-        \n                },\n                \"weight\": {\n                    \"type\": \"number\",\n                 \
-        \   \"format\": \"float\",\n                    \"description\": \"Weight applied to this domain on scenario completion\"\
-        \n                }\n            }\n        },\n        \"ConnectivityMode\": {\n            \"type\": \"string\"\
-        ,\n            \"enum\": [\n                \"Isolated\",\n                \"WorldSlice\",\n                \"Persistent\"\
+        \n            ],\n            \"properties\": {\n                \"code\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Unique template code for reference\"\n                },\n             \
+        \   \"displayName\": {\n                    \"type\": \"string\",\n                    \"description\": \"Human-readable
+        template name\"\n                },\n                \"description\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Template description\"\n                },\n                \"category\"\
+        : {\n                    \"$ref\": \"#/$defs/ScenarioCategory\",\n                    \"description\": \"Primary gameplay
+        category\"\n                },\n                \"subcategory\": {\n                    \"type\": \"string\",\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"Optional subcategory within the primary
+        category\"\n                },\n                \"domainWeights\": {\n                    \"type\": \"array\",\n \
+        \                   \"items\": {\n                        \"$ref\": \"#/$defs/DomainWeight\"\n                   \
+        \ },\n                    \"description\": \"Growth domain weights awarded on completion\"\n                },\n \
+        \               \"minGrowthPhase\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Minimum seed growth phase for soft-gating scenario availability\"\n\
+        \                },\n                \"connectivityMode\": {\n                    \"$ref\": \"#/$defs/ConnectivityMode\"\
+        ,\n                    \"description\": \"How this scenario connects to the game world\",\n                    \"\
+        default\": \"Isolated\"\n                },\n                \"allowedPhases\": {\n                    \"type\": \"\
+        array\",\n                    \"nullable\": true,\n                    \"items\": {\n                        \"$ref\"\
+        : \"#/$defs/DeploymentPhase\"\n                    },\n                    \"description\": \"Deployment phases in
+        which this template is available. Null or empty means available in all phases.\"\n                },\n           \
+        \     \"maxConcurrentInstances\": {\n                    \"type\": \"integer\",\n                    \"default\":
+        100,\n                    \"description\": \"Maximum concurrent active instances of this template\"\n            \
+        \    },\n                \"estimatedDurationMinutes\": {\n                    \"type\": \"integer\",\n           \
+        \         \"nullable\": true,\n                    \"description\": \"Estimated scenario duration in minutes\"\n \
+        \               },\n                \"prerequisites\": {\n                    \"$ref\": \"#/$defs/ScenarioPrerequisites\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Requirements that must be met before
+        entering\"\n                },\n                \"chaining\": {\n                    \"$ref\": \"#/$defs/ScenarioChaining\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Chaining configuration\"\n    \
+        \            },\n                \"multiplayer\": {\n                    \"$ref\": \"#/$defs/ScenarioMultiplayer\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Multiplayer support configuration\"\
+        \n                },\n                \"content\": {\n                    \"$ref\": \"#/$defs/ScenarioContent\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Game content references\"\n     \
+        \           }\n            }\n        },\n        \"ScenarioCategory\": {\n            \"type\": \"string\",\n   \
+        \         \"enum\": [\n                \"Combat\",\n                \"Crafting\",\n                \"Social\",\n \
+        \               \"Trade\",\n                \"Exploration\",\n                \"Magic\",\n                \"Survival\"\
+        ,\n                \"Mixed\",\n                \"Narrative\",\n                \"Tutorial\"\n            ],\n    \
+        \        \"description\": \"Primary gameplay category for a scenario template\"\n        },\n        \"DomainWeight\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Domain name and weight pair for scenario template
+        growth weighting\",\n            \"required\": [\n                \"domain\",\n                \"weight\"\n      \
+        \      ],\n            \"properties\": {\n                \"domain\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Growth domain path (e.g. combat.melee, exploration.caves)\"\n          \
+        \      },\n                \"weight\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"float\",\n                    \"description\": \"Weight applied to this domain on scenario completion\"\n    \
+        \            }\n            }\n        },\n        \"ConnectivityMode\": {\n            \"type\": \"string\",\n  \
+        \          \"enum\": [\n                \"Isolated\",\n                \"WorldSlice\",\n                \"Persistent\"\
         \n            ],\n            \"description\": \"How a scenario instance connects to the broader game world\"\n  \
         \      },\n        \"DeploymentPhase\": {\n            \"type\": \"string\",\n            \"enum\": [\n          \
         \      \"Alpha\",\n                \"Beta\",\n                \"Release\"\n            ],\n            \"description\"\
@@ -1007,29 +1008,30 @@ paths:
         \ \"$ref\": \"#/$defs/ConnectivityMode\",\n                    \"description\": \"World connectivity mode\"\n    \
         \            },\n                \"allowedPhases\": {\n                    \"type\": \"array\",\n                \
         \    \"items\": {\n                        \"$ref\": \"#/$defs/DeploymentPhase\"\n                    },\n       \
-        \             \"description\": \"Deployment phases where this template is available\"\n                },\n      \
-        \          \"maxConcurrentInstances\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Maximum concurrent active instances\"\n                },\n                \"estimatedDurationMinutes\": {\n \
-        \                   \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Estimated scenario duration in minutes\"\n                },\n                \"prerequisites\": {\n         \
-        \           \"$ref\": \"#/$defs/ScenarioPrerequisites\",\n                    \"nullable\": true,\n              \
-        \      \"description\": \"Entry requirements\"\n                },\n                \"chaining\": {\n            \
-        \        \"$ref\": \"#/$defs/ScenarioChaining\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"Chaining configuration\"\n                },\n                \"multiplayer\": {\n              \
-        \      \"$ref\": \"#/$defs/ScenarioMultiplayer\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"Multiplayer support\"\n                },\n                \"content\": {\n                    \"\
-        $ref\": \"#/$defs/ScenarioContent\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Content references\"\n                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/TemplateStatus\"\
-        ,\n                    \"description\": \"Current lifecycle status\"\n                },\n                \"createdAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"When this template was created\"\n                },\n                \"updatedAt\": {\n  \
-        \                  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When this template was last updated\"\n                }\n            }\n        },\n        \"ScenarioCategory\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Combat\",\n                \"Crafting\"\
-        ,\n                \"Social\",\n                \"Trade\",\n                \"Exploration\",\n                \"Magic\"\
-        ,\n                \"Survival\",\n                \"Mixed\",\n                \"Narrative\",\n                \"Tutorial\"\
-        \n            ],\n            \"description\": \"Primary gameplay category for a scenario template\"\n        },\n\
-        \        \"DomainWeight\": {\n            \"type\": \"object\",\n            \"description\": \"Domain name and weight
+        \             \"description\": \"Deployment phases where this template is available. Always contains explicit values
+        (never empty).\"\n                },\n                \"maxConcurrentInstances\": {\n                    \"type\"\
+        : \"integer\",\n                    \"description\": \"Maximum concurrent active instances\"\n                },\n\
+        \                \"estimatedDurationMinutes\": {\n                    \"type\": \"integer\",\n                   \
+        \ \"nullable\": true,\n                    \"description\": \"Estimated scenario duration in minutes\"\n         \
+        \       },\n                \"prerequisites\": {\n                    \"$ref\": \"#/$defs/ScenarioPrerequisites\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Entry requirements\"\n        \
+        \        },\n                \"chaining\": {\n                    \"$ref\": \"#/$defs/ScenarioChaining\",\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Chaining configuration\"\n            \
+        \    },\n                \"multiplayer\": {\n                    \"$ref\": \"#/$defs/ScenarioMultiplayer\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Multiplayer support\"\n             \
+        \   },\n                \"content\": {\n                    \"$ref\": \"#/$defs/ScenarioContent\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"Content references\"\n                },\n   \
+        \             \"status\": {\n                    \"$ref\": \"#/$defs/TemplateStatus\",\n                    \"description\"\
+        : \"Current lifecycle status\"\n                },\n                \"createdAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When this template
+        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"date-time\",\n                    \"description\": \"When this template was last
+        updated\"\n                }\n            }\n        },\n        \"ScenarioCategory\": {\n            \"type\": \"\
+        string\",\n            \"enum\": [\n                \"Combat\",\n                \"Crafting\",\n                \"\
+        Social\",\n                \"Trade\",\n                \"Exploration\",\n                \"Magic\",\n            \
+        \    \"Survival\",\n                \"Mixed\",\n                \"Narrative\",\n                \"Tutorial\"\n   \
+        \         ],\n            \"description\": \"Primary gameplay category for a scenario template\"\n        },\n   \
+        \     \"DomainWeight\": {\n            \"type\": \"object\",\n            \"description\": \"Domain name and weight
         pair for scenario template growth weighting\",\n            \"required\": [\n                \"domain\",\n       \
         \         \"weight\"\n            ],\n            \"properties\": {\n                \"domain\": {\n             \
         \       \"type\": \"string\",\n                    \"description\": \"Growth domain path (e.g. combat.melee, exploration.caves)\"\
@@ -1145,29 +1147,30 @@ paths:
         \ \"$ref\": \"#/$defs/ConnectivityMode\",\n                    \"description\": \"World connectivity mode\"\n    \
         \            },\n                \"allowedPhases\": {\n                    \"type\": \"array\",\n                \
         \    \"items\": {\n                        \"$ref\": \"#/$defs/DeploymentPhase\"\n                    },\n       \
-        \             \"description\": \"Deployment phases where this template is available\"\n                },\n      \
-        \          \"maxConcurrentInstances\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Maximum concurrent active instances\"\n                },\n                \"estimatedDurationMinutes\": {\n \
-        \                   \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Estimated scenario duration in minutes\"\n                },\n                \"prerequisites\": {\n         \
-        \           \"$ref\": \"#/$defs/ScenarioPrerequisites\",\n                    \"nullable\": true,\n              \
-        \      \"description\": \"Entry requirements\"\n                },\n                \"chaining\": {\n            \
-        \        \"$ref\": \"#/$defs/ScenarioChaining\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"Chaining configuration\"\n                },\n                \"multiplayer\": {\n              \
-        \      \"$ref\": \"#/$defs/ScenarioMultiplayer\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"Multiplayer support\"\n                },\n                \"content\": {\n                    \"\
-        $ref\": \"#/$defs/ScenarioContent\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Content references\"\n                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/TemplateStatus\"\
-        ,\n                    \"description\": \"Current lifecycle status\"\n                },\n                \"createdAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"When this template was created\"\n                },\n                \"updatedAt\": {\n  \
-        \                  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When this template was last updated\"\n                }\n            }\n        },\n        \"ScenarioCategory\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Combat\",\n                \"Crafting\"\
-        ,\n                \"Social\",\n                \"Trade\",\n                \"Exploration\",\n                \"Magic\"\
-        ,\n                \"Survival\",\n                \"Mixed\",\n                \"Narrative\",\n                \"Tutorial\"\
-        \n            ],\n            \"description\": \"Primary gameplay category for a scenario template\"\n        },\n\
-        \        \"DomainWeight\": {\n            \"type\": \"object\",\n            \"description\": \"Domain name and weight
+        \             \"description\": \"Deployment phases where this template is available. Always contains explicit values
+        (never empty).\"\n                },\n                \"maxConcurrentInstances\": {\n                    \"type\"\
+        : \"integer\",\n                    \"description\": \"Maximum concurrent active instances\"\n                },\n\
+        \                \"estimatedDurationMinutes\": {\n                    \"type\": \"integer\",\n                   \
+        \ \"nullable\": true,\n                    \"description\": \"Estimated scenario duration in minutes\"\n         \
+        \       },\n                \"prerequisites\": {\n                    \"$ref\": \"#/$defs/ScenarioPrerequisites\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Entry requirements\"\n        \
+        \        },\n                \"chaining\": {\n                    \"$ref\": \"#/$defs/ScenarioChaining\",\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Chaining configuration\"\n            \
+        \    },\n                \"multiplayer\": {\n                    \"$ref\": \"#/$defs/ScenarioMultiplayer\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Multiplayer support\"\n             \
+        \   },\n                \"content\": {\n                    \"$ref\": \"#/$defs/ScenarioContent\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"Content references\"\n                },\n   \
+        \             \"status\": {\n                    \"$ref\": \"#/$defs/TemplateStatus\",\n                    \"description\"\
+        : \"Current lifecycle status\"\n                },\n                \"createdAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When this template
+        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"date-time\",\n                    \"description\": \"When this template was last
+        updated\"\n                }\n            }\n        },\n        \"ScenarioCategory\": {\n            \"type\": \"\
+        string\",\n            \"enum\": [\n                \"Combat\",\n                \"Crafting\",\n                \"\
+        Social\",\n                \"Trade\",\n                \"Exploration\",\n                \"Magic\",\n            \
+        \    \"Survival\",\n                \"Mixed\",\n                \"Narrative\",\n                \"Tutorial\"\n   \
+        \         ],\n            \"description\": \"Primary gameplay category for a scenario template\"\n        },\n   \
+        \     \"DomainWeight\": {\n            \"type\": \"object\",\n            \"description\": \"Domain name and weight
         pair for scenario template growth weighting\",\n            \"required\": [\n                \"domain\",\n       \
         \         \"weight\"\n            ],\n            \"properties\": {\n                \"domain\": {\n             \
         \       \"type\": \"string\",\n                    \"description\": \"Growth domain path (e.g. combat.melee, exploration.caves)\"\
@@ -1282,29 +1285,30 @@ paths:
         \ \"$ref\": \"#/$defs/ConnectivityMode\",\n                    \"description\": \"World connectivity mode\"\n    \
         \            },\n                \"allowedPhases\": {\n                    \"type\": \"array\",\n                \
         \    \"items\": {\n                        \"$ref\": \"#/$defs/DeploymentPhase\"\n                    },\n       \
-        \             \"description\": \"Deployment phases where this template is available\"\n                },\n      \
-        \          \"maxConcurrentInstances\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Maximum concurrent active instances\"\n                },\n                \"estimatedDurationMinutes\": {\n \
-        \                   \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Estimated scenario duration in minutes\"\n                },\n                \"prerequisites\": {\n         \
-        \           \"$ref\": \"#/$defs/ScenarioPrerequisites\",\n                    \"nullable\": true,\n              \
-        \      \"description\": \"Entry requirements\"\n                },\n                \"chaining\": {\n            \
-        \        \"$ref\": \"#/$defs/ScenarioChaining\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"Chaining configuration\"\n                },\n                \"multiplayer\": {\n              \
-        \      \"$ref\": \"#/$defs/ScenarioMultiplayer\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"Multiplayer support\"\n                },\n                \"content\": {\n                    \"\
-        $ref\": \"#/$defs/ScenarioContent\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Content references\"\n                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/TemplateStatus\"\
-        ,\n                    \"description\": \"Current lifecycle status\"\n                },\n                \"createdAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"When this template was created\"\n                },\n                \"updatedAt\": {\n  \
-        \                  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When this template was last updated\"\n                }\n            }\n        },\n        \"ScenarioCategory\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Combat\",\n                \"Crafting\"\
-        ,\n                \"Social\",\n                \"Trade\",\n                \"Exploration\",\n                \"Magic\"\
-        ,\n                \"Survival\",\n                \"Mixed\",\n                \"Narrative\",\n                \"Tutorial\"\
-        \n            ],\n            \"description\": \"Primary gameplay category for a scenario template\"\n        },\n\
-        \        \"DomainWeight\": {\n            \"type\": \"object\",\n            \"description\": \"Domain name and weight
+        \             \"description\": \"Deployment phases where this template is available. Always contains explicit values
+        (never empty).\"\n                },\n                \"maxConcurrentInstances\": {\n                    \"type\"\
+        : \"integer\",\n                    \"description\": \"Maximum concurrent active instances\"\n                },\n\
+        \                \"estimatedDurationMinutes\": {\n                    \"type\": \"integer\",\n                   \
+        \ \"nullable\": true,\n                    \"description\": \"Estimated scenario duration in minutes\"\n         \
+        \       },\n                \"prerequisites\": {\n                    \"$ref\": \"#/$defs/ScenarioPrerequisites\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Entry requirements\"\n        \
+        \        },\n                \"chaining\": {\n                    \"$ref\": \"#/$defs/ScenarioChaining\",\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Chaining configuration\"\n            \
+        \    },\n                \"multiplayer\": {\n                    \"$ref\": \"#/$defs/ScenarioMultiplayer\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Multiplayer support\"\n             \
+        \   },\n                \"content\": {\n                    \"$ref\": \"#/$defs/ScenarioContent\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"Content references\"\n                },\n   \
+        \             \"status\": {\n                    \"$ref\": \"#/$defs/TemplateStatus\",\n                    \"description\"\
+        : \"Current lifecycle status\"\n                },\n                \"createdAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When this template
+        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"date-time\",\n                    \"description\": \"When this template was last
+        updated\"\n                }\n            }\n        },\n        \"ScenarioCategory\": {\n            \"type\": \"\
+        string\",\n            \"enum\": [\n                \"Combat\",\n                \"Crafting\",\n                \"\
+        Social\",\n                \"Trade\",\n                \"Exploration\",\n                \"Magic\",\n            \
+        \    \"Survival\",\n                \"Mixed\",\n                \"Narrative\",\n                \"Tutorial\"\n   \
+        \         ],\n            \"description\": \"Primary gameplay category for a scenario template\"\n        },\n   \
+        \     \"DomainWeight\": {\n            \"type\": \"object\",\n            \"description\": \"Domain name and weight
         pair for scenario template growth weighting\",\n            \"required\": [\n                \"domain\",\n       \
         \         \"weight\"\n            ],\n            \"properties\": {\n                \"domain\": {\n             \
         \       \"type\": \"string\",\n                    \"description\": \"Growth domain path (e.g. combat.melee, exploration.caves)\"\
@@ -1449,29 +1453,30 @@ paths:
         \ \"$ref\": \"#/$defs/ConnectivityMode\",\n                    \"description\": \"World connectivity mode\"\n    \
         \            },\n                \"allowedPhases\": {\n                    \"type\": \"array\",\n                \
         \    \"items\": {\n                        \"$ref\": \"#/$defs/DeploymentPhase\"\n                    },\n       \
-        \             \"description\": \"Deployment phases where this template is available\"\n                },\n      \
-        \          \"maxConcurrentInstances\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Maximum concurrent active instances\"\n                },\n                \"estimatedDurationMinutes\": {\n \
-        \                   \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Estimated scenario duration in minutes\"\n                },\n                \"prerequisites\": {\n         \
-        \           \"$ref\": \"#/$defs/ScenarioPrerequisites\",\n                    \"nullable\": true,\n              \
-        \      \"description\": \"Entry requirements\"\n                },\n                \"chaining\": {\n            \
-        \        \"$ref\": \"#/$defs/ScenarioChaining\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"Chaining configuration\"\n                },\n                \"multiplayer\": {\n              \
-        \      \"$ref\": \"#/$defs/ScenarioMultiplayer\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"Multiplayer support\"\n                },\n                \"content\": {\n                    \"\
-        $ref\": \"#/$defs/ScenarioContent\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Content references\"\n                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/TemplateStatus\"\
-        ,\n                    \"description\": \"Current lifecycle status\"\n                },\n                \"createdAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"When this template was created\"\n                },\n                \"updatedAt\": {\n  \
-        \                  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When this template was last updated\"\n                }\n            }\n        },\n        \"ScenarioCategory\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Combat\",\n                \"Crafting\"\
-        ,\n                \"Social\",\n                \"Trade\",\n                \"Exploration\",\n                \"Magic\"\
-        ,\n                \"Survival\",\n                \"Mixed\",\n                \"Narrative\",\n                \"Tutorial\"\
-        \n            ],\n            \"description\": \"Primary gameplay category for a scenario template\"\n        },\n\
-        \        \"DomainWeight\": {\n            \"type\": \"object\",\n            \"description\": \"Domain name and weight
+        \             \"description\": \"Deployment phases where this template is available. Always contains explicit values
+        (never empty).\"\n                },\n                \"maxConcurrentInstances\": {\n                    \"type\"\
+        : \"integer\",\n                    \"description\": \"Maximum concurrent active instances\"\n                },\n\
+        \                \"estimatedDurationMinutes\": {\n                    \"type\": \"integer\",\n                   \
+        \ \"nullable\": true,\n                    \"description\": \"Estimated scenario duration in minutes\"\n         \
+        \       },\n                \"prerequisites\": {\n                    \"$ref\": \"#/$defs/ScenarioPrerequisites\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Entry requirements\"\n        \
+        \        },\n                \"chaining\": {\n                    \"$ref\": \"#/$defs/ScenarioChaining\",\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Chaining configuration\"\n            \
+        \    },\n                \"multiplayer\": {\n                    \"$ref\": \"#/$defs/ScenarioMultiplayer\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Multiplayer support\"\n             \
+        \   },\n                \"content\": {\n                    \"$ref\": \"#/$defs/ScenarioContent\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"Content references\"\n                },\n   \
+        \             \"status\": {\n                    \"$ref\": \"#/$defs/TemplateStatus\",\n                    \"description\"\
+        : \"Current lifecycle status\"\n                },\n                \"createdAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When this template
+        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"date-time\",\n                    \"description\": \"When this template was last
+        updated\"\n                }\n            }\n        },\n        \"ScenarioCategory\": {\n            \"type\": \"\
+        string\",\n            \"enum\": [\n                \"Combat\",\n                \"Crafting\",\n                \"\
+        Social\",\n                \"Trade\",\n                \"Exploration\",\n                \"Magic\",\n            \
+        \    \"Survival\",\n                \"Mixed\",\n                \"Narrative\",\n                \"Tutorial\"\n   \
+        \         ],\n            \"description\": \"Primary gameplay category for a scenario template\"\n        },\n   \
+        \     \"DomainWeight\": {\n            \"type\": \"object\",\n            \"description\": \"Domain name and weight
         pair for scenario template growth weighting\",\n            \"required\": [\n                \"domain\",\n       \
         \         \"weight\"\n            ],\n            \"properties\": {\n                \"domain\": {\n             \
         \       \"type\": \"string\",\n                    \"description\": \"Growth domain path (e.g. combat.melee, exploration.caves)\"\
@@ -1653,29 +1658,30 @@ paths:
         \ \"$ref\": \"#/$defs/ConnectivityMode\",\n                    \"description\": \"World connectivity mode\"\n    \
         \            },\n                \"allowedPhases\": {\n                    \"type\": \"array\",\n                \
         \    \"items\": {\n                        \"$ref\": \"#/$defs/DeploymentPhase\"\n                    },\n       \
-        \             \"description\": \"Deployment phases where this template is available\"\n                },\n      \
-        \          \"maxConcurrentInstances\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Maximum concurrent active instances\"\n                },\n                \"estimatedDurationMinutes\": {\n \
-        \                   \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Estimated scenario duration in minutes\"\n                },\n                \"prerequisites\": {\n         \
-        \           \"$ref\": \"#/$defs/ScenarioPrerequisites\",\n                    \"nullable\": true,\n              \
-        \      \"description\": \"Entry requirements\"\n                },\n                \"chaining\": {\n            \
-        \        \"$ref\": \"#/$defs/ScenarioChaining\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"Chaining configuration\"\n                },\n                \"multiplayer\": {\n              \
-        \      \"$ref\": \"#/$defs/ScenarioMultiplayer\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"Multiplayer support\"\n                },\n                \"content\": {\n                    \"\
-        $ref\": \"#/$defs/ScenarioContent\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Content references\"\n                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/TemplateStatus\"\
-        ,\n                    \"description\": \"Current lifecycle status\"\n                },\n                \"createdAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"When this template was created\"\n                },\n                \"updatedAt\": {\n  \
-        \                  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When this template was last updated\"\n                }\n            }\n        },\n        \"ScenarioCategory\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Combat\",\n                \"Crafting\"\
-        ,\n                \"Social\",\n                \"Trade\",\n                \"Exploration\",\n                \"Magic\"\
-        ,\n                \"Survival\",\n                \"Mixed\",\n                \"Narrative\",\n                \"Tutorial\"\
-        \n            ],\n            \"description\": \"Primary gameplay category for a scenario template\"\n        },\n\
-        \        \"DomainWeight\": {\n            \"type\": \"object\",\n            \"description\": \"Domain name and weight
+        \             \"description\": \"Deployment phases where this template is available. Always contains explicit values
+        (never empty).\"\n                },\n                \"maxConcurrentInstances\": {\n                    \"type\"\
+        : \"integer\",\n                    \"description\": \"Maximum concurrent active instances\"\n                },\n\
+        \                \"estimatedDurationMinutes\": {\n                    \"type\": \"integer\",\n                   \
+        \ \"nullable\": true,\n                    \"description\": \"Estimated scenario duration in minutes\"\n         \
+        \       },\n                \"prerequisites\": {\n                    \"$ref\": \"#/$defs/ScenarioPrerequisites\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Entry requirements\"\n        \
+        \        },\n                \"chaining\": {\n                    \"$ref\": \"#/$defs/ScenarioChaining\",\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Chaining configuration\"\n            \
+        \    },\n                \"multiplayer\": {\n                    \"$ref\": \"#/$defs/ScenarioMultiplayer\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Multiplayer support\"\n             \
+        \   },\n                \"content\": {\n                    \"$ref\": \"#/$defs/ScenarioContent\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"Content references\"\n                },\n   \
+        \             \"status\": {\n                    \"$ref\": \"#/$defs/TemplateStatus\",\n                    \"description\"\
+        : \"Current lifecycle status\"\n                },\n                \"createdAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When this template
+        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"date-time\",\n                    \"description\": \"When this template was last
+        updated\"\n                }\n            }\n        },\n        \"ScenarioCategory\": {\n            \"type\": \"\
+        string\",\n            \"enum\": [\n                \"Combat\",\n                \"Crafting\",\n                \"\
+        Social\",\n                \"Trade\",\n                \"Exploration\",\n                \"Magic\",\n            \
+        \    \"Survival\",\n                \"Mixed\",\n                \"Narrative\",\n                \"Tutorial\"\n   \
+        \         ],\n            \"description\": \"Primary gameplay category for a scenario template\"\n        },\n   \
+        \     \"DomainWeight\": {\n            \"type\": \"object\",\n            \"description\": \"Domain name and weight
         pair for scenario template growth weighting\",\n            \"required\": [\n                \"domain\",\n       \
         \         \"weight\"\n            ],\n            \"properties\": {\n                \"domain\": {\n             \
         \       \"type\": \"string\",\n                    \"description\": \"Growth domain path (e.g. combat.melee, exploration.caves)\"\
@@ -1791,29 +1797,30 @@ paths:
         \ \"$ref\": \"#/$defs/ConnectivityMode\",\n                    \"description\": \"World connectivity mode\"\n    \
         \            },\n                \"allowedPhases\": {\n                    \"type\": \"array\",\n                \
         \    \"items\": {\n                        \"$ref\": \"#/$defs/DeploymentPhase\"\n                    },\n       \
-        \             \"description\": \"Deployment phases where this template is available\"\n                },\n      \
-        \          \"maxConcurrentInstances\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Maximum concurrent active instances\"\n                },\n                \"estimatedDurationMinutes\": {\n \
-        \                   \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Estimated scenario duration in minutes\"\n                },\n                \"prerequisites\": {\n         \
-        \           \"$ref\": \"#/$defs/ScenarioPrerequisites\",\n                    \"nullable\": true,\n              \
-        \      \"description\": \"Entry requirements\"\n                },\n                \"chaining\": {\n            \
-        \        \"$ref\": \"#/$defs/ScenarioChaining\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"Chaining configuration\"\n                },\n                \"multiplayer\": {\n              \
-        \      \"$ref\": \"#/$defs/ScenarioMultiplayer\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"Multiplayer support\"\n                },\n                \"content\": {\n                    \"\
-        $ref\": \"#/$defs/ScenarioContent\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Content references\"\n                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/TemplateStatus\"\
-        ,\n                    \"description\": \"Current lifecycle status\"\n                },\n                \"createdAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"When this template was created\"\n                },\n                \"updatedAt\": {\n  \
-        \                  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When this template was last updated\"\n                }\n            }\n        },\n        \"ScenarioCategory\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Combat\",\n                \"Crafting\"\
-        ,\n                \"Social\",\n                \"Trade\",\n                \"Exploration\",\n                \"Magic\"\
-        ,\n                \"Survival\",\n                \"Mixed\",\n                \"Narrative\",\n                \"Tutorial\"\
-        \n            ],\n            \"description\": \"Primary gameplay category for a scenario template\"\n        },\n\
-        \        \"DomainWeight\": {\n            \"type\": \"object\",\n            \"description\": \"Domain name and weight
+        \             \"description\": \"Deployment phases where this template is available. Always contains explicit values
+        (never empty).\"\n                },\n                \"maxConcurrentInstances\": {\n                    \"type\"\
+        : \"integer\",\n                    \"description\": \"Maximum concurrent active instances\"\n                },\n\
+        \                \"estimatedDurationMinutes\": {\n                    \"type\": \"integer\",\n                   \
+        \ \"nullable\": true,\n                    \"description\": \"Estimated scenario duration in minutes\"\n         \
+        \       },\n                \"prerequisites\": {\n                    \"$ref\": \"#/$defs/ScenarioPrerequisites\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Entry requirements\"\n        \
+        \        },\n                \"chaining\": {\n                    \"$ref\": \"#/$defs/ScenarioChaining\",\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Chaining configuration\"\n            \
+        \    },\n                \"multiplayer\": {\n                    \"$ref\": \"#/$defs/ScenarioMultiplayer\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Multiplayer support\"\n             \
+        \   },\n                \"content\": {\n                    \"$ref\": \"#/$defs/ScenarioContent\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"Content references\"\n                },\n   \
+        \             \"status\": {\n                    \"$ref\": \"#/$defs/TemplateStatus\",\n                    \"description\"\
+        : \"Current lifecycle status\"\n                },\n                \"createdAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When this template
+        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"date-time\",\n                    \"description\": \"When this template was last
+        updated\"\n                }\n            }\n        },\n        \"ScenarioCategory\": {\n            \"type\": \"\
+        string\",\n            \"enum\": [\n                \"Combat\",\n                \"Crafting\",\n                \"\
+        Social\",\n                \"Trade\",\n                \"Exploration\",\n                \"Magic\",\n            \
+        \    \"Survival\",\n                \"Mixed\",\n                \"Narrative\",\n                \"Tutorial\"\n   \
+        \         ],\n            \"description\": \"Primary gameplay category for a scenario template\"\n        },\n   \
+        \     \"DomainWeight\": {\n            \"type\": \"object\",\n            \"description\": \"Domain name and weight
         pair for scenario template growth weighting\",\n            \"required\": [\n                \"domain\",\n       \
         \         \"weight\"\n            ],\n            \"properties\": {\n                \"domain\": {\n             \
         \       \"type\": \"string\",\n                    \"description\": \"Growth domain path (e.g. combat.melee, exploration.caves)\"\
@@ -1933,29 +1940,30 @@ paths:
         \ \"$ref\": \"#/$defs/ConnectivityMode\",\n                    \"description\": \"World connectivity mode\"\n    \
         \            },\n                \"allowedPhases\": {\n                    \"type\": \"array\",\n                \
         \    \"items\": {\n                        \"$ref\": \"#/$defs/DeploymentPhase\"\n                    },\n       \
-        \             \"description\": \"Deployment phases where this template is available\"\n                },\n      \
-        \          \"maxConcurrentInstances\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Maximum concurrent active instances\"\n                },\n                \"estimatedDurationMinutes\": {\n \
-        \                   \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Estimated scenario duration in minutes\"\n                },\n                \"prerequisites\": {\n         \
-        \           \"$ref\": \"#/$defs/ScenarioPrerequisites\",\n                    \"nullable\": true,\n              \
-        \      \"description\": \"Entry requirements\"\n                },\n                \"chaining\": {\n            \
-        \        \"$ref\": \"#/$defs/ScenarioChaining\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"Chaining configuration\"\n                },\n                \"multiplayer\": {\n              \
-        \      \"$ref\": \"#/$defs/ScenarioMultiplayer\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"Multiplayer support\"\n                },\n                \"content\": {\n                    \"\
-        $ref\": \"#/$defs/ScenarioContent\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Content references\"\n                },\n                \"status\": {\n                    \"$ref\": \"#/$defs/TemplateStatus\"\
-        ,\n                    \"description\": \"Current lifecycle status\"\n                },\n                \"createdAt\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
-        \   \"description\": \"When this template was created\"\n                },\n                \"updatedAt\": {\n  \
-        \                  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"When this template was last updated\"\n                }\n            }\n        },\n        \"ScenarioCategory\"\
-        : {\n            \"type\": \"string\",\n            \"enum\": [\n                \"Combat\",\n                \"Crafting\"\
-        ,\n                \"Social\",\n                \"Trade\",\n                \"Exploration\",\n                \"Magic\"\
-        ,\n                \"Survival\",\n                \"Mixed\",\n                \"Narrative\",\n                \"Tutorial\"\
-        \n            ],\n            \"description\": \"Primary gameplay category for a scenario template\"\n        },\n\
-        \        \"DomainWeight\": {\n            \"type\": \"object\",\n            \"description\": \"Domain name and weight
+        \             \"description\": \"Deployment phases where this template is available. Always contains explicit values
+        (never empty).\"\n                },\n                \"maxConcurrentInstances\": {\n                    \"type\"\
+        : \"integer\",\n                    \"description\": \"Maximum concurrent active instances\"\n                },\n\
+        \                \"estimatedDurationMinutes\": {\n                    \"type\": \"integer\",\n                   \
+        \ \"nullable\": true,\n                    \"description\": \"Estimated scenario duration in minutes\"\n         \
+        \       },\n                \"prerequisites\": {\n                    \"$ref\": \"#/$defs/ScenarioPrerequisites\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Entry requirements\"\n        \
+        \        },\n                \"chaining\": {\n                    \"$ref\": \"#/$defs/ScenarioChaining\",\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Chaining configuration\"\n            \
+        \    },\n                \"multiplayer\": {\n                    \"$ref\": \"#/$defs/ScenarioMultiplayer\",\n    \
+        \                \"nullable\": true,\n                    \"description\": \"Multiplayer support\"\n             \
+        \   },\n                \"content\": {\n                    \"$ref\": \"#/$defs/ScenarioContent\",\n             \
+        \       \"nullable\": true,\n                    \"description\": \"Content references\"\n                },\n   \
+        \             \"status\": {\n                    \"$ref\": \"#/$defs/TemplateStatus\",\n                    \"description\"\
+        : \"Current lifecycle status\"\n                },\n                \"createdAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When this template
+        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"date-time\",\n                    \"description\": \"When this template was last
+        updated\"\n                }\n            }\n        },\n        \"ScenarioCategory\": {\n            \"type\": \"\
+        string\",\n            \"enum\": [\n                \"Combat\",\n                \"Crafting\",\n                \"\
+        Social\",\n                \"Trade\",\n                \"Exploration\",\n                \"Magic\",\n            \
+        \    \"Survival\",\n                \"Mixed\",\n                \"Narrative\",\n                \"Tutorial\"\n   \
+        \         ],\n            \"description\": \"Primary gameplay category for a scenario template\"\n        },\n   \
+        \     \"DomainWeight\": {\n            \"type\": \"object\",\n            \"description\": \"Domain name and weight
         pair for scenario template growth weighting\",\n            \"required\": [\n                \"domain\",\n       \
         \         \"weight\"\n            ],\n            \"properties\": {\n                \"domain\": {\n             \
         \       \"type\": \"string\",\n                    \"description\": \"Growth domain path (e.g. combat.melee, exploration.caves)\"\
@@ -2788,7 +2796,6 @@ components:
       - description
       - category
       - domainWeights
-      - allowedPhases
       properties:
         code:
           type: string
@@ -2821,9 +2828,12 @@ components:
           default: Isolated
         allowedPhases:
           type: array
+          nullable: true
           items:
             $ref: '#/components/schemas/DeploymentPhase'
-          description: Deployment phases in which this template is available
+          description: >-
+            Deployment phases in which this template is available.
+            Null or empty means available in all phases.
         maxConcurrentInstances:
           type: integer
           default: 100
@@ -3265,7 +3275,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/DeploymentPhase'
-          description: Deployment phases where this template is available
+          description: Deployment phases where this template is available. Always contains explicit values (never 
+            empty).
         maxConcurrentInstances:
           type: integer
           description: Maximum concurrent active instances

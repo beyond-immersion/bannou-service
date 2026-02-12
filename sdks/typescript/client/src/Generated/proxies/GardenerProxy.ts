@@ -357,6 +357,24 @@ export class GardenerProxy {
   }
 
   /**
+   * Delete scenario template
+   * @param request - The request payload.
+   * @param channel - Message channel for ordering (default 0).
+   * @param timeout - Request timeout in milliseconds.
+   * @returns ApiResponse containing the response on success.
+   */
+  async deleteTemplateAsync(
+    request: Schemas['DeleteTemplateRequest'],
+    channel: number = 0,
+    timeout?: number
+  ): Promise<ApiResponse<Schemas['ScenarioTemplateResponse']>> {
+    return this.client.invokeAsync<
+      Schemas['DeleteTemplateRequest'],
+      Schemas['ScenarioTemplateResponse']
+    >('/gardener/template/delete', request, channel, timeout);
+  }
+
+  /**
    * Get deployment phase configuration
    * @param request - The request payload.
    * @param channel - Message channel for ordering (default 0).

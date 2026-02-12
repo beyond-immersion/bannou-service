@@ -2202,8 +2202,7 @@ public partial class GardenerController
                 "displayName",
                 "description",
                 "category",
-                "domainWeights",
-                "allowedPhases"
+                "domainWeights"
             ],
             "properties": {
                 "code": {
@@ -2246,10 +2245,11 @@ public partial class GardenerController
                 },
                 "allowedPhases": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                         "$ref": "#/$defs/DeploymentPhase"
                     },
-                    "description": "Deployment phases in which this template is available"
+                    "description": "Deployment phases in which this template is available. Null or empty means available in all phases."
                 },
                 "maxConcurrentInstances": {
                     "type": "integer",
@@ -2526,7 +2526,7 @@ public partial class GardenerController
                     "items": {
                         "$ref": "#/$defs/DeploymentPhase"
                     },
-                    "description": "Deployment phases where this template is available"
+                    "description": "Deployment phases where this template is available. Always contains explicit values (never empty)."
                 },
                 "maxConcurrentInstances": {
                     "type": "integer",
@@ -2904,7 +2904,7 @@ public partial class GardenerController
                     "items": {
                         "$ref": "#/$defs/DeploymentPhase"
                     },
-                    "description": "Deployment phases where this template is available"
+                    "description": "Deployment phases where this template is available. Always contains explicit values (never empty)."
                 },
                 "maxConcurrentInstances": {
                     "type": "integer",
@@ -3281,7 +3281,7 @@ public partial class GardenerController
                     "items": {
                         "$ref": "#/$defs/DeploymentPhase"
                     },
-                    "description": "Deployment phases where this template is available"
+                    "description": "Deployment phases where this template is available. Always contains explicit values (never empty)."
                 },
                 "maxConcurrentInstances": {
                     "type": "integer",
@@ -3755,7 +3755,7 @@ public partial class GardenerController
                     "items": {
                         "$ref": "#/$defs/DeploymentPhase"
                     },
-                    "description": "Deployment phases where this template is available"
+                    "description": "Deployment phases where this template is available. Always contains explicit values (never empty)."
                 },
                 "maxConcurrentInstances": {
                     "type": "integer",
@@ -4311,7 +4311,7 @@ public partial class GardenerController
                     "items": {
                         "$ref": "#/$defs/DeploymentPhase"
                     },
-                    "description": "Deployment phases where this template is available"
+                    "description": "Deployment phases where this template is available. Always contains explicit values (never empty)."
                 },
                 "maxConcurrentInstances": {
                     "type": "integer",
@@ -4689,7 +4689,7 @@ public partial class GardenerController
                     "items": {
                         "$ref": "#/$defs/DeploymentPhase"
                     },
-                    "description": "Deployment phases where this template is available"
+                    "description": "Deployment phases where this template is available. Always contains explicit values (never empty)."
                 },
                 "maxConcurrentInstances": {
                     "type": "integer",
@@ -5067,7 +5067,7 @@ public partial class GardenerController
                     "items": {
                         "$ref": "#/$defs/DeploymentPhase"
                     },
-                    "description": "Deployment phases where this template is available"
+                    "description": "Deployment phases where this template is available. Always contains explicit values (never empty)."
                 },
                 "maxConcurrentInstances": {
                     "type": "integer",

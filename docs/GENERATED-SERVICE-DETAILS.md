@@ -135,7 +135,7 @@ Hybrid lobby/matchmade game session management (L2 GameFoundation) with subscrip
 
 ## Gardener {#gardener}
 
-**Version**: 1.0.0 | **Schema**: `schemas/gardener-api.yaml` | **Endpoints**: 23 | **Deep Dive**: [docs/plugins/GARDENER.md](plugins/GARDENER.md)
+**Version**: 1.0.0 | **Schema**: `schemas/gardener-api.yaml` | **Endpoints**: 24 | **Deep Dive**: [docs/plugins/GARDENER.md](plugins/GARDENER.md)
 
 Player experience orchestration service (L4 GameFeatures) for garden navigation, scenario routing, progressive discovery, and deployment phase management. Gardener is the player-side counterpart to Puppetmaster: where Puppetmaster orchestrates what NPCs experience, Gardener orchestrates what players experience. Players enter a procedural "Garden" discovery space, encounter POIs (Points of Interest) driven by a weighted scoring algorithm, and enter scenarios backed by Game Sessions that award Seed growth on completion. Internal-only, never internet-facing.
 
@@ -165,7 +165,7 @@ The License service (L4 GameFeatures) provides grid-based progression boards (sk
 
 ## Location {#location}
 
-**Version**: 1.0.0 | **Schema**: `schemas/location-api.yaml` | **Endpoints**: 19 | **Deep Dive**: [docs/plugins/LOCATION.md](plugins/LOCATION.md)
+**Version**: 1.0.0 | **Schema**: `schemas/location-api.yaml` | **Endpoints**: 20 | **Deep Dive**: [docs/plugins/LOCATION.md](plugins/LOCATION.md)
 
 Hierarchical location management (L2 GameFoundation) for the Arcadia game world. Manages physical places (cities, regions, buildings, rooms, landmarks) within realms as a tree structure with depth tracking. Each location belongs to exactly one realm and optionally has a parent location. Supports deprecation, circular reference prevention, cascading depth updates, code-based lookups, and bulk seeding with two-pass parent resolution.
 
@@ -310,7 +310,7 @@ Public-facing website service (L3 AppFeatures) for browser-based access to news,
 ## Summary
 
 - **Total services**: 50
-- **Total endpoints**: 747
+- **Total endpoints**: 749
 
 ---
 
