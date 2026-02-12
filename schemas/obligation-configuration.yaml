@@ -1,0 +1,92 @@
+openapi: 3.0.3
+info:
+  title: Obligation Service Configuration
+  description: |
+    Configuration schema for Obligation service.
+    Properties are bound to environment variables with OBLIGATION_ prefix.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+paths: {}
+x-service-configuration:
+  properties:
+    # Cache Configuration
+    CacheTtlMinutes:
+      type: integer
+      description: TTL in minutes for obligation manifest cache entries per character
+      default: 10
+      minimum: 1
+      maximum: 1440
+      env: OBLIGATION_CACHE_TTL_MINUTES
+
+    # Evaluation Configuration
+    EvaluationTimeoutMs:
+      type: integer
+      description: Timeout in milliseconds for evaluate-action operations
+      default: 5000
+      minimum: 500
+      maximum: 30000
+      env: OBLIGATION_EVALUATION_TIMEOUT_MS
+
+    MaxObligationsPerCharacter:
+      type: integer
+      description: Safety limit on cached obligations per character (prevents runaway contract accumulation)
+      default: 200
+      minimum: 10
+      maximum: 1000
+      env: OBLIGATION_MAX_OBLIGATIONS_PER_CHARACTER
+
+    # Violation Configuration
+    BreachReportEnabled:
+      type: boolean
+      description: Whether to auto-report violations as breaches to the contract service
+      default: true
+      env: OBLIGATION_BREACH_REPORT_ENABLED
+
+    IdempotencyTtlSeconds:
+      type: integer
+      description: TTL in seconds for violation report idempotency keys
+      default: 86400
+      minimum: 3600
+      maximum: 604800
+      env: OBLIGATION_IDEMPOTENCY_TTL_SECONDS
+
+    # Pagination
+    DefaultPageSize:
+      type: integer
+      description: Default page size for paginated queries
+      default: 20
+      minimum: 1
+      maximum: 100
+      env: OBLIGATION_DEFAULT_PAGE_SIZE
+
+    # Distributed Lock Configuration
+    LockTimeoutSeconds:
+      type: integer
+      description: Timeout in seconds for distributed locks on obligation cache operations
+      default: 30
+      minimum: 5
+      maximum: 120
+      env: OBLIGATION_LOCK_TIMEOUT_SECONDS
+
+    # Concurrency
+    MaxConcurrencyRetries:
+      type: integer
+      description: Maximum retry attempts for optimistic concurrency conflicts
+      default: 3
+      minimum: 1
+      maximum: 10
+      env: OBLIGATION_MAX_CONCURRENCY_RETRIES
+
+    # Contract Query Configuration
+    MaxActiveContractsQuery:
+      type: integer
+      description: Maximum number of active contracts to query per character during cache rebuild
+      default: 100
+      minimum: 10
+      maximum: 500
+      env: OBLIGATION_MAX_ACTIVE_CONTRACTS_QUERY

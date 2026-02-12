@@ -1,0 +1,100 @@
+openapi: 3.0.0
+info:
+  title: Faction Service Configuration
+  description: |
+    Configuration properties for the Faction service (L4 GameFeatures).
+    Controls seed integration, membership defaults, hierarchy limits, norm
+    constraints, caching, and distributed locking.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+  version: 1.0.0
+
+x-service-configuration:
+  properties:
+    # =========================================================================
+    # Seed Integration
+    # =========================================================================
+
+    SeedTypeCode:
+      type: string
+      env: FACTION_SEED_TYPE_CODE
+      default: faction
+      description: Which seed type code this service manages for faction growth
+
+    # =========================================================================
+    # Membership Defaults
+    # =========================================================================
+
+    DefaultMemberRole:
+      $ref: 'faction-api.yaml#/components/schemas/FactionMemberRole'
+      env: FACTION_DEFAULT_MEMBER_ROLE
+      default: Member
+      description: Default role assigned to new members when no role is specified
+
+    # =========================================================================
+    # Hierarchy and Limits
+    # =========================================================================
+
+    MaxHierarchyDepth:
+      type: integer
+      env: FACTION_MAX_HIERARCHY_DEPTH
+      minimum: 1
+      maximum: 20
+      default: 5
+      description: Maximum parent/child nesting depth for faction hierarchy
+
+    MaxNormsPerFaction:
+      type: integer
+      env: FACTION_MAX_NORMS_PER_FACTION
+      minimum: 1
+      maximum: 500
+      default: 50
+      description: Maximum number of norm definitions per faction
+
+    MaxTerritoriesPerFaction:
+      type: integer
+      env: FACTION_MAX_TERRITORIES_PER_FACTION
+      minimum: 1
+      maximum: 200
+      default: 20
+      description: Maximum number of territory claims per faction
+
+    # =========================================================================
+    # Caching
+    # =========================================================================
+
+    NormQueryCacheTtlSeconds:
+      type: integer
+      env: FACTION_NORM_QUERY_CACHE_TTL_SECONDS
+      minimum: 0
+      maximum: 3600
+      default: 300
+      description: TTL in seconds for cached norm resolution results per character+location
+
+    # =========================================================================
+    # Distributed Locking
+    # =========================================================================
+
+    DistributedLockTimeoutSeconds:
+      type: integer
+      env: FACTION_DISTRIBUTED_LOCK_TIMEOUT_SECONDS
+      minimum: 5
+      maximum: 300
+      default: 30
+      description: Timeout in seconds for distributed lock acquisition on faction mutations
+
+    # =========================================================================
+    # Bulk Operations
+    # =========================================================================
+
+    SeedBulkPageSize:
+      type: integer
+      env: FACTION_SEED_BULK_PAGE_SIZE
+      minimum: 10
+      maximum: 1000
+      default: 100
+      description: Page size for bulk seed operations during faction seeding

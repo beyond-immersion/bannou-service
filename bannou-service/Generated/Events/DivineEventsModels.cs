@@ -24,7 +24,7 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
-using BeyondImmersion.BannouService.CharacterPersonality;
+using BeyondImmersion.BannouService.Divine;
 
 #pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
 #pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
@@ -47,170 +47,236 @@ namespace BeyondImmersion.BannouService.Events;
 using System = global::System;
 
 /// <summary>
-/// Published when a character's personality is first created
+/// Published when a god grants a blessing to an entity
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class PersonalityCreatedEvent
+public partial class DivineBlessingGrantedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Unique identifier for this event
+    /// The deity granting the blessing
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("deityId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
+    public System.Guid DeityId { get; set; } = default!;
 
     /// <summary>
-    /// When this event was published
+    /// The entity receiving the blessing
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.Text.Json.Serialization.JsonPropertyName("entityId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    public System.Guid EntityId { get; set; } = default!;
 
     /// <summary>
-    /// ID of the character whose personality was created
+    /// Type of entity receiving the blessing (e.g., character, account, deity)
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.Text.Json.Serialization.JsonPropertyName("entityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
+    public string EntityType { get; set; } = default!;
 
     /// <summary>
-    /// Version number of the personality data
+    /// The blessing record identifier
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("version")]
-    public int Version { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Published when a character's personality traits are updated
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class PersonalityUpdatedEvent
-{
-
-    /// <summary>
-    /// Unique identifier for this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("blessingId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
+    public System.Guid BlessingId { get; set; } = default!;
 
     /// <summary>
-    /// When this event was published
+    /// Tier of the granted blessing
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
-
-    /// <summary>
-    /// ID of the character whose personality was updated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
-
-    /// <summary>
-    /// New version number of the personality data
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("version")]
-    public int Version { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Published when a character's personality evolves due to experience
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class PersonalityEvolvedEvent
-{
-
-    /// <summary>
-    /// Unique identifier for this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When this event was published
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
-
-    /// <summary>
-    /// ID of the character whose personality evolved
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
-
-    /// <summary>
-    /// Type of experience that caused the evolution
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("experienceType")]
+    [System.Text.Json.Serialization.JsonPropertyName("tier")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ExperienceType ExperienceType { get; set; } = default!;
+    public BlessingTier Tier { get; set; } = default!;
 
     /// <summary>
-    /// Intensity of the experience (0.0-1.0)
+    /// The item instance created for this blessing
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("intensity")]
-    public float Intensity { get; set; } = default!;
-
-    /// <summary>
-    /// New version number of the personality data
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("version")]
-    public int Version { get; set; } = default!;
-
-    /// <summary>
-    /// List of trait names that were affected by the evolution
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("affectedTraits")]
-    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonPropertyName("itemInstanceId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<string> AffectedTraits { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+    public System.Guid ItemInstanceId { get; set; } = default!;
 
 }
 
 /// <summary>
-/// Published when a character's personality is deleted
+/// Published when a blessing is revoked
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class PersonalityDeletedEvent
+public partial class DivineBlessingRevokedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Unique identifier for this event
+    /// The revoked blessing
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("blessingId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
+    public System.Guid BlessingId { get; set; } = default!;
 
     /// <summary>
-    /// When this event was published
+    /// The deity revoking the blessing
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.Text.Json.Serialization.JsonPropertyName("deityId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
+    public System.Guid DeityId { get; set; } = default!;
 
     /// <summary>
-    /// ID of the character whose personality was deleted
+    /// The entity losing the blessing
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entityId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EntityId { get; set; } = default!;
+
+    /// <summary>
+    /// Type of entity losing the blessing
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entityType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string EntityType { get; set; } = default!;
+
+    /// <summary>
+    /// Why the blessing was revoked
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Reason { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published when divinity is earned by a deity from mortal actions or direct grant
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DivineDivinityCreditedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// The deity receiving divinity
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deityId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid DeityId { get; set; } = default!;
+
+    /// <summary>
+    /// Amount of divinity credited
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("amount")]
+    public double Amount { get; set; } = default!;
+
+    /// <summary>
+    /// Source of the divinity gain
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("source")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Source { get; set; } = default!;
+
+    /// <summary>
+    /// The triggering event if applicable
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceEventId")]
+    public System.Guid? SourceEventId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published when divinity is spent by a deity for blessings or other purposes
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DivineDivinityDebitedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// The deity spending divinity
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deityId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid DeityId { get; set; } = default!;
+
+    /// <summary>
+    /// Amount of divinity spent
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("amount")]
+    public double Amount { get; set; } = default!;
+
+    /// <summary>
+    /// What the divinity was spent on
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("purpose")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Purpose { get; set; } = default!;
+
+    /// <summary>
+    /// Target character if blessing-related
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetCharacterId")]
+    public System.Guid? TargetCharacterId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published when a character becomes a follower of a deity
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DivineFollowerRegisteredEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// The deity gaining a follower
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deityId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid DeityId { get; set; } = default!;
+
+    /// <summary>
+    /// The new follower
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+    /// <summary>
+    /// The Relationship record for this bond
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("relationshipId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RelationshipId { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Published when a character is removed as a follower
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class DivineFollowerRemovedEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// The deity losing a follower
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("deityId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid DeityId { get; set; } = default!;
+
+    /// <summary>
+    /// The removed follower
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("characterId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -220,167 +286,52 @@ public partial class PersonalityDeletedEvent
 }
 
 /// <summary>
-/// Published when a character's combat preferences are first created
+/// Published when a deity becomes active in the world
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CombatPreferencesCreatedEvent
+public partial class DivineDeityActivatedEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Unique identifier for this event
+    /// The activated deity
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("deityId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
+    public System.Guid DeityId { get; set; } = default!;
 
     /// <summary>
-    /// When this event was published
+    /// The game service scope
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
-
-    /// <summary>
-    /// ID of the character whose combat preferences were created
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
-
-    /// <summary>
-    /// Version number of the combat preferences data
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("version")]
-    public int Version { get; set; } = default!;
+    public System.Guid GameServiceId { get; set; } = default!;
 
 }
 
 /// <summary>
-/// Published when a character's combat preferences are updated
+/// Published when a deity goes dormant
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CombatPreferencesUpdatedEvent
+public partial class DivineDeityDormantEvent : BaseServiceEvent
 {
 
     /// <summary>
-    /// Unique identifier for this event
+    /// The dormant deity
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("deityId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
+    public System.Guid DeityId { get; set; } = default!;
 
     /// <summary>
-    /// When this event was published
+    /// The game service scope
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.Text.Json.Serialization.JsonPropertyName("gameServiceId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
-
-    /// <summary>
-    /// ID of the character whose combat preferences were updated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
-
-    /// <summary>
-    /// New version number of the combat preferences data
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("version")]
-    public int Version { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Published when a character's combat preferences evolve due to combat experience
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CombatPreferencesEvolvedEvent
-{
-
-    /// <summary>
-    /// Unique identifier for this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When this event was published
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
-
-    /// <summary>
-    /// ID of the character whose combat preferences evolved
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
-
-    /// <summary>
-    /// Type of combat experience that caused the evolution
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("experienceType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public CombatExperienceType ExperienceType { get; set; } = default!;
-
-    /// <summary>
-    /// Intensity of the combat experience (0.0-1.0)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("intensity")]
-    public float Intensity { get; set; } = default!;
-
-    /// <summary>
-    /// New version number of the combat preferences data
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("version")]
-    public int Version { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Published when a character's combat preferences are deleted
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CombatPreferencesDeletedEvent
-{
-
-    /// <summary>
-    /// Unique identifier for this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When this event was published
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
-
-    /// <summary>
-    /// ID of the character whose combat preferences were deleted
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
+    public System.Guid GameServiceId { get; set; } = default!;
 
 }
 

@@ -42,7 +42,7 @@ info:
     # Custom events - Blessing
     - topic: divine.blessing.granted
       event: DivineBlessingGrantedEvent
-      description: Published when a god grants a blessing to a character
+      description: Published when a god grants a blessing to an entity
     - topic: divine.blessing.revoked
       event: DivineBlessingRevokedEvent
       description: Published when a blessing is revoked
@@ -111,10 +111,11 @@ components:
         - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
-      description: Published when a god grants a blessing to a character
+      description: Published when a god grants a blessing to an entity
       required:
         - deityId
-        - characterId
+        - entityId
+        - entityType
         - blessingId
         - tier
         - itemInstanceId
@@ -123,10 +124,13 @@ components:
           type: string
           format: uuid
           description: The deity granting the blessing
-        characterId:
+        entityId:
           type: string
           format: uuid
-          description: The character receiving the blessing
+          description: The entity receiving the blessing
+        entityType:
+          type: string
+          description: Type of entity receiving the blessing (e.g., character, account, deity)
         blessingId:
           type: string
           format: uuid
@@ -148,7 +152,8 @@ components:
       required:
         - blessingId
         - deityId
-        - characterId
+        - entityId
+        - entityType
         - reason
       properties:
         blessingId:
@@ -159,10 +164,13 @@ components:
           type: string
           format: uuid
           description: The deity revoking the blessing
-        characterId:
+        entityId:
           type: string
           format: uuid
-          description: The character losing the blessing
+          description: The entity losing the blessing
+        entityType:
+          type: string
+          description: Type of entity losing the blessing
         reason:
           type: string
           description: Why the blessing was revoked

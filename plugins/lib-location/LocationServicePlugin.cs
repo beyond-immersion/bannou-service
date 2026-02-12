@@ -9,11 +9,20 @@ namespace BeyondImmersion.BannouService.Location;
 /// <summary>
 /// Plugin wrapper for Location service enabling plugin-based discovery and lifecycle management.
 /// Registers territory_constraint clause type with Contract service during startup.
+/// Registers entity presence cleanup background worker.
 /// </summary>
 public class LocationServicePlugin : StandardServicePlugin<ILocationService>
 {
     public override string PluginName => "location";
     public override string DisplayName => "Location Service";
+
+    /// <summary>
+    /// Registers background services for entity presence cleanup.
+    /// </summary>
+    public override void ConfigureServices(IServiceCollection services)
+    {
+        services.AddHostedService<EntityPresenceCleanupWorker>();
+    }
 
     /// <summary>
     /// Running phase - registers territory_constraint clause type with Contract service.

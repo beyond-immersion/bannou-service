@@ -129,4 +129,24 @@ public partial interface ILocationService : IBannouService
         /// </summary>
         Task<(StatusCodes, SeedLocationsResponse?)> SeedLocationsAsync(SeedLocationsRequest body, CancellationToken cancellationToken = default(CancellationToken));
 
+        /// <summary>
+        /// ReportEntityPosition operation
+        /// </summary>
+        Task<(StatusCodes, ReportEntityPositionResponse?)> ReportEntityPositionAsync(ReportEntityPositionRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// GetEntityLocation operation
+        /// </summary>
+        Task<(StatusCodes, GetEntityLocationResponse?)> GetEntityLocationAsync(GetEntityLocationRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// ListEntitiesAtLocation operation
+        /// </summary>
+        Task<(StatusCodes, ListEntitiesAtLocationResponse?)> ListEntitiesAtLocationAsync(ListEntitiesAtLocationRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
+        /// <summary>
+        /// ClearEntityPosition operation
+        /// </summary>
+        Task<(StatusCodes, ClearEntityPositionResponse?)> ClearEntityPositionAsync(ClearEntityPositionRequest body, CancellationToken cancellationToken = default(CancellationToken));
+
 }

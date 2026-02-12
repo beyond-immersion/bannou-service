@@ -345,6 +345,66 @@ public static class LocationPermissionRegistration
             }
         });
 
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/location/report-entity-position",
+            Method = ServiceEndpointMethod.POST,
+            Description = "reportEntityPosition",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/location/get-entity-location",
+            Method = ServiceEndpointMethod.POST,
+            Description = "getEntityLocation",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/location/list-entities-at-location",
+            Method = ServiceEndpointMethod.POST,
+            Description = "listEntitiesAtLocation",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
+            Path = "/location/clear-entity-position",
+            Method = ServiceEndpointMethod.POST,
+            Description = "clearEntityPosition",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
         return endpoints;
     }
 

@@ -24,7 +24,6 @@
 
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
-using BeyondImmersion.BannouService.CharacterPersonality;
 
 #pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
 #pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
@@ -47,10 +46,14 @@ namespace BeyondImmersion.BannouService.Events;
 using System = global::System;
 
 /// <summary>
-/// Published when a character's personality is first created
+/// Published when a character knowingly violates an obligation. Downstream
+/// <br/>consumers use this to trigger personality drift (OATH_BROKEN experience
+/// <br/>type in character-personality), encounter memory recording (negative
+/// <br/>sentiment in character-encounter), and other feedback effects.
+/// <br/>
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class PersonalityCreatedEvent
+public partial class ObligationViolationReportedEvent
 {
 
     /// <summary>
@@ -70,7 +73,15 @@ public partial class PersonalityCreatedEvent
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
-    /// ID of the character whose personality was created
+    /// ID of the violation record
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("violationId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ViolationId { get; set; } = default!;
+
+    /// <summary>
+    /// Character who committed the violation
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("characterId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -78,119 +89,104 @@ public partial class PersonalityCreatedEvent
     public System.Guid CharacterId { get; set; } = default!;
 
     /// <summary>
-    /// Version number of the personality data
+    /// Contract that was violated
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("version")]
-    public int Version { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Published when a character's personality traits are updated
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class PersonalityUpdatedEvent
-{
-
-    /// <summary>
-    /// Unique identifier for this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("contractId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
+    public System.Guid ContractId { get; set; } = default!;
 
     /// <summary>
-    /// When this event was published
+    /// Template code of the violated contract
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
-
-    /// <summary>
-    /// ID of the character whose personality was updated
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
-
-    /// <summary>
-    /// New version number of the personality data
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("version")]
-    public int Version { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Published when a character's personality evolves due to experience
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class PersonalityEvolvedEvent
-{
-
-    /// <summary>
-    /// Unique identifier for this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
-
-    /// <summary>
-    /// When this event was published
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
-
-    /// <summary>
-    /// ID of the character whose personality evolved
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
-
-    /// <summary>
-    /// Type of experience that caused the evolution
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("experienceType")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public ExperienceType ExperienceType { get; set; } = default!;
-
-    /// <summary>
-    /// Intensity of the experience (0.0-1.0)
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("intensity")]
-    public float Intensity { get; set; } = default!;
-
-    /// <summary>
-    /// New version number of the personality data
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("version")]
-    public int Version { get; set; } = default!;
-
-    /// <summary>
-    /// List of trait names that were affected by the evolution
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("affectedTraits")]
+    [System.Text.Json.Serialization.JsonPropertyName("templateCode")]
     [System.ComponentModel.DataAnnotations.Required]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Collections.Generic.ICollection<string> AffectedTraits { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
+    public string TemplateCode { get; set; } = default!;
+
+    /// <summary>
+    /// Code of the behavioral clause that was violated
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("clauseCode")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
+    public string ClauseCode { get; set; } = default!;
+
+    /// <summary>
+    /// Violation type code (e.g., "theft", "deception")
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("violationType")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
+    public string ViolationType { get; set; } = default!;
+
+    /// <summary>
+    /// GOAP action tag that triggered the violation
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("actionTag")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
+    public string ActionTag { get; set; } = default!;
+
+    /// <summary>
+    /// Goal urgency that overrode the obligation (0.0-1.0)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("motivationScore")]
+    [System.ComponentModel.DataAnnotations.Range(0.0F, 1.0F)]
+    public float MotivationScore { get; set; } = default!;
+
+    /// <summary>
+    /// Total violation cost that was accepted
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("violationCost")]
+    [System.ComponentModel.DataAnnotations.Range(0.0F, float.MaxValue)]
+    public float ViolationCost { get; set; } = default!;
+
+    /// <summary>
+    /// Whether a breach was filed with the contract service
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("breachReported")]
+    public bool BreachReported { get; set; } = default!;
+
+    /// <summary>
+    /// Breach record ID from contract service
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("breachId")]
+    public System.Guid? BreachId { get; set; } = default!;
+
+    /// <summary>
+    /// Target entity of the violating action
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetEntityId")]
+    public System.Guid? TargetEntityId { get; set; } = default!;
+
+    /// <summary>
+    /// Entity type of the target
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetEntityType")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType? TargetEntityType { get; set; } = default!;
+
+    /// <summary>
+    /// The violating character's role in the contract
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("contractRole")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
+    public string ContractRole { get; set; } = default!;
 
 }
 
 /// <summary>
-/// Published when a character's personality is deleted
+/// Published when a character's obligation cache is rebuilt (for observability and debugging)
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class PersonalityDeletedEvent
+public partial class ObligationCacheRebuiltEvent
 {
 
     /// <summary>
@@ -210,24 +206,47 @@ public partial class PersonalityDeletedEvent
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
-    /// ID of the character whose personality was deleted
+    /// Character whose cache was rebuilt
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("characterId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public System.Guid CharacterId { get; set; } = default!;
 
+    /// <summary>
+    /// Number of obligations now cached
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("obligationCount")]
+    [System.ComponentModel.DataAnnotations.Range(0, 10000)]
+    public int ObligationCount { get; set; } = default!;
+
+    /// <summary>
+    /// Number of active contracts with behavioral clauses
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("contractCount")]
+    [System.ComponentModel.DataAnnotations.Range(0, 1000)]
+    public int ContractCount { get; set; } = default!;
+
+    /// <summary>
+    /// What triggered the rebuild (contract.activated, contract.terminated, manual, etc.)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("trigger")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.ComponentModel.DataAnnotations.StringLength(128, MinimumLength = 1)]
+    public string Trigger { get; set; } = default!;
+
 }
 
 /// <summary>
-/// Published when a character's combat preferences are first created
+/// Consumed from contract service when a contract becomes active
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CombatPreferencesCreatedEvent
+public partial class ContractActivatedEvent
 {
 
     /// <summary>
-    /// Unique identifier for this event
+    /// Unique event identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -235,7 +254,7 @@ public partial class CombatPreferencesCreatedEvent
     public System.Guid EventId { get; set; } = default!;
 
     /// <summary>
-    /// When this event was published
+    /// When the event occurred
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -243,30 +262,46 @@ public partial class CombatPreferencesCreatedEvent
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
-    /// ID of the character whose combat preferences were created
+    /// Contract instance ID
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.Text.Json.Serialization.JsonPropertyName("contractId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
+    public System.Guid ContractId { get; set; } = default!;
 
     /// <summary>
-    /// Version number of the combat preferences data
+    /// Template code
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("version")]
-    public int Version { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("templateCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string TemplateCode { get; set; } = default!;
+
+    /// <summary>
+    /// All contract parties
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parties")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<ContractPartyInfo> Parties { get; set; } = new System.Collections.ObjectModel.Collection<ContractPartyInfo>();
+
+    /// <summary>
+    /// When contract expires
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("effectiveUntil")]
+    public System.DateTimeOffset? EffectiveUntil { get; set; } = default!;
 
 }
 
 /// <summary>
-/// Published when a character's combat preferences are updated
+/// Consumed from contract service when a contract is terminated early
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CombatPreferencesUpdatedEvent
+public partial class ContractTerminatedEvent
 {
 
     /// <summary>
-    /// Unique identifier for this event
+    /// Unique event identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -274,7 +309,7 @@ public partial class CombatPreferencesUpdatedEvent
     public System.Guid EventId { get; set; } = default!;
 
     /// <summary>
-    /// When this event was published
+    /// When the event occurred
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -282,84 +317,53 @@ public partial class CombatPreferencesUpdatedEvent
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
-    /// ID of the character whose combat preferences were updated
+    /// Contract instance ID
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.Text.Json.Serialization.JsonPropertyName("contractId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
+    public System.Guid ContractId { get; set; } = default!;
 
     /// <summary>
-    /// New version number of the combat preferences data
+    /// Entity that requested termination
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("version")]
-    public int Version { get; set; } = default!;
-
-}
-
-/// <summary>
-/// Published when a character's combat preferences evolve due to combat experience
-/// </summary>
-[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CombatPreferencesEvolvedEvent
-{
-
-    /// <summary>
-    /// Unique identifier for this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.Text.Json.Serialization.JsonPropertyName("terminatedByEntityId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
+    public System.Guid TerminatedByEntityId { get; set; } = default!;
 
     /// <summary>
-    /// When this event was published
+    /// Entity type
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.DateTimeOffset Timestamp { get; set; } = default!;
-
-    /// <summary>
-    /// ID of the character whose combat preferences evolved
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
-
-    /// <summary>
-    /// Type of combat experience that caused the evolution
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("experienceType")]
+    [System.Text.Json.Serialization.JsonPropertyName("terminatedByEntityType")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    public CombatExperienceType ExperienceType { get; set; } = default!;
+    public EntityType TerminatedByEntityType { get; set; } = default!;
 
     /// <summary>
-    /// Intensity of the combat experience (0.0-1.0)
+    /// Reason for termination
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("intensity")]
-    public float Intensity { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("reason")]
+    public string? Reason { get; set; } = default!;
 
     /// <summary>
-    /// New version number of the combat preferences data
+    /// Whether termination was due to breach
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("version")]
-    public int Version { get; set; } = default!;
+    [System.Text.Json.Serialization.JsonPropertyName("wasBreachRelated")]
+    public bool WasBreachRelated { get; set; } = default!;
 
 }
 
 /// <summary>
-/// Published when a character's combat preferences are deleted
+/// Consumed from contract service when all required milestones complete
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class CombatPreferencesDeletedEvent
+public partial class ContractFulfilledEvent
 {
 
     /// <summary>
-    /// Unique identifier for this event
+    /// Unique event identifier
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("eventId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -367,7 +371,7 @@ public partial class CombatPreferencesDeletedEvent
     public System.Guid EventId { get; set; } = default!;
 
     /// <summary>
-    /// When this event was published
+    /// When the event occurred
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
@@ -375,12 +379,115 @@ public partial class CombatPreferencesDeletedEvent
     public System.DateTimeOffset Timestamp { get; set; } = default!;
 
     /// <summary>
-    /// ID of the character whose combat preferences were deleted
+    /// Contract instance ID
     /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.Text.Json.Serialization.JsonPropertyName("contractId")]
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid CharacterId { get; set; } = default!;
+    public System.Guid ContractId { get; set; } = default!;
+
+    /// <summary>
+    /// Template code
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("templateCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string TemplateCode { get; set; } = default!;
+
+    /// <summary>
+    /// All contract parties
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("parties")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<ContractPartyInfo> Parties { get; set; } = new System.Collections.ObjectModel.Collection<ContractPartyInfo>();
+
+    /// <summary>
+    /// Number of milestones completed
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("milestonesCompleted")]
+    public int MilestonesCompleted { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Consumed from contract service when a contract reaches natural expiration
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ContractExpiredEvent
+{
+
+    /// <summary>
+    /// Unique event identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EventId { get; set; } = default!;
+
+    /// <summary>
+    /// When the event occurred
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.DateTimeOffset Timestamp { get; set; } = default!;
+
+    /// <summary>
+    /// Contract instance ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("contractId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid ContractId { get; set; } = default!;
+
+    /// <summary>
+    /// Template code
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("templateCode")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string TemplateCode { get; set; } = default!;
+
+    /// <summary>
+    /// When contract was set to expire
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("effectiveUntil")]
+    public System.DateTimeOffset EffectiveUntil { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Brief party information from contract events
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ContractPartyInfo
+{
+
+    /// <summary>
+    /// Entity ID
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entityId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid EntityId { get; set; } = default!;
+
+    /// <summary>
+    /// Entity type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("entityType")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EntityType EntityType { get; set; } = default!;
+
+    /// <summary>
+    /// Role in contract
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("role")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Role { get; set; } = default!;
 
 }
 

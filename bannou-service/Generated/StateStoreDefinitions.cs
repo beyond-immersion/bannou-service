@@ -147,6 +147,18 @@ public static class StateStoreDefinitions
     /// <summary>Wallet ownership and status</summary>
     public const string CurrencyWallets = "currency-wallets";
 
+    // Divine Service
+    /// <summary>Active attention slot tracking per deity (ephemeral, high-frequency reads)</summary>
+    public const string DivineAttention = "divine-attention";
+    /// <summary>Blessing grant records linking deities to characters via items (durable, queryable)</summary>
+    public const string DivineBlessings = "divine-blessings";
+    /// <summary>Deity entity records (durable, queryable by game service, domain, status)</summary>
+    public const string DivineDeities = "divine-deities";
+    /// <summary>Pending divinity generation events awaiting batch processing (ephemeral queue)</summary>
+    public const string DivineDivinityEvents = "divine-divinity-events";
+    /// <summary>Distributed locks for deity and blessing mutations</summary>
+    public const string DivineLock = "divine-lock";
+
     // Documentation Service
     /// <summary>Documentation content and metadata</summary>
     public const string Documentation = "documentation-statestore";
@@ -166,6 +178,18 @@ public static class StateStoreDefinitions
     public const string EscrowStatusIndex = "escrow-status-index";
     /// <summary>Token hash validation (hashed tokens to escrow/party info)</summary>
     public const string EscrowTokens = "escrow-tokens";
+
+    // Faction Service
+    /// <summary>Faction and membership lookup cache (frequently read)</summary>
+    public const string FactionCache = "faction-cache";
+    /// <summary>Distributed locks for faction and membership modifications</summary>
+    public const string FactionLock = "faction-lock";
+    /// <summary>Faction membership records linking characters to factions</summary>
+    public const string FactionMembership = "faction-membership-statestore";
+    /// <summary>Faction entity records (durable, queryable by type/realm/game service)</summary>
+    public const string Faction = "faction-statestore";
+    /// <summary>Faction type definitions and configuration rules</summary>
+    public const string FactionTypeDefinitions = "faction-type-definitions";
 
     // GameService Service
     /// <summary>Game service registry</summary>
@@ -234,6 +258,10 @@ public static class StateStoreDefinitions
     // Location Service
     /// <summary>Location lookup cache for frequently-accessed locations</summary>
     public const string LocationCache = "location-cache";
+    /// <summary>Ephemeral entity-to-location bindings with TTL for presence tracking</summary>
+    public const string LocationEntityPresence = "location-entity-presence";
+    /// <summary>Redis Sets tracking which entities are at each location</summary>
+    public const string LocationEntitySet = "location-entity-set";
     /// <summary>Distributed locks for concurrent index modifications</summary>
     public const string LocationLock = "location-lock";
     /// <summary>Location hierarchy and metadata</summary>
@@ -266,6 +294,18 @@ public static class StateStoreDefinitions
     public const string MusicCompositions = "music-compositions";
     /// <summary>Style definitions (celtic, jazz, baroque, etc.)</summary>
     public const string MusicStyles = "music-styles";
+
+    // Obligation Service
+    /// <summary>Action tag to violation type code mappings (durable, queryable)</summary>
+    public const string ObligationActionMappings = "obligation-action-mappings";
+    /// <summary>Cached obligation manifests per character (ephemeral, event-driven invalidation)</summary>
+    public const string ObligationCache = "obligation-cache";
+    /// <summary>Violation report idempotency key deduplication</summary>
+    public const string ObligationIdempotency = "obligation-idempotency";
+    /// <summary>Distributed locks for obligation cache rebuild operations</summary>
+    public const string ObligationLock = "obligation-lock";
+    /// <summary>Violation history records (durable, queryable by character/contract/type)</summary>
+    public const string ObligationViolations = "obligation-violations";
 
     // Orchestrator Service
     /// <summary>Configuration version and metadata</summary>
@@ -448,6 +488,11 @@ public static class StateStoreDefinitions
             [CurrencyIdempotency] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "currency:idemp" },
             [CurrencyTransactions] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "currency_transactions" },
             [CurrencyWallets] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "currency_wallets" },
+            [DivineAttention] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "divine:attention" },
+            [DivineBlessings] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "divine_blessings" },
+            [DivineDeities] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "divine_deities" },
+            [DivineDivinityEvents] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "divine:divevt" },
+            [DivineLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "divine:lock" },
             [Documentation] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "doc", EnableSearch = true },
             [EdgeRevocation] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "auth:edge" },
             [EscrowActiveValidation] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "escrow:validate" },
@@ -457,6 +502,11 @@ public static class StateStoreDefinitions
             [EscrowPartyPending] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "escrow:pending" },
             [EscrowStatusIndex] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "escrow:status" },
             [EscrowTokens] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "escrow:token" },
+            [FactionCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "faction:cache" },
+            [FactionLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "faction:lock" },
+            [FactionMembership] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "faction_membership_statestore" },
+            [Faction] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "faction_statestore" },
+            [FactionTypeDefinitions] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "faction_type_definitions" },
             [GameService] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "game_service_statestore" },
             [GameSession] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "game_session_statestore" },
             [GardenerGardenInstances] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "gardener:garden" },
@@ -483,6 +533,8 @@ public static class StateStoreDefinitions
             [LicenseDefinitions] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "license_definitions" },
             [LicenseLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "license:lock" },
             [LocationCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "location" },
+            [LocationEntityPresence] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "location:presence" },
+            [LocationEntitySet] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "location:entities" },
             [LocationLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "location:lock" },
             [Location] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "location_statestore" },
             [Mapping] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "mapping" },
@@ -494,6 +546,11 @@ public static class StateStoreDefinitions
             [MessagingExternalSubs] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "msg:subs" },
             [MusicCompositions] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "music:comp" },
             [MusicStyles] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "music_styles" },
+            [ObligationActionMappings] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "obligation_action_mappings" },
+            [ObligationCache] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "obligation:cache" },
+            [ObligationIdempotency] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "obligation:idemp" },
+            [ObligationLock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "obligation:lock" },
+            [ObligationViolations] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "obligation_violations" },
             [OrchestratorConfig] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "orch:cfg" },
             [OrchestratorHeartbeats] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "orch:hb" },
             [OrchestratorRoutings] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "orch:rt" },
@@ -599,6 +656,11 @@ public static class StateStoreDefinitions
             [CurrencyIdempotency] = new StoreMetadata("Currency", "Idempotency key deduplication", "redis"),
             [CurrencyTransactions] = new StoreMetadata("Currency", "Immutable transaction history", "mysql"),
             [CurrencyWallets] = new StoreMetadata("Currency", "Wallet ownership and status", "mysql"),
+            [DivineAttention] = new StoreMetadata("Divine", "Active attention slot tracking per deity (ephemeral, high-frequency reads)", "redis"),
+            [DivineBlessings] = new StoreMetadata("Divine", "Blessing grant records linking deities to characters via items (durable, queryable)", "mysql"),
+            [DivineDeities] = new StoreMetadata("Divine", "Deity entity records (durable, queryable by game service, domain, status)", "mysql"),
+            [DivineDivinityEvents] = new StoreMetadata("Divine", "Pending divinity generation events awaiting batch processing (ephemeral queue)", "redis"),
+            [DivineLock] = new StoreMetadata("Divine", "Distributed locks for deity and blessing mutations", "redis"),
             [Documentation] = new StoreMetadata("Documentation", "Documentation content and metadata", "redis"),
             [EdgeRevocation] = new StoreMetadata("Auth", "Edge revocation tracking for CDN/firewall layer blocking", "redis"),
             [EscrowActiveValidation] = new StoreMetadata("Escrow", "Track active escrows requiring periodic validation", "redis"),
@@ -608,6 +670,11 @@ public static class StateStoreDefinitions
             [EscrowPartyPending] = new StoreMetadata("Escrow", "Count pending escrows per party for limits", "redis"),
             [EscrowStatusIndex] = new StoreMetadata("Escrow", "Escrow IDs by status (sorted set for expiration/validation)", "redis"),
             [EscrowTokens] = new StoreMetadata("Escrow", "Token hash validation (hashed tokens to escrow/party info)", "redis"),
+            [FactionCache] = new StoreMetadata("Faction", "Faction and membership lookup cache (frequently read)", "redis"),
+            [FactionLock] = new StoreMetadata("Faction", "Distributed locks for faction and membership modifications", "redis"),
+            [FactionMembership] = new StoreMetadata("Faction", "Faction membership records linking characters to factions", "mysql"),
+            [Faction] = new StoreMetadata("Faction", "Faction entity records (durable, queryable by type/realm/game service)", "mysql"),
+            [FactionTypeDefinitions] = new StoreMetadata("Faction", "Faction type definitions and configuration rules", "mysql"),
             [GameService] = new StoreMetadata("GameService", "Game service registry", "mysql"),
             [GameSession] = new StoreMetadata("GameSession", "Game session state and history", "mysql"),
             [GardenerGardenInstances] = new StoreMetadata("Gardener", "Active garden instance state per player (ephemeral, TTL-based)", "redis"),
@@ -634,6 +701,8 @@ public static class StateStoreDefinitions
             [LicenseDefinitions] = new StoreMetadata("License", "License definitions (nodes) per board template with grid positions", "mysql"),
             [LicenseLock] = new StoreMetadata("License", "Distributed locks for board mutations and unlock operations", "redis"),
             [LocationCache] = new StoreMetadata("Location", "Location lookup cache for frequently-accessed locations", "redis"),
+            [LocationEntityPresence] = new StoreMetadata("Location", "Ephemeral entity-to-location bindings with TTL for presence tracking", "redis"),
+            [LocationEntitySet] = new StoreMetadata("Location", "Redis Sets tracking which entities are at each location", "redis"),
             [LocationLock] = new StoreMetadata("Location", "Distributed locks for concurrent index modifications", "redis"),
             [Location] = new StoreMetadata("Location", "Location hierarchy and metadata", "mysql"),
             [Mapping] = new StoreMetadata("Mapping", "Spatial map data and channels", "redis"),
@@ -645,6 +714,11 @@ public static class StateStoreDefinitions
             [MessagingExternalSubs] = new StoreMetadata("Messaging", "External subscription recovery data", "redis"),
             [MusicCompositions] = new StoreMetadata("Music", "Cached generated compositions", "redis"),
             [MusicStyles] = new StoreMetadata("Music", "Style definitions (celtic, jazz, baroque, etc.)", "mysql"),
+            [ObligationActionMappings] = new StoreMetadata("Obligation", "Action tag to violation type code mappings (durable, queryable)", "mysql"),
+            [ObligationCache] = new StoreMetadata("Obligation", "Cached obligation manifests per character (ephemeral, event-driven invalidation)", "redis"),
+            [ObligationIdempotency] = new StoreMetadata("Obligation", "Violation report idempotency key deduplication", "redis"),
+            [ObligationLock] = new StoreMetadata("Obligation", "Distributed locks for obligation cache rebuild operations", "redis"),
+            [ObligationViolations] = new StoreMetadata("Obligation", "Violation history records (durable, queryable by character/contract/type)", "mysql"),
             [OrchestratorConfig] = new StoreMetadata("Orchestrator", "Configuration version and metadata", "redis"),
             [OrchestratorHeartbeats] = new StoreMetadata("Orchestrator", "Service heartbeat tracking", "redis"),
             [OrchestratorRoutings] = new StoreMetadata("Orchestrator", "Service-to-app-id routing tables", "redis"),

@@ -23,6 +23,12 @@ info:
     - topic: location.deleted
       event: LocationDeletedEvent
       description: Published when a location is soft-deleted
+    - topic: location.entity-arrived
+      event: LocationEntityArrivedEvent
+      description: Published when an entity arrives at a location (position change detected)
+    - topic: location.entity-departed
+      event: LocationEntityDepartedEvent
+      description: Published when an entity departs from a location (position change or clear)
 
 # Lifecycle events auto-generated from this definition
 # Output: schemas/Generated/location-lifecycle-events.yaml
@@ -50,4 +56,75 @@ x-lifecycle:
 
 paths: {}  # Events don't have HTTP paths
 
-# NOTE: No components/schemas - lifecycle events are auto-generated to schemas/Generated/
+components:
+  schemas:
+    LocationEntityArrivedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when an entity arrives at a location
+      required:
+        - eventId
+        - timestamp
+        - entityType
+        - entityId
+        - locationId
+        - realmId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the arrival was recorded
+        entityType:
+          type: string
+          description: Type of entity (opaque string - character, actor, npc, player, etc.)
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity that arrived
+        locationId:
+          type: string
+          format: uuid
+          description: ID of the location the entity arrived at
+        realmId:
+          type: string
+          format: uuid
+          description: ID of the realm the location belongs to
+        reportedBy:
+          type: string
+          nullable: true
+          description: Identifier of the reporter (service name or session ID)
+
+    LocationEntityDepartedEvent:
+      type: object
+      additionalProperties: false
+      description: Published when an entity departs from a location
+      required:
+        - eventId
+        - timestamp
+        - entityType
+        - entityId
+        - locationId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Unique identifier for this event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the departure was recorded
+        entityType:
+          type: string
+          description: Type of entity (opaque string - character, actor, npc, player, etc.)
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity that departed
+        locationId:
+          type: string
+          format: uuid
+          description: ID of the location the entity departed from

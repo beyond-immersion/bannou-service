@@ -55,6 +55,11 @@ This document lists all state store components used in Bannou.
 | `currency-idempotency` | Redis | Currency | Idempotency key deduplication |
 | `currency-transactions` | MySQL | Currency | Immutable transaction history |
 | `currency-wallets` | MySQL | Currency | Wallet ownership and status |
+| `divine-attention` | Redis | Divine | Active attention slot tracking per deity (ephemeral, high-frequency reads) |
+| `divine-blessings` | MySQL | Divine | Blessing grant records linking deities to characters via items (durable, queryable) |
+| `divine-deities` | MySQL | Divine | Deity entity records (durable, queryable by game service, domain, status) |
+| `divine-divinity-events` | Redis | Divine | Pending divinity generation events awaiting batch processing (ephemeral queue) |
+| `divine-lock` | Redis | Divine | Distributed locks for deity and blessing mutations |
 | `documentation-statestore` | Redis | Documentation | Documentation content and metadata |
 | `edge-revocation-statestore` | Redis | Auth | Edge revocation tracking for CDN/firewall layer blocking |
 | `escrow-active-validation` | Redis | Escrow | Track active escrows requiring periodic validation |
@@ -64,6 +69,11 @@ This document lists all state store components used in Bannou.
 | `escrow-party-pending` | Redis | Escrow | Count pending escrows per party for limits |
 | `escrow-status-index` | Redis | Escrow | Escrow IDs by status (sorted set for expiration/validation) |
 | `escrow-tokens` | Redis | Escrow | Token hash validation (hashed tokens to escrow/party info) |
+| `faction-cache` | Redis | Faction | Faction and membership lookup cache (frequently read) |
+| `faction-lock` | Redis | Faction | Distributed locks for faction and membership modifications |
+| `faction-membership-statestore` | MySQL | Faction | Faction membership records linking characters to factions |
+| `faction-statestore` | MySQL | Faction | Faction entity records (durable, queryable by type/realm/game service) |
+| `faction-type-definitions` | MySQL | Faction | Faction type definitions and configuration rules |
 | `game-service-statestore` | MySQL | GameService | Game service registry |
 | `game-session-statestore` | MySQL | GameSession | Game session state and history |
 | `gardener-garden-instances` | Redis | Gardener | Active garden instance state per player (ephemeral, TTL-based) |
@@ -90,6 +100,8 @@ This document lists all state store components used in Bannou.
 | `license-definitions` | MySQL | License | License definitions (nodes) per board template with grid positions |
 | `license-lock` | Redis | License | Distributed locks for board mutations and unlock operations |
 | `location-cache` | Redis | Location | Location lookup cache for frequently-accessed locations |
+| `location-entity-presence` | Redis | Location | Ephemeral entity-to-location bindings with TTL for presence tracking |
+| `location-entity-set` | Redis | Location | Redis Sets tracking which entities are at each location |
 | `location-lock` | Redis | Location | Distributed locks for concurrent index modifications |
 | `location-statestore` | MySQL | Location | Location hierarchy and metadata |
 | `mapping-statestore` | Redis | Mapping | Spatial map data and channels |
@@ -101,6 +113,11 @@ This document lists all state store components used in Bannou.
 | `messaging-external-subs` | Redis | Messaging | External subscription recovery data |
 | `music-compositions` | Redis | Music | Cached generated compositions |
 | `music-styles` | MySQL | Music | Style definitions (celtic, jazz, baroque, etc.) |
+| `obligation-action-mappings` | MySQL | Obligation | Action tag to violation type code mappings (durable, queryable) |
+| `obligation-cache` | Redis | Obligation | Cached obligation manifests per character (ephemeral, event-driven invalidation) |
+| `obligation-idempotency` | Redis | Obligation | Violation report idempotency key deduplication |
+| `obligation-lock` | Redis | Obligation | Distributed locks for obligation cache rebuild operations |
+| `obligation-violations` | MySQL | Obligation | Violation history records (durable, queryable by character/contract/type) |
 | `orchestrator-config` | Redis | Orchestrator | Configuration version and metadata |
 | `orchestrator-heartbeats` | Redis | Orchestrator | Service heartbeat tracking |
 | `orchestrator-routings` | Redis | Orchestrator | Service-to-app-id routing tables |
@@ -149,7 +166,7 @@ This document lists all state store components used in Bannou.
 | `test-search-statestore` | Redis | State | Test store with RedisSearch enabled |
 | `voice-statestore` | Redis | Voice | Voice room and peer state |
 
-**Total**: 139 stores (85 Redis, 54 MySQL)
+**Total**: 156 stores (95 Redis, 61 MySQL)
 
 ## Naming Conventions
 

@@ -615,6 +615,119 @@ paths:
         '400':
           description: Invalid seed data
 
+  /location/report-entity-position:
+    post:
+      summary: Report entity presence at a location
+      description: |
+        Reports that an entity is present at a location. Creates or refreshes an ephemeral
+        presence binding with configurable TTL. Reporters must call this periodically to
+        keep the presence alive. Publishes arrival/departure events only when the entity's
+        location actually changes (pure refreshes are silent).
+
+        The optional previousLocationId provides a caller-hint optimization: if provided
+        and matches the current stored location, only a TTL refresh occurs (no GET needed).
+        If omitted, the service reads the current value to detect location changes.
+      operationId: reportEntityPosition
+      tags:
+      - Location Presence
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportEntityPositionRequest'
+      responses:
+        '200':
+          description: Position reported successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportEntityPositionResponse'
+        '404':
+          description: Location not found
+
+  /location/get-entity-location:
+    post:
+      summary: Get the current location of an entity
+      description: |
+        Queries where an entity currently is. Returns the entity's location if a
+        non-expired presence binding exists.
+      operationId: getEntityLocation
+      tags:
+      - Location Presence
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetEntityLocationRequest'
+      responses:
+        '200':
+          description: Entity location query result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetEntityLocationResponse'
+
+  /location/list-entities-at-location:
+    post:
+      summary: List entities currently at a location
+      description: |
+        Queries which entities are currently present at a location. Supports optional
+        entity type filtering and pagination. Results are hydrated from the entity
+        presence store for reporting metadata.
+      operationId: listEntitiesAtLocation
+      tags:
+      - Location Presence
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListEntitiesAtLocationRequest'
+      responses:
+        '200':
+          description: Entity list for the location
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListEntitiesAtLocationResponse'
+
+  /location/clear-entity-position:
+    post:
+      summary: Remove entity presence from its current location
+      description: |
+        Clears an entity's presence binding, removing it from its current location.
+        Publishes a departure event if the entity was present at a location.
+      operationId: clearEntityPosition
+      tags:
+      - Location Presence
+      x-permissions:
+      - role: developer
+        states: {}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClearEntityPositionRequest'
+      responses:
+        '200':
+          description: Entity position cleared
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClearEntityPositionResponse'
+
 components:
   schemas:
     LocationType:
@@ -1398,3 +1511,216 @@ components:
             type: string
           description: List of error messages for locations that failed to seed
 
+    ReportEntityPositionRequest:
+      description: Request to report an entity's presence at a location
+      type: object
+      additionalProperties: false
+      required:
+      - entityType
+      - entityId
+      - locationId
+      properties:
+        entityType:
+          type: string
+          description: Type of entity (opaque string - character, actor, npc, player, etc.)
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity being reported
+        locationId:
+          type: string
+          format: uuid
+          description: ID of the location the entity is at
+        previousLocationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Caller hint for the entity's previous location (optimization to skip GET on refresh)
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of the realm the location belongs to (included in arrival events if provided)
+        reportedBy:
+          type: string
+          nullable: true
+          description: Identifier of the reporter (service name or session ID)
+
+    ReportEntityPositionResponse:
+      description: Result of reporting entity presence
+      type: object
+      additionalProperties: false
+      required:
+      - recorded
+      properties:
+        recorded:
+          type: boolean
+          description: Whether the position was successfully recorded
+        arrivedAt:
+          type: string
+          format: uuid
+          nullable: true
+          description: Location ID the entity arrived at (only set when location changed)
+        departedFrom:
+          type: string
+          format: uuid
+          nullable: true
+          description: Location ID the entity departed from (only set when location changed)
+
+    GetEntityLocationRequest:
+      description: Request to query an entity's current location
+      type: object
+      additionalProperties: false
+      required:
+      - entityType
+      - entityId
+      properties:
+        entityType:
+          type: string
+          description: Type of entity (opaque string - character, actor, npc, player, etc.)
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity to look up
+
+    GetEntityLocationResponse:
+      description: Result of querying an entity's current location
+      type: object
+      additionalProperties: false
+      required:
+      - found
+      properties:
+        found:
+          type: boolean
+          description: Whether a non-expired presence binding exists for this entity
+        locationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of the location the entity is currently at
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of the realm the location belongs to
+        entityType:
+          type: string
+          nullable: true
+          description: Type of entity (echoed back)
+        entityId:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID of the entity (echoed back)
+        reportedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the presence was last reported
+        reportedBy:
+          type: string
+          nullable: true
+          description: Identifier of the last reporter
+
+    ListEntitiesAtLocationRequest:
+      description: Request to list entities at a specific location
+      type: object
+      additionalProperties: false
+      required:
+      - locationId
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: ID of the location to query
+        entityType:
+          type: string
+          nullable: true
+          description: Optional filter by entity type (opaque string)
+        page:
+          type: integer
+          default: 1
+          description: Page number (1-indexed)
+        pageSize:
+          type: integer
+          default: 50
+          description: Number of entities per page
+
+    ListEntitiesAtLocationResponse:
+      description: Result of listing entities at a location
+      type: object
+      additionalProperties: false
+      required:
+      - entities
+      - totalCount
+      - locationId
+      properties:
+        entities:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityPresenceEntry'
+          description: Entities currently present at the location
+        totalCount:
+          type: integer
+          description: Total number of entities matching the query
+        locationId:
+          type: string
+          format: uuid
+          description: ID of the queried location
+
+    EntityPresenceEntry:
+      description: An entity currently present at a location
+      type: object
+      additionalProperties: false
+      required:
+      - entityType
+      - entityId
+      properties:
+        entityType:
+          type: string
+          description: Type of entity (opaque string)
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity
+        reportedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the presence was last reported
+        reportedBy:
+          type: string
+          nullable: true
+          description: Identifier of the last reporter
+
+    ClearEntityPositionRequest:
+      description: Request to clear an entity's presence from its current location
+      type: object
+      additionalProperties: false
+      required:
+      - entityType
+      - entityId
+      properties:
+        entityType:
+          type: string
+          description: Type of entity (opaque string - character, actor, npc, player, etc.)
+        entityId:
+          type: string
+          format: uuid
+          description: ID of the entity to clear
+
+    ClearEntityPositionResponse:
+      description: Result of clearing entity presence
+      type: object
+      additionalProperties: false
+      required:
+      - cleared
+      properties:
+        cleared:
+          type: boolean
+          description: Whether the entity had an active presence that was cleared
+        previousLocationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Location the entity was removed from (null if entity had no active presence)

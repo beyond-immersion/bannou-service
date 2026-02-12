@@ -14,7 +14,10 @@ info:
 
     **Critical architectural insight**: Gods influence characters through the character's
     own Actor, not directly. A god's Actor (regional watcher) monitors event streams
-    and makes decisions; the character's Actor receives the consequences.
+    and makes decisions; the character's Actor receives the consequences. Blessings
+    are entity-agnostic -- characters, accounts, deities, or any entity type can
+    receive them, since the backing storage (lib-collection, lib-status) is also
+    entity-agnostic.
 
     **Zero Arcadia-specific content**: lib-divine is a generic pantheon management
     service. Arcadia's 18 Old Gods are configured through behaviors and templates
@@ -395,12 +398,13 @@ paths:
 
   /divine/blessing/grant:
     post:
-      summary: Grant a blessing from a deity to a character
+      summary: Grant a blessing from a deity to an entity
       description: |
         Orchestrates the full blessing ceremony: validates deity is active, validates
-        character exists, checks blessing capacity, calculates divinity cost from tier,
+        target entity exists, checks blessing capacity, calculates divinity cost from tier,
         debits divinity, grants the blessing via lib-collection (Greater/Supreme) or
-        Status Inventory (Minor/Standard), and records the blessing.
+        Status Inventory (Minor/Standard), and records the blessing. Blessings are
+        entity-agnostic -- characters, accounts, deities, or any entity type can receive them.
       operationId: grantBlessing
       tags:
       - Blessing Orchestration
@@ -422,9 +426,9 @@ paths:
         '400':
           description: Deity is not active or insufficient divinity
         '404':
-          description: Deity or character not found
+          description: Deity or target entity not found
         '409':
-          description: Character has reached maximum active blessings
+          description: Entity has reached maximum active blessings
 
   /divine/blessing/revoke:
     post:
@@ -456,11 +460,11 @@ paths:
         '404':
           description: Blessing not found
 
-  /divine/blessing/list-by-character:
+  /divine/blessing/list-by-entity:
     post:
-      summary: List blessings for a character
-      description: Returns paginated blessings granted to a specific character.
-      operationId: listBlessingsByCharacter
+      summary: List blessings for an entity
+      description: Returns paginated blessings granted to a specific entity.
+      operationId: listBlessingsByEntity
       tags:
       - Blessing Orchestration
       x-permissions:
@@ -470,7 +474,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ListBlessingsByCharacterRequest'
+              $ref: '#/components/schemas/ListBlessingsByEntityRequest'
       responses:
         '200':
           description: Blessings listed
@@ -618,8 +622,9 @@ paths:
       summary: Cleanup divine data for a deleted character
       description: |
         Called by lib-resource when a character is deleted. Revokes all active
-        blessings for this character, removes follower relationships from all
-        deities, updates follower counts, and clears attention slots.
+        blessings targeting this character (entityType=character), removes follower
+        relationships from all deities, updates follower counts, and clears
+        attention slots.
       operationId: cleanupByCharacter
       tags:
       - Resource Cleanup
@@ -754,7 +759,8 @@ components:
       required:
         - blessingId
         - deityId
-        - characterId
+        - entityId
+        - entityType
         - tier
         - itemInstanceId
         - grantedAt
@@ -768,10 +774,13 @@ components:
           type: string
           format: uuid
           description: Deity that granted this blessing
-        characterId:
+        entityId:
           type: string
           format: uuid
-          description: Character that received this blessing
+          description: Entity that received this blessing
+        entityType:
+          type: string
+          description: Type of entity that received this blessing
         tier:
           $ref: '#/components/schemas/BlessingTier'
           description: Tier of the blessing
@@ -813,15 +822,15 @@ components:
         transactionType:
           type: string
           description: Type of transaction (e.g., mortal_action, blessing_grant, manual_credit)
-        referenceType:
+        targetType:
           type: string
           nullable: true
-          description: Optional reference type for cross-referencing (e.g., blessing, miracle)
-        referenceId:
+          description: Type of entity involved in this transaction (e.g., character, deity)
+        targetId:
           type: string
           format: uuid
           nullable: true
-          description: Optional reference ID for the source entity
+          description: Entity ID involved in this transaction (e.g., the blessed character, the rival deity)
         createdAt:
           type: string
           format: date-time
@@ -1031,7 +1040,6 @@ components:
         - deityId
         - amount
         - source
-        - description
       properties:
         deityId:
           type: string
@@ -1053,6 +1061,7 @@ components:
           description: Triggering event identifier if applicable
         description:
           type: string
+          nullable: true
           description: Human-readable description of the credit reason
 
     DebitDivinityRequest:
@@ -1063,7 +1072,6 @@ components:
         - deityId
         - amount
         - purpose
-        - description
       properties:
         deityId:
           type: string
@@ -1085,6 +1093,7 @@ components:
           description: Target character if the expenditure is blessing-related
         description:
           type: string
+          nullable: true
           description: Human-readable description of the debit reason
 
     GetDivinityHistoryRequest:
@@ -1117,10 +1126,11 @@ components:
     GrantBlessingRequest:
       type: object
       additionalProperties: false
-      description: Request to grant a blessing from a deity to a character
+      description: Request to grant a blessing from a deity to an entity
       required:
         - deityId
-        - characterId
+        - entityId
+        - entityType
         - tier
         - itemTemplateCode
         - reason
@@ -1129,10 +1139,13 @@ components:
           type: string
           format: uuid
           description: Deity granting the blessing
-        characterId:
+        entityId:
           type: string
           format: uuid
-          description: Character receiving the blessing
+          description: Entity receiving the blessing
+        entityType:
+          type: string
+          description: Type of entity receiving the blessing (e.g., character, account, deity)
         tier:
           $ref: '#/components/schemas/BlessingTier'
           description: Tier of the blessing (determines cost and storage mechanism)
@@ -1159,17 +1172,21 @@ components:
           type: string
           description: Why the blessing is being revoked
 
-    ListBlessingsByCharacterRequest:
+    ListBlessingsByEntityRequest:
       type: object
       additionalProperties: false
-      description: Request to list blessings for a character
+      description: Request to list blessings for an entity
       required:
-        - characterId
+        - entityId
+        - entityType
       properties:
-        characterId:
+        entityId:
           type: string
           format: uuid
-          description: Character whose blessings to list
+          description: Entity whose blessings to list
+        entityType:
+          type: string
+          description: Type of entity (e.g., character, account, deity)
         page:
           type: integer
           minimum: 1
@@ -1478,7 +1495,8 @@ components:
       required:
         - blessingId
         - deityId
-        - characterId
+        - entityId
+        - entityType
         - tier
         - itemTemplateCode
         - itemInstanceId
@@ -1494,10 +1512,13 @@ components:
           type: string
           format: uuid
           description: Deity that granted this blessing
-        characterId:
+        entityId:
           type: string
           format: uuid
-          description: Character that received this blessing
+          description: Entity that received this blessing
+        entityType:
+          type: string
+          description: Type of entity that received this blessing
         tier:
           $ref: '#/components/schemas/BlessingTier'
           description: Tier of the blessing

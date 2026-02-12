@@ -81,13 +81,13 @@ x-service-configuration:
       default: divine_blessing
       description: Status category code for temporary blessings via Status Inventory
 
-    MaxBlessingsPerCharacter:
+    MaxBlessingsPerEntity:
       type: integer
-      env: DIVINE_MAX_BLESSINGS_PER_CHARACTER
+      env: DIVINE_MAX_BLESSINGS_PER_ENTITY
       minimum: 1
       maximum: 100
       default: 10
-      description: Maximum active blessings a character can hold simultaneously
+      description: Maximum active blessings an entity can hold simultaneously
 
     # =========================================================================
     # Follower Management

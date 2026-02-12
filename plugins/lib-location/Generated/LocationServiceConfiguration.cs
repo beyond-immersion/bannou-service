@@ -83,4 +83,32 @@ public class LocationServiceConfiguration : IServiceConfiguration
     /// </summary>
     public int IndexLockTimeoutSeconds { get; set; } = 5;
 
+    /// <summary>
+    /// Default TTL for entity presence entries in seconds (reporters must refresh within this window)
+    /// Environment variable: LOCATION_ENTITY_PRESENCE_TTL_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 5, Maximum = 300)]
+    public int EntityPresenceTtlSeconds { get; set; } = 30;
+
+    /// <summary>
+    /// Interval in seconds between background cleanup cycles for expired location-entities set members
+    /// Environment variable: LOCATION_ENTITY_PRESENCE_CLEANUP_INTERVAL_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 600)]
+    public int EntityPresenceCleanupIntervalSeconds { get; set; } = 60;
+
+    /// <summary>
+    /// Delay in seconds before entity presence cleanup worker starts processing
+    /// Environment variable: LOCATION_ENTITY_PRESENCE_CLEANUP_STARTUP_DELAY_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 5, Maximum = 120)]
+    public int EntityPresenceCleanupStartupDelaySeconds { get; set; } = 15;
+
+    /// <summary>
+    /// Maximum entities returned by list-entities-at-location (pagination cap)
+    /// Environment variable: LOCATION_MAX_ENTITIES_PER_LOCATION_QUERY
+    /// </summary>
+    [ConfigRange(Minimum = 10, Maximum = 1000)]
+    public int MaxEntitiesPerLocationQuery { get; set; } = 100;
+
 }

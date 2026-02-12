@@ -391,6 +391,18 @@ x-state-stores:
     service: Location
     purpose: Distributed locks for concurrent index modifications
 
+  location-entity-presence:
+    backend: redis
+    prefix: "location:presence"
+    service: Location
+    purpose: Ephemeral entity-to-location bindings with TTL for presence tracking
+
+  location-entity-set:
+    backend: redis
+    prefix: "location:entities"
+    service: Location
+    purpose: Redis Sets tracking which entities are at each location
+
   realm-statestore:
     backend: mysql
     service: Realm
@@ -827,6 +839,42 @@ x-state-stores:
     purpose: Distributed locks for seed modifications
 
   # ============================================================================
+  # Faction Stores (L4 GameFeatures Service)
+  # ============================================================================
+
+  faction-statestore:
+    backend: mysql
+    service: Faction
+    purpose: Faction entity records (durable, queryable by realm/game service/status)
+
+  faction-membership-statestore:
+    backend: mysql
+    service: Faction
+    purpose: Faction membership records linking characters to factions with roles
+
+  faction-territory-statestore:
+    backend: mysql
+    service: Faction
+    purpose: Territory claim records linking factions to controlled locations
+
+  faction-norm-statestore:
+    backend: mysql
+    service: Faction
+    purpose: Behavioral norm definitions per faction (durable, queryable by violation type)
+
+  faction-cache:
+    backend: redis
+    prefix: "faction:cache"
+    service: Faction
+    purpose: Faction lookup and norm resolution cache (frequently read, TTL-based)
+
+  faction-lock:
+    backend: redis
+    prefix: "faction:lock"
+    service: Faction
+    purpose: Distributed locks for faction, membership, and territory mutations
+
+  # ============================================================================
   # License Stores (L4 GameFeatures Service)
   # ============================================================================
 
@@ -962,3 +1010,35 @@ x-state-stores:
     prefix: "divine:lock"
     service: Divine
     purpose: Distributed locks for deity and blessing mutations
+
+  # =========================================================================
+  # Obligation Stores (L4 GameFeatures)
+  # =========================================================================
+
+  obligation-cache:
+    backend: redis
+    prefix: "obligation:cache"
+    service: Obligation
+    purpose: Cached obligation manifests per character (ephemeral, event-driven invalidation)
+
+  obligation-action-mappings:
+    backend: mysql
+    service: Obligation
+    purpose: Action tag to violation type code mappings (durable, queryable)
+
+  obligation-violations:
+    backend: mysql
+    service: Obligation
+    purpose: Violation history records (durable, queryable by character/contract/type)
+
+  obligation-idempotency:
+    backend: redis
+    prefix: "obligation:idemp"
+    service: Obligation
+    purpose: Violation report idempotency key deduplication
+
+  obligation-lock:
+    backend: redis
+    prefix: "obligation:lock"
+    service: Obligation
+    purpose: Distributed locks for obligation cache rebuild operations

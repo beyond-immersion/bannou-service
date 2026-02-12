@@ -34,20 +34,17 @@ public partial class LocationService
 // ============================================================================
 // INTERNAL DATA MODELS
 // ============================================================================
-// Add your internal data models below. Examples:
-//
-// /// <summary>
-// /// Internal storage model for [entity].
-// /// </summary>
-// internal class LocationStorageModel
-// {
-//     public Guid Id { get; set; }
-//     public string Name { get; set; } = string.Empty;
-//     public DateTimeOffset CreatedAt { get; set; }
-// }
-//
-// /// <summary>
-// /// Cache entry for [purpose].
-// /// </summary>
-// internal record LocationCacheEntry(Guid Id, string Data, DateTimeOffset CachedAt);
-// ============================================================================
+
+/// <summary>
+/// Internal storage model for entity presence in Redis.
+/// Stored at key entity-location:{entityType}:{entityId} with configurable TTL.
+/// </summary>
+internal class EntityPresenceModel
+{
+    public Guid EntityId { get; set; }
+    public string EntityType { get; set; } = string.Empty;
+    public Guid LocationId { get; set; }
+    public Guid RealmId { get; set; }
+    public DateTimeOffset ReportedAt { get; set; }
+    public string? ReportedBy { get; set; }
+}

@@ -63,6 +63,17 @@ public partial class LocationService : ILocationService
     private static string BuildParentIndexKey(Guid realmId, Guid parentId) => $"{PARENT_INDEX_PREFIX}{realmId}:{parentId}";
     private static string BuildRootLocationsKey(Guid realmId) => $"{ROOT_LOCATIONS_PREFIX}{realmId}";
 
+    private const string ENTITY_LOCATION_PREFIX = "entity-location:";
+    private const string LOCATION_ENTITIES_PREFIX = "location-entities:";
+    private const string LOCATION_ENTITIES_INDEX_KEY = "location-entities:__index__";
+
+    private static string BuildEntityLocationKey(string entityType, Guid entityId)
+        => $"{ENTITY_LOCATION_PREFIX}{entityType}:{entityId}";
+    private static string BuildLocationEntitiesKey(Guid locationId)
+        => $"{LOCATION_ENTITIES_PREFIX}{locationId}";
+    private static string BuildEntitySetMember(string entityType, Guid entityId)
+        => $"{entityType}:{entityId}";
+
     #endregion
 
     #region Read Operations
@@ -1396,6 +1407,224 @@ public partial class LocationService : ILocationService
 
     #endregion
 
+    #region Entity Presence Operations
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ReportEntityPositionResponse?)> ReportEntityPositionAsync(
+        ReportEntityPositionRequest body, CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("Reporting entity position: {EntityType}:{EntityId} at location {LocationId}",
+            body.EntityType, body.EntityId, body.LocationId);
+
+        // Validate the target location exists
+        var locationKey = BuildLocationKey(body.LocationId);
+        var location = await GetLocationWithCacheAsync(locationKey, cancellationToken);
+        if (location is null)
+        {
+            _logger.LogDebug("Location {LocationId} not found for entity position report", body.LocationId);
+            return (StatusCodes.NotFound, null);
+        }
+
+        var entityLocationKey = BuildEntityLocationKey(body.EntityType, body.EntityId);
+        var presenceStore = _stateStoreFactory.GetStore<EntityPresenceModel>(StateStoreDefinitions.LocationEntityPresence);
+        var ttl = _configuration.EntityPresenceTtlSeconds;
+        var realmId = body.RealmId ?? location.RealmId;
+
+        Guid? arrivedAt = null;
+        Guid? departedFrom = null;
+
+        // Determine if location changed
+        Guid? previousLocationId = body.PreviousLocationId;
+
+        if (previousLocationId is null)
+        {
+            // Fallback path: read current value to detect change
+            var existing = await presenceStore.GetAsync(entityLocationKey, cancellationToken);
+            previousLocationId = existing?.LocationId;
+        }
+
+        var locationChanged = previousLocationId != body.LocationId;
+
+        // Save the new presence with TTL
+        var presenceModel = new EntityPresenceModel
+        {
+            EntityId = body.EntityId,
+            EntityType = body.EntityType,
+            LocationId = body.LocationId,
+            RealmId = realmId,
+            ReportedAt = DateTimeOffset.UtcNow,
+            ReportedBy = body.ReportedBy
+        };
+        await presenceStore.SaveAsync(entityLocationKey, presenceModel,
+            new StateOptions { Ttl = ttl }, cancellationToken);
+
+        // Update entity sets and publish events on location change
+        if (locationChanged)
+        {
+            var entitySetStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.LocationEntitySet);
+            var entityMember = BuildEntitySetMember(body.EntityType, body.EntityId);
+
+            // Add to new location's entity set
+            var newLocationSetKey = BuildLocationEntitiesKey(body.LocationId);
+            await entitySetStore.AddToSetAsync(newLocationSetKey, entityMember, cancellationToken: cancellationToken);
+
+            // Track this location in the index set for cleanup worker discovery
+            await entitySetStore.AddToSetAsync(LOCATION_ENTITIES_INDEX_KEY, body.LocationId.ToString(), cancellationToken: cancellationToken);
+
+            // Remove from old location's entity set if there was a previous location
+            if (previousLocationId.HasValue)
+            {
+                var oldLocationSetKey = BuildLocationEntitiesKey(previousLocationId.Value);
+                await entitySetStore.RemoveFromSetAsync(oldLocationSetKey, entityMember, cancellationToken);
+
+                departedFrom = previousLocationId.Value;
+                await PublishEntityDepartedEventAsync(body.EntityType, body.EntityId, previousLocationId.Value, cancellationToken);
+            }
+
+            arrivedAt = body.LocationId;
+            await PublishEntityArrivedEventAsync(body.EntityType, body.EntityId, body.LocationId, realmId, body.ReportedBy, cancellationToken);
+        }
+
+        return (StatusCodes.OK, new ReportEntityPositionResponse
+        {
+            Recorded = true,
+            ArrivedAt = arrivedAt,
+            DepartedFrom = departedFrom
+        });
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, GetEntityLocationResponse?)> GetEntityLocationAsync(
+        GetEntityLocationRequest body, CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("Getting entity location: {EntityType}:{EntityId}", body.EntityType, body.EntityId);
+
+        var entityLocationKey = BuildEntityLocationKey(body.EntityType, body.EntityId);
+        var presenceStore = _stateStoreFactory.GetStore<EntityPresenceModel>(StateStoreDefinitions.LocationEntityPresence);
+        var model = await presenceStore.GetAsync(entityLocationKey, cancellationToken);
+
+        if (model is null)
+        {
+            return (StatusCodes.OK, new GetEntityLocationResponse { Found = false });
+        }
+
+        return (StatusCodes.OK, new GetEntityLocationResponse
+        {
+            Found = true,
+            LocationId = model.LocationId,
+            RealmId = model.RealmId,
+            EntityType = model.EntityType,
+            EntityId = model.EntityId,
+            ReportedAt = model.ReportedAt,
+            ReportedBy = model.ReportedBy
+        });
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ListEntitiesAtLocationResponse?)> ListEntitiesAtLocationAsync(
+        ListEntitiesAtLocationRequest body, CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("Listing entities at location {LocationId}", body.LocationId);
+
+        var entitySetStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.LocationEntitySet);
+        var locationSetKey = BuildLocationEntitiesKey(body.LocationId);
+        var members = await entitySetStore.GetSetAsync<string>(locationSetKey, cancellationToken);
+
+        // Parse members into entityType:entityId pairs
+        var parsed = new List<(string EntityType, Guid EntityId)>();
+        foreach (var member in members)
+        {
+            var separatorIndex = member.LastIndexOf(':');
+            if (separatorIndex <= 0) continue;
+
+            var entityType = member[..separatorIndex];
+            if (!Guid.TryParse(member[(separatorIndex + 1)..], out var entityId)) continue;
+
+            // Apply entity type filter if specified
+            if (body.EntityType is not null && !string.Equals(entityType, body.EntityType, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            parsed.Add((entityType, entityId));
+        }
+
+        var totalCount = parsed.Count;
+
+        // Apply pagination
+        var page = Math.Max(1, body.Page);
+        var pageSize = Math.Min(
+            Math.Max(1, body.PageSize),
+            _configuration.MaxEntitiesPerLocationQuery);
+        var skip = (page - 1) * pageSize;
+        var paged = parsed.Skip(skip).Take(pageSize).ToList();
+
+        // Hydrate each entry from the presence store for metadata
+        var presenceStore = _stateStoreFactory.GetStore<EntityPresenceModel>(StateStoreDefinitions.LocationEntityPresence);
+        var entries = new List<EntityPresenceEntry>();
+
+        foreach (var (entityType, entityId) in paged)
+        {
+            var entityLocationKey = BuildEntityLocationKey(entityType, entityId);
+            var presence = await presenceStore.GetAsync(entityLocationKey, cancellationToken);
+
+            entries.Add(new EntityPresenceEntry
+            {
+                EntityType = entityType,
+                EntityId = entityId,
+                ReportedAt = presence?.ReportedAt,
+                ReportedBy = presence?.ReportedBy
+            });
+        }
+
+        return (StatusCodes.OK, new ListEntitiesAtLocationResponse
+        {
+            Entities = entries,
+            TotalCount = totalCount,
+            LocationId = body.LocationId
+        });
+    }
+
+    /// <inheritdoc />
+    public async Task<(StatusCodes, ClearEntityPositionResponse?)> ClearEntityPositionAsync(
+        ClearEntityPositionRequest body, CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("Clearing entity position: {EntityType}:{EntityId}", body.EntityType, body.EntityId);
+
+        var entityLocationKey = BuildEntityLocationKey(body.EntityType, body.EntityId);
+        var presenceStore = _stateStoreFactory.GetStore<EntityPresenceModel>(StateStoreDefinitions.LocationEntityPresence);
+
+        // Get current presence to know which location to clean up
+        var existing = await presenceStore.GetAsync(entityLocationKey, cancellationToken);
+
+        if (existing is null)
+        {
+            return (StatusCodes.OK, new ClearEntityPositionResponse
+            {
+                Cleared = false,
+                PreviousLocationId = null
+            });
+        }
+
+        // Delete the presence key
+        await presenceStore.DeleteAsync(entityLocationKey, cancellationToken);
+
+        // Remove from location's entity set
+        var entitySetStore = _stateStoreFactory.GetCacheableStore<string>(StateStoreDefinitions.LocationEntitySet);
+        var locationSetKey = BuildLocationEntitiesKey(existing.LocationId);
+        var entityMember = BuildEntitySetMember(body.EntityType, body.EntityId);
+        await entitySetStore.RemoveFromSetAsync(locationSetKey, entityMember, cancellationToken);
+
+        // Publish departure event
+        await PublishEntityDepartedEventAsync(body.EntityType, body.EntityId, existing.LocationId, cancellationToken);
+
+        return (StatusCodes.OK, new ClearEntityPositionResponse
+        {
+            Cleared = true,
+            PreviousLocationId = existing.LocationId
+        });
+    }
+
+    #endregion
+
     #region Private Helpers
 
     private async Task<List<LocationModel>> LoadLocationsByIdsAsync(List<Guid> locationIds, CancellationToken cancellationToken)
@@ -1783,6 +2012,38 @@ public partial class LocationService : ILocationService
         };
 
         await _messageBus.TryPublishAsync("location.deleted", eventData, cancellationToken: cancellationToken);
+    }
+
+    private async Task PublishEntityArrivedEventAsync(
+        string entityType, Guid entityId, Guid locationId, Guid realmId, string? reportedBy, CancellationToken cancellationToken)
+    {
+        var eventData = new LocationEntityArrivedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            EntityType = entityType,
+            EntityId = entityId,
+            LocationId = locationId,
+            RealmId = realmId,
+            ReportedBy = reportedBy
+        };
+
+        await _messageBus.TryPublishAsync("location.entity-arrived", eventData, cancellationToken: cancellationToken);
+    }
+
+    private async Task PublishEntityDepartedEventAsync(
+        string entityType, Guid entityId, Guid locationId, CancellationToken cancellationToken)
+    {
+        var eventData = new LocationEntityDepartedEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            EntityType = entityType,
+            EntityId = entityId,
+            LocationId = locationId
+        };
+
+        await _messageBus.TryPublishAsync("location.entity-departed", eventData, cancellationToken: cancellationToken);
     }
 
     #endregion

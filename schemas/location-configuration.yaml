@@ -39,3 +39,31 @@ x-service-configuration:
       description: Timeout for acquiring distributed locks on index operations (realm, parent, root indexes)
       default: 5
       env: LOCATION_INDEX_LOCK_TIMEOUT_SECONDS
+    EntityPresenceTtlSeconds:
+      type: integer
+      description: Default TTL for entity presence entries in seconds (reporters must refresh within this window)
+      default: 30
+      minimum: 5
+      maximum: 300
+      env: LOCATION_ENTITY_PRESENCE_TTL_SECONDS
+    EntityPresenceCleanupIntervalSeconds:
+      type: integer
+      description: Interval in seconds between background cleanup cycles for expired location-entities set members
+      default: 60
+      minimum: 10
+      maximum: 600
+      env: LOCATION_ENTITY_PRESENCE_CLEANUP_INTERVAL_SECONDS
+    EntityPresenceCleanupStartupDelaySeconds:
+      type: integer
+      description: Delay in seconds before entity presence cleanup worker starts processing
+      default: 15
+      minimum: 5
+      maximum: 120
+      env: LOCATION_ENTITY_PRESENCE_CLEANUP_STARTUP_DELAY_SECONDS
+    MaxEntitiesPerLocationQuery:
+      type: integer
+      description: Maximum entities returned by list-entities-at-location (pagination cap)
+      default: 100
+      minimum: 10
+      maximum: 1000
+      env: LOCATION_MAX_ENTITIES_PER_LOCATION_QUERY
