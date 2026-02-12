@@ -59,6 +59,26 @@ public partial class SeedService : ISeedService
             string.Join(", ", _evolutionListeners.Select(l => l.GetType().Name)));
     }
 
+    /// <summary>
+    /// Internal key segment for cross-game seed types (gameServiceId is null).
+    /// Used in composite keys like type:{segment}:{seedTypeCode} so that
+    /// cross-game types have stable, predictable storage keys.
+    /// </summary>
+    private const string CrossGameKeySegment = "cross-game";
+
+    /// <summary>
+    /// Converts a nullable GameServiceId to the storage key segment.
+    /// Returns the GUID string for game-scoped types, or "cross-game" for null.
+    /// </summary>
+    private static string GameServiceKeySegment(Guid? gameServiceId) =>
+        gameServiceId?.ToString() ?? CrossGameKeySegment;
+
+    /// <summary>
+    /// Builds the composite type key: type:{gameServiceId|cross-game}:{seedTypeCode}
+    /// </summary>
+    private static string TypeKey(Guid? gameServiceId, string seedTypeCode) =>
+        $"type:{GameServiceKeySegment(gameServiceId)}:{seedTypeCode}";
+
     // ========================================================================
     // SEED CRUD
     // ========================================================================
@@ -72,20 +92,23 @@ public partial class SeedService : ISeedService
         _logger.LogInformation("Creating seed of type {SeedTypeCode} for owner {OwnerId} ({OwnerType})",
             body.SeedTypeCode, body.OwnerId, body.OwnerType);
 
-        // Validate game service exists (L2 hard dependency)
-        try
+        // Validate game service exists (L2 hard dependency) - skip for cross-game types
+        if (body.GameServiceId.HasValue)
         {
-            await _gameServiceClient.GetServiceAsync(
-                new GetServiceRequest { ServiceId = body.GameServiceId }, cancellationToken);
-        }
-        catch (ApiException ex) when (ex.StatusCode == 404)
-        {
-            _logger.LogWarning("Game service {GameServiceId} not found", body.GameServiceId);
-            return (StatusCodes.NotFound, null);
+            try
+            {
+                await _gameServiceClient.GetServiceAsync(
+                    new GetServiceRequest { ServiceId = body.GameServiceId.Value }, cancellationToken);
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                _logger.LogWarning("Game service {GameServiceId} not found", body.GameServiceId);
+                return (StatusCodes.NotFound, null);
+            }
         }
 
         var typeStore = _stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
-        var typeKey = $"type:{body.GameServiceId}:{body.SeedTypeCode}";
+        var typeKey = TypeKey(body.GameServiceId, body.SeedTypeCode);
         var seedType = await typeStore.GetAsync(typeKey, cancellationToken);
 
         if (seedType == null)
@@ -116,7 +139,7 @@ public partial class SeedService : ISeedService
             new QueryCondition { Path = "$.OwnerId", Operator = QueryOperator.Equals, Value = body.OwnerId.ToString() },
             new QueryCondition { Path = "$.OwnerType", Operator = QueryOperator.Equals, Value = body.OwnerType },
             new QueryCondition { Path = "$.SeedTypeCode", Operator = QueryOperator.Equals, Value = body.SeedTypeCode },
-            new QueryCondition { Path = "$.GameServiceId", Operator = QueryOperator.Equals, Value = body.GameServiceId.ToString() },
+            new QueryCondition { Path = "$.GameServiceId", Operator = QueryOperator.Equals, Value = GameServiceKeySegment(body.GameServiceId) },
             new QueryCondition { Path = "$.Status", Operator = QueryOperator.NotEquals, Value = SeedStatus.Archived.ToString() },
             new QueryCondition { Path = "$.SeedId", Operator = QueryOperator.Exists, Value = true }
         };
@@ -497,7 +520,7 @@ public partial class SeedService : ISeedService
         }
 
         var typeStore = _stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
-        var seedType = await typeStore.GetAsync($"type:{seed.GameServiceId}:{seed.SeedTypeCode}", cancellationToken);
+        var seedType = await typeStore.GetAsync(TypeKey(seed.GameServiceId, seed.SeedTypeCode), cancellationToken);
 
         if (seedType == null)
         {
@@ -575,7 +598,7 @@ public partial class SeedService : ISeedService
         }
 
         var store = _stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
-        var key = $"type:{body.GameServiceId}:{body.SeedTypeCode}";
+        var key = TypeKey(body.GameServiceId, body.SeedTypeCode);
 
         var existing = await store.GetAsync(key, cancellationToken);
         if (existing != null)
@@ -656,7 +679,7 @@ public partial class SeedService : ISeedService
     public async Task<(StatusCodes, SeedTypeResponse?)> GetSeedTypeAsync(GetSeedTypeRequest body, CancellationToken cancellationToken)
     {
         var store = _stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
-        var seedType = await store.GetAsync($"type:{body.GameServiceId}:{body.SeedTypeCode}", cancellationToken);
+        var seedType = await store.GetAsync(TypeKey(body.GameServiceId, body.SeedTypeCode), cancellationToken);
 
         if (seedType == null)
         {
@@ -700,7 +723,7 @@ public partial class SeedService : ISeedService
     {
         var lockOwner = $"update-type-{Guid.NewGuid():N}";
         await using var lockResponse = await _lockProvider.LockAsync(
-            StateStoreDefinitions.SeedLock, $"type:{body.GameServiceId}:{body.SeedTypeCode}",
+            StateStoreDefinitions.SeedLock, TypeKey(body.GameServiceId, body.SeedTypeCode),
             lockOwner, 30, cancellationToken);
 
         if (!lockResponse.Success)
@@ -709,7 +732,7 @@ public partial class SeedService : ISeedService
         }
 
         var store = _stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
-        var key = $"type:{body.GameServiceId}:{body.SeedTypeCode}";
+        var key = TypeKey(body.GameServiceId, body.SeedTypeCode);
         var seedType = await store.GetAsync(key, cancellationToken);
 
         if (seedType == null)
@@ -797,7 +820,7 @@ public partial class SeedService : ISeedService
             body.SeedTypeCode, body.GameServiceId);
 
         var store = _stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
-        var key = $"type:{body.GameServiceId}:{body.SeedTypeCode}";
+        var key = TypeKey(body.GameServiceId, body.SeedTypeCode);
         var model = await store.GetAsync(key, cancellationToken);
 
         if (model == null)
@@ -849,7 +872,7 @@ public partial class SeedService : ISeedService
             body.SeedTypeCode, body.GameServiceId);
 
         var store = _stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
-        var key = $"type:{body.GameServiceId}:{body.SeedTypeCode}";
+        var key = TypeKey(body.GameServiceId, body.SeedTypeCode);
         var model = await store.GetAsync(key, cancellationToken);
 
         if (model == null)
@@ -902,7 +925,7 @@ public partial class SeedService : ISeedService
 
         var lockOwner = $"delete-type-{Guid.NewGuid():N}";
         await using var lockResponse = await _lockProvider.LockAsync(
-            StateStoreDefinitions.SeedLock, $"type:{body.GameServiceId}:{body.SeedTypeCode}",
+            StateStoreDefinitions.SeedLock, TypeKey(body.GameServiceId, body.SeedTypeCode),
             lockOwner, 30, cancellationToken);
 
         if (!lockResponse.Success)
@@ -911,7 +934,7 @@ public partial class SeedService : ISeedService
         }
 
         var typeStore = _stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
-        var key = $"type:{body.GameServiceId}:{body.SeedTypeCode}";
+        var key = TypeKey(body.GameServiceId, body.SeedTypeCode);
         var model = await typeStore.GetAsync(key, cancellationToken);
 
         if (model == null)
@@ -1360,7 +1383,7 @@ public partial class SeedService : ISeedService
 
         // Load type definition for phase check
         var typeStore = _stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
-        var seedType = await typeStore.GetAsync($"type:{seed.GameServiceId}:{seed.SeedTypeCode}", cancellationToken);
+        var seedType = await typeStore.GetAsync(TypeKey(seed.GameServiceId, seed.SeedTypeCode), cancellationToken);
 
         if (seedType != null)
         {
@@ -1705,7 +1728,7 @@ public partial class SeedService : ISeedService
         var domains = growth?.Domains ?? new Dictionary<string, DomainGrowthEntry>();
 
         var typeStore = _stateStoreFactory.GetStore<SeedTypeDefinitionModel>(StateStoreDefinitions.SeedTypeDefinitions);
-        var seedType = await typeStore.GetAsync($"type:{seed.GameServiceId}:{seed.SeedTypeCode}", cancellationToken);
+        var seedType = await typeStore.GetAsync(TypeKey(seed.GameServiceId, seed.SeedTypeCode), cancellationToken);
 
         var capabilities = new List<CapabilityEntry>();
         if (seedType?.CapabilityRules != null)

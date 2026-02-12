@@ -705,7 +705,7 @@ components:
     CreateSeedRequest:
       type: object
       description: Request to create a new seed.
-      required: [ownerId, ownerType, seedTypeCode, gameServiceId]
+      required: [ownerId, ownerType, seedTypeCode]
       properties:
         ownerId:
           type: string
@@ -722,7 +722,10 @@ components:
         gameServiceId:
           type: string
           format: uuid
-          description: Game service this seed is scoped to.
+          nullable: true
+          description: >-
+            Game service this seed is scoped to. Null for cross-game seed types
+            that are not scoped to any single game service.
         displayName:
           type: string
           nullable: true
@@ -929,7 +932,7 @@ components:
       type: object
       description: Request to register a new seed type definition.
       required:
-        [seedTypeCode, gameServiceId, displayName, description,
+        [seedTypeCode, displayName, description,
          maxPerOwner, allowedOwnerTypes, growthPhases, bondCardinality, bondPermanent]
       properties:
         seedTypeCode:
@@ -938,7 +941,10 @@ components:
         gameServiceId:
           type: string
           format: uuid
-          description: Game service this type is scoped to.
+          nullable: true
+          description: >-
+            Game service this type is scoped to. Null for cross-game seed types
+            that are not scoped to any single game service.
         displayName:
           type: string
           description: Human-readable name.
@@ -1006,7 +1012,7 @@ components:
     GetSeedTypeRequest:
       type: object
       description: Request to get a seed type definition.
-      required: [seedTypeCode, gameServiceId]
+      required: [seedTypeCode]
       properties:
         seedTypeCode:
           type: string
@@ -1014,17 +1020,20 @@ components:
         gameServiceId:
           type: string
           format: uuid
-          description: The game service scope.
+          nullable: true
+          description: >-
+            The game service scope. Null for cross-game seed types.
 
     ListSeedTypesRequest:
       type: object
-      description: Request to list seed types for a game service.
-      required: [gameServiceId]
+      description: Request to list seed types, optionally filtered by game service.
       properties:
         gameServiceId:
           type: string
           format: uuid
-          description: Game service to list seed types for.
+          nullable: true
+          description: >-
+            Game service to filter seed types for. Null returns cross-game types.
         includeDeprecated:
           type: boolean
           default: false
@@ -1033,7 +1042,7 @@ components:
     UpdateSeedTypeRequest:
       type: object
       description: Request to update a seed type definition.
-      required: [seedTypeCode, gameServiceId]
+      required: [seedTypeCode]
       properties:
         seedTypeCode:
           type: string
@@ -1041,7 +1050,9 @@ components:
         gameServiceId:
           type: string
           format: uuid
-          description: The game service scope.
+          nullable: true
+          description: >-
+            The game service scope. Null for cross-game seed types.
         displayName:
           type: string
           nullable: true
@@ -1095,7 +1106,7 @@ components:
       type: object
       description: Request to deprecate a seed type, preventing new seed creation.
       additionalProperties: false
-      required: [seedTypeCode, gameServiceId]
+      required: [seedTypeCode]
       properties:
         seedTypeCode:
           type: string
@@ -1103,7 +1114,9 @@ components:
         gameServiceId:
           type: string
           format: uuid
-          description: The game service scope.
+          nullable: true
+          description: >-
+            The game service scope. Null for cross-game seed types.
         reason:
           type: string
           maxLength: 500
@@ -1114,7 +1127,7 @@ components:
       type: object
       description: Request to restore a deprecated seed type to active status.
       additionalProperties: false
-      required: [seedTypeCode, gameServiceId]
+      required: [seedTypeCode]
       properties:
         seedTypeCode:
           type: string
@@ -1122,13 +1135,15 @@ components:
         gameServiceId:
           type: string
           format: uuid
-          description: The game service scope.
+          nullable: true
+          description: >-
+            The game service scope. Null for cross-game seed types.
 
     DeleteSeedTypeRequest:
       type: object
       description: Request to hard-delete a deprecated seed type with no remaining non-archived seeds.
       additionalProperties: false
-      required: [seedTypeCode, gameServiceId]
+      required: [seedTypeCode]
       properties:
         seedTypeCode:
           type: string
@@ -1136,7 +1151,9 @@ components:
         gameServiceId:
           type: string
           format: uuid
-          description: The game service scope.
+          nullable: true
+          description: >-
+            The game service scope. Null for cross-game seed types.
 
     InitiateBondRequest:
       type: object
@@ -1202,7 +1219,7 @@ components:
       type: object
       description: Full seed entity response.
       required:
-        [seedId, ownerId, ownerType, seedTypeCode, gameServiceId,
+        [seedId, ownerId, ownerType, seedTypeCode,
          createdAt, growthPhase, totalGrowth, displayName, status]
       properties:
         seedId:
@@ -1222,7 +1239,9 @@ components:
         gameServiceId:
           type: string
           format: uuid
-          description: Game service this seed is scoped to.
+          nullable: true
+          description: >-
+            Game service this seed is scoped to. Null for cross-game seed types.
         createdAt:
           type: string
           format: date-time
@@ -1363,7 +1382,7 @@ components:
       type: object
       description: Full seed type definition response.
       required:
-        [seedTypeCode, gameServiceId, displayName, description,
+        [seedTypeCode, displayName, description,
          maxPerOwner, allowedOwnerTypes, growthPhases, bondCardinality, bondPermanent,
          isDeprecated]
       properties:
@@ -1373,7 +1392,9 @@ components:
         gameServiceId:
           type: string
           format: uuid
-          description: Game service scope.
+          nullable: true
+          description: >-
+            Game service scope. Null for cross-game seed types.
         displayName:
           type: string
           description: Human-readable name.

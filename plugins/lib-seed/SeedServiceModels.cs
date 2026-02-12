@@ -32,8 +32,8 @@ internal class SeedModel
     /// <summary>Registered seed type code.</summary>
     public string SeedTypeCode { get; set; } = string.Empty;
 
-    /// <summary>Game service this seed is scoped to.</summary>
-    public Guid GameServiceId { get; set; }
+    /// <summary>Game service this seed is scoped to. Null for cross-game seed types.</summary>
+    public Guid? GameServiceId { get; set; }
 
     /// <summary>When the seed was created.</summary>
     public DateTimeOffset CreatedAt { get; set; }
@@ -90,15 +90,15 @@ internal class SeedGrowthModel
 
 /// <summary>
 /// Internal storage model for seed type definitions. Stored in seed-type-definitions-statestore (MySQL).
-/// Key pattern: type:{gameServiceId}:{seedTypeCode}
+/// Key pattern: type:{gameServiceId|cross-game}:{seedTypeCode}
 /// </summary>
 internal class SeedTypeDefinitionModel
 {
     /// <summary>Unique type code (e.g., "guardian", "dungeon_core").</summary>
     public string SeedTypeCode { get; set; } = string.Empty;
 
-    /// <summary>Game service this type is scoped to.</summary>
-    public Guid GameServiceId { get; set; }
+    /// <summary>Game service this type is scoped to. Null for cross-game seed types.</summary>
+    public Guid? GameServiceId { get; set; }
 
     /// <summary>Human-readable name.</summary>
     public string DisplayName { get; set; } = string.Empty;
