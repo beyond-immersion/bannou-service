@@ -1,7 +1,11 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
+using BeyondImmersion.BannouService.GameSession;
 using BeyondImmersion.BannouService.Messaging;
+using BeyondImmersion.BannouService.Puppetmaster;
+using BeyondImmersion.BannouService.Seed;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
@@ -138,6 +142,16 @@ public partial class GardenerService : IGardenerService
         _phaseStore ??= _stateStoreFactory.GetStore<DeploymentPhaseConfigModel>(
             StateStoreDefinitions.GardenerPhaseConfig);
 
+    private ICacheableStateStore<GardenInstanceModel>? _gardenCacheStore;
+
+    /// <summary>
+    /// Cacheable store providing Redis set operations for tracking active instances.
+    /// Used for maintaining tracking sets of active void and scenario account IDs.
+    /// </summary>
+    internal ICacheableStateStore<GardenInstanceModel> GardenCacheStore =>
+        _gardenCacheStore ??= _stateStoreFactory.GetCacheableStore<GardenInstanceModel>(
+            StateStoreDefinitions.GardenerVoidInstances);
+
     #endregion
 
     #region Key Helpers
@@ -148,6 +162,18 @@ public partial class GardenerService : IGardenerService
     private static string TemplateKey(Guid templateId) => $"template:{templateId}";
     private static string HistoryKey(Guid scenarioInstanceId) => $"history:{scenarioInstanceId}";
     private const string PhaseConfigKey = "phase:config";
+
+    /// <summary>
+    /// Redis set key tracking account IDs with active void instances.
+    /// Used by GardenerVoidOrchestratorWorker to iterate active gardens.
+    /// </summary>
+    internal const string ActiveVoidsTrackingKey = "gardener:active-voids";
+
+    /// <summary>
+    /// Redis set key tracking account IDs with active scenario instances.
+    /// Used by GardenerScenarioLifecycleWorker to iterate active scenarios.
+    /// </summary>
+    internal const string ActiveScenariosTrackingKey = "gardener:active-scenarios";
 
     #endregion
 
@@ -197,7 +223,11 @@ public partial class GardenerService : IGardenerService
             NeedsReEvaluation = true
         };
 
-        await GardenStore.SaveAsync(GardenKey(body.AccountId), garden, cancellationToken);
+        await GardenStore.SaveAsync(GardenKey(body.AccountId), garden, cancellationToken: cancellationToken);
+
+        // Track active void instance for background worker iteration
+        await GardenCacheStore.AddToSetAsync<Guid>(
+            ActiveVoidsTrackingKey, body.AccountId, cancellationToken: cancellationToken);
 
         await _messageBus.TryPublishAsync("gardener.void.entered",
             new GardenerVoidEnteredEvent
@@ -212,7 +242,7 @@ public partial class GardenerService : IGardenerService
             "Created garden instance {GardenInstanceId} for account {AccountId} with seed {SeedId}",
             gardenInstanceId, body.AccountId, activeSeed.SeedId);
 
-        return (StatusCodes.Created, MapToVoidStateResponse(garden, Array.Empty<PoiModel>()));
+        return (StatusCodes.OK, MapToVoidStateResponse(garden, Array.Empty<PoiModel>()));
     }
 
     /// <inheritdoc />
@@ -265,7 +295,7 @@ public partial class GardenerService : IGardenerService
                 {
                     poi.Status = PoiStatus.Entered;
                     await PoiStore.SaveAsync(
-                        PoiKey(garden.GardenInstanceId, poiId), poi, cancellationToken);
+                        PoiKey(garden.GardenInstanceId, poiId), poi, cancellationToken: cancellationToken);
                     triggeredPois.Add(MapToPoiSummary(poi));
 
                     await _messageBus.TryPublishAsync("gardener.poi.entered",
@@ -280,7 +310,7 @@ public partial class GardenerService : IGardenerService
             }
         }
 
-        await GardenStore.SaveAsync(GardenKey(body.AccountId), garden, cancellationToken);
+        await GardenStore.SaveAsync(GardenKey(body.AccountId), garden, cancellationToken: cancellationToken);
 
         return (StatusCodes.OK, new PositionUpdateResponse
         {
@@ -318,6 +348,10 @@ public partial class GardenerService : IGardenerService
 
         var sessionDuration = (float)(DateTimeOffset.UtcNow - garden.CreatedAt).TotalSeconds;
         await GardenStore.DeleteAsync(GardenKey(body.AccountId), cancellationToken);
+
+        // Remove from tracking set
+        await GardenCacheStore.RemoveFromSetAsync<Guid>(
+            ActiveVoidsTrackingKey, body.AccountId, cancellationToken);
 
         await _messageBus.TryPublishAsync("gardener.void.left",
             new GardenerVoidLeftEvent
@@ -412,7 +446,7 @@ public partial class GardenerService : IGardenerService
 
         poi.Status = PoiStatus.Entered;
         await PoiStore.SaveAsync(
-            PoiKey(garden.GardenInstanceId, body.PoiId), poi, cancellationToken);
+            PoiKey(garden.GardenInstanceId, body.PoiId), poi, cancellationToken: cancellationToken);
 
         await _messageBus.TryPublishAsync("gardener.poi.entered",
             new GardenerPoiEnteredEvent
@@ -452,13 +486,13 @@ public partial class GardenerService : IGardenerService
 
         poi.Status = PoiStatus.Declined;
         await PoiStore.SaveAsync(
-            PoiKey(garden.GardenInstanceId, body.PoiId), poi, cancellationToken);
+            PoiKey(garden.GardenInstanceId, body.PoiId), poi, cancellationToken: cancellationToken);
 
         // Track declined template for diversity scoring
         if (!garden.ScenarioHistory.Contains(poi.ScenarioTemplateId))
             garden.ScenarioHistory.Add(poi.ScenarioTemplateId);
         garden.NeedsReEvaluation = true;
-        await GardenStore.SaveAsync(GardenKey(body.AccountId), garden, cancellationToken);
+        await GardenStore.SaveAsync(GardenKey(body.AccountId), garden, cancellationToken: cancellationToken);
 
         await _messageBus.TryPublishAsync("gardener.poi.declined",
             new GardenerPoiDeclinedEvent
@@ -563,7 +597,13 @@ public partial class GardenerService : IGardenerService
             }
         };
 
-        await ScenarioStore.SaveAsync(ScenarioKey(body.AccountId), scenario, cancellationToken);
+        await ScenarioStore.SaveAsync(ScenarioKey(body.AccountId), scenario, cancellationToken: cancellationToken);
+
+        // Update tracking sets: leaving void, entering scenario
+        await GardenCacheStore.RemoveFromSetAsync<Guid>(
+            ActiveVoidsTrackingKey, body.AccountId, cancellationToken);
+        await GardenCacheStore.AddToSetAsync<Guid>(
+            ActiveScenariosTrackingKey, body.AccountId, cancellationToken: cancellationToken);
 
         // Clean up garden instance -- player leaves the void to enter the scenario
         foreach (var poiId in garden.ActivePoiIds)
@@ -596,7 +636,7 @@ public partial class GardenerService : IGardenerService
             "Scenario {ScenarioId} started for account {AccountId}, template {TemplateCode}",
             scenarioInstanceId, body.AccountId, template.Code);
 
-        return (StatusCodes.Created, MapToScenarioStateResponse(scenario));
+        return (StatusCodes.OK, MapToScenarioStateResponse(scenario));
     }
 
     /// <inheritdoc />
@@ -649,13 +689,17 @@ public partial class GardenerService : IGardenerService
         scenario.Status = ScenarioStatus.Completed;
         scenario.CompletedAt = DateTimeOffset.UtcNow;
         scenario.GrowthAwarded = growthAwarded;
-        await ScenarioStore.SaveAsync(ScenarioKey(body.AccountId), scenario, cancellationToken);
+        await ScenarioStore.SaveAsync(ScenarioKey(body.AccountId), scenario, cancellationToken: cancellationToken);
 
         // Move to durable history
-        await WriteScenarioHistoryAsync(scenario, template, cancellationToken);
+        await WriteScenarioHistoryAsync(scenario, template, cancellationToken: cancellationToken);
 
         // Clean up from Redis
         await ScenarioStore.DeleteAsync(ScenarioKey(body.AccountId), cancellationToken);
+
+        // Remove from tracking set
+        await GardenCacheStore.RemoveFromSetAsync<Guid>(
+            ActiveScenariosTrackingKey, body.AccountId, cancellationToken);
 
         // Clean up game session by having participant leave
         await TryCleanupGameSessionAsync(scenario, cancellationToken);
@@ -718,10 +762,14 @@ public partial class GardenerService : IGardenerService
         scenario.GrowthAwarded = partialGrowth;
 
         // Move to durable history
-        await WriteScenarioHistoryAsync(scenario, template, cancellationToken);
+        await WriteScenarioHistoryAsync(scenario, template, cancellationToken: cancellationToken);
 
         // Clean up from Redis
         await ScenarioStore.DeleteAsync(ScenarioKey(body.AccountId), cancellationToken);
+
+        // Remove from tracking set
+        await GardenCacheStore.RemoveFromSetAsync<Guid>(
+            ActiveScenariosTrackingKey, body.AccountId, cancellationToken);
 
         await TryCleanupGameSessionAsync(scenario, cancellationToken);
 
@@ -822,7 +870,7 @@ public partial class GardenerService : IGardenerService
             Participants = currentScenario.Participants
         };
 
-        await ScenarioStore.SaveAsync(ScenarioKey(body.AccountId), newScenario, cancellationToken);
+        await ScenarioStore.SaveAsync(ScenarioKey(body.AccountId), newScenario, cancellationToken: cancellationToken);
 
         await _messageBus.TryPublishAsync("gardener.scenario.chained",
             new GardenerScenarioChainedEvent
@@ -839,7 +887,7 @@ public partial class GardenerService : IGardenerService
             currentScenario.ScenarioInstanceId, newScenarioId,
             newScenario.ChainDepth, body.AccountId);
 
-        return (StatusCodes.Created, MapToScenarioStateResponse(newScenario));
+        return (StatusCodes.OK, MapToScenarioStateResponse(newScenario));
     }
 
     #endregion
@@ -854,9 +902,9 @@ public partial class GardenerService : IGardenerService
         var codeCheck = await TemplateStore.JsonQueryPagedAsync(
             new List<QueryCondition>
             {
-                new("$.ScenarioTemplateId", QueryOperator.Exists, null),
-                new("$.Code", QueryOperator.Equals, body.Code)
-            }, 1, 1, cancellationToken);
+                new QueryCondition { Path = "$.ScenarioTemplateId", Operator = QueryOperator.Exists, Value = true },
+                new QueryCondition { Path = "$.Code", Operator = QueryOperator.Equals, Value = body.Code }
+            }, 1, 1, cancellationToken: cancellationToken);
 
         if (codeCheck.TotalCount > 0)
         {
@@ -893,12 +941,12 @@ public partial class GardenerService : IGardenerService
             UpdatedAt = now
         };
 
-        await TemplateStore.SaveAsync(TemplateKey(templateId), template, cancellationToken);
+        await TemplateStore.SaveAsync(TemplateKey(templateId), template, cancellationToken: cancellationToken);
 
         _logger.LogInformation(
             "Created scenario template {TemplateId} with code {Code}", templateId, body.Code);
 
-        return (StatusCodes.Created, MapToTemplateResponse(template));
+        return (StatusCodes.OK, MapToTemplateResponse(template));
     }
 
     /// <inheritdoc />
@@ -920,9 +968,9 @@ public partial class GardenerService : IGardenerService
         var result = await TemplateStore.JsonQueryPagedAsync(
             new List<QueryCondition>
             {
-                new("$.ScenarioTemplateId", QueryOperator.Exists, null),
-                new("$.Code", QueryOperator.Equals, body.Code)
-            }, 1, 1, cancellationToken);
+                new QueryCondition { Path = "$.ScenarioTemplateId", Operator = QueryOperator.Exists, Value = true },
+                new QueryCondition { Path = "$.Code", Operator = QueryOperator.Equals, Value = body.Code }
+            }, 1, 1, cancellationToken: cancellationToken);
 
         var item = result.Items.FirstOrDefault();
         if (item == null)
@@ -937,21 +985,21 @@ public partial class GardenerService : IGardenerService
     {
         var conditions = new List<QueryCondition>
         {
-            new("$.ScenarioTemplateId", QueryOperator.Exists, null)
+            new QueryCondition { Path = "$.ScenarioTemplateId", Operator = QueryOperator.Exists, Value = true }
         };
 
         if (body.Category != null)
-            conditions.Add(new("$.Category", QueryOperator.Equals, body.Category.Value.ToString()));
+            conditions.Add(new QueryCondition { Path = "$.Category", Operator = QueryOperator.Equals, Value = body.Category.Value.ToString() });
 
         if (body.ConnectivityMode != null)
-            conditions.Add(new("$.ConnectivityMode", QueryOperator.Equals,
-                body.ConnectivityMode.Value.ToString()));
+            conditions.Add(new QueryCondition { Path = "$.ConnectivityMode", Operator = QueryOperator.Equals,
+                Value = body.ConnectivityMode.Value.ToString() });
 
         if (body.Status != null)
-            conditions.Add(new("$.Status", QueryOperator.Equals, body.Status.Value.ToString()));
+            conditions.Add(new QueryCondition { Path = "$.Status", Operator = QueryOperator.Equals, Value = body.Status.Value.ToString() });
 
         var result = await TemplateStore.JsonQueryPagedAsync(
-            conditions, body.Page, body.PageSize, cancellationToken);
+            conditions, body.Page, body.PageSize, cancellationToken: cancellationToken);
 
         // In-memory filter for deployment phase (JSON array contains not supported in queries)
         var templates = result.Items.Select(i => i.Value);
@@ -1011,7 +1059,7 @@ public partial class GardenerService : IGardenerService
             template.Content = MapFromContent(body.Content);
 
         template.UpdatedAt = DateTimeOffset.UtcNow;
-        await TemplateStore.SaveAsync(TemplateKey(body.ScenarioTemplateId), template, cancellationToken);
+        await TemplateStore.SaveAsync(TemplateKey(body.ScenarioTemplateId), template, cancellationToken: cancellationToken);
 
         _logger.LogInformation(
             "Updated scenario template {TemplateId}", body.ScenarioTemplateId);
@@ -1040,7 +1088,7 @@ public partial class GardenerService : IGardenerService
 
         template.Status = TemplateStatus.Deprecated;
         template.UpdatedAt = DateTimeOffset.UtcNow;
-        await TemplateStore.SaveAsync(TemplateKey(body.ScenarioTemplateId), template, cancellationToken);
+        await TemplateStore.SaveAsync(TemplateKey(body.ScenarioTemplateId), template, cancellationToken: cancellationToken);
 
         _logger.LogInformation(
             "Deprecated scenario template {TemplateId} ({Code})",
@@ -1088,7 +1136,7 @@ public partial class GardenerService : IGardenerService
             config.GardenMinigamesEnabled = body.VoidMinigamesEnabled.Value;
 
         config.UpdatedAt = DateTimeOffset.UtcNow;
-        await PhaseStore.SaveAsync(PhaseConfigKey, config, cancellationToken);
+        await PhaseStore.SaveAsync(PhaseConfigKey, config, cancellationToken: cancellationToken);
 
         // Publish phase change event if phase changed
         if (body.CurrentPhase != null && body.CurrentPhase.Value != previousPhase)
@@ -1115,11 +1163,11 @@ public partial class GardenerService : IGardenerService
     {
         var config = await GetOrCreatePhaseConfigAsync(cancellationToken);
 
-        // Count active instances by querying known keys
-        // This is approximate -- the background worker maintains more accurate counts
-        // For production, consider maintaining counter keys in Redis
-        var activeVoidCount = 0;
-        var activeScenarioCount = 0;
+        // Count active instances from Redis tracking sets maintained by Enter/Leave operations
+        var activeVoidCount = (int)await GardenCacheStore.SetCountAsync(
+            ActiveVoidsTrackingKey, cancellationToken);
+        var activeScenarioCount = (int)await GardenCacheStore.SetCountAsync(
+            ActiveScenariosTrackingKey, cancellationToken);
 
         // Phase metrics are best-effort counts from available data
         var utilization = config.MaxConcurrentScenariosGlobal > 0
@@ -1150,11 +1198,11 @@ public partial class GardenerService : IGardenerService
         }
 
         // Load bond to find both participants
-        BondPartnersResponse bondPartners;
+        BondResponse bond;
         try
         {
-            bondPartners = await _seedClient.GetBondPartnersAsync(
-                new GetBondPartnersRequest { BondId = body.BondId }, cancellationToken);
+            bond = await _seedClient.GetBondAsync(
+                new GetBondRequest { BondId = body.BondId }, cancellationToken);
         }
         catch (ApiException ex) when (ex.StatusCode == 404)
         {
@@ -1162,9 +1210,14 @@ public partial class GardenerService : IGardenerService
             return (StatusCodes.NotFound, null);
         }
 
-        var partnerAccountIds = bondPartners.Partners
-            .Select(p => p.OwnerId)
-            .ToList();
+        // Resolve participant seed IDs to owner account IDs
+        var partnerAccountIds = new List<Guid>();
+        foreach (var participant in bond.Participants)
+        {
+            var seed = await _seedClient.GetSeedAsync(
+                new GetSeedRequest { SeedId = participant.SeedId }, cancellationToken);
+            partnerAccountIds.Add(seed.OwnerId);
+        }
 
         if (partnerAccountIds.Count < 2)
         {
@@ -1236,7 +1289,16 @@ public partial class GardenerService : IGardenerService
         // Save scenario for each participant
         foreach (var accountId in partnerAccountIds)
         {
-            await ScenarioStore.SaveAsync(ScenarioKey(accountId), scenario, cancellationToken);
+            await ScenarioStore.SaveAsync(ScenarioKey(accountId), scenario, cancellationToken: cancellationToken);
+        }
+
+        // Update tracking sets for all participants
+        foreach (var accountId in partnerAccountIds)
+        {
+            await GardenCacheStore.RemoveFromSetAsync<Guid>(
+                ActiveVoidsTrackingKey, accountId, cancellationToken);
+            await GardenCacheStore.AddToSetAsync<Guid>(
+                ActiveScenariosTrackingKey, accountId, cancellationToken: cancellationToken);
         }
 
         // Clean up all garden instances
@@ -1263,7 +1325,7 @@ public partial class GardenerService : IGardenerService
             "Bond scenario {ScenarioId} started for bond {BondId} with {Count} participants",
             scenarioId, body.BondId, partnerAccountIds.Count);
 
-        return (StatusCodes.Created, MapToScenarioStateResponse(scenario));
+        return (StatusCodes.OK, MapToScenarioStateResponse(scenario));
     }
 
     /// <inheritdoc />
@@ -1273,20 +1335,25 @@ public partial class GardenerService : IGardenerService
         if (!_configuration.BondSharedVoidEnabled)
             return (StatusCodes.BadRequest, null);
 
-        BondPartnersResponse bondPartners;
+        BondResponse bond;
         try
         {
-            bondPartners = await _seedClient.GetBondPartnersAsync(
-                new GetBondPartnersRequest { BondId = body.BondId }, cancellationToken);
+            bond = await _seedClient.GetBondAsync(
+                new GetBondRequest { BondId = body.BondId }, cancellationToken);
         }
         catch (ApiException ex) when (ex.StatusCode == 404)
         {
             return (StatusCodes.NotFound, null);
         }
 
-        var partnerAccountIds = bondPartners.Partners
-            .Select(p => p.OwnerId)
-            .ToList();
+        // Resolve participant seed IDs to owner account IDs
+        var partnerAccountIds = new List<Guid>();
+        foreach (var participant in bond.Participants)
+        {
+            var seed = await _seedClient.GetSeedAsync(
+                new GetSeedRequest { SeedId = participant.SeedId }, cancellationToken);
+            partnerAccountIds.Add(seed.OwnerId);
+        }
 
         var allPois = new List<PoiSummary>();
         var playerStates = new List<BondedPlayerVoidState>();
@@ -1300,8 +1367,7 @@ public partial class GardenerService : IGardenerService
             {
                 AccountId = accountId,
                 SeedId = garden.SeedId,
-                Position = MapToVec3(garden.Position),
-                VoidInstanceId = garden.GardenInstanceId
+                Position = MapToVec3(garden.Position)
             });
 
             var pois = await LoadActivePoisAsync(garden, cancellationToken);
@@ -1311,7 +1377,7 @@ public partial class GardenerService : IGardenerService
         return (StatusCodes.OK, new SharedVoidStateResponse
         {
             BondId = body.BondId,
-            Players = playerStates,
+            Participants = playerStates,
             SharedPois = allPois
         });
     }
@@ -1355,7 +1421,7 @@ public partial class GardenerService : IGardenerService
             UpdatedAt = DateTimeOffset.UtcNow
         };
 
-        await PhaseStore.SaveAsync(PhaseConfigKey, config, ct);
+        await PhaseStore.SaveAsync(PhaseConfigKey, config, cancellationToken: ct);
         _logger.LogInformation(
             "Created default phase config with phase {Phase}", config.CurrentPhase);
         return config;
@@ -1472,7 +1538,7 @@ public partial class GardenerService : IGardenerService
             TemplateCode = template?.Code ?? "unknown"
         };
 
-        await HistoryStore.SaveAsync(HistoryKey(scenario.ScenarioInstanceId), history, ct);
+        await HistoryStore.SaveAsync(HistoryKey(scenario.ScenarioInstanceId), history, cancellationToken: ct);
     }
 
     /// <summary>
@@ -1529,9 +1595,7 @@ public partial class GardenerService : IGardenerService
             Status = poi.Status,
             VisualHint = poi.VisualHint,
             AudioHint = poi.AudioHint,
-            IntensityRamp = poi.IntensityRamp,
-            SpawnedAt = poi.SpawnedAt,
-            ExpiresAt = poi.ExpiresAt
+            IntensityRamp = poi.IntensityRamp
         };
     }
 

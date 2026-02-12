@@ -16,6 +16,12 @@ info:
     - topic: realm.created
       event: RealmCreatedEvent
       handler: HandleRealmCreated
+    - topic: realm.deleted
+      event: RealmDeletedEvent
+      handler: HandleRealmDeleted
+    - topic: realm.updated
+      event: RealmUpdatedEvent
+      handler: HandleRealmUpdated
     - topic: behavior.updated
       event: BehaviorUpdatedEvent
       handler: HandleBehaviorUpdated

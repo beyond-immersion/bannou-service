@@ -11,7 +11,6 @@ namespace BeyondImmersion.BannouService.Voice.Tests;
 
 public class ScaledTierCoordinatorTests
 {
-    private readonly Mock<IKamailioClient> _mockKamailioClient;
     private readonly Mock<IRtpEngineClient> _mockRtpEngineClient;
     private readonly Mock<ILogger<ScaledTierCoordinator>> _mockLogger;
     private readonly Mock<IMessageBus> _mockMessageBus;
@@ -19,7 +18,6 @@ public class ScaledTierCoordinatorTests
 
     public ScaledTierCoordinatorTests()
     {
-        _mockKamailioClient = new Mock<IKamailioClient>();
         _mockRtpEngineClient = new Mock<IRtpEngineClient>();
         _mockLogger = new Mock<ILogger<ScaledTierCoordinator>>();
         _mockMessageBus = new Mock<IMessageBus>();
@@ -39,7 +37,6 @@ public class ScaledTierCoordinatorTests
     private ScaledTierCoordinator CreateCoordinator()
     {
         return new ScaledTierCoordinator(
-            _mockKamailioClient.Object,
             _mockRtpEngineClient.Object,
             _mockLogger.Object,
             _mockMessageBus.Object,
@@ -124,7 +121,6 @@ public class ScaledTierCoordinatorTests
         // Arrange
         var config = new VoiceServiceConfiguration { ScaledMaxParticipants = 0 };
         var coordinator = new ScaledTierCoordinator(
-            _mockKamailioClient.Object,
             _mockRtpEngineClient.Object,
             _mockLogger.Object,
             _mockMessageBus.Object,

@@ -862,6 +862,163 @@ public class ActorServiceTests
         Assert.Equal("target-category", response.Actors.First().Category);
     }
 
+    [Fact]
+    public async Task ListActorsAsync_BannouModeWithMatchingNodeId_ReturnsLocalActors()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new ListActorsRequest { NodeId = "bannou-local", Limit = 10, Offset = 0 };
+
+        var mockRunner = new Mock<IActorRunner>();
+        mockRunner.SetupGet(r => r.Category).Returns("test-category");
+        mockRunner.SetupGet(r => r.Status).Returns(ActorStatus.Running);
+        mockRunner.SetupGet(r => r.CharacterId).Returns((Guid?)null);
+        mockRunner.Setup(r => r.GetStateSnapshot()).Returns(new ActorStateSnapshot
+        {
+            ActorId = "actor-1",
+            TemplateId = Guid.NewGuid(),
+            Category = "test-category",
+            Status = ActorStatus.Running,
+            StartedAt = DateTimeOffset.UtcNow
+        });
+
+        _mockActorRegistry.Setup(r => r.GetAllRunners()).Returns(new[] { mockRunner.Object });
+
+        // Act
+        var (status, response) = await service.ListActorsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Actors);
+        Assert.Equal(1, response.Total);
+    }
+
+    [Fact]
+    public async Task ListActorsAsync_BannouModeWithNonMatchingNodeId_ReturnsEmpty()
+    {
+        // Arrange
+        var service = CreateService();
+        var request = new ListActorsRequest { NodeId = "other-node", Limit = 10, Offset = 0 };
+
+        var mockRunner = new Mock<IActorRunner>();
+        mockRunner.SetupGet(r => r.Category).Returns("test-category");
+        mockRunner.SetupGet(r => r.Status).Returns(ActorStatus.Running);
+        mockRunner.SetupGet(r => r.CharacterId).Returns((Guid?)null);
+
+        _mockActorRegistry.Setup(r => r.GetAllRunners()).Returns(new[] { mockRunner.Object });
+
+        // Act
+        var (status, response) = await service.ListActorsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Empty(response.Actors);
+        Assert.Equal(0, response.Total);
+        _mockActorRegistry.Verify(r => r.GetAllRunners(), Times.Never());
+    }
+
+    [Fact]
+    public async Task ListActorsAsync_PoolModeWithNodeId_QueriesPoolAssignments()
+    {
+        // Arrange
+        _configuration.DeploymentMode = DeploymentMode.PoolPerType;
+        var service = CreateService();
+        var request = new ListActorsRequest { NodeId = "pool-node-1", Limit = 10, Offset = 0 };
+
+        var assignments = new List<ActorAssignment>
+        {
+            new ActorAssignment
+            {
+                ActorId = "actor-1",
+                NodeId = "pool-node-1",
+                NodeAppId = "bannou-pool-1",
+                TemplateId = Guid.NewGuid(),
+                Category = "npc",
+                Status = ActorStatus.Running,
+                AssignedAt = DateTimeOffset.UtcNow,
+                StartedAt = DateTimeOffset.UtcNow
+            },
+            new ActorAssignment
+            {
+                ActorId = "actor-2",
+                NodeId = "pool-node-1",
+                NodeAppId = "bannou-pool-1",
+                TemplateId = Guid.NewGuid(),
+                Category = "event-brain",
+                Status = ActorStatus.Running,
+                AssignedAt = DateTimeOffset.UtcNow,
+                StartedAt = DateTimeOffset.UtcNow
+            }
+        };
+
+        _mockPoolManager
+            .Setup(p => p.ListActorsByNodeAsync("pool-node-1", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(assignments);
+
+        // Act
+        var (status, response) = await service.ListActorsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Actors.Count);
+        Assert.Equal(2, response.Total);
+        Assert.Equal("pool-node-1", response.Actors.First().NodeId);
+        _mockPoolManager.Verify(p => p.ListActorsByNodeAsync("pool-node-1", It.IsAny<CancellationToken>()), Times.Once());
+        _mockActorRegistry.Verify(r => r.GetAllRunners(), Times.Never());
+    }
+
+    [Fact]
+    public async Task ListActorsAsync_PoolModeWithNodeIdAndCategoryFilter_ReturnsFilteredAssignments()
+    {
+        // Arrange
+        _configuration.DeploymentMode = DeploymentMode.PoolPerType;
+        var service = CreateService();
+        var request = new ListActorsRequest { NodeId = "pool-node-1", Category = "npc", Limit = 10, Offset = 0 };
+
+        var assignments = new List<ActorAssignment>
+        {
+            new ActorAssignment
+            {
+                ActorId = "actor-1",
+                NodeId = "pool-node-1",
+                NodeAppId = "bannou-pool-1",
+                TemplateId = Guid.NewGuid(),
+                Category = "npc",
+                Status = ActorStatus.Running,
+                AssignedAt = DateTimeOffset.UtcNow,
+                StartedAt = DateTimeOffset.UtcNow
+            },
+            new ActorAssignment
+            {
+                ActorId = "actor-2",
+                NodeId = "pool-node-1",
+                NodeAppId = "bannou-pool-1",
+                TemplateId = Guid.NewGuid(),
+                Category = "event-brain",
+                Status = ActorStatus.Running,
+                AssignedAt = DateTimeOffset.UtcNow,
+                StartedAt = DateTimeOffset.UtcNow
+            }
+        };
+
+        _mockPoolManager
+            .Setup(p => p.ListActorsByNodeAsync("pool-node-1", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(assignments);
+
+        // Act
+        var (status, response) = await service.ListActorsAsync(request, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+        Assert.Single(response.Actors);
+        Assert.Equal(1, response.Total);
+        Assert.Equal("npc", response.Actors.First().Category);
+    }
+
     #endregion
 
     #region InjectPerceptionAsync Tests

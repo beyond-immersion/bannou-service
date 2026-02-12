@@ -25,6 +25,14 @@ public partial class PuppetmasterService
             "realm.created",
             async (svc, evt) => await ((PuppetmasterService)svc).HandleRealmCreatedAsync(evt));
 
+        eventConsumer.RegisterHandler<IPuppetmasterService, RealmDeletedEvent>(
+            "realm.deleted",
+            async (svc, evt) => await ((PuppetmasterService)svc).HandleRealmDeletedAsync(evt));
+
+        eventConsumer.RegisterHandler<IPuppetmasterService, RealmUpdatedEvent>(
+            "realm.updated",
+            async (svc, evt) => await ((PuppetmasterService)svc).HandleRealmUpdatedAsync(evt));
+
         // Behavior hot-reload: invalidate cache and notify running actors
         eventConsumer.RegisterHandler<IPuppetmasterService, BehaviorUpdatedEvent>(
             "behavior.updated",
@@ -370,6 +378,124 @@ public partial class PuppetmasterService
         }
 
         return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Handles realm.deleted events.
+    /// Stops all active watchers for the deleted realm.
+    /// </summary>
+    /// <param name="evt">The event data.</param>
+    public async Task HandleRealmDeletedAsync(RealmDeletedEvent evt)
+    {
+        _logger.LogInformation(
+            "Received realm.deleted event for realm {RealmId} ({Code}), reason: {Reason}",
+            evt.RealmId,
+            evt.Code,
+            evt.DeletedReason);
+
+        var stoppedCount = await StopAllWatchersForRealmAsync(evt.RealmId, "realm_deleted");
+
+        if (stoppedCount > 0)
+        {
+            _logger.LogInformation(
+                "Stopped {Count} watchers for deleted realm {RealmId}",
+                stoppedCount,
+                evt.RealmId);
+        }
+    }
+
+    /// <summary>
+    /// Handles realm.updated events.
+    /// Stops watchers if the realm was deactivated; restarts watchers if reactivated.
+    /// </summary>
+    /// <param name="evt">The event data.</param>
+    public async Task HandleRealmUpdatedAsync(RealmUpdatedEvent evt)
+    {
+        // Only react when isActive was changed
+        if (!evt.ChangedFields.Contains("isActive"))
+            return;
+
+        if (!evt.IsActive)
+        {
+            _logger.LogInformation(
+                "Realm {RealmId} ({Code}) deactivated, stopping watchers",
+                evt.RealmId,
+                evt.Code);
+
+            var stoppedCount = await StopAllWatchersForRealmAsync(evt.RealmId, "realm_deactivated");
+
+            if (stoppedCount > 0)
+            {
+                _logger.LogInformation(
+                    "Stopped {Count} watchers for deactivated realm {RealmId}",
+                    stoppedCount,
+                    evt.RealmId);
+            }
+        }
+        else
+        {
+            _logger.LogInformation(
+                "Realm {RealmId} ({Code}) reactivated, starting watchers",
+                evt.RealmId,
+                evt.Code);
+
+            var (status, response) = await StartWatchersForRealmAsync(
+                new StartWatchersForRealmRequest { RealmId = evt.RealmId },
+                CancellationToken.None);
+
+            if (status == StatusCodes.OK && response != null)
+            {
+                _logger.LogInformation(
+                    "Started {Count} watchers for reactivated realm {RealmId}",
+                    response.WatchersStarted,
+                    evt.RealmId);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Stops all active watchers for a given realm and publishes stop events.
+    /// </summary>
+    /// <param name="realmId">The realm to stop watchers for.</param>
+    /// <param name="reason">The reason for stopping (e.g., "realm_deleted", "realm_deactivated").</param>
+    /// <returns>The number of watchers stopped.</returns>
+    private async Task<int> StopAllWatchersForRealmAsync(Guid realmId, string reason)
+    {
+        // Find all watchers for this realm
+        var realmWatchers = _activeWatchers.Values
+            .Where(w => w.RealmId == realmId)
+            .ToList();
+
+        var stoppedCount = 0;
+
+        foreach (var watcher in realmWatchers)
+        {
+            if (!_activeWatchers.TryRemove(watcher.WatcherId, out _))
+                continue;
+
+            // Remove from realm/type index
+            var watcherKey = (watcher.RealmId, watcher.WatcherType);
+            _watchersByRealmAndType.TryRemove(watcherKey, out _);
+
+            // Publish watcher stopped event
+            var evt = new WatcherStoppedEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                WatcherId = watcher.WatcherId,
+                RealmId = watcher.RealmId,
+                WatcherType = watcher.WatcherType,
+                Reason = reason
+            };
+            await _messageBus.TryPublishAsync(
+                "puppetmaster.watcher.stopped",
+                evt,
+                cancellationToken: CancellationToken.None);
+
+            stoppedCount++;
+        }
+
+        return stoppedCount;
     }
 
     /// <summary>

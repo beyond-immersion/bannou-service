@@ -102,9 +102,7 @@ public class P2PCoordinator : IP2PCoordinator
     /// <inheritdoc />
     public int GetP2PMaxParticipants()
     {
-        return _configuration.P2PMaxParticipants > 0
-            ? _configuration.P2PMaxParticipants
-            : 6; // Default fallback
+        return _configuration.P2PMaxParticipants;
     }
 
     /// <inheritdoc />

@@ -71,6 +71,8 @@ The Puppetmaster service is a `Singleton` and maintains all state in memory via 
 | Topic | Handler | Action |
 |-------|---------|--------|
 | `realm.created` | `HandleRealmCreatedAsync` | Auto-starts regional watchers for newly created active realms |
+| `realm.deleted` | `HandleRealmDeletedAsync` | Stops all active watchers for the deleted realm, publishes `WatcherStoppedEvent` with reason `realm_deleted` |
+| `realm.updated` | `HandleRealmUpdatedAsync` | On deactivation (`isActive` changed to `false`): stops all watchers with reason `realm_deactivated`. On reactivation: restarts default watchers. |
 | `behavior.updated` | `HandleBehaviorUpdatedAsync` | Invalidates cached behavior document by AssetId, then paginates through all running actors via `IActorClient` to inject behavior_updated perceptions for hot-reload |
 | `actor.instance.deleted` | `HandleActorDeletedAsync` | Cleans up all watches in `WatchRegistry` for the deleted actor |
 | *(dynamic lifecycle topics)* | `HandleLifecycleEventAsync` | Subscribed via `IMessageSubscriber.SubscribeDynamicRawAsync` to all topics from `ResourceEventMapping`. Dispatches `WatchPerception` events to actors watching the affected resource. |
@@ -446,14 +448,18 @@ When a lifecycle event arrives (e.g., `personality.updated`):
 ## Potential Extensions
 
 1. **Distributed Watcher State**: Move watcher registry to Redis for multi-instance consistency and persistence across restarts.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/395 -->
 
 2. **Behavior Variant Selection**: Support the ABML variant system with fallback chains (e.g., `character-personality:aggressive` → `character-personality:default` → `character-base`).
+<!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/397 -->
 
 3. **Watcher Health Monitoring**: Track watcher execution health, restart failed watchers, expose metrics.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/398 -->
 
 4. **Cache Warm-up on Startup**: Pre-load commonly-used behaviors on service startup to reduce first-request latency.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/399 -->
 
-5. **Realm Deactivation Handling**: Subscribe to realm deactivation/deletion events to automatically stop watchers.
+5. ~~**Realm Deactivation Handling**~~: **FIXED** (2026-02-11) - Added `realm.deleted` and `realm.updated` event subscriptions. Deleted realms stop all watchers with reason `realm_deleted`. Deactivated realms (`isActive` changed to `false`) stop watchers with reason `realm_deactivated`. Reactivated realms auto-start default watchers.
 
 ---
 
@@ -475,7 +481,7 @@ When a lifecycle event arrives (e.g., `personality.updated`):
 
 5. **ResourceSnapshotCache uses `GetRequiredService<IResourceClient>()` via scope**: Because the cache is a Singleton and `IResourceClient` is Scoped, it cannot use constructor injection. Instead it creates a scope and calls `GetRequiredService<IResourceClient>()` - which correctly fails fast if the Resource service (L1) is unavailable, per the hard dependency pattern for L0/L1/L2 dependencies.
 
-6. **Event handler doesn't stop watchers on realm deletion**: The service only subscribes to `realm.created`, not `realm.deleted`. Watchers for deleted realms continue running until manually stopped or service restart.
+6. **Realm event reactions are best-effort**: Realm deletion/deactivation event handlers stop watchers on the node that receives the event. In multi-instance deployments, watcher state is local to each instance (per Intentional Quirk #5), so other nodes' watchers are unaffected until Distributed Watcher State (PE #1) is implemented.
 
 7. **Dynamic lifecycle subscriptions bypass `IEventConsumer`**: The `SubscribeToLifecycleEvents` method uses `IMessageSubscriber.SubscribeDynamicRawAsync()` directly because the subscribed topics are determined at runtime from `ResourceEventMapping`, not statically known at schema time. This is intentional - `IEventConsumer` requires compile-time event type registration.
 

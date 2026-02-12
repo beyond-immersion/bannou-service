@@ -530,27 +530,38 @@ No bugs identified.
 
 8. **Single-threaded behavior loop by design**: Each ActorRunner runs its behavior loop on a single task (sequential: perceptions → behavior tick → state publish → persistence → sleep). CPU-intensive behaviors delay tick processing but do not block other actors. `GoapPlanTimeoutMs` (50ms default) is passed to the GOAP planner as a budget hint via the behavior scope — it is NOT enforced as a hard timeout by ActorRunner. If planning exceeds the budget, the tick runs long and the sleep phase is skipped to compensate. This design simplifies state management (no concurrent access to actor state) and matches the one-brain-per-NPC model.
 
+9. **State persistence is a periodic snapshot, not the real-time path**: Actor state is persisted to Redis every `AutoSaveIntervalSeconds` (60s default) to balance write load against recovery granularity. During normal operation, all state changes publish `character.state_update` events immediately (every tick, ~100ms), so game servers see real-time updates. On graceful shutdown, state is persisted immediately. In crash scenarios, up to 60 seconds of unpersisted snapshot data may be lost, but gameplay-visible state was already broadcast via events. Feelings/goals re-stabilize quickly after actor respawn, and critical game state (inventory, quests, combat outcomes) is managed by other services.
+
+10. **Per-actor RabbitMQ subscription for perceptions**: Each actor with a `CharacterId` creates a dynamic RabbitMQ subscription via `SubscribeDynamicAsync` on topic `character.{characterId}.perceptions`. Game servers and other actors publish perceptions to these character-specific topics via the ABML `emit_perception:` action. At scale (100,000+ actors), this means 100,000+ RabbitMQ subscriptions. This is intentional: targeted per-character topics enable efficient perception routing without the actor needing to filter irrelevant perceptions from a shared topic. Pool mode distributes subscriptions across nodes (e.g., 10 nodes × 10,000 subscriptions each). The `InjectPerception` API provides a direct injection alternative for testing. Subscriptions are disposed on actor stop.
+
+11. **Per-tick memory cleanup via linear scan**: `ActorState.CleanupExpiredMemories()` runs every behavior loop tick (~100ms) and performs `List.RemoveAll()` on the `_memories` list under a lock, removing entries where `ExpiresAt <= now`. Permanent memories (`ExpiresAt = null`) are never removed. This is a simple O(n) scan per tick, acceptable for typical actor populations (hundreds of memories per actor). At extreme scale (10,000+ memories per actor), this could become a bottleneck and would benefit from a sorted expiration index. Working memory (`SetWorkingMemory`) persists across ticks — new perceptions overwrite by key but no explicit clearing occurs between ticks.
+
+12. **Encounter phase strings are intentionally unvalidated**: `SetEncounterPhase(string phase)` accepts any string without validation or state machine enforcement. `StartEncounter` sets the initial phase to `"initializing"`. Phase names and valid transitions are defined by ABML behavior scripts per encounter type — the Actor service (L2) is intentionally agnostic to encounter-type-specific phase semantics. Adding server-side phase validation would couple Actor to specific encounter type definitions, violating the extensibility model where new encounter types (with their own phases) can be authored in ABML without schema or code changes. Callers (Puppetmaster, game servers) are responsible for passing meaningful phase strings. Invalid phase strings are accepted silently because "invalid" is relative to the encounter type's ABML behavior, not to Actor.
+
+13. **Fresh options query uses approximate tick wait**: `QueryOptionsAsync` with `Freshness=Fresh` injects a perception into the actor's queue and then calls `Task.Delay(DefaultTickIntervalMs)` (~100ms) before re-reading state. This does NOT synchronize with the actual behavior loop — the delay may finish before or after the next tick processes the perception. This is intentional: options queries are best-effort decision-support, not precision-critical operations. The three freshness levels (`Cached`/`Fresh`/`Stale`) already give callers control over timing expectations. Adding a synchronization primitive (e.g., `TaskCompletionSource` signaled on tick completion) would add contention to the behavior loop hot path (~100ms per tick per actor × 100,000+ actors) for a marginal improvement in query timing. If the perception wasn't processed in one tick, the caller can query again with `Fresh` or fall back to `Stale`.
+
+14. **Auto-spawn failure returns NotFound to caller**: When `GetActor` triggers auto-spawn and `SpawnActorAsync` fails (Conflict, ServiceUnavailable, etc.), `GetActorAsync` returns `NotFound` — not the real failure status. This is intentional: auto-spawn is an implementation detail invisible to the caller. From the caller's perspective, they asked "get actor X" and the answer is "it doesn't exist." Returning `Conflict` or `ServiceUnavailable` would leak the auto-spawn mechanism. The real failure status and reason are logged at Warning level server-side for debugging. **Edge case**: If `SpawnActorAsync` returns `Conflict` because a concurrent `GetActor` call just auto-spawned the same actor, the caller gets `NotFound` even though the actor now exists. A retry by the caller would succeed. If this becomes a problem at scale (high-contention auto-spawn for the same actor ID), a retry-on-conflict loop could be added inside `GetActorAsync`.
+
 ### Design Considerations (Requires Planning)
 
 1. ~~**ActorRunner._encounter field lacks synchronization**~~: **FIXED** (2026-02-11) - All `_encounter` access points now use local variable capture to prevent TOCTOU NullReferenceException. Reference reads are atomic per ECMA-334; capturing to a local before accessing properties prevents the race between EndEncounter (nulling `_encounter`) and the behavior loop (reading encounter properties). No lock needed — the pattern avoids contention on the behavior loop hot path.
 
-2. **State persistence is periodic**: Saved every `AutoSaveIntervalSeconds` (60s default). Crash loses up to 60 seconds. Critical state publishes events immediately.
+2. **Pool node capacity is self-reported**: No external validation of claimed capacity.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/394 -->
 
-3. **Pool node capacity is self-reported**: No external validation of claimed capacity.
+3. ~~**Perception subscription per-character**~~: **MOVED TO QUIRK #10** (2026-02-11) - Moved to Intentional Quirks with expanded documentation covering per-actor `SubscribeDynamicAsync` pattern, topic format, pool mode distribution, and testing alternative.
 
-4. **Perception subscription per-character**: 100,000+ actors = 100,000+ RabbitMQ subscriptions. Pool mode distributes.
+4. ~~**Memory cleanup is per-tick**~~: **MOVED TO QUIRK #11** (2026-02-11) - Moved to Intentional Quirks with corrected documentation. Original claimed "Working memory cleared between perceptions" which is inaccurate — working memory persists across ticks, new perceptions overwrite by key.
 
-5. **Memory cleanup is per-tick**: Expired memories scanned each tick. Working memory cleared between perceptions.
+5. ~~**Template index optimistic concurrency**~~: **FIXED** (2026-02-11) - Template index updates (create/delete) now retry up to 3 times on optimistic concurrency conflict. Each retry re-reads the index to resolve the conflict. Without this, concurrent template creates/deletes could permanently orphan templates from the index, breaking list and auto-spawn operations.
 
-6. **Template index optimistic concurrency**: No retry on conflict - returns immediately. Index may be temporarily inconsistent if TrySave fails.
+6. ~~**Encounter phase strings unvalidated**~~: **MOVED TO QUIRK #12** (2026-02-11) - Moved to Intentional Quirks with expanded documentation explaining why phases are intentionally unvalidated (ABML behavior scripts define encounter-type-specific phase semantics).
 
-7. **Encounter phase strings unvalidated**: No state machine. ABML behaviors enforce meaningful transitions.
+7. ~~**Fresh options query waits approximately one tick**~~: **MOVED TO QUIRK #13** (2026-02-11) - Moved to Intentional Quirks with expanded documentation explaining why the approximate wait is acceptable and what the alternatives would be.
 
-8. **Fresh options query waits approximately one tick**: `Task.Delay(DefaultTickIntervalMs)` doesn't synchronize with actual behavior loop.
+8. ~~**Auto-spawn failure returns NotFound**~~: **MOVED TO QUIRK #14** (2026-02-11) - Moved to Intentional Quirks with documentation explaining why NotFound is the correct response from the caller's perspective.
 
-9. **Auto-spawn failure returns NotFound**: True failure reason only logged, not returned to caller.
-
-10. **ListActors nodeId filter not implemented**: Parameter exists but ignored in all modes.
+9. ~~**ListActors nodeId filter not implemented**~~: **FIXED** (2026-02-11) - Bannou mode now compares nodeId against LocalModeNodeId (returns empty on mismatch). Pool mode queries `IActorPoolManager.ListActorsByNodeAsync` with category/status/characterId filtering. Also fixed T23 violation (method is now async).
 
 ---
 
@@ -558,7 +569,14 @@ No bugs identified.
 
 ### Completed
 
+- (2026-02-11) Fixed template index optimistic concurrency: added retry loop (3 attempts) to `UpdateTemplateIndexAsync` helper for both create and delete paths. Without retry, concurrent template mutations could permanently orphan templates from the index.
+- (2026-02-11) Moved "Memory cleanup is per-tick" from Design Considerations to Intentional Quirks (#11) with corrected documentation. Fixed inaccuracy: working memory is NOT cleared between perceptions (persists across ticks, overwrites by key).
+- (2026-02-11) Moved "Perception subscription per-character" from Design Considerations to Intentional Quirks (#10) with expanded documentation covering per-actor SubscribeDynamicAsync pattern, topic format, pool mode distribution, and testing alternative.
 - (2026-02-11) Moved "Single-threaded behavior loop" from Design Considerations to Intentional Quirks (#8) with improved documentation clarifying GoapPlanTimeoutMs is a budget hint, not an enforced timeout.
+- (2026-02-11) Moved "State persistence is periodic" from Design Considerations to Intentional Quirks (#9) with expanded documentation covering event-driven real-time path, graceful shutdown persistence, and crash recovery implications.
+- (2026-02-11) Moved "Encounter phase strings unvalidated" from Design Considerations to Intentional Quirks (#12) with expanded documentation explaining ABML-driven phase semantics and why server-side validation would violate the extensibility model.
+- (2026-02-11) Moved "Fresh options query waits approximately one tick" from Design Considerations to Intentional Quirks (#13) with expanded documentation covering why the approximate wait is acceptable, alternatives considered (TaskCompletionSource synchronization), and the caller's ability to use freshness levels or re-query.
+- (2026-02-11) Moved "Auto-spawn failure returns NotFound" from Design Considerations to Intentional Quirks (#14) with documentation explaining why NotFound is the correct caller-facing response (auto-spawn is an implementation detail) and noting the concurrent auto-spawn edge case.
 
 ### Implementation Gaps
 

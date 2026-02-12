@@ -12,7 +12,6 @@ namespace BeyondImmersion.BannouService.Voice.Services;
 /// </summary>
 public class ScaledTierCoordinator : IScaledTierCoordinator
 {
-    private readonly IKamailioClient _kamailioClient;
     private readonly IRtpEngineClient _rtpEngineClient;
     private readonly ILogger<ScaledTierCoordinator> _logger;
     private readonly IMessageBus _messageBus;
@@ -21,19 +20,16 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
     /// <summary>
     /// Initializes a new instance of the ScaledTierCoordinator.
     /// </summary>
-    /// <param name="kamailioClient">Kamailio client for SIP control.</param>
     /// <param name="rtpEngineClient">RTPEngine client for media control.</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="messageBus">Message bus for error event publishing.</param>
     /// <param name="configuration">Voice service configuration.</param>
     public ScaledTierCoordinator(
-        IKamailioClient kamailioClient,
         IRtpEngineClient rtpEngineClient,
         ILogger<ScaledTierCoordinator> logger,
         IMessageBus messageBus,
         VoiceServiceConfiguration configuration)
     {
-        _kamailioClient = kamailioClient;
         _rtpEngineClient = rtpEngineClient;
         _logger = logger;
         _messageBus = messageBus;
@@ -63,9 +59,7 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
     /// <inheritdoc />
     public int GetScaledMaxParticipants()
     {
-        return _configuration.ScaledMaxParticipants > 0
-            ? _configuration.ScaledMaxParticipants
-            : 100; // Default fallback for scaled tier
+        return _configuration.ScaledMaxParticipants;
     }
 
     /// <inheritdoc />
@@ -198,12 +192,7 @@ public class ScaledTierCoordinator : IScaledTierCoordinator
 
     private List<string> GetStunServers()
     {
-        var stunServers = _configuration.StunServers;
-        if (string.IsNullOrWhiteSpace(stunServers))
-        {
-            return new List<string> { "stun:stun.l.google.com:19302" };
-        }
-        return stunServers
+        return _configuration.StunServers
             .Split(',', StringSplitOptions.RemoveEmptyEntries)
             .Select(s => s.Trim())
             .ToList();

@@ -56,6 +56,11 @@ public partial class ActorService : IActorService
     // State store names use StateStoreDefinitions constants per IMPLEMENTATION TENETS
     private const string ALL_TEMPLATES_KEY = "_all_template_ids";
 
+    // Retry count for template index optimistic concurrency updates.
+    // Without retry, concurrent template creates/deletes can permanently
+    // orphan templates from the index (affects list and auto-spawn).
+    private const int TemplateIndexMaxRetries = 3;
+
     // Regex cache for auto-spawn patterns to prevent ReDoS and improve performance
     private static readonly ConcurrentDictionary<string, Regex> _regexCache = new();
     private static readonly TimeSpan RegexTimeout = TimeSpan.FromMilliseconds(100);
@@ -159,19 +164,16 @@ public partial class ActorService : IActorService
         await templateStore.SaveAsync(templateId.ToString(), template, cancellationToken: cancellationToken);
         await templateStore.SaveAsync($"category:{body.Category}", template, cancellationToken: cancellationToken);
 
-        // Add to template index with optimistic concurrency
-        var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.ActorTemplates);
-        var (allIds, indexEtag) = await indexStore.GetWithETagAsync(ALL_TEMPLATES_KEY, cancellationToken);
-        allIds ??= new List<string>();
-        if (!allIds.Contains(templateId.ToString()))
-        {
-            allIds.Add(templateId.ToString());
-            var indexResult = await indexStore.TrySaveAsync(ALL_TEMPLATES_KEY, allIds, indexEtag ?? string.Empty, cancellationToken);
-            if (indexResult == null)
+        // Add to template index with optimistic concurrency and retry
+        await UpdateTemplateIndexAsync(
+            ids =>
             {
-                _logger.LogWarning("Concurrent modification on template index during create of {TemplateId}", templateId);
-            }
-        }
+                var idStr = templateId.ToString();
+                if (ids.Contains(idStr)) return false;
+                ids.Add(idStr);
+                return true;
+            },
+            "create", templateId, cancellationToken);
 
         // Publish created event
         var evt = new ActorTemplateCreatedEvent
@@ -392,18 +394,10 @@ public partial class ActorService : IActorService
         await templateStore.DeleteAsync(body.TemplateId.ToString(), cancellationToken);
         await templateStore.DeleteAsync($"category:{existing.Category}", cancellationToken);
 
-        // Remove from template index with optimistic concurrency
-        var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.ActorTemplates);
-        var (allIds, indexEtag) = await indexStore.GetWithETagAsync(ALL_TEMPLATES_KEY, cancellationToken);
-        allIds ??= new List<string>();
-        if (allIds.Remove(body.TemplateId.ToString()))
-        {
-            var indexResult = await indexStore.TrySaveAsync(ALL_TEMPLATES_KEY, allIds, indexEtag ?? string.Empty, cancellationToken);
-            if (indexResult == null)
-            {
-                _logger.LogWarning("Concurrent modification on template index during delete of {TemplateId}", body.TemplateId);
-            }
-        }
+        // Remove from template index with optimistic concurrency and retry
+        await UpdateTemplateIndexAsync(
+            ids => ids.Remove(body.TemplateId.ToString()),
+            "delete", body.TemplateId, cancellationToken);
 
         // Publish deleted event
         var evt = new ActorTemplateDeletedEvent
@@ -426,6 +420,58 @@ public partial class ActorService : IActorService
             Deleted = true,
             StoppedActorCount = stoppedCount
         });
+    }
+
+    /// <summary>
+    /// Updates the template index with retry on optimistic concurrency conflict.
+    /// Re-reads the index on each attempt to resolve conflicts from concurrent mutations.
+    /// </summary>
+    /// <param name="mutate">
+    /// Function that mutates the index list. Returns true if a change was made (needs save),
+    /// false if no change needed (already present for add, already absent for remove).
+    /// </param>
+    /// <param name="operation">Operation name for logging (e.g., "create", "delete").</param>
+    /// <param name="templateId">Template ID for logging context.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    private async Task UpdateTemplateIndexAsync(
+        Func<List<string>, bool> mutate,
+        string operation,
+        Guid templateId,
+        CancellationToken cancellationToken)
+    {
+        var indexStore = _stateStoreFactory.GetStore<List<string>>(StateStoreDefinitions.ActorTemplates);
+
+        for (int attempt = 1; attempt <= TemplateIndexMaxRetries; attempt++)
+        {
+            var (allIds, etag) = await indexStore.GetWithETagAsync(ALL_TEMPLATES_KEY, cancellationToken);
+            allIds ??= new List<string>();
+
+            if (!mutate(allIds))
+            {
+                return; // No mutation needed (idempotent - already in desired state)
+            }
+
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
+            var result = await indexStore.TrySaveAsync(ALL_TEMPLATES_KEY, allIds, etag ?? string.Empty, cancellationToken);
+            if (result != null)
+            {
+                return; // Successfully saved
+            }
+
+            if (attempt < TemplateIndexMaxRetries)
+            {
+                _logger.LogDebug(
+                    "Template index conflict during {Operation} of {TemplateId}, retrying (attempt {Attempt}/{Max})",
+                    operation, templateId, attempt, TemplateIndexMaxRetries);
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "Template index update failed after {MaxRetries} attempts during {Operation} of {TemplateId}",
+                    TemplateIndexMaxRetries, operation, templateId);
+            }
+        }
     }
 
     #endregion
@@ -952,12 +998,32 @@ public partial class ActorService : IActorService
     /// <summary>
     /// Lists active actors with filtering.
     /// </summary>
-    public Task<(StatusCodes, ListActorsResponse?)> ListActorsAsync(
+    public async Task<(StatusCodes, ListActorsResponse?)> ListActorsAsync(
         ListActorsRequest body,
         CancellationToken cancellationToken)
     {
         _logger.LogDebug("Listing actors (category: {Category}, nodeId: {NodeId}, status: {Status})",
             body.Category, body.NodeId, body.Status);
+
+        // In pool mode with nodeId filter, query pool assignments directly
+        if (_configuration.DeploymentMode != DeploymentMode.Bannou && !string.IsNullOrWhiteSpace(body.NodeId))
+        {
+            return await ListActorsFromPoolAsync(body, cancellationToken);
+        }
+
+        // In bannou mode with nodeId filter, return empty if nodeId doesn't match this instance
+        if (!string.IsNullOrWhiteSpace(body.NodeId) &&
+            !string.Equals(body.NodeId, _configuration.LocalModeNodeId, StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.LogDebug("NodeId filter {NodeId} does not match local node {LocalNodeId}, returning empty",
+                body.NodeId, _configuration.LocalModeNodeId);
+
+            return (StatusCodes.OK, new ListActorsResponse
+            {
+                Actors = new List<ActorInstanceResponse>(),
+                Total = 0
+            });
+        }
 
         IEnumerable<IActorRunner> runners = _actorRegistry.GetAllRunners();
 
@@ -977,8 +1043,6 @@ public partial class ActorService : IActorService
             runners = runners.Where(r => r.CharacterId == body.CharacterId);
         }
 
-        // Note: nodeId filtering not applicable in bannou mode
-
         var filteredRunners = runners.ToList();
         var total = filteredRunners.Count;
         var actors = filteredRunners
@@ -989,11 +1053,66 @@ public partial class ActorService : IActorService
                 nodeAppId: _configuration.DeploymentMode == DeploymentMode.Bannou ? _configuration.LocalModeAppId : null))
             .ToList();
 
-        return Task.FromResult<(StatusCodes, ListActorsResponse?)>((StatusCodes.OK, new ListActorsResponse
+        return (StatusCodes.OK, new ListActorsResponse
         {
             Actors = actors,
             Total = total
-        }));
+        });
+    }
+
+    /// <summary>
+    /// Lists actors from pool assignments for a specific node.
+    /// Used in pool deployment modes when nodeId filter is specified.
+    /// </summary>
+    private async Task<(StatusCodes, ListActorsResponse?)> ListActorsFromPoolAsync(
+        ListActorsRequest body,
+        CancellationToken cancellationToken)
+    {
+        // NodeId is verified non-null by caller; extract to satisfy NRT analysis
+        var nodeId = body.NodeId ?? throw new InvalidOperationException("NodeId must be set before calling ListActorsFromPoolAsync");
+        var assignments = await _poolManager.ListActorsByNodeAsync(nodeId, cancellationToken);
+
+        IEnumerable<ActorAssignment> filtered = assignments;
+
+        if (!string.IsNullOrWhiteSpace(body.Category))
+        {
+            filtered = filtered.Where(a => string.Equals(a.Category, body.Category, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (body.Status != default)
+        {
+            filtered = filtered.Where(a => a.Status == body.Status);
+        }
+
+        if (body.CharacterId.HasValue)
+        {
+            filtered = filtered.Where(a => a.CharacterId == body.CharacterId);
+        }
+
+        var filteredList = filtered.ToList();
+        var total = filteredList.Count;
+        var actors = filteredList
+            .Skip(body.Offset)
+            .Take(body.Limit)
+            .Select(a => new ActorInstanceResponse
+            {
+                ActorId = a.ActorId,
+                TemplateId = a.TemplateId,
+                Category = a.Category ?? "unknown",
+                CharacterId = a.CharacterId,
+                NodeId = a.NodeId,
+                NodeAppId = a.NodeAppId,
+                Status = a.Status,
+                StartedAt = a.StartedAt ?? a.AssignedAt,
+                LoopIterations = 0
+            })
+            .ToList();
+
+        return (StatusCodes.OK, new ListActorsResponse
+        {
+            Actors = actors,
+            Total = total
+        });
     }
 
     #endregion
