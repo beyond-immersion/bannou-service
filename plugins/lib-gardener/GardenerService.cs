@@ -610,9 +610,9 @@ public partial class GardenerService : IGardenerService
             return (StatusCodes.BadRequest, null);
         }
 
-        // Phase gating
+        // Phase gating (empty AllowedPhases = unrestricted, allowed in all phases)
         var phaseConfig = await GetOrCreatePhaseConfigAsync(cancellationToken);
-        if (!template.AllowedPhases.Contains(phaseConfig.CurrentPhase))
+        if (template.AllowedPhases.Count > 0 && !template.AllowedPhases.Contains(phaseConfig.CurrentPhase))
         {
             _logger.LogInformation(
                 "Template {TemplateId} not allowed in current phase {Phase}",
@@ -1447,9 +1447,9 @@ public partial class GardenerService : IGardenerService
             return (StatusCodes.BadRequest, null);
         }
 
-        // Phase gating
+        // Phase gating (empty AllowedPhases = unrestricted, allowed in all phases)
         var phaseConfig = await GetOrCreatePhaseConfigAsync(cancellationToken);
-        if (!template.AllowedPhases.Contains(phaseConfig.CurrentPhase))
+        if (template.AllowedPhases.Count > 0 && !template.AllowedPhases.Contains(phaseConfig.CurrentPhase))
         {
             _logger.LogInformation(
                 "Template {TemplateId} not allowed in current phase {Phase}",

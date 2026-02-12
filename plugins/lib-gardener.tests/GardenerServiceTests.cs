@@ -917,6 +917,39 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
         Assert.Equal(StatusCodes.BadRequest, status);
     }
 
+    [Fact]
+    public async Task EnterScenarioAsync_EmptyAllowedPhases_TreatedAsUnrestricted()
+    {
+        var service = CreateService();
+        _mockGardenStore
+            .Setup(s => s.GetAsync($"garden:{_testAccountId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CreateTestGarden());
+
+        var template = CreateTestTemplate();
+        template.AllowedPhases = new List<DeploymentPhase>(); // Empty = all phases allowed
+        _mockTemplateStore
+            .Setup(s => s.GetAsync($"template:{_testTemplateId}", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(template);
+
+        SetupPhaseConfig(DeploymentPhase.Release);
+
+        _mockScenarioStore
+            .Setup(s => s.SaveAsync(It.IsAny<string>(), It.IsAny<ScenarioInstanceModel>(),
+                It.IsAny<StateOptions?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("etag");
+
+        var (status, response) = await service.EnterScenarioAsync(
+            new EnterScenarioRequest
+            {
+                AccountId = _testAccountId,
+                ScenarioTemplateId = _testTemplateId
+            },
+            CancellationToken.None);
+
+        Assert.Equal(StatusCodes.OK, status);
+        Assert.NotNull(response);
+    }
+
     #endregion
 
     #region CompleteScenarioAsync
@@ -1466,6 +1499,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
     public async Task EnterScenarioTogetherAsync_ValidBond_CreatesSharedScenario()
     {
         var service = CreateService();
+        SetupPhaseConfig();
         var partnerAccountId = Guid.NewGuid();
         var partnerSeedId = Guid.NewGuid();
         var bondId = Guid.NewGuid();
