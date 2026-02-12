@@ -56,7 +56,7 @@ public class GardenerSeedEvolutionListener : ISeedEvolutionListener
     {
         var gardenStore = _stateStoreFactory.GetStore<GardenInstanceModel>(
             StateStoreDefinitions.GardenerVoidInstances);
-        var gardenKey = $"void:{notification.OwnerId}";
+        var gardenKey = $"garden:{notification.OwnerId}";
 
         var garden = await gardenStore.GetAsync(gardenKey, ct);
         if (garden == null) return;
@@ -77,7 +77,7 @@ public class GardenerSeedEvolutionListener : ISeedEvolutionListener
     {
         var gardenStore = _stateStoreFactory.GetStore<GardenInstanceModel>(
             StateStoreDefinitions.GardenerVoidInstances);
-        var gardenKey = $"void:{notification.OwnerId}";
+        var gardenKey = $"garden:{notification.OwnerId}";
 
         var garden = await gardenStore.GetAsync(gardenKey, ct);
         if (garden == null) return;

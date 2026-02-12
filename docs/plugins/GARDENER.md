@@ -305,17 +305,35 @@ If the player has a bond and the template is bond-preferred, score is multiplied
 
 4. **PersistentEntryEnabled / GardenMinigamesEnabled**: These phase config flags are stored and returned but never read by any service logic. They appear to be forward-looking feature flags.
 
+5. **Matchmaking integration**: The implementation plan specified `IMatchmakingClient` (L4 soft dependency) for submitting matchmaking tickets when templates have `MinPlayers > 1`. This was never implemented -- group scenarios beyond bond pairs have no queueing mechanism.
+
+6. **Analytics integration**: The implementation plan specified `IAnalyticsClient` (L4 soft dependency) for querying milestone data to enrich scenario scoring. This was never implemented -- the `NarrativeWeight` scoring component partially compensates but milestone-based scoring is absent.
+
+7. **Client event schema (gardener-client-events.yaml)**: No client event schema exists for real-time POI push to WebSocket clients. POI spawns, expirations, and trigger events happen server-side only. Clients must poll `GetVoidStateAsync` to discover changes, which defeats the purpose of the void as a responsive discovery space. This is a significant gap for the intended player experience.
+
+8. **ConnectivityMode.Persistent has no special handling**: The enum value exists (Alpha, Beta, Release map to Isolated, WorldSlice, Persistent) but the code treats all connectivity modes identically during scenario creation and lifecycle. The vision describes Persistent as "a scenario that doesn't end" -- the release surprise. No code path distinguishes Persistent scenarios from Isolated ones.
+
+9. **Prerequisite validation during scenario entry**: Templates store `Prerequisites` (required domains, required/excluded scenarios) in the model but they are never validated in `EnterScenarioAsync`. A player can enter any scenario regardless of prerequisites. The `VoidOrchestratorWorker.GetEligibleTemplatesAsync` also does not filter by prerequisites.
+
+10. **Per-template MaxConcurrentInstances enforcement**: Templates store a `MaxConcurrentInstances` value but it is never checked during scenario entry. Only the global `MaxConcurrentScenariosGlobal` is enforced.
+
 ## Potential Extensions
 
-1. **Prerequisite validation**: Templates have `Prerequisites` (required domains, required/excluded scenarios) stored in the model but never validated during `EnterScenarioAsync`. The VoidOrchestratorWorker's `GetEligibleTemplatesAsync` also does not check prerequisites.
+1. **Scenario history cleanup**: History records in MySQL accumulate indefinitely. No retention policy or cleanup mechanism exists. A background worker or configurable retention window (similar to transaction history in lib-currency) would prevent unbounded growth.
 
-2. **MaxConcurrentInstances per template**: Templates store a `MaxConcurrentInstances` value but it is never checked during scenario entry. Currently only the global `MaxConcurrentScenariosGlobal` is enforced.
+2. **Multi-participant history**: `WriteScenarioHistoryAsync` only writes a history record for the primary participant. Secondary participants in bond scenarios do not get individual history records. This means cooldown checking and scenario diversity scoring are inaccurate for non-primary bond participants.
 
-3. **Scenario history cleanup**: History records in MySQL accumulate indefinitely. No retention policy or cleanup mechanism exists.
+3. **Template delete endpoint**: A delete API endpoint could allow removing deprecated templates and publishing the already-declared `scenario-template.deleted` lifecycle event.
 
-4. **Multi-participant history**: `WriteScenarioHistoryAsync` only writes a history record for the primary participant. Secondary participants in bond scenarios do not get individual history records.
+4. **Content flywheel connection**: Scenarios complete and award growth, but there's no mechanism to feed scenario outcomes back into future content generation. No events are consumed by Storyline, no archive data is generated from scenario history. Per VISION.md, this is a load-bearing connection: "more play produces more content, which produces more play." Gardener generates play but doesn't yet contribute to the content side of the flywheel.
 
-5. **Template delete endpoint**: A delete API endpoint could allow removing deprecated templates and publishing the already-declared `scenario-template.deleted` lifecycle event.
+5. **Dialog choice trigger mode**: PLAYER-VISION.md describes four acceptance modes: implicit (proximity), prompted (acknowledge), dialog choices (multiple branching options), and forced. The implementation has Proximity, Interaction, Prompted, and Forced -- but "dialog choices" (presenting multiple distinct branching options beyond Enter/Decline) is missing. Prompted mode only offers binary accept/decline.
+
+6. **Void position binary protocol optimization**: `UpdatePositionAsync` uses POST JSON for high-frequency position updates. PLAYER-VISION.md describes the void as "negligible bandwidth" but JSON POST per tick adds overhead. Binary protocol through Connect would reduce this but was deferred per the plan ("optimize only if latency/throughput becomes a problem").
+
+7. **Multi-seed-type support**: `SeedTypeCode` is a single config property (default "guardian"). PLAYER-VISION.md describes multiple seed types (guardian spirit, dungeon master, realm-specific). Each type would need its own Gardener instance or the service would need to manage multiple types. The current architecture supports this (deploy multiple Gardener instances with different `GARDENER_SEED_TYPE_CODE`), but this deployment pattern is undocumented.
+
+8. **Analytics milestone integration for scoring**: The plan specified consuming `analytics.milestone.reached` events to enrich scenario selection. When Analytics publishes this event, a subscription could be added to boost templates that align with player milestone achievements.
 
 ## Known Quirks & Caveats
 
@@ -327,11 +345,13 @@ If the player has a bond and the template is bond-preferred, score is multiplied
 
 3. **ListTemplatesAsync in-memory phase filtering breaks pagination**: When `DeploymentPhase` filter is provided, templates are filtered in-memory after the database query. The response uses `templateList.Count` instead of `result.TotalCount`, making TotalCount inaccurate relative to page/pageSize. If 100 templates exist but only 10 match the phase filter on page 1, the client sees TotalCount=10 regardless of what's on other pages.
 
-4. **Missing try-catch around CreateGameSessionAsync**: In `EnterScenarioAsync` (line 607) and `EnterScenarioTogetherAsync` (line 1383), `_gameSessionClient.CreateGameSessionAsync` is called without try-catch. If game session creation fails, the exception propagates unhandled. Per error handling tenets, external service calls should be wrapped with `ApiException` distinction. The void tracking set and garden instance may be in an inconsistent state if this call fails mid-operation.
+4. **Missing try-catch around CreateGameSessionAsync**: In `EnterScenarioAsync` (line 607) and `EnterScenarioTogetherAsync` (line 1383), `_gameSessionClient.CreateGameSessionAsync` is called without try-catch. If game session creation fails, the exception propagates unhandled. Per error handling tenets, external service calls should be wrapped with `ApiException` distinction. The void tracking set and garden instance may be in an inconsistent state if this call fails mid-operation (garden already deleted, but scenario never created -- player stuck with no void and no scenario). Fix requires try-catch with compensation (restore garden instance on failure) or transactional ordering (create game session before deleting garden).
 
 5. **EnterVoidAsync has no distributed lock**: Unlike `LeaveVoidAsync`, `InteractWithPoiAsync`, `DeclinePoiAsync`, and all scenario mutation methods, `EnterVoidAsync` does not acquire a distributed lock before checking for an existing garden and creating a new one. Two concurrent calls for the same account could both pass the existence check (line 179-184), both create a garden instance, and both publish `gardener.void.entered` events. The second `SaveAsync` overwrites the first, and the tracking set `AddToSetAsync` is idempotent, but the first call's event would reference a garden that was immediately replaced. Unlike `UpdatePositionAsync` (which intentionally omits the lock for latency on high-frequency calls), `EnterVoidAsync` is a low-frequency operation where a lock would be appropriate.
 
 6. **Hardcoded query page sizes in VoidOrchestratorWorker (T21 violation)**: `GetEligibleTemplatesAsync` (GardenerVoidOrchestratorWorker.cs:427) queries templates with hardcoded `page: 0, pageSize: 500` and history with `page: 0, pageSize: 200` (line 438). If a deployment has more than 500 active templates or a player has more than 200 history records, excess entries are silently ignored. These limits should be configuration properties per the Configuration-First tenet.
+
+7. **Race condition in background worker POI expiry**: `GardenerVoidOrchestratorWorker.ExpireStalePoiAsync` modifies POI state (setting `Status = Expired`) and removes POI IDs from the garden's `ActivePoiIds` list without acquiring a distributed lock for the garden instance. If a player interacts with a POI via `InteractWithPoiAsync` (which does acquire a lock) at the same moment the worker expires it, the worker's unlocked write could overwrite the interaction result. The API and worker operate on the same Redis keys without coordination. Fix requires either acquiring a garden-level lock in the worker's per-garden processing or accepting and documenting last-write-wins semantics for POI state.
 
 ### Intentional Quirks (Documented Behavior)
 

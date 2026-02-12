@@ -43,7 +43,7 @@ public class GardenerServicePlugin : StandardServicePlugin<IGardenerService>
         services.AddSingleton<ISeedEvolutionListener, GardenerSeedEvolutionListener>();
 
         // Register background workers as hosted services
-        services.AddHostedService<GardenerVoidOrchestratorWorker>();
+        services.AddHostedService<GardenerGardenOrchestratorWorker>();
         services.AddHostedService<GardenerScenarioLifecycleWorker>();
     }
 
@@ -68,7 +68,7 @@ public class GardenerServicePlugin : StandardServicePlugin<IGardenerService>
                 SeedTypeCode = configuration.SeedTypeCode,
                 GameServiceId = Guid.Empty, // Gardener is cross-game; resolved at runtime
                 DisplayName = "Guardian Spirit",
-                Description = "Player guardian spirit that grows through void exploration and scenario completion",
+                Description = "Player guardian spirit that grows through garden exploration and scenario completion",
                 MaxPerOwner = 1,
                 AllowedOwnerTypes = new List<string> { "account" },
                 GrowthPhases = new List<GrowthPhaseDefinition>

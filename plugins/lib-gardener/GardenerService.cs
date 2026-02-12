@@ -20,7 +20,7 @@ namespace BeyondImmersion.BannouService.Gardener;
 /// </summary>
 /// <remarks>
 /// <para>
-/// The Gardener is an L4 GameFeatures service that manages the "Void" experience --
+/// The Gardener is an L4 GameFeatures service that manages the "Garden" experience --
 /// a procedural discovery space where players encounter POIs (Points of Interest)
 /// that lead into scenarios. Scenarios are backed by Game Sessions and award Seed
 /// growth on completion. Internal naming uses "Garden" for clarity.
@@ -78,8 +78,8 @@ public partial class GardenerService : IGardenerService
     private IStateStore<GardenInstanceModel>? _gardenStore;
 
     /// <summary>
-    /// Redis-backed store for active garden (void) instances.
-    /// Key pattern: void:{accountId}
+    /// Redis-backed store for active garden instances.
+    /// Key pattern: garden:{accountId}
     /// </summary>
     internal IStateStore<GardenInstanceModel> GardenStore =>
         _gardenStore ??= _stateStoreFactory.GetStore<GardenInstanceModel>(
@@ -139,7 +139,7 @@ public partial class GardenerService : IGardenerService
 
     /// <summary>
     /// Cacheable store providing Redis set operations for tracking active instances.
-    /// Used for maintaining tracking sets of active void and scenario account IDs.
+    /// Used for maintaining tracking sets of active garden and scenario account IDs.
     /// </summary>
     internal ICacheableStateStore<GardenInstanceModel> GardenCacheStore =>
         _gardenCacheStore ??= _stateStoreFactory.GetCacheableStore<GardenInstanceModel>(
@@ -149,7 +149,7 @@ public partial class GardenerService : IGardenerService
 
     #region Key Helpers
 
-    private static string GardenKey(Guid accountId) => $"void:{accountId}";
+    private static string GardenKey(Guid accountId) => $"garden:{accountId}";
     private static string PoiKey(Guid gardenInstanceId, Guid poiId) => $"poi:{gardenInstanceId}:{poiId}";
     private static string ScenarioKey(Guid accountId) => $"scenario:{accountId}";
     private static string TemplateKey(Guid templateId) => $"template:{templateId}";
@@ -157,10 +157,10 @@ public partial class GardenerService : IGardenerService
     private const string PhaseConfigKey = "phase:config";
 
     /// <summary>
-    /// Redis set key tracking account IDs with active void instances.
-    /// Used by GardenerVoidOrchestratorWorker to iterate active gardens.
+    /// Redis set key tracking account IDs with active garden instances.
+    /// Used by GardenerGardenOrchestratorWorker to iterate active gardens.
     /// </summary>
-    internal const string ActiveVoidsTrackingKey = "gardener:active-voids";
+    internal const string ActiveGardensTrackingKey = "gardener:active-gardens";
 
     /// <summary>
     /// Redis set key tracking account IDs with active scenario instances.
@@ -170,7 +170,7 @@ public partial class GardenerService : IGardenerService
 
     #endregion
 
-    #region Void Management
+    #region Garden Management
 
     /// <inheritdoc />
     public async Task<(StatusCodes, VoidStateResponse?)> EnterVoidAsync(
@@ -218,11 +218,11 @@ public partial class GardenerService : IGardenerService
 
         await GardenStore.SaveAsync(GardenKey(body.AccountId), garden, cancellationToken: cancellationToken);
 
-        // Track active void instance for background worker iteration
+        // Track active garden instance for background worker iteration
         await GardenCacheStore.AddToSetAsync<Guid>(
-            ActiveVoidsTrackingKey, body.AccountId, cancellationToken: cancellationToken);
+            ActiveGardensTrackingKey, body.AccountId, cancellationToken: cancellationToken);
 
-        await _messageBus.TryPublishAsync("gardener.void.entered",
+        await _messageBus.TryPublishAsync("gardener.garden.entered",
             new GardenerVoidEnteredEvent
             {
                 EventId = Guid.NewGuid(),
@@ -236,7 +236,7 @@ public partial class GardenerService : IGardenerService
             "Created garden instance {GardenInstanceId} for account {AccountId} with seed {SeedId}",
             gardenInstanceId, body.AccountId, activeSeed.SeedId);
 
-        return (StatusCodes.OK, MapToVoidStateResponse(garden, Array.Empty<PoiModel>()));
+        return (StatusCodes.OK, MapToGardenStateResponse(garden, Array.Empty<PoiModel>()));
     }
 
     /// <inheritdoc />
@@ -248,7 +248,7 @@ public partial class GardenerService : IGardenerService
             return (StatusCodes.NotFound, null);
 
         var pois = await LoadActivePoisAsync(garden, cancellationToken);
-        return (StatusCodes.OK, MapToVoidStateResponse(garden, pois));
+        return (StatusCodes.OK, MapToGardenStateResponse(garden, pois));
     }
 
     /// <inheritdoc />
@@ -325,7 +325,7 @@ public partial class GardenerService : IGardenerService
     {
         await using var lockResult = await _lockProvider.LockAsync(
             StateStoreDefinitions.GardenerLock,
-            $"void:{body.AccountId}",
+            $"garden:{body.AccountId}",
             Guid.NewGuid().ToString(),
             _configuration.DistributedLockTimeoutSeconds,
             cancellationToken);
@@ -351,9 +351,9 @@ public partial class GardenerService : IGardenerService
 
         // Remove from tracking set
         await GardenCacheStore.RemoveFromSetAsync<Guid>(
-            ActiveVoidsTrackingKey, body.AccountId, cancellationToken);
+            ActiveGardensTrackingKey, body.AccountId, cancellationToken);
 
-        await _messageBus.TryPublishAsync("gardener.void.left",
+        await _messageBus.TryPublishAsync("gardener.garden.left",
             new GardenerVoidLeftEvent
             {
                 EventId = Guid.NewGuid(),
@@ -400,7 +400,7 @@ public partial class GardenerService : IGardenerService
     {
         await using var lockResult = await _lockProvider.LockAsync(
             StateStoreDefinitions.GardenerLock,
-            $"void:{body.AccountId}",
+            $"garden:{body.AccountId}",
             Guid.NewGuid().ToString(),
             _configuration.DistributedLockTimeoutSeconds,
             cancellationToken);
@@ -485,7 +485,7 @@ public partial class GardenerService : IGardenerService
     {
         await using var lockResult = await _lockProvider.LockAsync(
             StateStoreDefinitions.GardenerLock,
-            $"void:{body.AccountId}",
+            $"garden:{body.AccountId}",
             Guid.NewGuid().ToString(),
             _configuration.DistributedLockTimeoutSeconds,
             cancellationToken);
@@ -643,13 +643,13 @@ public partial class GardenerService : IGardenerService
 
         await ScenarioStore.SaveAsync(ScenarioKey(body.AccountId), scenario, cancellationToken: cancellationToken);
 
-        // Update tracking sets: leaving void, entering scenario
+        // Update tracking sets: leaving garden, entering scenario
         await GardenCacheStore.RemoveFromSetAsync<Guid>(
-            ActiveVoidsTrackingKey, body.AccountId, cancellationToken);
+            ActiveGardensTrackingKey, body.AccountId, cancellationToken);
         await GardenCacheStore.AddToSetAsync<Guid>(
             ActiveScenariosTrackingKey, body.AccountId, cancellationToken: cancellationToken);
 
-        // Clean up garden instance -- player leaves the void to enter the scenario
+        // Clean up garden instance -- player leaves the garden to enter the scenario
         foreach (var poiId in garden.ActivePoiIds)
         {
             await PoiStore.DeleteAsync(PoiKey(garden.GardenInstanceId, poiId), cancellationToken);
@@ -1261,8 +1261,8 @@ public partial class GardenerService : IGardenerService
         var config = await GetOrCreatePhaseConfigAsync(cancellationToken);
 
         // Count active instances from Redis tracking sets maintained by Enter/Leave operations
-        var activeVoidCount = (int)await GardenCacheStore.SetCountAsync(
-            ActiveVoidsTrackingKey, cancellationToken);
+        var activeGardenCount = (int)await GardenCacheStore.SetCountAsync(
+            ActiveGardensTrackingKey, cancellationToken);
         var activeScenarioCount = (int)await GardenCacheStore.SetCountAsync(
             ActiveScenariosTrackingKey, cancellationToken);
 
@@ -1274,7 +1274,7 @@ public partial class GardenerService : IGardenerService
         return (StatusCodes.OK, new PhaseMetricsResponse
         {
             CurrentPhase = config.CurrentPhase,
-            ActiveVoidInstances = activeVoidCount,
+            ActiveVoidInstances = activeGardenCount,
             ActiveScenarioInstances = activeScenarioCount,
             ScenarioCapacityUtilization = utilization
         });
@@ -1300,7 +1300,7 @@ public partial class GardenerService : IGardenerService
 
         if (!_configuration.BondSharedVoidEnabled)
         {
-            _logger.LogDebug("Bond shared void is disabled");
+            _logger.LogDebug("Bond shared garden is disabled");
             return (StatusCodes.BadRequest, null);
         }
 
@@ -1332,7 +1332,7 @@ public partial class GardenerService : IGardenerService
             return (StatusCodes.BadRequest, null);
         }
 
-        // Verify both participants are in the void
+        // Verify both participants are in the garden
         var gardens = new List<GardenInstanceModel>();
         foreach (var accountId in partnerAccountIds)
         {
@@ -1424,7 +1424,7 @@ public partial class GardenerService : IGardenerService
         foreach (var accountId in partnerAccountIds)
         {
             await GardenCacheStore.RemoveFromSetAsync<Guid>(
-                ActiveVoidsTrackingKey, accountId, cancellationToken);
+                ActiveGardensTrackingKey, accountId, cancellationToken);
             await GardenCacheStore.AddToSetAsync<Guid>(
                 ActiveScenariosTrackingKey, accountId, cancellationToken: cancellationToken);
         }
@@ -1685,7 +1685,7 @@ public partial class GardenerService : IGardenerService
 
     #region Model Mapping
 
-    private static VoidStateResponse MapToVoidStateResponse(
+    private static VoidStateResponse MapToGardenStateResponse(
         GardenInstanceModel garden, IReadOnlyList<PoiModel> pois)
     {
         return new VoidStateResponse

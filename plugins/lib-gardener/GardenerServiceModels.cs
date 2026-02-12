@@ -24,8 +24,8 @@ public partial class GardenerService
 // ============================================================================
 
 /// <summary>
-/// Internal storage model for an active garden (void) instance.
-/// Stored in Redis with key pattern: void:{accountId}
+/// Internal storage model for an active garden instance.
+/// Stored in Redis with key pattern: garden:{accountId}
 /// </summary>
 internal class GardenInstanceModel
 {

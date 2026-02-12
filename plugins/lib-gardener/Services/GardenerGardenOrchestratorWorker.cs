@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 namespace BeyondImmersion.BannouService.Gardener;
 
 /// <summary>
-/// Background service that periodically evaluates active void (garden) instances,
+/// Background service that periodically evaluates active garden instances,
 /// expires stale POIs, runs the scenario selection algorithm, and spawns new POIs.
 /// </summary>
 /// <remarks>
@@ -26,14 +26,14 @@ namespace BeyondImmersion.BannouService.Gardener;
 /// respecting MinPoiSpacing between POIs.
 /// </para>
 /// </remarks>
-public class GardenerVoidOrchestratorWorker : BackgroundService
+public class GardenerGardenOrchestratorWorker : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;
-    private readonly ILogger<GardenerVoidOrchestratorWorker> _logger;
+    private readonly ILogger<GardenerGardenOrchestratorWorker> _logger;
     private readonly GardenerServiceConfiguration _configuration;
 
     /// <summary>
-    /// Interval between void orchestrator evaluation cycles, from configuration.
+    /// Interval between garden orchestrator evaluation cycles, from configuration.
     /// </summary>
     private TimeSpan WorkerInterval => TimeSpan.FromMilliseconds(_configuration.VoidTickIntervalMs);
 
@@ -43,14 +43,14 @@ public class GardenerVoidOrchestratorWorker : BackgroundService
     private TimeSpan StartupDelay => TimeSpan.FromSeconds(_configuration.BackgroundServiceStartupDelaySeconds);
 
     /// <summary>
-    /// Initializes the void orchestrator worker with required dependencies.
+    /// Initializes the garden orchestrator worker with required dependencies.
     /// </summary>
     /// <param name="serviceProvider">Service provider for creating scopes to access scoped services.</param>
     /// <param name="logger">Logger for structured logging.</param>
-    /// <param name="configuration">Service configuration with void orchestration settings.</param>
-    public GardenerVoidOrchestratorWorker(
+    /// <param name="configuration">Service configuration with garden orchestration settings.</param>
+    public GardenerGardenOrchestratorWorker(
         IServiceProvider serviceProvider,
-        ILogger<GardenerVoidOrchestratorWorker> logger,
+        ILogger<GardenerGardenOrchestratorWorker> logger,
         GardenerServiceConfiguration configuration)
     {
         _serviceProvider = serviceProvider;
@@ -66,7 +66,7 @@ public class GardenerVoidOrchestratorWorker : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation(
-            "Void orchestrator worker starting, interval: {Interval}ms, startup delay: {Delay}s",
+            "Garden orchestrator worker starting, interval: {Interval}ms, startup delay: {Delay}s",
             _configuration.VoidTickIntervalMs,
             _configuration.BackgroundServiceStartupDelaySeconds);
 
@@ -76,7 +76,7 @@ public class GardenerVoidOrchestratorWorker : BackgroundService
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {
-            _logger.LogInformation("Void orchestrator worker cancelled during startup");
+            _logger.LogInformation("Garden orchestrator worker cancelled during startup");
             return;
         }
 
@@ -84,7 +84,7 @@ public class GardenerVoidOrchestratorWorker : BackgroundService
         {
             try
             {
-                await ProcessVoidTickAsync(stoppingToken);
+                await ProcessGardenTickAsync(stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
@@ -92,14 +92,14 @@ public class GardenerVoidOrchestratorWorker : BackgroundService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error during void orchestrator processing cycle");
+                _logger.LogError(ex, "Error during garden orchestrator processing cycle");
                 try
                 {
                     using var errorScope = _serviceProvider.CreateScope();
                     var messageBus = errorScope.ServiceProvider.GetRequiredService<IMessageBus>();
                     await messageBus.TryPublishErrorAsync(
                         "gardener",
-                        "GardenerVoidOrchestratorWorker",
+                        "GardenerGardenOrchestratorWorker",
                         ex.GetType().Name,
                         ex.Message,
                         severity: ServiceErrorEventSeverity.Error);
@@ -120,14 +120,14 @@ public class GardenerVoidOrchestratorWorker : BackgroundService
             }
         }
 
-        _logger.LogInformation("Void orchestrator worker stopped");
+        _logger.LogInformation("Garden orchestrator worker stopped");
     }
 
     /// <summary>
-    /// Processes one full void tick: iterates all active gardens,
+    /// Processes one full garden tick: iterates all active gardens,
     /// expires stale POIs, runs scoring, spawns new POIs.
     /// </summary>
-    private async Task ProcessVoidTickAsync(CancellationToken ct)
+    private async Task ProcessGardenTickAsync(CancellationToken ct)
     {
         using var scope = _serviceProvider.CreateScope();
         var stateStoreFactory = scope.ServiceProvider.GetRequiredService<IStateStoreFactory>();
@@ -145,14 +145,14 @@ public class GardenerVoidOrchestratorWorker : BackgroundService
         var cacheStore = stateStoreFactory.GetCacheableStore<GardenInstanceModel>(
             StateStoreDefinitions.GardenerVoidInstances);
 
-        // Get all active void account IDs from tracking set
+        // Get all active garden account IDs from tracking set
         var activeAccountIds = await cacheStore.GetSetAsync<Guid>(
-            GardenerService.ActiveVoidsTrackingKey, ct);
+            GardenerService.ActiveGardensTrackingKey, ct);
 
         if (activeAccountIds.Count == 0)
             return;
 
-        _logger.LogDebug("Processing void tick for {Count} active gardens", activeAccountIds.Count);
+        _logger.LogDebug("Processing garden tick for {Count} active gardens", activeAccountIds.Count);
 
         var totalPoisExpired = 0;
         var totalPoisSpawned = 0;
@@ -172,14 +172,14 @@ public class GardenerVoidOrchestratorWorker : BackgroundService
             catch (Exception ex)
             {
                 _logger.LogWarning(ex,
-                    "Failed to process void tick for account {AccountId}", accountId);
+                    "Failed to process garden tick for account {AccountId}", accountId);
             }
         }
 
         if (totalPoisExpired > 0 || totalPoisSpawned > 0)
         {
             _logger.LogDebug(
-                "Void tick complete: expired={Expired}, spawned={Spawned}",
+                "Garden tick complete: expired={Expired}, spawned={Spawned}",
                 totalPoisExpired, totalPoisSpawned);
         }
     }
@@ -199,13 +199,13 @@ public class GardenerVoidOrchestratorWorker : BackgroundService
         IMessageBus messageBus,
         CancellationToken ct)
     {
-        var gardenKey = $"void:{accountId}";
+        var gardenKey = $"garden:{accountId}";
         var garden = await gardenStore.GetAsync(gardenKey, ct);
         if (garden == null)
         {
             // Garden no longer exists; clean up tracking set
             await cacheStore.RemoveFromSetAsync<Guid>(
-                GardenerService.ActiveVoidsTrackingKey, accountId, ct);
+                GardenerService.ActiveGardensTrackingKey, accountId, ct);
             return (0, 0);
         }
 
