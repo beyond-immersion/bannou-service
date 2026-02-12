@@ -258,13 +258,17 @@ None identified.
 
 6. **Permission state set for BOTH directions**: When joining a room with existing peers, `voice:ringing` is set for both the joining session AND all existing sessions. This enables bidirectional SDP exchange.
 
+7. **Permission state race on peer leave during join**: The sequential `voice:ringing` loop in `NotifyPeerJoinedAsync` can set state on a session that left between the participant list fetch and the state update. This is benign: every `UpdateSessionStateAsync` call is try-catch wrapped (logs warning), and the leaving session's own `LeaveVoiceRoomAsync` path clears its permission state independently.
+
 ### Design Considerations (Requires Planning)
 
-1. **RTPEngine UDP protocol**: Uses raw UDP with bencode encoding. No connection state, no retries on packet loss. `_sendLock` prevents concurrent sends but lost responses are not retried - the operation simply times out.
+1. **RTPEngine UDP protocol**: Uses raw UDP with bencode encoding. No connection state, no retries on packet loss. `_sendLock` prevents concurrent sends but lost responses are not retried - the operation simply times out. Additionally, cookie mismatch responses (stale data from previous timed-out requests) are logged but used anyway — a correctness bug.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/404 -->
 
-2. **Permission state race condition**: Setting `voice:ringing` for existing peers happens sequentially in a loop. If a peer leaves between the check and the state update, the state is set on a dead session (benign but wasteful).
+2. ~~**Permission state race condition**~~: **FIXED** (2026-02-11) - Reclassified as Intentional Quirk. The sequential `voice:ringing` loop in `NotifyPeerJoinedAsync` can set state on a dead session if a peer leaves mid-loop, but every call is try-catch wrapped (LogWarning), the leaving session's cleanup path clears its own state, and no data integrity risk exists. Moved to Intentional Quirks #7.
 
 3. **SIP credential expiration not enforced**: Credentials have a 24-hour expiration timestamp (`SipCredentialExpirationHours`) but no server-side enforcement. Clients receive the expiration but there's no background task to rotate credentials or invalidate sessions.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/405 -->
 
 4. ~~**Hardcoded fallbacks in coordinators**~~: **FIXED** (2026-02-11) - Removed secondary fallbacks from `P2PCoordinator.GetP2PMaxParticipants()` (was `?? 6`, schema default is `8`), `ScaledTierCoordinator.GetScaledMaxParticipants()` (was `?? 100`), and `ScaledTierCoordinator.GetStunServers()` (was `?? "stun:stun.l.google.com:19302"`). All three now use configuration values directly; schema defaults guarantee non-null/non-zero values.
 
@@ -285,6 +289,8 @@ None identified.
 | 2026-02-11 | [#401](https://github.com/beyond-immersion/bannou-service/issues/401) | Voice recording support architecture — storage, consent, RTPEngine protocol, retention | Needs Design |
 | 2026-02-11 | [#402](https://github.com/beyond-immersion/bannou-service/issues/402) | Mute state synchronization — self vs admin mute, SFU enforcement, notification scope | Needs Design |
 | 2026-02-11 | [#403](https://github.com/beyond-immersion/bannou-service/issues/403) | ICE trickle support — relay vs accumulate, permission gating, P2P/SFU scope | Needs Design |
+| 2026-02-11 | [#404](https://github.com/beyond-immersion/bannou-service/issues/404) | RTPEngine UDP client: cookie mismatch correctness bug and retry strategy | Needs Design |
+| 2026-02-11 | [#405](https://github.com/beyond-immersion/bannou-service/issues/405) | SIP credential expiration enforcement — Bannou vs Kamailio, rotation strategy | Needs Design |
 
 ### Completed
 
@@ -293,3 +299,4 @@ None identified.
 | 2026-02-11 | IKamailioClient methods unused (Stubs #3) | Removed 4 dead JSONRPC methods and all supporting infrastructure. `IKamailioClient` reduced to `IsHealthyAsync` only. |
 | 2026-02-11 | Hardcoded fallbacks in coordinators (Design Considerations #4) | Removed 3 secondary fallbacks in `P2PCoordinator` and `ScaledTierCoordinator`. Config properties have schema defaults; fallbacks were unreachable and violated IMPLEMENTATION TENETS (T21). |
 | 2026-02-11 | Dead `_kamailioClient` field in ScaledTierCoordinator (Stubs #3 follow-up) | Removed `IKamailioClient` injection from `ScaledTierCoordinator` constructor, removed orphaned DI registration from `VoiceServicePlugin`, updated tests. `IKamailioClient.cs` and `KamailioClient.cs` are now fully orphaned source files. |
+| 2026-02-11 | Permission state race condition (Design Considerations #2) | Reclassified as Intentional Quirk #7. Race is benign: try-catch handles dead sessions, cleanup paths are independent. No code changes needed. |
