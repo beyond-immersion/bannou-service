@@ -284,7 +284,7 @@ public class GardenerScenarioLifecycleWorker : BackgroundService
             StateStoreDefinitions.GardenerLock,
             $"scenario:{accountId}",
             lockOwner,
-            30,
+            _configuration.DistributedLockTimeoutSeconds,
             ct);
 
         if (!lockResult.Success)

@@ -214,7 +214,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
                 AccountId = _testAccountId,
                 SessionId = _testSessionId,
                 JoinedAt = DateTimeOffset.UtcNow.AddMinutes(-5),
-                Role = "primary"
+                Role = ScenarioParticipantRole.Primary
             }
         }
     };
@@ -617,7 +617,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.Equal(GardenerService.PoiInteractionResults.ScenarioPrompt, response.Result);
+        Assert.Equal(PoiInteractionResult.ScenarioPrompt, response.Result);
         Assert.NotNull(response.PromptText);
         Assert.NotNull(response.PromptChoices);
     }
@@ -651,7 +651,7 @@ public class GardenerServiceTests : ServiceTestBase<GardenerServiceConfiguration
 
         Assert.Equal(StatusCodes.OK, status);
         Assert.NotNull(response);
-        Assert.Equal(GardenerService.PoiInteractionResults.ScenarioEnter, response.Result);
+        Assert.Equal(PoiInteractionResult.ScenarioEnter, response.Result);
     }
 
     [Fact]

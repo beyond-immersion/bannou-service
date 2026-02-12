@@ -334,4 +334,25 @@ public class GardenerServiceConfiguration : IServiceConfiguration
     [ConfigRange(Minimum = 0, Maximum = 60)]
     public int BackgroundServiceStartupDelaySeconds { get; set; } = 5;
 
+    /// <summary>
+    /// Timeout in seconds for distributed lock acquisition on gardener operations
+    /// Environment variable: GARDENER_DISTRIBUTED_LOCK_TIMEOUT_SECONDS
+    /// </summary>
+    [ConfigRange(Minimum = 5, Maximum = 300)]
+    public int DistributedLockTimeoutSeconds { get; set; } = 30;
+
+    /// <summary>
+    /// Maximum rejection sampling attempts when generating a valid POI position
+    /// Environment variable: GARDENER_POI_POSITION_MAX_RETRIES
+    /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 100)]
+    public int PoiPositionMaxRetries { get; set; } = 10;
+
+    /// <summary>
+    /// Y-axis scale factor for POI vertical distribution relative to horizontal spread
+    /// Environment variable: GARDENER_POI_VERTICAL_DAMPENING_FACTOR
+    /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 1.0)]
+    public double PoiVerticalDampeningFactor { get; set; } = 0.3;
+
 }

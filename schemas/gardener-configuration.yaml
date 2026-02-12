@@ -380,3 +380,36 @@ x-service-configuration:
       maximum: 60
       default: 5
       description: Seconds to wait before starting background workers after service initialization
+
+    # =========================================================================
+    # Distributed Locking
+    # =========================================================================
+
+    DistributedLockTimeoutSeconds:
+      type: integer
+      env: GARDENER_DISTRIBUTED_LOCK_TIMEOUT_SECONDS
+      minimum: 5
+      maximum: 300
+      default: 30
+      description: Timeout in seconds for distributed lock acquisition on gardener operations
+
+    # =========================================================================
+    # POI Position Generation
+    # =========================================================================
+
+    PoiPositionMaxRetries:
+      type: integer
+      env: GARDENER_POI_POSITION_MAX_RETRIES
+      minimum: 1
+      maximum: 100
+      default: 10
+      description: Maximum rejection sampling attempts when generating a valid POI position
+
+    PoiVerticalDampeningFactor:
+      type: number
+      format: float
+      env: GARDENER_POI_VERTICAL_DAMPENING_FACTOR
+      minimum: 0.0
+      maximum: 1.0
+      default: 0.3
+      description: Y-axis scale factor for POI vertical distribution relative to horizontal spread

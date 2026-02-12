@@ -327,7 +327,7 @@ public partial class GardenerService : IGardenerService
             StateStoreDefinitions.GardenerLock,
             $"void:{body.AccountId}",
             Guid.NewGuid().ToString(),
-            30,
+            _configuration.DistributedLockTimeoutSeconds,
             cancellationToken);
 
         if (!lockResult.Success)
@@ -402,7 +402,7 @@ public partial class GardenerService : IGardenerService
             StateStoreDefinitions.GardenerLock,
             $"void:{body.AccountId}",
             Guid.NewGuid().ToString(),
-            30,
+            _configuration.DistributedLockTimeoutSeconds,
             cancellationToken);
 
         if (!lockResult.Success)
@@ -487,7 +487,7 @@ public partial class GardenerService : IGardenerService
             StateStoreDefinitions.GardenerLock,
             $"void:{body.AccountId}",
             Guid.NewGuid().ToString(),
-            30,
+            _configuration.DistributedLockTimeoutSeconds,
             cancellationToken);
 
         if (!lockResult.Success)
@@ -545,7 +545,7 @@ public partial class GardenerService : IGardenerService
             StateStoreDefinitions.GardenerLock,
             $"scenario:{body.AccountId}",
             Guid.NewGuid().ToString(),
-            30,
+            _configuration.DistributedLockTimeoutSeconds,
             cancellationToken);
 
         if (!lockResult.Success)
@@ -590,6 +590,17 @@ public partial class GardenerService : IGardenerService
                 "Template {TemplateId} not allowed in current phase {Phase}",
                 body.ScenarioTemplateId, phaseConfig.CurrentPhase);
             return (StatusCodes.BadRequest, null);
+        }
+
+        // Global scenario capacity check
+        var activeScenarioCount = (int)await GardenCacheStore.SetCountAsync(
+            ActiveScenariosTrackingKey, cancellationToken);
+        if (activeScenarioCount >= phaseConfig.MaxConcurrentScenariosGlobal)
+        {
+            _logger.LogInformation(
+                "Global scenario capacity reached ({Active}/{Max})",
+                activeScenarioCount, phaseConfig.MaxConcurrentScenariosGlobal);
+            return (StatusCodes.ServiceUnavailable, null);
         }
 
         // Create backing game session
@@ -692,7 +703,7 @@ public partial class GardenerService : IGardenerService
             StateStoreDefinitions.GardenerLock,
             $"scenario:{body.AccountId}",
             Guid.NewGuid().ToString(),
-            30,
+            _configuration.DistributedLockTimeoutSeconds,
             cancellationToken);
 
         if (!lockResult.Success)
@@ -769,7 +780,7 @@ public partial class GardenerService : IGardenerService
             StateStoreDefinitions.GardenerLock,
             $"scenario:{body.AccountId}",
             Guid.NewGuid().ToString(),
-            30,
+            _configuration.DistributedLockTimeoutSeconds,
             cancellationToken);
 
         if (!lockResult.Success)
@@ -836,7 +847,7 @@ public partial class GardenerService : IGardenerService
             StateStoreDefinitions.GardenerLock,
             $"scenario:{body.AccountId}",
             Guid.NewGuid().ToString(),
-            30,
+            _configuration.DistributedLockTimeoutSeconds,
             cancellationToken);
 
         if (!lockResult.Success)
@@ -1081,7 +1092,7 @@ public partial class GardenerService : IGardenerService
             StateStoreDefinitions.GardenerLock,
             $"template:{body.ScenarioTemplateId}",
             Guid.NewGuid().ToString(),
-            30,
+            _configuration.DistributedLockTimeoutSeconds,
             cancellationToken);
 
         if (!lockResult.Success)
@@ -1144,7 +1155,7 @@ public partial class GardenerService : IGardenerService
             StateStoreDefinitions.GardenerLock,
             $"template:{body.ScenarioTemplateId}",
             Guid.NewGuid().ToString(),
-            30,
+            _configuration.DistributedLockTimeoutSeconds,
             cancellationToken);
 
         if (!lockResult.Success)
@@ -1202,7 +1213,7 @@ public partial class GardenerService : IGardenerService
             StateStoreDefinitions.GardenerLock,
             "phase",
             Guid.NewGuid().ToString(),
-            30,
+            _configuration.DistributedLockTimeoutSeconds,
             cancellationToken);
 
         if (!lockResult.Success)
@@ -1281,7 +1292,7 @@ public partial class GardenerService : IGardenerService
             StateStoreDefinitions.GardenerLock,
             $"bond-scenario:{body.BondId}",
             Guid.NewGuid().ToString(),
-            30,
+            _configuration.DistributedLockTimeoutSeconds,
             cancellationToken);
 
         if (!lockResult.Success)
@@ -1345,6 +1356,27 @@ public partial class GardenerService : IGardenerService
             _logger.LogWarning(
                 "Template {TemplateId} does not support multiplayer", body.ScenarioTemplateId);
             return (StatusCodes.BadRequest, null);
+        }
+
+        // Phase gating
+        var phaseConfig = await GetOrCreatePhaseConfigAsync(cancellationToken);
+        if (template.AllowedPhases.Count > 0 && !template.AllowedPhases.Contains(phaseConfig.CurrentPhase))
+        {
+            _logger.LogInformation(
+                "Template {TemplateId} not allowed in current phase {Phase}",
+                body.ScenarioTemplateId, phaseConfig.CurrentPhase);
+            return (StatusCodes.BadRequest, null);
+        }
+
+        // Global scenario capacity check
+        var activeScenarioCount = (int)await GardenCacheStore.SetCountAsync(
+            ActiveScenariosTrackingKey, cancellationToken);
+        if (activeScenarioCount >= phaseConfig.MaxConcurrentScenariosGlobal)
+        {
+            _logger.LogInformation(
+                "Global scenario capacity reached ({Active}/{Max})",
+                activeScenarioCount, phaseConfig.MaxConcurrentScenariosGlobal);
+            return (StatusCodes.ServiceUnavailable, null);
         }
 
         // Create shared game session

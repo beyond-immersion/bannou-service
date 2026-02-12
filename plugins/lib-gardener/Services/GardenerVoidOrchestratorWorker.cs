@@ -364,7 +364,9 @@ public class GardenerVoidOrchestratorWorker : BackgroundService
                 garden.Position, existingPois,
                 (float)_configuration.PoiSpawnRadiusMin,
                 (float)_configuration.PoiSpawnRadiusMax,
-                (float)_configuration.MinPoiSpacing);
+                (float)_configuration.MinPoiSpacing,
+                _configuration.PoiPositionMaxRetries,
+                (float)_configuration.PoiVerticalDampeningFactor);
 
             var poiId = Guid.NewGuid();
             var poi = new PoiModel
@@ -602,7 +604,8 @@ public class GardenerVoidOrchestratorWorker : BackgroundService
         float radiusMin,
         float radiusMax,
         float minSpacing,
-        int maxRetries = 10)
+        int maxRetries,
+        float verticalDampeningFactor)
     {
         for (var attempt = 0; attempt < maxRetries; attempt++)
         {
@@ -613,7 +616,7 @@ public class GardenerVoidOrchestratorWorker : BackgroundService
             var position = new Vec3Model
             {
                 X = playerPosition.X + MathF.Cos(angle) * MathF.Cos(elevation) * distance,
-                Y = playerPosition.Y + MathF.Sin(elevation) * distance * 0.3f,
+                Y = playerPosition.Y + MathF.Sin(elevation) * distance * verticalDampeningFactor,
                 Z = playerPosition.Z + MathF.Sin(angle) * MathF.Cos(elevation) * distance
             };
 
