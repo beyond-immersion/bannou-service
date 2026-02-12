@@ -43,16 +43,9 @@ public partial class GardenerService : IGardenerService
     private readonly IServiceProvider _serviceProvider;
 
     /// <summary>
-    /// POI interaction result constants. Schema defines Result as string (T25 schema gap);
-    /// these constants provide type-safe values within service code.
+    /// POI interaction result values are now the generated PoiInteractionResult enum
+    /// (per IMPLEMENTATION TENETS type safety).
     /// </summary>
-    internal static class PoiInteractionResults
-    {
-        public const string ScenarioPrompt = "scenario_prompt";
-        public const string ScenarioEnter = "scenario_enter";
-        public const string PoiUpdate = "poi_update";
-        public const string ChainOffer = "chain_offer";
-    }
 
     /// <summary>
     /// Constructs the Gardener service with all required dependencies.
@@ -233,6 +226,7 @@ public partial class GardenerService : IGardenerService
             new GardenerVoidEnteredEvent
             {
                 EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
                 AccountId = body.AccountId,
                 SeedId = activeSeed.SeedId,
                 VoidInstanceId = gardenInstanceId
@@ -302,6 +296,7 @@ public partial class GardenerService : IGardenerService
                         new GardenerPoiEnteredEvent
                         {
                             EventId = Guid.NewGuid(),
+                            Timestamp = DateTimeOffset.UtcNow,
                             AccountId = body.AccountId,
                             PoiId = poiId,
                             ScenarioTemplateId = poi.ScenarioTemplateId
@@ -357,6 +352,7 @@ public partial class GardenerService : IGardenerService
             new GardenerVoidLeftEvent
             {
                 EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
                 AccountId = body.AccountId,
                 VoidInstanceId = garden.GardenInstanceId,
                 SessionDurationSeconds = sessionDuration
@@ -418,29 +414,29 @@ public partial class GardenerService : IGardenerService
         var template = await TemplateStore.GetAsync(
             TemplateKey(poi.ScenarioTemplateId), cancellationToken);
 
-        string result;
+        PoiInteractionResult result;
         string? promptText = null;
         ICollection<string>? promptChoices = null;
 
         switch (poi.TriggerMode)
         {
             case TriggerMode.Prompted:
-                result = PoiInteractionResults.ScenarioPrompt;
+                result = PoiInteractionResult.ScenarioPrompt;
                 promptText = template?.DisplayName;
                 promptChoices = new List<string> { "Enter", "Decline" };
                 break;
 
             case TriggerMode.Proximity:
             case TriggerMode.Interaction:
-                result = PoiInteractionResults.ScenarioEnter;
+                result = PoiInteractionResult.ScenarioEnter;
                 break;
 
             case TriggerMode.Forced:
-                result = PoiInteractionResults.ScenarioEnter;
+                result = PoiInteractionResult.ScenarioEnter;
                 break;
 
             default:
-                result = PoiInteractionResults.PoiUpdate;
+                result = PoiInteractionResult.PoiUpdate;
                 break;
         }
 
@@ -452,6 +448,7 @@ public partial class GardenerService : IGardenerService
             new GardenerPoiEnteredEvent
             {
                 EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
                 AccountId = body.AccountId,
                 PoiId = body.PoiId,
                 ScenarioTemplateId = poi.ScenarioTemplateId
@@ -498,6 +495,7 @@ public partial class GardenerService : IGardenerService
             new GardenerPoiDeclinedEvent
             {
                 EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
                 AccountId = body.AccountId,
                 PoiId = body.PoiId,
                 ScenarioTemplateId = poi.ScenarioTemplateId
@@ -592,7 +590,7 @@ public partial class GardenerService : IGardenerService
                     AccountId = body.AccountId,
                     SessionId = garden.SessionId,
                     JoinedAt = now,
-                    Role = "primary"
+                    Role = ScenarioParticipantRole.Primary
                 }
             }
         };
@@ -616,6 +614,7 @@ public partial class GardenerService : IGardenerService
             new GardenerScenarioStartedEvent
             {
                 EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
                 ScenarioInstanceId = scenarioInstanceId,
                 ScenarioTemplateId = body.ScenarioTemplateId,
                 GameSessionId = gameSession.SessionId,
@@ -708,6 +707,7 @@ public partial class GardenerService : IGardenerService
             new GardenerScenarioCompletedEvent
             {
                 EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
                 ScenarioInstanceId = scenario.ScenarioInstanceId,
                 ScenarioTemplateId = scenario.ScenarioTemplateId,
                 AccountId = body.AccountId,
@@ -777,6 +777,7 @@ public partial class GardenerService : IGardenerService
             new GardenerScenarioAbandonedEvent
             {
                 EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
                 ScenarioInstanceId = scenario.ScenarioInstanceId,
                 AccountId = body.AccountId
             }, cancellationToken: cancellationToken);
@@ -876,6 +877,7 @@ public partial class GardenerService : IGardenerService
             new GardenerScenarioChainedEvent
             {
                 EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
                 PreviousScenarioInstanceId = currentScenario.ScenarioInstanceId,
                 NewScenarioInstanceId = newScenarioId,
                 AccountId = body.AccountId,
@@ -1145,6 +1147,7 @@ public partial class GardenerService : IGardenerService
                 new GardenerPhaseChangedEvent
                 {
                     EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
                     PreviousPhase = previousPhase,
                     NewPhase = body.CurrentPhase.Value
                 }, cancellationToken: cancellationToken);
@@ -1282,7 +1285,7 @@ public partial class GardenerService : IGardenerService
                 AccountId = g.AccountId,
                 SessionId = g.SessionId,
                 JoinedAt = now,
-                Role = i == 0 ? "primary" : "partner"
+                Role = i == 0 ? ScenarioParticipantRole.Primary : ScenarioParticipantRole.Partner
             }).ToList()
         };
 
@@ -1315,6 +1318,7 @@ public partial class GardenerService : IGardenerService
             new GardenerBondEnteredTogetherEvent
             {
                 EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
                 BondId = body.BondId,
                 ScenarioInstanceId = scenarioId,
                 ScenarioTemplateId = body.ScenarioTemplateId,
@@ -1428,7 +1432,7 @@ public partial class GardenerService : IGardenerService
     }
 
     /// <summary>
-    /// Calculates growth awards and records them via ISeedClient (T27 direct API call).
+    /// Calculates growth awards and records them via ISeedClient (per FOUNDATION TENETS cross-service communication).
     /// </summary>
     private async Task<Dictionary<string, float>> CalculateAndAwardGrowthAsync(
         ScenarioInstanceModel scenario,
@@ -1466,7 +1470,7 @@ public partial class GardenerService : IGardenerService
             entries.Add(new GrowthEntry { Domain = dw.Domain, Amount = amount });
         }
 
-        // Award growth for primary participant via batch API (T27 compliant)
+        // Award growth for primary participant via batch API (per FOUNDATION TENETS)
         var primaryParticipant = scenario.Participants.FirstOrDefault();
         if (primaryParticipant != null && entries.Count > 0)
         {
@@ -1535,7 +1539,7 @@ public partial class GardenerService : IGardenerService
             Status = scenario.Status,
             GrowthAwarded = scenario.GrowthAwarded,
             DurationSeconds = durationSeconds,
-            TemplateCode = template?.Code ?? "unknown"
+            TemplateCode = template?.Code
         };
 
         await HistoryStore.SaveAsync(HistoryKey(scenario.ScenarioInstanceId), history, cancellationToken: ct);
@@ -1551,6 +1555,9 @@ public partial class GardenerService : IGardenerService
         {
             try
             {
+                // IMPLEMENTATION TENETS: Guid.Empty is a sentinel (T26 violation);
+                // game-session schema requires non-nullable webSocketSessionId but
+                // server-side leave has no real session. Needs game-session schema fix.
                 await _gameSessionClient.LeaveGameSessionByIdAsync(
                     new LeaveGameSessionByIdRequest
                     {

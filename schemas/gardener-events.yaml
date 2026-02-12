@@ -116,19 +116,16 @@ components:
     # =========================================================================
 
     GardenerVoidEnteredEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a player enters the void
       required:
-        - eventId
         - accountId
         - seedId
         - voidInstanceId
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
         accountId:
           type: string
           format: uuid
@@ -143,19 +140,16 @@ components:
           description: Created void instance ID
 
     GardenerVoidLeftEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a player leaves the void
       required:
-        - eventId
         - accountId
         - voidInstanceId
         - sessionDurationSeconds
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
         accountId:
           type: string
           format: uuid
@@ -170,20 +164,17 @@ components:
           description: Total void session duration in seconds
 
     GardenerPoiSpawnedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a POI spawns in a void instance
       required:
-        - eventId
         - voidInstanceId
         - poiId
         - poiType
         - scenarioTemplateId
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
         voidInstanceId:
           type: string
           format: uuid
@@ -201,19 +192,16 @@ components:
           description: Scenario template this POI leads to
 
     GardenerPoiEnteredEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a player enters a POI or triggers a scenario from it
       required:
-        - eventId
         - accountId
         - poiId
         - scenarioTemplateId
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
         accountId:
           type: string
           format: uuid
@@ -228,19 +216,16 @@ components:
           description: Scenario template associated with the POI
 
     GardenerPoiDeclinedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a player declines a POI
       required:
-        - eventId
         - accountId
         - poiId
         - scenarioTemplateId
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
         accountId:
           type: string
           format: uuid
@@ -255,18 +240,15 @@ components:
           description: Scenario template that was declined
 
     GardenerPoiExpiredEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a POI expires without player interaction
       required:
-        - eventId
         - voidInstanceId
         - poiId
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
         voidInstanceId:
           type: string
           format: uuid
@@ -277,21 +259,18 @@ components:
           description: POI that expired
 
     GardenerScenarioStartedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a scenario instance is created
       required:
-        - eventId
         - scenarioInstanceId
         - scenarioTemplateId
         - gameSessionId
         - accountId
         - seedId
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
         scenarioInstanceId:
           type: string
           format: uuid
@@ -314,20 +293,17 @@ components:
           description: Active seed for the entering player
 
     GardenerScenarioCompletedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a scenario is completed with growth awards
       required:
-        - eventId
         - scenarioInstanceId
         - scenarioTemplateId
         - accountId
         - growthAwarded
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
         scenarioInstanceId:
           type: string
           format: uuid
@@ -348,18 +324,15 @@ components:
           description: Growth awarded per domain
 
     GardenerScenarioAbandonedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a scenario is abandoned
       required:
-        - eventId
         - scenarioInstanceId
         - accountId
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
         scenarioInstanceId:
           type: string
           format: uuid
@@ -370,20 +343,17 @@ components:
           description: Account that abandoned the scenario
 
     GardenerScenarioChainedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when a player chains from one scenario to another
       required:
-        - eventId
         - previousScenarioInstanceId
         - newScenarioInstanceId
         - accountId
         - chainDepth
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
         previousScenarioInstanceId:
           type: string
           format: uuid
@@ -401,20 +371,17 @@ components:
           description: Current chain depth after chaining
 
     GardenerBondEnteredTogetherEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when bonded players enter a scenario together
       required:
-        - eventId
         - bondId
         - scenarioInstanceId
         - scenarioTemplateId
         - participants
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
         bondId:
           type: string
           format: uuid
@@ -432,21 +399,18 @@ components:
           items:
             type: string
             format: uuid
-          description: Seed IDs of bond participants entering together
+          description: Account IDs of bond participants entering together
 
     GardenerPhaseChangedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
       type: object
       additionalProperties: false
       description: Published when the deployment phase changes
       required:
-        - eventId
         - previousPhase
         - newPhase
       properties:
-        eventId:
-          type: string
-          format: uuid
-          description: Unique identifier for this event
         previousPhase:
           $ref: 'gardener-api.yaml#/components/schemas/DeploymentPhase'
           description: Phase before the change

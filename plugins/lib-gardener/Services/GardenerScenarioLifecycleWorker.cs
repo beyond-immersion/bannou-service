@@ -363,7 +363,7 @@ public class GardenerScenarioLifecycleWorker : BackgroundService
                 Status = scenario.Status,
                 GrowthAwarded = scenario.GrowthAwarded,
                 DurationSeconds = durationSeconds,
-                TemplateCode = template?.Code ?? "unknown"
+                TemplateCode = template?.Code
             };
 
             await historyStore.SaveAsync(
@@ -382,6 +382,9 @@ public class GardenerScenarioLifecycleWorker : BackgroundService
         {
             try
             {
+                // IMPLEMENTATION TENETS: Guid.Empty is a sentinel (no-sentinel violation);
+                // game-session schema requires non-nullable webSocketSessionId but
+                // server-side leave has no real session. Needs game-session schema fix.
                 await gameSessionClient.LeaveGameSessionByIdAsync(
                     new LeaveGameSessionByIdRequest
                     {
@@ -409,6 +412,7 @@ public class GardenerScenarioLifecycleWorker : BackgroundService
                 new GardenerScenarioCompletedEvent
                 {
                     EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
                     ScenarioInstanceId = scenario.ScenarioInstanceId,
                     ScenarioTemplateId = scenario.ScenarioTemplateId,
                     AccountId = accountId,
@@ -421,6 +425,7 @@ public class GardenerScenarioLifecycleWorker : BackgroundService
                 new GardenerScenarioAbandonedEvent
                 {
                     EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
                     ScenarioInstanceId = scenario.ScenarioInstanceId,
                     AccountId = accountId
                 }, cancellationToken: ct);

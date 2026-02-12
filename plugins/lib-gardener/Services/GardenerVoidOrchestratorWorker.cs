@@ -271,6 +271,7 @@ public class GardenerVoidOrchestratorWorker : BackgroundService
                     new GardenerPoiExpiredEvent
                     {
                         EventId = Guid.NewGuid(),
+                        Timestamp = DateTimeOffset.UtcNow,
                         VoidInstanceId = garden.GardenInstanceId,
                         PoiId = poiId
                     }, cancellationToken: ct);
@@ -373,7 +374,7 @@ public class GardenerVoidOrchestratorWorker : BackgroundService
                 Position = position,
                 PoiType = SelectPoiType(template.Category),
                 ScenarioTemplateId = template.ScenarioTemplateId,
-                VisualHint = template.Category.ToString().ToLowerInvariant(),
+                VisualHint = template.Category,
                 AudioHint = template.Category == ScenarioCategory.Narrative ? "whisper" : null,
                 IntensityRamp = 0.5f,
                 TriggerMode = SelectTriggerMode(garden.DriftMetrics),
@@ -392,6 +393,7 @@ public class GardenerVoidOrchestratorWorker : BackgroundService
                 new GardenerPoiSpawnedEvent
                 {
                     EventId = Guid.NewGuid(),
+                    Timestamp = DateTimeOffset.UtcNow,
                     VoidInstanceId = garden.GardenInstanceId,
                     PoiId = poiId,
                     PoiType = poi.PoiType,

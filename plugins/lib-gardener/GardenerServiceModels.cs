@@ -200,9 +200,9 @@ internal class PoiModel
     public Guid ScenarioTemplateId { get; set; }
 
     /// <summary>
-    /// Visual hint identifier for client rendering.
+    /// Scenario category hint for client rendering.
     /// </summary>
-    public string VisualHint { get; set; } = string.Empty;
+    public ScenarioCategory? VisualHint { get; set; }
 
     /// <summary>
     /// Audio hint identifier for client rendering.
@@ -547,7 +547,7 @@ internal class ScenarioParticipantModel
     /// <summary>
     /// Role of this participant in the scenario.
     /// </summary>
-    public string? Role { get; set; }
+    public ScenarioParticipantRole? Role { get; set; }
 }
 
 /// <summary>
@@ -598,8 +598,9 @@ internal class ScenarioHistoryModel
 
     /// <summary>
     /// Template code for cooldown tracking via JSON queries.
+    /// Nullable when template was deleted before scenario completed.
     /// </summary>
-    public string TemplateCode { get; set; } = string.Empty;
+    public string? TemplateCode { get; set; }
 }
 
 /// <summary>

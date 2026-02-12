@@ -94,8 +94,8 @@ public class GardenerSeedEvolutionListener : ISeedEvolutionListener
     /// <summary>
     /// Called when capabilities change. Not currently used by Gardener.
     /// </summary>
-    public Task OnCapabilitiesChangedAsync(SeedCapabilityNotification notification, CancellationToken ct)
+    public async Task OnCapabilitiesChangedAsync(SeedCapabilityNotification notification, CancellationToken ct)
     {
-        return Task.CompletedTask;
+        await Task.CompletedTask;
     }
 }

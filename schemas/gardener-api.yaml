@@ -729,6 +729,16 @@ components:
       enum: [Draft, Active, Deprecated]
       description: Current lifecycle status of a scenario template
 
+    PoiInteractionResult:
+      type: string
+      enum: [ScenarioPrompt, ScenarioEnter, PoiUpdate, ChainOffer]
+      description: Outcome of interacting with a POI
+
+    ScenarioParticipantRole:
+      type: string
+      enum: [Primary, Partner]
+      description: Role of a participant within a scenario instance
+
     # =========================================================================
     # Shared Sub-Types
     # =========================================================================
@@ -767,9 +777,9 @@ components:
           $ref: '#/components/schemas/PoiType'
           description: Sensory presentation type
         visualHint:
-          type: string
+          $ref: '#/components/schemas/ScenarioCategory'
           nullable: true
-          description: Visual hint identifier for client rendering
+          description: Scenario category hint for client rendering
         audioHint:
           type: string
           nullable: true
@@ -880,6 +890,7 @@ components:
       properties:
         behaviorDocumentId:
           type: string
+          format: uuid
           nullable: true
           description: ABML behavior document ID for NPC orchestration
         sceneDocumentId:
@@ -1390,8 +1401,8 @@ components:
           format: uuid
           description: POI that was interacted with
         result:
-          type: string
-          description: Interaction outcome (scenario_prompt, scenario_enter, poi_update, chain_offer)
+          $ref: '#/components/schemas/PoiInteractionResult'
+          description: Interaction outcome
         scenarioTemplateId:
           type: string
           format: uuid
