@@ -50,16 +50,8 @@ using System = global::System;
 /// Published when a player enters the void
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class GardenerVoidEnteredEvent
+public partial class GardenerVoidEnteredEvent : BaseServiceEvent
 {
-
-    /// <summary>
-    /// Unique identifier for this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
 
     /// <summary>
     /// Account that entered the void
@@ -91,16 +83,8 @@ public partial class GardenerVoidEnteredEvent
 /// Published when a player leaves the void
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class GardenerVoidLeftEvent
+public partial class GardenerVoidLeftEvent : BaseServiceEvent
 {
-
-    /// <summary>
-    /// Unique identifier for this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
 
     /// <summary>
     /// Account that left the void
@@ -130,16 +114,8 @@ public partial class GardenerVoidLeftEvent
 /// Published when a POI spawns in a void instance
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class GardenerPoiSpawnedEvent
+public partial class GardenerPoiSpawnedEvent : BaseServiceEvent
 {
-
-    /// <summary>
-    /// Unique identifier for this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
 
     /// <summary>
     /// Void instance the POI spawned in
@@ -180,16 +156,8 @@ public partial class GardenerPoiSpawnedEvent
 /// Published when a player enters a POI or triggers a scenario from it
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class GardenerPoiEnteredEvent
+public partial class GardenerPoiEnteredEvent : BaseServiceEvent
 {
-
-    /// <summary>
-    /// Unique identifier for this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
 
     /// <summary>
     /// Account that entered the POI
@@ -221,16 +189,8 @@ public partial class GardenerPoiEnteredEvent
 /// Published when a player declines a POI
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class GardenerPoiDeclinedEvent
+public partial class GardenerPoiDeclinedEvent : BaseServiceEvent
 {
-
-    /// <summary>
-    /// Unique identifier for this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
 
     /// <summary>
     /// Account that declined the POI
@@ -262,16 +222,8 @@ public partial class GardenerPoiDeclinedEvent
 /// Published when a POI expires without player interaction
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class GardenerPoiExpiredEvent
+public partial class GardenerPoiExpiredEvent : BaseServiceEvent
 {
-
-    /// <summary>
-    /// Unique identifier for this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
 
     /// <summary>
     /// Void instance the POI was in
@@ -295,16 +247,8 @@ public partial class GardenerPoiExpiredEvent
 /// Published when a scenario instance is created
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class GardenerScenarioStartedEvent
+public partial class GardenerScenarioStartedEvent : BaseServiceEvent
 {
-
-    /// <summary>
-    /// Unique identifier for this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
 
     /// <summary>
     /// Created scenario instance ID
@@ -352,16 +296,8 @@ public partial class GardenerScenarioStartedEvent
 /// Published when a scenario is completed with growth awards
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class GardenerScenarioCompletedEvent
+public partial class GardenerScenarioCompletedEvent : BaseServiceEvent
 {
-
-    /// <summary>
-    /// Unique identifier for this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
 
     /// <summary>
     /// Completed scenario instance ID
@@ -401,16 +337,8 @@ public partial class GardenerScenarioCompletedEvent
 /// Published when a scenario is abandoned
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class GardenerScenarioAbandonedEvent
+public partial class GardenerScenarioAbandonedEvent : BaseServiceEvent
 {
-
-    /// <summary>
-    /// Unique identifier for this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
 
     /// <summary>
     /// Abandoned scenario instance ID
@@ -434,16 +362,8 @@ public partial class GardenerScenarioAbandonedEvent
 /// Published when a player chains from one scenario to another
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class GardenerScenarioChainedEvent
+public partial class GardenerScenarioChainedEvent : BaseServiceEvent
 {
-
-    /// <summary>
-    /// Unique identifier for this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
 
     /// <summary>
     /// Scenario instance that was chained from
@@ -481,16 +401,8 @@ public partial class GardenerScenarioChainedEvent
 /// Published when bonded players enter a scenario together
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class GardenerBondEnteredTogetherEvent
+public partial class GardenerBondEnteredTogetherEvent : BaseServiceEvent
 {
-
-    /// <summary>
-    /// Unique identifier for this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
 
     /// <summary>
     /// Bond linking the participants
@@ -517,7 +429,7 @@ public partial class GardenerBondEnteredTogetherEvent
     public System.Guid ScenarioTemplateId { get; set; } = default!;
 
     /// <summary>
-    /// Seed IDs of bond participants entering together
+    /// Account IDs of bond participants entering together
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("participants")]
     [System.ComponentModel.DataAnnotations.Required]
@@ -530,16 +442,8 @@ public partial class GardenerBondEnteredTogetherEvent
 /// Published when the deployment phase changes
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
-public partial class GardenerPhaseChangedEvent
+public partial class GardenerPhaseChangedEvent : BaseServiceEvent
 {
-
-    /// <summary>
-    /// Unique identifier for this event
-    /// </summary>
-    [System.Text.Json.Serialization.JsonPropertyName("eventId")]
-    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    [System.Text.Json.Serialization.JsonRequired]
-    public System.Guid EventId { get; set; } = default!;
 
     /// <summary>
     /// Phase before the change
