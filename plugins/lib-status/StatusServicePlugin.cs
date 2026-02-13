@@ -40,17 +40,18 @@ public class StatusServicePlugin : StandardServicePlugin<IStatusService>
 
     /// <summary>
     /// Registers cleanup callbacks with lib-resource for entity types that can have statuses.
-    /// When a character is deleted, lib-resource calls our cleanup endpoint to remove all status data.
+    /// When a character or account is deleted, lib-resource calls our cleanup endpoint to remove all status data.
     /// </summary>
     private async Task RegisterResourceCleanupCallbacksAsync()
     {
         var serviceProvider = ServiceProvider ?? throw new InvalidOperationException("ServiceProvider not available during OnRunningAsync");
         var resourceClient = serviceProvider.GetRequiredService<IResourceClient>();
+        var logger = serviceProvider.GetRequiredService<ILogger<StatusServicePlugin>>();
 
+        // Register cleanup for character deletion per FOUNDATION TENETS (resource-managed cleanup).
+        // When a character is deleted, all their status effects must be cleaned up.
         try
         {
-            // Register cleanup for character deletion per FOUNDATION TENETS (resource-managed cleanup).
-            // When a character is deleted, all their status effects must be cleaned up.
             await resourceClient.DefineCleanupCallbackAsync(
                 new DefineCleanupRequest
                 {
@@ -66,9 +67,29 @@ public class StatusServicePlugin : StandardServicePlugin<IStatusService>
         }
         catch (ApiException ex)
         {
-            var logger = serviceProvider.GetRequiredService<ILogger<StatusServicePlugin>>();
-            logger.LogError(ex,
-                "Failed to register character cleanup callback with lib-resource");
+            logger.LogError(ex, "Failed to register character cleanup callback with lib-resource");
+        }
+
+        // Register cleanup for account deletion per FOUNDATION TENETS (resource-managed cleanup).
+        // When an account is deleted, all their status effects (e.g., subscription benefits) must be cleaned up.
+        try
+        {
+            await resourceClient.DefineCleanupCallbackAsync(
+                new DefineCleanupRequest
+                {
+                    ResourceType = "account",
+                    SourceType = "status",
+                    OnDeleteAction = OnDeleteAction.CASCADE,
+                    ServiceName = "status",
+                    CallbackEndpoint = "/status/cleanup-by-owner",
+                    PayloadTemplate = "{\"ownerType\": \"account\", \"ownerId\": \"{{resourceId}}\"}",
+                    Description = "Cleanup status effects and containers for deleted account"
+                },
+                CancellationToken.None);
+        }
+        catch (ApiException ex)
+        {
+            logger.LogError(ex, "Failed to register account cleanup callback with lib-resource");
         }
     }
 }

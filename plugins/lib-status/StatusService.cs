@@ -458,6 +458,22 @@ public partial class StatusService : IStatusService
                 continue;
             }
 
+            // Validate item template exists (matches CreateStatusTemplateAsync validation)
+            try
+            {
+                await _itemClient.GetItemTemplateAsync(
+                    new GetItemTemplateRequest { TemplateId = templateReq.ItemTemplateId },
+                    cancellationToken);
+            }
+            catch (ApiException ex) when (ex.StatusCode == 404)
+            {
+                _logger.LogWarning(
+                    "Skipping status template {Code}: item template {ItemTemplateId} not found",
+                    templateReq.Code, templateReq.ItemTemplateId);
+                skipped++;
+                continue;
+            }
+
             var effectiveMaxStacks = Math.Min(
                 templateReq.MaxStacks,
                 _configuration.MaxStacksPerStatus);

@@ -106,13 +106,11 @@ See [GitHub Issue #410](https://github.com/beyond-immersion/bannou-service/issue
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
 | `CacheTtlMinutes` | `OBLIGATION_CACHE_TTL_MINUTES` | `10` | TTL in minutes for obligation manifest cache entries per character (range: 1-1440) |
-| `EvaluationTimeoutMs` | `OBLIGATION_EVALUATION_TIMEOUT_MS` | `5000` | Timeout in milliseconds for evaluate-action operations (range: 500-30000) |
 | `MaxObligationsPerCharacter` | `OBLIGATION_MAX_OBLIGATIONS_PER_CHARACTER` | `200` | Safety limit on cached obligations per character to prevent runaway contract accumulation (range: 10-1000) |
 | `BreachReportEnabled` | `OBLIGATION_BREACH_REPORT_ENABLED` | `true` | Whether to auto-report violations as breaches to the contract service |
 | `IdempotencyTtlSeconds` | `OBLIGATION_IDEMPOTENCY_TTL_SECONDS` | `86400` | TTL in seconds for violation report idempotency keys (range: 3600-604800) |
 | `DefaultPageSize` | `OBLIGATION_DEFAULT_PAGE_SIZE` | `20` | Default page size for paginated queries (range: 1-100) |
 | `LockTimeoutSeconds` | `OBLIGATION_LOCK_TIMEOUT_SECONDS` | `30` | Timeout in seconds for distributed locks on obligation cache operations (range: 5-120) |
-| `MaxConcurrencyRetries` | `OBLIGATION_MAX_CONCURRENCY_RETRIES` | `3` | Maximum retry attempts for optimistic concurrency conflicts (range: 1-10) |
 | `MaxActiveContractsQuery` | `OBLIGATION_MAX_ACTIVE_CONTRACTS_QUERY` | `100` | Maximum number of active contracts to query per character during cache rebuild (range: 10-500) |
 
 ---
@@ -263,15 +261,7 @@ Recording and querying knowing obligation violations.
 
 ### Bugs (Fix Immediately)
 
-- **T21 violation: unused config properties**: `EvaluationTimeoutMs`, `DefaultPageSize`, and `MaxConcurrencyRetries` are defined in the configuration schema but never referenced in service code. `DefaultPageSize` should be wired into `ListActionMappingsAsync` and `QueryViolationsAsync` as the fallback page size. `EvaluationTimeoutMs` needs timeout logic in `EvaluateActionAsync` or removal from schema. `MaxConcurrencyRetries` appears to be dead config with no retry loops in the codebase -- remove from schema.
-
-- **Missing variable provider paths**: `ObligationProvider` does not implement `${obligations.has_obligations}` or `${obligations.contract_count}` paths that are documented in the API schema. ABML expressions using these will resolve to null. Either add them to the provider's `GetValue()` switch or remove them from the schema documentation.
-
-- **Cleanup pagination hardcoded**: `CleanupByCharacterAsync` queries violations with a hardcoded 10000 limit instead of paginating. Characters with extreme violation counts could have orphaned data after cleanup.
-
 - **Hardcoded personality trait mapping**: The personality weight computation maps violation types to traits via a hardcoded switch (`theft`→honesty+conscientiousness, `deception`→honesty, `violence`→agreeableness, `honor_combat`→conscientiousness+loyalty, `betrayal`→loyalty, everything else→conscientiousness). This is in tension with violation types being opaque strings that "grow organically" -- any new type falls through to the default, silently degrading moral reasoning quality. The mapping should be data-driven (part of action mapping store or behavioral clause definitions) or at minimum configurable.
-
-- **Lock failure returns empty manifest on query path**: `RebuildObligationCacheAsync` returns an empty manifest when the distributed lock cannot be acquired. This is called from both event handlers (acceptable -- query path rebuilds on next access) and `QueryObligationsAsync` (problematic -- caller gets zero obligations instead of stale-but-correct cached data). On the query path, stale data is strictly better than no data; lock failure should return the existing cached value if one exists.
 
 ### Intentional Quirks (Documented Behavior)
 

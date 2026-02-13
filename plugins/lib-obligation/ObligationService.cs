@@ -535,21 +535,27 @@ public partial class ObligationService : IObligationService
         // Remove cached obligations
         await _cacheStore.DeleteAsync(body.CharacterId.ToString(), cancellationToken);
 
-        // Query and remove violations
+        // Query and remove violations in batches (offset 0 each iteration since deletes shift results)
         var violationConditions = new List<QueryCondition>
         {
             new QueryCondition { Path = "$.CharacterId", Operator = QueryOperator.Equals, Value = body.CharacterId.ToString() }
         };
 
-        var violations = await _violationJsonStore.JsonQueryPagedAsync(
-            violationConditions, 0, 10000, cancellationToken: cancellationToken);
-
+        const int cleanupBatchSize = 100;
         var violationsRemoved = 0;
-        foreach (var violation in violations.Items)
+        int fetched;
+        do
         {
-            await _violationStore.DeleteAsync($"violation:{violation.Value.ViolationId}", cancellationToken);
-            violationsRemoved++;
-        }
+            var violations = await _violationJsonStore.JsonQueryPagedAsync(
+                violationConditions, 0, cleanupBatchSize, cancellationToken: cancellationToken);
+
+            fetched = violations.Items.Count;
+            foreach (var violation in violations.Items)
+            {
+                await _violationStore.DeleteAsync($"violation:{violation.Value.ViolationId}", cancellationToken);
+                violationsRemoved++;
+            }
+        } while (fetched == cleanupBatchSize);
 
         _logger.LogInformation(
             "Cleaned up obligation data for character {CharacterId}: {ViolationsRemoved} violations removed",

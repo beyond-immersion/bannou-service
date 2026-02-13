@@ -37,10 +37,9 @@ Internal-only, never internet-facing.
 | lib-seed (`ISeedClient`) | Creating seeds for new factions, recording growth, querying capabilities for gating norm/territory operations; seed bonds for inter-faction alliances |
 | lib-location (`ILocationClient`) | Validating location existence for territory claims (L2 hard dependency) |
 | lib-realm (`IRealmClient`) | Validating realm existence for faction creation and realm baseline designation (L2 hard dependency) |
-| lib-contract (`IContractClient`) | Formal membership agreements (guild charters) as obligation sources (L1 hard dependency) |
 | lib-game-service (`IGameServiceClient`) | Validating game service existence during faction creation (L2 hard dependency) |
+| lib-resource (`IResourceClient`) | Reference tracking, cleanup callback registration, and compression callback registration (L1 hard dependency) |
 | `IDistributedLockProvider` | Distributed locks for faction, membership, territory, and norm mutations (L0 hard dependency) |
-| `IEventConsumer` | Registering handlers via DI listener patterns (ISeedEvolutionListener, ICollectionUnlockListener) |
 
 ## Dependents (What Relies On This Plugin)
 
@@ -88,8 +87,7 @@ Internal-only, never internet-facing.
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
-| `ncache:{characterId}:{locationId}` | `ResolvedNormCacheModel` | Cached resolved norm set per character+location (with TTL) |
-| `fcache:{factionId}` | `FactionCacheModel` | Cached faction data for fast lookups |
+| `ncache:{characterId}:{locationId}` | `ResolvedNormCacheModel` | Cached resolved norm set per character+location (with TTL). Location is "none" when no location specified. |
 
 ### Distributed Locks
 **Store**: `faction-lock` (Backend: Redis, prefix: `faction:lock`)
@@ -159,12 +157,12 @@ Archives faction memberships, roles, and applicable norm context for character c
 |---------|------|
 | `ILogger<FactionService>` | Structured logging |
 | `FactionServiceConfiguration` | Typed configuration access |
-| `IStateStoreFactory` | State store access (creates 4 MySQL stores + cache + lock store) |
+| `IStateStoreFactory` | State store access (creates 4 MySQL stores + cache store); also creates `IJsonQueryableStateStore<FactionModel>` for paginated listing and `IJsonQueryableStateStore<FactionMemberModel>` for norm cache invalidation |
 | `IMessageBus` | Event publishing |
+| `IResourceClient` | Reference tracking, cleanup callbacks, compression callbacks (L1) |
 | `ISeedClient` | Seed creation, growth recording, capability queries (L2) |
 | `ILocationClient` | Location existence validation for territory claims (L2) |
 | `IRealmClient` | Realm existence validation (L2) |
-| `IContractClient` | Formal membership contract creation (L1) |
 | `IGameServiceClient` | Game service existence validation (L2) |
 | `IDistributedLockProvider` | Distributed lock acquisition (L0) |
 
@@ -232,19 +230,40 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS, T28):
 
 ## Variable Provider: `${faction.*}` Namespace
 
-Implements `IVariableProviderFactory` providing the following variables to Actor (L2) via the Variable Provider Factory pattern for ABML behavior expressions:
+Implements `IVariableProviderFactory` (via `FactionProviderFactory`) providing the following variables to Actor (L2) via the Variable Provider Factory pattern for ABML behavior expressions. Loads the character's faction memberships from the membership list store and enriches with faction details.
+
+**Aggregate variables:**
 
 | Variable | Type | Description |
 |----------|------|-------------|
-| `${faction.is_member}` | bool | Whether character belongs to any faction |
-| `${faction.membership_count}` | int | Number of faction memberships |
-| `${faction.primary_faction}` | string | Name of highest-role faction |
-| `${faction.primary_faction_phase}` | string | Seed growth phase of primary faction |
-| `${faction.has_norm.<type>}` | bool | Whether any applicable norm covers a violation type |
-| `${faction.norm_penalty.<type>}` | float | Merged base penalty for a violation type |
-| `${faction.in_controlled_territory}` | bool | Whether character is at a faction-controlled location |
-| `${faction.controlling_faction}` | string | Name of controlling faction at current location |
-| `${faction.realm_baseline_faction}` | string | Name of realm baseline faction |
+| `${faction.count}` | int | Number of factions the character belongs to |
+| `${faction.names}` | List&lt;string&gt; | Names of all factions |
+| `${faction.codes}` | List&lt;string&gt; | Codes of all factions |
+
+**Per-faction variables** (accessed by faction code, case-insensitive):
+
+| Variable | Type | Description |
+|----------|------|-------------|
+| `${faction.CODE.name}` | string | Faction display name |
+| `${faction.CODE.status}` | string | Faction status (e.g., "Active", "Deprecated") |
+| `${faction.CODE.phase}` | string? | Current seed growth phase |
+| `${faction.CODE.is_realm_baseline}` | bool | Whether this is the realm baseline faction |
+| `${faction.CODE.member_count}` | int | Total member count |
+| `${faction.CODE.role}` | string | Character's role in this faction (e.g., "Leader", "Member") |
+
+Returns `FactionProvider.Empty` for non-character actors or characters with no faction memberships.
+
+**Implementation Gap vs. Plan**: The original plan (Issue #410 comment + `~/.claude/plans/glittery-jingling-meadow.md`) specified additional variables that are **not yet implemented**:
+
+| Planned Variable | Status | Impact |
+|-----------------|--------|--------|
+| `${faction.primary_faction}` | **Missing** | No "highest-role faction" identification for behavior shortcuts |
+| `${faction.primary_faction_phase}` | **Missing** | Depends on primary faction concept |
+| `${faction.has_norm.<type>}` | **Missing** | ABML cannot check norm existence per violation type |
+| `${faction.norm_penalty.<type>}` | **Missing** | ABML cannot read base penalty per violation type |
+| `${faction.in_controlled_territory}` | **Missing** | ABML cannot check territory control context |
+
+The norm and territory variables are the critical integration point for lib-obligation's `evaluate_consequences` cognition stage. Without them, the GOAP cost modifier pipeline cannot access faction norm data through ABML expressions. The current provider only exposes membership data. Implementing the missing variables requires the provider to query norm stores and territory stores (with the character's current location as context, which may need to be passed through the `CreateAsync` call).
 
 ## Visual Aid
 
@@ -318,14 +337,7 @@ Implements `IVariableProviderFactory` providing the following variables to Actor
 
 ## Stubs & Unimplemented Features
 
-**This service is entirely stubbed.** All 31 endpoints return `NotImplemented`. The schema is complete and code generation has been run, but no business logic has been implemented.
-
-Implementation will follow the phases outlined in GitHub Issue #410:
-
-1. **Phase 1: Faction Core** -- Entity CRUD, seed type registration, Collection→Seed pipeline, FactionProviderFactory
-2. **Phase 2: Membership & Territory** -- Member management, territory claims, seed capability gating
-3. **Phase 3: Norms** -- Norm definition, query-applicable with resolution hierarchy, cache invalidation
-4. **Phase 4: Cleanup & Compression** -- Resource cleanup callbacks, character compression/restore
+None. All 31 endpoints are fully implemented with business logic.
 
 ## Potential Extensions
 
@@ -336,6 +348,10 @@ Implementation will follow the phases outlined in GitHub Issue #410:
 5. **Faction governance elections**: Member voting for leadership positions using Contract-backed consent flows.
 
 ## Known Quirks & Caveats
+
+### Bugs (Fix Immediately)
+
+1. **RestoreFromArchive does not register resource references**: `AddMemberAsync` registers character references with `IResourceClient` for cleanup coordination, but `RestoreFromArchiveAsync` restores memberships without calling `RegisterReferenceAsync`. This means restored memberships won't be cleaned up if the character is later deleted via lib-resource. Fix: add `RegisterReferenceAsync` call for each restored membership.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -353,6 +369,10 @@ Implementation will follow the phases outlined in GitHub Issue #410:
 
 7. **No event subscriptions -- DI listeners only**: Cross-service integration uses `ISeedEvolutionListener` and `ICollectionUnlockListener` DI provider patterns (per FOUNDATION TENETS, T27) instead of broadcast event subscriptions. Resource cleanup uses `x-references` callbacks (per FOUNDATION TENETS, T28), not `character.deleted` / `realm.deleted` event subscriptions.
 
+8. **Cascading delete does not publish individual norm/territory events**: `DeleteFactionAsync` cascades norm and territory deletions by directly deleting from stores without publishing individual `faction.norm.deleted` or `faction.territory.released` events. The `faction.deleted` lifecycle event is published to signal that the entire entity (and all child data) was removed. Consumers that need to react to norm deletions should listen for `faction.deleted` and treat it as implying all norms are gone.
+
+9. **SeedFactions allows setting IsRealmBaseline directly**: Unlike `CreateFactionAsync` (which always sets `IsRealmBaseline = false`), the `SeedFactionsAsync` endpoint passes through `def.IsRealmBaseline` from the seed definition, allowing baseline designation during bulk seeding without a separate `DesignateRealmBaseline` call.
+
 ### Design Considerations (Requires Planning)
 
 1. **No owner validation for territory claims**: Like Collection/Seed, faction trusts that callers pass valid entity IDs. Location existence is validated via lib-location, but no check that the faction "should" be able to claim that location beyond seed capability gating.
@@ -363,8 +383,13 @@ Implementation will follow the phases outlined in GitHub Issue #410:
 
 4. **Seed bond mechanics for alliances**: The schema description references seed bonds for inter-faction alliances, but no API endpoints exist for bond management. These would be managed directly through lib-seed's bond API. May need faction-level wrapper endpoints for ergonomic alliance management.
 
+5. **Variable Provider missing norm/territory variables (plan gap)**: The plan (Issue #410 + `glittery-jingling-meadow.md`) specified `${faction.has_norm.<type>}`, `${faction.norm_penalty.<type>}`, `${faction.in_controlled_territory}`, and `${faction.primary_faction}` variables. The current `FactionProviderFactory` only provides membership data (count, names, codes, per-code details). The norm and territory variables are the critical integration point for lib-obligation's `evaluate_consequences` cognition stage. Implementing them requires the provider to query norm and territory stores, and may need the character's current location passed through `CreateAsync` (currently only receives `entityId`).
+
+6. **Missing lib-contract integration for guild charters (plan gap)**: Issue #410 decision Q3 states: "When a character joins a faction (formal guild membership), the guild contract is created explicitly through lib-contract." The plan lists `lib-contract (L1) — formal membership agreements, guild charters` as a dependency. The current implementation does not use `IContractClient` at all -- membership is managed directly without contract backing. This means guild charters are not formalized as binding agreements, and lib-obligation cannot discover faction-sourced contractual obligations through lib-contract.
+
 ## Work Tracking
 
 - **GitHub Issue**: [#410 - Feature: Second Thoughts -- Prospective Consequence Evaluation for NPC Cognition](https://github.com/beyond-immersion/bannou-service/issues/410)
   - lib-faction was extracted from the original lib-moral proposal during architecture review
   - Part of the larger lib-obligation + lib-faction system for NPC "second thoughts" cognition
+  - All 31 endpoints are now fully implemented (faction CRUD, membership, territory, norms, cleanup, compression)
