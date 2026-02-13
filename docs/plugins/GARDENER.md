@@ -100,10 +100,11 @@ When entity-based services (Status, Currency, Inventory, Collection, Seed, etc.)
 
 | Component | Role | Layer |
 |-----------|------|-------|
-| **Game Session** | Hosts the Entity Session Registry implementation (Redis infrastructure, query API) | L2 |
-| **Connect** | Registers `account → session` mappings (already does this via `account-sessions:{accountId}`) | L1 |
-| **Game Session** | Registers `game-service → session` mappings | L2 |
+| **Connect** | Hosts the Entity Session Registry implementation (Redis infrastructure, register/unregister/query API). Already manages `account → session` mappings via `account-sessions:{accountId}`; the entity registry generalizes this to arbitrary `(entityType, entityId) → Set<sessionId>`. | L1 |
+| **Game Session** | Registers `game-service → session` mappings via the registry API | L2 |
 | **Gardener** | Primary registrar for gameplay entities: `seed → session`, `character → session`, `collection → session`, `inventory → session`, `currency → session`, `status → session` | L4 |
+
+**Why Connect (L1), not Game Session (L2)**: Entity→session mappings are pure session routing infrastructure -- mapping any entity to WebSocket session IDs. This has no game-service boundary, no realm scoping, and no concept of "game session." Connect already owns session lifecycle (creation, heartbeat, disconnect cleanup, reconnection) and the `account-sessions` index. The entity registry is a natural generalization of what Connect already does. Placing it at L1 means it's available in ALL deployments (app-only, game, full) without requiring a no-op default implementation, and all layers (L1, L2, L3, L4) can both register and query mappings.
 
 **Flow**:
 
@@ -476,7 +477,7 @@ Player connects → Gardener launches gardener behavior actor
 
 14. **Per-garden entity associations**: Gardens do not currently track associated entities (characters, collections, inventories, wallets). The target architecture gives each garden its own set of entities that the player can interact with, managed dynamically by the gardener behavior. For example, a lobby garden offers character selection from a roster; an in-game garden binds the selected character and its inventory/wallet.
 
-15. **Entity Session Registry integration**: Gardener does not currently register entity→session mappings. The target architecture has Gardener as the primary registrar for gameplay entities (seed→session, character→session, collection→session, inventory→session, currency→session, status→session) in the Entity Session Registry hosted by Game Session (L2). This enables entity-based services to route client events to relevant WebSocket sessions without a central event router. See [The Garden Concept > Entity Session Registry Role](#entity-session-registry-role) for the full architecture.
+15. **Entity Session Registry integration**: Gardener does not currently register entity→session mappings. The target architecture has Gardener as the primary registrar for gameplay entities (seed→session, character→session, collection→session, inventory→session, currency→session, status→session) in the Entity Session Registry hosted by Connect (L1). This enables entity-based services to route client events to relevant WebSocket sessions without a central event router. See [The Garden Concept > Entity Session Registry Role](#entity-session-registry-role) for the full architecture.
 
 16. **Dynamic character switching**: No mechanism exists for players to switch between characters within a garden (e.g., L1/R1 on a joystick). The target architecture has the gardener behavior managing character bindings in real-time, updating entity session registrations as the player switches context.
 
@@ -562,7 +563,7 @@ Player connects → Gardener launches gardener behavior actor
 
 #### Architectural (Garden Concept)
 
-7. **Entity Session Registry design** ([Issue #426](https://github.com/beyond-immersion/bannou-service/issues/426)): The Entity Session Registry needs to be designed and implemented in Game Session (L2). Key decisions: interface shape (`IEntitySessionRegistry` in `bannou-service/`), Redis key structure (`entity-sessions:{entityType}:{entityId}` → `Set<sessionId>`), cleanup on session disconnect (`UnregisterSessionAsync` sweeping all bindings), and TTL/expiry for stale entries. Connect's existing `account-sessions:{accountId}` pattern is the precedent. Entity-based services (Status, Currency, Inventory, Collection, Seed, etc.) then query the registry and publish their own client events via `IClientEventPublisher`. This is a cross-cutting infrastructure addition that affects many services.
+7. **Entity Session Registry design** ([Issue #426](https://github.com/beyond-immersion/bannou-service/issues/426)): The Entity Session Registry needs to be designed and implemented in Connect (L1), generalizing Connect's existing `account-sessions:{accountId}` pattern to arbitrary entity types. Key decisions: interface shape (`IEntitySessionRegistry` in `bannou-service/`), Redis key structure (`entity-sessions:{entityType}:{entityId}` → `Set<sessionId>`), cleanup on session disconnect (`UnregisterSessionAsync` sweeping all bindings via session-to-entities reverse index), and TTL/expiry for stale entries. Connect already manages session lifecycle, heartbeat liveness, and disconnect cleanup -- the entity registry plugs into the same infrastructure. Entity-based services (Status, Currency, Inventory, Collection, Seed, etc.) then query the registry and publish their own client events via `IClientEventPublisher`. This is a cross-cutting infrastructure addition that affects many services.
 
 8. **Gardener behavior document design**: The gardener behavior running as an actor needs an ABML behavior document (or family of documents) that encodes the per-game orchestration logic. Key questions: Is there a default/base gardener behavior? How does a game author customize it? Does the behavior use the same ABML bytecode as NPC behaviors, or does it need gardener-specific opcodes? How does the actor runtime interact with Gardener's APIs (the behavior needs to call garden/POI/scenario endpoints)?
 
@@ -604,7 +605,7 @@ Player connects → Gardener launches gardener behavior actor
 - [ ] **Stub #7**: Create `gardener-client-events.yaml` schema for real-time POI spawn/expire/trigger push to WebSocket clients
 - [ ] **Extension #2**: Write history records for all bond scenario participants, not just primary
 - [ ] **Stub #3**: Implement actual Puppetmaster API call in `EnterScenarioAsync` (not just log)
-- [ ] **Design #7/Stub #15**: Design and implement Entity Session Registry in Game Session (L2) -- `IEntitySessionRegistry` interface in `bannou-service/`, Redis-backed implementation, cleanup on disconnect. Cross-cutting: affects all entity-based services that want client event routing. See [Issue #426](https://github.com/beyond-immersion/bannou-service/issues/426).
+- [ ] **Design #7/Stub #15**: Design and implement Entity Session Registry in Connect (L1) -- `IEntitySessionRegistry` interface in `bannou-service/`, Redis-backed implementation in Connect (generalizing existing `account-sessions` pattern), cleanup on disconnect via reverse index. Cross-cutting: affects all entity-based services that want client event routing. See [Issue #426](https://github.com/beyond-immersion/bannou-service/issues/426).
 
 ### P2 -- Feature Gaps
 

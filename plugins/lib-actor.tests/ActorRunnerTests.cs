@@ -99,6 +99,16 @@ public class ActorRunnerTests
         var expressionEvaluatorMock = new Mock<IExpressionEvaluator>();
         var cognitionBuilderMock = new Mock<ICognitionBuilder>();
 
+        // Set up cognition builder to return a minimal pipeline by default.
+        // Category defaults (e.g., npc-brain → humanoid-cognition-base) resolve a template ID,
+        // and a specified-but-unresolvable template now fails the actor. Return a valid pipeline
+        // so existing tests that don't care about cognition still work.
+        var defaultPipelineMock = new Mock<ICognitionPipeline>();
+        defaultPipelineMock.SetupGet(p => p.Stages).Returns(new List<ICognitionStage>());
+        defaultPipelineMock.SetupGet(p => p.TemplateId).Returns("test-pipeline");
+        cognitionBuilderMock.Setup(b => b.Build(It.IsAny<string>(), It.IsAny<CognitionOverrides?>()))
+            .Returns(defaultPipelineMock.Object);
+
         // Set up executor to return success
         executorMock.Setup(e => e.ExecuteAsync(
                 It.IsAny<AbmlDocument>(),

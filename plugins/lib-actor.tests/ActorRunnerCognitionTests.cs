@@ -458,4 +458,39 @@ public class ActorRunnerCognitionTests
     }
 
     #endregion
+
+    #region Failed Template
+
+    [Fact]
+    public async Task FailedTemplate_SpecifiedButUnresolvable_SetsErrorStatus()
+    {
+        // Arrange: template specifies a cognition template ID, but builder returns null (not found)
+        var template = CreateTestTemplate(cognitionTemplateId: "nonexistent-template");
+        var (runner, builderMock, _) = CreateRunnerWithCognition(
+            template: template,
+            builderReturnsNull: true);
+
+        // Act: start runner — the first tick should fail during initialization
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        await runner.StartAsync(cts.Token);
+
+        // Wait for the runner to transition to Error state (before StopAsync overwrites it)
+        var started = DateTime.UtcNow;
+        while (runner.Status != ActorStatus.Error && DateTime.UtcNow - started < TimeSpan.FromSeconds(5))
+        {
+            await Task.Delay(10);
+        }
+
+        // Assert: runner entered error state because template was specified but unresolvable
+        // Check BEFORE StopAsync, which unconditionally sets Status = Stopped
+        Assert.Equal(ActorStatus.Error, runner.Status);
+
+        // Assert: builder was called with the specified template ID
+        builderMock.Verify(b => b.Build("nonexistent-template", It.IsAny<CognitionOverrides?>()), Times.Once);
+
+        // Clean up
+        await runner.StopAsync(cancellationToken: cts.Token);
+    }
+
+    #endregion
 }
