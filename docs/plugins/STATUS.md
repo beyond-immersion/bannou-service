@@ -329,8 +329,10 @@ All 16 API endpoints are fully implemented. The remaining stub is the `item.expi
 <!-- AUDIT:NEEDS_DESIGN:2026-02-13:https://github.com/beyond-immersion/bannou-service/issues/419 -->
 
 - **Subscription renewal flows**: Premium subscription auto-renewal with `checkEndpoint` for billing verification. Requires contract renewal milestone pattern.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-13:https://github.com/beyond-immersion/bannou-service/issues/421 -->
 
 - **Source tracking cascading**: Premium subscription granting child statuses (double-xp, cosmetics access). On parent removal, cascade-remove children via `RemoveBySourceAsync`. The endpoint exists but the subscription-creates-children workflow is deferred.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-13:https://github.com/beyond-immersion/bannou-service/issues/423 -->
 
 - **IStatusEffectProvider DI interface**: If L2 services ever need status data (e.g., Character needs "is dead?" checks), add `IStatusEffectProvider` in `bannou-service/Providers/` with DI inversion. Status implements it; Character discovers via `IEnumerable<IStatusEffectProvider>`.
 

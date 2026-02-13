@@ -52,18 +52,21 @@ The `evaluate_consequences` stage would:
 
 ### GOAP Planner Cost Modification
 
-The GOAP planner's A* search expansion currently uses static action costs defined in ABML metadata. The planned modification adds an optional dynamic cost modifier:
+The GOAP planner's A* search expansion currently uses static action costs defined in ABML metadata. The modification adds an optional dynamic cost modifier via `PlanningOptions.CostModifier` — it's a per-invocation planning configuration parameter, alongside `MaxDepth`, `TimeoutMs`, and `HeuristicWeight`:
 
 ```csharp
 // Current: static cost only
 var gCost = current.GCost + action.Cost;
 
-// Planned: static + dynamic obligation cost
-var dynamicCost = costModifier?.Invoke(action, current.State) ?? 0f;
+// With CostModifier on PlanningOptions: static + dynamic obligation cost
+var dynamicCost = options.CostModifier?.Invoke(action, current.State) ?? 0f;
+if (dynamicCost < 0f) dynamicCost = 0f;
 var gCost = current.GCost + action.Cost + dynamicCost;
 ```
 
-This is backward-compatible: a null modifier produces identical behavior to the current implementation. The `evaluate_consequences` stage builds the cost modifier function from obligation data and passes it through the execution context.
+The `evaluate_consequences` handler builds the cost modifier function from obligation data and stores it in the execution scope as `"conscience_cost_modifier"`. The `trigger_goap_replan` handler reads it from scope and passes it to `PlanningOptions` when invoking the planner.
+
+`PlannedAction` carries a `DynamicCost` property so that post-plan code can identify which actions had obligation penalties applied. This is how `knowing_violation` flagging works — the replan handler compares `PlannedAction.DynamicCost` against the `conscience_violations` dictionary from scope.
 
 **Performance target** (from #410): <5ms per tick for characters with ~10 active obligations and a 3-5 action GOAP plan. This is a premium cognition feature for named NPCs, faction leaders, and player companions -- not for 100,000 ambient NPCs.
 
@@ -81,7 +84,7 @@ metadata:
   conscience: false  # Skip -- no moral evaluation
 ```
 
-When `conscience: false` (or absent), the stage is entirely skipped at compile time -- the ABML compiler omits the stage from the built cognition pipeline, meaning zero runtime cost. Even when `conscience: true`, the stage dynamically short-circuits when:
+When `conscience: false` (or absent), the handler self-short-circuits at runtime: it checks the behavior document's `Conscience` metadata from the execution context and returns immediately with no output. This is effectively zero-cost (one boolean check per tick). After #422 lands (wiring `CognitionBuilder` into `ActorRunner`), the template system can eliminate the stage entirely via `DisableHandlerOverride` — true compile-time pipeline elimination. Both mechanisms coexist as defense-in-depth. Even when `conscience: true`, the stage dynamically short-circuits when:
 
 - The `ObligationProviderFactory` returns an empty provider (no obligations for this character)
 - The current GOAP plan contains no actions with obligation-relevant tags
@@ -144,7 +147,7 @@ Each service works internally, but the cross-service integration that makes the 
 | `${faction.in_controlled_territory}` | ABML cannot check territory control context |
 
 **Fix**: `FactionProviderFactory` needs to query the norm resolution endpoint and territory store during `CreateAsync`. This requires the character's current location -- the `IVariableProviderFactory.CreateAsync` signature currently only receives `entityId`. Options:
-- (a) Extend the factory interface to accept an optional context dictionary (breaking change to `IVariableProviderFactory` -- affects all providers)
+- (a) Extend the factory interface to accept a context dictionary (cleanest if multiple providers need location — faction clearly does, others may)
 - (b) Have the faction provider call lib-location to determine the character's current position (adds L4→L2 dependency, which is permitted)
 - (c) Accept that norm/territory variables require a location provider to have already populated the execution scope's shared state -- the faction provider reads location from there
 
@@ -156,12 +159,12 @@ Each service works internally, but the cross-service integration that makes the 
 
 **Impact**: Even when obligation costs are computed correctly, they don't affect NPC behavior because the GOAP planner never sees them.
 
-**Architecture note**: The cognition template system supports adding new stages and handlers via `CognitionStageDefinition` and handler registrations. The override system (`AddHandlerOverride`, `DisableHandlerOverride`, etc.) in `ICognitionTemplate.cs` provides fine-grained control over which stages run. A new `CognitionStages.EvaluateConsequences = "evaluate_consequences"` constant and corresponding stage definition in the humanoid template would slot in between `Storage` and `Intention`. The stage handler would:
+**Architecture note**: Cognition handlers are standard ABML action handlers registered in `DocumentExecutorFactory.RegisterCognitionHandlers()` (in lib-actor) and dispatched by the tree-walking `DocumentExecutor` when ABML documents list them as actions. Currently, `ActorRunner` executes ABML flows directly — it does not consume `CognitionBuilder` or the `CognitionTemplateRegistry` (#422 tracks wiring this). The template override system (`DisableHandlerOverride`, `ParameterOverride`, etc.) is built, DI-registered, and tested, but has no runtime application point until #422 lands. In the meantime, the handler self-gates on the behavior document's `conscience` metadata flag. A new `CognitionStages.EvaluateConsequences = "evaluate_consequences"` constant, a corresponding handler, and a stage definition in the humanoid template (forward-compatible for #422) would slot in between `Storage` and `Intention`. The handler receives `IActionConsequenceEvaluator` implementations via DI (same inversion pattern as `IVariableProviderFactory`) and would:
 
-1. Check for `conscience: true` metadata (skip if absent)
-2. Read `${obligations.violation_cost.*}` from the variable provider
-3. Build a cost modifier function from the obligation data
-4. Inject it into the execution context for the GOAP planner
+1. Check for `conscience: true` metadata (self-short-circuit if absent — primary gate pre-#422)
+2. Call registered `IActionConsequenceEvaluator` instances (e.g., ObligationConsequenceEvaluator) with action tags
+3. Build a cost modifier function from the aggregated consequence results
+4. Store the cost modifier in scope as `"conscience_cost_modifier"` for the GOAP replan handler to read
 5. Flag `knowing_violation` for actions where the NPC proceeds despite moral cost
 
 ### Gap 4: Guild Charter Contract Integration (Moderate)
@@ -237,20 +240,22 @@ Each service works internally, but the cross-service integration that makes the 
 **Why this is Phase 3, not Phase 1**: The stage is useless without data flowing through the variable providers. Phases 1-2 ensure the data is there; this phase makes the actor read it.
 
 1. Add `CognitionStages.EvaluateConsequences = "evaluate_consequences"` constant to `ICognitionTemplate.cs`
-2. Add optional `Func<GoapAction, WorldState, float>? costModifier` parameter to the GOAP planner's plan method (null = current behavior, backward-compatible)
-3. Implement `evaluate_consequences` handler in a new `EvaluateConsequencesHandler` class:
-   - Read `${obligations.violation_cost.<type>}` for each action tag in the current GOAP plan
-   - Build the cost modifier function from the obligation violation cost map
-   - Inject cost modifier into execution context for GOAP planner consumption
-   - Flag `knowing_violation` in working memory for actions where cost exceeds a threshold but the NPC proceeds anyway (motivation > moral cost)
-4. Add `conscience: true/false` ABML metadata flag -- compiler omits the stage entirely when `false` or absent
-5. Register the new stage in the humanoid cognition template (between `storage` and `intention`), conditional on `conscience` metadata
-6. Implement dynamic short-circuits:
-   - No `ObligationProviderFactory` registered → skip (zero cost)
-   - Provider returns empty manifest → skip (zero cost)
+2. Add `CostModifier` property to `PlanningOptions` — it's a per-invocation planning configuration parameter alongside `MaxDepth`, `TimeoutMs`, and `HeuristicWeight`.
+3. Create `IActionConsequenceEvaluator` interface in `bannou-service/Providers/` — same DI inversion pattern as `IVariableProviderFactory`. L4 services (lib-obligation, eventually lib-faction) implement this to provide consequence data to the L2 Actor runtime.
+4. Implement `evaluate_consequences` handler in a new `EvaluateConsequencesHandler` class:
+   - Self-gates on `Conscience` metadata flag from execution context (primary gate mechanism pre-#422; defense-in-depth after)
+   - Calls registered `IActionConsequenceEvaluator` instances with action tags, aggregates results
+   - Builds cost modifier function and stores in scope as `"conscience_cost_modifier"` for the GOAP replan handler
+   - Flags `knowing_violation` in working memory for actions where cost exceeds a threshold but the NPC proceeds anyway
+5. Register the handler: DI singleton in `ActorServicePlugin.cs`, handler registration in `DocumentExecutorFactory.RegisterCognitionHandlers()` (between StoreMemory and EvaluateGoalImpact)
+6. Add `conscience: true/false` ABML metadata flag — handler self-short-circuits when `false` or absent. After #422, `ActorRunner` also injects `DisableHandlerOverride` to eliminate the stage from the built cognition pipeline entirely.
+7. Add stage definition to humanoid cognition template in `CognitionTemplateRegistry` (forward-compatible preparation — takes effect once #422 wires `CognitionBuilder` into `ActorRunner`)
+8. Implement dynamic short-circuits (in addition to the conscience metadata gate):
+   - No `IActionConsequenceEvaluator` instances registered in DI → skip (zero cost)
+   - Evaluators return empty results → skip (zero cost)
    - No obligation-relevant action tags in current plan → skip
    - Urgency bypass: perception urgency exceeds threshold → skip (survival overrides morality)
-7. **Performance budget**: Configurable `ConscienceEvaluationTimeoutMs` (default: 5ms). If evaluation exceeds budget, use last-known costs rather than blocking the cognition tick.
+9. **Performance budget**: Configurable `ConscienceEvaluationTimeoutMs` (default: 5ms). If evaluation exceeds budget, use last-known costs rather than blocking the cognition tick.
 
 ### Phase 4: Post-Violation Feedback Loop
 

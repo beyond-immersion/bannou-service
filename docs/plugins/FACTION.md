@@ -351,7 +351,7 @@ None. All 31 endpoints are fully implemented with business logic.
 4. **Client events for real-time faction notifications**: Define `faction-client-events.yaml` to push membership changes, territory shifts, and norm updates to connected WebSocket clients via `IClientEventPublisher`.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-13:https://github.com/beyond-immersion/bannou-service/issues/418 -->
 5. **Faction governance elections**: Member voting for leadership positions using Contract-backed consent flows.
-<!-- AUDIT:NEEDS_DESIGN:2026-02-13:ISSUE_URL_PLACEHOLDER -->
+<!-- AUDIT:NEEDS_DESIGN:2026-02-13:https://github.com/beyond-immersion/bannou-service/issues/420 -->
 
 ## Known Quirks & Caveats
 
@@ -382,6 +382,7 @@ None. All 31 endpoints are fully implemented with business logic.
 ### Design Considerations (Requires Planning)
 
 1. **No owner validation for territory claims**: Like Collection/Seed, faction trusts that callers pass valid entity IDs. Location existence is validated via lib-location, but no check that the faction "should" be able to claim that location beyond seed capability gating.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-13:https://github.com/beyond-immersion/bannou-service/issues/424 -->
 
 2. **Membership count denormalization**: `FactionResponse.memberCount` is denormalized on the faction entity. Add/remove operations must update this count atomically. Potential for drift if operations fail between membership store write and faction store update.
 
