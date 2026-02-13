@@ -96,14 +96,6 @@ x-service-configuration:
       default: 5
       description: Maximum seconds to wait when acquiring a distributed lock before failing with a timeout error
 
-    MaxConcurrencyRetries:
-      type: integer
-      env: STATUS_MAX_CONCURRENCY_RETRIES
-      minimum: 1
-      maximum: 10
-      default: 3
-      description: ETag-based optimistic concurrency retry attempts for cache updates
-
     # Note: No expiration worker config -- TTL-based expiration is delegated to
     # lib-item's native decay system (#407). Status reacts to item.expired events.
 

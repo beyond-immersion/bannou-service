@@ -111,13 +111,13 @@ public partial class FactionCreatedEvent : BaseServiceEvent
     /// Parent faction in hierarchy
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("parentFactionId")]
-    public System.Guid ParentFactionId { get; set; } = default!;
+    public System.Guid? ParentFactionId { get; set; } = default!;
 
     /// <summary>
     /// Associated seed for growth tracking
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seedId")]
-    public System.Guid SeedId { get; set; } = default!;
+    public System.Guid? SeedId { get; set; } = default!;
 
     /// <summary>
     /// Current lifecycle status
@@ -132,7 +132,7 @@ public partial class FactionCreatedEvent : BaseServiceEvent
     /// Current seed growth phase
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentPhase")]
-    public string CurrentPhase { get; set; } = default!;
+    public string? CurrentPhase { get; set; } = default!;
 
     /// <summary>
     /// Current number of members
@@ -223,13 +223,13 @@ public partial class FactionUpdatedEvent : BaseServiceEvent
     /// Parent faction in hierarchy
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("parentFactionId")]
-    public System.Guid ParentFactionId { get; set; } = default!;
+    public System.Guid? ParentFactionId { get; set; } = default!;
 
     /// <summary>
     /// Associated seed for growth tracking
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seedId")]
-    public System.Guid SeedId { get; set; } = default!;
+    public System.Guid? SeedId { get; set; } = default!;
 
     /// <summary>
     /// Current lifecycle status
@@ -244,7 +244,7 @@ public partial class FactionUpdatedEvent : BaseServiceEvent
     /// Current seed growth phase
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentPhase")]
-    public string CurrentPhase { get; set; } = default!;
+    public string? CurrentPhase { get; set; } = default!;
 
     /// <summary>
     /// Current number of members
@@ -343,13 +343,13 @@ public partial class FactionDeletedEvent : BaseServiceEvent
     /// Parent faction in hierarchy
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("parentFactionId")]
-    public System.Guid ParentFactionId { get; set; } = default!;
+    public System.Guid? ParentFactionId { get; set; } = default!;
 
     /// <summary>
     /// Associated seed for growth tracking
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("seedId")]
-    public System.Guid SeedId { get; set; } = default!;
+    public System.Guid? SeedId { get; set; } = default!;
 
     /// <summary>
     /// Current lifecycle status
@@ -364,7 +364,7 @@ public partial class FactionDeletedEvent : BaseServiceEvent
     /// Current seed growth phase
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("currentPhase")]
-    public string CurrentPhase { get; set; } = default!;
+    public string? CurrentPhase { get; set; } = default!;
 
     /// <summary>
     /// Current number of members

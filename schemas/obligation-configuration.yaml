@@ -24,14 +24,6 @@ x-service-configuration:
       env: OBLIGATION_CACHE_TTL_MINUTES
 
     # Evaluation Configuration
-    EvaluationTimeoutMs:
-      type: integer
-      description: Timeout in milliseconds for evaluate-action operations
-      default: 5000
-      minimum: 500
-      maximum: 30000
-      env: OBLIGATION_EVALUATION_TIMEOUT_MS
-
     MaxObligationsPerCharacter:
       type: integer
       description: Safety limit on cached obligations per character (prevents runaway contract accumulation)
@@ -72,15 +64,6 @@ x-service-configuration:
       minimum: 5
       maximum: 120
       env: OBLIGATION_LOCK_TIMEOUT_SECONDS
-
-    # Concurrency
-    MaxConcurrencyRetries:
-      type: integer
-      description: Maximum retry attempts for optimistic concurrency conflicts
-      default: 3
-      minimum: 1
-      maximum: 10
-      env: OBLIGATION_MAX_CONCURRENCY_RETRIES
 
     # Contract Query Configuration
     MaxActiveContractsQuery:

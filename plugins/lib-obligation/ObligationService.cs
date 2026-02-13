@@ -135,7 +135,7 @@ public partial class ObligationService : IObligationService
     {
         _logger.LogDebug("Listing action mappings, search={SearchTerm}", body.SearchTerm);
 
-        var pageSize = body.PageSize;
+        var pageSize = body.PageSize > 0 ? body.PageSize : _configuration.DefaultPageSize;
         var offset = DecodeCursor(body.Cursor);
 
         var conditions = new List<QueryCondition>
@@ -456,7 +456,7 @@ public partial class ObligationService : IObligationService
     {
         _logger.LogDebug("Querying violations for character {CharacterId}", body.CharacterId);
 
-        var pageSize = body.PageSize;
+        var pageSize = body.PageSize > 0 ? body.PageSize : _configuration.DefaultPageSize;
         var offset = DecodeCursor(body.Cursor);
 
         var conditions = new List<QueryCondition>
@@ -675,7 +675,13 @@ public partial class ObligationService : IObligationService
         if (!lockResponse.Success)
         {
             _logger.LogWarning("Failed to acquire lock for cache rebuild of character {CharacterId}", characterId);
-            // Return empty manifest rather than failing the request
+            // Return existing cached value if available (stale data is better than no data on the query path)
+            var existingCached = await _cacheStore.GetAsync(characterId.ToString(), ct);
+            if (existingCached != null)
+            {
+                return existingCached;
+            }
+            // No cached data exists; return empty manifest rather than failing the request
             return new ObligationManifestModel
             {
                 CharacterId = characterId,

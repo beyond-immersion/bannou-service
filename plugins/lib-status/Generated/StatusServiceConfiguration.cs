@@ -116,13 +116,6 @@ public class StatusServiceConfiguration : IServiceConfiguration
     public int LockAcquisitionTimeoutSeconds { get; set; } = 5;
 
     /// <summary>
-    /// ETag-based optimistic concurrency retry attempts for cache updates
-    /// Environment variable: STATUS_MAX_CONCURRENCY_RETRIES
-    /// </summary>
-    [ConfigRange(Minimum = 1, Maximum = 10)]
-    public int MaxConcurrencyRetries { get; set; } = 3;
-
-    /// <summary>
     /// Default page size for paginated queries
     /// Environment variable: STATUS_DEFAULT_PAGE_SIZE
     /// </summary>

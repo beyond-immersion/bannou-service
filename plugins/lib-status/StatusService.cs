@@ -1540,23 +1540,10 @@ public partial class StatusService : IStatusService
             CachedAt = now
         };
 
-        // Save to cache with TTL; retry on transient failures per IMPLEMENTATION TENETS (configuration-first)
-        for (var attempt = 1; attempt <= _configuration.MaxConcurrencyRetries; attempt++)
-        {
-            try
-            {
-                await ActiveCacheStore.SaveAsync(cacheKey, cache,
-                    new StateOptions { Ttl = _configuration.StatusCacheTtlSeconds },
-                    cancellationToken);
-                break;
-            }
-            catch (Exception ex) when (attempt < _configuration.MaxConcurrencyRetries)
-            {
-                _logger.LogDebug(ex,
-                    "Active cache save attempt {Attempt}/{Max} failed for {EntityType} {EntityId}",
-                    attempt, _configuration.MaxConcurrencyRetries, entityType, entityId);
-            }
-        }
+        // Save to cache with TTL; MaxCachedEntities is enforced by Redis eviction policy
+        await ActiveCacheStore.SaveAsync(cacheKey, cache,
+            new StateOptions { Ttl = _configuration.StatusCacheTtlSeconds },
+            cancellationToken);
 
         return cache;
     }
@@ -1625,23 +1612,10 @@ public partial class StatusService : IStatusService
             CachedAt = DateTimeOffset.UtcNow
         };
 
-        // Save to cache with TTL; retry on transient failures per IMPLEMENTATION TENETS (configuration-first)
-        for (var attempt = 1; attempt <= _configuration.MaxConcurrencyRetries; attempt++)
-        {
-            try
-            {
-                await SeedEffectsCacheStore.SaveAsync(cacheKey, cache,
-                    new StateOptions { Ttl = _configuration.SeedEffectsCacheTtlSeconds },
-                    cancellationToken);
-                break;
-            }
-            catch (Exception ex) when (attempt < _configuration.MaxConcurrencyRetries)
-            {
-                _logger.LogDebug(ex,
-                    "Seed effects cache save attempt {Attempt}/{Max} failed for {EntityType} {EntityId}",
-                    attempt, _configuration.MaxConcurrencyRetries, entityType, entityId);
-            }
-        }
+        // Save to cache with TTL
+        await SeedEffectsCacheStore.SaveAsync(cacheKey, cache,
+            new StateOptions { Ttl = _configuration.SeedEffectsCacheTtlSeconds },
+            cancellationToken);
 
         return cache;
     }

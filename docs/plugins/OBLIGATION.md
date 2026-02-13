@@ -269,6 +269,10 @@ Recording and querying knowing obligation violations.
 
 - **Cleanup pagination hardcoded**: `CleanupByCharacterAsync` queries violations with a hardcoded 10000 limit instead of paginating. Characters with extreme violation counts could have orphaned data after cleanup.
 
+- **Hardcoded personality trait mapping**: The personality weight computation maps violation types to traits via a hardcoded switch (`theft`→honesty+conscientiousness, `deception`→honesty, `violence`→agreeableness, `honor_combat`→conscientiousness+loyalty, `betrayal`→loyalty, everything else→conscientiousness). This is in tension with violation types being opaque strings that "grow organically" -- any new type falls through to the default, silently degrading moral reasoning quality. The mapping should be data-driven (part of action mapping store or behavioral clause definitions) or at minimum configurable.
+
+- **Lock failure returns empty manifest on query path**: `RebuildObligationCacheAsync` returns an empty manifest when the distributed lock cannot be acquired. This is called from both event handlers (acceptable -- query path rebuilds on next access) and `QueryObligationsAsync` (problematic -- caller gets zero obligations instead of stale-but-correct cached data). On the query path, stale data is strictly better than no data; lock failure should return the existing cached value if one exists.
+
 ### Intentional Quirks (Documented Behavior)
 
 - **Violation types are opaque strings**: No separate taxonomy or enum is maintained for violation types. The vocabulary is defined entirely by contract templates' behavioral clause definitions (e.g., "theft", "deception", "violence", "honor_combat"). This allows the violation vocabulary to grow organically as new contract templates are authored.

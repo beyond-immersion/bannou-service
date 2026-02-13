@@ -103,6 +103,7 @@ public class FactionSeedEvolutionListener : ISeedEvolutionListener
         faction.CurrentPhase = notification.NewPhase;
         faction.UpdatedAt = DateTimeOffset.UtcNow;
         await factionStore.SaveAsync(factionKey, faction, cancellationToken: ct);
+        await factionStore.SaveAsync($"fac:{faction.GameServiceId}:{faction.Code}", faction, cancellationToken: ct);
 
         _logger.LogInformation(
             "Updated faction {FactionId} phase from {OldPhase} to {NewPhase} for seed {SeedId}",
@@ -120,8 +121,8 @@ public class FactionSeedEvolutionListener : ISeedEvolutionListener
                 Code = faction.Code,
                 RealmId = faction.RealmId,
                 IsRealmBaseline = faction.IsRealmBaseline,
-                ParentFactionId = faction.ParentFactionId.GetValueOrDefault(),
-                SeedId = faction.SeedId.GetValueOrDefault(),
+                ParentFactionId = faction.ParentFactionId,
+                SeedId = faction.SeedId,
                 Status = faction.Status,
                 CurrentPhase = notification.NewPhase,
                 MemberCount = faction.MemberCount,

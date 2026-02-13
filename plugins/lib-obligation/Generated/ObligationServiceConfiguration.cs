@@ -61,13 +61,6 @@ public class ObligationServiceConfiguration : IServiceConfiguration
     public int CacheTtlMinutes { get; set; } = 10;
 
     /// <summary>
-    /// Timeout in milliseconds for evaluate-action operations
-    /// Environment variable: OBLIGATION_EVALUATION_TIMEOUT_MS
-    /// </summary>
-    [ConfigRange(Minimum = 500, Maximum = 30000)]
-    public int EvaluationTimeoutMs { get; set; } = 5000;
-
-    /// <summary>
     /// Safety limit on cached obligations per character (prevents runaway contract accumulation)
     /// Environment variable: OBLIGATION_MAX_OBLIGATIONS_PER_CHARACTER
     /// </summary>
@@ -100,13 +93,6 @@ public class ObligationServiceConfiguration : IServiceConfiguration
     /// </summary>
     [ConfigRange(Minimum = 5, Maximum = 120)]
     public int LockTimeoutSeconds { get; set; } = 30;
-
-    /// <summary>
-    /// Maximum retry attempts for optimistic concurrency conflicts
-    /// Environment variable: OBLIGATION_MAX_CONCURRENCY_RETRIES
-    /// </summary>
-    [ConfigRange(Minimum = 1, Maximum = 10)]
-    public int MaxConcurrencyRetries { get; set; } = 3;
 
     /// <summary>
     /// Maximum number of active contracts to query per character during cache rebuild

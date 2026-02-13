@@ -10,6 +10,8 @@ namespace BeyondImmersion.BannouService.Obligation.Providers;
 /// Supported variable paths:
 /// <list type="bullet">
 ///   <item><c>${obligations.active_count}</c> - Number of active obligations</item>
+///   <item><c>${obligations.has_obligations}</c> - Whether any obligations exist (bool)</item>
+///   <item><c>${obligations.contract_count}</c> - Number of active contracts with behavioral clauses</item>
 ///   <item><c>${obligations.violation_cost.&lt;type&gt;}</c> - Aggregated cost for a specific violation type</item>
 ///   <item><c>${obligations.highest_penalty_type}</c> - Violation type with the highest aggregated penalty</item>
 ///   <item><c>${obligations.total_obligation_cost}</c> - Sum of all violation costs</item>
@@ -50,6 +52,18 @@ public sealed class ObligationProvider : IVariableProvider
             return _manifest.Obligations.Count;
         }
 
+        // ${obligations.has_obligations}
+        if (firstSegment.Equals("has_obligations", StringComparison.OrdinalIgnoreCase))
+        {
+            return _manifest.Obligations.Count > 0;
+        }
+
+        // ${obligations.contract_count}
+        if (firstSegment.Equals("contract_count", StringComparison.OrdinalIgnoreCase))
+        {
+            return _manifest.TotalActiveContracts;
+        }
+
         // ${obligations.total_obligation_cost}
         if (firstSegment.Equals("total_obligation_cost", StringComparison.OrdinalIgnoreCase))
         {
@@ -81,6 +95,8 @@ public sealed class ObligationProvider : IVariableProvider
         return new Dictionary<string, object?>
         {
             ["active_count"] = _manifest.Obligations.Count,
+            ["has_obligations"] = _manifest.Obligations.Count > 0,
+            ["contract_count"] = _manifest.TotalActiveContracts,
             ["total_obligation_cost"] = _manifest.ViolationCostMap.Values.Sum(),
             ["highest_penalty_type"] = _manifest.ViolationCostMap.Count > 0
                 ? _manifest.ViolationCostMap.MaxBy(kvp => kvp.Value).Key
@@ -95,6 +111,8 @@ public sealed class ObligationProvider : IVariableProvider
         if (path.Length == 0) return true;
         var firstSegment = path[0];
         return firstSegment.Equals("active_count", StringComparison.OrdinalIgnoreCase) ||
+               firstSegment.Equals("has_obligations", StringComparison.OrdinalIgnoreCase) ||
+               firstSegment.Equals("contract_count", StringComparison.OrdinalIgnoreCase) ||
                firstSegment.Equals("total_obligation_cost", StringComparison.OrdinalIgnoreCase) ||
                firstSegment.Equals("highest_penalty_type", StringComparison.OrdinalIgnoreCase) ||
                firstSegment.Equals("violation_cost", StringComparison.OrdinalIgnoreCase);

@@ -201,10 +201,10 @@ public partial class FactionService : IFactionService
             Code = model.Code,
             RealmId = model.RealmId,
             IsRealmBaseline = model.IsRealmBaseline,
-            ParentFactionId = model.ParentFactionId.GetValueOrDefault(),
-            SeedId = model.SeedId.GetValueOrDefault(),
+            ParentFactionId = model.ParentFactionId,
+            SeedId = model.SeedId,
             Status = model.Status,
-            CurrentPhase = model.CurrentPhase ?? string.Empty,
+            CurrentPhase = model.CurrentPhase,
             MemberCount = model.MemberCount,
             CreatedAt = model.CreatedAt,
             UpdatedAt = model.UpdatedAt,
@@ -228,10 +228,10 @@ public partial class FactionService : IFactionService
             Code = model.Code,
             RealmId = model.RealmId,
             IsRealmBaseline = model.IsRealmBaseline,
-            ParentFactionId = model.ParentFactionId.GetValueOrDefault(),
-            SeedId = model.SeedId.GetValueOrDefault(),
+            ParentFactionId = model.ParentFactionId,
+            SeedId = model.SeedId,
             Status = model.Status,
-            CurrentPhase = model.CurrentPhase ?? string.Empty,
+            CurrentPhase = model.CurrentPhase,
             MemberCount = model.MemberCount,
             CreatedAt = model.CreatedAt,
             UpdatedAt = model.UpdatedAt,
@@ -699,10 +699,10 @@ public partial class FactionService : IFactionService
             Code = model.Code,
             RealmId = model.RealmId,
             IsRealmBaseline = model.IsRealmBaseline,
-            ParentFactionId = model.ParentFactionId.GetValueOrDefault(),
-            SeedId = model.SeedId.GetValueOrDefault(),
+            ParentFactionId = model.ParentFactionId,
+            SeedId = model.SeedId,
             Status = model.Status,
-            CurrentPhase = model.CurrentPhase ?? string.Empty,
+            CurrentPhase = model.CurrentPhase,
             MemberCount = model.MemberCount,
             CreatedAt = model.CreatedAt,
             UpdatedAt = model.UpdatedAt,
@@ -1039,6 +1039,22 @@ public partial class FactionService : IFactionService
 
         await _memberStore.DeleteAsync(MemberKey(factionId, characterId), cancellationToken: ct);
 
+        // Unregister resource reference with lib-resource (mirrors RegisterReferenceAsync in AddMemberAsync)
+        try
+        {
+            await _resourceClient.UnregisterReferenceAsync(new UnregisterReferenceRequest
+            {
+                ResourceType = "character",
+                ResourceId = characterId,
+                SourceType = "faction",
+                SourceId = factionId.ToString(),
+            }, ct);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Failed to unregister resource reference for character {CharacterId}", characterId);
+        }
+
         // Update character's membership list
         var charList = await _memberListStore.GetAsync(CharacterMembershipsKey(characterId), ct);
         if (charList != null)
@@ -1343,6 +1359,22 @@ public partial class FactionService : IFactionService
 
         await _territoryStore.SaveAsync(ClaimKey(claim.ClaimId), claim, cancellationToken: ct);
         await _territoryStore.DeleteAsync(LocationClaimKey(claim.LocationId), cancellationToken: ct);
+
+        // Unregister resource reference with lib-resource (mirrors RegisterReferenceAsync in ClaimTerritoryAsync)
+        try
+        {
+            await _resourceClient.UnregisterReferenceAsync(new UnregisterReferenceRequest
+            {
+                ResourceType = "location",
+                ResourceId = claim.LocationId,
+                SourceType = "faction",
+                SourceId = claim.FactionId.ToString(),
+            }, ct);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Failed to unregister resource reference for location {LocationId}", claim.LocationId);
+        }
 
         // Update faction's claim list
         var claimList = await _territoryListStore.GetAsync(FactionClaimsKey(claim.FactionId), ct);
