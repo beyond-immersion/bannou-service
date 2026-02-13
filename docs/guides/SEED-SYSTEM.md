@@ -245,7 +245,7 @@ The pattern: L4 consumers subscribe to `seed.capability.updated` events, filter 
 
 For guardian spirits, this means Gardener will subscribe to `seed.capability.updated`, interpret the capabilities as UX modules, and push to clients via the Connect service's per-session RabbitMQ channel -- the same mechanism used for permission capability updates.
 
-See [#365](https://github.com/BeyondImmersion/bannou-service/issues/365) for design tracking.
+See [#365](https://github.com/beyond-immersion/bannou-service/issues/365) for design tracking.
 
 ---
 
@@ -253,11 +253,11 @@ See [#365](https://github.com/BeyondImmersion/bannou-service/issues/365) for des
 
 ### Seed → Actor (Variable Provider) -- Implemented
 
-Seed exposes `${seed.*}` variables to the Actor service's behavior system via `SeedProviderFactory` (implements `IVariableProviderFactory`). Variables include `${seed.phase}`, `${seed.totalGrowth}`, `${seed.status}`, per-domain growth depths like `${seed.growth.combat}`, and per-capability fidelity like `${seed.capability.combat_awareness}`. Uses `SeedDataCache` (singleton, TTL-based) to avoid per-tick API calls. See [#361](https://github.com/BeyondImmersion/bannou-service/issues/361).
+Seed exposes `${seed.*}` variables to the Actor service's behavior system via `SeedProviderFactory` (implements `IVariableProviderFactory`). Variables include `${seed.phase}`, `${seed.totalGrowth}`, `${seed.status}`, per-domain growth depths like `${seed.growth.combat}`, and per-capability fidelity like `${seed.capability.combat_awareness}`. Uses `SeedDataCache` (singleton, TTL-based) to avoid per-tick API calls. See [#361](https://github.com/beyond-immersion/bannou-service/issues/361).
 
 ### Seed Bonds → Connect (Pair Communication)
 
-For bonded seeds, Connect would establish a shared communication channel using the bond ID as the subscription key. The bond exists in lib-seed; the communication channel is managed by Connect. This enables paired players to communicate without needing to unlock in-game social systems. See [#386](https://github.com/BeyondImmersion/bannou-service/issues/386).
+For bonded seeds, Connect would establish a shared communication channel using the bond ID as the subscription key. The bond exists in lib-seed; the communication channel is managed by Connect. This enables paired players to communicate without needing to unlock in-game social systems. See [#386](https://github.com/beyond-immersion/bannou-service/issues/386).
 
 ### Gardener → Game Session -- Implemented
 
@@ -281,14 +281,14 @@ The original design specified `IMatchmakingClient` (L4 soft dependency) for subm
 
 | Question | Status | Reference |
 |----------|--------|-----------|
-| Per-type growth decay configuration | Open issue | [#352](https://github.com/BeyondImmersion/bannou-service/issues/352) |
-| Cross-seed-type growth transfer matrix | Open issue | [#354](https://github.com/BeyondImmersion/bannou-service/issues/354) |
-| Bond dissolution endpoint | Open issue | [#362](https://github.com/BeyondImmersion/bannou-service/issues/362) |
-| Seed type merge | Open issue | [#374](https://github.com/BeyondImmersion/bannou-service/issues/374) |
-| Archived seed cleanup strategy | Open issue | [#366](https://github.com/BeyondImmersion/bannou-service/issues/366) |
-| Bond growth multiplier when partner inactive | Open issue | [#367](https://github.com/BeyondImmersion/bannou-service/issues/367) |
-| Variable provider for Actor behavior system | Open issue | [#361](https://github.com/BeyondImmersion/bannou-service/issues/361) |
-| Capability push notifications (L4 consumer) | Open issue | [#365](https://github.com/BeyondImmersion/bannou-service/issues/365) |
+| Per-type growth decay configuration | Open issue | [#352](https://github.com/beyond-immersion/bannou-service/issues/352) |
+| Cross-seed-type growth transfer matrix | Open issue | [#354](https://github.com/beyond-immersion/bannou-service/issues/354) |
+| Bond dissolution endpoint | Open issue | [#362](https://github.com/beyond-immersion/bannou-service/issues/362) |
+| Seed type merge | Open issue | [#374](https://github.com/beyond-immersion/bannou-service/issues/374) |
+| Archived seed cleanup strategy | Open issue | [#366](https://github.com/beyond-immersion/bannou-service/issues/366) |
+| Bond growth multiplier when partner inactive | Open issue | [#367](https://github.com/beyond-immersion/bannou-service/issues/367) |
+| Variable provider for Actor behavior system | Open issue | [#361](https://github.com/beyond-immersion/bannou-service/issues/361) |
+| Capability push notifications (L4 consumer) | Open issue | [#365](https://github.com/beyond-immersion/bannou-service/issues/365) |
 
 ### Gardener-Level
 

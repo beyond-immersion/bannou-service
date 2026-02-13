@@ -72,7 +72,7 @@ No known bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Store migration tooling** | No mechanism to move data between Redis and MySQL backends without downtime. Needed for production scenarios where a store's backend needs to change (e.g., promoting ephemeral Redis data to durable MySQL). | [#190](https://github.com/BeyondImmersion/bannou-service/issues/190) |
+| 1 | **Store migration tooling** | No mechanism to move data between Redis and MySQL backends without downtime. Needed for production scenarios where a store's backend needs to change (e.g., promoting ephemeral Redis data to durable MySQL). | [#190](https://github.com/beyond-immersion/bannou-service/issues/190) |
 | 2 | *(No further enhancements identified)* | | |
 | 3 | | | |
 
@@ -170,7 +170,7 @@ No known bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Account merge workflow** | No mechanism to merge two accounts (e.g., email registration + OAuth under different email). Data model supports multiple auth methods, but no merge orchestration exists. Complex cross-service operation (40+ services reference accounts). Post-launch compliance feature. | [#137](https://github.com/BeyondImmersion/bannou-service/issues/137) |
+| 1 | **Account merge workflow** | No mechanism to merge two accounts (e.g., email registration + OAuth under different email). Data model supports multiple auth methods, but no merge orchestration exists. Complex cross-service operation (40+ services reference accounts). Post-launch compliance feature. | [#137](https://github.com/beyond-immersion/bannou-service/issues/137) |
 | 2 | **Per-account audit trail** | Account mutations publish events but don't maintain a per-account change history. Deep dive notes zero Account-side code changes needed -- this is purely a consumer-side feature (likely Analytics L4 or dedicated audit service). | #138 (closed) |
 | 3 | *(No further enhancements identified)* | | |
 
@@ -202,9 +202,9 @@ No known bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Audit event consumers** | Auth publishes 6 audit event types (login success/fail, registration, OAuth, Steam, password reset) but no service subscribes to them. Per-email rate limiting already exists via Redis counters -- the gap is Analytics (L4) consuming events for IP-level cross-account correlation, anomaly detection, and admin alerting. | [#142](https://github.com/BeyondImmersion/bannou-service/issues/142) |
-| 2 | **Email change propagation** | When Account adds email change, Auth must propagate new email to active sessions. Handler exists (`HandleAccountUpdatedAsync`) but only watches for `"roles"` changes, not `"email"`. Needs: distributed lock per account, security notification to old email, `session.updated` event. Deep dive marks this as READY. | Auth-side of [#139](https://github.com/BeyondImmersion/bannou-service/issues/139) (Account-side closed) |
-| 3 | **Account merge session handling** | When account merge is implemented, Auth needs to handle a new `account.merged` event: invalidate all sessions for the source account and optionally refresh target account sessions with merged roles. Auth's handler is straightforward; the merge itself is Account-layer orchestration. Low priority -- post-launch. | Auth-side of [#137](https://github.com/BeyondImmersion/bannou-service/issues/137) |
+| 1 | **Audit event consumers** | Auth publishes 6 audit event types (login success/fail, registration, OAuth, Steam, password reset) but no service subscribes to them. Per-email rate limiting already exists via Redis counters -- the gap is Analytics (L4) consuming events for IP-level cross-account correlation, anomaly detection, and admin alerting. | [#142](https://github.com/beyond-immersion/bannou-service/issues/142) |
+| 2 | **Email change propagation** | When Account adds email change, Auth must propagate new email to active sessions. Handler exists (`HandleAccountUpdatedAsync`) but only watches for `"roles"` changes, not `"email"`. Needs: distributed lock per account, security notification to old email, `session.updated` event. Deep dive marks this as READY. | Auth-side of [#139](https://github.com/beyond-immersion/bannou-service/issues/139) (Account-side closed) |
+| 3 | **Account merge session handling** | When account merge is implemented, Auth needs to handle a new `account.merged` event: invalidate all sessions for the source account and optionally refresh target account sessions with merged roles. Auth's handler is straightforward; the merge itself is Account-layer orchestration. Low priority -- post-launch. | Auth-side of [#137](https://github.com/beyond-immersion/bannou-service/issues/137) |
 
 ### GH Issues
 
@@ -236,9 +236,9 @@ No known bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Auto-scale deployment mode** | Declared as a valid `DeploymentMode` enum value but no auto-scaling logic is implemented. Pool nodes must be manually managed or pre-provisioned. This is essential for the 100,000+ concurrent NPC target -- manual pool sizing won't work at scale. | [#318](https://github.com/BeyondImmersion/bannou-service/issues/318) |
-| 2 | **Session-bound actors** | `HandleSessionDisconnectedAsync` is stubbed. Currently all actors are NPC brains that continue running when players disconnect. Future need: actors tied to player sessions that stop on disconnect (e.g., player-controlled summons, temporary companions). | [#191](https://github.com/BeyondImmersion/bannou-service/issues/191) |
-| 3 | **Actor migration** | No mechanism to move running actors between pool nodes without state loss. Required for production load balancing -- without it, hot nodes stay hot until actors naturally stop. Needs: state snapshot transfer, perception queue draining, subscription re-establishment on target node. | [#393](https://github.com/BeyondImmersion/bannou-service/issues/393) |
+| 1 | **Auto-scale deployment mode** | Declared as a valid `DeploymentMode` enum value but no auto-scaling logic is implemented. Pool nodes must be manually managed or pre-provisioned. This is essential for the 100,000+ concurrent NPC target -- manual pool sizing won't work at scale. | [#318](https://github.com/beyond-immersion/bannou-service/issues/318) |
+| 2 | **Session-bound actors** | `HandleSessionDisconnectedAsync` is stubbed. Currently all actors are NPC brains that continue running when players disconnect. Future need: actors tied to player sessions that stop on disconnect (e.g., player-controlled summons, temporary companions). | [#191](https://github.com/beyond-immersion/bannou-service/issues/191) |
+| 3 | **Actor migration** | No mechanism to move running actors between pool nodes without state loss. Required for production load balancing -- without it, hot nodes stay hot until actors naturally stop. Needs: state snapshot transfer, perception queue draining, subscription re-establishment on target node. | [#393](https://github.com/beyond-immersion/bannou-service/issues/393) |
 
 ### GH Issues
 
@@ -270,7 +270,7 @@ No known bugs.
 
 | # | Enhancement | Description | Issue |
 |---|-------------|-------------|-------|
-| 1 | **Processing pool auto-scaling** | Scale-up/down thresholds (`ScaleUpThreshold`, `ScaleDownThreshold`) are stored in pool config but no background service evaluates them. Pools cannot auto-scale -- only manual `ScalePool` API calls work. Critical for the 100k+ NPC target where actor pool demand is dynamic. | [#252](https://github.com/BeyondImmersion/bannou-service/issues/252) (queue design) / [#318](https://github.com/BeyondImmersion/bannou-service/issues/318) (actor auto-scale) |
+| 1 | **Processing pool auto-scaling** | Scale-up/down thresholds (`ScaleUpThreshold`, `ScaleDownThreshold`) are stored in pool config but no background service evaluates them. Pools cannot auto-scale -- only manual `ScalePool` API calls work. Critical for the 100k+ NPC target where actor pool demand is dynamic. | [#252](https://github.com/beyond-immersion/bannou-service/issues/252) (queue design) / [#318](https://github.com/beyond-immersion/bannou-service/issues/318) (actor auto-scale) |
 | 2 | **Kubernetes/Swarm/Portainer backends** | Only Docker Compose is implemented. Swarm, Kubernetes, and Portainer backends are stubs (interface methods return NotImplemented or minimal responses). Required for any production deployment beyond single-machine dev. | No issue |
 | 3 | **Lease expiry enforcement** | Expired processor leases are only reclaimed lazily during the next `AcquireProcessorAsync` call. No background timer proactively scans for expired leases. Pools with no acquire traffic will hold expired leases indefinitely, wasting worker containers. | No issue |
 

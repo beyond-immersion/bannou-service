@@ -220,7 +220,7 @@ The data layer is complete (Character History provides backstory hooks, Relation
 
 ### Related Issues
 
-- [#385](https://github.com/BeyondImmersion/bannou-service/issues/385) - Archive-to-Storyline Feedback Pipeline (content flywheel, adjacent concept)
+- [#385](https://github.com/beyond-immersion/bannou-service/issues/385) - Archive-to-Storyline Feedback Pipeline (content flywheel, adjacent concept)
 
 ---
 
@@ -441,7 +441,7 @@ flows:
 This is the most infrastructure-heavy opportunity:
 
 - **Faction entity model**: Factions don't exist as a service concept. Could be modeled as Actors with a "faction_brain" type, using the existing Actor pool infrastructure. Or could be a new service. Factions need: member rosters, treasury (Currency wallets), territory claims (Location references), political relationships (Relationship service).
-- **Realm economic state aggregation**: A way to query realm-level economic data (total currency in circulation, resource prices, trade volume). Currency has some of this (global supply analytics -- see [#211](https://github.com/BeyondImmersion/bannou-service/issues/211)) but not realm-scoped.
+- **Realm economic state aggregation**: A way to query realm-level economic data (total currency in circulation, resource prices, trade volume). Currency has some of this (global supply analytics -- see [#211](https://github.com/beyond-immersion/bannou-service/issues/211)) but not realm-scoped.
 - **Faction GOAP world state provider**: Variable Provider Factory for faction-level data (treasury, territory, political standing). Would feed into faction brain actors.
 - **Regional Watcher integration**: Faction brains should interact with Regional Watchers (Puppetmaster). Hermes/Commerce god could manipulate faction dynamics through narrative events ("divine economic intervention").
 
@@ -615,7 +615,7 @@ flows:
 - **Conversation state tracking**: A way to maintain GOAP world state across a conversation (rapport level, topics discussed, emotional state). Could be ephemeral state in the Actor's memory during an encounter, or a new lightweight state model.
 - **Dialogue action handlers**: ABML action handlers that map dialogue moves to actual text/speech output. This is where LLM integration or template-based text generation would connect -- the GOAP decides WHAT to say (compliment, ask about travels, hard sell), and the text generation layer decides HOW to say it.
 - **Encounter integration**: Conversations should automatically record as Character Encounters with per-participant emotional impact, feeding back into future social dynamics.
-- **GOAP WorldState provider for conversations**: Issue [#148](https://github.com/BeyondImmersion/bannou-service/issues/148) (Extend GOAP WorldState with external service data) is directly relevant here.
+- **GOAP WorldState provider for conversations**: Issue [#148](https://github.com/beyond-immersion/bannou-service/issues/148) (Extend GOAP WorldState with external service data) is directly relevant here.
 
 ---
 

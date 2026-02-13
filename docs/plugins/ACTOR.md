@@ -92,7 +92,7 @@ Is consistency critical (currency balance, item ownership)?
     NO  → Variable Provider Factory with appropriate cache TTL
 ```
 
-Current providers cover personality, combat preferences, backstory, encounters, and quests. Planned future providers ([#147](https://github.com/BeyondImmersion/bannou-service/issues/147)): currency (30s TTL), inventory (1m TTL), relationships (5m TTL). Spatial context ([#145](https://github.com/BeyondImmersion/bannou-service/issues/145)): coarse-grained zone/region awareness (10s TTL) for GOAP planning -- actors need "am I in hostile territory?" not frame-by-frame coordinates.
+Current providers cover personality, combat preferences, backstory, encounters, and quests. Planned future providers ([#147](https://github.com/beyond-immersion/bannou-service/issues/147)): currency (30s TTL), inventory (1m TTL), relationships (5m TTL). Spatial context ([#145](https://github.com/beyond-immersion/bannou-service/issues/145)): coarse-grained zone/region awareness (10s TTL) for GOAP planning -- actors need "am I in hostile territory?" not frame-by-frame coordinates.
 
 **Anti-patterns**: Never access another plugin's state store directly. Never poll APIs in tight loops (use Variable Providers with cache). Never cache mutation-critical data beyond short TTLs.
 

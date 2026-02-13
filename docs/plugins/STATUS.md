@@ -419,13 +419,13 @@ All 16 API endpoints are fully implemented. The remaining stub is the `item.expi
 
 ### Active
 
-- [#282](https://github.com/BeyondImmersion/bannou-service/issues/282) - Status service design (stacking model, five modes)
-- [#407](https://github.com/BeyondImmersion/bannou-service/issues/407) - **BLOCKING**: Item Decay/Expiration System (required for proactive TTL-based status expiration; lazy expiration during cache rebuild is the interim workaround)
+- [#282](https://github.com/beyond-immersion/bannou-service/issues/282) - Status service design (stacking model, five modes)
+- [#407](https://github.com/beyond-immersion/bannou-service/issues/407) - **BLOCKING**: Item Decay/Expiration System (required for proactive TTL-based status expiration; lazy expiration during cache rebuild is the interim workaround)
 
 ### Completed
 
-- [#375](https://github.com/BeyondImmersion/bannou-service/issues/375) - Pipeline architecture (Collection -> Seed -> Status) -- implemented
-- [#280](https://github.com/BeyondImmersion/bannou-service/issues/280) - Itemize anything pattern -- implemented
+- [#375](https://github.com/beyond-immersion/bannou-service/issues/375) - Pipeline architecture (Collection -> Seed -> Status) -- implemented
+- [#280](https://github.com/beyond-immersion/bannou-service/issues/280) - Itemize anything pattern -- implemented
 - **Account cleanup callback registration** (2026-02-12) - Fixed missing account cleanup callback in `StatusServicePlugin.OnRunningAsync`
 - **SeedStatusTemplatesAsync item template validation** (2026-02-12) - Added item template validation in seed endpoint
 - **SeedStatusTemplatesAsync game service validation** (2026-02-12) - Added game service existence validation in seed endpoint

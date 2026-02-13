@@ -291,6 +291,6 @@ No design considerations currently pending.
 
 ## Work Tracking
 
-- **2026-02-12**: Issue [#406](https://github.com/BeyondImmersion/bannou-service/issues/406) - Added entity presence tracking: 4 new endpoints (report-entity-position, get-entity-location, list-entities-at-location, clear-entity-position), Redis-backed ephemeral storage with TTL, background cleanup worker, arrived/departed events. Prerequisite for #145.
+- **2026-02-12**: Issue [#406](https://github.com/beyond-immersion/bannou-service/issues/406) - Added entity presence tracking: 4 new endpoints (report-entity-position, get-entity-location, list-entities-at-location, clear-entity-position), Redis-backed ephemeral storage with TTL, background cleanup worker, arrived/departed events. Prerequisite for #145.
 - **2026-02-12**: Issue [#165](https://github.com/beyond-immersion/bannou-service/issues/165) - Added optional spatial coordinates (BoundingBox3D bounds, BoundsPrecision, CoordinateMode, Position3D localOrigin) to locations. Added `/location/query/by-position` endpoint for spatial-to-location lookup. Shared Position3D/BoundingBox3D types added to common-api.yaml.
 - **T4 Violation: Graceful degradation for L1 dependency** (Bugs #1): COMPLETED (2026-02-08) - Changed to `GetRequiredService` with fail-fast behavior
