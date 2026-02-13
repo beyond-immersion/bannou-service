@@ -1,5 +1,3 @@
-using System.Text;
-using System.Text.Json;
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Contract;
@@ -11,6 +9,8 @@ using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Text;
+using System.Text.Json;
 
 namespace BeyondImmersion.BannouService.Obligation;
 

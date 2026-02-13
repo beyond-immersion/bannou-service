@@ -93,12 +93,12 @@ public sealed class LocationContextProvider : IVariableProvider
 
         var segment = path[0];
         return segment.Equals("zone", StringComparison.OrdinalIgnoreCase) ||
-               segment.Equals("name", StringComparison.OrdinalIgnoreCase) ||
-               segment.Equals("region", StringComparison.OrdinalIgnoreCase) ||
-               segment.Equals("type", StringComparison.OrdinalIgnoreCase) ||
-               segment.Equals("depth", StringComparison.OrdinalIgnoreCase) ||
-               segment.Equals("realm", StringComparison.OrdinalIgnoreCase) ||
-               segment.Equals("nearby_pois", StringComparison.OrdinalIgnoreCase) ||
-               segment.Equals("entity_count", StringComparison.OrdinalIgnoreCase);
+                segment.Equals("name", StringComparison.OrdinalIgnoreCase) ||
+                segment.Equals("region", StringComparison.OrdinalIgnoreCase) ||
+                segment.Equals("type", StringComparison.OrdinalIgnoreCase) ||
+                segment.Equals("depth", StringComparison.OrdinalIgnoreCase) ||
+                segment.Equals("realm", StringComparison.OrdinalIgnoreCase) ||
+                segment.Equals("nearby_pois", StringComparison.OrdinalIgnoreCase) ||
+                segment.Equals("entity_count", StringComparison.OrdinalIgnoreCase);
     }
 }

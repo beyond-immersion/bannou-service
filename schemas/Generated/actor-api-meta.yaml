@@ -62,20 +62,28 @@ paths:
         : 60,\n                    \"description\": \"Seconds between automatic state saves (0 to disable)\"\n           \
         \     },\n                \"maxInstancesPerNode\": {\n                    \"type\": \"integer\",\n               \
         \     \"default\": 100,\n                    \"description\": \"Maximum actors of this category per pool node\"\n\
-        \                }\n            }\n        },\n        \"AutoSpawnConfig\": {\n            \"type\": \"object\",\n\
-        \            \"additionalProperties\": false,\n            \"description\": \"Configuration for instantiate-on-access
-        behavior\",\n            \"properties\": {\n                \"enabled\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"default\": false,\n                    \"description\": \"If true, accessing a non-existent
-        actor creates it\"\n                },\n                \"idPattern\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Regex pattern for actor IDs that
-        trigger auto-spawn.\\nExamples: \\\"npc-.*\\\" matches \\\"npc-grok\\\", \\\"npc-merchant-123\\\"\\n\"\n         \
-        \       },\n                \"maxInstances\": {\n                    \"type\": \"integer\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Maximum auto-spawned instances (0 = unlimited)\"\n     \
-        \           },\n                \"characterIdCaptureGroup\": {\n                    \"type\": \"integer\",\n     \
-        \               \"minimum\": 1,\n                    \"nullable\": true,\n                    \"description\": \"\
-        1-based regex capture group index for extracting CharacterId from actor ID.\\nExample: With idPattern \\\"npc-brain-([a-f0-9-]+)\\\
-        \" and characterIdCaptureGroup: 1,\\nactor ID \\\"npc-brain-abc-123-def\\\" extracts \\\"abc-123-def\\\" as CharacterId
-        (parsed as GUID).\\n\"\n                }\n            }\n        }\n    }\n}"
+        \                },\n                \"cognitionTemplateId\": {\n                    \"type\": \"string\",\n     \
+        \               \"nullable\": true,\n                    \"description\": \"Cognition template ID for this actor type.
+        Primary source for cognition\\npipeline resolution. When null, falls back to ABML metadata, then category default.\\
+        nExamples: \\\"humanoid-cognition-base\\\", \\\"creature-cognition-base\\\", \\\"object-cognition-base\\\"\\n\"\n\
+        \                },\n                \"cognitionOverrides\": {\n                    \"type\": \"object\",\n      \
+        \              \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Static template-level cognition overrides. Applied as the first layer\\nin the three-layer override composition
+        (template \\u2192 instance \\u2192 ABML metadata).\\n\"\n                }\n            }\n        },\n        \"\
+        AutoSpawnConfig\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n          \
+        \  \"description\": \"Configuration for instantiate-on-access behavior\",\n            \"properties\": {\n       \
+        \         \"enabled\": {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n  \
+        \                  \"description\": \"If true, accessing a non-existent actor creates it\"\n                },\n \
+        \               \"idPattern\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Regex pattern for actor IDs that trigger auto-spawn.\\nExamples: \\\"npc-.*\\\
+        \" matches \\\"npc-grok\\\", \\\"npc-merchant-123\\\"\\n\"\n                },\n                \"maxInstances\":
+        {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Maximum auto-spawned instances (0 = unlimited)\"\n                },\n                \"characterIdCaptureGroup\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"1-based regex capture group index for extracting CharacterId from
+        actor ID.\\nExample: With idPattern \\\"npc-brain-([a-f0-9-]+)\\\" and characterIdCaptureGroup: 1,\\nactor ID \\\"\
+        npc-brain-abc-123-def\\\" extracts \\\"abc-123-def\\\" as CharacterId (parsed as GUID).\\n\"\n                }\n\
+        \            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ActorTemplateResponse\"\
         ,\n    \"$defs\": {\n        \"ActorTemplateResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response containing actor template details\",\n            \"required\":
@@ -96,24 +104,31 @@ paths:
         \    \"autoSaveIntervalSeconds\": {\n                    \"type\": \"integer\",\n                    \"description\"\
         : \"Seconds between automatic state saves\"\n                },\n                \"maxInstancesPerNode\": {\n    \
         \                \"type\": \"integer\",\n                    \"description\": \"Maximum actors of this category per
-        pool node\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n   \
-        \                 \"format\": \"date-time\",\n                    \"description\": \"When the template was created\"\
-        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"When the template was last updated\"\n \
-        \               }\n            }\n        },\n        \"AutoSpawnConfig\": {\n            \"type\": \"object\",\n\
-        \            \"additionalProperties\": false,\n            \"description\": \"Configuration for instantiate-on-access
-        behavior\",\n            \"properties\": {\n                \"enabled\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"default\": false,\n                    \"description\": \"If true, accessing a non-existent
-        actor creates it\"\n                },\n                \"idPattern\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Regex pattern for actor IDs that
-        trigger auto-spawn.\\nExamples: \\\"npc-.*\\\" matches \\\"npc-grok\\\", \\\"npc-merchant-123\\\"\\n\"\n         \
-        \       },\n                \"maxInstances\": {\n                    \"type\": \"integer\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Maximum auto-spawned instances (0 = unlimited)\"\n     \
-        \           },\n                \"characterIdCaptureGroup\": {\n                    \"type\": \"integer\",\n     \
-        \               \"minimum\": 1,\n                    \"nullable\": true,\n                    \"description\": \"\
-        1-based regex capture group index for extracting CharacterId from actor ID.\\nExample: With idPattern \\\"npc-brain-([a-f0-9-]+)\\\
-        \" and characterIdCaptureGroup: 1,\\nactor ID \\\"npc-brain-abc-123-def\\\" extracts \\\"abc-123-def\\\" as CharacterId
-        (parsed as GUID).\\n\"\n                }\n            }\n        }\n    }\n}"
+        pool node\"\n                },\n                \"cognitionTemplateId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Cognition template ID for this
+        actor type. Primary source for cognition\\npipeline resolution. When null, falls back to ABML metadata, then category
+        default.\\n\"\n                },\n                \"cognitionOverrides\": {\n                    \"type\": \"object\"\
+        ,\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n                \
+        \    \"description\": \"Static template-level cognition overrides. Applied as the first layer\\nin the three-layer
+        override composition (template \\u2192 instance \\u2192 ABML metadata).\\n\"\n                },\n               \
+        \ \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n  \
+        \                  \"description\": \"When the template was created\"\n                },\n                \"updatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"When the template was last updated\"\n                }\n            }\n        },\n      \
+        \  \"AutoSpawnConfig\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n     \
+        \       \"description\": \"Configuration for instantiate-on-access behavior\",\n            \"properties\": {\n  \
+        \              \"enabled\": {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n\
+        \                    \"description\": \"If true, accessing a non-existent actor creates it\"\n                },\n\
+        \                \"idPattern\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Regex pattern for actor IDs that trigger auto-spawn.\\nExamples: \\\"npc-.*\\\
+        \" matches \\\"npc-grok\\\", \\\"npc-merchant-123\\\"\\n\"\n                },\n                \"maxInstances\":
+        {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Maximum auto-spawned instances (0 = unlimited)\"\n                },\n                \"characterIdCaptureGroup\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"1-based regex capture group index for extracting CharacterId from
+        actor ID.\\nExample: With idPattern \\\"npc-brain-([a-f0-9-]+)\\\" and characterIdCaptureGroup: 1,\\nactor ID \\\"\
+        npc-brain-abc-123-def\\\" extracts \\\"abc-123-def\\\" as CharacterId (parsed as GUID).\\n\"\n                }\n\
+        \            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create an actor template (category definition)\",\n    \"description\"\
         : \"\",\n    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"CreateActorTemplate\"\n}"
   /actor/template/get:
@@ -164,24 +179,31 @@ paths:
         \    \"autoSaveIntervalSeconds\": {\n                    \"type\": \"integer\",\n                    \"description\"\
         : \"Seconds between automatic state saves\"\n                },\n                \"maxInstancesPerNode\": {\n    \
         \                \"type\": \"integer\",\n                    \"description\": \"Maximum actors of this category per
-        pool node\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n   \
-        \                 \"format\": \"date-time\",\n                    \"description\": \"When the template was created\"\
-        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"When the template was last updated\"\n \
-        \               }\n            }\n        },\n        \"AutoSpawnConfig\": {\n            \"type\": \"object\",\n\
-        \            \"additionalProperties\": false,\n            \"description\": \"Configuration for instantiate-on-access
-        behavior\",\n            \"properties\": {\n                \"enabled\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"default\": false,\n                    \"description\": \"If true, accessing a non-existent
-        actor creates it\"\n                },\n                \"idPattern\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Regex pattern for actor IDs that
-        trigger auto-spawn.\\nExamples: \\\"npc-.*\\\" matches \\\"npc-grok\\\", \\\"npc-merchant-123\\\"\\n\"\n         \
-        \       },\n                \"maxInstances\": {\n                    \"type\": \"integer\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Maximum auto-spawned instances (0 = unlimited)\"\n     \
-        \           },\n                \"characterIdCaptureGroup\": {\n                    \"type\": \"integer\",\n     \
-        \               \"minimum\": 1,\n                    \"nullable\": true,\n                    \"description\": \"\
-        1-based regex capture group index for extracting CharacterId from actor ID.\\nExample: With idPattern \\\"npc-brain-([a-f0-9-]+)\\\
-        \" and characterIdCaptureGroup: 1,\\nactor ID \\\"npc-brain-abc-123-def\\\" extracts \\\"abc-123-def\\\" as CharacterId
-        (parsed as GUID).\\n\"\n                }\n            }\n        }\n    }\n}"
+        pool node\"\n                },\n                \"cognitionTemplateId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Cognition template ID for this
+        actor type. Primary source for cognition\\npipeline resolution. When null, falls back to ABML metadata, then category
+        default.\\n\"\n                },\n                \"cognitionOverrides\": {\n                    \"type\": \"object\"\
+        ,\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n                \
+        \    \"description\": \"Static template-level cognition overrides. Applied as the first layer\\nin the three-layer
+        override composition (template \\u2192 instance \\u2192 ABML metadata).\\n\"\n                },\n               \
+        \ \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n  \
+        \                  \"description\": \"When the template was created\"\n                },\n                \"updatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"When the template was last updated\"\n                }\n            }\n        },\n      \
+        \  \"AutoSpawnConfig\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n     \
+        \       \"description\": \"Configuration for instantiate-on-access behavior\",\n            \"properties\": {\n  \
+        \              \"enabled\": {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n\
+        \                    \"description\": \"If true, accessing a non-existent actor creates it\"\n                },\n\
+        \                \"idPattern\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Regex pattern for actor IDs that trigger auto-spawn.\\nExamples: \\\"npc-.*\\\
+        \" matches \\\"npc-grok\\\", \\\"npc-merchant-123\\\"\\n\"\n                },\n                \"maxInstances\":
+        {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Maximum auto-spawned instances (0 = unlimited)\"\n                },\n                \"characterIdCaptureGroup\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"1-based regex capture group index for extracting CharacterId from
+        actor ID.\\nExample: With idPattern \\\"npc-brain-([a-f0-9-]+)\\\" and characterIdCaptureGroup: 1,\\nactor ID \\\"\
+        npc-brain-abc-123-def\\\" extracts \\\"abc-123-def\\\" as CharacterId (parsed as GUID).\\n\"\n                }\n\
+        \            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get an actor template by ID or category\",\n    \"description\": \"\",\n\
         \    \"tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"GetActorTemplate\"\n}"
   /actor/template/list:
@@ -239,24 +261,30 @@ paths:
         \           \"type\": \"integer\",\n                    \"description\": \"Seconds between automatic state saves\"\
         \n                },\n                \"maxInstancesPerNode\": {\n                    \"type\": \"integer\",\n   \
         \                 \"description\": \"Maximum actors of this category per pool node\"\n                },\n       \
-        \         \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"When the template was created\"\n                },\n                \"\
-        updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
-        \              \"description\": \"When the template was last updated\"\n                }\n            }\n       \
-        \ },\n        \"AutoSpawnConfig\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
-        \            \"description\": \"Configuration for instantiate-on-access behavior\",\n            \"properties\": {\n\
-        \                \"enabled\": {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n\
-        \                    \"description\": \"If true, accessing a non-existent actor creates it\"\n                },\n\
-        \                \"idPattern\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Regex pattern for actor IDs that trigger auto-spawn.\\nExamples: \\\"npc-.*\\\
-        \" matches \\\"npc-grok\\\", \\\"npc-merchant-123\\\"\\n\"\n                },\n                \"maxInstances\":
-        {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Maximum auto-spawned instances (0 = unlimited)\"\n                },\n                \"characterIdCaptureGroup\"\
-        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"1-based regex capture group index for extracting CharacterId from
-        actor ID.\\nExample: With idPattern \\\"npc-brain-([a-f0-9-]+)\\\" and characterIdCaptureGroup: 1,\\nactor ID \\\"\
-        npc-brain-abc-123-def\\\" extracts \\\"abc-123-def\\\" as CharacterId (parsed as GUID).\\n\"\n                }\n\
-        \            }\n        }\n    }\n}"
+        \         \"cognitionTemplateId\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Cognition template ID for this actor type. Primary source for cognition\\
+        npipeline resolution. When null, falls back to ABML metadata, then category default.\\n\"\n                },\n  \
+        \              \"cognitionOverrides\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Static template-level cognition
+        overrides. Applied as the first layer\\nin the three-layer override composition (template \\u2192 instance \\u2192
+        ABML metadata).\\n\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"When the template was created\"\
+        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"When the template was last updated\"\n \
+        \               }\n            }\n        },\n        \"AutoSpawnConfig\": {\n            \"type\": \"object\",\n\
+        \            \"additionalProperties\": false,\n            \"description\": \"Configuration for instantiate-on-access
+        behavior\",\n            \"properties\": {\n                \"enabled\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"default\": false,\n                    \"description\": \"If true, accessing a non-existent
+        actor creates it\"\n                },\n                \"idPattern\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Regex pattern for actor IDs that
+        trigger auto-spawn.\\nExamples: \\\"npc-.*\\\" matches \\\"npc-grok\\\", \\\"npc-merchant-123\\\"\\n\"\n         \
+        \       },\n                \"maxInstances\": {\n                    \"type\": \"integer\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Maximum auto-spawned instances (0 = unlimited)\"\n     \
+        \           },\n                \"characterIdCaptureGroup\": {\n                    \"type\": \"integer\",\n     \
+        \               \"minimum\": 1,\n                    \"nullable\": true,\n                    \"description\": \"\
+        1-based regex capture group index for extracting CharacterId from actor ID.\\nExample: With idPattern \\\"npc-brain-([a-f0-9-]+)\\\
+        \" and characterIdCaptureGroup: 1,\\nactor ID \\\"npc-brain-abc-123-def\\\" extracts \\\"abc-123-def\\\" as CharacterId
+        (parsed as GUID).\\n\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List all actor templates\",\n    \"description\": \"\",\n    \"tags\":
         [],\n    \"deprecated\": false,\n    \"operationId\": \"ListActorTemplates\"\n}"
   /actor/template/update:
@@ -294,20 +322,26 @@ paths:
         \ \"nullable\": true,\n                    \"description\": \"Updated tick interval in milliseconds\"\n          \
         \      },\n                \"autoSaveIntervalSeconds\": {\n                    \"type\": \"integer\",\n          \
         \          \"nullable\": true,\n                    \"description\": \"Updated auto-save interval in seconds\"\n \
-        \               }\n            }\n        },\n        \"AutoSpawnConfig\": {\n            \"type\": \"object\",\n\
-        \            \"additionalProperties\": false,\n            \"description\": \"Configuration for instantiate-on-access
-        behavior\",\n            \"properties\": {\n                \"enabled\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"default\": false,\n                    \"description\": \"If true, accessing a non-existent
-        actor creates it\"\n                },\n                \"idPattern\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Regex pattern for actor IDs that
-        trigger auto-spawn.\\nExamples: \\\"npc-.*\\\" matches \\\"npc-grok\\\", \\\"npc-merchant-123\\\"\\n\"\n         \
-        \       },\n                \"maxInstances\": {\n                    \"type\": \"integer\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Maximum auto-spawned instances (0 = unlimited)\"\n     \
-        \           },\n                \"characterIdCaptureGroup\": {\n                    \"type\": \"integer\",\n     \
-        \               \"minimum\": 1,\n                    \"nullable\": true,\n                    \"description\": \"\
-        1-based regex capture group index for extracting CharacterId from actor ID.\\nExample: With idPattern \\\"npc-brain-([a-f0-9-]+)\\\
-        \" and characterIdCaptureGroup: 1,\\nactor ID \\\"npc-brain-abc-123-def\\\" extracts \\\"abc-123-def\\\" as CharacterId
-        (parsed as GUID).\\n\"\n                }\n            }\n        }\n    }\n}"
+        \               },\n                \"cognitionTemplateId\": {\n                    \"type\": \"string\",\n      \
+        \              \"nullable\": true,\n                    \"description\": \"Updated cognition template ID. Set to override
+        the cognition pipeline\\nfor actors created from this template.\\n\"\n                },\n                \"cognitionOverrides\"\
+        : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Updated static template-level cognition overrides.
+        Applied as the first layer\\nin the three-layer override composition.\\n\"\n                }\n            }\n   \
+        \     },\n        \"AutoSpawnConfig\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Configuration for instantiate-on-access behavior\",\n            \"properties\"\
+        : {\n                \"enabled\": {\n                    \"type\": \"boolean\",\n                    \"default\":
+        false,\n                    \"description\": \"If true, accessing a non-existent actor creates it\"\n            \
+        \    },\n                \"idPattern\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Regex pattern for actor IDs that trigger auto-spawn.\\nExamples: \\\
+        \"npc-.*\\\" matches \\\"npc-grok\\\", \\\"npc-merchant-123\\\"\\n\"\n                },\n                \"maxInstances\"\
+        : {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Maximum auto-spawned instances (0 = unlimited)\"\n                },\n                \"characterIdCaptureGroup\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"1-based regex capture group index for extracting CharacterId from
+        actor ID.\\nExample: With idPattern \\\"npc-brain-([a-f0-9-]+)\\\" and characterIdCaptureGroup: 1,\\nactor ID \\\"\
+        npc-brain-abc-123-def\\\" extracts \\\"abc-123-def\\\" as CharacterId (parsed as GUID).\\n\"\n                }\n\
+        \            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ActorTemplateResponse\"\
         ,\n    \"$defs\": {\n        \"ActorTemplateResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response containing actor template details\",\n            \"required\":
@@ -328,24 +362,31 @@ paths:
         \    \"autoSaveIntervalSeconds\": {\n                    \"type\": \"integer\",\n                    \"description\"\
         : \"Seconds between automatic state saves\"\n                },\n                \"maxInstancesPerNode\": {\n    \
         \                \"type\": \"integer\",\n                    \"description\": \"Maximum actors of this category per
-        pool node\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n   \
-        \                 \"format\": \"date-time\",\n                    \"description\": \"When the template was created\"\
-        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"When the template was last updated\"\n \
-        \               }\n            }\n        },\n        \"AutoSpawnConfig\": {\n            \"type\": \"object\",\n\
-        \            \"additionalProperties\": false,\n            \"description\": \"Configuration for instantiate-on-access
-        behavior\",\n            \"properties\": {\n                \"enabled\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"default\": false,\n                    \"description\": \"If true, accessing a non-existent
-        actor creates it\"\n                },\n                \"idPattern\": {\n                    \"type\": \"string\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"Regex pattern for actor IDs that
-        trigger auto-spawn.\\nExamples: \\\"npc-.*\\\" matches \\\"npc-grok\\\", \\\"npc-merchant-123\\\"\\n\"\n         \
-        \       },\n                \"maxInstances\": {\n                    \"type\": \"integer\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Maximum auto-spawned instances (0 = unlimited)\"\n     \
-        \           },\n                \"characterIdCaptureGroup\": {\n                    \"type\": \"integer\",\n     \
-        \               \"minimum\": 1,\n                    \"nullable\": true,\n                    \"description\": \"\
-        1-based regex capture group index for extracting CharacterId from actor ID.\\nExample: With idPattern \\\"npc-brain-([a-f0-9-]+)\\\
-        \" and characterIdCaptureGroup: 1,\\nactor ID \\\"npc-brain-abc-123-def\\\" extracts \\\"abc-123-def\\\" as CharacterId
-        (parsed as GUID).\\n\"\n                }\n            }\n        }\n    }\n}"
+        pool node\"\n                },\n                \"cognitionTemplateId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"nullable\": true,\n                    \"description\": \"Cognition template ID for this
+        actor type. Primary source for cognition\\npipeline resolution. When null, falls back to ABML metadata, then category
+        default.\\n\"\n                },\n                \"cognitionOverrides\": {\n                    \"type\": \"object\"\
+        ,\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n                \
+        \    \"description\": \"Static template-level cognition overrides. Applied as the first layer\\nin the three-layer
+        override composition (template \\u2192 instance \\u2192 ABML metadata).\\n\"\n                },\n               \
+        \ \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n  \
+        \                  \"description\": \"When the template was created\"\n                },\n                \"updatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"When the template was last updated\"\n                }\n            }\n        },\n      \
+        \  \"AutoSpawnConfig\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n     \
+        \       \"description\": \"Configuration for instantiate-on-access behavior\",\n            \"properties\": {\n  \
+        \              \"enabled\": {\n                    \"type\": \"boolean\",\n                    \"default\": false,\n\
+        \                    \"description\": \"If true, accessing a non-existent actor creates it\"\n                },\n\
+        \                \"idPattern\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Regex pattern for actor IDs that trigger auto-spawn.\\nExamples: \\\"npc-.*\\\
+        \" matches \\\"npc-grok\\\", \\\"npc-merchant-123\\\"\\n\"\n                },\n                \"maxInstances\":
+        {\n                    \"type\": \"integer\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Maximum auto-spawned instances (0 = unlimited)\"\n                },\n                \"characterIdCaptureGroup\"\
+        : {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"1-based regex capture group index for extracting CharacterId from
+        actor ID.\\nExample: With idPattern \\\"npc-brain-([a-f0-9-]+)\\\" and characterIdCaptureGroup: 1,\\nactor ID \\\"\
+        npc-brain-abc-123-def\\\" extracts \\\"abc-123-def\\\" as CharacterId (parsed as GUID).\\n\"\n                }\n\
+        \            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update an actor template\",\n    \"description\": \"\",\n    \"tags\":
         [],\n    \"deprecated\": false,\n    \"operationId\": \"UpdateActorTemplate\"\n}"
   /actor/template/delete:
@@ -1156,6 +1197,20 @@ components:
           type: integer
           default: 100
           description: Maximum actors of this category per pool node
+        cognitionTemplateId:
+          type: string
+          nullable: true
+          description: |
+            Cognition template ID for this actor type. Primary source for cognition
+            pipeline resolution. When null, falls back to ABML metadata, then category default.
+            Examples: "humanoid-cognition-base", "creature-cognition-base", "object-cognition-base"
+        cognitionOverrides:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: |
+            Static template-level cognition overrides. Applied as the first layer
+            in the three-layer override composition (template → instance → ABML metadata).
     AutoSpawnConfig:
       type: object
       additionalProperties: false
@@ -1225,6 +1280,19 @@ components:
         maxInstancesPerNode:
           type: integer
           description: Maximum actors of this category per pool node
+        cognitionTemplateId:
+          type: string
+          nullable: true
+          description: |
+            Cognition template ID for this actor type. Primary source for cognition
+            pipeline resolution. When null, falls back to ABML metadata, then category default.
+        cognitionOverrides:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: |
+            Static template-level cognition overrides. Applied as the first layer
+            in the three-layer override composition (template → instance → ABML metadata).
         createdAt:
           type: string
           format: date-time
@@ -1308,6 +1376,19 @@ components:
           type: integer
           nullable: true
           description: Updated auto-save interval in seconds
+        cognitionTemplateId:
+          type: string
+          nullable: true
+          description: |
+            Updated cognition template ID. Set to override the cognition pipeline
+            for actors created from this template.
+        cognitionOverrides:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: |
+            Updated static template-level cognition overrides. Applied as the first layer
+            in the three-layer override composition.
     DeleteActorTemplateRequest:
       type: object
       additionalProperties: false

@@ -113,9 +113,17 @@ Multi-currency management service (L2 GameFoundation) for game economies. Handle
 
 **Version**: 1.0.0 | **Schema**: `schemas/divine-api.yaml` | **Endpoints**: 22 | **Deep Dive**: [docs/plugins/DIVINE.md](plugins/DIVINE.md)
 
-Pantheon management service (L4 GameFeatures) for deity entities, divinity economy,
-and blessing orchestration. A thin orchestration layer (like Quest over Contract,
-Escrow over Currency/Item) that...
+Pantheon management service (L4 GameFeatures) for deity entities, divinity economy, and blessing orchestration. A thin orchestration layer (like Quest over Contract, Escrow over Currency/Item) that composes existing Bannou primitives to deliver divine game mechanics.
+
+**Composability**: God identity is owned here. God behavior is Actor (event brain) via Puppetmaster. Domain power is Seed. Divinity resource is Currency. Greater Blessings are Collection. Minor Blessings are Status Inventory. Follower bonds are Relationship. lib-divine orchestrates the ceremony connecting these primitives.
+
+**Critical architectural insight**: Gods influence characters through the character's own Actor, not directly. A god's Actor (regional watcher) monitors event streams and makes decisions; the character's Actor receives the consequences. Blessings are entity-agnostic -- characters, accounts, deities, or any entity type can receive them, since the backing storage (lib-collection, lib-status) is also entity-agnostic.
+
+**Zero Arcadia-specific content**: lib-divine is a generic pantheon management service. Arcadia's 18 Old Gods are configured through behaviors and templates at deployment time, not baked into lib-divine.
+
+**Domain codes are opaque strings**: Different games define different domains (War, Knowledge, Nature, etc.). Domain codes follow the same extensibility pattern as seed type codes, collection type codes, and relationship type codes.
+
+**Current status**: All endpoints are stubbed (return `NotImplemented`). See the implementation plan at `docs/plans/DIVINE.md` for the full implementation specification.
 
 ## Documentation {#documentation}
 
@@ -133,7 +141,26 @@ Full-custody orchestration layer (L4 GameFeatures) for multi-party asset exchang
 
 **Version**: 1.0.0 | **Schema**: `schemas/faction-api.yaml` | **Endpoints**: 31 | **Deep Dive**: [docs/plugins/FACTION.md](plugins/FACTION.md)
 
-Faction management as seed-based living entities (L4 GameFeatures).
+The Faction service (L4 GameFeatures) models factions as seed-based living entities whose capabilities emerge from growth, not static assignment. Each faction owns a seed (via lib-seed) that grows through member activities fed by the Collection-to-Seed pipeline. As the faction's seed grows through phases (nascent, established, influential, dominant), capabilities unlock: norm definition, enforcement tiers, territory claiming, and trade regulation. A nascent faction literally CANNOT enforce norms -- it hasn't grown enough governance capability yet.
+
+**Primary Purpose**: Store and serve social norms for lib-obligation. lib-obligation is the PRIMARY CONSUMER of faction norm data -- it queries `/faction/norm/query-applicable` to resolve the full norm hierarchy (guild faction -> location faction -> realm baseline faction) into a merged norm set, then applies personality-weighted moral reasoning to produce GOAP action cost modifiers for NPC cognition. Without lib-faction, lib-obligation only has contractual obligations (guild charters, trade agreements). With lib-faction, ambient social and cultural norms become enforceable through the same cognition pipeline.
+
+**Norm Resolution Hierarchy** (most specific wins):
+1. Guild faction norms (character's direct memberships)
+2. Location faction norms (controlling faction at character's current location)
+3. Realm baseline faction norms (realm-wide cultural context)
+
+**Faction Concepts**:
+- **Realm baseline faction**: provides realm-wide cultural norms (honor codes, taboos)
+- **Location controlling faction**: provides local norms (lawless district, temple sanctity)
+- **Guild factions**: character memberships with role hierarchy (Leader, Officer, Member, Recruit)
+- **Parent/child hierarchy**: organizational structure with configurable max depth
+
+**Political Connections**: Inter-faction political relationships (alliances, rivalries, treaties) are modeled as seed bonds via lib-seed's existing bond API, NOT through lib-relationship. A bond between two faction seeds represents the alliance/rivalry as a growable entity with its own capability manifest. Joint member activities grow the bonded seed, unlocking alliance capabilities.
+
+**violationType as Opaque String**: Norm violation types (e.g., "theft", "deception", "violence") are opaque strings, not enums. The vocabulary is defined by contract templates and action tag mappings in lib-obligation; lib-faction stores whatever violation type strings callers provide. Adding new violation types never requires a schema change.
+
+Internal-only, never internet-facing.
 
 ## Game Service {#game-service}
 
@@ -151,7 +178,9 @@ Hybrid lobby/matchmade game session management (L2 GameFoundation) with subscrip
 
 **Version**: 1.0.0 | **Schema**: `schemas/gardener-api.yaml` | **Endpoints**: 24 | **Deep Dive**: [docs/plugins/GARDENER.md](plugins/GARDENER.md)
 
-Player experience orchestration service (L4 GameFeatures) for garden navigation, scenario routing, progressive discovery, and deployment phase management. Gardener is the player-side counterpart to Puppetmaster: where Puppetmaster orchestrates what NPCs experience, Gardener orchestrates what players experience. Players enter a procedural "Garden" discovery space, encounter POIs (Points of Interest) driven by a weighted scoring algorithm, and enter scenarios backed by Game Sessions that award Seed growth on completion. Internal-only, never internet-facing.
+Player experience orchestration service (L4 GameFeatures) and the player-side counterpart to Puppetmaster: where Puppetmaster orchestrates what NPCs experience, Gardener orchestrates what players experience. A "garden" is an abstract conceptual space that a player inhabits -- it can represent a lobby, an in-game experience, a post-game space, player housing, cooperative gameplay, or the void/discovery space. The player is always in some garden, and Gardener is always active for every connected player, managing their gameplay context, entity associations, and event routing. Gardener provides the APIs and infrastructure that a gardener behavior (running as an actor) uses to manipulate and manage player experiences. The specific behavior varies per game -- some use fully autonomous gardener behaviors, others use manual API calls from the game engine. Internal-only, never internet-facing.
+
+**Current implementation status**: The codebase implements the **void/discovery garden type** only (POI-driven scenario routing with drift metrics and weighted scoring). The broader garden concept (multiple garden types, gardener behavior actor, entity session registration, garden-to-garden transitions) is documented here as the architectural target but not yet implemented. Sections below describe both the current implementation and the target architecture, clearly labeled.
 
 ## Inventory {#inventory}
 
@@ -217,7 +246,19 @@ Pure computation music generation (L4 GameFeatures) using formal music theory ru
 
 **Version**: 1.0.0 | **Schema**: `schemas/obligation-api.yaml` | **Endpoints**: 11 | **Deep Dive**: [docs/plugins/OBLIGATION.md](plugins/OBLIGATION.md)
 
-Contract-aware obligation tracking for NPC cognition (L4 GameFeatures).
+Contract-aware obligation tracking for NPC cognition (L4 GameFeatures). Provides dynamically-updated action cost modifiers based on active contracts (guild charters, trade agreements, quest oaths). The obligation service is the bridge between the Contract service's behavioral clauses and the GOAP planner's action cost system, enabling NPCs to have "second thoughts" before violating their obligations.
+
+**Two-Layer Design**: Works standalone with raw contract penalties. When personality data is available (soft L4 dependency via character-personality's variable provider), obligation costs are enriched with trait-weighted moral reasoning. Without personality enrichment, costs are the unweighted base penalties from contract behavioral clauses.
+
+**Core Flow**:
+1. Contract activated -> obligation service extracts behavioral clauses -> caches per-party
+2. Actor cognition evaluates actions -> reads `${obligations.*}` variables from provider
+3. GOAP planner sees modified action costs -> selects alternative if cost too high
+4. If actor proceeds despite cost -> report-violation -> breach + feedback events
+
+**Variable Provider**: Implements `IVariableProviderFactory` providing the `${obligations.*}` namespace to Actor (L2) via the Variable Provider Factory pattern.
+
+See [GitHub Issue #410](https://github.com/beyond-immersion/bannou-service/issues/410) for the original design specification ("Second Thoughts" feature).
 
 ## Orchestrator {#orchestrator}
 
@@ -301,8 +342,9 @@ The State service (L0 Infrastructure) provides all Bannou services with unified 
 
 **Version**: 1.0.0 | **Schema**: `schemas/status-api.yaml` | **Endpoints**: 16 | **Deep Dive**: [docs/plugins/STATUS.md](plugins/STATUS.md)
 
-Unified entity effects query layer for temporary contract-managed statuses
-and passive seed-derived capabilities.
+Unified entity effects query layer for temporary contract-managed statuses and passive seed-derived capabilities (L4 GameFeatures). Aggregates item-based statuses (buffs, debuffs, death penalties, subscription benefits) stored as items in per-entity status containers, and seed-derived passive effects computed from seed growth state. Any system needing "what effects does this entity have" queries lib-status.
+
+Follows the "items in inventories" pattern (#280): status templates define effect definitions, status containers hold per-entity inventory containers, and granting a status creates an item instance in that container. Contract integration is optional per-template for complex lifecycle management (death penalties, subscriptions); simple TTL-based statuses use lib-item's native decay system (#407). Seed-derived effects are queried from lib-seed and cached with invalidation via `ISeedEvolutionListener`. Internal-only, never internet-facing.
 
 ## Storyline {#storyline}
 

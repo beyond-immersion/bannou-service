@@ -7,8 +7,6 @@ using BeyondImmersion.BannouService.Actor.Handlers;
 using BeyondImmersion.BannouService.Actor.Providers;
 using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Events;
-using GoapGoal = BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal;
-using GoapAction = BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapAction;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
@@ -16,6 +14,8 @@ using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Text.Json;
 using System.Threading.Channels;
+using GoapAction = BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapAction;
+using GoapGoal = BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal;
 
 namespace BeyondImmersion.BannouService.Actor.Runtime;
 

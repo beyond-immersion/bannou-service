@@ -15560,6 +15560,19 @@ components:
         maxInstancesPerNode:
           type: integer
           description: Maximum actors of this category per pool node
+        cognitionTemplateId:
+          type: string
+          nullable: true
+          description: |
+            Cognition template ID for this actor type. Primary source for cognition
+            pipeline resolution. When null, falls back to ABML metadata, then category default.
+        cognitionOverrides:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: |
+            Static template-level cognition overrides. Applied as the first layer
+            in the three-layer override composition (template → instance → ABML metadata).
         createdAt:
           type: string
           format: date-time
@@ -22314,6 +22327,20 @@ components:
           type: integer
           default: 100
           description: Maximum actors of this category per pool node
+        cognitionTemplateId:
+          type: string
+          nullable: true
+          description: |
+            Cognition template ID for this actor type. Primary source for cognition
+            pipeline resolution. When null, falls back to ABML metadata, then category default.
+            Examples: "humanoid-cognition-base", "creature-cognition-base", "object-cognition-base"
+        cognitionOverrides:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: |
+            Static template-level cognition overrides. Applied as the first layer
+            in the three-layer override composition (template → instance → ABML metadata).
     CreateArchiveRequest:
       description: Request to create a point-in-time snapshot of namespace 
         documentation
@@ -47413,6 +47440,19 @@ components:
           type: integer
           nullable: true
           description: Updated auto-save interval in seconds
+        cognitionTemplateId:
+          type: string
+          nullable: true
+          description: |
+            Updated cognition template ID. Set to override the cognition pipeline
+            for actors created from this template.
+        cognitionOverrides:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: |
+            Updated static template-level cognition overrides. Applied as the first layer
+            in the three-layer override composition.
     UpdateBoardTemplateRequest:
       type: object
       description: Request to update mutable fields of a board template

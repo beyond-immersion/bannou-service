@@ -1,6 +1,6 @@
-using System.Text.Json;
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Behavior;
+using System.Text.Json;
 
 namespace BeyondImmersion.BannouService.Actor.Runtime;
 

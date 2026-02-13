@@ -64,6 +64,17 @@ public partial class ActorController
                     "type": "integer",
                     "default": 100,
                     "description": "Maximum actors of this category per pool node"
+                },
+                "cognitionTemplateId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Cognition template ID for this actor type. Primary source for cognition\npipeline resolution. When null, falls back to ABML metadata, then category default.\ nExamples: \"humanoid-cognition-base\", \"creature-cognition-base\", \"object-cognition-base\"\n"
+                },
+                "cognitionOverrides": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Static template-level cognition overrides. Applied as the first layer\nin the three-layer override composition (template \u2192 instance \u2192 ABML metadata).\n"
                 }
             }
         },
@@ -154,6 +165,17 @@ public partial class ActorController
                 "maxInstancesPerNode": {
                     "type": "integer",
                     "description": "Maximum actors of this category per pool node"
+                },
+                "cognitionTemplateId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Cognition template ID for this actor type. Primary source for cognition\npipeline resolution. When null, falls back to ABML metadata, then category default.\n"
+                },
+                "cognitionOverrides": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Static template-level cognition overrides. Applied as the first layer\nin the three-layer override composition (template \u2192 instance \u2192 ABML metadata).\n"
                 },
                 "createdAt": {
                     "type": "string",
@@ -335,6 +357,17 @@ public partial class ActorController
                 "maxInstancesPerNode": {
                     "type": "integer",
                     "description": "Maximum actors of this category per pool node"
+                },
+                "cognitionTemplateId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Cognition template ID for this actor type. Primary source for cognition\npipeline resolution. When null, falls back to ABML metadata, then category default.\n"
+                },
+                "cognitionOverrides": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Static template-level cognition overrides. Applied as the first layer\nin the three-layer override composition (template \u2192 instance \u2192 ABML metadata).\n"
                 },
                 "createdAt": {
                     "type": "string",
@@ -538,6 +571,17 @@ public partial class ActorController
                     "type": "integer",
                     "description": "Maximum actors of this category per pool node"
                 },
+                "cognitionTemplateId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Cognition template ID for this actor type. Primary source for cognition\ npipeline resolution. When null, falls back to ABML metadata, then category default.\n"
+                },
+                "cognitionOverrides": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Static template-level cognition overrides. Applied as the first layer\nin the three-layer override composition (template \u2192 instance \u2192 ABML metadata).\n"
+                },
                 "createdAt": {
                     "type": "string",
                     "format": "date-time",
@@ -679,6 +723,17 @@ public partial class ActorController
                     "type": "integer",
                     "nullable": true,
                     "description": "Updated auto-save interval in seconds"
+                },
+                "cognitionTemplateId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Updated cognition template ID. Set to override the cognition pipeline\nfor actors created from this template.\n"
+                },
+                "cognitionOverrides": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Updated static template-level cognition overrides. Applied as the first layer\nin the three-layer override composition.\n"
                 }
             }
         },
@@ -769,6 +824,17 @@ public partial class ActorController
                 "maxInstancesPerNode": {
                     "type": "integer",
                     "description": "Maximum actors of this category per pool node"
+                },
+                "cognitionTemplateId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Cognition template ID for this actor type. Primary source for cognition\npipeline resolution. When null, falls back to ABML metadata, then category default.\n"
+                },
+                "cognitionOverrides": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "nullable": true,
+                    "description": "Static template-level cognition overrides. Applied as the first layer\nin the three-layer override composition (template \u2192 instance \u2192 ABML metadata).\n"
                 },
                 "createdAt": {
                     "type": "string",

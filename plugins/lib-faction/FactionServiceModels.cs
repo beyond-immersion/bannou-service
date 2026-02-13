@@ -305,4 +305,3 @@ internal class CachedMergedNorm
     /// <summary>Severity of the winning norm.</summary>
     public NormSeverity Severity { get; set; }
 }
-

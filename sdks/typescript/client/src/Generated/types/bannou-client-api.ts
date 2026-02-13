@@ -12136,6 +12136,18 @@ export interface components {
       /** @description Maximum actors of this category per pool node */
       maxInstancesPerNode: number;
       /**
+       * @description Cognition template ID for this actor type. Primary source for cognition
+       *     pipeline resolution. When null, falls back to ABML metadata, then category default.
+       */
+      cognitionTemplateId?: string | null;
+      /**
+       * @description Static template-level cognition overrides. Applied as the first layer
+       *     in the three-layer override composition (template → instance → ABML metadata).
+       */
+      cognitionOverrides?: {
+        [key: string]: unknown;
+      } | null;
+      /**
        * Format: date-time
        * @description When the template was created
        */
@@ -16585,6 +16597,19 @@ export interface components {
        * @default 100
        */
       maxInstancesPerNode: number;
+      /**
+       * @description Cognition template ID for this actor type. Primary source for cognition
+       *     pipeline resolution. When null, falls back to ABML metadata, then category default.
+       *     Examples: "humanoid-cognition-base", "creature-cognition-base", "object-cognition-base"
+       */
+      cognitionTemplateId?: string | null;
+      /**
+       * @description Static template-level cognition overrides. Applied as the first layer
+       *     in the three-layer override composition (template → instance → ABML metadata).
+       */
+      cognitionOverrides?: {
+        [key: string]: unknown;
+      } | null;
     };
     /** @description Request to create a point-in-time snapshot of namespace documentation */
     CreateArchiveRequest: {
@@ -33152,6 +33177,18 @@ export interface components {
       tickIntervalMs?: number | null;
       /** @description Updated auto-save interval in seconds */
       autoSaveIntervalSeconds?: number | null;
+      /**
+       * @description Updated cognition template ID. Set to override the cognition pipeline
+       *     for actors created from this template.
+       */
+      cognitionTemplateId?: string | null;
+      /**
+       * @description Updated static template-level cognition overrides. Applied as the first layer
+       *     in the three-layer override composition.
+       */
+      cognitionOverrides?: {
+        [key: string]: unknown;
+      } | null;
     };
     /** @description Request to update mutable fields of a board template */
     UpdateBoardTemplateRequest: {

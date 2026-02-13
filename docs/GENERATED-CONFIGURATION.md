@@ -660,6 +660,8 @@ This document lists all configuration options defined in Bannou's configuration 
 | Environment Variable | Type | Default | Description |
 |---------------------|------|---------|-------------|
 | `LOCATION_CACHE_TTL_SECONDS` | int | `3600` | TTL for location cache entries in seconds (locations change ... |
+| `LOCATION_CONTEXT_CACHE_TTL_SECONDS` | int | `10` | TTL for location context provider cache entries in seconds, ... |
+| `LOCATION_CONTEXT_NEARBY_POIS_LIMIT` | int | `50` | Maximum number of sibling locations to include in the nearby... |
 | `LOCATION_DEFAULT_DESCENDANT_MAX_DEPTH` | int | `10` | Default max depth when listing descendants if not specified ... |
 | `LOCATION_ENTITY_PRESENCE_CLEANUP_INTERVAL_SECONDS` | int | `60` | Interval in seconds between background cleanup cycles for ex... |
 | `LOCATION_ENTITY_PRESENCE_CLEANUP_STARTUP_DELAY_SECONDS` | int | `15` | Delay in seconds before entity presence cleanup worker start... |
@@ -825,11 +827,9 @@ Final ... |
 | `OBLIGATION_BREACH_REPORT_ENABLED` | bool | `true` | Whether to auto-report violations as breaches to the contrac... |
 | `OBLIGATION_CACHE_TTL_MINUTES` | int | `10` | TTL in minutes for obligation manifest cache entries per cha... |
 | `OBLIGATION_DEFAULT_PAGE_SIZE` | int | `20` | Default page size for paginated queries |
-| `OBLIGATION_EVALUATION_TIMEOUT_MS` | int | `5000` | Timeout in milliseconds for evaluate-action operations |
 | `OBLIGATION_IDEMPOTENCY_TTL_SECONDS` | int | `86400` | TTL in seconds for violation report idempotency keys |
 | `OBLIGATION_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for distributed locks on obligation cache... |
 | `OBLIGATION_MAX_ACTIVE_CONTRACTS_QUERY` | int | `100` | Maximum number of active contracts to query per character du... |
-| `OBLIGATION_MAX_CONCURRENCY_RETRIES` | int | `3` | Maximum retry attempts for optimistic concurrency conflicts |
 | `OBLIGATION_MAX_OBLIGATIONS_PER_CHARACTER` | int | `200` | Safety limit on cached obligations per character (prevents r... |
 
 ### Orchestrator
@@ -1049,7 +1049,6 @@ CHECK_ALL (defaul... |
 | `STATUS_LOCK_ACQUISITION_TIMEOUT_SECONDS` | int | `5` | Maximum seconds to wait when acquiring a distributed lock be... |
 | `STATUS_LOCK_TIMEOUT_SECONDS` | int | `30` | TTL for distributed locks on status mutations |
 | `STATUS_MAX_CACHED_ENTITIES` | int | `10000` | Maximum number of entity active-status cache entries retaine... |
-| `STATUS_MAX_CONCURRENCY_RETRIES` | int | `3` | ETag-based optimistic concurrency retry attempts for cache u... |
 | `STATUS_MAX_STACKS_PER_STATUS` | int | `10` | Global maximum stack count per status (template maxStacks ta... |
 | `STATUS_MAX_STATUSES_PER_ENTITY` | int | `50` | Maximum concurrent active statuses per entity |
 | `STATUS_MAX_STATUS_TEMPLATES_PER_GAME_SERVICE` | int | `200` | Maximum status template definitions per game service |
@@ -1154,9 +1153,9 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 872
+- **Total properties**: 871
 - **Required (no default)**: 51
-- **Optional (has default)**: 821
+- **Optional (has default)**: 820
 
 ## Environment Variable Naming Convention
 

@@ -111,10 +111,10 @@ public sealed class ObligationProvider : IVariableProvider
         if (path.Length == 0) return true;
         var firstSegment = path[0];
         return firstSegment.Equals("active_count", StringComparison.OrdinalIgnoreCase) ||
-               firstSegment.Equals("has_obligations", StringComparison.OrdinalIgnoreCase) ||
-               firstSegment.Equals("contract_count", StringComparison.OrdinalIgnoreCase) ||
-               firstSegment.Equals("total_obligation_cost", StringComparison.OrdinalIgnoreCase) ||
-               firstSegment.Equals("highest_penalty_type", StringComparison.OrdinalIgnoreCase) ||
-               firstSegment.Equals("violation_cost", StringComparison.OrdinalIgnoreCase);
+                firstSegment.Equals("has_obligations", StringComparison.OrdinalIgnoreCase) ||
+                firstSegment.Equals("contract_count", StringComparison.OrdinalIgnoreCase) ||
+                firstSegment.Equals("total_obligation_cost", StringComparison.OrdinalIgnoreCase) ||
+                firstSegment.Equals("highest_penalty_type", StringComparison.OrdinalIgnoreCase) ||
+                firstSegment.Equals("violation_cost", StringComparison.OrdinalIgnoreCase);
     }
 }
