@@ -4,6 +4,7 @@ using BeyondImmersion.Bannou.BehaviorExpressions.Runtime;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Actor;
 using BeyondImmersion.BannouService.Actor.Runtime;
+using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Providers;
@@ -96,6 +97,7 @@ public class ActorRunnerTests
 
         var executorMock = new Mock<IDocumentExecutor>();
         var expressionEvaluatorMock = new Mock<IExpressionEvaluator>();
+        var cognitionBuilderMock = new Mock<ICognitionBuilder>();
 
         // Set up executor to return success
         executorMock.Setup(e => e.ExecuteAsync(
@@ -120,6 +122,7 @@ public class ActorRunnerTests
             providerFactories,
             executorMock.Object,
             expressionEvaluatorMock.Object,
+            cognitionBuilderMock.Object,
             loggerMock.Object,
             initialState);
 

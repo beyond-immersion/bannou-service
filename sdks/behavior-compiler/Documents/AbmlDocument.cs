@@ -93,6 +93,20 @@ public sealed class DocumentMetadata
     /// Enables compile-time path validation when IResourceTemplateRegistry is available.
     /// </summary>
     public IReadOnlyList<string> ResourceTemplates { get; init; } = [];
+
+    /// <summary>
+    /// Optional cognition template override for actor execution.
+    /// When specified, overrides the actor template's cognition configuration.
+    /// Example: "humanoid-cognition-base", "creature-cognition-base".
+    /// </summary>
+    public string? CognitionTemplate { get; init; }
+
+    /// <summary>
+    /// Whether this behavior enables the evaluate_consequences cognition stage.
+    /// When true, the actor's cognition pipeline includes moral/obligation cost evaluation.
+    /// Default is false (no moral reasoning overhead).
+    /// </summary>
+    public bool Conscience { get; init; }
 }
 
 /// <summary>

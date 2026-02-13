@@ -137,7 +137,9 @@ public sealed class DocumentParser
             Description = meta.TryGetValue("description", out var d) ? d as string : null,
             Tags = ParseStringList(meta.TryGetValue("tags", out var tags) ? tags : null),
             Deterministic = meta.TryGetValue("deterministic", out var det) && ParseBool(det),
-            ResourceTemplates = ParseStringList(meta.TryGetValue("resource_templates", out var rt) ? rt : null)
+            ResourceTemplates = ParseStringList(meta.TryGetValue("resource_templates", out var rt) ? rt : null),
+            CognitionTemplate = meta.TryGetValue("cognition_template", out var ct) ? ct as string : null,
+            Conscience = meta.TryGetValue("conscience", out var con) && ParseBool(con)
         };
     }
 

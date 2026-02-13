@@ -335,8 +335,10 @@ All 16 API endpoints are fully implemented. The remaining stub is the `item.expi
 <!-- AUDIT:NEEDS_DESIGN:2026-02-13:https://github.com/beyond-immersion/bannou-service/issues/423 -->
 
 - **IStatusEffectProvider DI interface**: If L2 services ever need status data (e.g., Character needs "is dead?" checks), add `IStatusEffectProvider` in `bannou-service/Providers/` with DI inversion. Status implements it; Character discovers via `IEnumerable<IStatusEffectProvider>`.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-13:https://github.com/beyond-immersion/bannou-service/issues/425 -->
 
 - **Client events**: `status-client-events.yaml` for pushing status change notifications to connected clients (buff applied, buff expired, death state entered).
+<!-- AUDIT:NEEDS_DESIGN:2026-02-13:https://github.com/beyond-immersion/bannou-service/issues/426 -->
 
 - **Variable provider factory**: `IStatusVariableProviderFactory` for ABML behavior expressions (`${status.has_buff}`, `${status.is_dead}`, `${status.poison_stacks}`).
 

@@ -1,3 +1,5 @@
+using BeyondImmersion.BannouService.Behavior;
+
 namespace BeyondImmersion.BannouService.Actor.Runtime;
 
 /// <summary>
@@ -56,6 +58,19 @@ public class ActorTemplateData
     public DateTimeOffset UpdatedAt { get; set; }
 
     /// <summary>
+    /// Gets or sets the cognition template ID for this actor type.
+    /// Primary source for cognition pipeline resolution (per IMPLEMENTATION TENETS).
+    /// When null, falls back to ABML metadata, then category default mapping.
+    /// </summary>
+    public string? CognitionTemplateId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the static template-level cognition overrides.
+    /// Applied as the first layer in the three-layer override composition.
+    /// </summary>
+    public CognitionOverrides? CognitionOverrides { get; set; }
+
+    /// <summary>
     /// Converts to API response model.
     /// </summary>
     public ActorTemplateResponse ToResponse()
@@ -70,6 +85,8 @@ public class ActorTemplateData
             TickIntervalMs = TickIntervalMs,
             AutoSaveIntervalSeconds = AutoSaveIntervalSeconds,
             MaxInstancesPerNode = MaxInstancesPerNode,
+            CognitionTemplateId = CognitionTemplateId,
+            CognitionOverrides = null,
             CreatedAt = CreatedAt,
             UpdatedAt = UpdatedAt
         };

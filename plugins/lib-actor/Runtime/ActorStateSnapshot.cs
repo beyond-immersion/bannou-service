@@ -1,3 +1,5 @@
+using BeyondImmersion.BannouService.Behavior;
+
 namespace BeyondImmersion.BannouService.Actor.Runtime;
 
 /// <summary>
@@ -70,6 +72,13 @@ public class ActorStateSnapshot
     /// Gets the working memory (perception-derived data).
     /// </summary>
     public IReadOnlyDictionary<string, object> WorkingMemory { get; init; } = new Dictionary<string, object>();
+
+    /// <summary>
+    /// Gets the per-instance cognition overrides accumulated through gameplay.
+    /// Applied as the second layer in the three-layer override composition
+    /// (template → instance → ABML metadata).
+    /// </summary>
+    public CognitionOverrides? CognitionOverrides { get; init; }
 
     /// <summary>
     /// Gets the current encounter state for Event Brain actors.

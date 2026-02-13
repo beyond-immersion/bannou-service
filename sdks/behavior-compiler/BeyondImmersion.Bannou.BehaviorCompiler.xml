@@ -2376,6 +2376,20 @@
             Enables compile-time path validation when IResourceTemplateRegistry is available.
             </summary>
         </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.DocumentMetadata.CognitionTemplate">
+            <summary>
+            Optional cognition template override for actor execution.
+            When specified, overrides the actor template's cognition configuration.
+            Example: "humanoid-cognition-base", "creature-cognition-base".
+            </summary>
+        </member>
+        <member name="P:BeyondImmersion.Bannou.BehaviorCompiler.Documents.DocumentMetadata.Conscience">
+            <summary>
+            Whether this behavior enables the evaluate_consequences cognition stage.
+            When true, the actor's cognition pipeline includes moral/obligation cost evaluation.
+            Default is false (no moral reasoning overhead).
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.Bannou.BehaviorCompiler.Documents.ImportDefinition">
             <summary>
             Import definition for schemas or other ABML documents.

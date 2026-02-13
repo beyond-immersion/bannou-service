@@ -5,7 +5,10 @@ using BeyondImmersion.Bannou.BehaviorExpressions.Runtime;
 using BeyondImmersion.BannouService.Abml.Execution;
 using BeyondImmersion.BannouService.Actor.Handlers;
 using BeyondImmersion.BannouService.Actor.Providers;
+using BeyondImmersion.BannouService.Behavior;
 using BeyondImmersion.BannouService.Events;
+using GoapGoal = BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapGoal;
+using GoapAction = BeyondImmersion.Bannou.BehaviorCompiler.Goap.GoapAction;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Services;
@@ -35,8 +38,11 @@ public sealed class ActorRunner : IActorRunner
     private readonly IEnumerable<IVariableProviderFactory> _providerFactories;
     private readonly IDocumentExecutor _executor;
     private readonly IExpressionEvaluator _expressionEvaluator;
+    private readonly ICognitionBuilder _cognitionBuilder;
 
     private AbmlDocument? _behavior;
+    private ICognitionPipeline? _cognitionPipeline;
+    private CognitionOverrides? _instanceCognitionOverrides;
     private IReadOnlyList<GoapGoal>? _goapGoals;
     private IReadOnlyList<GoapAction>? _goapActions;
     private ActorStatus _status = ActorStatus.Pending;
@@ -134,6 +140,7 @@ public sealed class ActorRunner : IActorRunner
     /// <param name="providerFactories">Variable provider factories for ABML expressions (discovered via DI).</param>
     /// <param name="executor">Document executor for behavior execution.</param>
     /// <param name="expressionEvaluator">Expression evaluator for options evaluation.</param>
+    /// <param name="cognitionBuilder">Cognition pipeline builder for template-driven cognition.</param>
     /// <param name="logger">Logger instance.</param>
     /// <param name="initialState">Initial state snapshot, or null for fresh actor.</param>
     public ActorRunner(
@@ -149,6 +156,7 @@ public sealed class ActorRunner : IActorRunner
         IEnumerable<IVariableProviderFactory> providerFactories,
         IDocumentExecutor executor,
         IExpressionEvaluator expressionEvaluator,
+        ICognitionBuilder cognitionBuilder,
         ILogger<ActorRunner> logger,
         object? initialState)
     {
@@ -164,6 +172,7 @@ public sealed class ActorRunner : IActorRunner
         _providerFactories = providerFactories;
         _executor = executor;
         _expressionEvaluator = expressionEvaluator;
+        _cognitionBuilder = cognitionBuilder;
         _logger = logger;
 
         // Create bounded perception queue with DropOldest behavior
@@ -320,6 +329,7 @@ public sealed class ActorRunner : IActorRunner
             Goals = _state.GetGoals(),
             Memories = _state.GetAllMemories(),
             WorkingMemory = _state.GetAllWorkingMemory(),
+            CognitionOverrides = _instanceCognitionOverrides,
             Encounter = encounter
         };
     }
@@ -430,6 +440,7 @@ public sealed class ActorRunner : IActorRunner
         _behavior = null;
         _goapGoals = null;
         _goapActions = null;
+        _cognitionPipeline = null;
         _logger.LogInformation("Actor {ActorId} cached behavior invalidated, will reload on next tick", ActorId);
     }
 
@@ -489,11 +500,20 @@ public sealed class ActorRunner : IActorRunner
 
             try
             {
-                // 1. Process perceptions (drain queue into working memory)
-                await ProcessPerceptionsAsync(ct);
+                // Phase 1: Cognition pipeline (if available)
+                CognitionResult? cognitionResult = null;
+                if (_cognitionPipeline != null)
+                {
+                    cognitionResult = await ExecuteCognitionPhaseAsync(ct);
+                }
+                else
+                {
+                    // No pipeline — process perceptions directly into working memory
+                    await ProcessPerceptionsAsync(ct);
+                }
 
-                // 2. Execute behavior tick
-                await ExecuteBehaviorTickAsync(ct);
+                // Phase 2: Behavior execution (always)
+                await ExecuteBehaviorTickAsync(cognitionResult, ct);
 
                 // 3. Publish state update if changed
                 await PublishStateUpdateIfNeededAsync(ct);
@@ -560,6 +580,91 @@ public sealed class ActorRunner : IActorRunner
     }
 
     /// <summary>
+    /// Executes the cognition pipeline phase: drains perceptions, processes through pipeline,
+    /// and applies results to actor state.
+    /// </summary>
+    private async Task<CognitionResult?> ExecuteCognitionPhaseAsync(CancellationToken ct)
+    {
+        // 1. Drain perception queue into a list for batch processing
+        var perceptions = new List<object>();
+        while (_perceptionQueue.Reader.TryRead(out var perception))
+        {
+            // Apply attention filter (based on urgency)
+            if (perception.Urgency < (float)_config.PerceptionFilterThreshold)
+                continue;
+
+            perceptions.Add(perception);
+        }
+
+        if (perceptions.Count == 0)
+        {
+            return null;
+        }
+
+        // 2. Build CognitionContext from actor state
+        var entityId = CharacterId ?? Guid.Empty;
+        var context = new CognitionContext
+        {
+            EntityId = entityId,
+            Data = new Dictionary<string, object>
+            {
+                ["actorId"] = ActorId,
+                ["category"] = Category,
+                ["feelings"] = _state.GetAllFeelings(),
+                ["goals"] = _state.GetGoals(),
+                ["memories"] = _state.GetAllMemories(),
+                ["workingMemory"] = _state.GetAllWorkingMemory()
+            }
+        };
+
+        // 3. Process perceptions through the cognition pipeline
+        // Capture to local for null safety (field can be reset by InvalidateCachedBehavior)
+        var pipeline = _cognitionPipeline;
+        if (pipeline == null)
+            return null;
+
+        var result = await pipeline.ProcessBatchAsync(perceptions, context, ct);
+
+        if (!result.Success)
+        {
+            _logger.LogWarning("Actor {ActorId} cognition pipeline failed: {Error}", ActorId, result.Error);
+            // Fall back to direct perception processing on pipeline failure
+            foreach (var p in perceptions.OfType<PerceptionData>())
+            {
+                var key = $"perception:{p.PerceptionType}:{p.SourceId}";
+                _state.SetWorkingMemory(key, p);
+            }
+            return null;
+        }
+
+        // 4. Apply cognition results to actor state
+        // Store filtered perceptions in working memory
+        foreach (var p in result.ProcessedPerceptions.OfType<PerceptionData>())
+        {
+            var key = $"perception:{p.PerceptionType}:{p.SourceId}";
+            _state.SetWorkingMemory(key, p);
+
+            // High significance perceptions become memories
+            if (p.Urgency >= (float)_config.PerceptionMemoryThreshold)
+            {
+                _state.AddMemory(
+                    $"recent:{p.PerceptionType}",
+                    p,
+                    DateTimeOffset.UtcNow.AddMinutes(_config.ShortTermMemoryMinutes));
+            }
+        }
+
+        if (perceptions.Count > 0)
+        {
+            _logger.LogDebug(
+                "Actor {ActorId} cognition processed {Total} perceptions, {Filtered} passed pipeline",
+                ActorId, perceptions.Count, result.ProcessedPerceptions.Count);
+        }
+
+        return result;
+    }
+
+    /// <summary>
     /// Processes all queued perceptions into working memory.
     /// </summary>
     private async Task ProcessPerceptionsAsync(CancellationToken ct)
@@ -605,7 +710,9 @@ public sealed class ActorRunner : IActorRunner
     /// <summary>
     /// Executes one tick of behavior using the loaded ABML document.
     /// </summary>
-    private async Task ExecuteBehaviorTickAsync(CancellationToken ct)
+    /// <param name="cognitionResult">Result from cognition phase, or null if no pipeline.</param>
+    /// <param name="ct">Cancellation token.</param>
+    private async Task ExecuteBehaviorTickAsync(CognitionResult? cognitionResult, CancellationToken ct)
     {
         // 1. Lazy-load behavior document on first tick
         if (_behavior == null)
@@ -652,13 +759,27 @@ public sealed class ActorRunner : IActorRunner
                     "Actor {ActorId} extracted GOAP metadata: {GoalCount} goals, {ActionCount} actions",
                     ActorId, _goapGoals.Count, _goapActions.Count);
             }
+
+            // Build cognition pipeline using three-tier resolution (per IMPLEMENTATION TENETS):
+            // 1. Actor template config (primary)
+            // 2. ABML metadata (override)
+            // 3. Category default mapping (fallback)
+            BuildCognitionPipeline();
         }
 
         // 2. Create scope with current actor state
         var scope = await CreateExecutionScopeAsync(ct);
 
-        // 3. Execute behavior (prefer process_tick flow if available, otherwise main)
-        var startFlow = _behavior.Flows.ContainsKey("process_tick") ? "process_tick" : "main";
+        // Inject cognition results into scope for behavior access
+        if (cognitionResult != null)
+        {
+            scope.SetValue("_cognition_replan", cognitionResult.RequiresReplan);
+            scope.SetValue("_cognition_replan_urgency", (double)cognitionResult.ReplanUrgency);
+            scope.SetValue("_cognition_affected_goals", cognitionResult.AffectedGoals);
+        }
+
+        // 3. Resolve start flow: on_tick (primary) → main (fallback)
+        var startFlow = _behavior.Flows.ContainsKey("on_tick") ? "on_tick" : "main";
         var result = await _executor.ExecuteAsync(_behavior, startFlow, scope, ct);
 
         if (!result.IsSuccess)
@@ -1173,10 +1294,90 @@ public sealed class ActorRunner : IActorRunner
             }
         }
 
+        // Restore per-instance cognition overrides
+        if (snapshot.CognitionOverrides != null)
+        {
+            _instanceCognitionOverrides = snapshot.CognitionOverrides;
+        }
+
         // Clear pending changes since we just loaded saved state
         _state.ClearPendingChanges();
 
         _logger.LogDebug("Actor {ActorId} restored state from snapshot", ActorId);
+    }
+
+    /// <summary>
+    /// Builds the cognition pipeline using three-tier template resolution.
+    /// Resolution order: actor template config → ABML metadata → category default.
+    /// </summary>
+    private void BuildCognitionPipeline()
+    {
+        // Tier 1: Actor template configuration (primary source)
+        var templateId = _template.CognitionTemplateId;
+
+        // Tier 2: ABML metadata override
+        if (string.IsNullOrEmpty(templateId))
+        {
+            templateId = _behavior?.Metadata?.CognitionTemplate;
+        }
+
+        // Tier 3: Category default mapping (fallback)
+        if (string.IsNullOrEmpty(templateId))
+        {
+            templateId = CognitionDefaults.GetDefaultTemplateId(Category);
+        }
+
+        // No template resolved — actor runs ABML-only (legitimate for simple actors)
+        if (string.IsNullOrEmpty(templateId))
+        {
+            _logger.LogDebug("Actor {ActorId} has no cognition template, running ABML-only", ActorId);
+            return;
+        }
+
+        // Merge overrides: template (Layer 1) + instance (Layer 2)
+        var mergedOverrides = MergeCognitionOverrides(
+            _template.CognitionOverrides,
+            _instanceCognitionOverrides);
+
+        // Build the pipeline
+        _cognitionPipeline = _cognitionBuilder.Build(templateId, mergedOverrides);
+
+        if (_cognitionPipeline == null)
+        {
+            // Template ID was specified but not found — this is a configuration error
+            _logger.LogError(
+                "Actor {ActorId} cognition template {TemplateId} not found, actor will run ABML-only",
+                ActorId, templateId);
+            return;
+        }
+
+        _logger.LogInformation(
+            "Actor {ActorId} built cognition pipeline from template {TemplateId} ({StageCount} stages)",
+            ActorId, templateId, _cognitionPipeline.Stages.Count);
+    }
+
+    /// <summary>
+    /// Merges cognition overrides from multiple layers.
+    /// Layer 1 (template) and Layer 2 (instance) are combined into a single override set.
+    /// </summary>
+    private static CognitionOverrides? MergeCognitionOverrides(
+        CognitionOverrides? templateOverrides,
+        CognitionOverrides? instanceOverrides)
+    {
+        if (templateOverrides == null && instanceOverrides == null)
+            return null;
+
+        if (templateOverrides == null)
+            return instanceOverrides;
+
+        if (instanceOverrides == null)
+            return templateOverrides;
+
+        // Combine both override lists — instance overrides applied after template overrides
+        var merged = new List<ICognitionOverride>(templateOverrides.Overrides);
+        merged.AddRange(instanceOverrides.Overrides);
+
+        return new CognitionOverrides { Overrides = merged };
     }
 
     /// <summary>

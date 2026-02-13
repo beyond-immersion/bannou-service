@@ -934,9 +934,11 @@ public partial class FactionService : IFactionService
     {
         _logger.LogDebug("Adding member {CharacterId} to faction {FactionId}", body.CharacterId, body.FactionId);
 
+        // Lock per faction (not per member pair) to serialize MemberCount updates
+        // and prevent concurrent additions from racing on the denormalized count
         await using var lockResponse = await _lockProvider.LockAsync(
             StateStoreDefinitions.FactionLock,
-            resourceId: $"membership:{body.FactionId}:{body.CharacterId}",
+            resourceId: $"faction-membership:{body.FactionId}",
             lockOwner: Guid.NewGuid().ToString(),
             expiryInSeconds: _configuration.DistributedLockTimeoutSeconds,
             cancellationToken: cancellationToken);
@@ -1021,9 +1023,11 @@ public partial class FactionService : IFactionService
     {
         _logger.LogDebug("Removing member {CharacterId} from faction {FactionId}", body.CharacterId, body.FactionId);
 
+        // Lock per faction (not per member pair) to serialize MemberCount updates
+        // and prevent concurrent removals from racing on the denormalized count
         await using var lockResponse = await _lockProvider.LockAsync(
             StateStoreDefinitions.FactionLock,
-            resourceId: $"membership:{body.FactionId}:{body.CharacterId}",
+            resourceId: $"faction-membership:{body.FactionId}",
             lockOwner: Guid.NewGuid().ToString(),
             expiryInSeconds: _configuration.DistributedLockTimeoutSeconds,
             cancellationToken: cancellationToken);

@@ -130,6 +130,7 @@ These documents provide the high-level architectural north-star context for the 
 ## Critical Development Rules
 
 - **NEVER repeat commands**: If a command succeeds, DO NOT run it again to "verify" or "see more output". If you need both the head and tail of command output, redirect to a file first (`command > /tmp/output.txt 2>&1`) then read the file. Repeating builds, tests, or any command wastes time and resources. Trust the output you already received.
+- **Scoped builds ONLY**: When you have only modified files in a single plugin, NEVER run a broad `dotnet build` (full solution). Build ONLY the specific plugin project: `dotnet build plugins/lib-{service}/lib-{service}.csproj --no-restore`. Full solution builds (`dotnet build` with no project path) are ONLY acceptable when changes span multiple projects or shared code (bannou-service/, schemas/, etc.). This saves significant build time and avoids unnecessary recompilation of 50+ unrelated projects.
 - **Research first**: Always research the correct library API before implementing
 - **Mandatory**: Never use null-forgiving operators (`!`) or cast null to non-nullable types anywhere in Bannou code as they cause segmentation faults and hide null reference exceptions.
 - **Prohibited**: `variable!`, `property!`, `method()!`, `null!`, `default!`, `(Type)null`

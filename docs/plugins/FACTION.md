@@ -384,7 +384,7 @@ None. All 31 endpoints are fully implemented with business logic.
 1. **No owner validation for territory claims**: Like Collection/Seed, faction trusts that callers pass valid entity IDs. Location existence is validated via lib-location, but no check that the faction "should" be able to claim that location beyond seed capability gating.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-13:https://github.com/beyond-immersion/bannou-service/issues/424 -->
 
-2. **Membership count denormalization**: `FactionResponse.memberCount` is denormalized on the faction entity. Add/remove operations must update this count atomically. Potential for drift if operations fail between membership store write and faction store update.
+2. ~~**Membership count denormalization race condition**~~: **FIXED** (2026-02-13) - Changed lock granularity in `AddMemberAsync` and `RemoveMemberAsync` from per-member-pair (`membership:{factionId}:{characterId}`) to per-faction (`faction-membership:{factionId}`). This serializes all member mutations per faction, preventing concurrent additions/removals from racing on the denormalized `MemberCount`. `UpdateMemberRoleAsync` keeps per-pair lock since it doesn't touch `MemberCount`. The non-atomic multi-store write risk (member saved but count update fails) remains an inherent architecture limitation shared by all Bannou services with denormalized counts.
 
 3. **Norm query performance at scale**: `QueryApplicableNorms` performs up to 3 aggregation passes (guild factions, location faction, realm baseline). With many memberships or large norm sets, this could become expensive. The Redis cache (TTL-based) mitigates reads but cold-start queries for characters with many memberships need profiling.
 

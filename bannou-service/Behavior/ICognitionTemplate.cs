@@ -325,12 +325,18 @@ public static class CognitionStages
     public const string Storage = "storage";
 
     /// <summary>
-    /// Stage 5: Intention formation.
+    /// Stage 5: Consequence evaluation (morality/obligation cost assessment).
+    /// Forward-compatible slot: inert until an EvaluateConsequencesHandler is registered.
+    /// </summary>
+    public const string EvaluateConsequences = "evaluate_consequences";
+
+    /// <summary>
+    /// Stage 6: Intention formation.
     /// </summary>
     public const string Intention = "intention";
 
     /// <summary>
     /// Gets all standard stage names in pipeline order.
     /// </summary>
-    public static IReadOnlyList<string> All { get; } = [Filter, MemoryQuery, Significance, Storage, Intention];
+    public static IReadOnlyList<string> All { get; } = [Filter, MemoryQuery, Significance, Storage, EvaluateConsequences, Intention];
 }

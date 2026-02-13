@@ -156,6 +156,7 @@ public partial class ActorService : IActorService
             MaxInstancesPerNode = body.MaxInstancesPerNode > 0
                 ? body.MaxInstancesPerNode
                 : _configuration.DefaultActorsPerNode,
+            CognitionTemplateId = body.CognitionTemplateId,
             CreatedAt = now,
             UpdatedAt = now
         };
@@ -316,6 +317,12 @@ public partial class ActorService : IActorService
         {
             existing.AutoSaveIntervalSeconds = body.AutoSaveIntervalSeconds.Value;
             changedFields.Add("autoSaveIntervalSeconds");
+        }
+
+        if (body.CognitionTemplateId != null && body.CognitionTemplateId != existing.CognitionTemplateId)
+        {
+            existing.CognitionTemplateId = body.CognitionTemplateId;
+            changedFields.Add("cognitionTemplateId");
         }
 
         existing.UpdatedAt = now;
