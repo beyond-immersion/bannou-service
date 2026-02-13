@@ -345,9 +345,13 @@ None. All 31 endpoints are fully implemented with business logic.
 1. **Faction diplomacy system**: Formalized alliance/rivalry mechanics through seed bonds with capability-gated treaty operations.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-12:https://github.com/beyond-immersion/bannou-service/issues/413 -->
 2. **Faction economy**: Trade regulation capabilities unlocked at seed growth thresholds, integrating with lib-currency for tariffs and trade agreements.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-12:https://github.com/beyond-immersion/bannou-service/issues/414 -->
 3. **Faction reputation system**: Per-character standing within a faction affecting norm enforcement intensity and available roles.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-12:https://github.com/beyond-immersion/bannou-service/issues/416 -->
 4. **Client events for real-time faction notifications**: Define `faction-client-events.yaml` to push membership changes, territory shifts, and norm updates to connected WebSocket clients via `IClientEventPublisher`.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-13:https://github.com/beyond-immersion/bannou-service/issues/418 -->
 5. **Faction governance elections**: Member voting for leadership positions using Contract-backed consent flows.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-13:ISSUE_URL_PLACEHOLDER -->
 
 ## Known Quirks & Caveats
 

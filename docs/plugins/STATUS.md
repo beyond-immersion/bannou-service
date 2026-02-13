@@ -305,6 +305,7 @@ All 16 API endpoints are fully implemented. The remaining stub is the `item.expi
 ### Blocking Dependency
 
 - **#407 (Item Decay/Expiration System)**: The `item.expired` event subscription is commented out in the events schema. lib-item does not yet publish `item.expired` events. Until #407 is implemented, TTL-based status expiration relies on **lazy expiration during cache rebuild** -- when `GetOrBuildActiveCacheAsync` encounters expired instances in MySQL, it deletes them and publishes `status.expired`. This means expired statuses persist in MySQL until the next cache miss for that entity. Contract-backed statuses still work independently (contract prebound APIs call `/status/remove` on expiry).
+<!-- AUDIT:BLOCKED:2026-02-13 -->
 
 ### Missing Implementation
 
@@ -322,8 +323,10 @@ All 16 API endpoints are fully implemented. The remaining stub is the `item.expi
 ## Potential Extensions
 
 - **Tick-based effects (DOT/HOT)**: Repeating actions during a status duration (damage every 3s, healing every 5s). Requires either contract milestone ticking support or a dedicated tick worker. The `onTick` pattern from #282 defines the interface; contract prebound APIs handle execution.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-12:https://github.com/beyond-immersion/bannou-service/issues/417 -->
 
 - **Conditional milestone completion**: Death penalty resurrection conditions ("wait 30s OR use resurrection scroll OR reach shrine"). Requires Contract's conditional milestone resolution (`anyOf` condition types).
+<!-- AUDIT:NEEDS_DESIGN:2026-02-13:https://github.com/beyond-immersion/bannou-service/issues/419 -->
 
 - **Subscription renewal flows**: Premium subscription auto-renewal with `checkEndpoint` for billing verification. Requires contract renewal milestone pattern.
 
@@ -371,9 +374,11 @@ All 16 API endpoints are fully implemented. The remaining stub is the `item.expi
 
 - **Item template per status template**: Each status template requires an `itemTemplateId` reference. This means game designers must create item templates for every status type before creating status templates. The relationship between item template properties and status behavior needs documentation.
 
-- **Hardcoded `EntityType.Character` in contract creation**: `CreateNewStatusInstanceAsync` hardcodes `EntityType.Character` as the contract party entity type (line 1234), but statuses can be granted to any entity type (polymorphic ownership). Contract creation will set the wrong entity type for non-character entities (e.g., accounts with subscription statuses).
+- **Hardcoded `EntityType.Character` in contract creation**: `CreateNewStatusInstanceAsync` hardcodes `EntityType.Character` as the contract party entity type (line 1261), but statuses can be granted to any entity type (polymorphic ownership). Contract creation will set the wrong entity type for non-character entities (e.g., accounts with subscription statuses).
+<!-- AUDIT:NEEDS_DESIGN:2026-02-12:https://github.com/beyond-immersion/bannou-service/issues/415 -->
 
-- **Hardcoded `EntityType.Character` in contract termination**: `RemoveInstanceInternalAsync` also hardcodes `EntityType.Character` as the `RequestingEntityType` for `TerminateContractInstanceAsync` (line 1411). Same issue as above.
+- **Hardcoded `EntityType.Character` in contract termination**: `RemoveInstanceInternalAsync` also hardcodes `EntityType.Character` as the `RequestingEntityType` for `TerminateContractInstanceAsync` (line 1440). Same issue as above.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-12:https://github.com/beyond-immersion/bannou-service/issues/415 -->
 
 ---
 

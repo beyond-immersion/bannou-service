@@ -239,9 +239,7 @@ Event-Driven Auto-Registration
 
 ## Potential Extensions
 
-1. **Endpoint affinity**: Sticky routing for stateful services (session affinity based on request metadata).
-
-2. **Graceful draining**: Endpoint status `ShuttingDown` could actively drain connections before full deregistration.
+*No extensions identified. Graceful draining was previously listed here but deemed unnecessary: Orchestrator's two-level routing model (mapping resolver + endpoint resolution) handles managed deployments by changing app-id mappings before stopping old nodes, so new requests never reach the draining node. Crash scenarios can't be helped by draining since the node is already dead.*
 
 ---
 
@@ -259,13 +257,15 @@ Event-Driven Auto-Registration
 
 These are standard behaviors worth understanding for operations and debugging:
 
-1. **Resilient routing fallback**: If health/load filtering eliminates all endpoints, `GetRoute` falls back to the full unfiltered list. Prefers degraded routing over total failure.
+1. **Two-level routing model**: Mesh routing operates in two stages. First, `IServiceAppMappingResolver` maps a **service name** to an **app-id** (e.g., `"auth"` → `"bannou-auth-node1"`). This mapping is populated by Orchestrator's `FullServiceMappingsEvent` broadcasts after deployments and topology changes. Second, Mesh resolves the **app-id** to a specific **endpoint** using load balancing across all healthy instances registered under that app-id. Node affinity is handled at the first level (Orchestrator assigns per-node app-ids like `bannou-{service}-{nodeName}`), so Mesh's load balancing at the second level is always stateless. In development, all services map to the default `"bannou"` app-id (single instance); in production, Orchestrator controls which node each service routes to by publishing different mappings.
 
-2. **Circuit breaker eventual consistency**: State syncs across instances via Redis + RabbitMQ events within milliseconds. Brief disagreement during propagation is expected and harmless.
+2. **Resilient routing fallback**: If health/load filtering eliminates all endpoints, `GetRoute` falls back to the full unfiltered list. Prefers degraded routing over total failure.
 
-3. **Global index lazy cleanup**: The `mesh-global-index` store cleans stale entries on access rather than via TTL. Endpoints themselves have TTL, so this is an optimization choice, not a bug.
+3. **Circuit breaker eventual consistency**: State syncs across instances via Redis + RabbitMQ events within milliseconds. Brief disagreement during propagation is expected and harmless.
 
-4. **Empty mappings = reset**: `FullServiceMappingsEvent` with empty mappings resets all routing to default ("bannou"). This is intentional for container teardown.
+4. **Global index lazy cleanup**: The `mesh-global-index` store cleans stale entries on access rather than via TTL. Endpoints themselves have TTL, so this is an optimization choice, not a bug.
+
+5. **Empty mappings = reset**: `FullServiceMappingsEvent` with empty mappings resets all routing to default ("bannou"). This is intentional for container teardown.
 
 ### Design Considerations (Requires Planning)
 
