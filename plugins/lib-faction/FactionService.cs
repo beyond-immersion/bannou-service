@@ -477,15 +477,21 @@ public partial class FactionService : IFactionService
         if (body.IsRealmBaseline.HasValue)
             conditions.Add(new QueryCondition { Path = "$.IsRealmBaseline", Operator = QueryOperator.Equals, Value = body.IsRealmBaseline.Value.ToString().ToLowerInvariant() });
 
+        var offset = 0;
+        if (!string.IsNullOrEmpty(body.Cursor) && int.TryParse(body.Cursor, out var parsedOffset))
+        {
+            offset = parsedOffset;
+        }
+
         var result = await _factionQueryStore.JsonQueryPagedAsync(
-            conditions, body.Offset, body.PageSize, cancellationToken: cancellationToken);
+            conditions, offset, body.PageSize, cancellationToken: cancellationToken);
 
         var factions = result.Items.Select(r => MapToResponse(r.Value)).ToList();
 
         return (StatusCodes.OK, new ListFactionsResponse
         {
             Factions = factions,
-            TotalCount = result.TotalCount,
+            NextCursor = result.HasMore ? (offset + body.PageSize).ToString() : null,
             HasMore = result.HasMore,
         });
     }
@@ -1082,14 +1088,19 @@ public partial class FactionService : IFactionService
             conditions.Add(new QueryCondition { Path = "$.Role", Operator = QueryOperator.Equals, Value = body.Role.Value.ToString() });
 
         var queryStore = _stateStoreFactory.GetJsonQueryableStore<FactionMemberModel>(StateStoreDefinitions.FactionMembership);
-        var result = await queryStore.JsonQueryPagedAsync(conditions, body.Offset, body.PageSize, cancellationToken: cancellationToken);
+        var memberOffset = 0;
+        if (!string.IsNullOrEmpty(body.Cursor) && int.TryParse(body.Cursor, out var parsedMemberOffset))
+        {
+            memberOffset = parsedMemberOffset;
+        }
+        var result = await queryStore.JsonQueryPagedAsync(conditions, memberOffset, body.PageSize, cancellationToken: cancellationToken);
 
         var members = result.Items.Select(r => MapToMemberResponse(r.Value)).ToList();
 
         return (StatusCodes.OK, new ListMembersResponse
         {
             Members = members,
-            TotalCount = result.TotalCount,
+            NextCursor = result.HasMore ? (memberOffset + body.PageSize).ToString() : null,
             HasMore = result.HasMore,
         });
     }
@@ -1373,14 +1384,19 @@ public partial class FactionService : IFactionService
             conditions.Add(new QueryCondition { Path = "$.Status", Operator = QueryOperator.Equals, Value = body.Status.Value.ToString() });
 
         var queryStore = _stateStoreFactory.GetJsonQueryableStore<TerritoryClaimModel>(StateStoreDefinitions.FactionTerritory);
-        var result = await queryStore.JsonQueryPagedAsync(conditions, body.Offset, body.PageSize, cancellationToken: cancellationToken);
+        var claimOffset = 0;
+        if (!string.IsNullOrEmpty(body.Cursor) && int.TryParse(body.Cursor, out var parsedClaimOffset))
+        {
+            claimOffset = parsedClaimOffset;
+        }
+        var result = await queryStore.JsonQueryPagedAsync(conditions, claimOffset, body.PageSize, cancellationToken: cancellationToken);
 
         var claims = result.Items.Select(r => MapToClaimResponse(r.Value)).ToList();
 
         return (StatusCodes.OK, new ListTerritoryClaimsResponse
         {
             Claims = claims,
-            TotalCount = result.TotalCount,
+            NextCursor = result.HasMore ? (claimOffset + body.PageSize).ToString() : null,
             HasMore = result.HasMore,
         });
     }

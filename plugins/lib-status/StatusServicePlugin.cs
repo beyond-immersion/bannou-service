@@ -1,3 +1,4 @@
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Plugins;
 using BeyondImmersion.BannouService.Providers;
@@ -43,13 +44,8 @@ public class StatusServicePlugin : StandardServicePlugin<IStatusService>
     /// </summary>
     private async Task RegisterResourceCleanupCallbacksAsync()
     {
-        var resourceClient = ServiceProvider.GetService<IResourceClient>();
-        if (resourceClient == null)
-        {
-            var logger = ServiceProvider.GetRequiredService<ILogger<StatusServicePlugin>>();
-            logger.LogWarning("IResourceClient not available; cleanup callbacks not registered");
-            return;
-        }
+        var serviceProvider = ServiceProvider ?? throw new InvalidOperationException("ServiceProvider not available during OnRunningAsync");
+        var resourceClient = serviceProvider.GetRequiredService<IResourceClient>();
 
         try
         {
@@ -70,7 +66,7 @@ public class StatusServicePlugin : StandardServicePlugin<IStatusService>
         }
         catch (ApiException ex)
         {
-            var logger = ServiceProvider.GetRequiredService<ILogger<StatusServicePlugin>>();
+            var logger = serviceProvider.GetRequiredService<ILogger<StatusServicePlugin>>();
             logger.LogError(ex,
                 "Failed to register character cleanup callback with lib-resource");
         }

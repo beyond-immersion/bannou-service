@@ -612,6 +612,22 @@ public partial class StatusService : IStatusService
             return (StatusCodes.NotFound, null);
         }
 
+        // Acquire distributed lock per IMPLEMENTATION TENETS (multi-instance safety)
+        using var lockCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        lockCts.CancelAfter(TimeSpan.FromSeconds(_configuration.LockAcquisitionTimeoutSeconds));
+
+        await using var lockHandle = await _lockProvider.LockAsync(
+            StateStoreDefinitions.StatusLock,
+            EntityLockKey(instance.EntityType, instance.EntityId),
+            Guid.NewGuid().ToString(),
+            _configuration.LockTimeoutSeconds,
+            lockCts.Token);
+
+        if (!lockHandle.Success)
+        {
+            return (StatusCodes.Conflict, null);
+        }
+
         await RemoveInstanceInternalAsync(instance, body.Reason, cancellationToken);
 
         return (StatusCodes.OK, ToInstanceResponse(instance));
@@ -1167,6 +1183,12 @@ public partial class StatusService : IStatusService
         var container = await GetOrCreateContainerAsync(
             body.EntityId, body.EntityType, body.GameServiceId, cancellationToken);
 
+        if (container == null)
+        {
+            await PublishGrantFailedEventAsync(body, GrantFailureReason.ItemCreationFailed, null, cancellationToken);
+            return (StatusCodes.InternalServerError, null);
+        }
+
         // Create item instance in the container
         Guid itemInstanceId;
         try
@@ -1206,8 +1228,8 @@ public partial class StatusService : IStatusService
                         {
                             new ContractPartyInput
                             {
-                                PartyEntityId = body.EntityId,
-                                PartyEntityType = EntityType.Character,
+                                EntityId = body.EntityId,
+                                EntityType = EntityType.Character,
                                 Role = "subject"
                             }
                         }
@@ -1303,7 +1325,7 @@ public partial class StatusService : IStatusService
     /// <summary>
     /// Gets or creates an inventory container for an entity's status effects.
     /// </summary>
-    private async Task<StatusContainerModel> GetOrCreateContainerAsync(
+    private async Task<StatusContainerModel?> GetOrCreateContainerAsync(
         Guid entityId, string entityType, Guid gameServiceId, CancellationToken cancellationToken)
     {
         var entityKey = ContainerEntityKey(entityId, entityType, gameServiceId);
@@ -1315,15 +1337,31 @@ public partial class StatusService : IStatusService
 
         // Create container via inventory service
         // ContainerOwnerType is an enum; status containers use Other for polymorphic entity support
-        var containerResponse = await _inventoryClient.CreateContainerAsync(
-            new CreateContainerRequest
-            {
-                OwnerId = entityId,
-                OwnerType = ContainerOwnerType.Other,
-                ContainerType = "status_effects",
-                ConstraintModel = ContainerConstraintModel.Unlimited
-            },
-            cancellationToken);
+        ContainerResponse containerResponse;
+        try
+        {
+            containerResponse = await _inventoryClient.CreateContainerAsync(
+                new CreateContainerRequest
+                {
+                    OwnerId = entityId,
+                    OwnerType = ContainerOwnerType.Other,
+                    ContainerType = "status_effects",
+                    ConstraintModel = ContainerConstraintModel.Unlimited
+                },
+                cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogError(ex,
+                "Failed to create status container for {EntityType} {EntityId} via inventory service",
+                entityType, entityId);
+            await _messageBus.TryPublishErrorAsync(
+                "status", "create-container", "InventoryError",
+                $"Failed to create status container for {entityType} {entityId}",
+                dependency: "inventory",
+                cancellationToken: cancellationToken);
+            return null;
+        }
 
         var container = new StatusContainerModel
         {
@@ -1349,8 +1387,8 @@ public partial class StatusService : IStatusService
         // Delete backing item
         try
         {
-            await _itemClient.DeleteItemInstanceAsync(
-                new DeleteItemInstanceRequest { InstanceId = instance.ItemInstanceId },
+            await _itemClient.DestroyItemInstanceAsync(
+                new DestroyItemInstanceRequest { InstanceId = instance.ItemInstanceId, Reason = "status-removed" },
                 cancellationToken);
         }
         catch (ApiException ex)
@@ -1502,10 +1540,23 @@ public partial class StatusService : IStatusService
             CachedAt = now
         };
 
-        // Save to cache with TTL; MaxCachedEntities is enforced by Redis eviction policy
-        await ActiveCacheStore.SaveAsync(cacheKey, cache,
-            new StateOptions { Ttl = _configuration.StatusCacheTtlSeconds },
-            cancellationToken);
+        // Save to cache with TTL; retry on transient failures per IMPLEMENTATION TENETS (configuration-first)
+        for (var attempt = 1; attempt <= _configuration.MaxConcurrencyRetries; attempt++)
+        {
+            try
+            {
+                await ActiveCacheStore.SaveAsync(cacheKey, cache,
+                    new StateOptions { Ttl = _configuration.StatusCacheTtlSeconds },
+                    cancellationToken);
+                break;
+            }
+            catch (Exception ex) when (attempt < _configuration.MaxConcurrencyRetries)
+            {
+                _logger.LogDebug(ex,
+                    "Active cache save attempt {Attempt}/{Max} failed for {EntityType} {EntityId}",
+                    attempt, _configuration.MaxConcurrencyRetries, entityType, entityId);
+            }
+        }
 
         return cache;
     }
@@ -1574,10 +1625,23 @@ public partial class StatusService : IStatusService
             CachedAt = DateTimeOffset.UtcNow
         };
 
-        // Save to cache with TTL
-        await SeedEffectsCacheStore.SaveAsync(cacheKey, cache,
-            new StateOptions { Ttl = _configuration.SeedEffectsCacheTtlSeconds },
-            cancellationToken);
+        // Save to cache with TTL; retry on transient failures per IMPLEMENTATION TENETS (configuration-first)
+        for (var attempt = 1; attempt <= _configuration.MaxConcurrencyRetries; attempt++)
+        {
+            try
+            {
+                await SeedEffectsCacheStore.SaveAsync(cacheKey, cache,
+                    new StateOptions { Ttl = _configuration.SeedEffectsCacheTtlSeconds },
+                    cancellationToken);
+                break;
+            }
+            catch (Exception ex) when (attempt < _configuration.MaxConcurrencyRetries)
+            {
+                _logger.LogDebug(ex,
+                    "Seed effects cache save attempt {Attempt}/{Max} failed for {EntityType} {EntityId}",
+                    attempt, _configuration.MaxConcurrencyRetries, entityType, entityId);
+            }
+        }
 
         return cache;
     }
@@ -1595,9 +1659,16 @@ public partial class StatusService : IStatusService
         }
         catch (Exception ex)
         {
+            // Cache invalidation failure is non-fatal; cache will expire via TTL
             _logger.LogWarning(ex,
                 "Failed to invalidate active cache for {EntityType} {EntityId}",
                 entityType, entityId);
+            await _messageBus.TryPublishErrorAsync(
+                "status", "invalidate-active-cache", "CacheError",
+                $"Failed to invalidate active cache for {entityType} {entityId}",
+                dependency: "state",
+                severity: ServiceErrorEventSeverity.Warning,
+                cancellationToken: cancellationToken);
         }
     }
 
@@ -1614,9 +1685,16 @@ public partial class StatusService : IStatusService
         }
         catch (Exception ex)
         {
+            // Cache invalidation failure is non-fatal; cache will expire via TTL
             _logger.LogWarning(ex,
                 "Failed to invalidate seed effects cache for {EntityType} {EntityId}",
                 entityType, entityId);
+            await _messageBus.TryPublishErrorAsync(
+                "status", "invalidate-seed-effects-cache", "CacheError",
+                $"Failed to invalidate seed effects cache for {entityType} {entityId}",
+                dependency: "state",
+                severity: ServiceErrorEventSeverity.Warning,
+                cancellationToken: cancellationToken);
         }
     }
 

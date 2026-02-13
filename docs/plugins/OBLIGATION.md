@@ -133,7 +133,7 @@ See [GitHub Issue #410](https://github.com/beyond-immersion/bannou-service/issue
 
 ## API Endpoints (Implementation Notes)
 
-**All endpoints are currently stubbed** -- returning `NotImplemented`. The schema and models are complete; business logic implementation is pending.
+**All 11 endpoints are fully implemented** with complete business logic, error handling, and distributed locking.
 
 ### Action Tag Mapping (3 endpoints)
 
@@ -228,30 +228,34 @@ Recording and querying knowing obligation violations.
 
 ---
 
-## Stubs & Unimplemented Features
+## Implementation Status
 
-**All 11 endpoints are stubbed** -- the service implementation returns `NotImplemented` for every operation. The schema, models, events, configuration, and state stores are fully defined; business logic implementation is pending.
+**All 11 endpoints are fully implemented.** Event handlers, variable provider factory, cache management, and resource cleanup are all operational.
 
-1. **Action Mapping CRUD** (`SetActionMapping`, `ListActionMappings`, `DeleteActionMapping`): No mapping storage or retrieval logic.
-2. **Obligation Query** (`QueryObligations`, `EvaluateAction`): No contract querying, cache management, or personality-weighted cost computation.
-3. **Violation Reporting** (`ReportViolation`, `QueryViolations`): No violation storage, idempotency checking, or breach reporting to lib-contract.
-4. **Cache Management** (`InvalidateCache`): No cache rebuild logic.
-5. **Resource Cleanup** (`CleanupByCharacter`): No cleanup of obligation or violation data.
-6. **Compression** (`GetCompressData`, `RestoreFromArchive`): No archive serialization or restoration.
-7. **Event Handlers**: Contract lifecycle event handlers (`HandleContractActivated`, `HandleContractTerminated`, `HandleContractFulfilled`, `HandleContractExpired`) are not implemented.
-8. **Variable Provider Factory**: `ObligationProviderFactory` providing `${obligations.*}` variables to Actor is not implemented.
+1. **Action Mapping CRUD** (`SetActionMapping`, `ListActionMappings`, `DeleteActionMapping`): Idempotent upsert with `CreatedAt`/`UpdatedAt` tracking, cursor-paginated listing with text search via JSON path queries, convention-based 1:1 fallback on delete.
+2. **Obligation Query** (`QueryObligations`, `EvaluateAction`): Cache-backed contract querying with distributed locking and double-check pattern, personality-weighted cost computation with graceful degradation when character-personality unavailable.
+3. **Violation Reporting** (`ReportViolation`, `QueryViolations`): Redis TTL-based idempotency, optional breach reporting to lib-contract (controlled by `BreachReportEnabled`), cursor-paginated history with contract/type/time-range filters.
+4. **Cache Management** (`InvalidateCache`): Full cache rebuild from current contract state with distributed locking and observability event.
+5. **Resource Cleanup** (`CleanupByCharacter`): Removes cached obligations and violation history via lib-resource CASCADE.
+6. **Compression** (`GetCompressData`, `RestoreFromArchive`): Archive serialization via BannouJson; obligation cache rebuilt from active contracts on restore, not from archive data (intentional -- archived obligations may reference expired contracts).
+7. **Event Handlers**: All 4 contract lifecycle handlers (`HandleContractActivated`, `HandleContractTerminated`, `HandleContractFulfilled`, `HandleContractExpired`) rebuild/clear obligation cache per character party. Terminated and expired handlers query contract for parties (event payload doesn't include them); activated and fulfilled handlers extract parties from the event directly.
+8. **Variable Provider Factory**: `ObligationProviderFactory` registered as singleton, provides `${obligations.*}` variables to Actor via `IEnumerable<IVariableProviderFactory>` DI discovery. Empty provider returned on cache miss (graceful degradation).
 
 ---
 
 ## Potential Extensions
 
-- **lib-moral integration**: The original design (#410) envisions a companion lib-moral service (L4) providing social/cultural norm framework that enriches obligation costs with location-dependent, faction-specific, and species-instinctual norms. Obligation is designed to integrate via `GetService<T>()` + graceful degradation.
+- **Cognition stage integration**: A 6th cognition stage (`evaluate_consequences`) inserted into the Actor behavior pipeline between `store_memory` and `evaluate_goal_impact`. Opt-in via `conscience: true` ABML metadata flag. The obligation service provides the data; the cognition stage integration lives in lib-actor/lib-behavior. This is the key remaining piece for the "second thoughts" feature to be active in NPC behavior.
 
-- **Cognition stage integration**: A 6th cognition stage (`evaluate_consequences`) inserted into the Actor behavior pipeline between `store_memory` and `evaluate_goal_impact`. Opt-in via `conscience: true` ABML metadata flag. The obligation service provides the data; the cognition stage integration lives in lib-actor/lib-behavior.
+- **Location-aware norm weighting**: The `EvaluateAction` request accepts a `locationId` field, but location-based cost adjustment (e.g., lawless district reduces norm penalties) is not yet implemented. Could query lib-faction's norm resolution hierarchy or use location metadata directly to modulate base penalties per-location.
 
-- **Post-violation emotional feedback**: When knowing violations occur, downstream consumers could: increase stress/decrease comfort (emotional modification), record high-significance memories, trigger personality drift (`OATH_BROKEN`, `RESISTED_TEMPTATION`, `GUILTY_CONSCIENCE` experience types), and record encounter memories for violations involving other characters.
+- **Species instinctual norms**: #410 envisioned species-specific norms (e.g., predator species has lower penalty for violence). These could be represented as species-based implicit contracts or integrated into the faction norm framework via species-faction associations.
+
+- **Post-violation emotional feedback**: When knowing violations occur, downstream consumers could: increase stress/decrease comfort (emotional modification), record high-significance memories, trigger personality drift (`OATH_BROKEN`, `RESISTED_TEMPTATION`, `GUILTY_CONSCIENCE` experience types), and record encounter memories for violations involving other characters. The `obligation.violation.reported` event already publishes the full context needed for this.
 
 - **Violation retention/pruning**: No retention policy exists for violation history. A background worker or configurable retention period could prune old violation records.
+
+**Note on lib-moral**: The original #410 design envisioned a companion lib-moral service for social/cultural norm framework. This has been absorbed: personality-weighted moral reasoning is built into obligation's two-layer design, and the norm framework (faction-specific, location-dependent norms with violation types and base penalties) is provided by lib-faction. No separate lib-moral service is planned.
 
 ---
 
@@ -259,7 +263,11 @@ Recording and querying knowing obligation violations.
 
 ### Bugs (Fix Immediately)
 
-*(No current bugs -- all endpoints are stubbed.)*
+- **T21 violation: unused config properties**: `EvaluationTimeoutMs`, `DefaultPageSize`, and `MaxConcurrencyRetries` are defined in the configuration schema but never referenced in service code. `DefaultPageSize` should be wired into `ListActionMappingsAsync` and `QueryViolationsAsync` as the fallback page size. `EvaluationTimeoutMs` needs timeout logic in `EvaluateActionAsync` or removal from schema. `MaxConcurrencyRetries` appears to be dead config with no retry loops in the codebase -- remove from schema.
+
+- **Missing variable provider paths**: `ObligationProvider` does not implement `${obligations.has_obligations}` or `${obligations.contract_count}` paths that are documented in the API schema. ABML expressions using these will resolve to null. Either add them to the provider's `GetValue()` switch or remove them from the schema documentation.
+
+- **Cleanup pagination hardcoded**: `CleanupByCharacterAsync` queries violations with a hardcoded 10000 limit instead of paginating. Characters with extreme violation counts could have orphaned data after cleanup.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -277,14 +285,14 @@ Recording and querying knowing obligation violations.
 
 ### Design Considerations (Requires Planning)
 
-- **Contract behavioral clause format**: The obligation service expects contracts to contain behavioral clauses with violation type codes and base penalties. The exact schema for behavioral clauses within contract templates is not yet defined in lib-contract. This is a prerequisite for implementation.
+- **Contract behavioral clause format**: The obligation service parses `CustomTerms.behavioral_clauses` from contract instances, expecting objects with `clauseCode`, `violationType`, `basePenalty` (defaults to 0.0), and optional `description` fields. This format works but is not formally defined in lib-contract's schema -- it's a convention that both services must agree on. Defining a `BehavioralClause` schema extension in contract-api.yaml would formalize this handshake and enable validation.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-12:https://github.com/beyond-immersion/bannou-service/issues/410 -->
 
-- **Personality variable consumption pattern**: The design specifies reading personality variables (`${personality.honesty}`, etc.) for moral weighting, but the mechanism for accessing another service's variable provider data within the obligation service (as opposed to within the Actor runtime) needs clarification. The obligation service may need to call character-personality's API directly rather than going through the variable provider system.
+- **Faction-to-contract bridge**: Faction norms (violation types + base penalties + severity) need to flow into the obligation system through the contract pipeline. The #410 design represents social norms as implicit contract templates -- faction membership automatically creates contracts with behavioral clauses matching the faction's norms. The mechanism for this automatic contract creation on faction join/leave is not yet implemented. This is the bridge that makes faction norms visible to obligation's cost computation without a direct faction dependency.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-12:https://github.com/beyond-immersion/bannou-service/issues/410 -->
 
 ---
 
 ## Work Tracking
 
-- [#410](https://github.com/beyond-immersion/bannou-service/issues/410) - Feature: Second Thoughts -- Prospective Consequence Evaluation for NPC Cognition (design spec for lib-obligation + lib-moral)
+- [#410](https://github.com/beyond-immersion/bannou-service/issues/410) - Feature: Second Thoughts -- Prospective Consequence Evaluation for NPC Cognition (original design spec; lib-moral absorbed into lib-obligation + lib-faction)
