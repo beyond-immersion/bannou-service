@@ -341,8 +341,10 @@ cd scripts && ./generate-service.sh <service>  # All generated code for one serv
 # ONLY use full regeneration when necessary (e.g., changed common schemas):
 scripts/generate-all-services.sh               # † Regenerate ALL services (slow - avoid if possible)
 
-# Unit Testing (the ONLY test command Claude should run)
-make test                      # Run unit tests (dotnet test)
+# Unit Testing - SCOPED TESTS ONLY (same rule as scoped builds)
+# NEVER run `make test` (full suite) when only specific plugins were changed.
+# Test ONLY the affected test project:
+dotnet test plugins/lib-{service}.tests/lib-{service}.tests.csproj --no-restore
 
 # Model Shape Inspection (for understanding service models without loading full schemas)
 # Prints compact model shapes (~6x smaller than schemas or generated C# code).
@@ -375,7 +377,7 @@ make inspect-list PKG="RabbitMQ.Client"
 **Claude's testing responsibilities**: WRITE all tests, but only RUN unit tests.
 
 **Three-tier architecture** (for reference - Claude does NOT run tiers 2-3):
-1. **Unit Tests**: Claude writes and runs these (`make test` / `dotnet test`)
+1. **Unit Tests**: Claude writes and runs these (`dotnet test plugins/lib-{service}.tests/...` — scoped to affected projects only)
 2. **HTTP Integration Tests**: Claude writes these but does NOT run them (user runs `make test-http`)
 3. **WebSocket Edge Tests**: Claude writes these but does NOT run them (user runs `make test-edge`)
 
