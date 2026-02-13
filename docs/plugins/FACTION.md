@@ -4,6 +4,7 @@
 > **Schema**: schemas/faction-api.yaml
 > **Version**: 1.0.0
 > **State Store**: faction-statestore (MySQL), faction-membership-statestore (MySQL), faction-territory-statestore (MySQL), faction-norm-statestore (MySQL), faction-cache (Redis), faction-lock (Redis)
+> **Guide**: [Morality System](../guides/MORALITY-SYSTEM.md) (cross-service integration with lib-obligation and lib-faction)
 
 ## Overview
 
@@ -342,6 +343,7 @@ None. All 31 endpoints are fully implemented with business logic.
 ## Potential Extensions
 
 1. **Faction diplomacy system**: Formalized alliance/rivalry mechanics through seed bonds with capability-gated treaty operations.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-12:https://github.com/beyond-immersion/bannou-service/issues/413 -->
 2. **Faction economy**: Trade regulation capabilities unlocked at seed growth thresholds, integrating with lib-currency for tariffs and trade agreements.
 3. **Faction reputation system**: Per-character standing within a faction affecting norm enforcement intensity and available roles.
 4. **Client events for real-time faction notifications**: Define `faction-client-events.yaml` to push membership changes, territory shifts, and norm updates to connected WebSocket clients via `IClientEventPublisher`.
@@ -351,7 +353,7 @@ None. All 31 endpoints are fully implemented with business logic.
 
 ### Bugs (Fix Immediately)
 
-1. **RestoreFromArchive does not register resource references**: `AddMemberAsync` registers character references with `IResourceClient` for cleanup coordination, but `RestoreFromArchiveAsync` restores memberships without calling `RegisterReferenceAsync`. This means restored memberships won't be cleaned up if the character is later deleted via lib-resource. Fix: add `RegisterReferenceAsync` call for each restored membership.
+1. ~~**RestoreFromArchive does not register resource references**~~: **FIXED** (2026-02-12) - Added `RegisterReferenceAsync` call inside `RestoreFromArchiveAsync` loop for each restored membership, mirroring the pattern from `AddMemberAsync`. Includes try-catch on `ApiException` with warning log so restore continues even if reference registration fails for one membership.
 
 ### Intentional Quirks (Documented Behavior)
 

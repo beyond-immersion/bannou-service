@@ -309,10 +309,13 @@ All 16 API endpoints are fully implemented. The remaining stub is the `item.expi
 ### Missing Implementation
 
 - **DeleteStatusTemplate endpoint**: The `x-lifecycle` declaration generates `StatusTemplateDeletedEvent`, and the event is listed in `x-event-publications`, but there is no delete endpoint in the API schema or service interface. Template deletion is not implemented.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-12:https://github.com/beyond-immersion/bannou-service/issues/411 -->
 
 - **Cache warming**: `CacheWarmingEnabled` config property exists and is checked in the constructor (logs a message when true), but no actual cache warming logic is implemented. Setting it to `true` has no functional effect beyond the log message.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-12:https://github.com/beyond-immersion/bannou-service/issues/412 -->
 
 - **MaxCachedEntities LRU eviction**: The `MaxCachedEntities` config (default 10,000) is referenced in the constructor log message but is not enforced. Redis TTL handles individual entry expiration, but there is no mechanism to enforce the 10,000 entry cap. The code comments note "MaxCachedEntities is enforced by Redis eviction policy" but this requires external Redis `maxmemory-policy` configuration.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-12:https://github.com/beyond-immersion/bannou-service/issues/412 -->
 
 ---
 
@@ -344,7 +347,7 @@ All 16 API endpoints are fully implemented. The remaining stub is the `item.expi
 
 2. ~~**SeedStatusTemplatesAsync skips item template validation**~~: **FIXED** (2026-02-12) - Added item template validation in `SeedStatusTemplatesAsync`. Templates referencing non-existent item templates are now skipped with a warning log and counted as "skipped" in the response, consistent with the idempotent seeding pattern.
 
-3. **SeedStatusTemplatesAsync skips game service validation**: `CreateStatusTemplateAsync` validates the game service exists via `IGameServiceClient.GetServiceAsync`, but `SeedStatusTemplatesAsync` takes `gameServiceId` from the request without validating it exists. Templates seeded for a non-existent game service will fail at grant time.
+3. ~~**SeedStatusTemplatesAsync skips game service validation**~~: **FIXED** (2026-02-12) - Added `_gameServiceClient.GetServiceAsync` validation at the top of `SeedStatusTemplatesAsync`, matching `CreateStatusTemplateAsync` pattern. Returns 404 if the game service doesn't exist, preventing orphaned templates.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -418,3 +421,4 @@ All 16 API endpoints are fully implemented. The remaining stub is the `item.expi
 - [#280](https://github.com/BeyondImmersion/bannou-service/issues/280) - Itemize anything pattern -- implemented
 - **Account cleanup callback registration** (2026-02-12) - Fixed missing account cleanup callback in `StatusServicePlugin.OnRunningAsync`
 - **SeedStatusTemplatesAsync item template validation** (2026-02-12) - Added item template validation in seed endpoint
+- **SeedStatusTemplatesAsync game service validation** (2026-02-12) - Added game service existence validation in seed endpoint

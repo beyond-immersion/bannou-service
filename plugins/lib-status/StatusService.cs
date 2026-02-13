@@ -444,6 +444,19 @@ public partial class StatusService : IStatusService
     public async Task<(StatusCodes, SeedStatusTemplatesResponse?)> SeedStatusTemplatesAsync(
         SeedStatusTemplatesRequest body, CancellationToken cancellationToken)
     {
+        // Validate game service exists (matches CreateStatusTemplateAsync validation)
+        try
+        {
+            await _gameServiceClient.GetServiceAsync(
+                new GetServiceRequest { ServiceId = body.GameServiceId },
+                cancellationToken);
+        }
+        catch (ApiException ex) when (ex.StatusCode == 404)
+        {
+            _logger.LogWarning("Game service {GameServiceId} not found for seed operation", body.GameServiceId);
+            return (StatusCodes.NotFound, null);
+        }
+
         var created = 0;
         var skipped = 0;
 

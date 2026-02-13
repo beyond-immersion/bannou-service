@@ -2145,6 +2145,23 @@ public partial class FactionService : IFactionService
                 faction.UpdatedAt = DateTimeOffset.UtcNow;
                 await _factionStore.SaveAsync(FactionKey(faction.FactionId), faction, cancellationToken: cancellationToken);
                 await _factionStore.SaveAsync(FactionCodeKey(faction.GameServiceId, faction.Code), faction, cancellationToken: cancellationToken);
+
+                // Register reference with lib-resource for cleanup coordination (mirrors AddMemberAsync)
+                try
+                {
+                    await _resourceClient.RegisterReferenceAsync(new RegisterReferenceRequest
+                    {
+                        ResourceType = "character",
+                        ResourceId = body.CharacterId,
+                        SourceType = "faction",
+                        SourceId = membership.FactionId.ToString(),
+                    }, cancellationToken);
+                }
+                catch (ApiException ex)
+                {
+                    _logger.LogWarning(ex, "Failed to register resource reference during archive restore for character {CharacterId} in faction {FactionId}",
+                        body.CharacterId, membership.FactionId);
+                }
             }
 
             membershipsRestored = true;
