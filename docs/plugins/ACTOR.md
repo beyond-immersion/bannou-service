@@ -24,6 +24,7 @@ Distributed actor management and execution (L2 GameFoundation) for NPC brains, e
 | lib-resource (`IResourceClient`) | Character reference cleanup via x-references pattern |
 | `IEnumerable<IVariableProviderFactory>` | DI-discovered providers from L3/L4 services (see below) |
 | `IEnumerable<IBehaviorDocumentProvider>` | DI-discovered behavior document providers (see below) |
+| `ICognitionBuilder` | Builds cognition pipelines from templates with override composition |
 
 **Behavior Document Loading (Provider Chain)**
 
@@ -95,6 +96,26 @@ Is consistency critical (currency balance, item ownership)?
 Current providers cover personality, combat preferences, backstory, encounters, and quests. Planned future providers ([#147](https://github.com/beyond-immersion/bannou-service/issues/147)): currency (30s TTL), inventory (1m TTL), relationships (5m TTL). Spatial context ([#145](https://github.com/beyond-immersion/bannou-service/issues/145)): coarse-grained zone/region awareness (10s TTL) for GOAP planning -- actors need "am I in hostile territory?" not frame-by-frame coordinates.
 
 **Anti-patterns**: Never access another plugin's state store directly. Never poll APIs in tight loops (use Variable Providers with cache). Never cache mutation-critical data beyond short TTLs.
+
+**Cognition Pipeline Integration**
+
+ActorRunner executes a two-phase tick model: template-driven cognition first, then ABML-driven behavior. The cognition pipeline is built from `ICognitionBuilder` during actor initialization and cached for the actor's lifetime.
+
+**Template Resolution Order** (first non-null wins):
+1. `ActorTemplateData.CognitionTemplateId` — explicit per-template config (primary)
+2. `AbmlDocument.Metadata.CognitionTemplate` — behavior-specified override
+3. `CognitionDefaults` category mapping — convention fallback (`npc-brain` → `humanoid-cognition-base`, `event-combat`/`event-regional` → `creature-cognition-base`, `world-admin` → `object-cognition-base`)
+4. No template resolved → no pipeline, actor runs ABML-only (legitimate for `scheduled-task` and similar)
+
+**Override Composition** (applied in order, later layers override earlier):
+- Layer 1: `ActorTemplateData.CognitionOverrides` — static per-type defaults (game designer's knob)
+- Layer 2: `ActorStateSnapshot.CognitionOverrides` — per-NPC overrides accumulated through gameplay
+
+**Failure Mode**: If a template ID is resolved but `ICognitionBuilder.Build()` returns null (template not found in registry), the actor fails to start with `ActorStatus.Error`. A misconfigured template is a bug, not a degradation case.
+
+**TOCTOU Safety**: The `_cognitionPipeline` field can be nulled by `InvalidateCachedBehavior()` on a RabbitMQ event handler thread. The main loop captures the pipeline reference to a local variable before use, preventing races between the null-check and pipeline execution.
+
+**Perception Loss Prevention**: If the cognition pipeline throws during processing, perceptions that were already drained from the bounded channel are stored directly into working memory as a fallback. This prevents data loss even on pipeline failures.
 
 ---
 
@@ -273,6 +294,7 @@ Current providers cover personality, combat preferences, backstory, encounters, 
 | `IEventConsumer` | Scoped | Cache invalidation, pool events |
 | `ActorRunnerFactory` | Singleton | Creates ActorRunner instances |
 | `ActorRegistry` | Singleton | Local actor instance tracking |
+| `ICognitionBuilder` | Singleton | Builds cognition pipelines from templates + overrides |
 | `IBehaviorDocumentLoader` | Singleton | Loads behavior documents via provider chain |
 | `SeededBehaviorProvider` | Singleton | Loads static behaviors from filesystem (Priority 50) |
 | `FallbackBehaviorProvider` | Singleton | Returns null for missing behaviors after logging warning (Priority 0) |
@@ -361,20 +383,33 @@ Deployment Modes
   └─────────────┘ └─────────────┘ └─────────────┘
 
 
-ActorRunner Behavior Loop
-============================
+ActorRunner Behavior Loop (Two-Phase Execution)
+==================================================
 
   StartAsync()
        │
+       ├── InitializeBehaviorAsync()
+       │    ├── Load ABML document (cached, hot-reloadable)
+       │    └── BuildCognitionPipeline()
+       │         ├── Resolve template: config → ABML metadata → category default
+       │         ├── Merge overrides: template L1 + instance L2
+       │         └── _cognitionPipeline = builder.Build(templateId, overrides)
+       │              └── null template ID → no pipeline (ABML-only)
+       │              └── null result with ID → Error (misconfigured)
+       │
        └── RunBehaviorLoopAsync() [while !cancelled]
                 │
-                ├── 1. ProcessPerceptionsAsync()
-                │    └── Drain perception queue → working memory
-                │         ├── urgency < FilterThreshold → drop
-                │         └── urgency ≥ MemoryThreshold → store as memory
+                ├── Phase 1: COGNITION (if pipeline exists)
+                │    ├── Capture pipeline to local (TOCTOU safety)
+                │    ├── Drain perception queue → perceptions list
+                │    │    ├── urgency < FilterThreshold → drop
+                │    │    └── urgency ≥ MemoryThreshold → store as memory
+                │    ├── Build CognitionContext (entityId, handler registry)
+                │    ├── pipeline.ProcessBatchAsync(perceptions, context)
+                │    └── Apply result → working memory, replan flags
+                │         └── On failure: store perceptions directly (no loss)
                 │
-                ├── 2. ExecuteBehaviorTickAsync()
-                │    ├── Load ABML document (cached, hot-reloadable)
+                ├── Phase 2: BEHAVIOR (always)
                 │    ├── Build execution scope:
                 │    │    ├── agent: {id, behavior_id, character_id, category}
                 │    │    ├── feelings: {joy: 0.5, anger: 0.2, ...}
@@ -579,6 +614,8 @@ No bugs identified.
 - (2026-02-11) Moved "Fresh options query waits approximately one tick" from Design Considerations to Intentional Quirks (#13) with expanded documentation covering why the approximate wait is acceptable, alternatives considered (TaskCompletionSource synchronization), and the caller's ability to use freshness levels or re-query.
 - (2026-02-11) Moved "Auto-spawn failure returns NotFound" from Design Considerations to Intentional Quirks (#14) with documentation explaining why NotFound is the correct caller-facing response (auto-spawn is an implementation detail) and noting the concurrent auto-spawn edge case.
 - (2026-02-11) Fixed missing behavior cache invalidation on template update (issue #391 side finding). Added `actor-template.updated` event subscription. Handler checks `ChangedFields` for `behaviorRef`, invalidates `BehaviorDocumentLoader` provider caches, and signals running actors on this node via `IActorRunner.InvalidateCachedBehavior()` to reload on next tick. This fixes hot-reload across all nodes (each node receives the event via RabbitMQ and invalidates locally).
+
+- **2026-02-13**: Wired CognitionBuilder into ActorRunner ([#422](https://github.com/beyond-immersion/bannou-service/issues/422)). Two-phase tick execution (cognition pipeline then ABML behavior). Template resolution: actor config → ABML metadata → category defaults. Three-layer override composition (template + instance). Added `CognitionTemplateId` and `CognitionOverrides` to `ActorTemplateData` and `ActorStateSnapshot`. Added `CognitionTemplate` and `Conscience` metadata fields to `DocumentMetadata`. Added `evaluate_consequences` stage slot to humanoid template (forward-compatible for #410). Standardized on `on_tick` flow name, removed `process_tick`. TOCTOU-safe pipeline capture. Perception loss prevention on pipeline failure.
 
 ### Implementation Gaps
 
