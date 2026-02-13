@@ -501,10 +501,12 @@ public sealed class ActorRunner : IActorRunner
             try
             {
                 // Phase 1: Cognition pipeline (if available)
+                // Capture to local once to prevent TOCTOU race with InvalidateCachedBehavior
                 CognitionResult? cognitionResult = null;
-                if (_cognitionPipeline != null)
+                var pipeline = _cognitionPipeline;
+                if (pipeline != null)
                 {
-                    cognitionResult = await ExecuteCognitionPhaseAsync(ct);
+                    cognitionResult = await ExecuteCognitionPhaseAsync(pipeline, ct);
                 }
                 else
                 {
@@ -583,7 +585,11 @@ public sealed class ActorRunner : IActorRunner
     /// Executes the cognition pipeline phase: drains perceptions, processes through pipeline,
     /// and applies results to actor state.
     /// </summary>
-    private async Task<CognitionResult?> ExecuteCognitionPhaseAsync(CancellationToken ct)
+    /// <param name="pipeline">The cognition pipeline captured from the field by the caller
+    /// to avoid TOCTOU races with InvalidateCachedBehavior.</param>
+    /// <param name="ct">Cancellation token.</param>
+    private async Task<CognitionResult?> ExecuteCognitionPhaseAsync(
+        ICognitionPipeline pipeline, CancellationToken ct)
     {
         // 1. Drain perception queue into a list for batch processing
         var perceptions = new List<object>();
@@ -601,67 +607,89 @@ public sealed class ActorRunner : IActorRunner
             return null;
         }
 
-        // 2. Build CognitionContext from actor state
-        var entityId = CharacterId ?? Guid.Empty;
-        var context = new CognitionContext
+        // Wrap processing in try/catch to prevent perception loss on exceptions.
+        // Perceptions have been destructively read from the channel — if processing fails,
+        // fall back to storing them directly in working memory.
+        try
         {
-            EntityId = entityId,
-            Data = new Dictionary<string, object>
+            // 2. Build CognitionContext from actor state
+            var context = new CognitionContext
             {
-                ["actorId"] = ActorId,
-                ["category"] = Category,
-                ["feelings"] = _state.GetAllFeelings(),
-                ["goals"] = _state.GetGoals(),
-                ["memories"] = _state.GetAllMemories(),
-                ["workingMemory"] = _state.GetAllWorkingMemory()
+                EntityId = CharacterId,
+                Data = new Dictionary<string, object>
+                {
+                    ["actorId"] = ActorId,
+                    ["category"] = Category,
+                    ["feelings"] = _state.GetAllFeelings(),
+                    ["goals"] = _state.GetGoals(),
+                    ["memories"] = _state.GetAllMemories(),
+                    ["workingMemory"] = _state.GetAllWorkingMemory()
+                }
+            };
+
+            // 3. Process perceptions through the cognition pipeline
+            var result = await pipeline.ProcessBatchAsync(perceptions, context, ct);
+
+            if (!result.Success)
+            {
+                _logger.LogWarning("Actor {ActorId} cognition pipeline failed: {Error}", ActorId, result.Error);
+                StorePerceptionsDirectly(perceptions);
+                return null;
             }
-        };
 
-        // 3. Process perceptions through the cognition pipeline
-        // Capture to local for null safety (field can be reset by InvalidateCachedBehavior)
-        var pipeline = _cognitionPipeline;
-        if (pipeline == null)
-            return null;
-
-        var result = await pipeline.ProcessBatchAsync(perceptions, context, ct);
-
-        if (!result.Success)
-        {
-            _logger.LogWarning("Actor {ActorId} cognition pipeline failed: {Error}", ActorId, result.Error);
-            // Fall back to direct perception processing on pipeline failure
-            foreach (var p in perceptions.OfType<PerceptionData>())
+            // 4. Apply cognition results to actor state
+            // Store filtered perceptions in working memory
+            foreach (var p in result.ProcessedPerceptions.OfType<PerceptionData>())
             {
                 var key = $"perception:{p.PerceptionType}:{p.SourceId}";
                 _state.SetWorkingMemory(key, p);
+
+                // High significance perceptions become memories
+                if (p.Urgency >= (float)_config.PerceptionMemoryThreshold)
+                {
+                    _state.AddMemory(
+                        $"recent:{p.PerceptionType}",
+                        p,
+                        DateTimeOffset.UtcNow.AddMinutes(_config.ShortTermMemoryMinutes));
+                }
             }
+
+            if (perceptions.Count > 0)
+            {
+                _logger.LogDebug(
+                    "Actor {ActorId} cognition processed {Total} perceptions, {Filtered} passed pipeline",
+                    ActorId, perceptions.Count, result.ProcessedPerceptions.Count);
+            }
+
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            // Cancellation — store perceptions so they're not lost, then re-throw
+            StorePerceptionsDirectly(perceptions);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex,
+                "Actor {ActorId} cognition phase failed, storing {Count} perceptions directly",
+                ActorId, perceptions.Count);
+            StorePerceptionsDirectly(perceptions);
             return null;
         }
+    }
 
-        // 4. Apply cognition results to actor state
-        // Store filtered perceptions in working memory
-        foreach (var p in result.ProcessedPerceptions.OfType<PerceptionData>())
+    /// <summary>
+    /// Stores perceptions directly into working memory as a fallback when the cognition
+    /// pipeline is unavailable or fails.
+    /// </summary>
+    private void StorePerceptionsDirectly(List<object> perceptions)
+    {
+        foreach (var p in perceptions.OfType<PerceptionData>())
         {
             var key = $"perception:{p.PerceptionType}:{p.SourceId}";
             _state.SetWorkingMemory(key, p);
-
-            // High significance perceptions become memories
-            if (p.Urgency >= (float)_config.PerceptionMemoryThreshold)
-            {
-                _state.AddMemory(
-                    $"recent:{p.PerceptionType}",
-                    p,
-                    DateTimeOffset.UtcNow.AddMinutes(_config.ShortTermMemoryMinutes));
-            }
         }
-
-        if (perceptions.Count > 0)
-        {
-            _logger.LogDebug(
-                "Actor {ActorId} cognition processed {Total} perceptions, {Filtered} passed pipeline",
-                ActorId, perceptions.Count, result.ProcessedPerceptions.Count);
-        }
-
-        return result;
     }
 
     /// <summary>
@@ -1344,11 +1372,14 @@ public sealed class ActorRunner : IActorRunner
 
         if (_cognitionPipeline == null)
         {
-            // Template ID was specified but not found — this is a configuration error
+            // Template ID was specified but not found — this is a configuration error, not degradation
             _logger.LogError(
-                "Actor {ActorId} cognition template {TemplateId} not found, actor will run ABML-only",
+                "Actor {ActorId} cognition template {TemplateId} not found, failing startup",
                 ActorId, templateId);
-            return;
+            Status = ActorStatus.Error;
+            throw new InvalidOperationException(
+                $"Cognition template '{templateId}' not found for actor '{ActorId}'. " +
+                "A specified template must be resolvable — check template registry.");
         }
 
         _logger.LogInformation(

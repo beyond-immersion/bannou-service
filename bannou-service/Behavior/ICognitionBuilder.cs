@@ -191,9 +191,9 @@ public interface ICognitionHandler
 public sealed class CognitionContext
 {
     /// <summary>
-    /// The entity ID being processed.
+    /// The entity ID being processed. Null when no character is associated with the actor.
     /// </summary>
-    public Guid EntityId { get; init; }
+    public Guid? EntityId { get; init; }
 
     /// <summary>
     /// ABML execution context for running action handlers.
@@ -254,7 +254,7 @@ public sealed class CognitionContext
     /// <summary>
     /// Creates a context for an entity.
     /// </summary>
-    public static CognitionContext ForEntity(Guid entityId)
+    public static CognitionContext ForEntity(Guid? entityId)
         => new() { EntityId = entityId };
 }
 

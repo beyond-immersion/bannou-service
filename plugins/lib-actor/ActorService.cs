@@ -157,6 +157,7 @@ public partial class ActorService : IActorService
                 ? body.MaxInstancesPerNode
                 : _configuration.DefaultActorsPerNode,
             CognitionTemplateId = body.CognitionTemplateId,
+            CognitionOverrides = ActorTemplateData.DeserializeCognitionOverrides(body.CognitionOverrides),
             CreatedAt = now,
             UpdatedAt = now
         };
@@ -323,6 +324,12 @@ public partial class ActorService : IActorService
         {
             existing.CognitionTemplateId = body.CognitionTemplateId;
             changedFields.Add("cognitionTemplateId");
+        }
+
+        if (body.CognitionOverrides != null)
+        {
+            existing.CognitionOverrides = ActorTemplateData.DeserializeCognitionOverrides(body.CognitionOverrides);
+            changedFields.Add("cognitionOverrides");
         }
 
         existing.UpdatedAt = now;

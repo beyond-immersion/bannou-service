@@ -7,7 +7,132 @@
 
 ## Overview
 
-Player experience orchestration service (L4 GameFeatures) for garden navigation, scenario routing, progressive discovery, and deployment phase management. Gardener is the player-side counterpart to Puppetmaster: where Puppetmaster orchestrates what NPCs experience, Gardener orchestrates what players experience. Players enter a procedural "Garden" discovery space, encounter POIs (Points of Interest) driven by a weighted scoring algorithm, and enter scenarios backed by Game Sessions that award Seed growth on completion. Internal-only, never internet-facing.
+Player experience orchestration service (L4 GameFeatures) and the player-side counterpart to Puppetmaster: where Puppetmaster orchestrates what NPCs experience, Gardener orchestrates what players experience. A "garden" is an abstract conceptual space that a player inhabits -- it can represent a lobby, an in-game experience, a post-game space, player housing, cooperative gameplay, or the void/discovery space. The player is always in some garden, and Gardener is always active for every connected player, managing their gameplay context, entity associations, and event routing. Gardener provides the APIs and infrastructure that a gardener behavior (running as an actor) uses to manipulate and manage player experiences. The specific behavior varies per game -- some use fully autonomous gardener behaviors, others use manual API calls from the game engine. Internal-only, never internet-facing.
+
+**Current implementation status**: The codebase implements the **void/discovery garden type** only (POI-driven scenario routing with drift metrics and weighted scoring). The broader garden concept (multiple garden types, gardener behavior actor, entity session registration, garden-to-garden transitions) is documented here as the architectural target but not yet implemented. Sections below describe both the current implementation and the target architecture, clearly labeled.
+
+## The Garden Concept (Architectural Target)
+
+> **Status**: Conceptual framework. The current implementation covers the void/discovery garden type only. This section describes the full architectural vision.
+
+### Gardens as Abstract Spaces
+
+A garden is not a physical location -- it is a **conceptual space that defines a player's current gameplay context**. Every player is always in some garden. The garden determines what entities the player interacts with, what events reach them, and how the gardener behavior orchestrates their experience.
+
+| Garden Type | Conceptual Space | Example |
+|-------------|-----------------|---------|
+| **Discovery** | The void from PLAYER-VISION.md | Spirit drifting, encountering POIs, entering scenarios |
+| **Lobby** | Pre-game gathering space | Waiting room before a match, character selection, loadout |
+| **In-Game** | Active gameplay experience | Combat encounter, exploration, crafting session |
+| **Post-Game** | Results and transition space | Score screen, growth awards, next-scenario selection |
+| **Housing** | Player-owned persistent space | Home base, workshop, garden (literal), trophy room |
+| **Cooperative** | Shared multi-player space | Co-op dungeon, guild hall, trade marketplace |
+
+Each garden has:
+- **A seed** representing its state, capabilities, and growth progression
+- **Entity associations** -- collections, inventories, characters available in this context
+- **A gardener behavior** (or manual API calls) controlling what the player experiences
+
+### Gardener Behavior Actor Pattern
+
+Just as Puppetmaster launches actors with behaviors to orchestrate NPC experiences, Gardener launches an actor with a **gardener behavior** to orchestrate each player's experience. The Gardener service provides APIs; the gardener behavior decides when and how to call them.
+
+```
+Puppetmaster (L4)                     Gardener (L4)
+─────────────────                     ──────────────
+Launches actors with                  Launches actors with
+NPC behavior documents                gardener behavior documents
+    │                                     │
+    ▼                                     ▼
+Actor Runtime (L2)                    Actor Runtime (L2)
+executes ABML bytecode                executes ABML bytecode
+    │                                     │
+    ▼                                     ▼
+NPC makes decisions,                  Gardener presents POIs,
+acts in the world                     manages transitions,
+                                      shifts entity bindings
+```
+
+**Multi-game variability**: The gardener behavior can vary significantly between games. In Arcadia, the void/discovery experience uses drift-based POI scoring and seed growth. A different game might use a simple menu-driven lobby. Some games may not need a behavior at all and instead drive Gardener APIs directly from the game engine. The Gardener service is behavior-agnostic -- it provides primitives, not policy.
+
+### Always-Active Lifecycle
+
+The player never leaves Gardener's domain. Transitioning from a lobby to an in-game experience is a **garden-to-garden transition**, not a handoff to another service. The gardener behavior manages the full lifecycle:
+
+```
+Player connects
+    │
+    ▼
+Enter discovery garden ──► POIs, drift, scenario selection
+    │
+    ├── Enter lobby garden ──► Character selection, loadout, party
+    │       │
+    │       └── Enter in-game garden ──► Combat, exploration, quests
+    │               │
+    │               ├── Chain to post-game garden ──► Results, growth
+    │               │       │
+    │               │       └── Return to discovery garden (loop)
+    │               │
+    │               └── Switch character (L1/R1) ──► Entity bindings shift
+    │
+    └── Enter housing garden ──► Persistent personal space
+```
+
+The current implementation models this as "enter garden → enter scenario (destroys garden)." The target architecture replaces scenario entry/destruction with garden-to-garden transitions where the gardener behavior continuously manages the player's context.
+
+### Per-Garden Entity Associations
+
+Each garden can define its own set of associated entities that the player can interact with:
+
+- **Characters**: Which characters are available to control in this garden (the player may switch between them dynamically -- e.g., L1/R1 on a joystick)
+- **Collections**: Which collections are visible/unlockable in this context
+- **Inventories**: Which inventories the player can access
+- **Currency wallets**: Which wallets are relevant
+- **Status effects**: Which buff/debuff contexts apply
+
+The gardener behavior manages these associations in real-time, adding and removing them as the player navigates between gardens and switches contexts within a garden.
+
+### Entity Session Registry Role
+
+When entity-based services (Status, Currency, Inventory, Collection, Seed, etc.) modify an entity, they need to notify connected players who care about that entity via WebSocket. These services operate on `(entityType, entityId)` and don't know WebSocket session IDs. The solution is an **Entity Session Registry** -- a shared Redis-backed mapping from `(entityType, entityId) → Set<sessionId>`.
+
+**Architecture**:
+
+| Component | Role | Layer |
+|-----------|------|-------|
+| **Game Session** | Hosts the Entity Session Registry implementation (Redis infrastructure, query API) | L2 |
+| **Connect** | Registers `account → session` mappings (already does this via `account-sessions:{accountId}`) | L1 |
+| **Game Session** | Registers `game-service → session` mappings | L2 |
+| **Gardener** | Primary registrar for gameplay entities: `seed → session`, `character → session`, `collection → session`, `inventory → session`, `currency → session`, `status → session` | L4 |
+
+**Flow**:
+
+```
+1. Gardener behavior assigns character C to player session S
+       │
+       ▼
+2. Gardener calls Entity Session Registry:
+   Register(character, C, sessionId=S)
+       │
+       ▼
+3. Later: Status grants a buff to character C
+       │
+       ▼
+4. Status queries Entity Session Registry:
+   GetSessionsForEntity(character, C) → {S}
+       │
+       ▼
+5. Status publishes client event via IClientEventPublisher
+   to session S → Connect → WebSocket → client
+```
+
+**Why not DI Listeners**: The multi-node problem. Gardener and all 13+ entity-based services can't be guaranteed to run on the same node. DI Listeners only fire locally.
+
+**Why not eventing TO Gardener**: Volume. 100K+ NPCs generating entity mutations would flood Gardener with events it doesn't care about (99%+ irrelevant). The registry inverts this: entity-based services do a cheap Redis lookup on their own mutations instead of broadcasting everything to a central router.
+
+**Dynamic registration**: The gardener behavior constantly shifts registrations as the player navigates. When a player switches characters, the gardener behavior may unregister the previous character and register the new one -- or it may keep both registered (to receive events about the previous character for behavioral reasoning). This is a behavior decision, not an infrastructure decision.
+
+---
 
 ## Dependencies (What This Plugin Relies On)
 
@@ -248,6 +373,50 @@ If the player has a bond and the template is bond-preferred, score is multiplied
 
 ## Visual Aid
 
+### Target Architecture: Garden Lifecycle & Entity Session Registry
+
+```
+Player connects → Gardener launches gardener behavior actor
+    │
+    ▼
+┌────────────────────────────────────────────────────────────────────┐
+│  GARDENER BEHAVIOR (running as Actor via L2 Actor Runtime)         │
+│                                                                    │
+│  Manages garden-to-garden transitions for this player:             │
+│                                                                    │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐           │
+│  │  Discovery   │───►│   Lobby      │───►│  In-Game     │          │
+│  │  Garden      │    │   Garden     │    │  Garden      │          │
+│  │             │    │             │    │             │            │
+│  │ POIs, drift, │    │ Char select,│    │ Combat,     │           │
+│  │ scoring      │    │ loadout     │    │ exploration │           │
+│  └─────────────┘    └─────────────┘    └──────┬──────┘           │
+│                                                │                  │
+│  Entity Session Registry updates per garden:   │ Player switches  │
+│  ┌─────────────────────────────────────────┐   │ character (L1/R1)│
+│  │ Register(seed, seedId, sessionId)       │   │      │          │
+│  │ Register(character, charA, sessionId)   │◄──┘      │          │
+│  │ Register(inventory, invId, sessionId)   │          ▼          │
+│  │ Register(collection, colId, sessionId)  │  Unregister(charA)  │
+│  │ ...                                     │  Register(charB)    │
+│  └─────────────────────────────────────────┘                     │
+└────────────────────────────────────────────────────────────────────┘
+         │
+         │  Entity-based services use the registry directly:
+         ▼
+┌────────────────────────────────────────────────────────────────────┐
+│  Status grants buff to character B                                 │
+│      │                                                             │
+│      ├── StatusService: GetSessionsForEntity(character, B) → {S}  │
+│      │   (Redis SMEMBERS, sub-millisecond)                         │
+│      │                                                             │
+│      └── StatusService: PublishToSessionsAsync({S}, event)         │
+│          → IClientEventPublisher → RabbitMQ → Connect → WebSocket  │
+└────────────────────────────────────────────────────────────────────┘
+```
+
+### Current Implementation: Void/Discovery Garden Only
+
 ```
                         ┌──────────────────────────────┐
                         │     EnterGardenAsync           │
@@ -297,6 +466,22 @@ If the player has a bond and the template is bond-preferred, score is multiplied
 
 ## Stubs & Unimplemented Features
 
+### Architectural Gaps (Garden Concept)
+
+11. **Gardener behavior actor pattern**: The gardener behavior does not run as an actor. The current implementation uses background workers (`GardenerGardenOrchestratorWorker`, `GardenerScenarioLifecycleWorker`) with fixed-interval ticks instead of a per-player actor executing an ABML gardener behavior document. The actor pattern would enable per-game customization of the gardener's decision-making via different behavior documents, matching how Puppetmaster uses actors for NPC orchestration.
+
+12. **Garden-to-garden transitions**: The current implementation destroys the garden instance on scenario entry (`EnterScenarioAsync` deletes garden + POIs). The target architecture replaces this with garden-to-garden transitions where the gardener behavior continuously manages the player's context across garden types (discovery → lobby → in-game → post-game → discovery). The player is always in some garden; Gardener is always active.
+
+13. **Multiple garden types**: Only the void/discovery garden type is implemented (POIs, drift metrics, weighted scoring). Lobby gardens, in-game gardens, housing gardens, post-game gardens, and cooperative gardens are not implemented. Each type requires its own behavioral patterns and entity association rules.
+
+14. **Per-garden entity associations**: Gardens do not currently track associated entities (characters, collections, inventories, wallets). The target architecture gives each garden its own set of entities that the player can interact with, managed dynamically by the gardener behavior. For example, a lobby garden offers character selection from a roster; an in-game garden binds the selected character and its inventory/wallet.
+
+15. **Entity Session Registry integration**: Gardener does not currently register entity→session mappings. The target architecture has Gardener as the primary registrar for gameplay entities (seed→session, character→session, collection→session, inventory→session, currency→session, status→session) in the Entity Session Registry hosted by Game Session (L2). This enables entity-based services to route client events to relevant WebSocket sessions without a central event router. See [The Garden Concept > Entity Session Registry Role](#entity-session-registry-role) for the full architecture.
+
+16. **Dynamic character switching**: No mechanism exists for players to switch between characters within a garden (e.g., L1/R1 on a joystick). The target architecture has the gardener behavior managing character bindings in real-time, updating entity session registrations as the player switches context.
+
+### Implementation Gaps (Current Void/Discovery Garden)
+
 1. **MinGrowthPhase filtering**: The `GetEligibleTemplatesAsync` method in `GardenerGardenOrchestratorWorker` has a MinGrowthPhase check block (lines 457-465) with an empty body -- the comment says "For now, include all templates where the player has any growth phase." Growth phases are opaque strings without ordinal comparison, so phase ordering would need a lookup table.
 
 2. **scenario-template.deleted event**: Declared in the events schema via `x-lifecycle` but no delete endpoint exists in the API. The lifecycle event is generated but never published.
@@ -329,11 +514,13 @@ If the player has a bond and the template is bond-preferred, score is multiplied
 
 5. **Dialog choice trigger mode**: PLAYER-VISION.md describes four acceptance modes: implicit (proximity), prompted (acknowledge), dialog choices (multiple branching options), and forced. The implementation has Proximity, Interaction, Prompted, and Forced -- but "dialog choices" (presenting multiple distinct branching options beyond Enter/Decline) is missing. Prompted mode only offers binary accept/decline.
 
-6. **Garden position binary protocol optimization**: `UpdatePositionAsync` uses POST JSON for high-frequency position updates. PLAYER-VISION.md describes the garden as "negligible bandwidth" but JSON POST per tick adds overhead. Binary protocol through Connect would reduce this but was deferred per the plan ("optimize only if latency/throughput becomes a problem").
+6. **Garden position binary protocol optimization**: `UpdatePositionAsync` uses POST JSON for high-frequency position updates. PLAYER-VISION.md describes the garden as "negligible bandwidth" but JSON POST per tick adds overhead. Binary protocol through Connect would reduce this but was deferred per the plan ("optimize only if latency/throughput becomes a problem"). In the full garden concept, high-frequency position updates may not apply to all garden types (lobby gardens don't have spatial drift).
 
 7. **Multi-seed-type support**: `SeedTypeCode` is a single config property (default "guardian"). PLAYER-VISION.md describes multiple seed types (guardian spirit, dungeon master, realm-specific). Each type would need its own Gardener instance or the service would need to manage multiple types. The current architecture supports this (deploy multiple Gardener instances with different `GARDENER_SEED_TYPE_CODE`), but this deployment pattern is undocumented.
 
 8. **Analytics milestone integration for scoring**: The plan specified consuming `analytics.milestone.reached` events to enrich scenario selection. When Analytics publishes this event, a subscription could be added to boost templates that align with player milestone achievements.
+
+9. **Gardener-to-Gardener communication for co-op gardens**: When multiple players share a cooperative garden, their gardener behaviors need to coordinate. This could use the existing pair bond mechanism for bonded players, but ad-hoc multiplayer gardens (matchmade groups, guild activities) need a coordination pattern. Possible approaches: shared garden state in Redis, inter-actor messaging via the Actor runtime, or a dedicated co-op coordination layer.
 
 ## Known Quirks & Caveats
 
@@ -373,11 +560,23 @@ If the player has a bond and the template is bond-preferred, score is multiplied
 
 ### Design Considerations (Requires Planning)
 
+#### Architectural (Garden Concept)
+
+7. **Entity Session Registry design** ([Issue #426](https://github.com/beyond-immersion/bannou-service/issues/426)): The Entity Session Registry needs to be designed and implemented in Game Session (L2). Key decisions: interface shape (`IEntitySessionRegistry` in `bannou-service/`), Redis key structure (`entity-sessions:{entityType}:{entityId}` → `Set<sessionId>`), cleanup on session disconnect (`UnregisterSessionAsync` sweeping all bindings), and TTL/expiry for stale entries. Connect's existing `account-sessions:{accountId}` pattern is the precedent. Entity-based services (Status, Currency, Inventory, Collection, Seed, etc.) then query the registry and publish their own client events via `IClientEventPublisher`. This is a cross-cutting infrastructure addition that affects many services.
+
+8. **Gardener behavior document design**: The gardener behavior running as an actor needs an ABML behavior document (or family of documents) that encodes the per-game orchestration logic. Key questions: Is there a default/base gardener behavior? How does a game author customize it? Does the behavior use the same ABML bytecode as NPC behaviors, or does it need gardener-specific opcodes? How does the actor runtime interact with Gardener's APIs (the behavior needs to call garden/POI/scenario endpoints)?
+
+9. **Garden type abstraction**: The current code assumes one garden type (void/discovery). Multiple garden types need a type registry, per-type behavioral patterns, and per-type entity association rules. Key question: Are garden types defined in configuration (like seed types), in schemas, or purely in behavior documents?
+
+10. **Garden-to-garden transition mechanics**: Replacing the current "destroy garden on scenario entry" with smooth transitions. What state persists across transitions? Does the gardener actor persist or restart? How does the game session relationship change (is each garden backed by a game session, or only in-game gardens)?
+
+#### Implementation (Current Void/Discovery Garden)
+
 1. **Growth phase ordering is unresolved**: Templates can specify `MinGrowthPhase` but there is no mechanism to compare phase labels ordinally. The growth phases ("nascent", "awakening", "attuned", "resonant", "transcendent") are registered with `MinTotalGrowth` thresholds in the Seed service, but Gardener only caches the phase label string. Implementing this requires either querying Seed for phase ordering or maintaining a local phase-to-ordinal mapping.
 
 2. ~~**DeploymentPhase filter needs MySQL JSON array query**~~: Resolved -- eliminated the empty-array sentinel by normalizing null/empty `AllowedPhases` to all phases at the API boundary. Storage always contains explicit values, enabling `QueryOperator.In` (which generates `JSON_CONTAINS`) for server-side filtering.
 
-3. **Persistent connectivity mode and the release transition**: PLAYER-VISION.md describes the release as "a scenario that doesn't end, a door that leads to permanent inhabitation." `ConnectivityMode.Persistent` exists as an enum value but has no differentiated code path. Designing this requires answering: What makes a Persistent scenario different from Isolated? Does the player stay in-world indefinitely? Does the garden become a between-sessions lobby? How does the "surprise" transition work without disrupting players mid-scenario?
+3. **Persistent connectivity mode and the release transition**: PLAYER-VISION.md describes the release as "a scenario that doesn't end, a door that leads to permanent inhabitation." `ConnectivityMode.Persistent` exists as an enum value but has no differentiated code path. Designing this requires answering: What makes a Persistent scenario different from Isolated? Does the player stay in-world indefinitely? Does the garden become a between-sessions lobby? How does the "surprise" transition work without disrupting players mid-scenario? In the full garden concept, this is subsumed by garden-to-garden transitions -- the "Persistent" mode is simply a garden that doesn't transition back to discovery.
 
 4. **Content flywheel integration point**: Gardener generates play (scenarios, growth, history) but doesn't contribute to the content side of the flywheel. The architectural question is where the connection point should be: Should scenario completion publish events that Storyline/Puppetmaster consume? Should scenario history records feed into compressed archives via lib-resource? This is a cross-cutting design question that affects multiple services.
 
@@ -405,6 +604,7 @@ If the player has a bond and the template is bond-preferred, score is multiplied
 - [ ] **Stub #7**: Create `gardener-client-events.yaml` schema for real-time POI spawn/expire/trigger push to WebSocket clients
 - [ ] **Extension #2**: Write history records for all bond scenario participants, not just primary
 - [ ] **Stub #3**: Implement actual Puppetmaster API call in `EnterScenarioAsync` (not just log)
+- [ ] **Design #7/Stub #15**: Design and implement Entity Session Registry in Game Session (L2) -- `IEntitySessionRegistry` interface in `bannou-service/`, Redis-backed implementation, cleanup on disconnect. Cross-cutting: affects all entity-based services that want client event routing. See [Issue #426](https://github.com/beyond-immersion/bannou-service/issues/426).
 
 ### P2 -- Feature Gaps
 
@@ -415,9 +615,17 @@ If the player has a bond and the template is bond-preferred, score is multiplied
 - [ ] **Extension #4**: Design content flywheel connection (scenario outcomes feeding Storyline/Puppetmaster)
 - [ ] **Extension #5**: Add dialog choice trigger mode for multi-option branching POIs
 - [ ] **Stub #4**: Wire up `PersistentEntryEnabled` and `GardenMinigamesEnabled` phase config flags to service logic
+- [ ] **Stub #11**: Gardener behavior actor pattern -- launch per-player actor with gardener behavior document instead of background workers
+- [ ] **Stub #12**: Garden-to-garden transitions replacing destroy-on-scenario-entry
+- [ ] **Stub #13**: Multiple garden types (lobby, in-game, housing, post-game, cooperative)
+- [ ] **Stub #14**: Per-garden entity associations (characters, collections, inventories, wallets)
+- [ ] **Stub #16**: Dynamic character switching within a garden (entity binding updates on switch)
 
 ### P3 -- Documentation & Cleanup
 
 - [x] **Design #6**: Implementation plan (`docs/plans/GARDENER.md`) superseded by this deep dive and deleted
 - [x] **Stub #2**: Added `/gardener/template/delete` endpoint (developer-only) that requires Deprecated status, publishes `scenario-template.deleted` lifecycle event
 - [ ] **Extension #7**: Document multi-seed-type deployment pattern (multiple Gardener instances with different `GARDENER_SEED_TYPE_CODE`)
+- [ ] **Design #8**: Design gardener behavior document structure (base/default behavior, per-game customization, ABML opcodes)
+- [ ] **Design #9**: Design garden type abstraction (registry, behavioral patterns, entity association rules)
+- [ ] **Design #10**: Design garden-to-garden transition mechanics (state persistence, actor lifecycle, game session relationship)

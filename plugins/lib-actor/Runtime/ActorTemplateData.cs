@@ -1,3 +1,5 @@
+using System.Text.Json;
+using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Behavior;
 
 namespace BeyondImmersion.BannouService.Actor.Runtime;
@@ -71,6 +73,33 @@ public class ActorTemplateData
     public CognitionOverrides? CognitionOverrides { get; set; }
 
     /// <summary>
+    /// Deserializes cognition overrides from API object.
+    /// The generated API model uses object? (arrives as JsonElement), but internal model is typed.
+    /// </summary>
+    public static CognitionOverrides? DeserializeCognitionOverrides(object? apiOverrides)
+    {
+        if (apiOverrides is not JsonElement element)
+            return null;
+
+        if (element.ValueKind == JsonValueKind.Null || element.ValueKind == JsonValueKind.Undefined)
+            return null;
+
+        return BannouJson.Deserialize<CognitionOverrides>(element.GetRawText());
+    }
+
+    /// <summary>
+    /// Serializes cognition overrides to a JsonElement for the API response model.
+    /// </summary>
+    private static object? SerializeCognitionOverrides(CognitionOverrides? overrides)
+    {
+        if (overrides == null)
+            return null;
+
+        var json = BannouJson.Serialize(overrides);
+        return JsonDocument.Parse(json).RootElement.Clone();
+    }
+
+    /// <summary>
     /// Converts to API response model.
     /// </summary>
     public ActorTemplateResponse ToResponse()
@@ -86,7 +115,7 @@ public class ActorTemplateData
             AutoSaveIntervalSeconds = AutoSaveIntervalSeconds,
             MaxInstancesPerNode = MaxInstancesPerNode,
             CognitionTemplateId = CognitionTemplateId,
-            CognitionOverrides = null,
+            CognitionOverrides = SerializeCognitionOverrides(CognitionOverrides),
             CreatedAt = CreatedAt,
             UpdatedAt = UpdatedAt
         };

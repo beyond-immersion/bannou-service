@@ -384,7 +384,7 @@ ActorRunner Behavior Loop
                 │    │    ├── personality: {traits, combat_style, risk}
                 │    │    └── backstory: {elements[]}
                 │    │
-                │    └── Execute flow: process_tick (preferred) or main
+                │    └── Execute flow: on_tick (preferred) or main
                 │
                 ├── 3. PublishStateUpdateIfNeededAsync()
                 │    └── If CharacterId set: publish character.state_update
