@@ -271,6 +271,7 @@ try:
         sys.exit(0)
 
     # Process each path and method
+    show_example_patterns = True
     for path, path_data in schema['paths'].items():
         for http_method, method_data in path_data.items():
             if not isinstance(method_data, dict):
@@ -371,7 +372,9 @@ try:
 ''')
             else:
                 # Response-body endpoint
-                print(f'''    /// <summary>
+                if show_example_patterns:
+                    show_example_patterns = False
+                    print(f'''    /// <summary>
     /// Implementation of {method_name} operation.
     /// TODO: Implement business logic for this method.
     /// </summary>
@@ -412,6 +415,17 @@ try:
         //
         // For event publishing (lib-messaging):
         // await _messageBus.TryPublishAsync(\"topic.name\", eventModel, cancellationToken: cancellationToken);
+    }}
+''')
+                else:
+                    print(f'''    /// <summary>
+    /// Implementation of {method_name} operation.
+    /// </summary>
+    public async Task<(StatusCodes, {return_type}?)> {method_name}Async({params_str})
+    {{
+        // TODO: Implement {method_name}
+        await Task.CompletedTask;
+        throw new NotImplementedException(\"Method {method_name} not yet implemented\");
     }}
 ''')
 
