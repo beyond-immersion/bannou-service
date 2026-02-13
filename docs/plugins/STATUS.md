@@ -15,6 +15,32 @@ Follows the "items in inventories" pattern (#280): status templates define effec
 
 ---
 
+## The Unified Effects Layer (Architectural Target)
+
+> **Status**: All 16 status endpoints are fully implemented. The two-source architecture (item-based + seed-derived), grant flow with stacking, contract integration, and seed effects cache are operational. lib-divine is the first active consumer. The broader vision described below -- Status as THE universal effects query point for everything from combat buffs to death penalties to divine blessings -- is the architectural target these systems serve.
+
+### Status Is THE Single Query Point for "What Effects Does This Entity Have?"
+
+Any system that needs to know about active effects on an entity -- combat buffs, death penalties, subscription benefits, divine blessings, environmental effects, curses, equipment bonuses, seed-derived passive capabilities -- queries Status through one unified API (`GetEffects`). The two-source architecture (item-based temporary effects + seed-derived persistent capabilities) exists specifically so that Status can answer this question comprehensively regardless of the effect's origin. This unification is critical: if combat systems query one service for buffs, divine systems query another for blessings, and progression systems query a third for passives, consumers need to know about every effect source. Status eliminates this by being the universal aggregation point.
+
+### Death Penalty and Resurrection Are Core Arcadia Mechanics, Not Extensions
+
+In Arcadia, death is transformation, not punishment. Death creates content -- compressed character archives become generative input for the Content Flywheel (ghosts, undead, quests, NPC memories, legacy mechanics). The death penalty status is a contract-backed effect with multiple resurrection conditions ("wait 30 seconds OR consume resurrection scroll OR reach a shrine") expressed through Contract's conditional milestone system. The death penalty status drives gameplay decisions (resurrection scrolls have real economic value because death penalties matter) and economy (the underworld itself offers gameplay during the penalty). This is a core use case for Status's contract integration, not a potential extension -- it's one of the primary reasons contract-backed statuses exist. The `onTick` pattern and conditional milestone resolution in Potential Extensions are also needed primarily for death penalty mechanics.
+
+### Divine Blessings Complete the Cosmological Moral Feedback Loop
+
+lib-divine is already Status's first consumer. The full vision: regional watcher god actors (running on Actor) observe NPC behavior patterns and spend divinity (a finite resource) on blessings for characters who impress them. These blessings are granted as temporary status effects via Status's grant API. A Blessing of Commerce from Hermes increases trade effectiveness. A Curse of Dishonor from Ares reduces combat prowess. Blessings expire, can be cleansed, and stack -- all using Status's existing stacking system. This creates the cosmological moral feedback loop: the morality system (Faction → Obligation → Actor cognition) drives NPC behavior → god actors observe that behavior → divine blessings/curses are granted via Status → those effects modify future NPC behavior through the variable provider. The loop closes.
+
+### A Variable Provider for ABML Is a Critical Architectural Requirement
+
+NPCs need to know their own status effects to make decisions. A poisoned NPC should seek healing. A blessed NPC should be more aggressive. A dead character's actor should transition to underworld behavior. `${status.is_dead}`, `${status.has_buff.<code>}`, `${status.poison_stacks}`, `${status.active_count}` are not nice-to-haves -- they are required integration points for the NPC intelligence stack. Every other data-providing L4 service (personality, encounters, history, faction, obligation) already has a variable provider factory. Status is the gap. Without it, NPC behavior cannot react to active effects, which breaks the divine blessing feedback loop and makes combat buffs/debuffs invisible to ABML behavior logic. This should be prioritized as a core requirement, not deferred as a potential extension.
+
+### Entity-Agnostic Design Is Intentional and Must Be Preserved
+
+Status uses opaque entity types (`entityType` as string, not enum) because effects apply to ANYTHING: characters, accounts, locations, realms, factions, dungeon cores. An environmental effect on a location (perpetual fog), a realm-wide curse, an account subscription benefit (double XP), a faction-wide morale boost -- all use the same Status primitives. The polymorphic ownership pattern (shared with Collection, License, Seed) ensures Status never needs to enumerate entity types from other layers. New entity types work automatically.
+
+---
+
 ## Dependencies (What This Plugin Relies On)
 
 | Dependency | Usage |

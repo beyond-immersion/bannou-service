@@ -126,33 +126,6 @@ public partial class DivineService : IDivineService
         // published as error events by the controller automatically.
         await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method GetDeity not yet implemented");
-
-        // Example patterns using infrastructure libs:
-        //
-        // For data retrieval (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var data = await stateStore.GetAsync(key, cancellationToken);
-        // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-        //
-        // For data creation (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.SaveAsync(key, newData, cancellationToken);
-        // return (StatusCodes.Created, newData);
-        //
-        // For data updates (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var existing = await stateStore.GetAsync(key, cancellationToken);
-        // if (existing == null) return (StatusCodes.NotFound, default);
-        // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-        // return (StatusCodes.OK, updatedData);
-        //
-        // For data deletion (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.DeleteAsync(key, cancellationToken);
-        // return StatusCodes.NoContent;
-        //
-        // For event publishing (lib-messaging):
-        // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -169,33 +142,6 @@ public partial class DivineService : IDivineService
         // published as error events by the controller automatically.
         await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method GetDeityByCode not yet implemented");
-
-        // Example patterns using infrastructure libs:
-        //
-        // For data retrieval (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var data = await stateStore.GetAsync(key, cancellationToken);
-        // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-        //
-        // For data creation (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.SaveAsync(key, newData, cancellationToken);
-        // return (StatusCodes.Created, newData);
-        //
-        // For data updates (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var existing = await stateStore.GetAsync(key, cancellationToken);
-        // if (existing == null) return (StatusCodes.NotFound, default);
-        // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-        // return (StatusCodes.OK, updatedData);
-        //
-        // For data deletion (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.DeleteAsync(key, cancellationToken);
-        // return StatusCodes.NoContent;
-        //
-        // For event publishing (lib-messaging):
-        // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -212,33 +158,6 @@ public partial class DivineService : IDivineService
         // published as error events by the controller automatically.
         await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method ListDeities not yet implemented");
-
-        // Example patterns using infrastructure libs:
-        //
-        // For data retrieval (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var data = await stateStore.GetAsync(key, cancellationToken);
-        // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-        //
-        // For data creation (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.SaveAsync(key, newData, cancellationToken);
-        // return (StatusCodes.Created, newData);
-        //
-        // For data updates (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var existing = await stateStore.GetAsync(key, cancellationToken);
-        // if (existing == null) return (StatusCodes.NotFound, default);
-        // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-        // return (StatusCodes.OK, updatedData);
-        //
-        // For data deletion (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.DeleteAsync(key, cancellationToken);
-        // return StatusCodes.NoContent;
-        //
-        // For event publishing (lib-messaging):
-        // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -255,33 +174,6 @@ public partial class DivineService : IDivineService
         // published as error events by the controller automatically.
         await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method UpdateDeity not yet implemented");
-
-        // Example patterns using infrastructure libs:
-        //
-        // For data retrieval (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var data = await stateStore.GetAsync(key, cancellationToken);
-        // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-        //
-        // For data creation (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.SaveAsync(key, newData, cancellationToken);
-        // return (StatusCodes.Created, newData);
-        //
-        // For data updates (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var existing = await stateStore.GetAsync(key, cancellationToken);
-        // if (existing == null) return (StatusCodes.NotFound, default);
-        // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-        // return (StatusCodes.OK, updatedData);
-        //
-        // For data deletion (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.DeleteAsync(key, cancellationToken);
-        // return StatusCodes.NoContent;
-        //
-        // For event publishing (lib-messaging):
-        // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -298,33 +190,6 @@ public partial class DivineService : IDivineService
         // published as error events by the controller automatically.
         await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method ActivateDeity not yet implemented");
-
-        // Example patterns using infrastructure libs:
-        //
-        // For data retrieval (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var data = await stateStore.GetAsync(key, cancellationToken);
-        // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-        //
-        // For data creation (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.SaveAsync(key, newData, cancellationToken);
-        // return (StatusCodes.Created, newData);
-        //
-        // For data updates (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var existing = await stateStore.GetAsync(key, cancellationToken);
-        // if (existing == null) return (StatusCodes.NotFound, default);
-        // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-        // return (StatusCodes.OK, updatedData);
-        //
-        // For data deletion (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.DeleteAsync(key, cancellationToken);
-        // return StatusCodes.NoContent;
-        //
-        // For event publishing (lib-messaging):
-        // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -341,33 +206,6 @@ public partial class DivineService : IDivineService
         // published as error events by the controller automatically.
         await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method DeactivateDeity not yet implemented");
-
-        // Example patterns using infrastructure libs:
-        //
-        // For data retrieval (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var data = await stateStore.GetAsync(key, cancellationToken);
-        // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-        //
-        // For data creation (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.SaveAsync(key, newData, cancellationToken);
-        // return (StatusCodes.Created, newData);
-        //
-        // For data updates (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var existing = await stateStore.GetAsync(key, cancellationToken);
-        // if (existing == null) return (StatusCodes.NotFound, default);
-        // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-        // return (StatusCodes.OK, updatedData);
-        //
-        // For data deletion (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.DeleteAsync(key, cancellationToken);
-        // return StatusCodes.NoContent;
-        //
-        // For event publishing (lib-messaging):
-        // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -402,33 +240,6 @@ public partial class DivineService : IDivineService
         // published as error events by the controller automatically.
         await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method GetDivinityBalance not yet implemented");
-
-        // Example patterns using infrastructure libs:
-        //
-        // For data retrieval (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var data = await stateStore.GetAsync(key, cancellationToken);
-        // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-        //
-        // For data creation (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.SaveAsync(key, newData, cancellationToken);
-        // return (StatusCodes.Created, newData);
-        //
-        // For data updates (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var existing = await stateStore.GetAsync(key, cancellationToken);
-        // if (existing == null) return (StatusCodes.NotFound, default);
-        // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-        // return (StatusCodes.OK, updatedData);
-        //
-        // For data deletion (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.DeleteAsync(key, cancellationToken);
-        // return StatusCodes.NoContent;
-        //
-        // For event publishing (lib-messaging):
-        // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -445,33 +256,6 @@ public partial class DivineService : IDivineService
         // published as error events by the controller automatically.
         await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method CreditDivinity not yet implemented");
-
-        // Example patterns using infrastructure libs:
-        //
-        // For data retrieval (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var data = await stateStore.GetAsync(key, cancellationToken);
-        // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-        //
-        // For data creation (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.SaveAsync(key, newData, cancellationToken);
-        // return (StatusCodes.Created, newData);
-        //
-        // For data updates (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var existing = await stateStore.GetAsync(key, cancellationToken);
-        // if (existing == null) return (StatusCodes.NotFound, default);
-        // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-        // return (StatusCodes.OK, updatedData);
-        //
-        // For data deletion (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.DeleteAsync(key, cancellationToken);
-        // return StatusCodes.NoContent;
-        //
-        // For event publishing (lib-messaging):
-        // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -488,33 +272,6 @@ public partial class DivineService : IDivineService
         // published as error events by the controller automatically.
         await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method DebitDivinity not yet implemented");
-
-        // Example patterns using infrastructure libs:
-        //
-        // For data retrieval (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var data = await stateStore.GetAsync(key, cancellationToken);
-        // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-        //
-        // For data creation (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.SaveAsync(key, newData, cancellationToken);
-        // return (StatusCodes.Created, newData);
-        //
-        // For data updates (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var existing = await stateStore.GetAsync(key, cancellationToken);
-        // if (existing == null) return (StatusCodes.NotFound, default);
-        // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-        // return (StatusCodes.OK, updatedData);
-        //
-        // For data deletion (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.DeleteAsync(key, cancellationToken);
-        // return StatusCodes.NoContent;
-        //
-        // For event publishing (lib-messaging):
-        // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -531,33 +288,6 @@ public partial class DivineService : IDivineService
         // published as error events by the controller automatically.
         await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method GetDivinityHistory not yet implemented");
-
-        // Example patterns using infrastructure libs:
-        //
-        // For data retrieval (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var data = await stateStore.GetAsync(key, cancellationToken);
-        // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-        //
-        // For data creation (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.SaveAsync(key, newData, cancellationToken);
-        // return (StatusCodes.Created, newData);
-        //
-        // For data updates (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var existing = await stateStore.GetAsync(key, cancellationToken);
-        // if (existing == null) return (StatusCodes.NotFound, default);
-        // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-        // return (StatusCodes.OK, updatedData);
-        //
-        // For data deletion (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.DeleteAsync(key, cancellationToken);
-        // return StatusCodes.NoContent;
-        //
-        // For event publishing (lib-messaging):
-        // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -574,33 +304,6 @@ public partial class DivineService : IDivineService
         // published as error events by the controller automatically.
         await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method GrantBlessing not yet implemented");
-
-        // Example patterns using infrastructure libs:
-        //
-        // For data retrieval (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var data = await stateStore.GetAsync(key, cancellationToken);
-        // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-        //
-        // For data creation (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.SaveAsync(key, newData, cancellationToken);
-        // return (StatusCodes.Created, newData);
-        //
-        // For data updates (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var existing = await stateStore.GetAsync(key, cancellationToken);
-        // if (existing == null) return (StatusCodes.NotFound, default);
-        // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-        // return (StatusCodes.OK, updatedData);
-        //
-        // For data deletion (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.DeleteAsync(key, cancellationToken);
-        // return StatusCodes.NoContent;
-        //
-        // For event publishing (lib-messaging):
-        // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -617,33 +320,6 @@ public partial class DivineService : IDivineService
         // published as error events by the controller automatically.
         await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method RevokeBlessing not yet implemented");
-
-        // Example patterns using infrastructure libs:
-        //
-        // For data retrieval (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var data = await stateStore.GetAsync(key, cancellationToken);
-        // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-        //
-        // For data creation (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.SaveAsync(key, newData, cancellationToken);
-        // return (StatusCodes.Created, newData);
-        //
-        // For data updates (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var existing = await stateStore.GetAsync(key, cancellationToken);
-        // if (existing == null) return (StatusCodes.NotFound, default);
-        // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-        // return (StatusCodes.OK, updatedData);
-        //
-        // For data deletion (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.DeleteAsync(key, cancellationToken);
-        // return StatusCodes.NoContent;
-        //
-        // For event publishing (lib-messaging):
-        // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -660,33 +336,6 @@ public partial class DivineService : IDivineService
         // published as error events by the controller automatically.
         await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method ListBlessingsByEntity not yet implemented");
-
-        // Example patterns using infrastructure libs:
-        //
-        // For data retrieval (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var data = await stateStore.GetAsync(key, cancellationToken);
-        // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-        //
-        // For data creation (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.SaveAsync(key, newData, cancellationToken);
-        // return (StatusCodes.Created, newData);
-        //
-        // For data updates (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var existing = await stateStore.GetAsync(key, cancellationToken);
-        // if (existing == null) return (StatusCodes.NotFound, default);
-        // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-        // return (StatusCodes.OK, updatedData);
-        //
-        // For data deletion (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.DeleteAsync(key, cancellationToken);
-        // return StatusCodes.NoContent;
-        //
-        // For event publishing (lib-messaging):
-        // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -703,33 +352,6 @@ public partial class DivineService : IDivineService
         // published as error events by the controller automatically.
         await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method ListBlessingsByDeity not yet implemented");
-
-        // Example patterns using infrastructure libs:
-        //
-        // For data retrieval (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var data = await stateStore.GetAsync(key, cancellationToken);
-        // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-        //
-        // For data creation (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.SaveAsync(key, newData, cancellationToken);
-        // return (StatusCodes.Created, newData);
-        //
-        // For data updates (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var existing = await stateStore.GetAsync(key, cancellationToken);
-        // if (existing == null) return (StatusCodes.NotFound, default);
-        // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-        // return (StatusCodes.OK, updatedData);
-        //
-        // For data deletion (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.DeleteAsync(key, cancellationToken);
-        // return StatusCodes.NoContent;
-        //
-        // For event publishing (lib-messaging):
-        // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -746,33 +368,6 @@ public partial class DivineService : IDivineService
         // published as error events by the controller automatically.
         await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method GetBlessing not yet implemented");
-
-        // Example patterns using infrastructure libs:
-        //
-        // For data retrieval (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var data = await stateStore.GetAsync(key, cancellationToken);
-        // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-        //
-        // For data creation (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.SaveAsync(key, newData, cancellationToken);
-        // return (StatusCodes.Created, newData);
-        //
-        // For data updates (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var existing = await stateStore.GetAsync(key, cancellationToken);
-        // if (existing == null) return (StatusCodes.NotFound, default);
-        // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-        // return (StatusCodes.OK, updatedData);
-        //
-        // For data deletion (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.DeleteAsync(key, cancellationToken);
-        // return StatusCodes.NoContent;
-        //
-        // For event publishing (lib-messaging):
-        // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -789,33 +384,6 @@ public partial class DivineService : IDivineService
         // published as error events by the controller automatically.
         await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method RegisterFollower not yet implemented");
-
-        // Example patterns using infrastructure libs:
-        //
-        // For data retrieval (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var data = await stateStore.GetAsync(key, cancellationToken);
-        // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-        //
-        // For data creation (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.SaveAsync(key, newData, cancellationToken);
-        // return (StatusCodes.Created, newData);
-        //
-        // For data updates (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var existing = await stateStore.GetAsync(key, cancellationToken);
-        // if (existing == null) return (StatusCodes.NotFound, default);
-        // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-        // return (StatusCodes.OK, updatedData);
-        //
-        // For data deletion (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.DeleteAsync(key, cancellationToken);
-        // return StatusCodes.NoContent;
-        //
-        // For event publishing (lib-messaging):
-        // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -850,33 +418,6 @@ public partial class DivineService : IDivineService
         // published as error events by the controller automatically.
         await Task.CompletedTask; // IMPLEMENTATION TENETS: async methods must contain await
         throw new NotImplementedException("Method GetFollowers not yet implemented");
-
-        // Example patterns using infrastructure libs:
-        //
-        // For data retrieval (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var data = await stateStore.GetAsync(key, cancellationToken);
-        // return data != null ? (StatusCodes.OK, data) : (StatusCodes.NotFound, default);
-        //
-        // For data creation (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.SaveAsync(key, newData, cancellationToken);
-        // return (StatusCodes.Created, newData);
-        //
-        // For data updates (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // var existing = await stateStore.GetAsync(key, cancellationToken);
-        // if (existing == null) return (StatusCodes.NotFound, default);
-        // await stateStore.SaveAsync(key, updatedData, cancellationToken);
-        // return (StatusCodes.OK, updatedData);
-        //
-        // For data deletion (lib-state):
-        // var stateStore = _stateStoreFactory.Create<YourDataType>(STATE_STORE);
-        // await stateStore.DeleteAsync(key, cancellationToken);
-        // return StatusCodes.NoContent;
-        //
-        // For event publishing (lib-messaging):
-        // await _messageBus.TryPublishAsync("topic.name", eventModel, cancellationToken: cancellationToken);
     }
 
     /// <summary>

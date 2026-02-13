@@ -13,6 +13,36 @@ Distributed actor management and execution (L2 GameFoundation) for NPC brains, e
 
 ---
 
+## The NPC Intelligence Stack (Architectural Target)
+
+> **Status**: The core actor runtime (ActorRunner, behavior loop, pool deployment, perception/memory) is implemented. The cognition pipeline is integrated with a forward-compatible evaluate_consequences slot. The broader vision of what Actor enables -- described below -- is the architectural north star that these systems serve.
+
+### Living Worlds Require 100,000+ Concurrent Autonomous NPCs
+
+The world must be alive whether or not players are watching. NPCs pursue their own goals, run businesses, form relationships, participate in politics, and generate emergent stories. This requires a scale target of 100,000+ concurrent AI-driven characters, each making decisions every 100-500ms. Every architecture choice in Actor -- zero-allocation bytecode VM, bounded perception queues, pool deployment modes, per-character RabbitMQ subscriptions -- exists specifically to hit this scale target. This is not a nice-to-have; it is the minimum viable living world.
+
+### Actor Is a Universal Autonomous Agent Runtime
+
+The same ActorRunner + ABML bytecode interpreter executes fundamentally different kinds of autonomous entities. NPC character brains, dungeon core intelligences, divine actors serving as both regional watcher gods (Moira/Fate, Thanatos/Death, Ares/War, Hermes/Commerce) and player garden orchestrators, and event brains for cinematic combat encounters all run on Actor. A divine actor tending a physical realm region and the same divine actor tending a player's conceptual garden space are the same operation from Actor's perspective -- different ABML behavior documents, same runtime. The category system (`npc-brain`, `event-combat`, `event-regional`, `world-admin`, `scheduled-task`) reflects this generality. If the Actor system can run all of these, it proves that the platform supports "any autonomous entity" -- and that improvements to the runtime benefit every system simultaneously.
+
+### Actors Are Both Producers and Consumers in the Content Flywheel
+
+The fundamental thesis: more play produces more content, which produces more play. Actor behavioral state (feelings, goals, memories, encounter outcomes) feeds into character history. Character history feeds into resource archives when characters die. Archives feed the Storyline composer which generates narrative seeds. Regional watcher actors (running on Actor) consume those seeds and orchestrate new scenarios. Those scenarios involve NPC character brains (running on Actor) which generate new behavioral state. The loop is: Actor output → History → Archives → Storyline → Watcher Actor input → new Actor output.
+
+### Player Characters Are Always Autonomous
+
+Characters are independent entities with NPC brains running at all times. The guardian spirit (the player) influences but does not directly control. Actor cognition runs for player-bound characters; the player is an input source, not a replacement for the brain. If the player goes idle, the character continues acting autonomously based on personality. If the player pushes the character against its nature, the character resists through the same morality and personality systems that govern NPCs. This dual-agency model means Actor is relevant for ALL characters, not just NPCs.
+
+### The Combat Dream: Cinematic Combat as an Actor Deployment Pattern
+
+The vision for combat is that encounters feel like choreographed cinematics generated in real-time from actual environment, character capabilities, and player input. This is not a separate system -- it is an Actor deployment pattern. An Event Brain actor (category `event-combat`) queries the Mapping service for spatial affordances ("what objects within 5m can be grabbed?", "are there elevation changes for dramatic leaps?"), queries character agents for capabilities and personality, composes streaming cinematics via continuation points, and coordinates the three-version temporal desync (canonical past, participant present, spectator projection). The Actor runtime's existing event brain architecture, encounter management, and ABML execution are the foundation.
+
+### Morality Integration: The Conscience That Emerges from the Pipeline
+
+The `evaluate_consequences` cognition stage (opt-in via `conscience: true` ABML metadata) enables NPCs to have "second thoughts" before taking morally costly actions. The stage reads obligation cost data (`${obligations.violation_cost.<type>}`) and faction norm data (`${faction.*}`) from the variable provider factory, flags actions where cost exceeds a threshold as `knowing_violation`, and writes cost modifiers into the GOAP planner's execution context. The planner then naturally selects alternatives when the moral cost is high enough. An honest merchant buys food; a desperate rogue steals it; the same rogue in a temple district buys it because territorial norms make theft expensive there. This is the endpoint of the Faction → Obligation → Actor cognition pipeline described in the [Morality System guide](../guides/MORALITY-SYSTEM.md).
+
+---
+
 ## Dependencies (What This Plugin Relies On)
 
 | Dependency | Usage |

@@ -29,6 +29,34 @@ The Faction service (L4 GameFeatures) models factions as seed-based living entit
 
 Internal-only, never internet-facing.
 
+---
+
+## Factions as Emergent Governance (Architectural Target)
+
+> **Status**: All 31 faction endpoints are fully implemented (CRUD, membership, territory, norms, cleanup, compression). The seed-based growth pipeline and norm resolution hierarchy work end-to-end. The broader vision described below -- emergent governance, economic regulation, and the morality pipeline role -- is the architectural target that these mechanics serve.
+
+### Factions Are the Emergent Governance Layer of the Living World
+
+The vision is not "factions with stats" but emergent political systems that arise organically from NPC activity. NPCs trade → faction grows its commerce seed domain → faction unlocks trade regulation capabilities → NPCs within that faction's territory experience different economic norms → the economy shifts. The seed growth system is the delivery mechanism: governance power is EARNED through member activity, not statically assigned by a designer. A nascent thieves' guild literally cannot define "honor among thieves" as an enforceable norm because it hasn't grown enough governance capability yet. A sovereign merchant guild can regulate pricing, enforce trade agreements, and claim territory. This mirrors real-world governance where authority comes from established legitimacy, not from declaration.
+
+### Faction Is the "Social Landscape" Layer of the Morality Pipeline
+
+Faction norms define what behaviors are costly WHERE and for WHOM. This feeds into Obligation (the "cost landscape") which computes personality-weighted costs, which feeds into Actor cognition where costs become GOAP action cost modifiers. Without Faction, the morality system is purely contractual -- only explicit agreements (guild charters, trade deals) create obligations. WITH Faction, ambient cultural and social norms become enforceable: a realm-wide honor code, a temple district's sanctity rules, a merchant quarter's trade regulations all modify NPC behavior without requiring individual contracts. See [Morality System guide](../guides/MORALITY-SYSTEM.md) for the full pipeline architecture.
+
+### Factions Are Economic Actors in a Living Economy
+
+The economy must be NPC-driven, not player-driven. Supply, demand, pricing, and trade routes emerge from NPC behavior -- what they need, what they produce, what they aspire to. Factions are how economic regulation emerges: trade regulation capabilities unlocked through faction growth, tariff systems, market influence, divine economic intervention (e.g., a Commerce regional watcher boosting trade) that works THROUGH faction mechanisms. Player economies layer on top of this NPC economic substrate. If the economy is just player-to-player, the world feels dead when players are offline.
+
+### Political Connections Are Growable Entities, Not Boolean Flags
+
+Alliances between factions are modeled as seed bonds via lib-seed's bond API. A bond between two faction seeds represents the alliance/rivalry as a growable entity with its own capability manifest and phase progression. Joint member activities (trade between allied factions, military cooperation) grow the bonded seed, unlocking alliance capabilities: joint territory claims, mutual defense pacts, trade agreements, shared governance. This means political relationships are living things that strengthen or atrophy based on actual inter-faction activity, not static diplomatic flags.
+
+### The Emergent Narrative of Faction Evolution
+
+Over simulated time, factions should undergo recognizable arcs. A street gang grows through member activities → becomes an established criminal organization with enforceable codes → claims territory → regulates the underground economy. A merchant guild forms around a marketplace → trade activity grows its commerce seed → it unlocks pricing regulation → eventually competes with the ruling faction for political influence. These arcs are not scripted; they emerge from the seed growth system, the Collection-to-Seed pipeline, and capability-gated operations. The game designer's role is defining seed types, growth mappings, and capability thresholds -- the specific arcs that emerge are unique to each world's simulated history.
+
+---
+
 ## Dependencies (What This Plugin Relies On)
 
 | Dependency | Usage |

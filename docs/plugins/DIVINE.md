@@ -9,9 +9,11 @@
 
 Pantheon management service (L4 GameFeatures) for deity entities, divinity economy, and blessing orchestration. A thin orchestration layer (like Quest over Contract, Escrow over Currency/Item) that composes existing Bannou primitives to deliver divine game mechanics.
 
-**Composability**: God identity is owned here. God behavior is Actor (event brain) via Puppetmaster. Domain power is Seed. Divinity resource is Currency. Greater Blessings are Collection. Minor Blessings are Status Inventory. Follower bonds are Relationship. lib-divine orchestrates the ceremony connecting these primitives.
+**Composability**: God identity is owned here. God behavior is Actor (event brain) via Puppetmaster. Domain power is Seed. Divinity resource is Currency. Greater Blessings are Collection. Minor Blessings are Status Inventory. Follower bonds are Relationship. Garden orchestration is Gardener. lib-divine orchestrates the ceremony connecting these primitives.
 
 **Critical architectural insight**: Gods influence characters through the character's own Actor, not directly. A god's Actor (regional watcher) monitors event streams and makes decisions; the character's Actor receives the consequences. Blessings are entity-agnostic -- characters, accounts, deities, or any entity type can receive them, since the backing storage (lib-collection, lib-status) is also entity-agnostic.
+
+**Divine actors are both puppetmasters and gardeners**: A god tending a physical realm region (spawning encounters, adjusting NPC moods, orchestrating narrative opportunities) and a god tending a player's conceptual garden space (spawning POIs, managing scenario selection, guiding discovery) are the same operation from different perspectives -- two sides of the same coin. The divine actor launched via Puppetmaster as a regional watcher also serves as the gardener behavior actor for player experience orchestration via Gardener's APIs. Whether the "space" being tended is a physical location in the game world or an abstract conceptual space (a void garden, a lobby, player housing) is a behavioral distinction encoded in the god's ABML behavior document, not a structural difference in the actor type. This means: (1) the same god (e.g., Moira/Fate) that creates emergent content in the physical world also curates which experiences reach players through their gardens, directly connecting the content flywheel to the player experience; (2) any conceptual space can potentially become a physical space and vice versa, because the transition is just the god shifting focus between garden types; (3) lib-gardener provides the tools (garden instances, POIs, scenarios, entity associations), lib-puppetmaster provides the actor lifecycle, and lib-divine provides the identity and economy of the entity doing the tending.
 
 **Zero Arcadia-specific content**: lib-divine is a generic pantheon management service. Arcadia's 18 Old Gods are configured through behaviors and templates at deployment time, not baked into lib-divine.
 
@@ -265,10 +267,17 @@ All endpoints require `developer` role. Called by lib-resource when referenced e
 │  │ Frees capacity       │  │ Aggregates per deity       │             │
 │  └─────────────────────┘  └───────────────────────────┘             │
 │                                                                      │
-│  God → Character Influence Path                                      │
-│  God's Actor (watcher) monitors events → decides → publishes         │
+│  God Influence Paths (Two Sides of the Same Coin)                    │
+│                                                                      │
+│  Realm-Tending (via Puppetmaster):                                   │
+│  God's Actor monitors realm events → decides → publishes             │
 │  Character's Actor consumes consequences → adjusts behavior          │
 │  (gods act through intermediaries, never directly)                    │
+│                                                                      │
+│  Garden-Tending (via Gardener):                                      │
+│  God's Actor monitors player drift/events → decides → calls          │
+│  Gardener APIs (spawn POI, manage transitions, shift bindings)       │
+│  (same actor, same decision-making, different toolbox)               │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 

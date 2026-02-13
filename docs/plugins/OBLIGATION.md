@@ -26,6 +26,36 @@ See [GitHub Issue #410](https://github.com/beyond-immersion/bannou-service/issue
 
 ---
 
+## The Second Thoughts Vision (Architectural Target)
+
+> **Status**: All 11 obligation endpoints are fully implemented. Contract-driven obligation extraction, personality-weighted cost computation, violation reporting, and the variable provider factory work end-to-end. The broader vision described below -- emergent moral character arcs, post-violation feedback loops, and progressive player moral agency -- represents the narrative payoff that the current machinery enables.
+
+### The Narrative Promise: NPCs with a Conscience
+
+The honest merchant NPC hesitates before selling stolen goods because her guild charter's behavioral clause makes "fence_stolen_goods" cost 20.6 after personality weighting. The corrupted guard gradually becomes more willing to take bribes -- each knowing violation triggers `OATH_BROKEN` personality drift, eroding honesty over time, which reduces the personality weight multiplier, which lowers future bribe costs. The redeemed thief chooses to return stolen property because joining a new guild added faction norms that make theft expensive, and each time he resists temptation, `RESISTED_TEMPTATION` ticks honesty upward, compounding the cost. None of these are scripted character arcs. They emerge from the repeated interaction between social context (Faction), personal traits (Personality), contractual commitments (Contract), and accumulated moral choices (Obligation), expressed through GOAP action cost modifications in the Actor cognition pipeline.
+
+### Post-Violation Feedback Loops Make Moral Choices Narratively Generative
+
+When an NPC commits a knowing violation (flagged by the `evaluate_consequences` cognition stage), the consequences ripple through multiple systems:
+
+- **Personality drift**: `OATH_BROKEN` / `RESISTED_TEMPTATION` / `GUILTY_CONSCIENCE` experience types shift personality traits over time via lib-character-personality. Repeated theft erodes honesty; repeated resistance reinforces it.
+- **Guilt as composite emotion**: The guilt pattern (stress up, sadness up, comfort down, joy down) is expressed through the existing actor emotional model -- not a new emotion axis, but a recognizable composite. The emotional state modulates future behavior through ABML expressions.
+- **Encounter memory**: Violations witnessed by other characters create negative-sentiment encounters via lib-character-encounter. The witness remembers. This propagates social consequences -- the merchant remembers being swindled and adjusts future interactions.
+- **Contract breach**: Knowing violations auto-report to lib-contract (controlled by `BreachReportEnabled`), triggering formal enforcement terms -- penalties, contract termination, escalation through governance structures.
+- **Divine attention**: Regional watcher god actors may notice patterns of consistent virtue or vice. Consistent violations → loss of divine favor. Consistent virtue → divine blessing (via lib-status). This creates a cosmological moral feedback loop.
+
+Each of these consequences feeds back into the inputs of the morality system (personality changes affect weighting, encounter memories affect relationships, divine blessings/curses affect status), making moral choices narratively generative rather than terminal. This is how the morality system participates in the Content Flywheel.
+
+### Progressive Moral Agency for Player Characters
+
+Player characters have NPC brains running at all times. The guardian spirit (the player) influences but doesn't directly control. The morality system creates friction between what the player wants and what the character is willing to do. A character with high honesty RESISTS being pushed toward theft -- the resistance is proportional to the moral cost. A player who consistently forces immoral actions doesn't just get the immediate reward; they get a character whose personality has shifted, whose reputation is damaged, whose divine relationships are strained, and who resists LESS next time. The "second thoughts" moment -- a visible hesitation proportional to moral cost -- is the player-facing expression of the `evaluate_consequences` stage. See [Morality System guide](../guides/MORALITY-SYSTEM.md) for the complete pipeline and player experience design.
+
+### The Integration Roadmap
+
+The full morality pipeline requires five integration points to be complete: (1) Faction norms flowing to Obligation as ambient cost sources alongside contractual obligations, (2) the faction variable provider exposing norm and territory data (`${faction.has_norm.<type>}`, `${faction.in_controlled_territory}`), (3) the `evaluate_consequences` cognition stage being fully wired in the Actor pipeline, (4) post-violation feedback loops to personality/encounter/divine systems, and (5) data-driven trait-to-violation-type mapping replacing the current hardcoded switch. The current implementation has the machinery in place; these integration points connect it into the full pipeline.
+
+---
+
 ## Dependencies (What This Plugin Relies On)
 
 | Dependency | Usage |

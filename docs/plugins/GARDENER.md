@@ -7,7 +7,7 @@
 
 ## Overview
 
-Player experience orchestration service (L4 GameFeatures) and the player-side counterpart to Puppetmaster: where Puppetmaster orchestrates what NPCs experience, Gardener orchestrates what players experience. A "garden" is an abstract conceptual space that a player inhabits -- it can represent a lobby, an in-game experience, a post-game space, player housing, cooperative gameplay, or the void/discovery space. The player is always in some garden, and Gardener is always active for every connected player, managing their gameplay context, entity associations, and event routing. Gardener provides the APIs and infrastructure that a gardener behavior (running as an actor) uses to manipulate and manage player experiences. The specific behavior varies per game -- some use fully autonomous gardener behaviors, others use manual API calls from the game engine. Internal-only, never internet-facing.
+Player experience orchestration service (L4 GameFeatures) and the player-side counterpart to Puppetmaster: where Puppetmaster orchestrates what NPCs experience, Gardener orchestrates what players experience. A "garden" is an abstract conceptual space that a player inhabits -- it can represent a lobby, an in-game experience, a post-game space, player housing, cooperative gameplay, or the void/discovery space. The player is always in some garden, and Gardener is always active for every connected player, managing their gameplay context, entity associations, and event routing. Gardener provides the APIs and infrastructure that a divine actor (running via Puppetmaster on the L2 Actor runtime) uses to manipulate and manage player experiences. The gardener behavior actor is not a new actor type -- it is a divine actor (see [DIVINE.md](DIVINE.md)) tending a conceptual space rather than a physical realm region, two sides of the same coin. The specific behavior varies per game -- some use fully autonomous divine gardener behaviors, others use manual API calls from the game engine. The Gardener service is behavior-agnostic -- it provides primitives, not policy. Internal-only, never internet-facing.
 
 **Current implementation status**: The codebase implements the **void/discovery garden type** only (POI-driven scenario routing with drift metrics and weighted scoring). The broader garden concept (multiple garden types, gardener behavior actor, entity session registration, garden-to-garden transitions) is documented here as the architectural target but not yet implemented. Sections below describe both the current implementation and the target architecture, clearly labeled.
 
@@ -33,27 +33,28 @@ Each garden has:
 - **Entity associations** -- collections, inventories, characters available in this context
 - **A gardener behavior** (or manual API calls) controlling what the player experiences
 
-### Gardener Behavior Actor Pattern
+### Gardener Behavior Actor Pattern (Divine Actor Unification)
 
-Just as Puppetmaster launches actors with behaviors to orchestrate NPC experiences, Gardener launches an actor with a **gardener behavior** to orchestrate each player's experience. The Gardener service provides APIs; the gardener behavior decides when and how to call them.
+The gardener behavior actor is a **divine actor** -- the same entity type that Puppetmaster launches as regional watchers to orchestrate NPC experiences in physical realms. From a god's perspective, tending a player's conceptual garden and tending a physical realm region are the same operation with different tools. The Gardener service provides the tools (garden instances, POIs, scenarios, entity associations); the divine actor's ABML behavior document determines when and how to use them.
 
 ```
-Puppetmaster (L4)                     Gardener (L4)
-─────────────────                     ──────────────
-Launches actors with                  Launches actors with
-NPC behavior documents                gardener behavior documents
-    │                                     │
-    ▼                                     ▼
-Actor Runtime (L2)                    Actor Runtime (L2)
-executes ABML bytecode                executes ABML bytecode
-    │                                     │
-    ▼                                     ▼
-NPC makes decisions,                  Gardener presents POIs,
-acts in the world                     manages transitions,
-                                      shifts entity bindings
+lib-divine (L4) ── deity identity, economy, blessings
+    │
+    ├── Realm-tending (via Puppetmaster)        Garden-tending (via Gardener)
+    │   God's Actor monitors realm events       God's Actor monitors player drift/events
+    │   Spawns encounters, adjusts NPCs         Spawns POIs, manages transitions
+    │   Tools: watch, load_snapshot,            Tools: Gardener APIs (enter garden,
+    │          spawn_watcher, emit_perception          spawn POI, enter scenario, etc.)
+    │           │                                       │
+    │           └──── Both run on Actor Runtime (L2) ───┘
+    │                 Same ABML bytecode interpreter
+    │                 Same divine actor identity
+    │
+    └── Any conceptual space can become physical and vice versa
+        (the god shifts focus between garden types)
 ```
 
-**Multi-game variability**: The gardener behavior can vary significantly between games. In Arcadia, the void/discovery experience uses drift-based POI scoring and seed growth. A different game might use a simple menu-driven lobby. Some games may not need a behavior at all and instead drive Gardener APIs directly from the game engine. The Gardener service is behavior-agnostic -- it provides primitives, not policy.
+**Multi-game variability**: The gardener behavior can vary significantly between games. In Arcadia, the void/discovery experience is tended by divine actors using drift-based POI scoring and seed growth. A different game might use different deities (or non-deity actors entirely) for garden orchestration, or drive Gardener APIs directly from the game engine without an actor. The Gardener service is behavior-agnostic -- it provides primitives, not policy.
 
 ### Always-Active Lifecycle
 
@@ -377,11 +378,11 @@ If the player has a bond and the template is bond-preferred, score is multiplied
 ### Target Architecture: Garden Lifecycle & Entity Session Registry
 
 ```
-Player connects → Gardener launches gardener behavior actor
+Player connects → Gardener triggers divine actor for garden-tending
     │
     ▼
 ┌────────────────────────────────────────────────────────────────────┐
-│  GARDENER BEHAVIOR (running as Actor via L2 Actor Runtime)         │
+│  DIVINE ACTOR as GARDENER (running via L2 Actor Runtime)           │
 │                                                                    │
 │  Manages garden-to-garden transitions for this player:             │
 │                                                                    │
@@ -469,7 +470,7 @@ Player connects → Gardener launches gardener behavior actor
 
 ### Architectural Gaps (Garden Concept)
 
-11. **Gardener behavior actor pattern**: The gardener behavior does not run as an actor. The current implementation uses background workers (`GardenerGardenOrchestratorWorker`, `GardenerScenarioLifecycleWorker`) with fixed-interval ticks instead of a per-player actor executing an ABML gardener behavior document. The actor pattern would enable per-game customization of the gardener's decision-making via different behavior documents, matching how Puppetmaster uses actors for NPC orchestration.
+11. **Divine actor as gardener pattern**: Garden-tending does not yet run as an actor. The current implementation uses background workers (`GardenerGardenOrchestratorWorker`, `GardenerScenarioLifecycleWorker`) with fixed-interval ticks instead of a per-player divine actor executing an ABML gardener behavior document. The target architecture uses divine actors (the same actor type that Puppetmaster launches as regional watchers) to tend conceptual garden spaces, unifying the puppetmaster and gardener roles under a single divine actor identity. See [DIVINE.md](DIVINE.md) for the full architectural rationale.
 
 12. **Garden-to-garden transitions**: The current implementation destroys the garden instance on scenario entry (`EnterScenarioAsync` deletes garden + POIs). The target architecture replaces this with garden-to-garden transitions where the gardener behavior continuously manages the player's context across garden types (discovery → lobby → in-game → post-game → discovery). The player is always in some garden; Gardener is always active.
 
@@ -565,11 +566,11 @@ Player connects → Gardener launches gardener behavior actor
 
 7. **Entity Session Registry design** ([Issue #426](https://github.com/beyond-immersion/bannou-service/issues/426)): The Entity Session Registry needs to be designed and implemented in Connect (L1), generalizing Connect's existing `account-sessions:{accountId}` pattern to arbitrary entity types. Key decisions: interface shape (`IEntitySessionRegistry` in `bannou-service/`), Redis key structure (`entity-sessions:{entityType}:{entityId}` → `Set<sessionId>`), cleanup on session disconnect (`UnregisterSessionAsync` sweeping all bindings via session-to-entities reverse index), and TTL/expiry for stale entries. Connect already manages session lifecycle, heartbeat liveness, and disconnect cleanup -- the entity registry plugs into the same infrastructure. Entity-based services (Status, Currency, Inventory, Collection, Seed, etc.) then query the registry and publish their own client events via `IClientEventPublisher`. This is a cross-cutting infrastructure addition that affects many services.
 
-8. **Gardener behavior document design**: The gardener behavior running as an actor needs an ABML behavior document (or family of documents) that encodes the per-game orchestration logic. Key questions: Is there a default/base gardener behavior? How does a game author customize it? Does the behavior use the same ABML bytecode as NPC behaviors, or does it need gardener-specific opcodes? How does the actor runtime interact with Gardener's APIs (the behavior needs to call garden/POI/scenario endpoints)?
+8. **Divine gardener behavior document design**: The divine actor tending a garden uses an ABML behavior document (or family of documents) that encodes the per-game orchestration logic -- the same ABML bytecode as any other divine actor behavior (realm-tending, encounter orchestration). Key questions: Is there a default/base gardener behavior? How does a game author customize it? How does the divine actor interact with Gardener's APIs from ABML (the behavior needs to call garden/POI/scenario endpoints -- likely via custom ABML action handlers analogous to Puppetmaster's `spawn_watcher:`, `watch:`, `load_snapshot:`)? Does a single divine actor handle both realm-tending and garden-tending flows, or are they separate actors for the same deity?
 
 9. **Garden type abstraction**: The current code assumes one garden type (void/discovery). Multiple garden types need a type registry, per-type behavioral patterns, and per-type entity association rules. Key question: Are garden types defined in configuration (like seed types), in schemas, or purely in behavior documents?
 
-10. **Garden-to-garden transition mechanics**: Replacing the current "destroy garden on scenario entry" with smooth transitions. What state persists across transitions? Does the gardener actor persist or restart? How does the game session relationship change (is each garden backed by a game session, or only in-game gardens)?
+10. **Garden-to-garden transition mechanics**: Replacing the current "destroy garden on scenario entry" with smooth transitions. What state persists across transitions? Does the divine gardener actor persist or restart? How does the game session relationship change (is each garden backed by a game session, or only in-game gardens)?
 
 #### Implementation (Current Void/Discovery Garden)
 
@@ -616,7 +617,7 @@ Player connects → Gardener launches gardener behavior actor
 - [ ] **Extension #4**: Design content flywheel connection (scenario outcomes feeding Storyline/Puppetmaster)
 - [ ] **Extension #5**: Add dialog choice trigger mode for multi-option branching POIs
 - [ ] **Stub #4**: Wire up `PersistentEntryEnabled` and `GardenMinigamesEnabled` phase config flags to service logic
-- [ ] **Stub #11**: Gardener behavior actor pattern -- launch per-player actor with gardener behavior document instead of background workers
+- [ ] **Stub #11**: Divine actor as gardener pattern -- launch per-player divine actor (via Puppetmaster) with gardener behavior document instead of background workers
 - [ ] **Stub #12**: Garden-to-garden transitions replacing destroy-on-scenario-entry
 - [ ] **Stub #13**: Multiple garden types (lobby, in-game, housing, post-game, cooperative)
 - [ ] **Stub #14**: Per-garden entity associations (characters, collections, inventories, wallets)
@@ -627,6 +628,6 @@ Player connects → Gardener launches gardener behavior actor
 - [x] **Design #6**: Implementation plan (`docs/plans/GARDENER.md`) superseded by this deep dive and deleted
 - [x] **Stub #2**: Added `/gardener/template/delete` endpoint (developer-only) that requires Deprecated status, publishes `scenario-template.deleted` lifecycle event
 - [ ] **Extension #7**: Document multi-seed-type deployment pattern (multiple Gardener instances with different `GARDENER_SEED_TYPE_CODE`)
-- [ ] **Design #8**: Design gardener behavior document structure (base/default behavior, per-game customization, ABML opcodes)
+- [ ] **Design #8**: Design divine gardener behavior document structure (base/default behavior, per-game customization, ABML action handlers for Gardener APIs)
 - [ ] **Design #9**: Design garden type abstraction (registry, behavioral patterns, entity association rules)
 - [ ] **Design #10**: Design garden-to-garden transition mechanics (state persistence, actor lifecycle, game session relationship)
