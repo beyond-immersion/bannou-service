@@ -29,312 +29,6 @@ Authoritative dispute resolution service (L4 GameFeatures) for competing claims 
 
 ---
 
-## Why Not lib-contract Directly?
-
-Contract provides the state machine, milestone progression, consent flows, and prebound API execution that arbitration cases need. The question arises: why not just create arbitration contracts directly via lib-contract's existing API?
-
-**The answer: arbitration requires jurisdiction, procedure, and enforcement -- Contract provides none of these.**
-
-| Concern | lib-contract Provides | lib-arbitration Adds |
-|---------|----------------------|---------------------|
-| **State machine** | Draft -> Proposed -> Active -> Fulfilled | Case-specific states (Filed -> Hearing -> Ruling -> Enforcement -> Closed) mapped onto Contract milestones |
-| **Parties** | Named party roles with consent | Jurisdiction-aware party roles (petitioner, respondent, arbiter, sovereign) with authority validation |
-| **Milestones** | Sequential progression with deadlines | Procedural steps (filing, evidence submission, hearing, ruling, appeal window, enforcement) selected from sovereign's template |
-| **Prebound APIs** | Callbacks on milestone transitions | Ruling enforcement (relationship status change, escrow release, obligation creation, exile) as prebound APIs |
-| **Procedures** | None -- Contract is procedure-agnostic | Jurisdiction determination, procedural template selection from sovereign's governance data, deadline computation |
-| **Authority** | None -- any entity can create a contract | Sovereign/Delegated authority validation, arbiter qualification, jurisdictional challenges |
-| **Enforcement** | Breach/cure mechanics | Legal vs. social consequence distinction, sovereign enforcement weight, guard NPC activation |
-
-Contract is the engine. Arbitration is the legal system built on that engine.
-
----
-
-## Faction Sovereignty Dependency
-
-Arbitration depends on a capability that does not yet exist in lib-faction: the `authorityLevel` field distinguishing Sovereign, Delegated, and Influence factions. This section documents the dependency and what it enables.
-
-### What Sovereignty Provides
-
-| Authority Level | Arbitration Capability |
-|----------------|----------------------|
-| **Sovereign** | Full jurisdiction. Defines procedural templates for case types. Appoints arbiters. Rulings carry legal weight (guard enforcement, imprisonment, asset seizure). |
-| **Delegated** | Scoped jurisdiction granted by a sovereign. Can arbitrate within delegated scope (e.g., temple district handles religious matters, merchant court handles trade disputes). Inherits sovereign's law for gaps. |
-| **Influence** | No jurisdiction. Cannot arbitrate. Can file cases (as petitioner), submit evidence, express preferences. Faction norms remain social cost modifiers only. |
-
-### Revised Norm Resolution for Arbitration
-
-When a case is filed, jurisdiction determination walks the authority hierarchy:
-
-1. **Find the sovereign** in the territory hierarchy (walk up faction territory claims and parent chains until Sovereign is found)
-2. **Check for delegated authority** -- a Delegated faction in the specific location may have jurisdiction for this case type
-3. **Sovereign's governance data** provides the procedural template for this case type
-4. **If sovereign has no position** (no governance data for this case type) -- fall through to realm baseline sovereign
-5. **Enclave sovereignty** -- a nested sovereign within the outer sovereign's territory overrides completely within its location boundary
-
-### What Must Change in lib-faction
-
-The following changes to lib-faction are prerequisites for lib-arbitration (documented in [DISSOLUTION-DESIGN.md](../planning/DISSOLUTION-DESIGN.md)):
-
-- **Schema change**: Add `authorityLevel` enum field (`Influence`, `Delegated`, `Sovereign`) to `faction-api.yaml`
-- **Model change**: Add field to `FactionModel`
-- **DesignateRealmBaseline enhancement**: Automatically sets `AuthorityLevel = Sovereign`
-- **New API**: Delegation endpoint for sovereign factions to grant Delegated authority to child factions
-- **QueryApplicableNorms enhancement**: Return authority source alongside norm data
-- **New governance data model**: Procedural norm type alongside cost norms -- `{ caseType, templateCode, governanceParameters }`, gated by `governance.arbitrate.*` seed capability and Sovereign/Delegated authority level
-- **New API**: `QueryGovernanceData` -- given a location and case type, resolve the jurisdictional faction and return its procedural template reference and governance parameters
-
-### What Must Change in lib-obligation
-
-- **Cost tagging**: Tag violation costs as `legal` vs. `social` vs. `personal` based on source faction's authority level
-- **Multi-channel costs**: Separate entries per violation type per authority channel (see [DISSOLUTION-DESIGN.md Q11](#))
-
----
-
-## The Arbitration Case Lifecycle
-
-An arbitration case progresses through a defined lifecycle, mapped onto Contract milestones:
-
-```
-CASE LIFECYCLE                           CONTRACT MILESTONE MAPPING
-=================                        ==========================
-
-Filed ──────────────────────────────────► Milestone 1: filing_accepted
-  │  Petitioner submits case              (prebound: validate jurisdiction,
-  │  Jurisdiction determined              create case record, notify respondent)
-  │  Procedural template selected
-  │
-  ▼
-Service ────────────────────────────────► Milestone 2: service_confirmed
-  │  Respondent formally notified          (prebound: record service timestamp,
-  │  Response deadline set                 start response timer)
-  │
-  ▼
-Response ───────────────────────────────► Milestone 3: response_received
-  │  Respondent accepts, contests,         (prebound: record response type,
-  │  or defaults (deadline expires)        update case state)
-  │
-  ▼
-Evidence ───────────────────────────────► Milestone 4: evidence_closed
-  │  Both parties submit evidence          (prebound: close evidence window,
-  │  Witnesses recorded                    notify arbiter)
-  │  Evidence window closes
-  │
-  ▼
-Hearing (optional) ─────────────────────► Milestone 5: hearing_completed
-  │  Arbiter reviews evidence              (prebound: record hearing outcome,
-  │  Parties may present arguments         advance to ruling)
-  │  (NPC arbiter uses GOAP to decide)
-  │
-  ▼
-Ruling ─────────────────────────────────► Milestone 6: ruling_issued
-  │  Arbiter issues ruling                 (prebound: execute ruling consequences
-  │  Consequences executed                 via downstream service APIs)
-  │  Appeal window opens
-  │
-  ▼
-Appeal Window ──────────────────────────► Milestone 7: appeal_window_closed
-  │  Parties may appeal to higher          (prebound: finalize or escalate)
-  │  sovereign (if exists)
-  │
-  ▼
-Enforcement ────────────────────────────► Milestone 8: enforcement_confirmed
-  │  Ruling consequences verified          (prebound: verify downstream state,
-  │  Ongoing obligations activated         close case)
-  │
-  ▼
-Closed ─────────────────────────────────► Contract Fulfilled
-```
-
-Not all milestones are required for every case type. The procedural template determines which milestones are active. A simple trade dispute might skip the hearing (arbiter rules on evidence alone). A criminal proceeding might have additional milestones (sentencing, probation review). The milestone set is template-driven, not hardcoded.
-
-### Default Proceedings
-
-If the respondent fails to respond within the deadline (Milestone 3), the case proceeds as a **default proceeding**:
-- The arbiter rules based on the petitioner's evidence alone
-- Default rulings typically favor the petitioner (sovereign's template configures default behavior)
-- The respondent can petition to reopen within an appeal window (if the template includes one)
-
-This creates emergent gameplay: NPCs who ignore legal proceedings face default judgments. A character who flees jurisdiction to avoid a divorce filing may return to find they've been divorced in absentia with unfavorable terms.
-
----
-
-## Procedural Templates
-
-Arbitration does not contain case-type-specific logic. All case behavior comes from procedural templates stored as governance data on sovereign/delegated factions, referencing contract templates in lib-contract.
-
-### The Flow
-
-```
-1. Case filed at Location X
-        │
-        ▼
-2. lib-arbitration queries lib-faction:
-   "Who is sovereign at Location X?"
-   "What governance data does the sovereign
-    have for case type 'dissolution'?"
-        │
-        ▼
-3. Faction returns:
-   {
-     caseType: "dissolution",
-     templateCode: "dissolution-standard",
-     governanceParameters: {
-       waitingPeriodDays: 30,
-       defaultAssetDivision: "equal",
-       appealWindowDays: 14,
-       requiresHearing: false,
-       defaultOnNoResponse: "petitioner_favored"
-     }
-   }
-        │
-        ▼
-4. lib-arbitration creates Contract instance
-   from template "dissolution-standard"
-   with governance parameters merged into
-   template values (via Contract's
-   SetTemplateValues API)
-        │
-        ▼
-5. Contract's milestone state machine
-   drives the case lifecycle
-   (prebound APIs execute consequences)
-```
-
-### Governance Parameters
-
-Governance parameters are template-specific key-value pairs that configure how the procedural template behaves for this jurisdiction. They are passed to Contract's `SetTemplateValues` API, which merges them into the template's configurable slots.
-
-| Parameter | Type | Used By | Description |
-|-----------|------|---------|-------------|
-| `waitingPeriodDays` | int | dissolution | Mandatory waiting period before ruling can be issued |
-| `defaultAssetDivision` | string | dissolution | Division rule for shared assets: `equal`, `petitioner_favored`, `respondent_favored`, `arbiter_discretion` |
-| `appealWindowDays` | int | all | Days after ruling before it becomes final |
-| `requiresHearing` | bool | all | Whether an in-person hearing milestone is included |
-| `defaultOnNoResponse` | string | all | Behavior on respondent default: `petitioner_favored`, `dismiss`, `continue` |
-| `maxEvidenceItems` | int | all | Evidence submission limit per party |
-| `sentencingRequired` | bool | criminal | Whether a separate sentencing milestone follows the guilty ruling |
-| `custodyEvaluationRequired` | bool | dissolution, custody | Whether a custody evaluation milestone is included |
-| `exileTerritory` | string | exile | Territory from which the subject is exiled (location code) |
-
-These parameters are opaque to lib-arbitration -- it passes them through to Contract. The contract template interprets them via its milestone configuration and prebound API parameters.
-
-### Example Procedural Templates
-
-Templates are authored at deployment time and registered in lib-contract. Different sovereigns reference different templates for the same case type.
-
-| Template Code | Case Type | Milestones | Description |
-|--------------|-----------|------------|-------------|
-| `dissolution-standard` | `dissolution` | filing, service, response, evidence, ruling, appeal, enforcement | Standard dissolution with waiting period and equal asset split |
-| `dissolution-religious-annulment` | `dissolution` | filing, service, response, evidence, hearing, ruling, enforcement | Religious proceeding requiring a hearing before a temple arbiter |
-| `criminal-trial-standard` | `criminal_proceeding` | filing, service, response, evidence, hearing, ruling, sentencing, appeal, enforcement | Full criminal trial with hearing and sentencing phases |
-| `trade-dispute-fast` | `trade_dispute` | filing, response, evidence, ruling, enforcement | Expedited merchant court proceeding (no hearing, no appeal) |
-| `exile-punitive` | `exile` | filing, ruling, enforcement | Sovereign-initiated, no response period -- immediate ruling and exile |
-| `sovereignty-recognition` | `sovereignty_recognition` | filing, evidence, hearing, ruling, appeal, enforcement | Petition for sovereign recognition adjudicated by current sovereign or divine arbiter |
-| `custody-standard` | `custody_inheritance` | filing, service, response, evidence, custody_evaluation, hearing, ruling, appeal, enforcement | Custody dispute with mandatory evaluation milestone |
-
----
-
-## Ruling Consequences
-
-When the arbiter issues a ruling (Milestone 6 prebound API execution), lib-arbitration orchestrates consequences across multiple downstream services. The specific consequences are determined by the ruling type and encoded in the contract template's prebound API configuration.
-
-### Consequence Types
-
-| Consequence | Downstream Service | Mechanism |
-|-------------|-------------------|-----------|
-| **Relationship status change** | Relationship (L2) | API call to update relationship type (married -> divorced, member -> exiled) |
-| **Asset division** | Escrow (L4, soft) | Create escrow with division terms from ruling, release to parties |
-| **Ongoing obligations** | Obligation (L4, soft) | Create new contracts with behavioral clauses (alimony, probation, reparations) that feed into GOAP costs |
-| **Custody assignment** | Character (L2) | Update character household assignment, modify guardian/dependent relationships |
-| **Exile enforcement** | Faction (L4) | Remove membership, mark character as exiled from territory. Obligation adds legal cost for re-entry. |
-| **Sovereignty transfer** | Faction (L4) | Update authority level, reassign territory control |
-| **Fine/penalty** | Currency (L2) | Debit from respondent's wallet, credit to petitioner or sovereign treasury |
-| **Imprisonment** | Status (L4, soft) | Apply imprisonment status effect (restricts movement, disables actions) via Status Inventory |
-| **Norm violation publication** | Events | Publish violation events consumed by encounter/reputation systems for social consequences |
-| **Divine attention** | Puppetmaster (L4, soft) | Publish events that regional watcher gods may notice (divine justice interest) |
-
-### The Escrow Integration
-
-Asset division in arbitration follows the same pattern as Escrow's existing arbiter-resolved disputes:
-
-```
-Ruling includes asset division terms
-        │
-        ▼
-lib-arbitration creates Escrow instance
-  - Type: two-party (petitioner, respondent)
-  - Trust mode: arbiter (the case arbiter)
-  - Assets: from shared organization assets
-    (via lib-organization) or directly held
-  - Division rule: from governance parameters
-        │
-        ▼
-Escrow collects deposits
-  (assets moved into custody)
-        │
-        ▼
-Arbiter resolves Escrow per ruling terms
-  (API call from Contract prebound execution)
-        │
-        ▼
-Escrow releases to parties per division
-```
-
-When lib-organization exists, shared organizational assets (household property, business inventory, treasury) are identified and moved into escrow as part of the filing process. Without lib-organization, only directly-held assets (character wallets, personal inventory) can be divided.
-
----
-
-## Arbiter Selection
-
-The arbiter for a case is determined by the jurisdictional faction's governance data and the case type. lib-arbitration does not select arbiters -- it resolves the selection rule and applies it.
-
-### Selection Modes
-
-| Mode | Mechanism | When Used |
-|------|-----------|-----------|
-| **Faction leader** | The sovereign/delegated faction's leader character is the arbiter | Default for most case types. Simple governance. |
-| **Appointed official** | The sovereign designates specific characters as arbiters for case types (stored in governance data) | Specialized courts: merchant guild's trade arbiter, temple's religious judge |
-| **Divine arbiter** | A regional watcher god serves as arbiter (via Puppetmaster actor) | Sovereignty disputes, religious matters, cases where mortal authority is contested |
-| **Peer panel** | Multiple faction members serve as a jury (majority rules) | Complex cases requiring community judgment. Template configures panel size. |
-
-### NPC Arbiter Decision-Making
-
-When the arbiter is an NPC (the common case), the ruling decision is made through the NPC's own cognition pipeline:
-
-1. The arbiter's Actor receives the case evidence as perceptions
-2. The `evaluate_consequences` stage considers the arbiter's own obligations (loyalty to sovereign, personal biases, bribery costs)
-3. The GOAP planner weighs the options (rule for petitioner, rule for respondent, split ruling, dismiss case)
-4. The arbiter's personality traits influence the ruling (a compassionate arbiter favors lenient sentences; a strict arbiter favors harsh penalties)
-
-This means arbiter corruption is emergent. An arbiter with low honesty and a bribe offer faces a GOAP evaluation: the cost of corruption vs. the cost of ruling honestly. The morality pipeline makes judicial corruption a natural consequence of character traits and social pressure, not a scripted event.
-
-### Divine Arbiter Pattern
-
-For cases involving sovereignty disputes or where mortal authority is contested, a regional watcher god can serve as arbiter:
-
-```
-Case filed with divine arbitration request
-        │
-        ▼
-lib-arbitration publishes arbitration.case.divine_requested event
-        │
-        ▼
-Regional watcher (via Puppetmaster) perceives the request
-  - God's aesthetic preferences evaluate the case
-  - Domain relevance: god of justice more likely to intervene
-    than god of war (unless it's a combat dispute)
-        │
-        ▼
-God accepts or ignores
-  - Accept: god actor issues ruling via Arbitration API
-    (ruling carries divine authority weight)
-  - Ignore: case falls back to mortal arbiter selection
-```
-
-Divine arbitration is never guaranteed. Gods have their own priorities, attention budgets, and domain preferences. Requesting divine arbitration is a petition, not a command.
-
----
-
 ## Dependencies (What This Plugin Relies On)
 
 ### Hard Dependencies (constructor injection -- crash if missing)
@@ -351,6 +45,7 @@ Divine arbitration is never guaranteed. Gods have their own priorities, attentio
 | lib-character (`ICharacterClient`) | Validating character existence for party roles, custody assignment (L2) |
 | lib-game-service (`IGameServiceClient`) | Validating game service scope (L2) |
 | lib-resource (`IResourceClient`) | Reference tracking, cleanup callback registration (L1) |
+| lib-location (`ILocationClient`) | Resolving location hierarchy for jurisdiction determination (L2) |
 
 **Note on Faction dependency**: Faction is L4, same layer as Arbitration. L4-to-L4 dependencies must handle graceful degradation per the service hierarchy. However, Arbitration is fundamentally meaningless without Faction (no jurisdiction = no arbitration). This is a hard dependency in practice, documented as such. If Faction is disabled, Arbitration should also be disabled. This is analogous to how Quest is meaningless without Contract -- the orchestration layer requires its substrate.
 
@@ -366,7 +61,6 @@ Divine arbitration is never guaranteed. Gods have their own priorities, attentio
 | lib-status (`IStatusClient`) | Applying status effects from rulings (imprisonment, probation restrictions) | Status effects not applied; ruling consequences limited to relationship/asset/monetary |
 | lib-seed (`ISeedClient`) | Seed bond dissolution, sovereignty capability checks | Seed-related rulings unavailable; sovereignty acquisition via conquest/treaty disabled |
 | lib-organization (`IOrganizationClient`) | Identifying shared organizational assets, organizational legal status changes | Organizational asset division unavailable; organization-level consequences disabled |
-| lib-location (`ILocationClient`) | Resolving location hierarchy for jurisdiction determination | Location-based jurisdiction resolution degraded; uses faction parent chain only |
 
 ---
 
@@ -838,7 +532,317 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 
 ---
 
+## Why Not lib-contract Directly?
+
+Contract provides the state machine, milestone progression, consent flows, and prebound API execution that arbitration cases need. The question arises: why not just create arbitration contracts directly via lib-contract's existing API?
+
+**The answer: arbitration requires jurisdiction, procedure, and enforcement -- Contract provides none of these.**
+
+| Concern | lib-contract Provides | lib-arbitration Adds |
+|---------|----------------------|---------------------|
+| **State machine** | Draft -> Proposed -> Active -> Fulfilled | Case-specific states (Filed -> Hearing -> Ruling -> Enforcement -> Closed) mapped onto Contract milestones |
+| **Parties** | Named party roles with consent | Jurisdiction-aware party roles (petitioner, respondent, arbiter, sovereign) with authority validation |
+| **Milestones** | Sequential progression with deadlines | Procedural steps (filing, evidence submission, hearing, ruling, appeal window, enforcement) selected from sovereign's template |
+| **Prebound APIs** | Callbacks on milestone transitions | Ruling enforcement (relationship status change, escrow release, obligation creation, exile) as prebound APIs |
+| **Procedures** | None -- Contract is procedure-agnostic | Jurisdiction determination, procedural template selection from sovereign's governance data, deadline computation |
+| **Authority** | None -- any entity can create a contract | Sovereign/Delegated authority validation, arbiter qualification, jurisdictional challenges |
+| **Enforcement** | Breach/cure mechanics | Legal vs. social consequence distinction, sovereign enforcement weight, guard NPC activation |
+
+Contract is the engine. Arbitration is the legal system built on that engine.
+
+---
+
+## Faction Sovereignty Dependency
+
+Arbitration depends on a capability that does not yet exist in lib-faction: the `authorityLevel` field distinguishing Sovereign, Delegated, and Influence factions. This section documents the dependency and what it enables.
+
+### What Sovereignty Provides
+
+| Authority Level | Arbitration Capability |
+|----------------|----------------------|
+| **Sovereign** | Full jurisdiction. Defines procedural templates for case types. Appoints arbiters. Rulings carry legal weight (guard enforcement, imprisonment, asset seizure). |
+| **Delegated** | Scoped jurisdiction granted by a sovereign. Can arbitrate within delegated scope (e.g., temple district handles religious matters, merchant court handles trade disputes). Inherits sovereign's law for gaps. |
+| **Influence** | No jurisdiction. Cannot arbitrate. Can file cases (as petitioner), submit evidence, express preferences. Faction norms remain social cost modifiers only. |
+
+### Revised Norm Resolution for Arbitration
+
+When a case is filed, jurisdiction determination walks the authority hierarchy:
+
+1. **Find the sovereign** in the territory hierarchy (walk up faction territory claims and parent chains until Sovereign is found)
+2. **Check for delegated authority** -- a Delegated faction in the specific location may have jurisdiction for this case type
+3. **Sovereign's governance data** provides the procedural template for this case type
+4. **If sovereign has no position** (no governance data for this case type) -- fall through to realm baseline sovereign
+5. **Enclave sovereignty** -- a nested sovereign within the outer sovereign's territory overrides completely within its location boundary
+
+### What Must Change in lib-faction
+
+The following changes to lib-faction are prerequisites for lib-arbitration (documented in [DISSOLUTION-DESIGN.md](../planning/DISSOLUTION-DESIGN.md)):
+
+- **Schema change**: Add `authorityLevel` enum field (`Influence`, `Delegated`, `Sovereign`) to `faction-api.yaml`
+- **Model change**: Add field to `FactionModel`
+- **DesignateRealmBaseline enhancement**: Automatically sets `AuthorityLevel = Sovereign`
+- **New API**: Delegation endpoint for sovereign factions to grant Delegated authority to child factions
+- **QueryApplicableNorms enhancement**: Return authority source alongside norm data
+- **New governance data model**: Procedural norm type alongside cost norms -- `{ caseType, templateCode, governanceParameters }`, gated by `governance.arbitrate.*` seed capability and Sovereign/Delegated authority level
+- **New API**: `QueryGovernanceData` -- given a location and case type, resolve the jurisdictional faction and return its procedural template reference and governance parameters
+
+### What Must Change in lib-obligation
+
+- **Cost tagging**: Tag violation costs as `legal` vs. `social` vs. `personal` based on source faction's authority level
+- **Multi-channel costs**: Separate entries per violation type per authority channel (see [DISSOLUTION-DESIGN.md Q11](#))
+
+---
+
+## The Arbitration Case Lifecycle
+
+An arbitration case progresses through a defined lifecycle, mapped onto Contract milestones:
+
+```
+CASE LIFECYCLE                           CONTRACT MILESTONE MAPPING
+=================                        ==========================
+
+Filed ──────────────────────────────────► Milestone 1: filing_accepted
+  │  Petitioner submits case              (prebound: validate jurisdiction,
+  │  Jurisdiction determined              create case record, notify respondent)
+  │  Procedural template selected
+  │
+  ▼
+Service ────────────────────────────────► Milestone 2: service_confirmed
+  │  Respondent formally notified          (prebound: record service timestamp,
+  │  Response deadline set                 start response timer)
+  │
+  ▼
+Response ───────────────────────────────► Milestone 3: response_received
+  │  Respondent accepts, contests,         (prebound: record response type,
+  │  or defaults (deadline expires)        update case state)
+  │
+  ▼
+Evidence ───────────────────────────────► Milestone 4: evidence_closed
+  │  Both parties submit evidence          (prebound: close evidence window,
+  │  Witnesses recorded                    notify arbiter)
+  │  Evidence window closes
+  │
+  ▼
+Hearing (optional) ─────────────────────► Milestone 5: hearing_completed
+  │  Arbiter reviews evidence              (prebound: record hearing outcome,
+  │  Parties may present arguments         advance to ruling)
+  │  (NPC arbiter uses GOAP to decide)
+  │
+  ▼
+Ruling ─────────────────────────────────► Milestone 6: ruling_issued
+  │  Arbiter issues ruling                 (prebound: execute ruling consequences
+  │  Consequences executed                 via downstream service APIs)
+  │  Appeal window opens
+  │
+  ▼
+Appeal Window ──────────────────────────► Milestone 7: appeal_window_closed
+  │  Parties may appeal to higher          (prebound: finalize or escalate)
+  │  sovereign (if exists)
+  │
+  ▼
+Enforcement ────────────────────────────► Milestone 8: enforcement_confirmed
+  │  Ruling consequences verified          (prebound: verify downstream state,
+  │  Ongoing obligations activated         close case)
+  │
+  ▼
+Closed ─────────────────────────────────► Contract Fulfilled
+```
+
+Not all milestones are required for every case type. The procedural template determines which milestones are active. A simple trade dispute might skip the hearing (arbiter rules on evidence alone). A criminal proceeding might have additional milestones (sentencing, probation review). The milestone set is template-driven, not hardcoded.
+
+### Default Proceedings
+
+If the respondent fails to respond within the deadline (Milestone 3), the case proceeds as a **default proceeding**:
+- The arbiter rules based on the petitioner's evidence alone
+- Default rulings typically favor the petitioner (sovereign's template configures default behavior)
+- The respondent can petition to reopen within an appeal window (if the template includes one)
+
+This creates emergent gameplay: NPCs who ignore legal proceedings face default judgments. A character who flees jurisdiction to avoid a divorce filing may return to find they've been divorced in absentia with unfavorable terms.
+
+---
+
+## Procedural Templates
+
+Arbitration does not contain case-type-specific logic. All case behavior comes from procedural templates stored as governance data on sovereign/delegated factions, referencing contract templates in lib-contract.
+
+### The Flow
+
+```
+1. Case filed at Location X
+        │
+        ▼
+2. lib-arbitration queries lib-faction:
+   "Who is sovereign at Location X?"
+   "What governance data does the sovereign
+    have for case type 'dissolution'?"
+        │
+        ▼
+3. Faction returns:
+   {
+     caseType: "dissolution",
+     templateCode: "dissolution-standard",
+     governanceParameters: {
+       waitingPeriodDays: 30,
+       defaultAssetDivision: "equal",
+       appealWindowDays: 14,
+       requiresHearing: false,
+       defaultOnNoResponse: "petitioner_favored"
+     }
+   }
+        │
+        ▼
+4. lib-arbitration creates Contract instance
+   from template "dissolution-standard"
+   with governance parameters merged into
+   template values (via Contract's
+   SetTemplateValues API)
+        │
+        ▼
+5. Contract's milestone state machine
+   drives the case lifecycle
+   (prebound APIs execute consequences)
+```
+
+### Governance Parameters
+
+Governance parameters are template-specific key-value pairs that configure how the procedural template behaves for this jurisdiction. They are passed to Contract's `SetTemplateValues` API, which merges them into the template's configurable slots.
+
+| Parameter | Type | Used By | Description |
+|-----------|------|---------|-------------|
+| `waitingPeriodDays` | int | dissolution | Mandatory waiting period before ruling can be issued |
+| `defaultAssetDivision` | string | dissolution | Division rule for shared assets: `equal`, `petitioner_favored`, `respondent_favored`, `arbiter_discretion` |
+| `appealWindowDays` | int | all | Days after ruling before it becomes final |
+| `requiresHearing` | bool | all | Whether an in-person hearing milestone is included |
+| `defaultOnNoResponse` | string | all | Behavior on respondent default: `petitioner_favored`, `dismiss`, `continue` |
+| `maxEvidenceItems` | int | all | Evidence submission limit per party |
+| `sentencingRequired` | bool | criminal | Whether a separate sentencing milestone follows the guilty ruling |
+| `custodyEvaluationRequired` | bool | dissolution, custody | Whether a custody evaluation milestone is included |
+| `exileTerritory` | string | exile | Territory from which the subject is exiled (location code) |
+
+These parameters are opaque to lib-arbitration -- it passes them through to Contract. The contract template interprets them via its milestone configuration and prebound API parameters.
+
+### Example Procedural Templates
+
+Templates are authored at deployment time and registered in lib-contract. Different sovereigns reference different templates for the same case type.
+
+| Template Code | Case Type | Milestones | Description |
+|--------------|-----------|------------|-------------|
+| `dissolution-standard` | `dissolution` | filing, service, response, evidence, ruling, appeal, enforcement | Standard dissolution with waiting period and equal asset split |
+| `dissolution-religious-annulment` | `dissolution` | filing, service, response, evidence, hearing, ruling, enforcement | Religious proceeding requiring a hearing before a temple arbiter |
+| `criminal-trial-standard` | `criminal_proceeding` | filing, service, response, evidence, hearing, ruling, sentencing, appeal, enforcement | Full criminal trial with hearing and sentencing phases |
+| `trade-dispute-fast` | `trade_dispute` | filing, response, evidence, ruling, enforcement | Expedited merchant court proceeding (no hearing, no appeal) |
+| `exile-punitive` | `exile` | filing, ruling, enforcement | Sovereign-initiated, no response period -- immediate ruling and exile |
+| `sovereignty-recognition` | `sovereignty_recognition` | filing, evidence, hearing, ruling, appeal, enforcement | Petition for sovereign recognition adjudicated by current sovereign or divine arbiter |
+| `custody-standard` | `custody_inheritance` | filing, service, response, evidence, custody_evaluation, hearing, ruling, appeal, enforcement | Custody dispute with mandatory evaluation milestone |
+
+---
+
+## Ruling Consequences
+
+When the arbiter issues a ruling (Milestone 6 prebound API execution), lib-arbitration orchestrates consequences across multiple downstream services. The specific consequences are determined by the ruling type and encoded in the contract template's prebound API configuration.
+
+### Consequence Types
+
+| Consequence | Downstream Service | Mechanism |
+|-------------|-------------------|-----------|
+| **Relationship status change** | Relationship (L2) | API call to update relationship type (married -> divorced, member -> exiled) |
+| **Asset division** | Escrow (L4, soft) | Create escrow with division terms from ruling, release to parties |
+| **Ongoing obligations** | Obligation (L4, soft) | Create new contracts with behavioral clauses (alimony, probation, reparations) that feed into GOAP costs |
+| **Custody assignment** | Character (L2) | Update character household assignment, modify guardian/dependent relationships |
+| **Exile enforcement** | Faction (L4) | Remove membership, mark character as exiled from territory. Obligation adds legal cost for re-entry. |
+| **Sovereignty transfer** | Faction (L4) | Update authority level, reassign territory control |
+| **Fine/penalty** | Currency (L2) | Debit from respondent's wallet, credit to petitioner or sovereign treasury |
+| **Imprisonment** | Status (L4, soft) | Apply imprisonment status effect (restricts movement, disables actions) via Status Inventory |
+| **Norm violation publication** | Events | Publish violation events consumed by encounter/reputation systems for social consequences |
+| **Divine attention** | Puppetmaster (L4, soft) | Publish events that regional watcher gods may notice (divine justice interest) |
+
+### The Escrow Integration
+
+Asset division in arbitration follows the same pattern as Escrow's existing arbiter-resolved disputes:
+
+```
+Ruling includes asset division terms
+        │
+        ▼
+lib-arbitration creates Escrow instance
+  - Type: two-party (petitioner, respondent)
+  - Trust mode: arbiter (the case arbiter)
+  - Assets: from shared organization assets
+    (via lib-organization) or directly held
+  - Division rule: from governance parameters
+        │
+        ▼
+Escrow collects deposits
+  (assets moved into custody)
+        │
+        ▼
+Arbiter resolves Escrow per ruling terms
+  (API call from Contract prebound execution)
+        │
+        ▼
+Escrow releases to parties per division
+```
+
+When lib-organization exists, shared organizational assets (household property, business inventory, treasury) are identified and moved into escrow as part of the filing process. Without lib-organization, only directly-held assets (character wallets, personal inventory) can be divided.
+
+---
+
+## Arbiter Selection
+
+The arbiter for a case is determined by the jurisdictional faction's governance data and the case type. lib-arbitration does not select arbiters -- it resolves the selection rule and applies it.
+
+### Selection Modes
+
+| Mode | Mechanism | When Used |
+|------|-----------|-----------|
+| **Faction leader** | The sovereign/delegated faction's leader character is the arbiter | Default for most case types. Simple governance. |
+| **Appointed official** | The sovereign designates specific characters as arbiters for case types (stored in governance data) | Specialized courts: merchant guild's trade arbiter, temple's religious judge |
+| **Divine arbiter** | A regional watcher god serves as arbiter (via Puppetmaster actor) | Sovereignty disputes, religious matters, cases where mortal authority is contested |
+| **Peer panel** | Multiple faction members serve as a jury (majority rules) | Complex cases requiring community judgment. Template configures panel size. |
+
+### NPC Arbiter Decision-Making
+
+When the arbiter is an NPC (the common case), the ruling decision is made through the NPC's own cognition pipeline:
+
+1. The arbiter's Actor receives the case evidence as perceptions
+2. The `evaluate_consequences` stage considers the arbiter's own obligations (loyalty to sovereign, personal biases, bribery costs)
+3. The GOAP planner weighs the options (rule for petitioner, rule for respondent, split ruling, dismiss case)
+4. The arbiter's personality traits influence the ruling (a compassionate arbiter favors lenient sentences; a strict arbiter favors harsh penalties)
+
+This means arbiter corruption is emergent. An arbiter with low honesty and a bribe offer faces a GOAP evaluation: the cost of corruption vs. the cost of ruling honestly. The morality pipeline makes judicial corruption a natural consequence of character traits and social pressure, not a scripted event.
+
+### Divine Arbiter Pattern
+
+For cases involving sovereignty disputes or where mortal authority is contested, a regional watcher god can serve as arbiter:
+
+```
+Case filed with divine arbitration request
+        │
+        ▼
+lib-arbitration publishes arbitration.case.divine_requested event
+        │
+        ▼
+Regional watcher (via Puppetmaster) perceives the request
+  - God's aesthetic preferences evaluate the case
+  - Domain relevance: god of justice more likely to intervene
+    than god of war (unless it's a combat dispute)
+        │
+        ▼
+God accepts or ignores
+  - Accept: god actor issues ruling via Arbitration API
+    (ruling carries divine authority weight)
+  - Ignore: case falls back to mortal arbiter selection
+```
+
+Divine arbitration is never guaranteed. Gods have their own priorities, attention budgets, and domain preferences. Requesting divine arbitration is a petition, not a command.
+
+---
+
 ## Known Quirks & Caveats
+
+### Bugs (Fix Immediately)
+
+*No bugs identified. Plugin is pre-implementation.*
 
 ### Intentional Quirks (Documented Behavior)
 
