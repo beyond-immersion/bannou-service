@@ -33,345 +33,6 @@ Legal entity management service (L4 GameFeatures) for organizations that own ass
 
 ---
 
-## Why Not lib-faction?
-
-Factions and organizations overlap conceptually -- both have members, both have internal structure, both participate in governance. The question arises: should organizations simply be a *type* of faction?
-
-**The answer is no -- factions govern, organizations operate.**
-
-| Concern | lib-faction | lib-organization |
-|---------|------------|-----------------|
-| **Primary purpose** | Social norms, territory control, governance, cultural identity | Economic participation, asset ownership, employment, commerce |
-| **Authority** | Sovereign/Delegated/Influence -- determines legal framework | Subject to authority -- operates within a faction's legal framework |
-| **Membership semantics** | Cultural affiliation, political allegiance | Employment, ownership, contractual role |
-| **Asset ownership** | Factions don't own wallets or inventories (they govern who can) | Organizations own wallets, inventories, locations, contracts |
-| **Growth domains** | Governance capabilities (norm definition, territory control, arbitration) | Economic capabilities (hiring, branches, trade complexity, contract capacity) |
-| **Dissolution** | Faction dissolution is a political event (power vacuum) | Organization dissolution is an economic/legal event (asset division, succession) |
-| **Legal status** | Factions ARE the legal authority (or subject to it, but for governance) | Organizations are granted legal status BY factions |
-
-**The relationship between them is clear**: A faction (sovereign) charters an organization. The organization operates within the faction's legal framework. The faction's norms constrain the organization's behavior (tax obligations, trade regulations, employment laws). The organization's legal status is determined by the faction. If the faction changes (new sovereign conquers the territory), the organization's charter may be re-evaluated.
-
-**Membership overlap is intentional**: A character can be both a Merchant Guild faction member (cultural/political affiliation that determines norms and GOAP action costs) and a "Kael's Forge" organization employee (economic role that determines income, work obligations, and access to organizational assets). These are orthogonal axes.
-
----
-
-## The Household Pattern
-
-Households are the most important organization type in Arcadia because every player character exists within one. Understanding households as organizations unlocks several critical game mechanics.
-
-### Why Households Are Organizations
-
-From the [Player Vision](../../arcadia-kb/PLAYER-VISION.md): "The player possesses a household member and participates in the world." The household is the player's primary management unit -- a collection of characters with shared assets and generational continuity. This maps exactly to an organization:
-
-| Household Concept | Organization Concept |
-|-------------------|---------------------|
-| Family members | Organization members with roles (head, heir, dependent, elder) |
-| Family home, savings, heirlooms | Organization assets (location, wallet, inventory) |
-| Inheritance rules | Succession rules on the organization entity |
-| Head of household | Leadership role with administrative permissions |
-| Branch family split | Organization dissolution via lib-arbitration |
-| Arranged marriage | Inter-organization contract (merging households or creating new ones) |
-| Family reputation | Organization seed growth (household prestige) |
-| Noble house status | Organization legal status (Chartered = recognized nobility) |
-
-### Household Lifecycle
-
-```
-CHARACTER CREATES HOUSEHOLD (marriage, coming of age, land grant)
-        │
-        ▼
-Organization created: type "household"
-  - Founding members registered
-  - Household wallet created (Currency)
-  - Household inventory created (Inventory)
-  - Household seed created (type: household)
-  - Location assigned (if applicable)
-  - Legal status: Tolerated (default) or Chartered (if sovereignty recognizes)
-        │
-        ▼
-HOUSEHOLD OPERATES (the living game)
-  - Members work -> income to household wallet
-  - Members craft -> goods to household inventory
-  - Members trade -> contracts in household's name
-  - Children born -> new members with Dependent role
-  - Elders age -> role transitions (Head -> Elder)
-  - Seed grows -> capabilities unlock (hire servants, open business, claim land)
-        │
-        ├──────────────────────────────────────────────┐
-        ▼                                               ▼
-SUCCESSION EVENT                              DISSOLUTION EVENT
-(head of household dies)                      (divorce, exile, split)
-        │                                               │
-        ▼                                               ▼
-Succession rules execute:                     Arbitration case filed:
-  - Primogeniture: eldest child               - Asset division via Escrow
-  - Equal: members vote                       - Custody of children
-  - Matrilineal: eldest daughter              - Ongoing obligations
-  - Elective: designated heir                 - Seed impact
-  - Testament: per will contract              - Two organizations result
-        │                                               │
-        ▼                                               ▼
-New head assumes leadership                   Split organizations operate
-Organization continues                        independently
-```
-
-### Branch Family Pattern
-
-When a household grows too large or members want independence, a **branch family** forms through organization dissolution:
-
-1. A member (or group of members) petitions to split via lib-arbitration
-2. The sovereign's dissolution procedure determines terms
-3. Assets are divided via lib-escrow
-4. A new organization (the branch family) is created with the departing members
-5. Ongoing obligations (family tithe, trade agreements, mutual defense) are created as new contracts
-6. The original household continues with remaining members
-7. Both organizations' seeds are affected (the original loses growth proportional to departing members; the branch starts with a portion of the original's growth)
-
-This is the same mechanism used for the [Dungeon deep dive](DUNGEON.md)'s Pattern A household split and for divorce proceedings.
-
----
-
-## Seed-Based Organizational Growth
-
-Each organization owns a seed whose type code matches the organization type (e.g., `household`, `shop`, `guild`, `trading_company`). Growth reflects what the organization's members actually do.
-
-### Growth Pipeline
-
-```
-Member performs economic action
-  (trade, craft, service, combat, governance)
-        │
-        ▼
-Collection entry unlocked
-  ("org-deeds", tag: "{activity}:{domain}")
-        │
-        ▼
-ICollectionUnlockListener (lib-organization)
-        │
-        ▼
-lib-seed: RecordGrowth
-  (orgSeedId, "{domain}", amount)
-        │
-        ▼
-ISeedEvolutionListener (lib-organization):
-  Phase changed → new capabilities unlocked
-  (e.g., nascent → established → influential)
-```
-
-### Example: Shop Seed Type
-
-| Property | Value |
-|----------|-------|
-| **SeedTypeCode** | `shop` |
-| **DisplayName** | Shop |
-| **MaxPerOwner** | 1 (one organizational seed per org) |
-| **AllowedOwnerTypes** | `["organization"]` |
-
-**Growth Phases**:
-
-| Phase | MinTotalGrowth | Capabilities Unlocked |
-|-------|---------------|----------------------|
-| Street Vendor | 0.0 | Single operator. No employees. Portable inventory only. |
-| Established Shop | 25.0 | `employ.basic` -- hire up to 2 employees. Fixed location. |
-| Prominent Business | 100.0 | `employ.expanded` -- up to 5 employees. `branch.open` -- open a second location. `contract.complex` -- enter multi-party trade agreements. |
-| Trade House | 500.0 | `employ.unlimited`. `branch.multiple`. `regulation.participate` -- participate in trade regulation governance. `charter.upgrade` -- petition for higher charter status. |
-
-**Growth Domains**:
-
-| Domain | Subdomain | Purpose |
-|--------|-----------|---------|
-| `commerce` | `.trade`, `.crafting`, `.service` | Economic transaction volume and value |
-| `employment` | `.hiring`, `.retention`, `.training` | Workforce management effectiveness |
-| `reputation` | `.quality`, `.reliability`, `.innovation` | Customer and peer perception |
-| `governance` | `.compliance`, `.regulation`, `.arbitration` | Legal and regulatory participation |
-
-### Example: Household Seed Type
-
-| Property | Value |
-|----------|-------|
-| **SeedTypeCode** | `household` |
-| **DisplayName** | Household |
-| **MaxPerOwner** | 1 |
-| **AllowedOwnerTypes** | `["organization"]` |
-
-**Growth Phases**:
-
-| Phase | MinTotalGrowth | Capabilities Unlocked |
-|-------|---------------|----------------------|
-| New Family | 0.0 | Basic household operations. Up to 4 members. |
-| Established | 30.0 | `property.acquire` -- purchase family home. `employ.servants` -- hire household servants. Up to 8 members. |
-| Prominent | 150.0 | `branch.family` -- member can petition to form branch family. `trade.family_business` -- operate a family business (org-within-org). `political.petition` -- petition sovereign for recognition. |
-| Noble House | 800.0 | `political.title` -- eligible for noble title (requires sovereign charter). `estate.manage` -- manage multiple properties. `dynasty.establish` -- formal dynastic succession rules. |
-
----
-
-## Legal Status from Sovereign
-
-The sovereign authority determines an organization's legal standing. This creates a dynamic legal landscape where the same organization can be legitimate in one territory and criminal in another.
-
-### Status Levels
-
-| Status | Meaning | Mechanical Effect |
-|--------|---------|-------------------|
-| **Chartered** | Officially recognized and protected by law | Full legal protections. Contracts are enforceable. Property is protected. Tax obligations apply. Seed growth bonus (legitimate economy feeds growth faster). |
-| **Licensed** | Permitted to operate in specific domains | Operates legally within licensed scope. Operating outside scope is a legal violation. License may have renewal requirements. |
-| **Tolerated** | Not officially recognized but not outlawed | No legal protections but no penalties for existing. Cannot enter contracts under the sovereign's jurisdiction that require legal standing. Default status for new organizations. |
-| **Outlawed** | Operating illegally, subject to enforcement | Conducting business with this org is a legal violation (adds obligation costs). Property can be seized without legal consequence. Members may face arrest. Cannot use the formal legal system (contracts, arbitration). Seed grows through underground economy domain instead of commerce domain. |
-
-### Charter as Contract
-
-The chartering mechanism is itself a Contract, following the established orchestration pattern:
-
-```
-Organization petitions sovereign for charter
-        │
-        ▼
-Sovereign evaluates (NPC sovereign uses GOAP):
-  - Organization's seed growth (is it significant enough?)
-  - Organization's reputation domain
-  - Political considerations (faction alliances, economic need)
-  - Bribery/corruption possibilities (obligation costs)
-        │
-        ▼
-If approved: Charter contract created
-  - Party roles: sovereign_faction, organization
-  - Behavioral clauses: tax compliance, regulatory adherence,
-    domain restrictions, reporting requirements
-  - Milestones: annual review, charter renewal
-  - Prebound API: on creation -> set legal status to Chartered
-  - Breach consequences: status downgrade (Chartered -> Licensed -> Tolerated)
-        │
-        ▼
-Charter contract active → organization operates as Chartered
-  - Breach (tax evasion, regulation violation) detected via obligation
-  - Cure period allows correction
-  - Repeated breach → status downgrade via prebound API
-  - Severe breach → immediate outlawing
-```
-
-### Sovereignty Changes
-
-When a new sovereign takes territory (conquest, treaty, divine mandate), all organizations in that territory face re-evaluation:
-
-1. New sovereign's governance data includes charter requirements for each organization type
-2. Organizations with existing charters from the old sovereign enter a **grace period** (configurable governance parameter)
-3. During grace period, organizations must petition the new sovereign for re-chartering
-4. Organizations that don't petition (or are denied) revert to Tolerated status
-5. Organizations the new sovereign actively opposes become Outlawed
-
-This creates emergent political upheaval: a regime change isn't just a faction flag swap -- every organization in the territory faces an existential question about their legal standing.
-
----
-
-## Internal Structure
-
-Organizations have internal structure -- roles, departments, and hierarchy. This is intentionally simpler than faction governance because organizations are economic entities, not political ones.
-
-### Roles
-
-Roles are organization-type-specific strings, not a global enum. A household has `head`, `heir`, `dependent`, `elder`, `servant`. A shop has `owner`, `manager`, `apprentice`, `employee`. A guild has `guildmaster`, `officer`, `journeyman`, `apprentice`.
-
-| Property | Description |
-|----------|-------------|
-| `roleCode` | Opaque string identifier (e.g., `head`, `owner`, `guildmaster`) |
-| `displayName` | Human-readable name |
-| `permissions` | Set of organization-level permission codes (e.g., `manage_assets`, `hire`, `fire`, `trade`, `represent`) |
-| `priority` | Numeric ordering for succession (lower = higher priority) |
-| `maxMembers` | Maximum members in this role (nullable = unlimited) |
-
-Role definitions are stored per organization type, not per organization instance. When an organization is created with type `shop`, it inherits the role template for shops. Customization per instance is limited to permission overrides (a shop owner might restrict their manager's trading permission).
-
-### Role Permissions
-
-| Permission Code | Description |
-|----------------|-------------|
-| `manage_assets` | Access to organization wallet and inventory |
-| `hire` | Add new members to the organization |
-| `fire` | Remove members from the organization |
-| `trade` | Enter contracts and execute trades on behalf of the organization |
-| `represent` | Act as the organization's representative in arbitration, governance |
-| `promote` | Change member roles within the organization |
-| `dissolve` | Initiate organization dissolution |
-| `succession` | Modify succession rules |
-| `charter` | Petition for or modify legal status |
-
-### Departments (Extension)
-
-For large organizations (trade houses, noble houses, military units), departments provide sub-structure:
-
-| Property | Description |
-|----------|-------------|
-| `departmentCode` | Opaque string identifier (e.g., `logistics`, `sales`, `security`) |
-| `headRole` | Role code of the department head |
-| `budget` | Allocated portion of organizational wallet (tracked as a hold via Currency authorization holds) |
-| `inventory` | Allocated inventory container (sub-container within the organization's main inventory) |
-
-Departments are optional and only relevant for organizations whose seed has grown past the `branch.open` capability threshold. A street vendor has no departments. A trade house might have logistics, sales, and security departments.
-
----
-
-## Succession Rules
-
-When an organization's leader dies, retires, or is removed, succession determines continuity. Succession rules are stored on the organization entity and executed automatically when triggered.
-
-### Succession Modes
-
-| Mode | Mechanism | Common For |
-|------|-----------|-----------|
-| **Primogeniture** | Eldest child (or eldest of a specified gender) inherits | Households, noble houses |
-| **Equal Division** | All eligible members vote; majority wins | Guilds, cooperatives |
-| **Designated** | Current leader explicitly names successor (stored as a relationship) | Shops, military units |
-| **Testament** | Per a will contract created by the leader | Noble houses, wealthy households |
-| **Elective** | Members with sufficient role priority vote | Guilds, trading companies |
-| **Conquest** | Strongest member claims leadership (resolved via Arbitration) | Criminal enterprises, some military |
-| **Dissolution** | No succession -- organization dissolves on leader death | Single-owner shops, personal enterprises |
-
-### Succession Flow
-
-```
-Leader death/removal event received
-        │
-        ▼
-Organization's succession mode checked
-        │
-        ├── Primogeniture/Designated/Testament:
-        │     Deterministic. New leader identified.
-        │     Role transition executed.
-        │     Contracts transferred.
-        │     Events published.
-        │
-        ├── Equal Division/Elective:
-        │     Voting period opened (Contract milestone).
-        │     Members with eligible roles vote.
-        │     Deadline enforced. Majority wins.
-        │     Tie-breaking: highest role priority.
-        │     New leader installed on vote completion.
-        │
-        ├── Conquest:
-        │     Arbitration case filed (type: succession_contest).
-        │     Claimants submit claims.
-        │     Resolved by sovereign's procedures.
-        │
-        └── Dissolution:
-              Organization enters dissolution.
-              Assets divided per dissolution rules.
-              Members become unaffiliated.
-              Organization archived.
-```
-
-### Succession and the Content Flywheel
-
-Succession events are rich content flywheel material. A contested succession in a noble house produces:
-- Factional alignment (which claimant do NPCs support?)
-- Arbitration cases (if multiple claimants contest)
-- Relationship changes (loyalties shift, alliances form)
-- Economic disruption (trade agreements in limbo during vacancy)
-- Narrative seeds (the disinherited heir who becomes a bandit, the reluctant successor who must grow into leadership)
-
-NPCs with the `evaluate_consequences` cognition stage consider succession implications in their decisions. An NPC head of household who is aging evaluates the cost of various succession plans based on their personality, family relationships, and faction norms.
-
----
-
 ## Dependencies (What This Plugin Relies On)
 
 ### Hard Dependencies (constructor injection -- crash if missing)
@@ -390,18 +51,18 @@ NPCs with the `evaluate_consequences` cognition stage consider succession implic
 | lib-game-service (`IGameServiceClient`) | Game service scope validation (L2) |
 | lib-resource (`IResourceClient`) | Reference tracking, cleanup callback registration (L1) |
 | lib-seed (`ISeedClient`) | Organizational seed type registration, growth recording, capability manifest queries (L2) |
+| lib-relationship (`IRelationshipClient`) | Member-to-organization bonds, inter-organization relationships, family bonds within households (L2) |
+| lib-collection (`ICollectionClient`) | Organizational deed collection for seed growth pipeline (L2) |
 
 ### Soft Dependencies (runtime resolution via `IServiceProvider` -- graceful degradation)
 
 | Dependency | Usage | Behavior When Missing |
 |------------|-------|-----------------------|
 | lib-faction (`IFactionClient`) | Legal status determination from sovereign, charter contract integration, governance queries | Legal status tracking disabled; organizations operate without sovereign framework |
-| lib-relationship (`IRelationshipClient`) | Member-to-organization bonds, inter-organization relationships, family bonds within households | Membership tracked internally only; no cross-service relationship visibility |
 | lib-arbitration (`IArbitrationClient`) | Succession contests, dissolution proceedings, charter disputes | Succession contests resolve by deterministic fallback (highest role priority wins); dissolution requires manual intervention |
 | lib-escrow (`IEscrowClient`) | Asset division during dissolution, inter-organization exchanges | Asset division unavailable; dissolution limited to simple transfer-to-successor |
 | lib-obligation (`IObligationClient`) | Post-dissolution ongoing obligations, employment obligation costs | No obligation cost tracking for organizational commitments |
 | lib-status (`IStatusClient`) | Employment status effects on members (employed buff, unemployment debuff) | Status effects not applied |
-| lib-collection (`ICollectionClient`) | Organizational deed collection for seed growth pipeline | Seed growth from member activities disabled; manual growth recording only |
 
 ---
 
@@ -568,6 +229,8 @@ NPCs with the `evaluate_consequences` cognition stage consider succession implic
 | `IGameServiceClient` | Game service scope validation (L2) |
 | `ISeedClient` | Organization seed type registration, growth recording, capability queries (L2) |
 | `IResourceClient` | Reference tracking, cleanup callbacks (L1) |
+| `IRelationshipClient` | Member-to-organization bonds, inter-organization relationships (L2) |
+| `ICollectionClient` | Organizational deed collection for seed growth pipeline (L2) |
 | `IServiceProvider` | Runtime resolution of soft L4 dependencies |
 
 ### Background Workers
@@ -582,55 +245,6 @@ NPCs with the `evaluate_consequences` cognition stage consider succession implic
 | Factory | Namespace | Data Source | Registration |
 |---------|-----------|-------------|--------------|
 | `OrganizationVariableProviderFactory` | `${organization.*}` | Organization membership, role, assets, capabilities, legal status | `IVariableProviderFactory` (DI singleton) |
-
----
-
-## Variable Provider: `${organization.*}`
-
-The organization variable provider exposes organizational context to ABML behavior expressions, enabling NPCs to reason about their economic and social organizational context.
-
-| Variable | Type | Description |
-|----------|------|-------------|
-| `${organization.count}` | int | Number of organizations the character belongs to |
-| `${organization.CODE.name}` | string | Display name for a specific organization (by code) |
-| `${organization.CODE.type}` | string | Organization type code |
-| `${organization.CODE.role}` | string | Character's role in this organization |
-| `${organization.CODE.legal_status}` | string | Organization's legal status (Chartered/Licensed/Tolerated/Outlawed) |
-| `${organization.CODE.phase}` | string | Organization seed growth phase |
-| `${organization.CODE.has_capability.<cap>}` | bool | Whether the organization has a specific seed capability |
-| `${organization.primary}` | string | Code of the organization where character holds highest-priority role |
-| `${organization.primary_type}` | string | Type code of the primary organization |
-| `${organization.primary_legal_status}` | string | Legal status of the primary organization |
-| `${organization.is_leader}` | bool | Whether the character is a leader (role with `dissolve` permission) in any organization |
-| `${organization.total_treasury}` | float | Sum of wallet balances across all organizations the character manages |
-| `${organization.employee_count}` | int | Total employees across organizations the character leads |
-
-### ABML Usage Example
-
-```yaml
-flows:
-  evaluate_business_decision:
-    - cond:
-        # Running an outlawed organization? Consider going legit.
-        - when: "${organization.primary_legal_status == 'Outlawed' && obligations.violation_cost.contraband > 15.0}"
-          then:
-            - call: consider_chartering
-
-        # Business is growing? Evaluate hiring.
-        - when: "${organization.primary.has_capability.employ.expanded && organization.employee_count < 5}"
-          then:
-            - call: evaluate_hiring
-
-        # Can't hire yet? Focus on growing the business.
-        - when: "${!organization.primary.has_capability.employ.basic}"
-          then:
-            - call: focus_on_trade
-
-        # Organization can open a branch? Evaluate expansion.
-        - when: "${organization.primary.has_capability.branch.open}"
-          then:
-            - call: evaluate_expansion
-```
 
 ---
 
@@ -736,209 +350,53 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 |                    ORGANIZATION STRUCTURE                               |
 |                                                                        |
 |   ORGANIZATION ENTITY                                                  |
-|   ┌──────────────────────────────────────────────────────────────┐    |
-|   │  organizationId: guid                                        │    |
-|   │  type: "shop" (opaque string)                                │    |
-|   │  code: "kaels-forge"                                         │    |
-|   │  gameServiceId: guid                                         │    |
-|   │  owner: { type: "character", id: guid }                      │    |
-|   │  legalStatus: Chartered                                      │    |
-|   │  legalStatusGrantor: factionId (sovereign)                   │    |
-|   │  jurisdiction: locationId                                    │    |
-|   │  seedId: guid (type: "shop")                                 │    |
-|   │  walletId: guid (Currency)                                   │    |
-|   │  primaryInventoryId: guid (Inventory)                        │    |
-|   │  successionMode: Designated                                  │    |
-|   │  status: Active                                              │    |
-|   └──────────────────────────┬───────────────────────────────────┘    |
-|                              │                                         |
-|          ┌───────────────────┼───────────────────┐                    |
-|          ▼                   ▼                   ▼                     |
-|   ┌──────────┐       ┌──────────┐       ┌──────────┐                 |
-|   │ MEMBERS  │       │ ASSETS   │       │ SEED     │                 |
-|   │          │       │          │       │ (growth) │                 |
-|   │ Kael     │       │ Wallet   │       │          │                 |
-|   │ (owner)  │       │ 500g     │       │ Phase:   │                 |
-|   │          │       │          │       │ Prominent│                 |
-|   │ Thane    │       │ Inventory│       │ Business │                 |
-|   │ (manager)│       │ 47 items │       │          │                 |
-|   │          │       │          │       │ Caps:    │                 |
-|   │ Pip      │       │ Location │       │ employ.  │                 |
-|   │ (appren- │       │ Market   │       │ expanded │                 |
-|   │  tice)   │       │ District │       │ branch.  │                 |
-|   │          │       │          │       │ open     │                 |
-|   └──────────┘       │ Charter  │       └──────────┘                 |
-|                      │ Contract │                                     |
-|                      └──────────┘                                     |
+|   +--------------------------------------------------------------+    |
+|   |  organizationId: guid                                        |    |
+|   |  type: "shop" (opaque string)                                |    |
+|   |  code: "kaels-forge"                                         |    |
+|   |  gameServiceId: guid                                         |    |
+|   |  owner: { type: "character", id: guid }                      |    |
+|   |  legalStatus: Chartered                                      |    |
+|   |  legalStatusGrantor: factionId (sovereign)                   |    |
+|   |  jurisdiction: locationId                                    |    |
+|   |  seedId: guid (type: "shop")                                 |    |
+|   |  walletId: guid (Currency)                                   |    |
+|   |  primaryInventoryId: guid (Inventory)                        |    |
+|   |  successionMode: Designated                                  |    |
+|   |  status: Active                                              |    |
+|   +--------------------------+-----------------------------------+    |
+|                              |                                         |
+|          +-------------------+-------------------+                    |
+|          v                   v                   v                     |
+|   +----------+       +----------+       +----------+                 |
+|   | MEMBERS  |       | ASSETS   |       | SEED     |                 |
+|   |          |       |          |       | (growth) |                 |
+|   | Kael     |       | Wallet   |       |          |                 |
+|   | (owner)  |       | 500g     |       | Phase:   |                 |
+|   |          |       |          |       | Prominent|                 |
+|   | Thane    |       | Inventory|       | Business |                 |
+|   | (manager)|       | 47 items |       |          |                 |
+|   |          |       |          |       | Caps:    |                 |
+|   | Pip      |       | Location |       | employ.  |                 |
+|   | (appren- |       | Market   |       | expanded |                 |
+|   |  tice)   |       | District |       | branch.  |                 |
+|   |          |       |          |       | open     |                 |
+|   +----------+       | Charter  |       +----------+                 |
+|                      | Contract |                                     |
+|                      +----------+                                     |
 |                                                                        |
 |   SOVEREIGN RELATIONSHIP                                               |
-|   ┌──────────────────────────────────────────────────────────────┐    |
-|   │ Kingdom of Arcadia (Sovereign)                                │   |
-|   │   │                                                           │   |
-|   │   ├── Charter contract: "Kael's Forge is a licensed          │   |
-|   │   │   blacksmith. Tax: 10% revenue. Annual review."          │   |
-|   │   │                                                           │   |
-|   │   ├── Behavioral clauses: no_weapons_to_outlaws,             │   |
-|   │   │   quality_standards, guild_membership_required            │   |
-|   │   │                                                           │   |
-|   │   └── Breach consequence: Chartered → Licensed → Tolerated   │   |
-|   └──────────────────────────────────────────────────────────────┘    |
-+-----------------------------------------------------------------------+
-```
-
-### Household as Organization
-
-```
-+-----------------------------------------------------------------------+
-|                    HOUSEHOLD AS ORGANIZATION                           |
-|                                                                        |
-|   ACCOUNT (guardian seed)                                              |
-|     │                                                                  |
-|     │ spirit possesses household                                       |
-|     │                                                                  |
-|     ▼                                                                  |
-|   HOUSEHOLD (Organization, type: "household")                          |
-|   ┌──────────────────────────────────────────────────────────────┐    |
-|   │                                                               │   |
-|   │   MEMBERS (with roles)         ASSETS                         │   |
-|   │   ┌─────────────────┐         ┌─────────────────┐           │   |
-|   │   │ Erik (Head)     │         │ Family Home     │           │   |
-|   │   │ Marta (Spouse)  │         │ (Location)      │           │   |
-|   │   │ Kael (Heir)     │         │                 │           │   |
-|   │   │ Lena (Dependent)│         │ Savings: 1200g  │           │   |
-|   │   │ Old Bjorn (Elder│         │ (Wallet)        │           │   |
-|   │   └─────────────────┘         │                 │           │   |
-|   │                                │ Family Chest    │           │   |
-|   │   SUCCESSION                   │ (Inventory)     │           │   |
-|   │   ┌─────────────────┐         │                 │           │   |
-|   │   │ Mode: Primogeni-│         │ Heirloom Sword  │           │   |
-|   │   │ ture (eldest    │         │ (Item in chest)  │           │   |
-|   │   │ child inherits) │         └─────────────────┘           │   |
-|   │   │                 │                                        │   |
-|   │   │ Heir: Kael      │         SEED (household)              │   |
-|   │   │ (auto-determined│         ┌─────────────────┐           │   |
-|   │   │  from priority) │         │ Phase: Prominent│           │   |
-|   │   └─────────────────┘         │ Caps: branch.   │           │   |
-|   │                                │ family, trade.  │           │   |
-|   │                                │ family_business │           │   |
-|   └──────────────────────────────────────────────────────────────┘    |
-|                                                                        |
-|   LIFECYCLE EVENTS:                                                    |
-|                                                                        |
-|   Erik dies ──► Succession: Kael becomes Head                          |
-|                  Marta becomes Elder                                    |
-|                  Family assets transfer to Kael's management           |
-|                                                                        |
-|   Kael wants to split ──► Arbitration: dissolution case filed          |
-|                            under sovereign's procedures                 |
-|                            Asset division via Escrow                    |
-|                            New household created for Kael               |
-|                            Original household continues with Marta     |
-|                                                                        |
-|   Lena marries outsider ──► Inter-household contract                   |
-|                              Dowry negotiation                          |
-|                              Member transfer (or new household)         |
-|                              Ongoing family trade agreement             |
-+-----------------------------------------------------------------------+
-```
-
-### Legal Status Lifecycle
-
-```
-+-----------------------------------------------------------------------+
-|                    LEGAL STATUS LIFECYCLE                               |
-|                                                                        |
-|   New organization created                                             |
-|        │                                                               |
-|        ▼                                                               |
-|   TOLERATED (default)                                                  |
-|        │                                                               |
-|        ├── Petition sovereign for charter ──┐                          |
-|        │   (seed capability: charter.*)     │                          |
-|        │                                    ▼                          |
-|        │                              Sovereign evaluates              |
-|        │                              (GOAP: growth, reputation,       |
-|        │                               political considerations)       |
-|        │                                    │                          |
-|        │                         ┌──────────┴──────────┐              |
-|        │                         ▼                     ▼              |
-|        │                    APPROVED              DENIED               |
-|        │                    Charter contract       Stays Tolerated     |
-|        │                    created                                    |
-|        │                         │                                     |
-|        │                         ▼                                     |
-|        │                    CHARTERED / LICENSED                        |
-|        │                         │                                     |
-|        │              ┌──────────┼──────────┐                         |
-|        │              ▼          ▼          ▼                          |
-|        │         Compliance  Minor breach  Major breach                |
-|        │         (renew)     (warning)     (downgrade)                 |
-|        │              │          │              │                      |
-|        │              ▼          ▼              ▼                      |
-|        │         CHARTERED   CHARTERED     LICENSED/TOLERATED          |
-|        │         (renewed)   (warned)      (demoted)                   |
-|        │                                        │                      |
-|        │                              Severe breach or                  |
-|        │                              sovereign hostility               |
-|        │                                        │                      |
-|        │                                        ▼                      |
-|        │                                   OUTLAWED                    |
-|        │                                        │                      |
-|        │                              ┌─────────┼─────────┐           |
-|        │                              ▼         ▼         ▼           |
-|        │                         Continues  Seized by  Dissolved       |
-|        │                         underground sovereign  (members       |
-|        │                         (crime      (asset      scatter)      |
-|        │                          economy)   forfeiture)               |
-|        │                                                               |
-|        └── Sovereignty changes ──► Grace period                        |
-|             (new sovereign takes    Re-petition required                |
-|              territory)             Or revert to Tolerated             |
-+-----------------------------------------------------------------------+
-```
-
-### Economy Integration
-
-```
-+-----------------------------------------------------------------------+
-|                    ORGANIZATION IN THE ECONOMY                         |
-|                                                                        |
-|   NPC ACTOR BRAIN (GOAP planner)                                      |
-|        │                                                               |
-|        │  ${organization.primary.has_capability.employ.basic}          |
-|        │  ${organization.primary_legal_status}                         |
-|        │  ${organization.total_treasury}                               |
-|        │                                                               |
-|        ▼                                                               |
-|   Economic Decision:                                                   |
-|   "I need iron ingots for my forge"                                    |
-|        │                                                               |
-|        ├── Check org wallet (Currency): 500g available                 |
-|        │                                                               |
-|        ├── Check supplier (another NPC org):                           |
-|        │   Is supplier Chartered? (legal to trade with)                |
-|        │   Is supplier Outlawed? (obligation cost for trade)           |
-|        │                                                               |
-|        ├── GOAP evaluates:                                             |
-|        │   buy_from_legal_supplier:  cost = 12g + 0 obligation        |
-|        │   buy_from_black_market:    cost = 8g + 15 obligation        |
-|        │   mine_own_iron:            cost = 20 (time) + 0 obligation  |
-|        │                                                               |
-|        ▼                                                               |
-|   Execute via organization:                                            |
-|   1. Contract created (org as party, not character)                    |
-|   2. Payment from org wallet (Currency debit)                          |
-|   3. Goods to org inventory (Inventory transfer)                       |
-|   4. Org seed grows (commerce.trade domain)                            |
-|   5. If trade with Outlawed org: obligation violation reported         |
-|        │                                                               |
-|        ▼                                                               |
-|   Downstream effects:                                                  |
-|   - Supplier org seed grows (commerce.trade)                           |
-|   - Local sovereign collects trade tax (if Chartered)                  |
-|   - Analytics tracks economic activity                                 |
-|   - Trade volume affects local faction territory norms                 |
-|   - God of Commerce (Hermes) may notice exceptional trades             |
+|   +--------------------------------------------------------------+    |
+|   | Kingdom of Arcadia (Sovereign)                                |   |
+|   |   |                                                           |   |
+|   |   +-- Charter contract: "Kael's Forge is a licensed          |   |
+|   |   |   blacksmith. Tax: 10% revenue. Annual review."          |   |
+|   |   |                                                           |   |
+|   |   +-- Behavioral clauses: no_weapons_to_outlaws,             |   |
+|   |   |   quality_standards, guild_membership_required            |   |
+|   |   |                                                           |   |
+|   |   +-- Breach consequence: Chartered -> Licensed -> Tolerated |   |
+|   +--------------------------------------------------------------+    |
 +-----------------------------------------------------------------------+
 ```
 
@@ -1029,7 +487,559 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 
 ---
 
+## Why Not lib-faction?
+
+Factions and organizations overlap conceptually -- both have members, both have internal structure, both participate in governance. The question arises: should organizations simply be a *type* of faction?
+
+**The answer is no -- factions govern, organizations operate.**
+
+| Concern | lib-faction | lib-organization |
+|---------|------------|-----------------|
+| **Primary purpose** | Social norms, territory control, governance, cultural identity | Economic participation, asset ownership, employment, commerce |
+| **Authority** | Sovereign/Delegated/Influence -- determines legal framework | Subject to authority -- operates within a faction's legal framework |
+| **Membership semantics** | Cultural affiliation, political allegiance | Employment, ownership, contractual role |
+| **Asset ownership** | Factions don't own wallets or inventories (they govern who can) | Organizations own wallets, inventories, locations, contracts |
+| **Growth domains** | Governance capabilities (norm definition, territory control, arbitration) | Economic capabilities (hiring, branches, trade complexity, contract capacity) |
+| **Dissolution** | Faction dissolution is a political event (power vacuum) | Organization dissolution is an economic/legal event (asset division, succession) |
+| **Legal status** | Factions ARE the legal authority (or subject to it, but for governance) | Organizations are granted legal status BY factions |
+
+**The relationship between them is clear**: A faction (sovereign) charters an organization. The organization operates within the faction's legal framework. The faction's norms constrain the organization's behavior (tax obligations, trade regulations, employment laws). The organization's legal status is determined by the faction. If the faction changes (new sovereign conquers the territory), the organization's charter may be re-evaluated.
+
+**Membership overlap is intentional**: A character can be both a Merchant Guild faction member (cultural/political affiliation that determines norms and GOAP action costs) and a "Kael's Forge" organization employee (economic role that determines income, work obligations, and access to organizational assets). These are orthogonal axes.
+
+---
+
+## The Household Pattern
+
+Households are the most important organization type in Arcadia because every player character exists within one. Understanding households as organizations unlocks several critical game mechanics.
+
+### Why Households Are Organizations
+
+From the [Player Vision](../../arcadia-kb/PLAYER-VISION.md): "The player possesses a household member and participates in the world." The household is the player's primary management unit -- a collection of characters with shared assets and generational continuity. This maps exactly to an organization:
+
+| Household Concept | Organization Concept |
+|-------------------|---------------------|
+| Family members | Organization members with roles (head, heir, dependent, elder) |
+| Family home, savings, heirlooms | Organization assets (location, wallet, inventory) |
+| Inheritance rules | Succession rules on the organization entity |
+| Head of household | Leadership role with administrative permissions |
+| Branch family split | Organization dissolution via lib-arbitration |
+| Arranged marriage | Inter-organization contract (merging households or creating new ones) |
+| Family reputation | Organization seed growth (household prestige) |
+| Noble house status | Organization legal status (Chartered = recognized nobility) |
+
+### Household Lifecycle
+
+```
+CHARACTER CREATES HOUSEHOLD (marriage, coming of age, land grant)
+        |
+        v
+Organization created: type "household"
+  - Founding members registered
+  - Household wallet created (Currency)
+  - Household inventory created (Inventory)
+  - Household seed created (type: household)
+  - Location assigned (if applicable)
+  - Legal status: Tolerated (default) or Chartered (if sovereignty recognizes)
+        |
+        v
+HOUSEHOLD OPERATES (the living game)
+  - Members work -> income to household wallet
+  - Members craft -> goods to household inventory
+  - Members trade -> contracts in household's name
+  - Children born -> new members with Dependent role
+  - Elders age -> role transitions (Head -> Elder)
+  - Seed grows -> capabilities unlock (hire servants, open business, claim land)
+        |
+        +----------------------------------------------+
+        v                                               v
+SUCCESSION EVENT                              DISSOLUTION EVENT
+(head of household dies)                      (divorce, exile, split)
+        |                                               |
+        v                                               v
+Succession rules execute:                     Arbitration case filed:
+  - Primogeniture: eldest child               - Asset division via Escrow
+  - Equal: members vote                       - Custody of children
+  - Matrilineal: eldest daughter              - Ongoing obligations
+  - Elective: designated heir                 - Seed impact
+  - Testament: per will contract              - Two organizations result
+        |                                               |
+        v                                               v
+New head assumes leadership                   Split organizations operate
+Organization continues                        independently
+```
+
+### Household as Organization
+
+```
++-----------------------------------------------------------------------+
+|                    HOUSEHOLD AS ORGANIZATION                           |
+|                                                                        |
+|   ACCOUNT (guardian seed)                                              |
+|     |                                                                  |
+|     | spirit possesses household                                       |
+|     |                                                                  |
+|     v                                                                  |
+|   HOUSEHOLD (Organization, type: "household")                          |
+|   +--------------------------------------------------------------+    |
+|   |                                                               |   |
+|   |   MEMBERS (with roles)         ASSETS                         |   |
+|   |   +-----------------+         +-----------------+           |   |
+|   |   | Erik (Head)     |         | Family Home     |           |   |
+|   |   | Marta (Spouse)  |         | (Location)      |           |   |
+|   |   | Kael (Heir)     |         |                 |           |   |
+|   |   | Lena (Dependent)|         | Savings: 1200g  |           |   |
+|   |   | Old Bjorn (Elder|         | (Wallet)        |           |   |
+|   |   +-----------------+         |                 |           |   |
+|   |                                | Family Chest    |           |   |
+|   |   SUCCESSION                   | (Inventory)     |           |   |
+|   |   +-----------------+         |                 |           |   |
+|   |   | Mode: Primogeni-|         | Heirloom Sword  |           |   |
+|   |   | ture (eldest    |         | (Item in chest)  |           |   |
+|   |   | child inherits) |         +-----------------+           |   |
+|   |   |                 |                                        |   |
+|   |   | Heir: Kael      |         SEED (household)              |   |
+|   |   | (auto-determined|         +-----------------+           |   |
+|   |   |  from priority) |         | Phase: Prominent|           |   |
+|   |   +-----------------+         | Caps: branch.   |           |   |
+|   |                                | family, trade.  |           |   |
+|   |                                | family_business |           |   |
+|   +--------------------------------------------------------------+    |
+|                                                                        |
+|   LIFECYCLE EVENTS:                                                    |
+|                                                                        |
+|   Erik dies --> Succession: Kael becomes Head                          |
+|                  Marta becomes Elder                                    |
+|                  Family assets transfer to Kael's management           |
+|                                                                        |
+|   Kael wants to split --> Arbitration: dissolution case filed          |
+|                            under sovereign's procedures                 |
+|                            Asset division via Escrow                    |
+|                            New household created for Kael               |
+|                            Original household continues with Marta     |
+|                                                                        |
+|   Lena marries outsider --> Inter-household contract                   |
+|                              Dowry negotiation                          |
+|                              Member transfer (or new household)         |
+|                              Ongoing family trade agreement             |
++-----------------------------------------------------------------------+
+```
+
+### Branch Family Pattern
+
+When a household grows too large or members want independence, a **branch family** forms through organization dissolution:
+
+1. A member (or group of members) petitions to split via lib-arbitration
+2. The sovereign's dissolution procedure determines terms
+3. Assets are divided via lib-escrow
+4. A new organization (the branch family) is created with the departing members
+5. Ongoing obligations (family tithe, trade agreements, mutual defense) are created as new contracts
+6. The original household continues with remaining members
+7. Both organizations' seeds are affected (the original loses growth proportional to departing members; the branch starts with a portion of the original's growth)
+
+This is the same mechanism used for the [Dungeon deep dive](DUNGEON.md)'s Pattern A household split and for divorce proceedings.
+
+---
+
+## Seed-Based Organizational Growth
+
+Each organization owns a seed whose type code matches the organization type (e.g., `household`, `shop`, `guild`, `trading_company`). Growth reflects what the organization's members actually do.
+
+### Growth Pipeline
+
+```
+Member performs economic action
+  (trade, craft, service, combat, governance)
+        |
+        v
+Collection entry unlocked
+  ("org-deeds", tag: "{activity}:{domain}")
+        |
+        v
+ICollectionUnlockListener (lib-organization)
+        |
+        v
+lib-seed: RecordGrowth
+  (orgSeedId, "{domain}", amount)
+        |
+        v
+ISeedEvolutionListener (lib-organization):
+  Phase changed -> new capabilities unlocked
+  (e.g., nascent -> established -> influential)
+```
+
+### Example: Shop Seed Type
+
+| Property | Value |
+|----------|-------|
+| **SeedTypeCode** | `shop` |
+| **DisplayName** | Shop |
+| **MaxPerOwner** | 1 (one organizational seed per org) |
+| **AllowedOwnerTypes** | `["organization"]` |
+
+**Growth Phases**:
+
+| Phase | MinTotalGrowth | Capabilities Unlocked |
+|-------|---------------|----------------------|
+| Street Vendor | 0.0 | Single operator. No employees. Portable inventory only. |
+| Established Shop | 25.0 | `employ.basic` -- hire up to 2 employees. Fixed location. |
+| Prominent Business | 100.0 | `employ.expanded` -- up to 5 employees. `branch.open` -- open a second location. `contract.complex` -- enter multi-party trade agreements. |
+| Trade House | 500.0 | `employ.unlimited`. `branch.multiple`. `regulation.participate` -- participate in trade regulation governance. `charter.upgrade` -- petition for higher charter status. |
+
+**Growth Domains**:
+
+| Domain | Subdomain | Purpose |
+|--------|-----------|---------|
+| `commerce` | `.trade`, `.crafting`, `.service` | Economic transaction volume and value |
+| `employment` | `.hiring`, `.retention`, `.training` | Workforce management effectiveness |
+| `reputation` | `.quality`, `.reliability`, `.innovation` | Customer and peer perception |
+| `governance` | `.compliance`, `.regulation`, `.arbitration` | Legal and regulatory participation |
+
+### Example: Household Seed Type
+
+| Property | Value |
+|----------|-------|
+| **SeedTypeCode** | `household` |
+| **DisplayName** | Household |
+| **MaxPerOwner** | 1 |
+| **AllowedOwnerTypes** | `["organization"]` |
+
+**Growth Phases**:
+
+| Phase | MinTotalGrowth | Capabilities Unlocked |
+|-------|---------------|----------------------|
+| New Family | 0.0 | Basic household operations. Up to 4 members. |
+| Established | 30.0 | `property.acquire` -- purchase family home. `employ.servants` -- hire household servants. Up to 8 members. |
+| Prominent | 150.0 | `branch.family` -- member can petition to form branch family. `trade.family_business` -- operate a family business (org-within-org). `political.petition` -- petition sovereign for recognition. |
+| Noble House | 800.0 | `political.title` -- eligible for noble title (requires sovereign charter). `estate.manage` -- manage multiple properties. `dynasty.establish` -- formal dynastic succession rules. |
+
+---
+
+## Legal Status from Sovereign
+
+The sovereign authority determines an organization's legal standing. This creates a dynamic legal landscape where the same organization can be legitimate in one territory and criminal in another.
+
+### Status Levels
+
+| Status | Meaning | Mechanical Effect |
+|--------|---------|-------------------|
+| **Chartered** | Officially recognized and protected by law | Full legal protections. Contracts are enforceable. Property is protected. Tax obligations apply. Seed growth bonus (legitimate economy feeds growth faster). |
+| **Licensed** | Permitted to operate in specific domains | Operates legally within licensed scope. Operating outside scope is a legal violation. License may have renewal requirements. |
+| **Tolerated** | Not officially recognized but not outlawed | No legal protections but no penalties for existing. Cannot enter contracts under the sovereign's jurisdiction that require legal standing. Default status for new organizations. |
+| **Outlawed** | Operating illegally, subject to enforcement | Conducting business with this org is a legal violation (adds obligation costs). Property can be seized without legal consequence. Members may face arrest. Cannot use the formal legal system (contracts, arbitration). Seed grows through underground economy domain instead of commerce domain. |
+
+### Charter as Contract
+
+The chartering mechanism is itself a Contract, following the established orchestration pattern:
+
+```
+Organization petitions sovereign for charter
+        |
+        v
+Sovereign evaluates (NPC sovereign uses GOAP):
+  - Organization's seed growth (is it significant enough?)
+  - Organization's reputation domain
+  - Political considerations (faction alliances, economic need)
+  - Bribery/corruption possibilities (obligation costs)
+        |
+        v
+If approved: Charter contract created
+  - Party roles: sovereign_faction, organization
+  - Behavioral clauses: tax compliance, regulatory adherence,
+    domain restrictions, reporting requirements
+  - Milestones: annual review, charter renewal
+  - Prebound API: on creation -> set legal status to Chartered
+  - Breach consequences: status downgrade (Chartered -> Licensed -> Tolerated)
+        |
+        v
+Charter contract active -> organization operates as Chartered
+  - Breach (tax evasion, regulation violation) detected via obligation
+  - Cure period allows correction
+  - Repeated breach -> status downgrade via prebound API
+  - Severe breach -> immediate outlawing
+```
+
+### Sovereignty Changes
+
+When a new sovereign takes territory (conquest, treaty, divine mandate), all organizations in that territory face re-evaluation:
+
+1. New sovereign's governance data includes charter requirements for each organization type
+2. Organizations with existing charters from the old sovereign enter a **grace period** (configurable governance parameter)
+3. During grace period, organizations must petition the new sovereign for re-chartering
+4. Organizations that don't petition (or are denied) revert to Tolerated status
+5. Organizations the new sovereign actively opposes become Outlawed
+
+This creates emergent political upheaval: a regime change isn't just a faction flag swap -- every organization in the territory faces an existential question about their legal standing.
+
+### Legal Status Lifecycle
+
+```
++-----------------------------------------------------------------------+
+|                    LEGAL STATUS LIFECYCLE                               |
+|                                                                        |
+|   New organization created                                             |
+|        |                                                               |
+|        v                                                               |
+|   TOLERATED (default)                                                  |
+|        |                                                               |
+|        +-- Petition sovereign for charter --+                          |
+|        |   (seed capability: charter.*)     |                          |
+|        |                                    v                          |
+|        |                              Sovereign evaluates              |
+|        |                              (GOAP: growth, reputation,       |
+|        |                               political considerations)       |
+|        |                                    |                          |
+|        |                         +----------+----------+              |
+|        |                         v                     v              |
+|        |                    APPROVED              DENIED               |
+|        |                    Charter contract       Stays Tolerated     |
+|        |                    created                                    |
+|        |                         |                                     |
+|        |                         v                                     |
+|        |                    CHARTERED / LICENSED                        |
+|        |                         |                                     |
+|        |              +----------+----------+                         |
+|        |              v          v          v                          |
+|        |         Compliance  Minor breach  Major breach                |
+|        |         (renew)     (warning)     (downgrade)                 |
+|        |              |          |              |                      |
+|        |              v          v              v                      |
+|        |         CHARTERED   CHARTERED     LICENSED/TOLERATED          |
+|        |         (renewed)   (warned)      (demoted)                   |
+|        |                                        |                      |
+|        |                              Severe breach or                  |
+|        |                              sovereign hostility               |
+|        |                                        |                      |
+|        |                                        v                      |
+|        |                                   OUTLAWED                    |
+|        |                                        |                      |
+|        |                              +---------+---------+           |
+|        |                              v         v         v           |
+|        |                         Continues  Seized by  Dissolved       |
+|        |                         underground sovereign  (members       |
+|        |                         (crime      (asset      scatter)      |
+|        |                          economy)   forfeiture)               |
+|        |                                                               |
+|        +-- Sovereignty changes --> Grace period                        |
+|             (new sovereign takes    Re-petition required                |
+|              territory)             Or revert to Tolerated             |
++-----------------------------------------------------------------------+
+```
+
+---
+
+## Internal Structure
+
+Organizations have internal structure -- roles, departments, and hierarchy. This is intentionally simpler than faction governance because organizations are economic entities, not political ones.
+
+### Roles
+
+Roles are organization-type-specific strings, not a global enum. A household has `head`, `heir`, `dependent`, `elder`, `servant`. A shop has `owner`, `manager`, `apprentice`, `employee`. A guild has `guildmaster`, `officer`, `journeyman`, `apprentice`.
+
+| Property | Description |
+|----------|-------------|
+| `roleCode` | Opaque string identifier (e.g., `head`, `owner`, `guildmaster`) |
+| `displayName` | Human-readable name |
+| `permissions` | Set of organization-level permission codes (e.g., `manage_assets`, `hire`, `fire`, `trade`, `represent`) |
+| `priority` | Numeric ordering for succession (lower = higher priority) |
+| `maxMembers` | Maximum members in this role (nullable = unlimited) |
+
+Role definitions are stored per organization type, not per organization instance. When an organization is created with type `shop`, it inherits the role template for shops. Customization per instance is limited to permission overrides (a shop owner might restrict their manager's trading permission).
+
+### Role Permissions
+
+| Permission Code | Description |
+|----------------|-------------|
+| `manage_assets` | Access to organization wallet and inventory |
+| `hire` | Add new members to the organization |
+| `fire` | Remove members from the organization |
+| `trade` | Enter contracts and execute trades on behalf of the organization |
+| `represent` | Act as the organization's representative in arbitration, governance |
+| `promote` | Change member roles within the organization |
+| `dissolve` | Initiate organization dissolution |
+| `succession` | Modify succession rules |
+| `charter` | Petition for or modify legal status |
+
+### Departments (Extension)
+
+For large organizations (trade houses, noble houses, military units), departments provide sub-structure:
+
+| Property | Description |
+|----------|-------------|
+| `departmentCode` | Opaque string identifier (e.g., `logistics`, `sales`, `security`) |
+| `headRole` | Role code of the department head |
+| `budget` | Allocated portion of organizational wallet (tracked as a hold via Currency authorization holds) |
+| `inventory` | Allocated inventory container (sub-container within the organization's main inventory) |
+
+Departments are optional and only relevant for organizations whose seed has grown past the `branch.open` capability threshold. A street vendor has no departments. A trade house might have logistics, sales, and security departments.
+
+---
+
+## Succession Rules
+
+When an organization's leader dies, retires, or is removed, succession determines continuity. Succession rules are stored on the organization entity and executed automatically when triggered.
+
+### Succession Modes
+
+| Mode | Mechanism | Common For |
+|------|-----------|-----------|
+| **Primogeniture** | Eldest child (or eldest of a specified gender) inherits | Households, noble houses |
+| **Equal Division** | All eligible members vote; majority wins | Guilds, cooperatives |
+| **Designated** | Current leader explicitly names successor (stored as a relationship) | Shops, military units |
+| **Testament** | Per a will contract created by the leader | Noble houses, wealthy households |
+| **Elective** | Members with sufficient role priority vote | Guilds, trading companies |
+| **Conquest** | Strongest member claims leadership (resolved via Arbitration) | Criminal enterprises, some military |
+| **Dissolution** | No succession -- organization dissolves on leader death | Single-owner shops, personal enterprises |
+
+### Succession Flow
+
+```
+Leader death/removal event received
+        |
+        v
+Organization's succession mode checked
+        |
+        +-- Primogeniture/Designated/Testament:
+        |     Deterministic. New leader identified.
+        |     Role transition executed.
+        |     Contracts transferred.
+        |     Events published.
+        |
+        +-- Equal Division/Elective:
+        |     Voting period opened (Contract milestone).
+        |     Members with eligible roles vote.
+        |     Deadline enforced. Majority wins.
+        |     Tie-breaking: highest role priority.
+        |     New leader installed on vote completion.
+        |
+        +-- Conquest:
+        |     Arbitration case filed (type: succession_contest).
+        |     Claimants submit claims.
+        |     Resolved by sovereign's procedures.
+        |
+        +-- Dissolution:
+              Organization enters dissolution.
+              Assets divided per dissolution rules.
+              Members become unaffiliated.
+              Organization archived.
+```
+
+### Succession and the Content Flywheel
+
+Succession events are rich content flywheel material. A contested succession in a noble house produces:
+- Factional alignment (which claimant do NPCs support?)
+- Arbitration cases (if multiple claimants contest)
+- Relationship changes (loyalties shift, alliances form)
+- Economic disruption (trade agreements in limbo during vacancy)
+- Narrative seeds (the disinherited heir who becomes a bandit, the reluctant successor who must grow into leadership)
+
+NPCs with the `evaluate_consequences` cognition stage consider succession implications in their decisions. An NPC head of household who is aging evaluates the cost of various succession plans based on their personality, family relationships, and faction norms.
+
+---
+
+## Variable Provider: `${organization.*}`
+
+The organization variable provider exposes organizational context to ABML behavior expressions, enabling NPCs to reason about their economic and social organizational context.
+
+| Variable | Type | Description |
+|----------|------|-------------|
+| `${organization.count}` | int | Number of organizations the character belongs to |
+| `${organization.CODE.name}` | string | Display name for a specific organization (by code) |
+| `${organization.CODE.type}` | string | Organization type code |
+| `${organization.CODE.role}` | string | Character's role in this organization |
+| `${organization.CODE.legal_status}` | string | Organization's legal status (Chartered/Licensed/Tolerated/Outlawed) |
+| `${organization.CODE.phase}` | string | Organization seed growth phase |
+| `${organization.CODE.has_capability.<cap>}` | bool | Whether the organization has a specific seed capability |
+| `${organization.primary}` | string | Code of the organization where character holds highest-priority role |
+| `${organization.primary_type}` | string | Type code of the primary organization |
+| `${organization.primary_legal_status}` | string | Legal status of the primary organization |
+| `${organization.is_leader}` | bool | Whether the character is a leader (role with `dissolve` permission) in any organization |
+| `${organization.total_treasury}` | float | Sum of wallet balances across all organizations the character manages |
+| `${organization.employee_count}` | int | Total employees across organizations the character leads |
+
+### ABML Usage Example
+
+```yaml
+flows:
+  evaluate_business_decision:
+    - cond:
+        # Running an outlawed organization? Consider going legit.
+        - when: "${organization.primary_legal_status == 'Outlawed' && obligations.violation_cost.contraband > 15.0}"
+          then:
+            - call: consider_chartering
+
+        # Business is growing? Evaluate hiring.
+        - when: "${organization.primary.has_capability.employ.expanded && organization.employee_count < 5}"
+          then:
+            - call: evaluate_hiring
+
+        # Can't hire yet? Focus on growing the business.
+        - when: "${!organization.primary.has_capability.employ.basic}"
+          then:
+            - call: focus_on_trade
+
+        # Organization can open a branch? Evaluate expansion.
+        - when: "${organization.primary.has_capability.branch.open}"
+          then:
+            - call: evaluate_expansion
+```
+
+---
+
+## Economy Integration
+
+How organizations participate in the NPC-driven economy through GOAP-based economic decision-making.
+
+```
++-----------------------------------------------------------------------+
+|                    ORGANIZATION IN THE ECONOMY                         |
+|                                                                        |
+|   NPC ACTOR BRAIN (GOAP planner)                                      |
+|        |                                                               |
+|        |  ${organization.primary.has_capability.employ.basic}          |
+|        |  ${organization.primary_legal_status}                         |
+|        |  ${organization.total_treasury}                               |
+|        |                                                               |
+|        v                                                               |
+|   Economic Decision:                                                   |
+|   "I need iron ingots for my forge"                                    |
+|        |                                                               |
+|        +-- Check org wallet (Currency): 500g available                 |
+|        |                                                               |
+|        +-- Check supplier (another NPC org):                           |
+|        |   Is supplier Chartered? (legal to trade with)                |
+|        |   Is supplier Outlawed? (obligation cost for trade)           |
+|        |                                                               |
+|        +-- GOAP evaluates:                                             |
+|        |   buy_from_legal_supplier:  cost = 12g + 0 obligation        |
+|        |   buy_from_black_market:    cost = 8g + 15 obligation        |
+|        |   mine_own_iron:            cost = 20 (time) + 0 obligation  |
+|        |                                                               |
+|        v                                                               |
+|   Execute via organization:                                            |
+|   1. Contract created (org as party, not character)                    |
+|   2. Payment from org wallet (Currency debit)                          |
+|   3. Goods to org inventory (Inventory transfer)                       |
+|   4. Org seed grows (commerce.trade domain)                            |
+|   5. If trade with Outlawed org: obligation violation reported         |
+|        |                                                               |
+|        v                                                               |
+|   Downstream effects:                                                  |
+|   - Supplier org seed grows (commerce.trade)                           |
+|   - Local sovereign collects trade tax (if Chartered)                  |
+|   - Analytics tracks economic activity                                 |
+|   - Trade volume affects local faction territory norms                 |
+|   - God of Commerce (Hermes) may notice exceptional trades             |
++-----------------------------------------------------------------------+
+```
+
+---
+
 ## Known Quirks & Caveats
+
+### Bugs (Fix Immediately)
+
+*No bugs to report. Plugin is in pre-implementation phase.*
 
 ### Intentional Quirks (Documented Behavior)
 
