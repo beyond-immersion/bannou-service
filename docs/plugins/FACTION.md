@@ -74,7 +74,7 @@ Over simulated time, factions should undergo recognizable arcs. A street gang gr
 
 | Dependent | Relationship |
 |-----------|-------------|
-| lib-obligation (L4) | Primary consumer: queries `/faction/norm/query-applicable` to resolve merged norm sets for NPC cognition cost modifiers. Gracefully degrades when lib-faction is disabled. |
+| lib-obligation (L4) | **Planned** primary consumer: will query `/faction/norm/query-applicable` to resolve merged norm sets for NPC cognition cost modifiers. Not yet wired up -- lib-obligation currently resolves faction context through contracts only. See Design Considerations #4-5. |
 
 ## State Storage
 
@@ -186,7 +186,7 @@ Archives faction memberships, roles, and applicable norm context for character c
 |---------|------|
 | `ILogger<FactionService>` | Structured logging |
 | `FactionServiceConfiguration` | Typed configuration access |
-| `IStateStoreFactory` | State store access (creates 4 MySQL stores + cache store); also creates `IJsonQueryableStateStore<FactionModel>` for paginated listing and `IJsonQueryableStateStore<FactionMemberModel>` for norm cache invalidation |
+| `IStateStoreFactory` | State store access (creates 4 MySQL stores + cache store); also creates `IJsonQueryableStateStore<FactionModel>` for paginated listing, `IJsonQueryableStateStore<FactionMemberModel>` for member queries and norm cache invalidation, and `IJsonQueryableStateStore<TerritoryClaimModel>` for territory claim listing |
 | `IMessageBus` | Event publishing |
 | `IResourceClient` | Reference tracking, cleanup callbacks, compression callbacks (L1) |
 | `ISeedClient` | Seed creation, growth recording, capability queries (L2) |
@@ -385,7 +385,7 @@ None. All 31 endpoints are fully implemented with business logic.
 
 ### Bugs (Fix Immediately)
 
-1. ~~**RestoreFromArchive does not register resource references**~~: **FIXED** (2026-02-12) - Added `RegisterReferenceAsync` call inside `RestoreFromArchiveAsync` loop for each restored membership, mirroring the pattern from `AddMemberAsync`. Includes try-catch on `ApiException` with warning log so restore continues even if reference registration fails for one membership.
+None currently.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -412,15 +412,13 @@ None. All 31 endpoints are fully implemented with business logic.
 1. **No owner validation for territory claims**: Like Collection/Seed, faction trusts that callers pass valid entity IDs. Location existence is validated via lib-location, but no check that the faction "should" be able to claim that location beyond seed capability gating.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-13:https://github.com/beyond-immersion/bannou-service/issues/424 -->
 
-2. ~~**Membership count denormalization race condition**~~: **FIXED** (2026-02-13) - Changed lock granularity in `AddMemberAsync` and `RemoveMemberAsync` from per-member-pair (`membership:{factionId}:{characterId}`) to per-faction (`faction-membership:{factionId}`). This serializes all member mutations per faction, preventing concurrent additions/removals from racing on the denormalized `MemberCount`. `UpdateMemberRoleAsync` keeps per-pair lock since it doesn't touch `MemberCount`. The non-atomic multi-store write risk (member saved but count update fails) remains an inherent architecture limitation shared by all Bannou services with denormalized counts.
+2. **Norm query performance at scale**: `QueryApplicableNorms` performs up to 3 aggregation passes (guild factions, location faction, realm baseline). With many memberships or large norm sets, this could become expensive. The Redis cache (TTL-based) mitigates reads but cold-start queries for characters with many memberships need profiling.
 
-3. **Norm query performance at scale**: `QueryApplicableNorms` performs up to 3 aggregation passes (guild factions, location faction, realm baseline). With many memberships or large norm sets, this could become expensive. The Redis cache (TTL-based) mitigates reads but cold-start queries for characters with many memberships need profiling.
+3. **Seed bond mechanics for alliances**: The schema description references seed bonds for inter-faction alliances, but no API endpoints exist for bond management. These would be managed directly through lib-seed's bond API. May need faction-level wrapper endpoints for ergonomic alliance management.
 
-4. **Seed bond mechanics for alliances**: The schema description references seed bonds for inter-faction alliances, but no API endpoints exist for bond management. These would be managed directly through lib-seed's bond API. May need faction-level wrapper endpoints for ergonomic alliance management.
+4. **Variable Provider missing norm/territory variables (plan gap)**: The plan (Issue #410 + `glittery-jingling-meadow.md`) specified `${faction.has_norm.<type>}`, `${faction.norm_penalty.<type>}`, `${faction.in_controlled_territory}`, and `${faction.primary_faction}` variables. The current `FactionProviderFactory` only provides membership data (count, names, codes, per-code details). The norm and territory variables are the critical integration point for lib-obligation's `evaluate_consequences` cognition stage. Implementing them requires the provider to query norm and territory stores, and may need the character's current location passed through `CreateAsync` (currently only receives `entityId`).
 
-5. **Variable Provider missing norm/territory variables (plan gap)**: The plan (Issue #410 + `glittery-jingling-meadow.md`) specified `${faction.has_norm.<type>}`, `${faction.norm_penalty.<type>}`, `${faction.in_controlled_territory}`, and `${faction.primary_faction}` variables. The current `FactionProviderFactory` only provides membership data (count, names, codes, per-code details). The norm and territory variables are the critical integration point for lib-obligation's `evaluate_consequences` cognition stage. Implementing them requires the provider to query norm and territory stores, and may need the character's current location passed through `CreateAsync` (currently only receives `entityId`).
-
-6. **Missing lib-contract integration for guild charters (plan gap)**: Issue #410 decision Q3 states: "When a character joins a faction (formal guild membership), the guild contract is created explicitly through lib-contract." The plan lists `lib-contract (L1) — formal membership agreements, guild charters` as a dependency. The current implementation does not use `IContractClient` at all -- membership is managed directly without contract backing. This means guild charters are not formalized as binding agreements, and lib-obligation cannot discover faction-sourced contractual obligations through lib-contract.
+5. **Missing lib-contract integration for guild charters (plan gap)**: Issue #410 decision Q3 states: "When a character joins a faction (formal guild membership), the guild contract is created explicitly through lib-contract." The plan lists `lib-contract (L1) — formal membership agreements, guild charters` as a dependency. The current implementation does not use `IContractClient` at all -- membership is managed directly without contract backing. This means guild charters are not formalized as binding agreements, and lib-obligation cannot discover faction-sourced contractual obligations through lib-contract.
 
 ## Work Tracking
 

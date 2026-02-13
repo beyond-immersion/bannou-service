@@ -64,7 +64,8 @@ The full morality pipeline requires five integration points to be complete: (1) 
 | lib-state (`IDistributedLockProvider`) | Distributed locks for obligation cache rebuild operations |
 | lib-messaging (`IMessageBus`) | Publishing violation reported and cache rebuilt events; error event publication |
 | lib-contract (`IContractClient`) | Querying active contracts for characters, extracting behavioral clauses, reporting breaches on knowing violations (L1 hard dependency) |
-| character-personality variable provider (soft L4 dependency) | Personality traits (`${personality.honesty}`, `${personality.loyalty}`, `${personality.agreeableness}`, `${personality.conscientiousness}`, `${combat.preferred_engagement}`) for moral weighting of obligation costs; graceful degradation when unavailable |
+| lib-resource (`IResourceClient`) | Registering/unregistering character references, cleanup callback registration, and compression callback registration (L1 hard dependency) |
+| character-personality variable provider (soft L4 dependency) | Personality traits (`${personality.honesty}`, `${personality.loyalty}`, `${personality.agreeableness}`, `${personality.conscientiousness}`) for moral weighting of obligation costs; graceful degradation when unavailable |
 
 ---
 
@@ -156,6 +157,9 @@ The full morality pipeline requires five integration points to be complete: (1) 
 | `IMessageBus` | Event publishing and error event publication |
 | `IDistributedLockProvider` | Distributed locks for cache rebuild operations |
 | `IContractClient` | Querying active contracts, extracting behavioral clauses, reporting breaches (L1 hard dependency) |
+| `IResourceClient` | Resource reference tracking, cleanup callback registration, compression callback registration (L1 hard dependency) |
+| `IEventConsumer` | Registers event handlers for contract lifecycle events (contract.activated/terminated/fulfilled/expired) |
+| `IEnumerable<IVariableProviderFactory>` | DI collection for locating the personality provider factory; used by `TryGetPersonalityTraitsAsync` for moral weighting |
 | `ObligationProviderFactory` | Implements `IVariableProviderFactory` to provide `${obligations.*}` variables to the Actor service's behavior system |
 
 ---
@@ -257,9 +261,11 @@ Recording and querying knowing obligation violations.
 
 ---
 
-## Implementation Status
+## Stubs & Unimplemented Features
 
-**All 11 endpoints are fully implemented.** Event handlers, variable provider factory, cache management, and resource cleanup are all operational.
+None — all 11 endpoints are fully implemented with complete business logic, error handling, and distributed locking. Event handlers, variable provider factory, cache management, and resource cleanup are all operational.
+
+## Implementation Status
 
 1. **Action Mapping CRUD** (`SetActionMapping`, `ListActionMappings`, `DeleteActionMapping`): Idempotent upsert with `CreatedAt`/`UpdatedAt` tracking, cursor-paginated listing with text search via JSON path queries, convention-based 1:1 fallback on delete.
 2. **Obligation Query** (`QueryObligations`, `EvaluateAction`): Cache-backed contract querying with distributed locking and double-check pattern, personality-weighted cost computation with graceful degradation when character-personality unavailable.
@@ -292,7 +298,7 @@ Recording and querying knowing obligation violations.
 
 ### Bugs (Fix Immediately)
 
-- **Hardcoded personality trait mapping**: The personality weight computation maps violation types to traits via a hardcoded switch (`theft`→honesty+conscientiousness, `deception`→honesty, `violence`→agreeableness, `honor_combat`→conscientiousness+loyalty, `betrayal`→loyalty, everything else→conscientiousness). This is in tension with violation types being opaque strings that "grow organically" -- any new type falls through to the default, silently degrading moral reasoning quality. The mapping should be data-driven (part of action mapping store or behavioral clause definitions) or at minimum configurable.
+- **Hardcoded personality trait mapping**: The personality weight computation maps violation types to traits via a hardcoded static dictionary (10 entries: `theft`→honesty+conscientiousness, `deception`→honesty, `violence`→agreeableness, `honor_combat`→conscientiousness+loyalty, `betrayal`→loyalty, `exploitation`→agreeableness+honesty, `oath_breaking`→loyalty+conscientiousness, `trespass`→conscientiousness, `disrespect`→agreeableness, `contraband`→conscientiousness; everything else→conscientiousness). This is in tension with violation types being opaque strings that "grow organically" -- any new type falls through to the default, silently degrading moral reasoning quality. The mapping should be data-driven (part of action mapping store or behavioral clause definitions) or at minimum configurable.
 
 ### Intentional Quirks (Documented Behavior)
 

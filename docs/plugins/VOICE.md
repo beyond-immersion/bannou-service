@@ -10,17 +10,17 @@
 
 Voice room coordination service (L3 AppFeatures) providing pure voice rooms as a platform primitive: P2P mesh topology for small groups, Kamailio/RTPEngine-based SFU for larger rooms, automatic tier upgrade, WebRTC SDP signaling, broadcast consent flows for streaming integration, and participant TTL enforcement via background worker. Agnostic to games, sessions, and subscriptions -- voice rooms are generic containers identified by Connect/Auth session IDs.
 
-**The three-service principle**: Voice is one of three services that together create a complete voice, streaming, and audience metagame stack. Each delivers value independently. lib-voice provides voice chat whether or not anyone is streaming. lib-stream (L3) can broadcast game content to Twitch whether or not voice is involved. lib-streaming (L4) provides a complete audience simulation metagame whether or not real platforms or voice rooms exist. They compose beautifully but never require each other.
+**The three-service principle**: Voice is one of three services that together create a complete voice, streaming, and audience metagame stack. Each delivers value independently. lib-voice provides voice chat whether or not anyone is streaming. lib-broadcast (L3) can broadcast game content to Twitch whether or not voice is involved. lib-showtime (L4) provides a complete audience simulation metagame whether or not real platforms or voice rooms exist. They compose beautifully but never require each other.
 
-**Composability**: Voice room primitives are owned here. RTMP broadcast output is lib-stream (L3). Game session voice orchestration is lib-streaming (L4). Platform account linking is lib-stream (L3). Audience simulation is lib-streaming (L4). Voice provides the audio infrastructure; higher layers decide when and why to use it.
+**Composability**: Voice room primitives are owned here. RTMP broadcast output is lib-broadcast (L3). Game session voice orchestration is lib-showtime (L4). Platform account linking is lib-broadcast (L3). Audience simulation is lib-showtime (L4). Voice provides the audio infrastructure; higher layers decide when and why to use it.
 
-**Critical architectural insight**: Voice moved from L4 (GameFeatures) to L3 (AppFeatures) to eliminate a hierarchy violation. GameSession (L2) previously depended on Voice (L4) to create/delete voice rooms -- a forbidden upward dependency. The redesign strips all game concepts from voice. Any service can create a room; higher layers (lib-streaming at L4) orchestrate the game-session-to-voice-room lifecycle via event subscriptions. The `sessionId` field in all models refers to the Connect/Auth session ID (L1 concept), not a game session.
+**Critical architectural insight**: Voice moved from L4 (GameFeatures) to L3 (AppFeatures) to eliminate a hierarchy violation. GameSession (L2) previously depended on Voice (L4) to create/delete voice rooms -- a forbidden upward dependency. The redesign strips all game concepts from voice. Any service can create a room; higher layers (lib-showtime at L4) orchestrate the game-session-to-voice-room lifecycle via event subscriptions. The `sessionId` field in all models refers to the Connect/Auth session ID (L1 concept), not a game session.
 
-**Privacy-first broadcasting**: Voice rooms contain personal audio data. Broadcasting that audio to external platforms (Twitch, YouTube, custom RTMP) requires explicit, informed consent from every participant. The broadcast consent flow is owned by lib-voice because it's a voice room concern; the actual RTMP output is lib-stream's domain. This separation ensures that consent is enforced at the audio source, not at the broadcast destination.
+**Privacy-first broadcasting**: Voice rooms contain personal audio data. Broadcasting that audio to external platforms (Twitch, YouTube, custom RTMP) requires explicit, informed consent from every participant. The broadcast consent flow is owned by lib-voice because it's a voice room concern; the actual RTMP output is lib-broadcast's domain. This separation ensures that consent is enforced at the audio source, not at the broadcast destination.
 
 **Zero game-specific content**: lib-voice is a generic voice room service. Whether voice rooms back game sessions, collaborative workspaces, or social hangouts is determined by the caller, not by lib-voice. The service knows nothing about games, characters, realms, or subscriptions.
 
-**Current implementation status**: The core voice room lifecycle (create, join, leave, delete), P2P mesh topology, scaled SFU tier with automatic upgrade, WebRTC signaling, and participant heartbeat tracking are **fully implemented**. The broadcast consent flow, service event publishing, participant TTL enforcement background worker, and ad-hoc room modes are **implemented**. The L3 layer classification and game-agnostic API descriptions are the **target state** per [VOICE-STREAMING.md](../planning/VOICE-STREAMING.md). Integration with lib-stream and lib-streaming is **future** (those services don't exist yet).
+**Current implementation status**: The core voice room lifecycle (create, join, leave, delete), P2P mesh topology, scaled SFU tier with automatic upgrade, WebRTC signaling, and participant heartbeat tracking are **fully implemented**. The broadcast consent flow, service event publishing, participant TTL enforcement background worker, and ad-hoc room modes are **implemented**. The L3 layer classification and game-agnostic API descriptions are the **target state** per [VOICE-STREAMING.md](../planning/VOICE-STREAMING.md). Integration with lib-broadcast and lib-showtime is **future** (those services don't exist yet).
 
 ---
 
@@ -30,7 +30,7 @@ Voice room coordination service (L3 AppFeatures) providing pure voice rooms as a
 
 **Ship Games Fast**: Voice rooms are an app-level primitive usable by any game built on Bannou, not just Arcadia. A non-game real-time collaboration tool gets voice rooms without pulling in game dependencies. Voice as L3 means it's available in any deployment mode -- voice-only, voice + streaming, or the full game stack.
 
-**Living Game Worlds**: When combined with lib-streaming (L4), voice rooms become part of the in-game streaming metagame. NPCs can "hear" that players are in voice rooms (via lib-streaming's audience context), and the social dynamics of voice communication feed into the world simulation. A bard performing for a crowd in Arcadia has voice; the crowd's reaction feeds into the audience simulation.
+**Living Game Worlds**: When combined with lib-showtime (L4), voice rooms become part of the in-game streaming metagame. NPCs can "hear" that players are in voice rooms (via lib-showtime's audience context), and the social dynamics of voice communication feed into the world simulation. A bard performing for a crowd in Arcadia has voice; the crowd's reaction feeds into the audience simulation.
 
 **Emergent Over Authored**: Voice rooms enable unscripted, emergent social interactions. The broadcast consent flow allows those interactions to become part of the streaming metagame -- a spontaneous voice conversation becomes a broadcast moment that generates audience reactions, hype trains, and streamer career progression, none of which was authored or scripted.
 
@@ -45,7 +45,7 @@ Voice room coordination service (L3 AppFeatures) providing pure voice rooms as a
               Webhooks / OAuth API      |
                          |              |
     +--------------------v--------------v--------------------+
-    |  lib-stream (L3 AppFeatures)                           |
+    |  lib-broadcast (L3 AppFeatures)                           |
     |                                                        |
     |  Platform Account Linking (OAuth)                      |
     |  Sentiment Processing (text -> anonymous sentiment)    |
@@ -63,7 +63,7 @@ Voice room coordination service (L3 AppFeatures) providing pure voice rooms as a
                              |
                              v
     +--------------------------------------------------------+
-    |  lib-streaming (L4 GameFeatures)                       |
+    |  lib-showtime (L4 GameFeatures)                       |
     |                                                        |
     |  Simulated Audience Pool (always available)            |
     |  Hype Train Mechanics                                  |
@@ -73,7 +73,7 @@ Voice room coordination service (L3 AppFeatures) providing pure voice rooms as a
     |  ------------------------------------                  |
     |  Subscribes to: game-session events                    |
     |  Subscribes to: voice room lifecycle events            |
-    |  Soft depends on: lib-stream (L3), lib-voice (L3)      |
+    |  Soft depends on: lib-broadcast (L3), lib-voice (L3)      |
     +--------------------------------------------------------+
 
     +--------------------------------------------------------+
@@ -88,7 +88,7 @@ Voice room coordination service (L3 AppFeatures) providing pure voice rooms as a
     |  NO game concepts (no sessions, no subscriptions)      |
     |  Depends on: L0, L1 (connect, auth, permission)        |
     |  Soft depends on: nothing                              |
-    |  Exposes: RTP audio endpoint for lib-stream            |
+    |  Exposes: RTP audio endpoint for lib-broadcast            |
     +--------------------------------------------------------+
 ```
 
@@ -111,10 +111,10 @@ Voice room coordination service (L3 AppFeatures) providing pure voice rooms as a
 
 | Dependent | Relationship |
 |-----------|-------------|
-| lib-stream (L3, future) | Subscribes to `voice.room.broadcast.approved` to start RTMP output; subscribes to `voice.room.broadcast.stopped` to stop; reads RTP audio endpoint from tier-upgraded events |
-| lib-streaming (L4, future) | Subscribes to `voice.room.created`/`voice.room.deleted` for stream-voice coordination; subscribes to participant events for audience context adjustments |
+| lib-broadcast (L3, future) | Subscribes to `voice.room.broadcast.approved` to start RTMP output; subscribes to `voice.room.broadcast.stopped` to stop; reads RTP audio endpoint from tier-upgraded events |
+| lib-showtime (L4, future) | Subscribes to `voice.room.created`/`voice.room.deleted` for broadcast-voice coordination; subscribes to participant events for audience context adjustments |
 
-> **Hierarchy note**: GameSession (L2) previously depended on Voice via `IVoiceClient` -- this was a hierarchy violation (L2 cannot depend on L3). The dependency has been removed. Voice now manages its own room lifecycle independently, and higher-layer services (lib-streaming at L4) will orchestrate voice-stream coordination via event subscriptions. The new dependency flow is clean: lib-streaming (L4) soft-depends on lib-voice (L3), which is permitted by the hierarchy.
+> **Hierarchy note**: GameSession (L2) previously depended on Voice via `IVoiceClient` -- this was a hierarchy violation (L2 cannot depend on L3). The dependency has been removed. Voice now manages its own room lifecycle independently, and higher-layer services (lib-showtime at L4) will orchestrate voice-broadcast coordination via event subscriptions. The new dependency flow is clean: lib-showtime (L4) soft-depends on lib-voice (L3), which is permitted by the hierarchy.
 
 ---
 
@@ -177,14 +177,14 @@ This plugin does not consume external events (`x-event-subscriptions: []`). Voic
 
 | Event | Consumer | Why |
 |-------|----------|-----|
-| `voice.room.created` | lib-streaming (L4) | Track voice rooms for audience context |
-| `voice.room.deleted` | lib-streaming (L4) | Clean up streaming session associations |
-| `voice.room.tier-upgraded` | lib-stream (L3) | Update RTP audio endpoint for active broadcasts |
-| `voice.participant.joined` | lib-streaming (L4) | Adjust audience behavior based on room size |
-| `voice.participant.left` | lib-streaming (L4) | Adjust audience behavior based on room size |
-| `voice.room.broadcast.approved` | lib-stream (L3) | Start RTMP output for the voice room |
+| `voice.room.created` | lib-showtime (L4) | Track voice rooms for audience context |
+| `voice.room.deleted` | lib-showtime (L4) | Clean up streaming session associations |
+| `voice.room.tier-upgraded` | lib-broadcast (L3) | Update RTP audio endpoint for active broadcasts |
+| `voice.participant.joined` | lib-showtime (L4) | Adjust audience behavior based on room size |
+| `voice.participant.left` | lib-showtime (L4) | Adjust audience behavior based on room size |
+| `voice.room.broadcast.approved` | lib-broadcast (L3) | Start RTMP output for the voice room |
 | `voice.room.broadcast.declined` | (nobody currently) | Informational; could drive UI feedback |
-| `voice.room.broadcast.stopped` | lib-stream (L3) | Stop RTMP output for the voice room |
+| `voice.room.broadcast.stopped` | lib-broadcast (L3) | Stop RTMP output for the voice room |
 
 ---
 
@@ -192,7 +192,7 @@ This plugin does not consume external events (`x-event-subscriptions: []`). Voic
 
 **This is a load-bearing privacy boundary.** Voice rooms contain personal audio data. Broadcasting that audio to an external platform requires explicit, informed consent from every participant.
 
-### Two Distinct Broadcast Modes (via lib-stream)
+### Two Distinct Broadcast Modes (via lib-broadcast)
 
 | Mode | What's Broadcast | Who Initiates | Consent Required |
 |------|-----------------|---------------|------------------|
@@ -221,7 +221,7 @@ Each participant calls /voice/room/broadcast/consent
     +-- All consent:
     |       Set broadcast state to Approved
     |       Publish voice.room.broadcast.approved (includes RTP audio endpoint)
-    |       lib-stream receives event, starts RTMP output
+    |       lib-broadcast receives event, starts RTMP output
     |
     +-- Any decline (or timeout):
     |       Reset broadcast state to Inactive
@@ -232,7 +232,7 @@ Each participant calls /voice/room/broadcast/consent
             /voice/room/broadcast/stop
             Reset broadcast state to Inactive
             Publish voice.room.broadcast.stopped (reason: ConsentRevoked)
-            lib-stream stops RTMP output
+            lib-broadcast stops RTMP output
 ```
 
 ### Key Rules
@@ -241,7 +241,7 @@ Each participant calls /voice/room/broadcast/consent
 - Any participant can revoke consent at any time, immediately stopping the broadcast
 - The broadcast status is visible to all room participants
 - Silence is not consent: unanswered consent requests auto-decline after `BroadcastConsentTimeoutSeconds`
-- Voice does not distinguish "Approved" from "Broadcasting" -- once all consent, what happens with the audio is lib-stream's domain
+- Voice does not distinguish "Approved" from "Broadcasting" -- once all consent, what happens with the audio is lib-broadcast's domain
 
 ---
 
@@ -356,10 +356,10 @@ Each participant calls /voice/room/broadcast/consent
   ... All clients switch to SFU mode ...
 ```
 
-### Broadcast Consent Flow (Voice -> Stream Integration)
+### Broadcast Consent Flow (Voice -> Broadcast Integration)
 
 ```
-  Client A          Voice Service          lib-stream (L3)        Twitch
+  Client A          Voice Service          lib-broadcast (L3)        Twitch
   ========          =============          ==============         ======
 
   /broadcast/request --> Validate room
@@ -405,13 +405,13 @@ STREAM_SERVICE_ENABLED=true
 # Full streaming metagame (voice + platform + in-game audiences)
 VOICE_SERVICE_ENABLED=true
 STREAM_SERVICE_ENABLED=true
-STREAMING_SERVICE_ENABLED=true
+SHOWTIME_SERVICE_ENABLED=true
 
 # Platform streaming only (broadcast game cameras, no voice)
 STREAM_SERVICE_ENABLED=true
 
 # In-game metagame only (100% simulated audiences, no real platforms)
-STREAMING_SERVICE_ENABLED=true
+SHOWTIME_SERVICE_ENABLED=true
 ```
 
 ---
@@ -433,9 +433,9 @@ STREAMING_SERVICE_ENABLED=true
 
 6. **Game-agnostic API descriptions**: Several endpoint descriptions still reference "game session" language. The target state has all descriptions framed as generic session concepts per [VOICE-STREAMING.md](../planning/VOICE-STREAMING.md).
 
-7. **lib-stream integration**: lib-stream does not exist yet. When implemented, it will subscribe to `voice.room.broadcast.approved` and `voice.room.broadcast.stopped` to manage RTMP output. The RTP audio endpoint metadata in the broadcast approved event enables this integration.
+7. **lib-broadcast integration**: lib-broadcast does not exist yet. When implemented, it will subscribe to `voice.room.broadcast.approved` and `voice.room.broadcast.stopped` to manage RTMP output. The RTP audio endpoint metadata in the broadcast approved event enables this integration.
 
-8. **lib-streaming integration**: lib-streaming does not exist yet. When implemented, it will subscribe to voice room lifecycle events and orchestrate the game-session-to-voice-room lifecycle that previously lived in GameSession (L2).
+8. **lib-showtime integration**: lib-showtime does not exist yet. When implemented, it will subscribe to voice room lifecycle events and orchestrate the game-session-to-voice-room lifecycle that previously lived in GameSession (L2).
 
 ---
 
@@ -487,9 +487,9 @@ None identified.
 2. **SIP credential expiration not enforced**: Credentials have a 24-hour expiration timestamp (`SipCredentialExpirationHours`) but no server-side enforcement. Clients receive the expiration but there's no background task to rotate credentials or invalidate sessions.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/405 -->
 
-3. **Realm-specific voice manifestation**: In Omega (cyberpunk), voice rooms are explicit. In Arcadia, the same mechanics manifest as "speaking at a gathering" or "bard performing for a crowd." How much realm-specific logic belongs in lib-voice (none -- it's L3) vs. lib-streaming (L4) vs. client rendering? The answer should be: lib-voice provides the audio primitive; lib-streaming provides the game context; the client renders the appropriate visual metaphor based on realm. Voice never knows about realms.
+3. **Realm-specific voice manifestation**: In Omega (cyberpunk), voice rooms are explicit. In Arcadia, the same mechanics manifest as "speaking at a gathering" or "bard performing for a crowd." How much realm-specific logic belongs in lib-voice (none -- it's L3) vs. lib-showtime (L4) vs. client rendering? The answer should be: lib-voice provides the audio primitive; lib-showtime provides the game context; the client renders the appropriate visual metaphor based on realm. Voice never knows about realms.
 
-4. **Voice room capacity and the streaming metagame**: When lib-streaming creates voice rooms for game sessions, how does room capacity interact with audience size? A streamer with 50 simulated audience members shouldn't need a 50-person voice room -- only real participants need voice. lib-streaming must track the distinction between voice participants and audience members independently.
+4. **Voice room capacity and the streaming metagame**: When lib-showtime creates voice rooms for game sessions, how does room capacity interact with audience size? A streamer with 50 simulated audience members shouldn't need a 50-person voice room -- only real participants need voice. lib-showtime must track the distinction between voice participants and audience members independently.
 
 ---
 

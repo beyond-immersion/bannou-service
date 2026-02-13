@@ -15,9 +15,9 @@ Platform streaming integration and RTMP output management service (L3 AppFeature
 
 **Two distinct broadcast modes**: Server-side content broadcasting (game cameras, game audio) requires no player consent -- it's game content. Voice room broadcasting to external platforms requires explicit consent from ALL room participants via lib-voice's broadcast consent flow. lib-stream subscribes to voice consent events and acts accordingly; it never initiates voice broadcasting directly.
 
-**Composability**: Platform identity linking is owned here. Sentiment processing is owned here. RTMP output management is owned here. Audience behavior and the in-game metagame are lib-streaming (L4). Voice room management is lib-voice (L3). lib-stream is the privacy boundary and platform integration layer -- it touches external APIs so nothing else has to.
+**Composability**: Platform identity linking is owned here. Sentiment processing is owned here. RTMP output management is owned here. Audience behavior and the in-game metagame are lib-showtime (L4). Voice room management is lib-voice (L3). lib-stream is the privacy boundary and platform integration layer -- it touches external APIs so nothing else has to.
 
-**The three-service principle**: lib-stream delivers value independently. It can broadcast game content to Twitch whether or not there's voice involved (lib-voice) or an in-game metagame (lib-streaming). It can ingest platform audience data and publish sentiment pulses whether or not anything consumes them. Each service in the voice/stream/streaming trio composes beautifully but never requires the others.
+**The three-service principle**: lib-stream delivers value independently. It can broadcast game content to Twitch whether or not there's voice involved (lib-voice) or an in-game metagame (lib-showtime). It can ingest platform audience data and publish sentiment pulses whether or not anything consumes them. Each service in the voice/stream/streaming trio composes beautifully but never requires the others.
 
 **Zero Arcadia-specific content**: lib-stream is a generic platform integration service. Which platforms are enabled, how sentiment categories map to game emotions, and what content gets broadcast are all configured via environment variables and API calls, not baked into lib-stream.
 
@@ -42,7 +42,7 @@ lib-stream processes raw platform events (chat messages, subscriptions, raids, e
 ```
 SentimentPulse:
   pulseId: Guid                       # Unique pulse identifier
-  streamSessionId: Guid               # The lib-streaming in-game session (if linked)
+  streamSessionId: Guid               # The lib-showtime in-game session (if linked)
   platformSessionId: Guid             # The lib-stream platform session
   timestamp: DateTime                 # When this pulse was assembled
   intervalSeconds: int                # Configured pulse interval
@@ -112,7 +112,7 @@ Primary Video (backgroundVideoUrl)
                  └─ Failed → Black Video (lavfi color=black)
 ```
 
-Each fallback transition publishes a `stream.broadcast.source-changed` event so consumers (lib-streaming L4) can react to degraded broadcast quality.
+Each fallback transition publishes a `stream.broadcast.source-changed` event so consumers (lib-showtime L4) can react to degraded broadcast quality.
 
 ### Stream Key Security
 
@@ -145,9 +145,9 @@ RTMP URLs contain stream keys (e.g., `rtmp://live.twitch.tv/app/YOUR_SECRET_KEY`
 
 | Dependent | Relationship |
 |-----------|-------------|
-| lib-streaming (L4) | Subscribes to `stream.audience.pulse` for real audience blending with simulated audiences |
-| lib-streaming (L4) | Subscribes to `stream.platform.session.started`/`ended` for platform session awareness |
-| lib-streaming (L4) | Subscribes to `stream.broadcast.started`/`stopped` for broadcast state tracking |
+| lib-showtime (L4) | Subscribes to `stream.audience.pulse` for real audience blending with simulated audiences |
+| lib-showtime (L4) | Subscribes to `stream.platform.session.started`/`ended` for platform session awareness |
+| lib-showtime (L4) | Subscribes to `stream.broadcast.started`/`stopped` for broadcast state tracking |
 
 ---
 
@@ -226,7 +226,7 @@ RTMP URLs contain stream keys (e.g., `rtmp://live.twitch.tv/app/YOUR_SECRET_KEY`
 | `camera.stream.started` | `HandleCameraStreamStartedAsync` | Register a game engine camera as an available video source for broadcasts |
 | `camera.stream.ended` | `HandleCameraStreamEndedAsync` | Remove camera from available sources |
 
-### Resource Cleanup (T28)
+### Resource Cleanup (per FOUNDATION TENETS)
 
 | Target Resource | Source Type | On Delete | Cleanup Endpoint |
 |----------------|-------------|-----------|-----------------|
@@ -319,7 +319,7 @@ All endpoints require `user` role.
 
 - **Start** (`/stream/session/start`): Validates platform link exists and account is currently live on the platform (queries platform API). Creates `PlatformSessionModel` in Redis. Starts ingesting platform events (chat, subs, raids) via the platform's real-time API (Twitch IRC/EventSub, YouTube Live Chat API). Publishes `stream.platform.session.started`.
 - **Stop** (`/stream/session/stop`): Stops event ingestion. Records duration and peak viewer count. Destroys in-memory tracking ID mappings. Publishes `stream.platform.session.ended`.
-- **Associate** (`/stream/session/associate`): Links a platform session to an in-game streaming session (lib-streaming L4). Updates the `streamSessionId` field on sentiment pulses so lib-streaming knows which in-game session the real audience belongs to.
+- **Associate** (`/stream/session/associate`): Links a platform session to an in-game streaming session (lib-showtime L4). Updates the `streamSessionId` field on sentiment pulses so lib-showtime knows which in-game session the real audience belongs to.
 - **Status** (`/stream/session/status`): Returns current session state including viewer count, sentiment category distribution, and linked in-game session ID.
 - **List** (`/stream/session/list`): Returns active and recent sessions for an account, paginated.
 
@@ -415,7 +415,7 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 │                                                                          │
 │  Consumed by:                                                            │
 │  ┌──────────────────────────────────────────────────────────────┐       │
-│  │ lib-streaming (L4) -- blends real sentiments with simulated  │       │
+│  │ lib-showtime (L4) -- blends real sentiments with simulated  │       │
 │  │                        audience members to create the         │       │
 │  │                        in-game streaming metagame             │       │
 │  └──────────────────────────────────────────────────────────────┘       │
@@ -489,11 +489,24 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 
 ---
 
+## License Compliance (per FOUNDATION TENETS)
+
+| Component | License | Status | Notes |
+|-----------|---------|--------|-------|
+| **FFmpeg** | LGPL v2.1+ | Compliant | Process isolation (separate OS process, not linked). Must use LGPL-compliant build (no `--enable-gpl`, `--enable-nonfree`, `libx264`, `libx265`). |
+| **MediaMTX** | MIT | Approved | Optional test RTMP server for development/testing |
+
+---
+
 ## Known Quirks & Caveats
+
+### Bugs (Fix Immediately)
+
+*None. Plugin is in pre-implementation phase -- no code exists to contain bugs.*
 
 ### Intentional Quirks (Documented Behavior)
 
-1. **Sentiment categories are an enum, not opaque strings**: Unlike most Bannou extensibility patterns (seed type codes, collection type codes), sentiment categories are a fixed enum (`Excited`, `Supportive`, `Critical`, `Curious`, `Surprised`, `Amused`, `Bored`, `Hostile`). This is intentional -- lib-streaming (L4) needs to map sentiments to audience behavior deterministically. Adding a new sentiment category requires schema changes, which is acceptable because it's a rare, deliberate extension.
+1. **Sentiment categories are an enum, not opaque strings**: Unlike most Bannou extensibility patterns (seed type codes, collection type codes), sentiment categories are a fixed enum (`Excited`, `Supportive`, `Critical`, `Curious`, `Surprised`, `Amused`, `Bored`, `Hostile`). This is intentional -- lib-showtime (L4) needs to map sentiments to audience behavior deterministically. Adding a new sentiment category requires schema changes, which is acceptable because it's a rare, deliberate extension.
 
 2. **In-memory tracking ID mapping**: The `platformUserId → trackingId` mapping is deliberately NOT persisted. It exists in a `ConcurrentDictionary` for the duration of a platform session. This is a privacy decision, not a multi-instance safety oversight. In multi-instance deployments, a tracked viewer's requests may hit different instances, resulting in different tracking IDs across pulses for the same viewer. This is acceptable -- tracking consistency is best-effort, not guaranteed.
 
@@ -520,15 +533,6 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 5. **OAuth token refresh race conditions**: If `TokenRefreshWorker` is running on multiple instances, they may attempt to refresh the same platform's tokens simultaneously. Platform APIs vary in their handling of concurrent refresh requests. Need either distributed locking per-link or leader election for the worker.
 
 6. **Rate limiting for webhook endpoints**: Platform webhooks can deliver bursts of events (e.g., during a raid or sub train). The webhook handlers need rate limiting or backpressure to prevent overwhelming the sentiment buffer. Redis-backed rate limiting per platform session is the likely approach.
-
----
-
-## License Compliance (Tenet 18)
-
-| Component | License | Status | Notes |
-|-----------|---------|--------|-------|
-| **FFmpeg** | LGPL v2.1+ | Compliant | Process isolation (separate OS process, not linked). Must use LGPL-compliant build (no `--enable-gpl`, `--enable-nonfree`, `libx264`, `libx265`). |
-| **MediaMTX** | MIT | Approved | Optional test RTMP server for development/testing |
 
 ---
 

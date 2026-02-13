@@ -182,17 +182,27 @@ Technical observations about ways the plugin could be improved or extended. No s
 
 ### Service-Specific Sections (Optional)
 
-Between sections 12 and 13, plugins may include additional `##` sections for service-specific content that doesn't fit the standard template structure. Common examples:
+Plugins may include additional `##` sections for service-specific content that doesn't fit the standard template structure. These sections can be placed in **two positions** depending on their role:
+
+**Position A: Between Overview (2) and Dependencies (3)** — for foundational architectural context that the rest of the document builds on. Use this when the section explains a core design principle, privacy model, protocol, or subsystem that readers need to understand before the standard sections make sense. Examples:
+
+- **Privacy Boundary**: Data flow and PII handling model (e.g., lib-stream's sentiment anonymization)
+- **Core Subsystem Design**: A subsystem architecture that drives the rest of the plugin (e.g., lib-streaming's simulated audience system)
+- **Protocol Details**: Wire protocol or binary format that the plugin implements
+
+**Position B: Between Potential Extensions (12) and Known Quirks (13)** — for supplementary content that adds detail but isn't prerequisite context. Examples:
 
 - **Duration/Format Reference**: ISO 8601 duration formats, encoding details, data format specifications
-- **Architecture Details**: Subsystem design, state machine diagrams, pipeline flows specific to this plugin
-- **Integration Guides**: How external systems interact with this plugin, protocol details
+- **License Compliance**: Third-party dependency licensing analysis
+- **Integration Guides**: How external systems interact with this plugin
+- **Composability Maps**: How this plugin composes other Bannou primitives
 
 **Rules for extra sections**:
 1. Use `##` headers (same level as other numbered sections)
 2. Must NOT duplicate content that belongs in standard sections above
 3. Content must be specific to this plugin's implementation, not general patterns
 4. Do not add extra sections to the overview/summary (that gets copied to GENERATED-SERVICE-DETAILS.md)
+5. Position A sections should be limited to 1-3 sections maximum — if you need more, some belong in Position B
 
 ---
 

@@ -17,9 +17,9 @@ Three services that together create a complete voice, streaming, and audience me
 |---------|-------|------|
 | **lib-voice** | L3 (AppFeatures) | Pure voice rooms: create, join, leave, P2P mesh, scaled SFU. No game concepts. Works with lib-connect alone. |
 | **lib-stream** | L3 (AppFeatures) | Platform streaming: link Twitch/YouTube accounts, RTMP output (FFmpeg), camera ingestion, sentiment processing. Can broadcast server-side content without player involvement. |
-| **lib-streaming** | L4 (GameFeatures) | In-game streaming metagame: simulated audience pools, hype trains, streamer careers, real-simulated audience blending. |
+| **lib-showtime** | L4 (GameFeatures) | In-game streaming metagame: simulated audience pools, hype trains, streamer careers, real-simulated audience blending. |
 
-**The three-service principle**: Each service delivers value independently. lib-voice provides voice chat whether or not anyone is streaming. lib-stream can broadcast game content to Twitch whether or not there's voice involved or an in-game metagame. lib-streaming provides a complete audience simulation metagame whether or not real platforms or voice rooms exist. They compose beautifully but never require each other.
+**The three-service principle**: Each service delivers value independently. lib-voice provides voice chat whether or not anyone is streaming. lib-stream can broadcast game content to Twitch whether or not there's voice involved or an in-game metagame. lib-showtime provides a complete audience simulation metagame whether or not real platforms or voice rooms exist. They compose beautifully but never require each other.
 
 **Privacy-first**: Real audience data never enters the event system as text, usernames, or PII. lib-stream processes raw platform events into **batched sentiment pulses** -- arrays of anonymous sentiment values with optional opaque tracking GUIDs for consistency. No platform user IDs, no message content, no personally identifiable information leaves lib-stream's boundary. Voice broadcasting to external platforms requires explicit client-side opt-in -- a potential privacy nightmare otherwise.
 
@@ -77,7 +77,7 @@ The Omega realm (cyberpunk meta-dashboard) provides the diegetic context for str
                             │
                             ▼
     ┌───────────────────────────────────────────────────────┐
-    │  lib-streaming (L4 GameFeatures)                      │
+    │  lib-showtime (L4 GameFeatures)                      │
     │                                                       │
     │  Simulated Audience Pool (always available)           │
     │  Interest Matching Engine                             │
@@ -116,7 +116,7 @@ The Omega realm (cyberpunk meta-dashboard) provides the diegetic context for str
 ### Dependency Graph
 
 ```
-lib-streaming (L4) ──hard──► L0, L1, L2 (game-session, character, game-service)
+lib-showtime (L4) ──hard──► L0, L1, L2 (game-session, character, game-service)
        │
        ├──soft──► lib-stream (L3)    # Sentiment pulses, platform sessions
        └──soft──► lib-voice (L3)     # Voice room awareness for audience context
@@ -144,10 +144,10 @@ STREAM_SERVICE_ENABLED=true
 # Full streaming metagame (voice + platform + in-game audiences)
 VOICE_SERVICE_ENABLED=true
 STREAM_SERVICE_ENABLED=true
-STREAMING_SERVICE_ENABLED=true
+SHOWTIME_SERVICE_ENABLED=true
 
 # In-game metagame only (100% simulated audiences, no real platforms)
-STREAMING_SERVICE_ENABLED=true
+SHOWTIME_SERVICE_ENABLED=true
 ```
 
 ---
@@ -169,7 +169,7 @@ lib-stream processes raw platform events (chat messages, subscriptions, raids, e
 ```
 SentimentPulse:
   pulseId: Guid                       # Unique pulse identifier
-  streamSessionId: Guid               # The lib-streaming in-game session (if linked)
+  streamSessionId: Guid               # The lib-showtime in-game session (if linked)
   platformSessionId: Guid             # The lib-stream platform session
   timestamp: DateTime                 # When this pulse was assembled
   intervalSeconds: int                # Configured pulse interval
@@ -313,7 +313,7 @@ This mode uses lib-stream's FFmpeg management to combine video (from game camera
 | **Hard dependencies** | L0 (state, messaging), L1 (connect, auth, permission) |
 | **Soft dependencies** | None |
 | **Cannot depend on** | L2, L4 |
-| **When absent** | No voice chat; lib-stream can still broadcast game content; lib-streaming runs without voice |
+| **When absent** | No voice chat; lib-stream can still broadcast game content; lib-showtime runs without voice |
 
 ### What This Service Does
 
@@ -330,7 +330,7 @@ This mode uses lib-stream's FFmpeg management to combine video (from game camera
 - No game session references (rooms are generic, identified by sessionId which is a Connect/Auth L1 concept)
 - No RTMP output (that's lib-stream's domain now)
 - No platform integration (that's lib-stream)
-- No audience simulation (that's lib-streaming)
+- No audience simulation (that's lib-showtime)
 - No subscription checks (higher layers gate access before calling voice)
 
 ### Key Architectural Change: L4 → L3
@@ -340,7 +340,7 @@ The current lib-voice is L4 because it was built before the service hierarchy an
 | Before (L4) | After (L3) |
 |-------------|------------|
 | `sessionId` described as "game session ID" | `sessionId` kept as-is (it's a Connect/Auth L1 concept, not game-specific) |
-| GameSession creates/deletes voice rooms | Higher layers (lib-streaming L4) orchestrate room lifecycle |
+| GameSession creates/deletes voice rooms | Higher layers (lib-showtime L4) orchestrate room lifecycle |
 | Voice room tied to game session lifecycle | Voice room is independent; higher layers manage association |
 | Voice publishes zero domain events | Voice publishes room lifecycle events |
 
@@ -466,7 +466,7 @@ See [VOICE-STREAMING.md](VOICE-STREAMING.md) for the complete lib-voice L3 redes
 | **Hard dependencies** | L0 (state, messaging), L1 (account, auth) |
 | **Soft dependencies** | L3 (lib-voice -- for voice room audio source) |
 | **Cannot depend on** | L2, L4 |
-| **When absent** | lib-streaming runs on 100% simulated audiences; lib-voice works without broadcasting |
+| **When absent** | lib-showtime runs on 100% simulated audiences; lib-voice works without broadcasting |
 
 ### What This Service Does
 
@@ -484,7 +484,7 @@ See [VOICE-STREAMING.md](VOICE-STREAMING.md) for the complete lib-voice L3 redes
 ### What This Service Does NOT Do
 
 - Does not know about games, characters, realms, or any L2 concepts
-- Does not manage simulated audiences (that's lib-streaming L4)
+- Does not manage simulated audiences (that's lib-showtime L4)
 - Does not store message content or platform usernames beyond the ephemeral processing window
 - Does not persist the platformUserId→trackingId mapping (in-memory only)
 - Does not initiate voice room broadcasts (client requests through lib-voice, which publishes consent events)
@@ -1315,16 +1315,16 @@ FFmpeg runs as a separate process with network/IPC communication only. No code l
 
 ---
 
-## lib-streaming: L4 Game Feature (In-Game Streaming Metagame)
+## lib-showtime: L4 Game Feature (In-Game Streaming Metagame)
 
 ### Service Identity
 
 | Property | Value |
 |----------|-------|
 | **Layer** | L4 (GameFeatures) |
-| **Plugin** | `plugins/lib-streaming/` |
-| **Schema prefix** | `streaming` |
-| **Service name** | `streaming` |
+| **Plugin** | `plugins/lib-showtime/` |
+| **Schema prefix** | `showtime` |
+| **Service name** | `showtime` |
 | **Hard dependencies** | L0 (state, messaging), L1 (account, auth, permission), L2 (game-session, game-service, character) |
 | **Soft dependencies** | L3 (lib-stream for real audience, lib-voice for room awareness), L4 (lib-seed for career, lib-collection for unlocks, lib-currency for tips, lib-relationship for follows, lib-analytics for reporting) |
 | **When absent** | No streaming metagame; voice and platform streaming still work independently |
@@ -1351,29 +1351,29 @@ FFmpeg runs as a separate process with network/IPC communication only. No code l
 
 ### Key Change From v1: Game-Session Integration
 
-lib-streaming (L4) now owns the "game sessions have voice" orchestration that previously lived in GameSession (L2):
+lib-showtime (L4) now owns the "game sessions have voice" orchestration that previously lived in GameSession (L2):
 
 ```
 game-session.created event
     │
     ▼
-lib-streaming subscribes, checks if game session wants voice
+lib-showtime subscribes, checks if game session wants voice
     │ yes
     ▼
-lib-streaming calls lib-voice (L3) to create voice room
+lib-showtime calls lib-voice (L3) to create voice room
     │
     ▼
-lib-streaming stores voice room ID ↔ game session ID mapping
+lib-showtime stores voice room ID ↔ game session ID mapping
     │
     ▼
-game-session.ended event → lib-streaming deletes voice room via lib-voice
+game-session.ended event → lib-showtime deletes voice room via lib-voice
 ```
 
-This eliminates the L2→L4 hierarchy violation entirely. GameSession publishes events; lib-streaming consumes them and orchestrates the voice+streaming stack.
+This eliminates the L2→L4 hierarchy violation entirely. GameSession publishes events; lib-showtime consumes them and orchestrates the voice+streaming stack.
 
 ### API Endpoints, Models, Events, State Stores, Configuration
 
-The lib-streaming API surface, models, events, state stores, and configuration are **unchanged from v1** of this document. The complete specifications are maintained below for reference. The only change is in the event subscriptions:
+The lib-showtime API surface, models, events, state stores, and configuration are **unchanged from v1** of this document. The complete specifications are maintained below for reference. The only change is in the event subscriptions:
 
 ### Updated Event Subscriptions
 
@@ -1421,8 +1421,8 @@ x-event-subscriptions:
       End any associated streaming sessions and delete voice rooms.
 
   # Self-generated events for background processing
-  - topic: streaming.session.ended
-    event: StreamingSessionEndedEvent
+  - topic: showtime.session.ended
+    event: ShowtimeSessionEndedEvent
     description: Trigger career progression and cleanup on session end.
 ```
 
@@ -1469,9 +1469,9 @@ Phase Labels:
 
 | Collection Category | Example Entries | Trigger |
 |-------------------|-----------------|---------|
-| Streaming Milestones | "First Stream", "100 Followers", "1000 Watch Hours" | `streaming.milestone.reached` events |
-| Hype Achievements | "First Hype Train", "Level 5 Hype", "Legendary Hype" | `streaming.hype.completed` events |
-| World-First Streams | "Discovered [X] On Stream" | `streaming.milestone.reached` with WorldFirstCount |
+| Streaming Milestones | "First Stream", "100 Followers", "1000 Watch Hours" | `showtime.milestone.reached` events |
+| Hype Achievements | "First Hype Train", "Level 5 Hype", "Legendary Hype" | `showtime.hype.completed` events |
+| World-First Streams | "Discovered [X] On Stream" | `showtime.milestone.reached` with WorldFirstCount |
 
 ### Currency: Virtual Tips
 
@@ -1519,7 +1519,7 @@ Prebound API on completion:
 
 7. **Voice room broadcasting UX**: When a player requests broadcast, what's the client-side consent UX? Modal dialog? In-room notification with timer? Veto-based (proceeds unless someone objects)?
 
-8. **Realm-specific manifestation**: In Omega, streaming is explicit. In Arcadia, same mechanics as "performing for a crowd." How much realm-specific logic in lib-streaming vs. client rendering?
+8. **Realm-specific manifestation**: In Omega, streaming is explicit. In Arcadia, same mechanics as "performing for a crowd." How much realm-specific logic in lib-showtime vs. client rendering?
 
 ---
 
@@ -1536,7 +1536,7 @@ Redesign lib-voice as L3 AppFeatures. See [VOICE-STREAMING.md](VOICE-STREAMING.m
 - Add participant TTL enforcement background worker
 - Preserve internal helpers (P2P, Scaled, SIP, Kamailio, RTPEngine)
 
-### Phase 2: lib-streaming (L4) Standalone
+### Phase 2: lib-showtime (L4) Standalone
 
 Build the in-game streaming metagame with 100% simulated audiences.
 
@@ -1573,7 +1573,7 @@ Add RTMP output capabilities to lib-stream.
 
 Connect L3 to L4.
 
-- Sentiment pulse consumer in lib-streaming
+- Sentiment pulse consumer in lib-showtime
 - Real-derived audience member creation
 - Tracking ID consistency across pulses
 - Blending with simulated audience behavior
