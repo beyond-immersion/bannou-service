@@ -17,9 +17,11 @@ Dungeon lifecycle orchestration service (L4 GameFeatures) for living dungeon ent
 
 **Critical architectural insight**: Dungeon cores influence characters through the character's own Actor, not directly. A dungeon core's Actor (event brain) monitors domain events and makes decisions; the bonded master's character Actor receives commands as perceptions, gated by the master's `dungeon_master` seed capabilities. This is the same indirect influence pattern used by divine actors (gods influence through the character's Actor, not by controlling the character directly).
 
-**The dungeon as garden**: From the dungeon master's perspective, the dungeon IS a garden -- an abstract conceptual space that defines their gameplay context. The dungeon core actor serves as the gardener behavior, managing what the master perceives, what commands are available, and what events reach them. For adventurers entering the dungeon, it is a physical game location -- they interact through normal combat, exploration, and trap mechanics. This dual nature (physical space for visitors, garden for the master) is a key architectural distinction.
+**Two mastery patterns**: When a character bonds with a dungeon core, the relationship takes one of two forms depending on the player's choice and the household context. **Pattern A (Full Split)**: The character separates from their household (a contractual split governed by faction norms and obligation), and the player commits one of their 3 account seed slots to a `dungeon_master` seed. The dungeon becomes a separate game -- selectable from the void as an independent experience with its own garden. **Pattern B (Bonded Role)**: The character stays in their household and gains a character-level `dungeon_master` seed. The dungeon influence layers onto gameplay while the player is actively controlling that character, but drops away when switching to another household member. Pattern A is a specific case of the general household split mechanic (which applies to branch families, divorces, and any household fragmentation). Pattern B is a "side gig" that doesn't change the account structure.
 
-**Two seed types, one pair**: The dungeon system introduces two seed types that grow in parallel: `dungeon_core` (the dungeon's own progressive growth -- mana capacity, genetic library, trap sophistication, spatial control, memory depth) and `dungeon_master` (the bonded entity's growth in the mastery role -- perception, command, channeling, coordination). Seeds track growth in *roles*, not growth in *entities*. The same character can hold a `guardian` seed (their spirit growth), a `dungeon_master` seed (their mastery role growth), and any other role-specific seeds simultaneously.
+**The dungeon as garden**: In Pattern A, the dungeon IS the player's garden -- a full conceptual space with its own UX surface, entity associations, and gardener behavior (the dungeon core actor). In Pattern B, the dungeon influence is transient -- it layers onto the existing garden while the bonded character is selected but doesn't replace it. For adventurers entering the dungeon, it is always a physical game location regardless of which pattern the master chose.
+
+**Two seed types, one pair**: The dungeon system introduces two seed types that grow in parallel: `dungeon_core` (the dungeon's own progressive growth -- mana capacity, genetic library, trap sophistication, spatial control, memory depth) and `dungeon_master` (the bonded entity's growth in the mastery role -- perception, command, channeling, coordination). The `dungeon_master` seed can be account-owned (Pattern A -- the spirit's relationship to the dungeon, persisting across character death) or character-owned (Pattern B -- one character's role, tied to that character's lifecycle). Seeds track growth in *roles*, not growth in *entities*.
 
 **Zero Arcadia-specific content**: lib-dungeon is a generic dungeon management service. Arcadia's personality types (martial, memorial, festive, scholarly), specific creature species, and narrative manifestation styles are configured through ABML behaviors and seed type definitions at deployment time, not baked into lib-dungeon.
 
@@ -56,58 +58,195 @@ This shared infrastructure is already factored into L0/L1/L2 services. lib-divin
 
 ---
 
+## The Dual Mastery Patterns
+
+The player controls a household -- a family, a clan, a dynasty -- not a single character. When one character bonds with a dungeon core, the question isn't just "what happens to this character?" but "what happens to the rest of the household?" The answer depends on which mastery pattern the player chooses, and that choice is governed by the same contractual/social mechanics that govern any household fragmentation.
+
+### Pattern A: Full Split (Account-Level Dungeon Master)
+
+The character **separates from their household** through a contractual split -- the same general mechanic that applies when branch families split off, when divorce occurs, or when any household member permanently departs. The split is governed by:
+
+- **Contract**: Terms of the separation (asset division, ongoing obligations, territorial claims). Can be explicitly negotiated or implicitly determined by character personalities and history.
+- **Faction norms**: Cultural context determines whether the split is amicable, contentious, or hostile. A culture that reveres dungeon bonds might celebrate the departure; one that values family cohesion might treat it as betrayal.
+- **Obligation**: Post-split obligations modify GOAP action costs for both parties. A contentious split makes interactions between the separated character and former family carry higher moral weight.
+- **Relationship**: Family bonds change type (parent-child might become estranged, formal, or hostile depending on the split character).
+
+After the split, the player **commits one of their 3 account seed slots** to the `dungeon_master` seed. This creates a fundamentally separate experience:
+
+- The `dungeon_master` seed is **account-owned** (the spirit's relationship to the dungeon, persisting across character death)
+- Selectable from the void as an independent game alongside the guardian seed
+- The dungeon IS the garden -- full UX surface, entity associations, dungeon core actor as gardener behavior
+- The character is gone from the household roster (the player can no longer switch to them from the guardian seed)
+- Cross-pollination between dungeon_master and guardian seeds happens at the spirit level (combat/strategy mastery feeds broader spirit growth)
+- The household the character left may gain passive benefits from the split (income, political connections, trade access) depending on contract terms
+
+**This is the PLAYER-VISION model**: "Dungeon Master: The spirit IS a dungeon. Your 'household' is your dungeon ecosystem."
+
+### Pattern B: Bonded Role (Character-Level Dungeon Master)
+
+The character **stays in their household** and gains a dungeon bond as a role, not an identity. No household split occurs. No account seed slot is consumed.
+
+- The `dungeon_master` seed is **character-owned** (this character's role growth, tied to that character's lifecycle)
+- The dungeon influence **layers onto gameplay while the player is actively controlling that character**
+- The dungeon core actor pushes perceptions into the character's Actor (gated by the character's dungeon_master seed capabilities)
+- The player gets dungeon-adjacent UX while playing this character (dungeon sight, limited commands based on mastery phase)
+- **Switch to another household character** and the dungeon layer drops off -- back to normal household gameplay
+- The dungeon influences the character far more than the player -- the character's Actor processes dungeon perceptions constantly (even when the player is controlling someone else), but the player only experiences the dungeon UX while connected to that character
+- The guardian seed is **incidentally** affected: growth in the dungeon_master seed feeds into the guardian seed only while the player is actively connected and only at a reduced cross-pollination rate
+- If the character dies, the character-owned seed follows character death rules (archived for Priest bonds, growth-halved for Paladin bonds, destroyed for Corrupted bonds)
+
+**This is the "side gig" model**: The character has a dungeon relationship, but the player's primary experience remains household management.
+
+### The General Household Split Mechanic
+
+Pattern A is not dungeon-specific. It's one instance of a general mechanic that the game needs for any household fragmentation:
+
+| Scenario | Trigger | Contract Terms | Result |
+|----------|---------|---------------|--------|
+| **Branch family** | Household too large, members want independence | Asset division, territorial rights, trade agreements | Branch becomes NPC-managed (player loses direct control), passive income/political benefits |
+| **Divorce** | Character relationship dissolution | Property division, child custody, ongoing obligations | Characters split; personality/history/faction norms determine amicability |
+| **Dungeon mastery** (Pattern A) | Character bonds with dungeon core, player commits seed slot | Departure terms, household compensation, ongoing ties | Character leaves household; player gains dungeon_master account seed |
+| **Exile/banishment** | Faction norm violation, family dishonor | Punitive terms, asset forfeiture, social stigma | Forced split; contentious by definition |
+| **Religious vocation** | Character joins a divine order (similar to dungeon bonding) | Service terms, family tithe, visitation rights | Character serves deity; similar to dungeon Pattern A but with lib-divine integration |
+
+All of these use the same underlying machinery: **Contract** (terms), **Faction** (cultural norms), **Obligation** (ongoing moral costs), **Relationship** (bond type changes), and **Seed** (potential account seed creation if the player commits a slot). The specifics of what happens after the split differ (dungeon management, branch family passive income, divine service), but the split mechanism itself is universal.
+
+**lib-dungeon doesn't implement the split** -- it consumes the result. The household split is a cross-cutting mechanic involving Contract, Faction, Obligation, Relationship, and Seed. lib-dungeon's FormBond endpoint accepts the outcome (character + bond type) and proceeds with dungeon-specific setup. Whether the character underwent a household split (Pattern A) or stayed in the household (Pattern B) is determined before FormBond is called.
+
+### Pattern Selection Flow
+
+```
+Character touches dungeon core
+    |
+    v
+Bond Contract created (lib-contract)
+    |
+    +--> dungeon_master seed created on CHARACTER (always, initially)
+    |
+    v
+Player presented with choice (via Gardener UX / game-specific flow):
+    |
+    +---> "Commit to this dungeon" (Pattern A)
+    |         |
+    |         +--> Household split mechanic triggered
+    |         |    (Contract + Faction norms + Obligation)
+    |         |
+    |         +--> dungeon_master seed PROMOTED from character to account
+    |         |    (consumes one of 3 account seed slots)
+    |         |
+    |         +--> Character leaves household roster
+    |         |
+    |         +--> Dungeon garden created as top-level experience
+    |
+    +---> "Keep my family" (Pattern B)
+              |
+              +--> dungeon_master seed stays on character
+              |
+              +--> Dungeon influence transient (active while
+              |    playing this character only)
+              |
+              +--> No household change, no account seed consumed
+```
+
+**The choice doesn't have to happen immediately.** A character can bond with a dungeon (Pattern B by default) and the player can later choose to promote the relationship to Pattern A through the household split mechanic. The reverse (Pattern A back to B) is not possible -- once the character has left the household, they're gone.
+
+---
+
 ## The Dungeon as Garden
 
-The Gardener deep dive defines a garden as "a conceptual space that defines a player's current gameplay context." Every player is always in some garden, and the gardener behavior manages their experience. The dungeon extends this pattern:
+The Gardener deep dive defines a garden as "a conceptual space that defines a player's current gameplay context." Every player is always in some garden, and the gardener behavior manages their experience. The dungeon extends this pattern differently depending on the mastery pattern:
+
+### Pattern A: The Dungeon IS the Garden
 
 | Perspective | Experience | System |
 |-------------|-----------|--------|
-| **Dungeon master** (bonded partner) | The dungeon IS their garden -- they perceive through the dungeon's senses, issue commands, and experience the dungeon's emotional state | Gardener (dungeon garden type) |
+| **Dungeon master** (Pattern A) | The dungeon IS their garden -- they perceive through the dungeon's senses, issue commands, and experience the dungeon's emotional state. This is their primary gameplay context. | Gardener (dungeon garden type, top-level) |
 | **Adventurers** (visitors) | The dungeon is a physical game location with monsters, traps, puzzles, and loot | Normal game mechanics (combat, inventory, mapping) |
 | **Dungeon core** (the actor) | The dungeon tends its own space AND the master's garden experience simultaneously | Actor + Gardener APIs + Dungeon APIs |
 
-The dungeon core actor serves as the gardener behavior for the master's garden. When a character bonds with a dungeon core:
+When a player commits an account seed slot (Pattern A):
 
-1. A "dungeon" garden type is created for the master
+1. A "dungeon" garden type is created as a **top-level garden** -- selectable from the void alongside the guardian seed's garden
 2. The dungeon core actor becomes the gardener behavior for that garden
 3. Entity associations bind the master's character, the dungeon's inhabitants, and relevant inventories to the garden context
 4. The master's perception of the dungeon (what they "see") is managed by the garden's entity session registrations
 5. Commands from the master arrive as perceptions in the dungeon core's actor, gated by the `dungeon_master` seed capabilities
+6. The UX capability manifest expands fully with dungeon-specific modules (dungeon sight, spawning, traps, layout, memory, channeling, coordination)
 
-When no master is bonded, the dungeon core actor still runs autonomously -- it just has no garden to tend (no partner receiving its experience). It continues to perceive, decide, and act within its domain purely based on its own `dungeon_core` seed capabilities.
+### Pattern B: The Dungeon Layers Onto the Garden
 
-**Multi-game variability**: The dungeon garden behavior document varies per game. In Arcadia, the dungeon master experience uses perception-gated awareness, command-gated actions, and channeling-gated power flows. A different game might use different mechanics for the master-dungeon relationship, or omit the dungeon garden entirely (autonomous dungeons with no master partnership). lib-dungeon provides primitives, not policy.
+In Pattern B, the dungeon is not the garden. The player's garden remains their household garden (the guardian seed's context). When the player switches to the bonded character:
+
+1. The dungeon core actor pushes perceptions into the character's Actor (just like a regional watcher/god does)
+2. Dungeon-specific UX modules appear **transiently** -- gated by the character-owned dungeon_master seed's capabilities, visible while this character is selected
+3. The player can issue commands to the dungeon through the character (gated by command.* capabilities)
+4. Switch to another household character and the dungeon UX drops away
+5. The dungeon continues to influence the bonded character's Actor regardless of who the player is controlling -- the character processes dungeon perceptions autonomously
+
+No dungeon garden instance is created in Pattern B. The dungeon influence is routed through the character's Actor perception pipeline, not through Gardener.
+
+### When No Master Is Bonded
+
+The dungeon core actor still runs autonomously -- it just has no garden to tend and no partner receiving its experience. It continues to perceive, decide, and act within its domain purely based on its own `dungeon_core` seed capabilities.
+
+**Multi-game variability**: The dungeon garden behavior document varies per game. In Arcadia, the Pattern A dungeon master experience uses perception-gated awareness, command-gated actions, and channeling-gated power flows. A different game might use different mechanics for the master-dungeon relationship, might only support Pattern B (no full dungeon master game), or might omit dungeon bonding entirely (autonomous dungeons with no master partnership). lib-dungeon provides primitives, not policy.
 
 ---
 
 ## The Asymmetric Bond Pattern
 
-The dungeon-master relationship follows the same structural pattern as the player-character relationship:
+The dungeon-master relationship follows the same structural pattern as the player-character relationship, but manifests differently depending on the mastery pattern:
 
 ```
-PLAYER-CHARACTER BOND                    CHARACTER-DUNGEON BOND
----------------------                    ----------------------
+PATTERN A: NESTED ASYMMETRY (spirit → character → dungeon)
+===========================================================
 
-Account (with guardian seed)             Character (with dungeon_master seed)
+Account (guardian seed)                 Account (dungeon_master seed)
     |                                        |
-    | possesses (asymmetric)                 | bonds with (asymmetric)
-    | can "go away"                          | can "go away"
-    | mutual benefit while engaged           | mutual benefit while engaged
+    | spirit possesses household             | spirit IS the dungeon master
+    | (guardian garden)                      | (dungeon garden)
     |                                        |
     v                                        v
-Character (autonomous NPC brain)         Dungeon (autonomous Actor brain)
-    always running                           always running
-    acts independently when                  acts independently when
-    player is absent                         master is absent
+Household of characters              Dungeon (autonomous Actor brain)
+    autonomous NPC brains                  always running
+    (player lost this character            master character lives here now
+     in the household split)
+
+    The same spirit has TWO relationships to the world,
+    selectable from the void as separate games.
+
+
+PATTERN B: LAYERED INFLUENCE (spirit → character ↔ dungeon)
+===========================================================
+
+Account (guardian seed only)
+    |
+    | spirit possesses household
+    |
+    v
+Household of characters
+    |
+    +-- Character A (no dungeon bond) -- normal gameplay
+    +-- Character B (dungeon_master seed) -- dungeon influence ON
+    +-- Character C (no dungeon bond) -- normal gameplay
+    |
+    | When playing Character B:
+    | dungeon perceptions layer onto character's Actor
+    | dungeon UX appears transiently
+    | dungeon_master seed grows
+    |
+    | When playing Character A or C:
+    | dungeon influence on player drops away
+    | Character B still processes dungeon perceptions autonomously
 ```
 
-Both relationships share key properties:
-- **Asymmetric agency**: One party has broader context (player sees UX, character sees dungeon rooms), the other has deeper local knowledge (character knows its body, dungeon knows its domain)
-- **Graceful absence**: The autonomous entity continues functioning when its partner disengages
-- **Progressive depth**: The relationship deepens with shared experience (guardian seed grows, dungeon_master seed grows)
-- **Contractual terms**: Governed by agreements with consequences (implicit for player-character, explicit Contract for character-dungeon)
+Both patterns share these properties:
+- **Asymmetric agency**: One party has broader context, the other has deeper local knowledge (dungeon knows its domain)
+- **Graceful absence**: The dungeon continues functioning when its partner disengages
+- **Progressive depth**: The relationship deepens with shared experience (dungeon_master seed grows)
+- **Contractual terms**: Governed by explicit Contract with consequences
 
-The partner is not always a character. Corrupted bonds use a monster (actor-managed entity). When the partner isn't a character, the dungeon core has fewer tools -- no character Actor to send commands to as perceptions. The paired seeds still grow, but the dungeon core exerts influence primarily through the seed bond alone (almost no active control), and the monster avatar operates with limited agency to grow its `dungeon_master` seed deliberately.
+The partner is not always a character. Corrupted bonds use a monster (actor-managed entity). When the partner isn't a character, the dungeon core has fewer tools -- no character Actor to send commands to as perceptions. The paired seeds still grow, but the dungeon core exerts influence primarily through the seed bond alone (almost no active control), and the monster avatar operates with limited agency to grow its `dungeon_master` seed deliberately. Corrupted bonds are always Pattern B (monsters don't have account seeds).
 
 ---
 
@@ -165,7 +304,7 @@ The partner is not always a character. Corrupted bonds use a monster (actor-mana
 | **SeedTypeCode** | `dungeon_master` |
 | **DisplayName** | Dungeon Master |
 | **MaxPerOwner** | 1 (can only master one dungeon at a time) |
-| **AllowedOwnerTypes** | `["character", "actor"]` (character for willing bonds, actor for monster avatars) |
+| **AllowedOwnerTypes** | `["account", "character", "actor"]` (account for Pattern A full split, character for Pattern B bonded role, actor for Corrupted monster avatars) |
 | **BondCardinality** | 0 (Contract handles the relationship) |
 
 **Growth Phases** (ordered by MinTotalGrowth):
@@ -435,7 +574,7 @@ All endpoints require `developer` role.
 
 All endpoints require `developer` role.
 
-- **FormBond** (`/dungeon/bond/form`): Validates dungeon is Active and has no active bond. Validates master entity exists. Creates Contract instance from bond template with bond type terms (Priest/Paladin/Corrupted). Contract prebound API triggers `dungeon_master` seed creation for the master entity. Updates dungeon core's bond references. If master is a character and Gardener available, creates dungeon garden instance. Publishes `dungeon.bond.formed`.
+- **FormBond** (`/dungeon/bond/form`): Validates dungeon is Active and has no active bond. Validates master entity exists. Creates Contract instance from bond template with bond type terms (Priest/Paladin/Corrupted). Contract prebound API triggers `dungeon_master` seed creation for the master entity (character-owned initially -- Pattern B). Updates dungeon core's bond references. Publishes `dungeon.bond.formed`. Note: the seed always starts character-owned; promotion to account-owned (Pattern A) happens through the household split mechanic, which is external to lib-dungeon.
 - **DissolveBond** (`/dungeon/bond/dissolve`): Lock. Terminates Contract. Archives or deletes `dungeon_master` seed per `MasterSeedArchiveOnDissolve` config. Clears bond references. Destroys dungeon garden if active. Publishes `dungeon.bond.dissolved`.
 - **GetBond** (`/dungeon/bond/get`): Returns active bond details for a dungeon, including master seed phase and capability summary.
 - **GetBondByMaster** (`/dungeon/bond/get-by-master`): Lookup active bond by master entity type + ID.
@@ -530,7 +669,7 @@ Dungeon physical form is a cross-service concern distributed across multiple ser
 | **Spatial data** | Mapping (L4, soft) | Room boundaries, corridors, connectivity graph, affordance queries (e.g., "what objects can be thrown in room X?") |
 | **Visual composition** | Scene (L4, soft) | Node trees for room decorations, memory manifestation paintings, environmental effects |
 | **Persistent state** | Save-Load (L4, soft) | Versioned dungeon construction snapshots: room properties, trap placements, structural modifications |
-| **Procedural generation** | lib-procedural (L4, future) | Houdini-backed generation of new chambers, corridors, and environmental features when domain_expansion capabilities are exercised |
+| **Procedural generation** | lib-procedural (L4, future) | Houdini-backed generation of new chambers, corridors, and environmental features when domain_expansion capabilities are exercised. See [PROCEDURAL.md](PROCEDURAL.md) for the full deep dive. |
 | **Inhabitant tracking** | Dungeon (this service) | Monster/creature positions, species, quality, soul slot usage |
 
 As the `dungeon_core` seed grows, `domain_expansion.*` capabilities unlock. When the dungeon core actor exercises `shift_layout` or expands its domain, the physical changes are:
@@ -545,14 +684,16 @@ As the `dungeon_core` seed grows, `domain_expansion.*` capabilities unlock. When
 
 ## Bond Types
 
-| Bond Type | Master Entity | Relationship | Death Behavior | Master Seed Effect |
-|-----------|--------------|-------------|----------------|--------------------|
-| **Priest** | Character (willing) | Core provides mana, master provides direction | Bond and master seed growth preserved through master death | Full growth tracking; seed archived on dissolution, retains all growth |
-| **Paladin** | Character (willing) | Core channels combat abilities through master | Master seed growth halved on death; bond can be re-formed | Full growth; `channeling.combat` domains grow faster |
-| **Corrupted** | Monster (dominated) | Core dominates, master is avatar | Core dies if avatar destroyed | Minimal agency -- growth happens passively, monster cannot deliberately direct growth |
+| Bond Type | Master Entity | Patterns | Relationship | Death Behavior | Master Seed Effect |
+|-----------|--------------|----------|-------------|----------------|--------------------|
+| **Priest** | Character (willing) | A or B | Core provides mana, master provides direction | Pattern A: account seed persists (spirit survives character death). Pattern B: character seed archived, bond preserved for next character. | Full growth tracking; seed archived on dissolution, retains all growth |
+| **Paladin** | Character (willing) | A or B | Core channels combat abilities through master | Pattern A: account seed persists, growth halved. Pattern B: character seed growth halved on death; bond can be re-formed. | Full growth; `channeling.combat` domains grow faster |
+| **Corrupted** | Monster (dominated) | B only | Core dominates, master is avatar | Core dies if avatar destroyed | Minimal agency -- growth happens passively, monster cannot deliberately direct growth |
+
+**Pattern A death behavior note**: Because the `dungeon_master` seed is account-owned in Pattern A, it naturally survives character death -- the spirit's relationship to the dungeon persists even when the vessel dies. The character that left the household can be replaced (the dungeon may find a new physical partner, or the spirit may inhabit the dungeon more directly). This is a significant advantage of Pattern A.
 
 Bond formation is entirely Contract-driven. The contract template (`dungeon-master-bond`) includes:
-- Party roles: `dungeon_core` (actor entity) and `dungeon_master` (character or actor entity)
+- Party roles: `dungeon_core` (actor entity) and `dungeon_master` (account, character, or actor entity)
 - Bond type term (Priest/Paladin/Corrupted)
 - Prebound API on contract creation: create `dungeon_master` seed for the bonded entity
 - Milestones linked to master seed phase transitions (Bonded -> Attuned -> Symbiotic -> Transcendent)
@@ -562,47 +703,98 @@ Bond formation is entirely Contract-driven. The contract template (`dungeon-mast
 
 ## Visual Aid
 
+### Pattern A: Full Split (Account-Level)
+
 ```
 +-----------------------------------------------------------------------+
-|                    DUNGEON STATE ARCHITECTURE                          |
+|                    DUNGEON STATE — PATTERN A                           |
 |                                                                        |
-|   ACTOR STATE              DUNGEON_CORE SEED     DUNGEON_MASTER SEED  |
-|   (Volatile, Redis)        (Progressive, MySQL)   (Progressive, MySQL) |
-|   +------------------+     +------------------+   +------------------+ |
-|   | CoreIntegrity    |     | Growth Domains:  |   | Growth Domains:  | |
-|   | CurrentMana      |     |  mana_reserves   |   |  perception      | |
-|   | ManaGenRate  <---|-----|  genetic_lib.*   |   |  command         | |
-|   | InhabitantCounts |     |  trap_complex.*  |   |  channeling      | |
-|   | ActiveTraps      |     |  domain_exp.*    |   |  coordination    | |
-|   | RoomHazardLevels |     |  memory_depth.*  |   |                  | |
-|   | Feelings         |     |                  |   | Capabilities:    | |
-|   | Memories --------|---->| Capabilities:    |   |  perception      | |
-|   | ActiveIntruders  |     |  spawn_monster v |   |   .tactical v    | |
-|   | BondContractId   |     |  shift_layout v  |   |  command         | |
-|   | BondedMasterRef  |     |  manifest_mem v  |   |   .tactical v    | |
-|   +------------------+     |  spawn_alpha x   |   |  channeling      | |
-|                             |                  |   |   .combat v      | |
-|        CONTRACT             | Phase: Awakened  |   |                  | |
-|   +------------------+     | Metadata:        |   | Phase: Symbiotic | |
-|   | Bond Type:       |     |  personality:    |   | Owner: character | |
-|   |  Paladin         |     |   martial        |   +------------------+ |
-|   | Death Clause     |     +------------------+                        |
-|   | Power Sharing    |                                                 |
-|   | Milestones:      |     DUNGEON GARDEN (Gardener)                   |
-|   |  initial_bond    |     +------------------------------------+      |
-|   |  attuned         |     | Garden type: dungeon               |      |
-|   |  symbiotic       |     | Player: bonded master              |      |
-|   |  transcendent    |     | Entities: character, inventory,    |      |
-|   +------------------+     |   dungeon inhabitants, mana wallet  |      |
-|                             | Tended by: dungeon core actor      |      |
-|                             +------------------------------------+      |
+|   ACCOUNT SEEDS (up to 3 slots)                                       |
+|   +------------------+   +------------------+   +------------------+  |
+|   | Slot 1: guardian |   | Slot 2: dungeon_ |   | Slot 3: (empty)  |  |
+|   |  (household)     |   |  master (THIS)   |   |                  |  |
+|   +--------+---------+   +--------+---------+   +------------------+  |
+|            |                       |                                   |
+|     guardian garden          dungeon garden                            |
+|    (household mgmt)    (full dungeon master UX)                       |
+|                               |                                       |
+|   DUNGEON_CORE SEED     DUNGEON_MASTER SEED    DUNGEON GARDEN         |
+|   (Progressive, MySQL)  (Progressive, MySQL)   (Gardener)             |
+|   +------------------+  +------------------+  +------------------+    |
+|   | Growth Domains:  |  | Growth Domains:  |  | Garden type:     |   |
+|   |  mana_reserves   |  |  perception      |  |  dungeon         |   |
+|   |  genetic_lib.*   |  |  command         |  | Player: master   |   |
+|   |  trap_complex.*  |  |  channeling      |  | Entities: char,  |   |
+|   |  domain_exp.*    |  |  coordination    |  |  inhabitants,    |   |
+|   |  memory_depth.*  |  |                  |  |  inventory,      |   |
+|   |                  |  | Owner: ACCOUNT   |  |  mana wallet     |   |
+|   | Phase: Awakened  |  | Phase: Symbiotic |  | Tended by:       |   |
+|   +------------------+  +------------------+  |  dungeon core    |   |
+|                                                |  actor           |   |
+|        CONTRACT          ACTOR STATE           +------------------+   |
+|   +------------------+  +------------------+                          |
+|   | Bond Type:       |  | CoreIntegrity    |   Cross-pollination:     |
+|   |  Paladin         |  | CurrentMana      |   dungeon_master seed    |
+|   | Milestones:      |  | Feelings         |   ──► guardian seed      |
+|   |  transcendent    |  | ActiveIntruders  |   (spirit-level growth)  |
+|   +------------------+  +------------------+                          |
 |                                                                        |
 |   PHYSICAL FORM                                                        |
 |   +------+  +-------+  +---------+  +------------+                    |
 |   |Mapping|  | Scene |  |Save-Load|  |Procedural  |                    |
 |   |spatial|  |visual |  |persist  |  |(future)    |                    |
-|   |index  |  |nodes  |  |layout   |  |Houdini gen |                    |
 |   +------+  +-------+  +---------+  +------------+                    |
++-----------------------------------------------------------------------+
+```
+
+### Pattern B: Bonded Role (Character-Level)
+
+```
++-----------------------------------------------------------------------+
+|                    DUNGEON STATE — PATTERN B                           |
+|                                                                        |
+|   ACCOUNT SEEDS                                                       |
+|   +------------------+   +------------------+   +------------------+  |
+|   | Slot 1: guardian |   | Slot 2: (empty)  |   | Slot 3: (empty)  |  |
+|   |  (household)     |   |  no dungeon slot  |   |                  |  |
+|   +--------+---------+   +------------------+   +------------------+  |
+|            |                                                           |
+|     guardian garden (always the player's garden)                       |
+|            |                                                           |
+|   HOUSEHOLD                                                           |
+|   +------+  +------+  +------+                                       |
+|   |Char A|  |Char B|  |Char C|                                       |
+|   |      |  |DM    |  |      |                                       |
+|   +------+  +--+---+  +------+                                       |
+|                |                                                       |
+|   CHAR B's DUNGEON BOND                                               |
+|   +------------------+  +------------------+                          |
+|   | dungeon_master   |  | CONTRACT         |                          |
+|   | seed             |  | Bond Type:       |                          |
+|   |                  |  |  Priest           |                          |
+|   | Owner: CHARACTER |  | Milestones:      |                          |
+|   | Phase: Attuned   |  |  attuned         |                          |
+|   +------------------+  +------------------+                          |
+|         |                                                              |
+|         |  While player controls Char B:                               |
+|         |  +-- dungeon perceptions layer onto Char B's Actor           |
+|         |  +-- dungeon UX appears transiently                          |
+|         |  +-- dungeon_master seed grows actively                      |
+|         |  +-- guardian seed cross-pollinated (reduced rate)            |
+|         |                                                              |
+|         |  While player controls Char A or C:                          |
+|         |  +-- dungeon perceptions still reach Char B's Actor          |
+|         |  |   (character processes them autonomously)                  |
+|         |  +-- dungeon UX NOT visible to player                        |
+|         |  +-- dungeon_master seed still grows (from char activity)    |
+|         |  +-- no cross-pollination to guardian seed                   |
+|         |                                                              |
+|   DUNGEON CORE (same as Pattern A)                                    |
+|   +------------------+  +------------------+                          |
+|   | dungeon_core     |  | ACTOR STATE      |                          |
+|   | seed             |  | (always running) |                          |
+|   | Phase: Awakened  |  +------------------+                          |
+|   +------------------+                                                |
 +-----------------------------------------------------------------------+
 ```
 
@@ -650,11 +842,16 @@ Bond formation is entirely Contract-driven. The contract template (`dungeon-mast
 - Integrate with Scene for visual composition
 - Future: integrate with lib-procedural for Houdini-based chamber generation
 
-### Phase 6: Garden Integration
+### Phase 6: Garden Integration (Pattern A)
 - Register dungeon garden type with Gardener
-- Implement dungeon garden creation on bond formation
+- Implement dungeon garden creation on seed promotion (Pattern A -- when character-owned seed becomes account-owned via household split)
 - Implement entity session registration for master's dungeon experience
 - Create ABML gardener behavior for dungeon master experience orchestration
+
+### Phase 7: Transient UX Routing (Pattern B)
+- Implement dynamic UX capability manifest updates on character switch (dungeon UX appears/disappears)
+- Implement dungeon perception routing through character Actor pipeline (no garden needed)
+- Implement transient cross-pollination (dungeon_master -> guardian, active only while player controls bonded character)
 
 ---
 
@@ -666,7 +863,7 @@ Bond formation is entirely Contract-driven. The contract template (`dungeon-mast
 
 3. **Cross-realm aberrant dungeons**: Dungeons that span realm boundaries. Requires design decisions about seed GameServiceId constraints and cross-realm actor communication.
 
-4. **Guardian seed cross-pollination**: When a player character serves as dungeon master, combat/strategy experience should plausibly feed the guardian seed's domains. Configurable multiplier per seed type pair (default 0.0, enabled for dungeon_master -> guardian).
+4. **Seed cross-pollination mechanism**: Cross-pollination between dungeon_master and guardian seeds is core to both patterns but the mechanism needs design. Pattern A: account-level cross-pollination (both seeds are on the same account, growth in one feeds the other at a configurable rate). Pattern B: transient cross-pollination (only while the player is controlling the bonded character, at a reduced rate). Requires a cross-pollination API or listener in lib-seed -- configurable multiplier per seed-type pair (default 0.0, enabled for dungeon_master -> guardian).
 
 5. **Dungeon political integration**: Officially-sanctioned dungeons interact with faction/political systems. `dungeon_core` seed growth phases could map to political recognition tiers.
 
@@ -688,21 +885,25 @@ Bond formation is entirely Contract-driven. The contract template (`dungeon-mast
 
 2. **Bond uniqueness is one-active-per-dungeon**: A dungeon core can only have one active bond (one master at a time). The master entity can also only master one dungeon at a time (`MaxPerOwner: 1` on `dungeon_master` seed). These constraints are enforced by both the seed system and the bond lookup keys.
 
-3. **Master seed archival is configurable**: On bond dissolution, the `dungeon_master` seed is archived (preserving experience for future bonds) or deleted (every new bond starts fresh), controlled by `MasterSeedArchiveOnDissolve` config. Archival is the default because prior mastery experience creates richer gameplay (experienced masters are valuable to new dungeons).
+3. **Master seed archival is configurable**: On bond dissolution, the `dungeon_master` seed is archived (preserving experience for future bonds) or deleted (every new bond starts fresh), controlled by `MasterSeedArchiveOnDissolve` config. Archival is the default because prior mastery experience creates richer gameplay (experienced masters are valuable to new dungeons). In Pattern A, seed archival means the account seed slot is freed but the growth data is preserved for a future bond. In Pattern B, the character-owned seed follows character lifecycle rules.
 
 4. **Corrupted bonds have minimal master agency**: When a monster serves as dungeon master, the monster has limited ability to deliberately grow its `dungeon_master` seed. Growth happens passively through the bond. This is intentional -- corrupted bonds represent domination, not partnership.
 
-5. **No seed-to-seed bonds**: The dungeon_core and dungeon_master seeds are NOT bonded via the seed bond system (BondCardinality: 0). The Contract is the relationship mechanism. Seeds grow independently in parallel, connected by the Contract. This is deliberate -- the dungeon can outgrow its master (Ancient dungeon with Bonded master) or vice versa (Transcendent master of a Stirring dungeon), creating interesting asymmetric dynamics.
+5. **No seed-to-seed bonds**: The dungeon_core and dungeon_master seeds are NOT bonded via the seed bond system (BondCardinality: 0). The Contract is the relationship mechanism. Seeds grow independently in parallel, connected by the Contract. This is deliberate -- the dungeon can outgrow its master (Ancient dungeon with Bonded master) or vice versa (Transcendent master of a Stirring dungeon), creating interesting asymmetric dynamics. Cross-pollination between dungeon_master and guardian seeds happens at the spirit/account level, not through seed bonds.
 
 6. **Dungeon personality stored in seed metadata**: Personality type is a permanent characteristic stored in the `dungeon_core` seed's metadata at creation time, not in the dungeon core record. This follows the established pattern of seeds carrying permanent entity characteristics.
 
 7. **Physical form is cross-service, not owned by lib-dungeon**: lib-dungeon owns identity, bond, inhabitants, and memories. Physical layout (rooms, corridors) is owned by Mapping + Save-Load. Visual appearance is owned by Scene. lib-dungeon orchestrates but does not store spatial or visual data directly.
 
+8. **Pattern B is always the default**: Bond formation always creates a character-owned dungeon_master seed (Pattern B). Promotion to Pattern A (account-owned) happens externally through the household split mechanic. lib-dungeon does not need to know which pattern is active -- it interacts with the dungeon_master seed regardless of owner type. The distinction matters to Gardener (Pattern A creates a dungeon garden), the UX capability manifest system (Pattern A has full dungeon UX, Pattern B has transient UX), and the cross-pollination system (Pattern A has persistent cross-pollination, Pattern B has transient).
+
+9. **lib-dungeon is pattern-agnostic**: lib-dungeon itself does not implement or enforce the Pattern A vs. Pattern B distinction. It creates bonds, manages seeds, and orchestrates dungeon mechanics identically in both cases. The pattern distinction is an emergent property of which entity owns the dungeon_master seed (account vs. character) and how the broader system (Gardener, Permission, household management) responds to that ownership.
+
 ### Design Considerations (Requires Planning)
 
 1. **Mana economy model**: Should dungeons have their own Currency wallet (enabling NPC economic participation) or use `current_mana` as a virtual resource in actor state? Currency wallet is richer but adds complexity. The planning document leaves this open.
 
-2. **Dungeon garden type design**: The dungeon-as-garden concept requires: a registered garden type in Gardener, entity association rules for the dungeon context, ABML action handlers for Gardener APIs (analogous to Puppetmaster's `spawn_watcher:`, `watch:` handlers), and a gardener behavior document for the dungeon core actor. This is a cross-service design effort.
+2. **Dungeon garden type design (Pattern A only)**: The dungeon-as-garden concept requires: a registered garden type in Gardener, entity association rules for the dungeon context, ABML action handlers for Gardener APIs (analogous to Puppetmaster's `spawn_watcher:`, `watch:` handlers), and a gardener behavior document for the dungeon core actor. Pattern B does not use a dungeon garden -- the dungeon influence is routed through the character's Actor perception pipeline. This is a cross-service design effort.
 
 3. **Actor type registration**: The dungeon core actor template (event_brain, category: dungeon_core, domain: "dungeon") needs to be registered in the Actor system. This includes the cognition template (`creature_base`), event subscriptions, and capability references. Design decisions: is `creature_base` an existing template or does it need creation?
 
@@ -710,7 +911,13 @@ Bond formation is entirely Contract-driven. The contract template (`dungeon-mast
 
 5. **Memory-to-archive pipeline**: Dungeon memories should feed into the Content Flywheel -- when a dungeon is destroyed or goes dormant, its accumulated memories become generative input for Storyline. This requires design decisions about the compression/archive format and the handoff to lib-resource.
 
-6. **Entity Session Registry for dungeon master**: The dungeon master's garden needs entity session registrations (dungeon -> session, inhabitants -> session, master character -> session) via the Entity Session Registry in Connect (L1). This depends on the Entity Session Registry being implemented first (see [Gardener Design #7](GARDENER.md)).
+6. **Entity Session Registry for dungeon master (Pattern A only)**: The dungeon master's garden needs entity session registrations (dungeon -> session, inhabitants -> session, master character -> session) via the Entity Session Registry in Connect (L1). This depends on the Entity Session Registry being implemented first (see [Gardener Design #7](GARDENER.md)). Pattern B does not need entity session registration for the dungeon -- the character's existing entity session registrations suffice.
+
+7. **Household split mechanic (cross-cutting dependency)**: Pattern A depends on a general household split mechanic that doesn't exist yet. This mechanic is needed for the game regardless of dungeons (branch families, divorces, exile) and involves Contract (split terms), Faction (cultural norms determining amicability), Obligation (post-split moral costs), Relationship (bond type changes), and Seed (potential account seed creation). lib-dungeon consumes the result of a household split but does not implement it. The split mechanic must be designed as a cross-cutting feature involving multiple services. Pattern B has no dependency on the household split mechanic.
+
+8. **Seed promotion mechanic**: Pattern A requires a mechanism to "promote" a character-owned dungeon_master seed to account-owned. The seed always starts character-owned (Pattern B is the default on bond formation). Promotion happens when the player commits an account seed slot through the household split flow. This requires lib-seed to support re-parenting a seed from one owner type to another (character -> account) while preserving all growth data. Alternatively, the promotion could create a new account-owned seed and transfer growth from the character-owned one.
+
+9. **Pattern B transient UX routing**: When the player switches characters within a garden, the dungeon UX modules need to appear/disappear based on whether the currently-controlled character has a dungeon_master seed. This requires the client's UX capability manifest to be dynamically updated on character switch -- likely via the same Permission/Connect capability manifest push mechanism, extended to include seed-derived UX capabilities.
 
 ---
 

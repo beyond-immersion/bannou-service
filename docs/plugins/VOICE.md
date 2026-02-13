@@ -4,12 +4,93 @@
 > **Schema**: schemas/voice-api.yaml
 > **Version**: 2.0.0
 > **State Store**: voice-statestore (Redis)
-
----
+> **Planning**: [VOICE-STREAMING.md](../planning/VOICE-STREAMING.md), [STREAMING-ARCHITECTURE.md](../planning/STREAMING-ARCHITECTURE.md)
 
 ## Overview
 
-The Voice service (L3 AppFeatures) provides voice room coordination for P2P and scaled-tier (SFU) WebRTC communication. Supports dual room modes (persistent rooms created via API, ad-hoc rooms auto-created on join), broadcast consent flows for streaming integration, participant TTL enforcement via background worker, and automatic tier upgrade when P2P rooms exceed capacity. Integrates with Kamailio (SIP proxy) and RTPEngine (media relay) for the scaled tier. Permission-state-gated SDP exchange and broadcast consent. Internal service accessed by other services via lib-mesh.
+Voice room coordination service (L3 AppFeatures) providing pure voice rooms as a platform primitive: P2P mesh topology for small groups, Kamailio/RTPEngine-based SFU for larger rooms, automatic tier upgrade, WebRTC SDP signaling, broadcast consent flows for streaming integration, and participant TTL enforcement via background worker. Agnostic to games, sessions, and subscriptions -- voice rooms are generic containers identified by Connect/Auth session IDs.
+
+**The three-service principle**: Voice is one of three services that together create a complete voice, streaming, and audience metagame stack. Each delivers value independently. lib-voice provides voice chat whether or not anyone is streaming. lib-stream (L3) can broadcast game content to Twitch whether or not voice is involved. lib-streaming (L4) provides a complete audience simulation metagame whether or not real platforms or voice rooms exist. They compose beautifully but never require each other.
+
+**Composability**: Voice room primitives are owned here. RTMP broadcast output is lib-stream (L3). Game session voice orchestration is lib-streaming (L4). Platform account linking is lib-stream (L3). Audience simulation is lib-streaming (L4). Voice provides the audio infrastructure; higher layers decide when and why to use it.
+
+**Critical architectural insight**: Voice moved from L4 (GameFeatures) to L3 (AppFeatures) to eliminate a hierarchy violation. GameSession (L2) previously depended on Voice (L4) to create/delete voice rooms -- a forbidden upward dependency. The redesign strips all game concepts from voice. Any service can create a room; higher layers (lib-streaming at L4) orchestrate the game-session-to-voice-room lifecycle via event subscriptions. The `sessionId` field in all models refers to the Connect/Auth session ID (L1 concept), not a game session.
+
+**Privacy-first broadcasting**: Voice rooms contain personal audio data. Broadcasting that audio to external platforms (Twitch, YouTube, custom RTMP) requires explicit, informed consent from every participant. The broadcast consent flow is owned by lib-voice because it's a voice room concern; the actual RTMP output is lib-stream's domain. This separation ensures that consent is enforced at the audio source, not at the broadcast destination.
+
+**Zero game-specific content**: lib-voice is a generic voice room service. Whether voice rooms back game sessions, collaborative workspaces, or social hangouts is determined by the caller, not by lib-voice. The service knows nothing about games, characters, realms, or subscriptions.
+
+**Current implementation status**: The core voice room lifecycle (create, join, leave, delete), P2P mesh topology, scaled SFU tier with automatic upgrade, WebRTC signaling, and participant heartbeat tracking are **fully implemented**. The broadcast consent flow, service event publishing, participant TTL enforcement background worker, and ad-hoc room modes are **implemented**. The L3 layer classification and game-agnostic API descriptions are the **target state** per [VOICE-STREAMING.md](../planning/VOICE-STREAMING.md). Integration with lib-stream and lib-streaming is **future** (those services don't exist yet).
+
+---
+
+## Vision Alignment
+
+### Which North Stars This Serves
+
+**Ship Games Fast**: Voice rooms are an app-level primitive usable by any game built on Bannou, not just Arcadia. A non-game real-time collaboration tool gets voice rooms without pulling in game dependencies. Voice as L3 means it's available in any deployment mode -- voice-only, voice + streaming, or the full game stack.
+
+**Living Game Worlds**: When combined with lib-streaming (L4), voice rooms become part of the in-game streaming metagame. NPCs can "hear" that players are in voice rooms (via lib-streaming's audience context), and the social dynamics of voice communication feed into the world simulation. A bard performing for a crowd in Arcadia has voice; the crowd's reaction feeds into the audience simulation.
+
+**Emergent Over Authored**: Voice rooms enable unscripted, emergent social interactions. The broadcast consent flow allows those interactions to become part of the streaming metagame -- a spontaneous voice conversation becomes a broadcast moment that generates audience reactions, hype trains, and streamer career progression, none of which was authored or scripted.
+
+### The Three-Service Architecture
+
+```
+                    EXTERNAL PLATFORMS
+                    +----------+  +----------+
+                    |  Twitch  |  |  YouTube  |
+                    +----+-----+  +-----+----+
+                         |              |
+              Webhooks / OAuth API      |
+                         |              |
+    +--------------------v--------------v--------------------+
+    |  lib-stream (L3 AppFeatures)                           |
+    |                                                        |
+    |  Platform Account Linking (OAuth)                      |
+    |  Sentiment Processing (text -> anonymous sentiment)    |
+    |  RTMP Output Management (FFmpeg)                       |
+    |  Camera/Audio Source Ingestion                          |
+    |  ------------------------------------                  |
+    |  Subscribes to: voice.room.broadcast.approved          |
+    |  Subscribes to: voice.room.broadcast.stopped           |
+    |  No game knowledge. No L2 dependencies.                |
+    |  Soft depends on: lib-voice (L3) for audio source      |
+    +------------------------+-------------------------------+
+                             |
+               stream.audience.pulse events
+               (sentiment arrays, no PII)
+                             |
+                             v
+    +--------------------------------------------------------+
+    |  lib-streaming (L4 GameFeatures)                       |
+    |                                                        |
+    |  Simulated Audience Pool (always available)            |
+    |  Hype Train Mechanics                                  |
+    |  Streamer Career (Seed type: streamer)                 |
+    |  Real Audience Blending (when L3 available)            |
+    |  Voice Room Orchestration (creates rooms for games)    |
+    |  ------------------------------------                  |
+    |  Subscribes to: game-session events                    |
+    |  Subscribes to: voice room lifecycle events            |
+    |  Soft depends on: lib-stream (L3), lib-voice (L3)      |
+    +--------------------------------------------------------+
+
+    +--------------------------------------------------------+
+    |  lib-voice (L3 AppFeatures)          <--- THIS SERVICE  |
+    |                                                        |
+    |  Pure Voice Rooms (create/join/leave/delete)           |
+    |  P2P Mesh Topology (small groups)                      |
+    |  Scaled SFU via Kamailio/RTPEngine                     |
+    |  Automatic Tier Upgrade (P2P -> Scaled)                |
+    |  Broadcast Consent Flow                                |
+    |  ------------------------------------                  |
+    |  NO game concepts (no sessions, no subscriptions)      |
+    |  Depends on: L0, L1 (connect, auth, permission)        |
+    |  Soft depends on: nothing                              |
+    |  Exposes: RTP audio endpoint for lib-stream            |
+    +--------------------------------------------------------+
+```
 
 ---
 
@@ -21,7 +102,7 @@ The Voice service (L3 AppFeatures) provides voice room coordination for P2P and 
 | lib-messaging (`IMessageBus`) | Service event publishing (8 event types) and error events via `TryPublishErrorAsync` |
 | lib-permission (`IPermissionClient`) | Permission state management: `voice:in_room`, `voice:consent_pending`, `voice:ringing` |
 | lib-connect (`IClientEventPublisher`) | Publishing WebSocket events to specific sessions (peer events, broadcast consent events) |
-| Kamailio (external, config-only) | SIP proxy for scaled tier; host/port used in SIP credential generation (registrar URI). No active client integration — `IKamailioClient`/`KamailioClient` files exist but are orphaned. |
+| Kamailio (external, config-only) | SIP proxy for scaled tier; host/port used in SIP credential generation (registrar URI). No active client integration -- `IKamailioClient`/`KamailioClient` files exist but are orphaned. |
 | RTPEngine (external) | Media relay for SFU voice conferencing (UDP bencode ng protocol) |
 
 ---
@@ -30,10 +111,10 @@ The Voice service (L3 AppFeatures) provides voice room coordination for P2P and 
 
 | Dependent | Relationship |
 |-----------|-------------|
-| lib-streaming (L4, future) | Will subscribe to `voice.room.broadcast.approved` to start broadcast, `voice.room.broadcast.stopped` to stop |
-| lib-stream (L3, future) | Will subscribe to `voice.room.created`/`voice.room.deleted` for stream-voice coordination |
+| lib-stream (L3, future) | Subscribes to `voice.room.broadcast.approved` to start RTMP output; subscribes to `voice.room.broadcast.stopped` to stop; reads RTP audio endpoint from tier-upgraded events |
+| lib-streaming (L4, future) | Subscribes to `voice.room.created`/`voice.room.deleted` for stream-voice coordination; subscribes to participant events for audience context adjustments |
 
-> **Hierarchy note**: GameSession (L2) previously depended on Voice via `IVoiceClient` -- this was a hierarchy violation (L2 cannot depend on L3). The dependency has been removed. Voice now manages its own room lifecycle independently, and higher-layer services (lib-streaming at L4) will orchestrate voice-stream coordination via event subscriptions.
+> **Hierarchy note**: GameSession (L2) previously depended on Voice via `IVoiceClient` -- this was a hierarchy violation (L2 cannot depend on L3). The dependency has been removed. Voice now manages its own room lifecycle independently, and higher-layer services (lib-streaming at L4) will orchestrate voice-stream coordination via event subscriptions. The new dependency flow is clean: lib-streaming (L4) soft-depends on lib-voice (L3), which is permitted by the hierarchy.
 
 ---
 
@@ -72,7 +153,7 @@ The Voice service (L3 AppFeatures) provides voice room coordination for P2P and 
 | `VoicePeerUpdatedEvent` | Peer sends SDP answer via `/voice/peer/answer` |
 | `VoiceTierUpgradeEvent` | Room upgrades from P2P to scaled (includes SIP credentials per participant) |
 | `VoiceRoomClosedEvent` | Room deleted (reason: Manual, Empty, Error) |
-| `VoiceBroadcastConsentRequestEvent` | Broadcast consent requested — sent to all room participants |
+| `VoiceBroadcastConsentRequestEvent` | Broadcast consent requested -- sent to all room participants |
 | `VoiceBroadcastConsentUpdateEvent` | Broadcast consent state changed (progress, approved, declined, stopped) |
 
 ### Published Service Events (via IMessageBus)
@@ -90,7 +171,77 @@ The Voice service (L3 AppFeatures) provides voice room coordination for P2P and 
 
 ### Consumed Events
 
-This plugin does not consume external events (`x-event-subscriptions: []`).
+This plugin does not consume external events (`x-event-subscriptions: []`). Voice is a purely reactive service -- callers invoke its API, and it publishes events about what happened. This is a deliberate architectural choice: voice has no external dependencies to subscribe to, and its event model is unidirectional (publish-only).
+
+### Who Consumes These Events (Target Architecture)
+
+| Event | Consumer | Why |
+|-------|----------|-----|
+| `voice.room.created` | lib-streaming (L4) | Track voice rooms for audience context |
+| `voice.room.deleted` | lib-streaming (L4) | Clean up streaming session associations |
+| `voice.room.tier-upgraded` | lib-stream (L3) | Update RTP audio endpoint for active broadcasts |
+| `voice.participant.joined` | lib-streaming (L4) | Adjust audience behavior based on room size |
+| `voice.participant.left` | lib-streaming (L4) | Adjust audience behavior based on room size |
+| `voice.room.broadcast.approved` | lib-stream (L3) | Start RTMP output for the voice room |
+| `voice.room.broadcast.declined` | (nobody currently) | Informational; could drive UI feedback |
+| `voice.room.broadcast.stopped` | lib-stream (L3) | Stop RTMP output for the voice room |
+
+---
+
+## The Broadcast Consent Flow
+
+**This is a load-bearing privacy boundary.** Voice rooms contain personal audio data. Broadcasting that audio to an external platform requires explicit, informed consent from every participant.
+
+### Two Distinct Broadcast Modes (via lib-stream)
+
+| Mode | What's Broadcast | Who Initiates | Consent Required |
+|------|-----------------|---------------|------------------|
+| **Server-side content** | Game cameras, game audio | Admin API or ENV config | No player consent (it's game content) |
+| **Voice room broadcast** | Participant voice audio | Client-side opt-in | Explicit consent from ALL room participants |
+
+### Consent Flow
+
+```
+Player requests "broadcast my voice room" via client
+    |
+    v
+lib-voice: /voice/room/broadcast/request
+    |
+    v
+Validate: room exists, broadcast state is Inactive, requester is in room
+    |
+    v
+Set room broadcast state to Pending
+Set voice:consent_pending permission state for all participants
+Send VoiceBroadcastConsentRequestEvent to all participants via WebSocket
+    |
+    v
+Each participant calls /voice/room/broadcast/consent
+    |
+    +-- All consent:
+    |       Set broadcast state to Approved
+    |       Publish voice.room.broadcast.approved (includes RTP audio endpoint)
+    |       lib-stream receives event, starts RTMP output
+    |
+    +-- Any decline (or timeout):
+    |       Reset broadcast state to Inactive
+    |       Publish voice.room.broadcast.declined
+    |       Broadcast does not start
+    |
+    +-- Any participant revokes at any time:
+            /voice/room/broadcast/stop
+            Reset broadcast state to Inactive
+            Publish voice.room.broadcast.stopped (reason: ConsentRevoked)
+            lib-stream stops RTMP output
+```
+
+### Key Rules
+
+- New participants joining a broadcasting room are warned before joining (via `isBroadcasting` flag in join response)
+- Any participant can revoke consent at any time, immediately stopping the broadcast
+- The broadcast status is visible to all room participants
+- Silence is not consent: unanswered consent requests auto-decline after `BroadcastConsentTimeoutSeconds`
+- Voice does not distinguish "Approved" from "Broadcasting" -- once all consent, what happens with the audio is lib-stream's domain
 
 ---
 
@@ -169,41 +320,98 @@ This plugin does not consume external events (`x-event-subscriptions: []`).
 
 ---
 
-## Visual Aid
+## Visual Aids
+
+### Voice Communication Flow (P2P -> Scaled Upgrade)
 
 ```
-Voice Communication Flow (P2P → Scaled Upgrade)
-=================================================
-
   Client A                    Voice Service                   Client B
   ========                    =============                   ========
 
-  JoinRoom ──────────────────► Register A
-                                Set voice:ringing on B ─────► [state updated]
-                                Send VoicePeerJoinedEvent ──► Receives SDP offer
-                                                              from A
-                              ◄──────────────────────────────  AnswerPeer
+  JoinRoom -----------------> Register A
+                                Set voice:ringing on B ------> [state updated]
+                                Send VoicePeerJoinedEvent ---> Receives SDP offer
+                                                               from A
+                              <-------------------------------  AnswerPeer
                                 Send VoicePeerUpdatedEvent
-  Receives SDP ◄───────────────  (A's answer)
+  Receives SDP <---------------  (A's answer)
   answer from B
 
   ... P2P mesh established ...
 
   Client C joins (exceeds P2PMaxParticipants)
-  JoinRoom ──────────────────► Register C
+  JoinRoom -----------------> Register C
                                 ShouldUpgrade? YES
-                                ┌─────────────────────┐
-                                │ Background Task:    │
-                                │ AllocateRtpServer() │
-                                │ Update room tier    │
-                                │ For each participant│
-                                │   GenSipCredentials │
-                                │   Send TierUpgrade  │
-                                └─────────────────────┘
-  TierUpgradeEvent ◄────────────────────────────────────────► TierUpgradeEvent
-  (SIP creds + RTP URI)                                       (SIP creds + RTP URI)
+                                +---------------------+
+                                | Background Task:    |
+                                | AllocateRtpServer() |
+                                | Update room tier    |
+                                | For each participant|
+                                |   GenSipCredentials |
+                                |   Send TierUpgrade  |
+                                +---------------------+
+  TierUpgradeEvent <---------------------------------------> TierUpgradeEvent
+  (SIP creds + RTP URI)                                      (SIP creds + RTP URI)
 
   ... All clients switch to SFU mode ...
+```
+
+### Broadcast Consent Flow (Voice -> Stream Integration)
+
+```
+  Client A          Voice Service          lib-stream (L3)        Twitch
+  ========          =============          ==============         ======
+
+  /broadcast/request --> Validate room
+                         Set state: Pending
+                         VoiceBroadcastConsentRequestEvent -----> Client B, C
+                                                                  (via WebSocket)
+  Client B consents ---> Record consent
+                         VoiceBroadcastConsentUpdateEvent ------> All clients
+                         (progress: 1/2 consented)
+
+  Client C consents ---> Record consent
+                         All consented!
+                         Set state: Approved
+                         Publish voice.room.broadcast.approved
+                         (with RTP audio endpoint)
+                                            |
+                                            v
+                                      Subscribe to event
+                                      Start FFmpeg:
+                                      RTP audio --> RTMP output -------> Live!
+
+  ... Broadcasting active ...
+
+  Client B: /broadcast/stop
+                         Set state: Inactive
+                         Publish voice.room.broadcast.stopped
+                                            |
+                                            v
+                                      Stop FFmpeg process
+                                      Publish stream.broadcast.stopped -> Offline
+```
+
+### Deployment Modes
+
+```bash
+# Voice only (collaboration tool, no streaming, no game)
+VOICE_SERVICE_ENABLED=true
+
+# Voice + platform streaming (broadcast voice rooms to Twitch)
+VOICE_SERVICE_ENABLED=true
+STREAM_SERVICE_ENABLED=true
+
+# Full streaming metagame (voice + platform + in-game audiences)
+VOICE_SERVICE_ENABLED=true
+STREAM_SERVICE_ENABLED=true
+STREAMING_SERVICE_ENABLED=true
+
+# Platform streaming only (broadcast game cameras, no voice)
+STREAM_SERVICE_ENABLED=true
+
+# In-game metagame only (100% simulated audiences, no real platforms)
+STREAMING_SERVICE_ENABLED=true
 ```
 
 ---
@@ -216,16 +424,24 @@ Voice Communication Flow (P2P → Scaled Upgrade)
 2. **RTP server pool allocation**: `AllocateRtpServerAsync` currently returns the single configured RTP server. The implementation notes "In production, this would select from a pool based on load."
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/258 -->
 
-3. ~~**IKamailioClient methods unused**~~: **FIXED** (2026-02-11) - Removed `GetActiveDialogsAsync`, `TerminateDialogAsync`, `ReloadDispatcherAsync`, `GetStatsAsync` and all supporting JSONRPC infrastructure (models, `CallRpcAsync`, `_messageBus` dependency, `_requestId` counter). `IKamailioClient` now exposes only `IsHealthyAsync`. ~~Dead `_kamailioClient` field in `ScaledTierCoordinator`~~: **FIXED** (2026-02-11) - Removed `IKamailioClient` injection from `ScaledTierCoordinator` constructor (field was stored but never used by any method). Also removed orphaned DI registration from `VoiceServicePlugin`. `IKamailioClient.cs` and `KamailioClient.cs` still exist as source files but are now completely unreferenced — can be deleted during next cleanup pass.
+3. ~~**IKamailioClient methods unused**~~: **FIXED** (2026-02-11) - Removed `GetActiveDialogsAsync`, `TerminateDialogAsync`, `ReloadDispatcherAsync`, `GetStatsAsync` and all supporting JSONRPC infrastructure (models, `CallRpcAsync`, `_messageBus` dependency, `_requestId` counter). `IKamailioClient` now exposes only `IsHealthyAsync`. ~~Dead `_kamailioClient` field in `ScaledTierCoordinator`~~: **FIXED** (2026-02-11) - Removed `IKamailioClient` injection from `ScaledTierCoordinator` constructor (field was stored but never used by any method). Also removed orphaned DI registration from `VoiceServicePlugin`. `IKamailioClient.cs` and `KamailioClient.cs` still exist as source files but are now completely unreferenced -- can be deleted during next cleanup pass.
 
 4. **VoiceRoomStateEvent**: Defined in `voice-client-events.yaml` but never published by the service.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/396 -->
+
+5. **L3 layer classification**: The API schema still declares voice as L4 (GameFeatures) or has no explicit `x-service-layer`. The target state is `x-service-layer: AppFeatures` per [VOICE-STREAMING.md](../planning/VOICE-STREAMING.md). This requires updating the schema and regenerating, then updating SERVICE-HIERARCHY.md.
+
+6. **Game-agnostic API descriptions**: Several endpoint descriptions still reference "game session" language. The target state has all descriptions framed as generic session concepts per [VOICE-STREAMING.md](../planning/VOICE-STREAMING.md).
+
+7. **lib-stream integration**: lib-stream does not exist yet. When implemented, it will subscribe to `voice.room.broadcast.approved` and `voice.room.broadcast.stopped` to manage RTMP output. The RTP audio endpoint metadata in the broadcast approved event enables this integration.
+
+8. **lib-streaming integration**: lib-streaming does not exist yet. When implemented, it will subscribe to voice room lifecycle events and orchestrate the game-session-to-voice-room lifecycle that previously lived in GameSession (L2).
 
 ---
 
 ## Potential Extensions
 
-1. **RTP server pool**: Multiple RTPEngine instances with load-based allocation. *(Duplicate of Stubs #2 — tracked by #258)*
+1. **RTP server pool**: Multiple RTPEngine instances with load-based allocation. *(Duplicate of Stubs #2 -- tracked by #258)*
 <!-- AUDIT:NEEDS_DESIGN:2026-02-01:https://github.com/beyond-immersion/bannou-service/issues/258 -->
 2. **Room quality metrics**: Track audio quality, latency, packet loss per participant.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/400 -->
@@ -235,6 +451,9 @@ Voice Communication Flow (P2P → Scaled Upgrade)
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/402 -->
 5. **ICE trickle support**: Current implementation sends all ICE candidates in initial SDP; could support trickle ICE for faster connections.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/403 -->
+6. **Spatial audio**: For in-game voice (Arcadia bard performances, dungeon master communication), voice rooms could carry spatial position metadata. Clients mix audio volumes based on character proximity. Voice wouldn't compute audio -- it would relay position metadata alongside SDP, and clients would handle spatial mixing locally.
+7. **Voice-to-text transcription**: For accessibility. Voice audio routed through a speech-to-text service, with transcriptions pushed as client events alongside the audio stream. Privacy-sensitive: requires separate consent from broadcast consent.
+8. **NPC voice integration**: When combined with text-to-speech services, NPC dialogue could be delivered through voice rooms. A dungeon master's commands to their dungeon could be vocalized. This would require voice rooms to accept synthetic audio sources alongside human participants.
 
 ---
 
@@ -262,17 +481,15 @@ None identified.
 
 ### Design Considerations (Requires Planning)
 
-1. **RTPEngine UDP protocol**: Uses raw UDP with bencode encoding. No connection state, no retries on packet loss. `_sendLock` prevents concurrent sends but lost responses are not retried - the operation simply times out. Additionally, cookie mismatch responses (stale data from previous timed-out requests) are logged but used anyway — a correctness bug.
+1. **RTPEngine UDP protocol**: Uses raw UDP with bencode encoding. No connection state, no retries on packet loss. `_sendLock` prevents concurrent sends but lost responses are not retried - the operation simply times out. Additionally, cookie mismatch responses (stale data from previous timed-out requests) are logged but used anyway -- a correctness bug.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/404 -->
 
-2. ~~**Permission state race condition**~~: **FIXED** (2026-02-11) - Reclassified as Intentional Quirk. The sequential `voice:ringing` loop in `NotifyPeerJoinedAsync` can set state on a dead session if a peer leaves mid-loop, but every call is try-catch wrapped (LogWarning), the leaving session's cleanup path clears its own state, and no data integrity risk exists. Moved to Intentional Quirks #7.
-
-3. **SIP credential expiration not enforced**: Credentials have a 24-hour expiration timestamp (`SipCredentialExpirationHours`) but no server-side enforcement. Clients receive the expiration but there's no background task to rotate credentials or invalidate sessions.
+2. **SIP credential expiration not enforced**: Credentials have a 24-hour expiration timestamp (`SipCredentialExpirationHours`) but no server-side enforcement. Clients receive the expiration but there's no background task to rotate credentials or invalidate sessions.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/405 -->
 
-4. ~~**Hardcoded fallbacks in coordinators**~~: **FIXED** (2026-02-11) - Removed secondary fallbacks from `P2PCoordinator.GetP2PMaxParticipants()` (was `?? 6`, schema default is `8`), `ScaledTierCoordinator.GetScaledMaxParticipants()` (was `?? 100`), and `ScaledTierCoordinator.GetStunServers()` (was `?? "stun:stun.l.google.com:19302"`). All three now use configuration values directly; schema defaults guarantee non-null/non-zero values.
+3. **Realm-specific voice manifestation**: In Omega (cyberpunk), voice rooms are explicit. In Arcadia, the same mechanics manifest as "speaking at a gathering" or "bard performing for a crowd." How much realm-specific logic belongs in lib-voice (none -- it's L3) vs. lib-streaming (L4) vs. client rendering? The answer should be: lib-voice provides the audio primitive; lib-streaming provides the game context; the client renders the appropriate visual metaphor based on realm. Voice never knows about realms.
 
-5. ~~**Kamailio health check path assumption**~~: **MOOT** (2026-02-11) - `KamailioClient` is now orphaned code (no DI registration, no consumers). The health check path concern only applies if the client is re-activated in the future.
+4. **Voice room capacity and the streaming metagame**: When lib-streaming creates voice rooms for game sessions, how does room capacity interact with audience size? A streamer with 50 simulated audience members shouldn't need a 50-person voice room -- only real participants need voice. lib-streaming must track the distinction between voice participants and audience members independently.
 
 ---
 
@@ -284,13 +501,13 @@ None identified.
 |------|-------|-----|--------|
 | 2026-01-31 | [#195](https://github.com/beyond-immersion/bannou-service/issues/195) | RTPEngine publish/subscribe methods unused in scaled tier | Needs Design |
 | 2026-02-01 | [#258](https://github.com/beyond-immersion/bannou-service/issues/258) | RTP server pool allocation with load-based selection | Needs Design |
-| 2026-02-11 | [#396](https://github.com/beyond-immersion/bannou-service/issues/396) | VoiceRoomStateEvent defined but never published — redundancy with JoinVoiceRoomResponse | Needs Design |
-| 2026-02-11 | [#400](https://github.com/beyond-immersion/bannou-service/issues/400) | Room quality metrics design — metric set, sources, storage, analytics integration | Needs Design |
-| 2026-02-11 | [#401](https://github.com/beyond-immersion/bannou-service/issues/401) | Voice recording support architecture — storage, consent, RTPEngine protocol, retention | Needs Design |
-| 2026-02-11 | [#402](https://github.com/beyond-immersion/bannou-service/issues/402) | Mute state synchronization — self vs admin mute, SFU enforcement, notification scope | Needs Design |
-| 2026-02-11 | [#403](https://github.com/beyond-immersion/bannou-service/issues/403) | ICE trickle support — relay vs accumulate, permission gating, P2P/SFU scope | Needs Design |
+| 2026-02-11 | [#396](https://github.com/beyond-immersion/bannou-service/issues/396) | VoiceRoomStateEvent defined but never published -- redundancy with JoinVoiceRoomResponse | Needs Design |
+| 2026-02-11 | [#400](https://github.com/beyond-immersion/bannou-service/issues/400) | Room quality metrics design -- metric set, sources, storage, analytics integration | Needs Design |
+| 2026-02-11 | [#401](https://github.com/beyond-immersion/bannou-service/issues/401) | Voice recording support architecture -- storage, consent, RTPEngine protocol, retention | Needs Design |
+| 2026-02-11 | [#402](https://github.com/beyond-immersion/bannou-service/issues/402) | Mute state synchronization -- self vs admin mute, SFU enforcement, notification scope | Needs Design |
+| 2026-02-11 | [#403](https://github.com/beyond-immersion/bannou-service/issues/403) | ICE trickle support -- relay vs accumulate, permission gating, P2P/SFU scope | Needs Design |
 | 2026-02-11 | [#404](https://github.com/beyond-immersion/bannou-service/issues/404) | RTPEngine UDP client: cookie mismatch correctness bug and retry strategy | Needs Design |
-| 2026-02-11 | [#405](https://github.com/beyond-immersion/bannou-service/issues/405) | SIP credential expiration enforcement — Bannou vs Kamailio, rotation strategy | Needs Design |
+| 2026-02-11 | [#405](https://github.com/beyond-immersion/bannou-service/issues/405) | SIP credential expiration enforcement -- Bannou vs Kamailio, rotation strategy | Needs Design |
 
 ### Completed
 
