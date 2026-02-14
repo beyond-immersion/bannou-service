@@ -76,6 +76,7 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Voice](#voice-status) | L3 | 87% | 0 | P2P + SFU tiers work. WebRTC signaling, broadcast consent. Single RTP server limitation. |
 | [Website](#website-status) | L3 | 5% | 0 | Complete stub. All 14 endpoints return NotImplemented. No state stores, no logic. |
 | [Broadcast](#broadcast-status) | L3 | 0% | 0 | Pre-implementation. Aspirational streaming platform integration spec. No schema, no code. |
+| [Agency](#agency-status) | L4 | 0% | 0 | Pre-implementation. Guardian spirit progressive agency and UX manifest engine spec. No schema, no code. |
 | [Achievement](#achievement-status) | L4 | 75% | 1 | Core CRUD + auto-unlock work. Xbox/PS stubs, rarity calc broken, dead code. |
 | [Analytics](#analytics-status) | L4 | 82% | 0 | Robust pipeline. Glicko-2 ratings, event ingestion, summaries. Rating decay missing. |
 | [Behavior](#behavior-status) | L4 | 80% | 0 | ABML compiler + GOAP planner work. 6 stubs: cinematics, bundles, embeddings. |
@@ -115,6 +116,7 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Showtime](#showtime-status) | L4 | 0% | 0 | Pre-implementation. In-game streaming metagame spec. No schema, no code. |
 | [Trade](#trade-status) | L4 | 0% | 0 | Pre-implementation. Economic logistics orchestration with trade routes, shipments, tariffs, supply/demand dynamics, and NPC economic profiles spec. No schema, no code. |
 | [Workshop](#workshop-status) | L4 | 0% | 0 | Pre-implementation. Time-based automated production with lazy evaluation and worker scaling spec. No schema, no code. |
+| [Agency](#agency-status) | L4 | 0% | 0 | Pre-implementation. Guardian spirit progressive agency, UX capability manifest, and spirit influence system spec. No schema, no code. |
 | [Common](#common-status) | N/A | N/A | 0 | Shared type definitions library. 0 endpoints. No deep dive document exists. |
 
 ---
@@ -1185,6 +1187,38 @@ gh issue list --search "Website:" --state open
 
 ---
 
+## Agency {#agency-status}
+
+**Layer**: L4 GameFeatures | **Deep Dive**: [AGENCY.md](plugins/AGENCY.md)
+
+### Production Readiness: 0%
+
+Aspirational/planned only. The deep dive explicitly states "Pre-implementation. No schema, no code." Not listed in GENERATED-SERVICE-DETAILS.md. A detailed architectural specification for the guardian spirit's progressive agency system -- the bridge between Seed's abstract capability data and the client's concrete UX module rendering. Three subsystems: **UX Module Registry** (definitions of available UI elements/interaction modes, their capability requirements, and fidelity curves), **Manifest Engine** (computes per-seed UX manifests from seed capabilities, caches in Redis, pushes updates when capabilities change), and **Influence Registry** (spirit influence types that the player can send to their possessed character, with compliance factors and rate limiting). Domains are opaque string codes (combat, crafting, social, trade, exploration, magic -- extensible without schema changes). Implements `IVariableProviderFactory` providing the `${spirit.*}` namespace for ABML behavior expressions (compliance base, available influences, manifest fidelity). Integrates with Disposition (L4, soft) for compliance computation and Gardener (L4, soft) for manifest push routing. Specifies 22 planned endpoints, 6 state stores, 6 published events, 3 consumed events, 13 configuration properties, 1 background worker (manifest recompute with debouncing), and a 5-phase implementation plan. No endpoints, no generated code, no service implementation exists.
+
+### Bug Count: 0
+
+No implementation exists to have bugs.
+
+### Top 3 Bugs
+
+*(None -- pre-implementation)*
+
+### Top 3 Enhancements
+
+| # | Enhancement | Description | Issue |
+|---|-------------|-------------|-------|
+| 1 | **Phase 2 - Manifest Engine** | Implement manifest computation from seed capabilities, Redis caching, manifest get/recompute/diff/history endpoints, `seed.capability.updated` event subscription, and ManifestRecomputeWorker with debouncing. | No issue |
+| 2 | **Phase 3 - Influence System** | Implement influence register/update/get/list/delete, evaluate and execute endpoints, Redis rate limiting, and influence execution/rejection/resistance event publishing. | No issue |
+| 3 | **Phase 4 - Variable Provider Factory** | Implement `SpiritProviderFactory` for the `${spirit.*}` ABML namespace, Disposition integration for compliance computation, and influence history tracking in Redis. | No issue |
+
+### GH Issues
+
+```bash
+gh issue list --search "Agency:" --state open
+```
+
+---
+
 ## Achievement {#achievement-status}
 
 **Layer**: L4 GameFeatures | **Deep Dive**: [ACHIEVEMENT.md](plugins/ACHIEVEMENT.md)
@@ -2087,6 +2121,38 @@ No known bugs.
 
 ```bash
 gh issue list --search "Storyline:" --state open
+```
+
+---
+
+## Agency {#agency-status}
+
+**Layer**: L4 GameFeatures | **Deep Dive**: [AGENCY.md](plugins/AGENCY.md)
+
+### Production Readiness: 0%
+
+Pre-implementation. No schema, no code. A detailed architectural specification for the guardian spirit's progressive agency system -- the bridge between Seed's abstract capability data and the client's concrete UX module rendering. Three subsystems: UX Module Registry (definitions of available UI modules gated by seed capability thresholds with fidelity curves), Manifest Engine (computes per-seed UX manifests from seed capabilities, caches in Redis, pushes updates), and Influence Registry (spirit nudge types mapping to Actor perception types with compliance factors). Provides the `${spirit.*}` variable namespace to Actor for co-pilot compliance/resistance evaluation. Specifies 22 planned endpoints, 6 state stores, 6 published events, 3 consumed events, 13 configuration properties, 1 background worker, and a 5-phase implementation plan. Cross-cutting reference: [BEHAVIORAL-BOOTSTRAP.md](reference/BEHAVIORAL-BOOTSTRAP.md) describes how Gardener and Puppetmaster god-actors interact with Agency for manifest routing and influence execution.
+
+### Bug Count: 0
+
+No implementation exists to have bugs.
+
+### Top 3 Bugs
+
+*(None -- pre-implementation)*
+
+### Top 3 Enhancements
+
+| # | Enhancement | Description | Issue |
+|---|-------------|-------------|-------|
+| 1 | **Phase 1-2: Core Registry + Manifest Engine** | Create schemas, generate code, implement domain/module/influence CRUD (10 endpoints), manifest computation from seed capabilities with Redis caching, event-driven recomputation with debouncing. | No issue |
+| 2 | **Phase 3: Influence System** | Implement spirit influence evaluate and execute endpoints with rate limiting, compliance factor enrichment, and Actor perception type mapping. The co-pilot input mechanism. | No issue |
+| 3 | **Phase 4: Variable Provider Factory** | Implement `SpiritProviderFactory` for the `${spirit.*}` ABML namespace, integrating Disposition guardian feelings for compliance computation and influence history tracking in Redis. | No issue |
+
+### GH Issues
+
+```bash
+gh issue list --search "Agency:" --state open
 ```
 
 ---
