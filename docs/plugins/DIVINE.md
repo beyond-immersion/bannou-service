@@ -303,6 +303,8 @@ All 22 endpoints are currently stubbed (return `NotImplemented`). The following 
 5. **Deity-Deity Rivalries**: Active rivalry mechanics where gods sabotage each other's followers. Relationship records exist; behavioral consequences are deferred.
 6. **Client Events**: `divine-client-events.yaml` for pushing blessing notifications, divine attention alerts, and divinity milestones to connected WebSocket clients.
 7. **Variable Provider Factory**: `IDivineVariableProviderFactory` for ABML behavior expressions (`${divine.blessing_tier}`, `${divine.patron_deity}`, `${divine.divinity_earned}`).
+8. **Economic Deity Behaviors**: Specialized ABML behavior documents for economic deities that monitor money velocity via analytics, spawn narrative intervention events (business opportunities, dropped wallets, thefts, treasure discoveries) to maintain healthy velocity, and respect location-level stagnation policies. God personalities (subtlety, chaos affinity, favored targets) modulate intervention style and frequency. GOAP flows evaluate velocity thresholds, hoarding detection, and intervention cooldowns. See [Economy System Guide](../guides/ECONOMY-SYSTEM.md#5-divine-economic-intervention) for the full design.
+9. **Deity Realm Economic Assignment**: Track which realms each economic deity watches, with per-deity personality parameters (intervention frequency, subtlety, favored targets, chaos affinity) that affect how they maintain economic health. Multiple gods per realm creates emergent economic dynamics from competing intervention styles.
 
 ## Known Quirks & Caveats
 

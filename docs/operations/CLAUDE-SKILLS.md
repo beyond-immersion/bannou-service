@@ -536,7 +536,7 @@ exit 0  # Allow command
 
 ### Project Documentation
 - [CLAUDE.md](../../CLAUDE.md) - Main project instructions for Claude
-- [DEEP_DIVE_TEMPLATE.md](../plugins/DEEP_DIVE_TEMPLATE.md) - Plugin documentation template
+- [DEEP_DIVE_TEMPLATE.md](../reference/DEEP_DIVE_TEMPLATE.md) - Plugin documentation template
 - [TENETS.md](../reference/TENETS.md) - Development standards
 
 ### Official Claude Code Documentation

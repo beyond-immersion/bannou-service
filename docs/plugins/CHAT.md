@@ -265,6 +265,8 @@ None. All 25 API endpoints are fully implemented with complete business logic, v
 
 6. **Ban expiry worker**: Background service that auto-removes expired bans, rather than relying on check-at-join-time lazy evaluation.
 
+7. **Lexicon room type for NPC communication**: A custom `lexicon` room type where messages are structured as Lexicon entry combinations rather than free text. NPCs would communicate in the same ontological building blocks they think in, with discovery-level validation gating vocabulary per character. Location-scoped social rooms would enable ambient social perception for NPC cognition. See [CHARACTER-COMMUNICATION.md](../guides/CHARACTER-COMMUNICATION.md) for the full architectural design.
+
 ---
 
 ## Known Quirks & Caveats

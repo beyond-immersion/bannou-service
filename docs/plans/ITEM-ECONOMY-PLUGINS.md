@@ -3,7 +3,7 @@
 > **Created**: 2026-02-12
 > **Purpose**: High-level survey of remaining plugins needed to support the full item/economy vision
 > **Status**: IDEAS ONLY -- no API specs yet, just concept separation and concern mapping
-> **Inputs**: VISION.md, PLAYER-VISION.md, ITEM-SYSTEM.md (PoE reference), ECONOMY-CURRENCY-ARCHITECTURE.md, item/inventory/currency/escrow deep dives, STATUS.md plan
+> **Inputs**: VISION.md, PLAYER-VISION.md, ECONOMY-CURRENCY-ARCHITECTURE.md, item/inventory/currency/escrow deep dives, STATUS.md plan
 
 ---
 

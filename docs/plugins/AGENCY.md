@@ -6,7 +6,7 @@
 > **Status**: Pre-implementation. No schema, no code.
 > **Depends On**: lib-state (L0), lib-messaging (L0), lib-mesh (L0), lib-seed (L2)
 > **Soft Dependencies**: lib-disposition (L4), lib-gardener (L4)
-> **Referenced By**: [BEHAVIORAL-BOOTSTRAP.md](../reference/BEHAVIORAL-BOOTSTRAP.md), [GARDENER.md](GARDENER.md), [PUPPETMASTER.md](PUPPETMASTER.md)
+> **Referenced By**: [BEHAVIORAL-BOOTSTRAP.md](../guides/BEHAVIORAL-BOOTSTRAP.md), [GARDENER.md](GARDENER.md), [PUPPETMASTER.md](PUPPETMASTER.md)
 
 ---
 
@@ -562,4 +562,4 @@ Pre-implementation. No schema, no code. All features described in this document 
 
 ---
 
-*This document describes a planned L4 GameFeatures service. For the behavioral bootstrap pattern that Agency interacts with, see [BEHAVIORAL-BOOTSTRAP.md](../reference/BEHAVIORAL-BOOTSTRAP.md). For the guardian seed that Agency reads capabilities from, see [SEED.md](SEED.md). For the disposition feelings that feed compliance computation, see [DISPOSITION.md](DISPOSITION.md).*
+*This document describes a planned L4 GameFeatures service. For the behavioral bootstrap pattern that Agency interacts with, see [BEHAVIORAL-BOOTSTRAP.md](../guides/BEHAVIORAL-BOOTSTRAP.md). For the guardian seed that Agency reads capabilities from, see [SEED.md](SEED.md). For the disposition feelings that feed compliance computation, see [DISPOSITION.md](DISPOSITION.md).*

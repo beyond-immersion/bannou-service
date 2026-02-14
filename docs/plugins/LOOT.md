@@ -5,7 +5,7 @@
 > **Version**: 1.0.0
 > **State Stores**: loot-tables (MySQL), loot-table-cache (Redis), loot-contexts (Redis), loot-pity-counters (Redis), loot-history (MySQL), loot-lock (Redis)
 > **Status**: Pre-implementation (architectural specification)
-> **Planning**: [ITEM-SYSTEM.md](../planning/ITEM-SYSTEM.md), [ITEM-ECONOMY-PLUGINS.md](../plans/ITEM-ECONOMY-PLUGINS.md)
+> **Planning**: [ITEM-ECONOMY-PLUGINS.md](../plans/ITEM-ECONOMY-PLUGINS.md)
 
 ---
 
@@ -29,7 +29,7 @@ Loot table management and generation service (L4 GameFeatures) for weighted drop
 
 **Zero game-specific content**: lib-loot is a generic loot generation service. Arcadia's pneuma-based drop metaphysics, PoE-style deterministic crafting drops, Diablo-style legendary showers, or a simple "kill monster, get gold" system are all equally valid configurations. Table structures, entry weights, context modifiers, distribution modes, and pity thresholds are all opaque configuration defined per game at deployment time through table seeding.
 
-**Current status**: Pre-implementation. No schema, no code. This deep dive is an architectural specification based on the [Path of Exile Item System Reference](../planning/ITEM-SYSTEM.md) complexity benchmark, the [Item & Economy Plugin Landscape](../plans/ITEM-ECONOMY-PLUGINS.md), and the broader architectural patterns established by lib-divine, lib-dungeon, lib-affix, and lib-market. Internal-only, never internet-facing.
+**Current status**: Pre-implementation. No schema, no code. This deep dive is an architectural specification based on a Path of Exile item system complexity benchmark, the [Item & Economy Plugin Landscape](../plans/ITEM-ECONOMY-PLUGINS.md), and the broader architectural patterns established by lib-divine, lib-dungeon, lib-affix, and lib-market. Internal-only, never internet-facing.
 
 ---
 

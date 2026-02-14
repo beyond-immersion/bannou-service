@@ -192,8 +192,10 @@ EmotionalState Dimensions
    <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/202 -->
 3. **Real-time streaming**: Generate and stream MIDI events for live performance scenarios.
    <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/203 -->
-4. **Style mixing**: Blend parameters from multiple styles for hybrid compositions.
+4. **Style mixing**: Blend parameters from multiple styles for hybrid compositions. Four candidate blending strategies: weighted average (interpolate style parameters), alternation (switch styles by phrase/section), layered (different styles for melody vs harmony), and evolution (transition between styles over composition duration). Should also support per-component blend ratios (e.g., 80% Celtic melody + 60% Jazz harmony). Tracked in [#204](https://github.com/beyond-immersion/bannou-service/issues/204).
    <!-- AUDIT:NEEDS_DESIGN:2026-01-31:https://github.com/beyond-immersion/bannou-service/issues/204 -->
+5. **Composer Layer (personality-driven generation)**: A third SDK layer above MusicStoryteller enabling persistent musical personalities ("virtual composers") with stylistic signatures, preference evolution, and ABML behavior integration. See full design in [#431](https://github.com/beyond-immersion/bannou-service/issues/431).
+   <!-- AUDIT:NEEDS_DESIGN:2026-02-14:https://github.com/beyond-immersion/bannou-service/issues/431 -->
 
 ---
 
@@ -244,6 +246,7 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **Stubs #1-2, Potential Extension #1, Design Consideration #1** (Unused state store / CreateStyle persistence): [#188](https://github.com/beyond-immersion/bannou-service/issues/188) - Requires decision on whether to implement custom styles or remove unused store
 - **Potential Extension #2** (Multi-instrument arrangement): [#202](https://github.com/beyond-immersion/bannou-service/issues/202) - Needs design for orchestration rules and presets
 - **Potential Extension #3** (Real-time streaming): [#203](https://github.com/beyond-immersion/bannou-service/issues/203) - Needs design for streaming protocol and timing semantics
-- **Potential Extension #4** (Style mixing): [#204](https://github.com/beyond-immersion/bannou-service/issues/204) - Needs design for blending algorithm and input format
+- **Potential Extension #4** (Style mixing): [#204](https://github.com/beyond-immersion/bannou-service/issues/204) - Four candidate blend strategies and per-component ratios documented; needs implementation design
+- **Potential Extension #5** (Composer Layer): [#431](https://github.com/beyond-immersion/bannou-service/issues/431) - Personality-driven generation layer with 5-dimension personality model, preference evolution, and ABML integration
 - **Design Consideration #4** (Event publishing): [#205](https://github.com/beyond-immersion/bannou-service/issues/205) - Needs decision on whether composition analytics are needed
 - **Design Consideration #5** (Rate limiting): [#206](https://github.com/beyond-immersion/bannou-service/issues/206) - Needs design for appropriate limits and enforcement point

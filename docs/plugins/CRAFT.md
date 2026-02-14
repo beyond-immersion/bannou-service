@@ -5,7 +5,7 @@
 > **Version**: 1.0.0
 > **State Stores**: craft-recipe-store (MySQL), craft-recipe-cache (Redis), craft-session-store (MySQL), craft-proficiency-store (MySQL), craft-station-registry (MySQL), craft-discovery-store (MySQL), craft-lock (Redis)
 > **Status**: Pre-implementation (architectural specification)
-> **Planning**: [ITEM-SYSTEM.md](../planning/ITEM-SYSTEM.md), [ITEM-ECONOMY-PLUGINS.md](../plans/ITEM-ECONOMY-PLUGINS.md)
+> **Planning**: [ITEM-ECONOMY-PLUGINS.md](../plans/ITEM-ECONOMY-PLUGINS.md)
 
 ---
 

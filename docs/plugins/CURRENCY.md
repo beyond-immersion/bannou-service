@@ -425,6 +425,8 @@ Escrow Integration Flow
 6. **Configurable earn cap reset times**: Use EarnCapResetTime field from definition to calculate reset points instead of hardcoded midnight/Monday.
 7. **Transaction pruning background task**: Delete transactions older than TransactionRetentionDays to prevent unbounded state growth. Currently retention is only enforced at query time (filtered out of results).
 8. **Batch debit operations**: Symmetric to BatchCredit but for debits (e.g., batch shop purchases).
+9. **Universal value anchoring**: Add `UniversalValue` field to currency definitions representing intrinsic worth (relative to a 1.0 baseline). Exchange rates can then be computed dynamically from universal values plus location-scoped modifiers (tariff, war, festival, shortage) rather than requiring manual `ExchangeRateToBase` updates. Universal values shift in response to game events (gold discoveries lower gold's value, wartime increases weapon-currency values). See [Economy System Guide](../guides/ECONOMY-SYSTEM.md#8-exchange-rate-extensions).
+10. **Location-scoped exchange rates**: Extend exchange rates to vary by scope (global, realm, location). A frontier outpost might offer worse rates than a capital city. Support modifier stacking with source tracking and expiry. Add buy/sell spread fields for NPC money changer profit margins. Enables arbitrage opportunities and regional economic variation.
 
 ---
 

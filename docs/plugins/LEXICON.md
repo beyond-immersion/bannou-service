@@ -5,7 +5,7 @@
 > **Version**: 1.0.0
 > **State Stores**: lexicon-entries (MySQL), lexicon-cache (Redis), lexicon-lock (Redis)
 > **Status**: Pre-implementation (architectural specification)
-> **Planning**: [VISION.md](../../VISION.md) (Logos metaphysical framework), [COMPRESSION-GAMEPLAY-PATTERNS.md](../planning/COMPRESSION-GAMEPLAY-PATTERNS.md) (identify spell concept)
+> **Planning**: [VISION.md](../../VISION.md) (Logos metaphysical framework), [COMPRESSION-GAMEPLAY-PATTERNS.md](../planning/COMPRESSION-GAMEPLAY-PATTERNS.md) (identify spell concept), [CHARACTER-COMMUNICATION.md](../guides/CHARACTER-COMMUNICATION.md) (Lexicon-shaped NPC social interaction)
 
 ## Overview
 

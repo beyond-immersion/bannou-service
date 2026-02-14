@@ -5,7 +5,7 @@
 > **Version**: 1.0.0
 > **State Stores**: affix-definitions (MySQL), affix-implicit-mappings (MySQL), affix-pool-cache (Redis), affix-definition-cache (Redis), affix-lock (Redis)
 > **Status**: Pre-implementation (architectural specification)
-> **Planning**: [ITEM-SYSTEM.md](../planning/ITEM-SYSTEM.md), [ITEM-ECONOMY-PLUGINS.md](../plans/ITEM-ECONOMY-PLUGINS.md)
+> **Planning**: [ITEM-ECONOMY-PLUGINS.md](../plans/ITEM-ECONOMY-PLUGINS.md)
 
 ---
 
@@ -21,7 +21,7 @@ Item modifier definition and generation service (L4 GameFeatures) for affix defi
 
 **Zero game-specific content**: lib-affix is a generic item modifier service. Arcadia's logos inscription metaphysics, PoE-style prefix/suffix tiers, Diablo-style legendary affixes, or a simple "quality stars" system are all equally valid configurations. Affix slot types, mod groups, generation tags, influence types, and tier structures are all opaque strings defined per game at deployment time through definition seeding.
 
-**Current status**: Pre-implementation. No schema, no code. This deep dive is an architectural specification based on the [Path of Exile Item System Reference](../planning/ITEM-SYSTEM.md) complexity benchmark and the [Item & Economy Plugin Landscape](../plans/ITEM-ECONOMY-PLUGINS.md). Internal-only, never internet-facing.
+**Current status**: Pre-implementation. No schema, no code. This deep dive is an architectural specification based on a Path of Exile item system complexity benchmark and the [Item & Economy Plugin Landscape](../plans/ITEM-ECONOMY-PLUGINS.md). Internal-only, never internet-facing.
 
 ---
 
