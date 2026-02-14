@@ -113,19 +113,7 @@ Multi-currency management service (L2 GameFoundation) for game economies. Handle
 
 **Version**: 1.0.0 | **Schema**: `schemas/divine-api.yaml` | **Endpoints**: 22 | **Deep Dive**: [docs/plugins/DIVINE.md](plugins/DIVINE.md)
 
-Pantheon management service (L4 GameFeatures) for deity entities, divinity economy, and blessing orchestration. A thin orchestration layer (like Quest over Contract, Escrow over Currency/Item) that composes existing Bannou primitives to deliver divine game mechanics.
-
-**Composability**: God identity is owned here. God behavior is Actor (event brain) via Puppetmaster. Domain power is Seed. Divinity resource is Currency. Greater Blessings are Collection. Minor Blessings are Status Inventory. Follower bonds are Relationship. Garden orchestration is Gardener. lib-divine orchestrates the ceremony connecting these primitives.
-
-**Critical architectural insight**: Gods influence characters through the character's own Actor, not directly. A god's Actor (regional watcher) monitors event streams and makes decisions; the character's Actor receives the consequences. Blessings are entity-agnostic -- characters, accounts, deities, or any entity type can receive them, since the backing storage (lib-collection, lib-status) is also entity-agnostic.
-
-**Divine actors are both puppetmasters and gardeners**: A god tending a physical realm region (spawning encounters, adjusting NPC moods, orchestrating narrative opportunities) and a god tending a player's conceptual garden space (spawning POIs, managing scenario selection, guiding discovery) are the same operation from different perspectives -- two sides of the same coin. The divine actor launched via Puppetmaster as a regional watcher also serves as the gardener behavior actor for player experience orchestration via Gardener's APIs. Whether the "space" being tended is a physical location in the game world or an abstract conceptual space (a void garden, a lobby, player housing) is a behavioral distinction encoded in the god's ABML behavior document, not a structural difference in the actor type. This means: (1) the same god (e.g., Moira/Fate) that creates emergent content in the physical world also curates which experiences reach players through their gardens, directly connecting the content flywheel to the player experience; (2) any conceptual space can potentially become a physical space and vice versa, because the transition is just the god shifting focus between garden types; (3) lib-gardener provides the tools (garden instances, POIs, scenarios, entity associations), lib-puppetmaster provides the actor lifecycle, and lib-divine provides the identity and economy of the entity doing the tending.
-
-**Zero Arcadia-specific content**: lib-divine is a generic pantheon management service. Arcadia's 18 Old Gods are configured through behaviors and templates at deployment time, not baked into lib-divine.
-
-**Domain codes are opaque strings**: Different games define different domains (War, Knowledge, Nature, etc.). Domain codes follow the same extensibility pattern as seed type codes, collection type codes, and relationship type codes.
-
-**Current status**: All endpoints are stubbed (return `NotImplemented`). See the implementation plan at `docs/plans/DIVINE.md` for the full implementation specification.
+Pantheon management service (L4 GameFeatures) for deity entities, divinity economy, and blessing orchestration. A thin orchestration layer (like Quest over Contract, Escrow over Currency/Item) that composes existing Bannou primitives to deliver divine game mechanics: god identity is owned here, behavior runs via Actor/Puppetmaster, domain power via Seed, divinity resource via Currency, blessings via Collection/Status, and follower bonds via Relationship. Gods influence characters indirectly through the character's own Actor -- a god's Actor monitors event streams and makes decisions, but the character's Actor receives the consequences. Blessings are entity-agnostic (characters, accounts, deities, or any entity type can receive them). All endpoints are currently stubbed (return `NotImplemented`); see the implementation plan at `docs/plans/DIVINE.md` for the full specification.
 
 ## Documentation {#documentation}
 
@@ -143,26 +131,7 @@ Full-custody orchestration layer (L4 GameFeatures) for multi-party asset exchang
 
 **Version**: 1.0.0 | **Schema**: `schemas/faction-api.yaml` | **Endpoints**: 31 | **Deep Dive**: [docs/plugins/FACTION.md](plugins/FACTION.md)
 
-The Faction service (L4 GameFeatures) models factions as seed-based living entities whose capabilities emerge from growth, not static assignment. Each faction owns a seed (via lib-seed) that grows through member activities fed by the Collection-to-Seed pipeline. As the faction's seed grows through phases (nascent, established, influential, dominant), capabilities unlock: norm definition, enforcement tiers, territory claiming, and trade regulation. A nascent faction literally CANNOT enforce norms -- it hasn't grown enough governance capability yet.
-
-**Primary Purpose**: Store and serve social norms for lib-obligation. lib-obligation is the PRIMARY CONSUMER of faction norm data -- it queries `/faction/norm/query-applicable` to resolve the full norm hierarchy (guild faction -> location faction -> realm baseline faction) into a merged norm set, then applies personality-weighted moral reasoning to produce GOAP action cost modifiers for NPC cognition. Without lib-faction, lib-obligation only has contractual obligations (guild charters, trade agreements). With lib-faction, ambient social and cultural norms become enforceable through the same cognition pipeline.
-
-**Norm Resolution Hierarchy** (most specific wins):
-1. Guild faction norms (character's direct memberships)
-2. Location faction norms (controlling faction at character's current location)
-3. Realm baseline faction norms (realm-wide cultural context)
-
-**Faction Concepts**:
-- **Realm baseline faction**: provides realm-wide cultural norms (honor codes, taboos)
-- **Location controlling faction**: provides local norms (lawless district, temple sanctity)
-- **Guild factions**: character memberships with role hierarchy (Leader, Officer, Member, Recruit)
-- **Parent/child hierarchy**: organizational structure with configurable max depth
-
-**Political Connections**: Inter-faction political relationships (alliances, rivalries, treaties) are modeled as seed bonds via lib-seed's existing bond API, NOT through lib-relationship. A bond between two faction seeds represents the alliance/rivalry as a growable entity with its own capability manifest. Joint member activities grow the bonded seed, unlocking alliance capabilities.
-
-**violationType as Opaque String**: Norm violation types (e.g., "theft", "deception", "violence") are opaque strings, not enums. The vocabulary is defined by contract templates and action tag mappings in lib-obligation; lib-faction stores whatever violation type strings callers provide. Adding new violation types never requires a schema change.
-
-Internal-only, never internet-facing.
+The Faction service (L4 GameFeatures) models factions as seed-based living entities whose capabilities emerge from growth, not static assignment. As a faction's seed grows through phases (nascent, established, influential, dominant), capabilities unlock: norm definition, enforcement tiers, territory claiming, and trade regulation. Its primary consumer is lib-obligation, which queries faction norms to produce GOAP action cost modifiers for NPC cognition -- resolving a hierarchy of guild, location, and realm baseline norms into a merged norm set. Supports guild memberships with role hierarchy, parent/child organizational structure, territory claims, and inter-faction political connections modeled as seed bonds via lib-seed. Internal-only, never internet-facing.
 
 ## Game Service {#game-service}
 
@@ -180,9 +149,7 @@ Hybrid lobby/matchmade game session management (L2 GameFoundation) with subscrip
 
 **Version**: 1.0.0 | **Schema**: `schemas/gardener-api.yaml` | **Endpoints**: 24 | **Deep Dive**: [docs/plugins/GARDENER.md](plugins/GARDENER.md)
 
-Player experience orchestration service (L4 GameFeatures) and the player-side counterpart to Puppetmaster: where Puppetmaster orchestrates what NPCs experience, Gardener orchestrates what players experience. A "garden" is an abstract conceptual space that a player inhabits -- it can represent a lobby, an in-game experience, a post-game space, player housing, cooperative gameplay, or the void/discovery space. The player is always in some garden, and Gardener is always active for every connected player, managing their gameplay context, entity associations, and event routing. Gardener provides the APIs and infrastructure that a divine actor (running via Puppetmaster on the L2 Actor runtime) uses to manipulate and manage player experiences. The gardener behavior actor is not a new actor type -- it is a divine actor (see [DIVINE.md](DIVINE.md)) tending a conceptual space rather than a physical realm region, two sides of the same coin. The specific behavior varies per game -- some use fully autonomous divine gardener behaviors, others use manual API calls from the game engine. The Gardener service is behavior-agnostic -- it provides primitives, not policy. Internal-only, never internet-facing.
-
-**Current implementation status**: The codebase implements the **void/discovery garden type** only (POI-driven scenario routing with drift metrics and weighted scoring). The broader garden concept (multiple garden types, gardener behavior actor, entity session registration, garden-to-garden transitions) is documented here as the architectural target but not yet implemented. Sections below describe both the current implementation and the target architecture, clearly labeled.
+Player experience orchestration service (L4 GameFeatures) and the player-side counterpart to Puppetmaster: where Puppetmaster orchestrates what NPCs experience, Gardener orchestrates what players experience. A "garden" is an abstract conceptual space (lobby, in-game, housing, void/discovery) that a player inhabits, with Gardener managing their gameplay context, entity associations, and event routing. Provides the APIs and infrastructure that divine actors (running via Puppetmaster on the L2 Actor runtime) use to manipulate player experiences -- behavior-agnostic, providing primitives not policy. Currently implements the void/discovery garden type only; the broader garden concept (multiple types, garden-to-garden transitions) is the architectural target. Internal-only, never internet-facing.
 
 ## Inventory {#inventory}
 
@@ -248,19 +215,7 @@ Pure computation music generation (L4 GameFeatures) using formal music theory ru
 
 **Version**: 1.0.0 | **Schema**: `schemas/obligation-api.yaml` | **Endpoints**: 11 | **Deep Dive**: [docs/plugins/OBLIGATION.md](plugins/OBLIGATION.md)
 
-Contract-aware obligation tracking for NPC cognition (L4 GameFeatures). Provides dynamically-updated action cost modifiers based on active contracts (guild charters, trade agreements, quest oaths). The obligation service is the bridge between the Contract service's behavioral clauses and the GOAP planner's action cost system, enabling NPCs to have "second thoughts" before violating their obligations.
-
-**Two-Layer Design**: Works standalone with raw contract penalties. When personality data is available (soft L4 dependency via character-personality's variable provider), obligation costs are enriched with trait-weighted moral reasoning. Without personality enrichment, costs are the unweighted base penalties from contract behavioral clauses.
-
-**Core Flow**:
-1. Contract activated -> obligation service extracts behavioral clauses -> caches per-party
-2. Actor cognition evaluates actions -> reads `${obligations.*}` variables from provider
-3. GOAP planner sees modified action costs -> selects alternative if cost too high
-4. If actor proceeds despite cost -> report-violation -> breach + feedback events
-
-**Variable Provider**: Implements `IVariableProviderFactory` providing the `${obligations.*}` namespace to Actor (L2) via the Variable Provider Factory pattern.
-
-See [GitHub Issue #410](https://github.com/beyond-immersion/bannou-service/issues/410) for the original design specification ("Second Thoughts" feature).
+Contract-aware obligation tracking for NPC cognition (L4 GameFeatures), bridging the Contract service's behavioral clauses and the GOAP planner's action cost system to enable NPCs to have "second thoughts" before violating obligations. Provides dynamically-updated action cost modifiers based on active contracts (guild charters, trade agreements, quest oaths), working standalone with raw contract penalties or enriched with personality-weighted moral reasoning when character-personality data is available. Implements `IVariableProviderFactory` providing the `${obligations.*}` namespace to Actor (L2) via the Variable Provider Factory pattern. See [GitHub Issue #410](https://github.com/beyond-immersion/bannou-service/issues/410) for the original design specification ("Second Thoughts" feature).
 
 ## Orchestrator {#orchestrator}
 
@@ -344,9 +299,7 @@ The State service (L0 Infrastructure) provides all Bannou services with unified 
 
 **Version**: 1.0.0 | **Schema**: `schemas/status-api.yaml` | **Endpoints**: 16 | **Deep Dive**: [docs/plugins/STATUS.md](plugins/STATUS.md)
 
-Unified entity effects query layer for temporary contract-managed statuses and passive seed-derived capabilities (L4 GameFeatures). Aggregates item-based statuses (buffs, debuffs, death penalties, subscription benefits) stored as items in per-entity status containers, and seed-derived passive effects computed from seed growth state. Any system needing "what effects does this entity have" queries lib-status.
-
-Follows the "items in inventories" pattern (#280): status templates define effect definitions, status containers hold per-entity inventory containers, and granting a status creates an item instance in that container. Contract integration is optional per-template for complex lifecycle management (death penalties, subscriptions); simple TTL-based statuses use lib-item's native decay system (#407). Seed-derived effects are queried from lib-seed and cached with invalidation via `ISeedEvolutionListener`. Internal-only, never internet-facing.
+Unified entity effects query layer (L4 GameFeatures) aggregating temporary contract-managed statuses and passive seed-derived capabilities into a single query point. Any system needing "what effects does this entity have" -- combat buffs, death penalties, divine blessings, subscription benefits -- queries lib-status. Follows the "items in inventories" pattern: status templates define effect definitions, status containers hold per-entity inventory containers, and granting a status creates an item instance in that container. Contract integration is optional per-template for complex lifecycle; simple TTL-based statuses use lib-item's native decay system. Internal-only, never internet-facing.
 
 ## Storyline {#storyline}
 
@@ -370,19 +323,7 @@ The Telemetry service (L0 Infrastructure, optional) provides unified observabili
 
 **Version**: 2.0.0 | **Schema**: `schemas/voice-api.yaml` | **Endpoints**: 11 | **Deep Dive**: [docs/plugins/VOICE.md](plugins/VOICE.md)
 
-Voice room coordination service (L3 AppFeatures) providing pure voice rooms as a platform primitive: P2P mesh topology for small groups, Kamailio/RTPEngine-based SFU for larger rooms, automatic tier upgrade, WebRTC SDP signaling, broadcast consent flows for streaming integration, and participant TTL enforcement via background worker. Agnostic to games, sessions, and subscriptions -- voice rooms are generic containers identified by Connect/Auth session IDs.
-
-**The three-service principle**: Voice is one of three services that together create a complete voice, streaming, and audience metagame stack. Each delivers value independently. lib-voice provides voice chat whether or not anyone is streaming. lib-broadcast (L3) can broadcast game content to Twitch whether or not voice is involved. lib-showtime (L4) provides a complete audience simulation metagame whether or not real platforms or voice rooms exist. They compose beautifully but never require each other.
-
-**Composability**: Voice room primitives are owned here. RTMP broadcast output is lib-broadcast (L3). Game session voice orchestration is lib-showtime (L4). Platform account linking is lib-broadcast (L3). Audience simulation is lib-showtime (L4). Voice provides the audio infrastructure; higher layers decide when and why to use it.
-
-**Critical architectural insight**: Voice moved from L4 (GameFeatures) to L3 (AppFeatures) to eliminate a hierarchy violation. GameSession (L2) previously depended on Voice (L4) to create/delete voice rooms -- a forbidden upward dependency. The redesign strips all game concepts from voice. Any service can create a room; higher layers (lib-showtime at L4) orchestrate the game-session-to-voice-room lifecycle via event subscriptions. The `sessionId` field in all models refers to the Connect/Auth session ID (L1 concept), not a game session.
-
-**Privacy-first broadcasting**: Voice rooms contain personal audio data. Broadcasting that audio to external platforms (Twitch, YouTube, custom RTMP) requires explicit, informed consent from every participant. The broadcast consent flow is owned by lib-voice because it's a voice room concern; the actual RTMP output is lib-broadcast's domain. This separation ensures that consent is enforced at the audio source, not at the broadcast destination.
-
-**Zero game-specific content**: lib-voice is a generic voice room service. Whether voice rooms back game sessions, collaborative workspaces, or social hangouts is determined by the caller, not by lib-voice. The service knows nothing about games, characters, realms, or subscriptions.
-
-**Current implementation status**: The core voice room lifecycle (create, join, leave, delete), P2P mesh topology, scaled SFU tier with automatic upgrade, WebRTC signaling, and participant heartbeat tracking are **fully implemented**. The broadcast consent flow, service event publishing, participant TTL enforcement background worker, and ad-hoc room modes are **implemented**. The L3 layer classification and game-agnostic API descriptions are the **target state** per [VOICE-STREAMING.md](../planning/VOICE-STREAMING.md). Integration with lib-broadcast and lib-showtime is **future** (those services don't exist yet).
+Voice room coordination service (L3 AppFeatures) providing pure voice rooms as a platform primitive: P2P mesh topology for small groups, Kamailio/RTPEngine-based SFU for larger rooms, automatic tier upgrade, WebRTC SDP signaling, broadcast consent flows for streaming integration, and participant TTL enforcement via background worker. Agnostic to games, sessions, and subscriptions -- voice rooms are generic containers identified by Connect/Auth session IDs. Part of a planned three-service stack (voice, broadcast, showtime) where each delivers value independently; voice provides audio infrastructure while higher layers decide when and why to use it. Moved from L4 to L3 to eliminate a hierarchy violation where GameSession (L2) previously depended on Voice (L4) for room lifecycle.
 
 ## Website {#website}
 

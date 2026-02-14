@@ -205,18 +205,18 @@ Effective rarity is tracked in the affix metadata on the item instance. `ItemTem
 
 ### Item States
 
-Item states are boolean flags stored in the affix metadata that gate modification rules:
+Item states are boolean flags stored in the affix metadata that gate what operations are valid. lib-affix **reads and validates** these flags during apply/remove operations; lib-craft (or other orchestrators) **set** these flags as part of crafting workflows.
 
-| State | Effect | How Set | Reversible |
-|-------|--------|---------|------------|
-| `isCorrupted` | No further modifications possible (except specific exceptions) | Corruption operation (game-specific) | No |
-| `isMirrored` | No modifications possible; exact copy of another item | Mirror operation | No |
-| `isFractured` | Per-affix flag: this affix cannot be changed | Source-specific (drop/synthesis) | No |
-| `isSplit` | Item was split in two; cannot be split again | Split operation | No |
-| `isSynthesized` | Special implicits; may have multiple implicit slots | Synthesis operation | No |
-| `isIdentified` | Affixes are visible; unidentified items hide their modifiers | Creation (unidentified) / identification scroll | One-way (unidentified -> identified) |
+| State | Effect on lib-affix | Set By |
+|-------|--------------------|--------|
+| `isCorrupted` | Rejects apply/remove/reroll operations | lib-craft (corruption recipe) |
+| `isMirrored` | Rejects all modification operations | lib-craft (mirror recipe) |
+| `isFractured` | Per-affix: rejects removal of this specific affix | lib-craft or source system (drop/synthesis) |
+| `isSplit` | No direct effect on affix operations (gates further splits) | lib-craft (split recipe) |
+| `isSynthesized` | Allows multiple implicit slots | Source system (synthesis workflow) |
+| `isIdentified` | Controls whether affixes are visible in queries | lib-craft (identification recipe) or creation |
 
-**lib-affix owns these states** because they primarily gate affix operations. Other services that modify items check these flags before proceeding. The flags are in the affix metadata convention, readable by any service without importing lib-affix.
+**lib-affix validates but does not set these states.** The flags live in the affix metadata convention, readable by any service without importing lib-affix. The `ApplyAffix` and `RemoveAffix` primitives check these flags and reject operations on corrupted/mirrored items or fractured affixes. Setting states is a crafting concern -- see [CRAFT.md](CRAFT.md).
 
 ### Influences and Exclusive Pools
 
@@ -248,8 +248,7 @@ lib-affix writes structured JSON to `ItemInstance.instanceMetadata` under the `a
         "definitionCode": "ruby_fire_res",
         "modGroup": "NaturalFireResistance",
         "rolledValues": [28],
-        "isFractured": false,
-        "isCrafted": false
+        "isFractured": false
       }
     ],
     "prefixSlots": [
@@ -258,8 +257,7 @@ lib-affix writes structured JSON to `ItemInstance.instanceMetadata` under the `a
         "definitionCode": "increased_life_t3",
         "modGroup": "IncreasedLife",
         "rolledValues": [95],
-        "isFractured": false,
-        "isCrafted": false
+        "isFractured": false
       }
     ],
     "suffixSlots": [
@@ -268,8 +266,7 @@ lib-affix writes structured JSON to `ItemInstance.instanceMetadata` under the `a
         "definitionCode": "fire_resistance_t2",
         "modGroup": "FireResistance",
         "rolledValues": [38],
-        "isFractured": true,
-        "isCrafted": false
+        "isFractured": true
       }
     ],
     "enchantSlots": [],
@@ -395,10 +392,7 @@ Paginated queries by gameServiceId + optional filters (slotType, modGroup, categ
 | `affix.applied` | `AffixAppliedEvent` | Affix added to an item instance |
 | `affix.removed` | `AffixRemovedEvent` | Affix removed from an item instance |
 | `affix.rerolled` | `AffixRerolledEvent` | Affix values rerolled (same definition, new rolled values) |
-| `affix.fractured` | `AffixFracturedEvent` | Affix became permanently inscribed |
 | `affix.generated` | `AffixBatchGeneratedEvent` | Batch event for generated affix sets (deduped by source, configurable window) |
-| `item-state.corrupted` | `ItemCorruptedEvent` | Item corruption state changed |
-| `item-state.identified` | `ItemIdentifiedEvent` | Item identified (affixes revealed) |
 | `item-rarity.changed` | `ItemRarityChangedEvent` | Effective rarity changed (normal -> magic -> rare) |
 
 ### Consumed Events
@@ -427,7 +421,6 @@ Paginated queries by gameServiceId + optional filters (slotType, modGroup, categ
 | `DefaultSpawnWeight` | `AFFIX_DEFAULT_SPAWN_WEIGHT` | `1000` | Default spawn weight for new definitions |
 | `DefaultMaxPrefixes` | `AFFIX_DEFAULT_MAX_PREFIXES` | `3` | Default max prefix slots for rare rarity |
 | `DefaultMaxSuffixes` | `AFFIX_DEFAULT_MAX_SUFFIXES` | `3` | Default max suffix slots for rare rarity |
-| `DefaultMaxCraftedMods` | `AFFIX_DEFAULT_MAX_CRAFTED_MODS` | `1` | Default max crafted mods per item |
 | `GenerationEventDeduplicationWindowSeconds` | `AFFIX_GENERATION_EVENT_DEDUPLICATION_WINDOW_SECONDS` | `60` | Deduplication window for batched generation events |
 | `GenerationEventBatchMaxSize` | `AFFIX_GENERATION_EVENT_BATCH_MAX_SIZE` | `100` | Max records per batched generation event |
 | `LockTimeoutSeconds` | `AFFIX_LOCK_TIMEOUT_SECONDS` | `30` | Distributed lock timeout |
@@ -465,7 +458,7 @@ Paginated queries by gameServiceId + optional filters (slotType, modGroup, categ
 | `${affix.has_modifier.<tag>}` | bool | Whether any equipped item has an affix with the given generation tag |
 | `${affix.weakest_slot}` | string | Equipment slot with the lowest affix power score (guides upgrade decisions) |
 | `${affix.item_value_estimate}` | float | Estimated trade value based on affix quality (for NPC economic GOAP) |
-| `${affix.can_be_improved}` | bool | Whether any equipped item has open affix slots (guides crafting GOAP) |
+| `${affix.has_open_slots}` | bool | Whether any equipped item has open affix slots |
 
 ---
 
@@ -501,21 +494,15 @@ All endpoints require `developer` role.
 
 - **RollImplicits** (`/affix/implicit/roll`): Takes gameServiceId + itemTemplateCode, looks up mapping, rolls values for each implicit definition according to stat grant ranges. Returns the rolled implicit slot data ready to be written to affix metadata. Does NOT modify any item -- the caller (lib-loot, lib-craft) writes the result.
 
-### Affix Application (6 endpoints)
+### Affix Application (3 endpoints)
 
-All endpoints require `developer` role.
+All endpoints require `developer` role. These are **validated primitives** -- they enforce mod group rules, slot limits, and item state checks. Higher-level operations that compose these primitives (reroll-all, fracture, corruption, identification) belong in lib-craft. See [CRAFT.md](CRAFT.md).
 
 - **ApplyAffix** (`/affix/apply`): The core modification operation. Acquires item lock. Loads item, reads current affix metadata. Validates: not corrupted, not mirrored, slot type has capacity, mod group not occupied (unless replacing), item class valid for definition, item level sufficient. Rolls values from definition stat grants. Writes updated metadata via `IItemClient.ModifyItemInstanceAsync`. Updates effective rarity if needed. Publishes `affix.applied`, optionally `item-rarity.changed`.
 
 - **RemoveAffix** (`/affix/remove`): Acquires item lock. Validates: not corrupted, not mirrored, target affix not fractured. Removes affix from the appropriate slot array. Recalculates effective rarity. Writes updated metadata. Publishes `affix.removed`, optionally `item-rarity.changed`.
 
 - **RerollValues** (`/affix/reroll-values`): Acquires item lock. Validates: not corrupted, not mirrored. Re-rolls values for a specific affix on the item (same definition, new random values within stat grant ranges). Writes updated metadata. Publishes `affix.rerolled`.
-
-- **RerollAll** (`/affix/reroll-all`): Acquires item lock. Validates: not corrupted, not mirrored. Removes all non-fractured explicit affixes. Generates entirely new affix set using weighted random generation for the item's class, level, and influences. Preserves fractured affixes (they occupy their mod groups during generation). Writes updated metadata. Publishes batch events.
-
-- **FractureAffix** (`/affix/fracture`): Acquires item lock. Sets `isFractured: true` on a specific affix. The affix can never be changed or removed. Publishes `affix.fractured`.
-
-- **SetItemState** (`/affix/set-state`): Acquires item lock. Sets item-level state flags (isCorrupted, isMirrored, isSplit, isIdentified, isSynthesized). Validates state transitions (e.g., can't un-corrupt). For corruption: optionally rerolls implicits or transforms the item (game-specific corruption outcomes are determined by the caller). Publishes `item-state.corrupted` or `item-state.identified`.
 
 ### Generation (3 endpoints)
 
@@ -571,7 +558,7 @@ All endpoints require `developer` role.
 |   +------------------------------------------------------------------+|
 |   |  1. Load cached pool (Redis, keyed by class+level+slot)          ||
 |   |  2. Filter: mod group exclusivity, item level, influences        ||
-|   |  3. Apply external weight modifiers (fossils, essences)          ||
+|   |  3. Apply external weight modifiers (passed by caller)           ||
 |   |  4. Weighted random selection                                    ||
 |   |  5. Roll values within stat grant ranges                         ||
 |   |  6. Return ready-to-write affix data                             ||
@@ -610,7 +597,7 @@ All endpoints require `developer` role.
 |   |  ${affix.equipped_power_score}  -- "My gear is weak"             ||
 |   |  ${affix.has_modifier.fire}     -- "I lack fire resistance"      ||
 |   |  ${affix.item_value_estimate}   -- "This drop is valuable"       ||
-|   |  ${affix.can_be_improved}       -- "I should visit an enchanter" ||
+|   |  ${affix.has_open_slots}        -- "This item could be stronger" ||
 |   +------------------------------------------------------------------+|
 +-----------------------------------------------------------------------+
 
@@ -710,8 +697,7 @@ Mod Group Exclusivity Visualization
 ### Phase 3: Affix Application
 - Implement `ApplyAffix` with full validation (mod groups, slot limits, item states)
 - Implement `RemoveAffix` with state flag checks
-- Implement `RerollValues` and `RerollAll` for crafting operations
-- Implement `FractureAffix` and `SetItemState` for special state management
+- Implement `RerollValues` for value re-randomization
 - Implement effective rarity tracking and transitions
 
 ### Phase 4: Query and Computation
@@ -734,23 +720,13 @@ Mod Group Exclusivity Visualization
 
 1. **Rarity slot limit definitions as configurable entities**: Instead of hardcoded slot counts per rarity, expose a `RaritySlotLimit` definition API that games use to define their own rarity tiers with custom slot counts. A game could define "Legendary" rarity with 4 prefixes and 4 suffixes, or "Mythic" with unlimited slots but exponentially increasing generation cost.
 
-2. **Weight modifier sources (fossils, essences)**: First-class support for "weight modifier sets" -- named collections of tag-to-weight-multiplier mappings that callers pass to generation endpoints. A "Pristine Fossil" weight modifier set might be `{"life": 2.0, "defense": 0.0}`. lib-craft creates these sets; lib-affix applies them during generation.
+2. **Affix trade index (materialized view)**: A denormalized MySQL store that indexes `(gameServiceId, statCode, statValue, itemInstanceId)` for fast trade-site-style queries ("find all items with +90 life and +30 fire res"). Built asynchronously from `affix.applied` and `affix.removed` events. Used by lib-market for search.
 
-3. **Affix crafting bench**: A subset of affix definitions marked as `isCraftedMod: true` that can be deterministically added (not randomly generated). Bench crafting bypasses the weighted random system entirely -- the caller specifies exactly which definition to apply. Separate crafted mod count limit from random mod limits.
+3. **Unique item definitions**: A `UniqueItemDefinition` entity that maps an item template code to a fixed set of affix definitions with predetermined roll ranges. When a unique item drops, its affixes come from the unique definition (not weighted random). The unique definition is owned by lib-affix, not lib-item.
 
-4. **Meta-crafting flags**: Item-level flags like "prefixes cannot be changed" or "cannot roll attack modifiers" that modify the generation pool at selection time. Stored in the affix metadata `states` block. Applied by lib-craft through the `SetItemState` endpoint or a dedicated meta-craft endpoint.
+4. **Client events**: `affix-client-events.yaml` for pushing real-time affix change notifications to connected WebSocket clients (affix applied, item identified, item corrupted).
 
-5. **Affix trade index (materialized view)**: A denormalized MySQL store that indexes `(gameServiceId, statCode, statValue, itemInstanceId)` for fast trade-site-style queries ("find all items with +90 life and +30 fire res"). Built asynchronously from `affix.applied` and `affix.removed` events. Used by lib-market for search.
-
-6. **Unique item definitions**: A `UniqueItemDefinition` entity that maps an item template code to a fixed set of affix definitions with predetermined roll ranges. When a unique item drops, its affixes come from the unique definition (not weighted random). The unique definition is owned by lib-affix, not lib-item.
-
-7. **Veiled/unveiled mods**: Affixes with a `isVeiled: true` state that are hidden until "unveiled" (a special operation that presents choices). The veiled state is stored per-affix in the metadata. Unveiling removes the veil and optionally adds the unveiled mod to a per-entity "known crafts" list for bench crafting.
-
-8. **Corruption outcome tables**: Instead of the caller determining corruption outcomes, lib-affix could own "corruption outcome tables" that define weighted outcomes per item class: no change, reroll rare, replace implicit, change sockets, transform to unique. The `SetItemState(isCorrupted=true)` call would optionally roll from this table and apply the outcome.
-
-9. **Client events**: `affix-client-events.yaml` for pushing real-time affix change notifications to connected WebSocket clients (affix applied, item identified, item corrupted).
-
-10. **Synthesis implicit tables**: A mapping from combinations of sacrificed item affix properties to possible synthesis implicit outcomes. This is a complex system (PoE's synthesis was notoriously opaque) and may warrant its own endpoint set or even a sub-service.
+5. **Synthesis implicit tables**: A mapping from combinations of sacrificed item affix properties to possible synthesis implicit outcomes. This is a complex system (PoE's synthesis was notoriously opaque) and may warrant its own endpoint set or even a sub-service.
 
 ---
 
@@ -788,7 +764,7 @@ Mod Group Exclusivity Visualization
 
 4. **Implicit mapping hot-reload**: When implicit mappings change (e.g., a base type's natural fire resistance range is adjusted), newly created items get the new values, but existing items are unaffected. There is no mechanism to "re-roll" existing items' implicits unless the caller explicitly calls the application endpoints.
 
-5. **Influence application mechanism**: lib-affix tracks influences on items and gates affix pools by influence requirements, but the mechanism for GIVING an item an influence is external. In PoE, influences come from specific content (Shaper items drop from Shaper). In Arcadia, they might come from leyline exposure. lib-affix's `ApplyAffix` / `SetItemState` endpoints can set influences, but the trigger is game-specific.
+5. **Influence application mechanism**: lib-affix tracks influences on items and gates affix pools by influence requirements, but the mechanism for GIVING an item an influence is external. In PoE, influences come from specific content (Shaper items drop from Shaper). In Arcadia, they might come from leyline exposure. lib-craft or loot systems write influence data to the affix metadata; lib-affix reads it during generation and application. The trigger is game-specific.
 
 6. **Interaction with lib-save-load**: When saving game state, items carry their full affix metadata in `instanceMetadata`. lib-save-load persists this naturally. On load, no lib-affix interaction is needed (the data is self-contained). However, if affix definitions have changed between save and load (definition deprecation, tier rebalancing), the loaded items may reference outdated definitions. `ComputeItemStats` handles this gracefully (reads current definitions), but `GetItemAffixes` enrichment may show stale display names.
 

@@ -7,11 +7,11 @@
 
 ## Overview
 
-Pantheon management service (L4 GameFeatures) for deity entities, divinity economy, and blessing orchestration. A thin orchestration layer (like Quest over Contract, Escrow over Currency/Item) that composes existing Bannou primitives to deliver divine game mechanics.
+Pantheon management service (L4 GameFeatures) for deity entities, divinity economy, and blessing orchestration. A thin orchestration layer (like Quest over Contract, Escrow over Currency/Item) that composes existing Bannou primitives to deliver divine game mechanics: god identity is owned here, behavior runs via Actor/Puppetmaster, domain power via Seed, divinity resource via Currency, blessings via Collection/Status, and follower bonds via Relationship. Gods influence characters indirectly through the character's own Actor -- a god's Actor monitors event streams and makes decisions, but the character's Actor receives the consequences. Blessings are entity-agnostic (characters, accounts, deities, or any entity type can receive them). All endpoints are currently stubbed (return `NotImplemented`); see the implementation plan at `docs/plans/DIVINE.md` for the full specification.
 
-**Composability**: God identity is owned here. God behavior is Actor (event brain) via Puppetmaster. Domain power is Seed. Divinity resource is Currency. Greater Blessings are Collection. Minor Blessings are Status Inventory. Follower bonds are Relationship. Garden orchestration is Gardener. lib-divine orchestrates the ceremony connecting these primitives.
+---
 
-**Critical architectural insight**: Gods influence characters through the character's own Actor, not directly. A god's Actor (regional watcher) monitors event streams and makes decisions; the character's Actor receives the consequences. Blessings are entity-agnostic -- characters, accounts, deities, or any entity type can receive them, since the backing storage (lib-collection, lib-status) is also entity-agnostic.
+## Composability & Architecture
 
 **Divine actors are both puppetmasters and gardeners**: A god tending a physical realm region (spawning encounters, adjusting NPC moods, orchestrating narrative opportunities) and a god tending a player's conceptual garden space (spawning POIs, managing scenario selection, guiding discovery) are the same operation from different perspectives -- two sides of the same coin. The divine actor launched via Puppetmaster as a regional watcher also serves as the gardener behavior actor for player experience orchestration via Gardener's APIs. Whether the "space" being tended is a physical location in the game world or an abstract conceptual space (a void garden, a lobby, player housing) is a behavioral distinction encoded in the god's ABML behavior document, not a structural difference in the actor type. This means: (1) the same god (e.g., Moira/Fate) that creates emergent content in the physical world also curates which experiences reach players through their gardens, directly connecting the content flywheel to the player experience; (2) any conceptual space can potentially become a physical space and vice versa, because the transition is just the god shifting focus between garden types; (3) lib-gardener provides the tools (garden instances, POIs, scenarios, entity associations), lib-puppetmaster provides the actor lifecycle, and lib-divine provides the identity and economy of the entity doing the tending.
 
@@ -19,7 +19,7 @@ Pantheon management service (L4 GameFeatures) for deity entities, divinity econo
 
 **Domain codes are opaque strings**: Different games define different domains (War, Knowledge, Nature, etc.). Domain codes follow the same extensibility pattern as seed type codes, collection type codes, and relationship type codes.
 
-**Current status**: All endpoints are stubbed (return `NotImplemented`). See the implementation plan at `docs/plans/DIVINE.md` for the full implementation specification.
+---
 
 ## Dependencies (What This Plugin Relies On)
 

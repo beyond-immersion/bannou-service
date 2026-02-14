@@ -8,19 +8,19 @@
 
 ## Overview
 
-Voice room coordination service (L3 AppFeatures) providing pure voice rooms as a platform primitive: P2P mesh topology for small groups, Kamailio/RTPEngine-based SFU for larger rooms, automatic tier upgrade, WebRTC SDP signaling, broadcast consent flows for streaming integration, and participant TTL enforcement via background worker. Agnostic to games, sessions, and subscriptions -- voice rooms are generic containers identified by Connect/Auth session IDs.
+Voice room coordination service (L3 AppFeatures) providing pure voice rooms as a platform primitive: P2P mesh topology for small groups, Kamailio/RTPEngine-based SFU for larger rooms, automatic tier upgrade, WebRTC SDP signaling, broadcast consent flows for streaming integration, and participant TTL enforcement via background worker. Agnostic to games, sessions, and subscriptions -- voice rooms are generic containers identified by Connect/Auth session IDs. Part of a planned three-service stack (voice, broadcast, showtime) where each delivers value independently; voice provides audio infrastructure while higher layers decide when and why to use it. Moved from L4 to L3 to eliminate a hierarchy violation where GameSession (L2) previously depended on Voice (L4) for room lifecycle.
+
+---
+
+## Design Notes
 
 **The three-service principle**: Voice is one of three services that together create a complete voice, streaming, and audience metagame stack. Each delivers value independently. lib-voice provides voice chat whether or not anyone is streaming. lib-broadcast (L3) can broadcast game content to Twitch whether or not voice is involved. lib-showtime (L4) provides a complete audience simulation metagame whether or not real platforms or voice rooms exist. They compose beautifully but never require each other.
 
 **Composability**: Voice room primitives are owned here. RTMP broadcast output is lib-broadcast (L3). Game session voice orchestration is lib-showtime (L4). Platform account linking is lib-broadcast (L3). Audience simulation is lib-showtime (L4). Voice provides the audio infrastructure; higher layers decide when and why to use it.
 
-**Critical architectural insight**: Voice moved from L4 (GameFeatures) to L3 (AppFeatures) to eliminate a hierarchy violation. GameSession (L2) previously depended on Voice (L4) to create/delete voice rooms -- a forbidden upward dependency. The redesign strips all game concepts from voice. Any service can create a room; higher layers (lib-showtime at L4) orchestrate the game-session-to-voice-room lifecycle via event subscriptions. The `sessionId` field in all models refers to the Connect/Auth session ID (L1 concept), not a game session.
-
 **Privacy-first broadcasting**: Voice rooms contain personal audio data. Broadcasting that audio to external platforms (Twitch, YouTube, custom RTMP) requires explicit, informed consent from every participant. The broadcast consent flow is owned by lib-voice because it's a voice room concern; the actual RTMP output is lib-broadcast's domain. This separation ensures that consent is enforced at the audio source, not at the broadcast destination.
 
-**Zero game-specific content**: lib-voice is a generic voice room service. Whether voice rooms back game sessions, collaborative workspaces, or social hangouts is determined by the caller, not by lib-voice. The service knows nothing about games, characters, realms, or subscriptions.
-
-**Current implementation status**: The core voice room lifecycle (create, join, leave, delete), P2P mesh topology, scaled SFU tier with automatic upgrade, WebRTC signaling, and participant heartbeat tracking are **fully implemented**. The broadcast consent flow, service event publishing, participant TTL enforcement background worker, and ad-hoc room modes are **implemented**. The L3 layer classification and game-agnostic API descriptions are the **target state** per [VOICE-STREAMING.md](../planning/VOICE-STREAMING.md). Integration with lib-broadcast and lib-showtime is **future** (those services don't exist yet).
+**Current implementation status**: Core voice room lifecycle, P2P mesh, scaled SFU with automatic upgrade, WebRTC signaling, participant heartbeat, broadcast consent flow, event publishing, and TTL enforcement are **fully implemented**. Integration with lib-broadcast and lib-showtime is **future** (those services don't exist yet).
 
 ---
 

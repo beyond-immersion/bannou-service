@@ -9,9 +9,7 @@
 
 ## Overview
 
-Unified entity effects query layer for temporary contract-managed statuses and passive seed-derived capabilities (L4 GameFeatures). Aggregates item-based statuses (buffs, debuffs, death penalties, subscription benefits) stored as items in per-entity status containers, and seed-derived passive effects computed from seed growth state. Any system needing "what effects does this entity have" queries lib-status.
-
-Follows the "items in inventories" pattern (#280): status templates define effect definitions, status containers hold per-entity inventory containers, and granting a status creates an item instance in that container. Contract integration is optional per-template for complex lifecycle management (death penalties, subscriptions); simple TTL-based statuses use lib-item's native decay system (#407). Seed-derived effects are queried from lib-seed and cached with invalidation via `ISeedEvolutionListener`. Internal-only, never internet-facing.
+Unified entity effects query layer (L4 GameFeatures) aggregating temporary contract-managed statuses and passive seed-derived capabilities into a single query point. Any system needing "what effects does this entity have" -- combat buffs, death penalties, divine blessings, subscription benefits -- queries lib-status. Follows the "items in inventories" pattern: status templates define effect definitions, status containers hold per-entity inventory containers, and granting a status creates an item instance in that container. Contract integration is optional per-template for complex lifecycle; simple TTL-based statuses use lib-item's native decay system. Internal-only, never internet-facing.
 
 ---
 

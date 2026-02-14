@@ -10,7 +10,11 @@
 
 ## Overview
 
-Contract-aware obligation tracking for NPC cognition (L4 GameFeatures). Provides dynamically-updated action cost modifiers based on active contracts (guild charters, trade agreements, quest oaths). The obligation service is the bridge between the Contract service's behavioral clauses and the GOAP planner's action cost system, enabling NPCs to have "second thoughts" before violating their obligations.
+Contract-aware obligation tracking for NPC cognition (L4 GameFeatures), bridging the Contract service's behavioral clauses and the GOAP planner's action cost system to enable NPCs to have "second thoughts" before violating obligations. Provides dynamically-updated action cost modifiers based on active contracts (guild charters, trade agreements, quest oaths), working standalone with raw contract penalties or enriched with personality-weighted moral reasoning when character-personality data is available. Implements `IVariableProviderFactory` providing the `${obligations.*}` namespace to Actor (L2) via the Variable Provider Factory pattern. See [GitHub Issue #410](https://github.com/beyond-immersion/bannou-service/issues/410) for the original design specification ("Second Thoughts" feature).
+
+---
+
+## Core Mechanics
 
 **Two-Layer Design**: Works standalone with raw contract penalties. When personality data is available (soft L4 dependency via character-personality's variable provider), obligation costs are enriched with trait-weighted moral reasoning. Without personality enrichment, costs are the unweighted base penalties from contract behavioral clauses.
 
@@ -19,10 +23,6 @@ Contract-aware obligation tracking for NPC cognition (L4 GameFeatures). Provides
 2. Actor cognition evaluates actions -> reads `${obligations.*}` variables from provider
 3. GOAP planner sees modified action costs -> selects alternative if cost too high
 4. If actor proceeds despite cost -> report-violation -> breach + feedback events
-
-**Variable Provider**: Implements `IVariableProviderFactory` providing the `${obligations.*}` namespace to Actor (L2) via the Variable Provider Factory pattern.
-
-See [GitHub Issue #410](https://github.com/beyond-immersion/bannou-service/issues/410) for the original design specification ("Second Thoughts" feature).
 
 ---
 

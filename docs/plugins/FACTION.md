@@ -8,16 +8,18 @@
 
 ## Overview
 
-The Faction service (L4 GameFeatures) models factions as seed-based living entities whose capabilities emerge from growth, not static assignment. Each faction owns a seed (via lib-seed) that grows through member activities fed by the Collection-to-Seed pipeline. As the faction's seed grows through phases (nascent, established, influential, dominant), capabilities unlock: norm definition, enforcement tiers, territory claiming, and trade regulation. A nascent faction literally CANNOT enforce norms -- it hasn't grown enough governance capability yet.
+The Faction service (L4 GameFeatures) models factions as seed-based living entities whose capabilities emerge from growth, not static assignment. As a faction's seed grows through phases (nascent, established, influential, dominant), capabilities unlock: norm definition, enforcement tiers, territory claiming, and trade regulation. Its primary consumer is lib-obligation, which queries faction norms to produce GOAP action cost modifiers for NPC cognition -- resolving a hierarchy of guild, location, and realm baseline norms into a merged norm set. Supports guild memberships with role hierarchy, parent/child organizational structure, territory claims, and inter-faction political connections modeled as seed bonds via lib-seed. Internal-only, never internet-facing.
 
-**Primary Purpose**: Store and serve social norms for lib-obligation. lib-obligation is the PRIMARY CONSUMER of faction norm data -- it queries `/faction/norm/query-applicable` to resolve the full norm hierarchy (guild faction -> location faction -> realm baseline faction) into a merged norm set, then applies personality-weighted moral reasoning to produce GOAP action cost modifiers for NPC cognition. Without lib-faction, lib-obligation only has contractual obligations (guild charters, trade agreements). With lib-faction, ambient social and cultural norms become enforceable through the same cognition pipeline.
+---
+
+## Key Concepts
 
 **Norm Resolution Hierarchy** (most specific wins):
 1. Guild faction norms (character's direct memberships)
 2. Location faction norms (controlling faction at character's current location)
 3. Realm baseline faction norms (realm-wide cultural context)
 
-**Faction Concepts**:
+**Faction Types**:
 - **Realm baseline faction**: provides realm-wide cultural norms (honor codes, taboos)
 - **Location controlling faction**: provides local norms (lawless district, temple sanctity)
 - **Guild factions**: character memberships with role hierarchy (Leader, Officer, Member, Recruit)
@@ -26,8 +28,6 @@ The Faction service (L4 GameFeatures) models factions as seed-based living entit
 **Political Connections**: Inter-faction political relationships (alliances, rivalries, treaties) are modeled as seed bonds via lib-seed's existing bond API, NOT through lib-relationship. A bond between two faction seeds represents the alliance/rivalry as a growable entity with its own capability manifest. Joint member activities grow the bonded seed, unlocking alliance capabilities.
 
 **violationType as Opaque String**: Norm violation types (e.g., "theft", "deception", "violence") are opaque strings, not enums. The vocabulary is defined by contract templates and action tag mappings in lib-obligation; lib-faction stores whatever violation type strings callers provide. Adding new violation types never requires a schema change.
-
-Internal-only, never internet-facing.
 
 ---
 
