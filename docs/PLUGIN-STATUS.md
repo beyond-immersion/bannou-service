@@ -68,6 +68,7 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Seed](#seed-status) | L2 | 88% | 0 | All 24 endpoints done. Growth, bonds, capabilities, decay worker. Archive cleanup needed. |
 | [Species](#species-status) | L2 | 92% | 0 | All 13 endpoints done. Missing distributed locks on concurrent operations. |
 | [Subscription](#subscription-status) | L2 | 88% | 0 | All 7 endpoints + expiration worker. Concurrency gaps and index cleanup needed. |
+| [Worldstate](#worldstate-status) | L2 | 0% | 0 | Pre-implementation. Per-realm game clock, calendar system, and temporal event broadcasting spec. No schema, no code. |
 | [Orchestrator](#orchestrator-status) | L3 | 58% | 0 | Compose backend works. 3/4 backends stubbed. Pool auto-scale/idle timeout missing. |
 | [Asset](#asset-status) | L3 | 82% | 1 | Upload/download pipeline works. 2/3 processors stubbed, cleanup tasks missing. |
 | [Documentation](#documentation-status) | L3 | 85% | 0 | All 27 endpoints done. Full-text search, git sync, archive. Semantic search pending. |
@@ -79,9 +80,11 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Behavior](#behavior-status) | L4 | 80% | 0 | ABML compiler + GOAP planner work. 6 stubs: cinematics, bundles, embeddings. |
 | [Character Encounter](#character-encounter-status) | L4 | 88% | 0 | Feature-complete. Encounters, perspectives, decay, sentiment, pruning. Index growth concerns. |
 | [Character History](#character-history-status) | L4 | 90% | 0 | Feature-complete. Participations, backstory, summarization, compression. Minor typing gaps. |
+| [Character Lifecycle](#character-lifecycle-status) | L4 | 0% | 0 | Pre-implementation. Generational cycle orchestration and genetic heritage spec. No schema, no code. |
 | [Character Personality](#character-personality-status) | L4 | 90% | 0 | Full evolution pipeline. Both variable providers work. Combat style transitions limited. |
 | [Divine](#divine-status) | L4 | 25% | 0 | Aspirational. All 22 endpoints return NotImplemented. Detailed plan exists, zero code. |
 | [Escrow](#escrow-status) | L4 | 70% | 1 | 13-state FSM works. Validation placeholder, custom handlers inert, status index broken. |
+| [Ethology](#ethology-status) | L4 | 0% | 0 | Pre-implementation. Species-level behavioral archetype registry and nature resolution spec. No schema, no code. |
 | [Faction](#faction-status) | L4 | 80% | 0 | All 31 endpoints done. Seed-based growth, norms, territory. Obligation integration missing. |
 | [Gardener](#gardener-status) | L4 | 62% | 0 | Void garden works. Broader garden concept unimplemented. No client events, no divine actors. |
 | [Leaderboard](#leaderboard-status) | L4 | 78% | 0 | Redis Sorted Set rankings work. IncludeArchived stub, batch UpdateMode ignored. |
@@ -99,6 +102,7 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Affix](#affix-status) | L4 | 0% | 0 | Pre-implementation. Item modifier definition and generation spec. No schema, no code. |
 | [Arbitration](#arbitration-status) | L4 | 0% | 0 | Pre-implementation. Dispute resolution orchestration spec. No schema, no code. |
 | [Craft](#craft-status) | L4 | 0% | 0 | Pre-implementation. Recipe-based crafting orchestration spec. No schema, no code. |
+| [Disposition](#disposition-status) | L4 | 0% | 0 | Pre-implementation. Emotional synthesis and aspirational drive spec. No schema, no code. |
 | [Dungeon](#dungeon-status) | L4 | 0% | 0 | Pre-implementation. Dungeon-as-actor lifecycle orchestration spec. No schema, no code. |
 | [Hearsay](#hearsay-status) | L4 | 0% | 0 | Pre-implementation. Social information propagation and belief formation spec. No schema, no code. |
 | [Loot](#loot-status) | L4 | 0% | 0 | Pre-implementation. Loot table management and generation spec. No schema, no code. |
@@ -106,6 +110,7 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Organization](#organization-status) | L4 | 0% | 0 | Pre-implementation. Legal entity management spec. No schema, no code. |
 | [Procedural](#procedural-status) | L4 | 0% | 0 | Pre-implementation. Houdini-based procedural 3D asset generation spec. No schema, no code. |
 | [Showtime](#showtime-status) | L4 | 0% | 0 | Pre-implementation. In-game streaming metagame spec. No schema, no code. |
+| [Workshop](#workshop-status) | L4 | 0% | 0 | Pre-implementation. Time-based automated production with lazy evaluation and worker scaling spec. No schema, no code. |
 | [Common](#common-status) | N/A | N/A | 0 | Shared type definitions library. 0 endpoints. No deep dive document exists. |
 
 ---
@@ -948,6 +953,38 @@ gh issue list --search "Subscription:" --state open
 
 ---
 
+## Worldstate {#worldstate-status}
+
+**Layer**: L2 GameFoundation | **Deep Dive**: [WORLDSTATE.md](plugins/WORLDSTATE.md)
+
+### Production Readiness: 0%
+
+Aspirational/planned only. The deep dive explicitly states "Pre-implementation. No schema, no code." Not listed in GENERATED-SERVICE-DETAILS.md. A detailed architectural specification for a per-realm game clock, calendar system, and temporal event broadcasting service. Maps real-world time to configurable game-time progression (default 24:1 ratio: 1 real hour = 1 game day, ~2.6 real years = 1 saeculum). Provides calendar templates (configurable days, months, seasons, years as opaque strings), day-period cycles (dawn, morning, afternoon, evening, night), boundary event publishing at game-time transitions, piecewise time-ratio history for lazy evaluation, and the `${world.*}` variable namespace for ABML behavior expressions via the Variable Provider Factory pattern. Specifies 14 planned endpoints, 8 published events, 2 consumed events, 4 state stores, 11 configuration properties, 1 background worker, and a 5-phase implementation plan. Fills the "ghost clock" gap: dozens of existing services reference game time (`${world.time.period}` in ABML, `TimeOfDay` in Storyline, `inGameTime` in encounters, `seasonalAvailability` in trade routes) with no authoritative provider. No endpoints, no generated code, no service implementation exists.
+
+### Bug Count: 0
+
+No implementation exists to have bugs.
+
+### Top 3 Bugs
+
+*(None -- pre-implementation)*
+
+### Top 3 Enhancements
+
+| # | Enhancement | Description | Issue |
+|---|-------------|-------------|-------|
+| 1 | **Phase 1 - Calendar Infrastructure** | Create schemas, generate code, implement calendar template CRUD with structural validation (period coverage, season-month mapping, consistency checks). | No issue |
+| 2 | **Phase 2 - Realm Clock Core** | Implement clock advancement background worker, boundary detection, event publishing, Redis cache for hot reads, and downtime catch-up with configurable policy (advance vs pause). | No issue |
+| 3 | **Phase 4 - Variable Provider** | Implement `WorldProviderFactory` and `WorldProvider` for the `${world.*}` ABML namespace, filling the ghost clock gap referenced by ABML behaviors, Storyline, encounters, and trade routes. | No issue |
+
+### GH Issues
+
+```bash
+gh issue list --search "Worldstate:" --state open
+```
+
+---
+
 ## Orchestrator {#orchestrator-status}
 
 **Layer**: L3 AppFeatures | **Deep Dive**: [ORCHESTRATOR.md](plugins/ORCHESTRATOR.md)
@@ -1274,6 +1311,38 @@ gh issue list --search "Character History:" --state open
 
 ---
 
+## Character Lifecycle {#character-lifecycle-status}
+
+**Layer**: L4 GameFeatures | **Deep Dive**: [CHARACTER-LIFECYCLE.md](plugins/CHARACTER-LIFECYCLE.md)
+
+### Production Readiness: 0%
+
+Aspirational/planned only. The deep dive explicitly states "Pre-implementation. No schema, no code." Not listed in GENERATED-SERVICE-DETAILS.md. A detailed architectural specification for generational cycle orchestration and genetic heritage -- the "ignition switch" for the content flywheel. Two complementary subsystems: **Lifecycle** (aging, marriage, procreation, death processing driven by worldstate year/season events) and **Heritage** (genetic trait inheritance with allele recombination, dominance models, mutation, phenotype expression, aptitude derivation, and bloodline tracking). Orchestrates across 12+ existing services: Character (L2) for CRUD, Relationship (L2) for bonds, Organization (L4) for households, Disposition (L4) for fulfillment calculation, Contract (L1) for marriage ceremonies, Resource (L1) for archive compression, Seed (L2) for guardian spirit growth, Character-Personality (L4) for trait seeding, Character-History (L4) for backstory, and Storyline (L4) for narrative generation from death archives. Specifies 28 planned endpoints, 5 state stores, 10+ published events, 5+ consumed events, 2 background workers (aging/pregnancy), 2 variable provider namespaces (`${lifecycle.*}`, `${heritage.*}`), and an 8-phase implementation plan (Phase 0 requires Worldstate, Organization Phase 5, and Disposition as prerequisites). No endpoints, no generated code, no service implementation exists.
+
+### Bug Count: 0
+
+No implementation exists to have bugs.
+
+### Top 3 Bugs
+
+*(None -- pre-implementation)*
+
+### Top 3 Enhancements
+
+| # | Enhancement | Description | Issue |
+|---|-------------|-------------|-------|
+| 1 | **Phase 1 - Lifecycle Templates and Profiles** | Create schemas, generate code, implement lifecycle template CRUD, profile management, basic aging via `worldstate.year-changed` events, stage transition detection, and resource cleanup/compression callbacks. | No issue |
+| 2 | **Phase 3 - Procreation** | Implement fertility calculation, pregnancy tracking with expected birth dates, pregnancy worker (worldstate.day-changed triggered), full procreation flow (heritage computation, character creation, relationships, household, backstory seeding), and child limits. | No issue |
+| 3 | **Phase 5 - Death Processing** | Implement fulfillment calculation from Disposition drives, guardian spirit contribution to Seed, archive compression trigger via Resource, inheritance processing, afterlife pathway determination, and content flywheel integration with Storyline. | No issue |
+
+### GH Issues
+
+```bash
+gh issue list --search "Character Lifecycle:" --state open
+```
+
+---
+
 ## Character Personality {#character-personality-status}
 
 **Layer**: L4 GameFeatures | **Deep Dive**: [CHARACTER-PERSONALITY.md](plugins/CHARACTER-PERSONALITY.md)
@@ -1338,6 +1407,38 @@ gh issue list --search "Divine:" --state open
 
 ---
 
+## Disposition {#disposition-status}
+
+**Layer**: L4 GameFeatures | **Deep Dive**: [DISPOSITION.md](plugins/DISPOSITION.md)
+
+### Production Readiness: 0%
+
+Entirely pre-implementation. The deep dive explicitly states "Pre-implementation. No schema, no code". A comprehensive architectural specification for emotional synthesis and aspirational drives -- what characters FEEL about specific entities (other characters, locations, factions, organizations, the guardian spirit) and what long-term goals DRIVE their behavior. Two complementary subsystems: Feelings (base + modifier model synthesizing encounters, personality, history, hearsay, and relationships into directed emotional states with persistent residue) and Drives (intrinsic aspirational goals with intensity/satisfaction/frustration dynamics that modulate GOAP goal priorities). Guardian spirit feelings provide the mechanical implementation of character independence (Design Principle 1). Provides `${disposition.*}` ABML variables via Variable Provider Factory. Integrates with Storyline for content flywheel (archived dispositions become narrative seeds). 17 planned endpoints, 10 published events, 9 consumed events, 4 state stores, 22 configuration properties, 3 background workers, and a 7-phase implementation plan.
+
+### Bug Count: 0
+
+No implementation exists to have bugs.
+
+### Top 3 Bugs
+
+*(None -- pre-implementation)*
+
+### Top 3 Enhancements
+
+| # | Enhancement | Description | Issue |
+|---|-------------|-------------|-------|
+| 1 | **Phase 1 - Core Feeling Infrastructure** | Create schemas, generate code, implement feeling CRUD (record, get, query-by-target, get-composite), feeling cache with event-driven invalidation, variable provider factory (`${disposition.*}` namespace), and resource cleanup/compression callbacks. | No issue |
+| 2 | **Phase 2 - Drive System** | Implement drive CRUD (set, get, evolve), backstory-seeded drive formation, personality-innate drive derivation, satisfaction/frustration dynamics, GOAP goal priority modulation, and drive intensity decay worker. | No issue |
+| 3 | **Phase 4 - Guardian Spirit Relationship** | Implement guardian spirit feeling axes (trust, resentment, autonomy, defiance, gratitude), compliance computation affecting player directive responsiveness, and override-triggered feeling updates. | No issue |
+
+### GH Issues
+
+```bash
+gh issue list --search "Disposition:" --state open
+```
+
+---
+
 ## Escrow {#escrow-status}
 
 **Layer**: L4 GameFeatures | **Deep Dive**: [ESCROW.md](plugins/ESCROW.md)
@@ -1368,6 +1469,38 @@ The escrow coordination layer has an impressive 13-state FSM, token-based securi
 
 ```bash
 gh issue list --search "Escrow:" --state open
+```
+
+---
+
+## Ethology {#ethology-status}
+
+**Layer**: L4 GameFeatures | **Deep Dive**: [ETHOLOGY.md](plugins/ETHOLOGY.md)
+
+### Production Readiness: 0%
+
+Aspirational/planned only. The deep dive explicitly states "Pre-implementation. No schema, no code." Not listed in GENERATED-SERVICE-DETAILS.md. A detailed architectural specification for a species-level behavioral archetype registry and nature resolution service -- the missing middle ground between "every wolf is identical" (hardcoded ABML context defaults) and "full character cognitive stack" (8+ variable providers with per-entity persistent state). Provides three-layer nature resolution: species archetype (base behavioral template), environmental overrides (realm/location modifications), and deterministic individual noise (hash-based per-entity variation without per-entity storage). Supports 100,000+ creatures without per-entity state entries. Delegates to Character-Lifecycle's Heritage Engine when the entity is a character with genetic data, making `${nature.*}` a universal behavioral baseline that Heritage refines. Specifies 18 planned endpoints, 4 state stores, 4+ published events, 2+ consumed events, 1 background worker (cache warmup), 1 variable provider namespace (`${nature.*}`), and a 6-phase implementation plan (Phase 0 requires only existing Species service and Actor's IVariableProviderFactory pattern). No endpoints, no generated code, no service implementation exists.
+
+### Bug Count: 0
+
+No implementation exists to have bugs.
+
+### Top 3 Bugs
+
+*(None -- pre-implementation)*
+
+### Top 3 Enhancements
+
+| # | Enhancement | Description | Issue |
+|---|-------------|-------------|-------|
+| 1 | **Phase 1 - Archetype Definitions** | Create schemas, generate code, implement archetype CRUD with species-code binding, bulk seed endpoint for world initialization, species event handlers, and resource cleanup. | No issue |
+| 2 | **Phase 2 - Nature Resolution** | Implement three-layer resolution algorithm (archetype + overrides + deterministic noise via MurmurHash3), `NatureProviderFactory` as `IVariableProviderFactory`, Redis caching, and ResolveNature/CompareNatures endpoints. | No issue |
+| 3 | **Phase 4 - Character Delegation** | Implement Heritage-aware resolution: when entity is a character with Heritage data, use phenotype values for mapped axes (skipping noise), falling back to species archetype for unmapped axes. Graceful degradation when Character-Lifecycle unavailable. | No issue |
+
+### GH Issues
+
+```bash
+gh issue list --search "Ethology:" --state open
 ```
 
 ---
@@ -2204,6 +2337,38 @@ No implementation exists to have bugs.
 
 ```bash
 gh issue list --search "Showtime:" --state open
+```
+
+---
+
+## Workshop {#workshop-status}
+
+**Layer**: L4 GameFeatures | **Deep Dive**: [WORKSHOP.md](plugins/WORKSHOP.md)
+
+### Production Readiness: 0%
+
+Aspirational/planned only. The deep dive explicitly states "Pre-implementation. No schema, no code." Not listed in GENERATED-SERVICE-DETAILS.md. A detailed architectural specification for a time-based automated production service that transforms inputs from source inventories into outputs placed in destination inventories over game time. Uses the Currency autogain pattern generalized: lazy evaluation with background materialization instead of real-time simulation. Supports variable worker counts that dynamically adjust production rate via piecewise rate segment history, enabling accurate calculation across rate changes. Blueprints support both recipe-referenced (from lib-craft) and custom input/output definitions. Features fair per-owner scheduling in the background worker to prevent heavy users from affecting others. Covers crafting automation, farming, mining, resource extraction, manufacturing, training, and any time-based production loop. Specifies 22 planned endpoints, 12 published events, 1 consumed event, 6 state stores, 14 configuration properties, 1 background worker, and a 7-phase implementation plan. Explicitly rejects actors for automation tasks (deterministic production doesn't need cognitive overhead) and rejects extending lib-craft (different interaction paradigms). No endpoints, no generated code, no service implementation exists.
+
+### Bug Count: 0
+
+No implementation exists to have bugs.
+
+### Top 3 Bugs
+
+*(None -- pre-implementation)*
+
+### Top 3 Enhancements
+
+| # | Enhancement | Description | Issue |
+|---|-------------|-------------|-------|
+| 1 | **Phase 2 - Task Lifecycle** | Implement task creation with blueprint snapshotting, status management (pause/resume/cancel), source/destination inventory validation, and initial rate segment creation. | No issue |
+| 2 | **Phase 4 - Lazy Evaluation & Materialization** | Implement `ProductionCalculator` with rate segment integration, material consumption, output creation via lib-item/lib-inventory, fractional progress tracking, and auto-pause on exhaustion/capacity. | No issue |
+| 3 | **Phase 5 - Background Worker** | Implement `WorkshopMaterializationWorkerService` with fair per-owner scheduling, distributed locking, lazy materialization on read, and `worldstate.day-changed` event-triggered processing. | No issue |
+
+### GH Issues
+
+```bash
+gh issue list --search "Workshop:" --state open
 ```
 
 ---
