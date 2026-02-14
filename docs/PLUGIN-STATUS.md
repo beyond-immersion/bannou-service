@@ -68,6 +68,7 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Seed](#seed-status) | L2 | 88% | 0 | All 24 endpoints done. Growth, bonds, capabilities, decay worker. Archive cleanup needed. |
 | [Species](#species-status) | L2 | 92% | 0 | All 13 endpoints done. Missing distributed locks on concurrent operations. |
 | [Subscription](#subscription-status) | L2 | 88% | 0 | All 7 endpoints + expiration worker. Concurrency gaps and index cleanup needed. |
+| [Transit](#transit-status) | L2 | 0% | 0 | Pre-implementation. Geographic connectivity graph, transit modes, and declarative journey tracking spec. No schema, no code. |
 | [Worldstate](#worldstate-status) | L2 | 0% | 0 | Pre-implementation. Per-realm game clock, calendar system, and temporal event broadcasting spec. No schema, no code. |
 | [Orchestrator](#orchestrator-status) | L3 | 58% | 0 | Compose backend works. 3/4 backends stubbed. Pool auto-scale/idle timeout missing. |
 | [Asset](#asset-status) | L3 | 82% | 1 | Upload/download pipeline works. 2/3 processors stubbed, cleanup tasks missing. |
@@ -89,6 +90,7 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Faction](#faction-status) | L4 | 80% | 0 | All 31 endpoints done. Seed-based growth, norms, territory. Obligation integration missing. |
 | [Gardener](#gardener-status) | L4 | 62% | 0 | Void garden works. Broader garden concept unimplemented. No client events, no divine actors. |
 | [Leaderboard](#leaderboard-status) | L4 | 78% | 0 | Redis Sorted Set rankings work. IncludeArchived stub, batch UpdateMode ignored. |
+| [Lexicon](#lexicon-status) | L4 | 0% | 0 | Pre-implementation. Structured world knowledge ontology and concept decomposition spec. No schema, no code. |
 | [License](#license-status) | L4 | 93% | 0 | Feature-complete. 14-step unlock saga, adjacency validation, board cloning. Only respec pending. |
 | [Mapping](#mapping-status) | L4 | 80% | 2 | Spatial indexing works. Version counter race, non-atomic index ops. N+1 query pattern. |
 | [Matchmaking](#matchmaking-status) | L4 | 73% | 1 | Core loop works. Queue stats all zeros, tournament stub, reconnect shortcut bug. |
@@ -111,6 +113,7 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Organization](#organization-status) | L4 | 0% | 0 | Pre-implementation. Legal entity management spec. No schema, no code. |
 | [Procedural](#procedural-status) | L4 | 0% | 0 | Pre-implementation. Houdini-based procedural 3D asset generation spec. No schema, no code. |
 | [Showtime](#showtime-status) | L4 | 0% | 0 | Pre-implementation. In-game streaming metagame spec. No schema, no code. |
+| [Trade](#trade-status) | L4 | 0% | 0 | Pre-implementation. Economic logistics orchestration with trade routes, shipments, tariffs, supply/demand dynamics, and NPC economic profiles spec. No schema, no code. |
 | [Workshop](#workshop-status) | L4 | 0% | 0 | Pre-implementation. Time-based automated production with lazy evaluation and worker scaling spec. No schema, no code. |
 | [Common](#common-status) | N/A | N/A | 0 | Shared type definitions library. 0 endpoints. No deep dive document exists. |
 
@@ -954,6 +957,38 @@ gh issue list --search "Subscription:" --state open
 
 ---
 
+## Transit {#transit-status}
+
+**Layer**: L2 GameFoundation | **Deep Dive**: [TRANSIT.md](plugins/TRANSIT.md)
+
+### Production Readiness: 0%
+
+Aspirational/planned only. The deep dive explicitly states "No schema, no code." Not listed in GENERATED-SERVICE-DETAILS.md. A detailed architectural specification for a geographic connectivity and movement primitive that completes Location's spatial model by adding **edges** (connections between locations) to Location's **nodes** (the hierarchical place tree). Three core capabilities: a **mode registry** (string-coded transit modes like walking, horseback, wagon, teleportation -- registered via API, not hardcoded), a **connectivity graph** (typed edges between locations with distance, terrain, seasonal availability, and mode compatibility), and **declarative journeys** (temporal travel tracking computed against Worldstate's game clock, with depart/advance/arrive driven by the game, not auto-simulated). Route calculation uses Dijkstra's algorithm over the connection graph filtered by mode compatibility. DI-based cost enrichment via `ITransitCostModifierProvider` enables L4 services (Disposition, Environment, Faction) to affect travel costs without hierarchy violations. Placed at L2 so Actor, Quest, Game Session, and Workshop can all compute travel times. Specifies 22 planned endpoints, 5 state stores (2 MySQL, 2 Redis, 1 MySQL archive), 10 published events, 2 consumed events, 2 background workers (seasonal connection, journey archival), 1 variable provider namespace (`${transit.*}`), and 7 design considerations. No endpoints, no generated code, no service implementation exists.
+
+### Bug Count: 0
+
+No implementation exists to have bugs.
+
+### Top 3 Bugs
+
+*(None -- pre-implementation)*
+
+### Top 3 Enhancements
+
+| # | Enhancement | Description | Issue |
+|---|-------------|-------------|-------|
+| 1 | **Core connectivity graph** | Create schemas, generate code, implement mode registry (CRUD with string codes), connection management (CRUD with terrain types, seasonal availability, bidirectionality), and connection graph caching in Redis for route calculation. | No issue |
+| 2 | **Route calculation engine** | Implement Dijkstra-based route calculation over connection graph with mode filtering, seasonal availability, multi-mode journeys, and DI-based cost enrichment via `ITransitCostModifierProvider` for L4 behavioral modifiers. | No issue |
+| 3 | **Variable provider (`${transit.*}`)** | Implement `TransitProviderFactory` for the `${transit.*}` ABML namespace, enabling NPC travel decisions in GOAP -- available modes, travel times to known locations, current journey status, and mode preference costs. | No issue |
+
+### GH Issues
+
+```bash
+gh issue list --search "Transit:" --state open
+```
+
+---
+
 ## Worldstate {#worldstate-status}
 
 **Layer**: L2 GameFoundation | **Deep Dive**: [WORLDSTATE.md](plugins/WORLDSTATE.md)
@@ -1666,6 +1701,38 @@ gh issue list --search "Leaderboard:" --state open
 
 ---
 
+## Lexicon {#lexicon-status}
+
+**Layer**: L4 GameFeatures | **Deep Dive**: [LEXICON.md](plugins/LEXICON.md)
+
+### Production Readiness: 0%
+
+Aspirational/planned only. The deep dive explicitly states "Pre-implementation. No schema, no code." Not listed in GENERATED-SERVICE-DETAILS.md. A detailed architectural specification for a structured world knowledge ontology that defines what things ARE in decomposed, queryable characteristics -- the missing NPC world-knowledge layer. Four interconnected pillars: **entries** (things that can be known about: species, objects, phenomena, individuals), **traits** (decomposed observable characteristics: four_legged, pack_hunter, fur), **categories** (hierarchical classification: canine < quadruped_mammal < mammal < animal), and **associations** (bidirectional concept links with asymmetric strength and discovery-tier gating). Also defines **strategies** (trait/category-derived implications for GOAP: "ways to escape a wolf"). Part of a three-service knowledge stack: Lexicon (ground truth) + Collection (discovery tracking) + Hearsay (subjective belief). Discovery-gated via Collection's `discoveryLevels` -- a character only accesses Lexicon data matching their discovery tier for that entry. Specifies 23 planned endpoints, 3 state stores, 5+ published events, 2+ consumed events, 1 variable provider namespace (`${lexicon.*}`), and a 7-phase implementation plan (Phase 0 requires only existing Collection and Actor services). No endpoints, no generated code, no service implementation exists.
+
+### Bug Count: 0
+
+No implementation exists to have bugs.
+
+### Top 3 Bugs
+
+*(None -- pre-implementation)*
+
+### Top 3 Enhancements
+
+| # | Enhancement | Description | Issue |
+|---|-------------|-------------|-------|
+| 1 | **Phase 1 - Core Ontology Infrastructure** | Create schemas, generate code, implement category tree management (CRUD, reparenting, depth tracking, circular reference prevention), entry management with category assignment, entry manifest computation and caching. | No issue |
+| 2 | **Phase 4 - Variable Provider** | Implement `LexiconProviderFactory` for the `${lexicon.*}` ABML namespace with Collection discovery-level gating, per-character caching, and perception-triggered demand loading per perceived entity. | No issue |
+| 3 | **Phase 6 - GOAP Integration** | Define strategy-to-GOAP-action mapping conventions, implement strategy viability checking against current world state, threat level computation from trait composition, and document ABML patterns for Lexicon-informed behavior. | No issue |
+
+### GH Issues
+
+```bash
+gh issue list --search "Lexicon:" --state open
+```
+
+---
+
 ## License {#license-status}
 
 **Layer**: L4 GameFeatures | **Deep Dive**: [LICENSE.md](plugins/LICENSE.md)
@@ -2370,6 +2437,38 @@ No implementation exists to have bugs.
 
 ```bash
 gh issue list --search "Showtime:" --state open
+```
+
+---
+
+## Trade {#trade-status}
+
+**Layer**: L4 GameFeatures | **Deep Dive**: [TRADE.md](plugins/TRADE.md)
+
+### Production Readiness: 0%
+
+Aspirational/planned only. The deep dive explicitly states "No schema, no code." Not listed in GENERATED-SERVICE-DETAILS.md. A detailed architectural specification for economic logistics orchestration -- the "over time" layer that creates geographic price differentials from Transit distances, Worldstate game-time, and Currency primitives. Absorbs the trade route, shipment, tariff, tax, NPC economic profile, and velocity monitoring concepts from the Economy-Currency Architecture planning document. Core capabilities: **trade routes** (pre-calculated corridors with legs mapped to Transit connections, aggregate cost/risk/duration), **shipments** (physical goods-in-transit with incident tracking and financial settlement), **tariffs and taxes** (location-scoped trade policies with exemptions, brackets, and enforcement), **NPC economic profiles** (per-NPC production/consumption preferences and trading personality), **supply/demand snapshots** (periodic aggregation of NPC economic activity into location-scoped market signals), and **velocity metrics** (economy health monitoring with configurable alerts). Three-tier usage: divine oversight (full visibility for god actors), NPC governance (bounded rationality for merchant/governor NPCs), and external management (data queries for monitoring). DI-based cost enrichment via Transit's `ITransitCostModifierProvider` and `ICollectionUnlockListener` integration. Specifies 38 planned endpoints, 12 state stores (8 MySQL, 4 Redis), 15 published events, 8 consumed events, 4 background workers (route recalculation, tax assessment, supply/demand aggregation, velocity monitoring), 1 variable provider namespace (`${trade.*}`), and 8 potential extensions. No endpoints, no generated code, no service implementation exists.
+
+### Bug Count: 0
+
+No implementation exists to have bugs.
+
+### Top 3 Bugs
+
+*(None -- pre-implementation)*
+
+### Top 3 Enhancements
+
+| # | Enhancement | Description | Issue |
+|---|-------------|-------------|-------|
+| 1 | **Trade routes and shipments** | Create schemas, generate code, implement trade route management (CRUD with legs mapped to Transit connections, aggregate cost/risk/duration calculation), and shipment lifecycle (create with goods/currency manifest, depart/advance/arrive driven by game events, incident recording, financial settlement on completion). | No issue |
+| 2 | **NPC economic profiles and supply/demand** | Implement per-NPC production/consumption/trading personality profiles, periodic supply/demand snapshot aggregation from NPC economic activity into location-scoped market signals, and the `SupplyDemandAggregationWorker` background service. | No issue |
+| 3 | **Variable provider (`${trade.*}`)** | Implement `TradeProviderFactory` for the `${trade.*}` ABML namespace, enabling NPC economic decisions in GOAP -- local supply/demand, best trade routes, profit margins, tariff costs, and market opportunity detection. | No issue |
+
+### GH Issues
+
+```bash
+gh issue list --search "Trade:" --state open
 ```
 
 ---
