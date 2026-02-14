@@ -115,8 +115,8 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 | [Procedural](#procedural-status) | L4 | 0% | 0 | Pre-implementation. Houdini-based procedural 3D asset generation spec. No schema, no code. |
 | [Showtime](#showtime-status) | L4 | 0% | 0 | Pre-implementation. In-game streaming metagame spec. No schema, no code. |
 | [Trade](#trade-status) | L4 | 0% | 0 | Pre-implementation. Economic logistics orchestration with trade routes, shipments, tariffs, supply/demand dynamics, and NPC economic profiles spec. No schema, no code. |
+| [Utility](#utility-status) | L4 | 0% | 0 | Pre-implementation. Infrastructure network topology, continuous flow calculation, coverage cascading, and maintenance lifecycle spec. No schema, no code. |
 | [Workshop](#workshop-status) | L4 | 0% | 0 | Pre-implementation. Time-based automated production with lazy evaluation and worker scaling spec. No schema, no code. |
-| [Agency](#agency-status) | L4 | 0% | 0 | Pre-implementation. Guardian spirit progressive agency, UX capability manifest, and spirit influence system spec. No schema, no code. |
 | [Common](#common-status) | N/A | N/A | 0 | Shared type definitions library. 0 endpoints. No deep dive document exists. |
 
 ---
@@ -2125,38 +2125,6 @@ gh issue list --search "Storyline:" --state open
 
 ---
 
-## Agency {#agency-status}
-
-**Layer**: L4 GameFeatures | **Deep Dive**: [AGENCY.md](plugins/AGENCY.md)
-
-### Production Readiness: 0%
-
-Pre-implementation. No schema, no code. A detailed architectural specification for the guardian spirit's progressive agency system -- the bridge between Seed's abstract capability data and the client's concrete UX module rendering. Three subsystems: UX Module Registry (definitions of available UI modules gated by seed capability thresholds with fidelity curves), Manifest Engine (computes per-seed UX manifests from seed capabilities, caches in Redis, pushes updates), and Influence Registry (spirit nudge types mapping to Actor perception types with compliance factors). Provides the `${spirit.*}` variable namespace to Actor for co-pilot compliance/resistance evaluation. Specifies 22 planned endpoints, 6 state stores, 6 published events, 3 consumed events, 13 configuration properties, 1 background worker, and a 5-phase implementation plan. Cross-cutting reference: [BEHAVIORAL-BOOTSTRAP.md](reference/BEHAVIORAL-BOOTSTRAP.md) describes how Gardener and Puppetmaster god-actors interact with Agency for manifest routing and influence execution.
-
-### Bug Count: 0
-
-No implementation exists to have bugs.
-
-### Top 3 Bugs
-
-*(None -- pre-implementation)*
-
-### Top 3 Enhancements
-
-| # | Enhancement | Description | Issue |
-|---|-------------|-------------|-------|
-| 1 | **Phase 1-2: Core Registry + Manifest Engine** | Create schemas, generate code, implement domain/module/influence CRUD (10 endpoints), manifest computation from seed capabilities with Redis caching, event-driven recomputation with debouncing. | No issue |
-| 2 | **Phase 3: Influence System** | Implement spirit influence evaluate and execute endpoints with rate limiting, compliance factor enrichment, and Actor perception type mapping. The co-pilot input mechanism. | No issue |
-| 3 | **Phase 4: Variable Provider Factory** | Implement `SpiritProviderFactory` for the `${spirit.*}` ABML namespace, integrating Disposition guardian feelings for compliance computation and influence history tracking in Redis. | No issue |
-
-### GH Issues
-
-```bash
-gh issue list --search "Agency:" --state open
-```
-
----
-
 ## Affix {#affix-status}
 
 **Layer**: L4 GameFeatures | **Deep Dive**: [AFFIX.md](plugins/AFFIX.md)
@@ -2535,6 +2503,38 @@ No implementation exists to have bugs.
 
 ```bash
 gh issue list --search "Trade:" --state open
+```
+
+---
+
+## Utility {#utility-status}
+
+**Layer**: L4 GameFeatures | **Deep Dive**: [UTILITY.md](plugins/UTILITY.md)
+
+### Production Readiness: 0%
+
+Aspirational/planned only. The deep dive explicitly states "Pre-implementation. No schema, no code." Not listed in GENERATED-SERVICE-DETAILS.md. A detailed architectural specification for an infrastructure network topology and continuous flow calculation service. Fills the gap between Workshop (point production) and Trade (discrete shipments) by modeling persistent infrastructure (aqueducts, power grids, sewer systems, magical conduits) as a graph of connections between locations. Core capabilities: **network type registry** (opaque string-coded types like water, power, sewer -- extensible without schema changes), **connection graph** (capacity-limited, condition-tracked edges between locations with ownership and maintenance state), **flow calculation** (BFS-based graph traversal computing steady-state service levels per location from production sources through the connection graph), **coverage snapshots** (cached per-location service levels with status classification: full/partial/critical/none), and **failure cascading** (when a connection fails, downstream locations lose service, publishing coverage events that trigger NPC awareness and emergent investigation/repair chains). Integrates with Workshop for production source rates, Organization for infrastructure operators, Faction for jurisdiction, and Environment for weather-based damage. Provides `${utility.*}` ABML variables via Variable Provider Factory for NPC infrastructure-awareness in GOAP decisions. Specifies 23 planned endpoints, 5 state stores (3 MySQL, 2 Redis), 15 published events, 4 consumed events, 2 background workers (condition decay, maintenance expiration), 1 variable provider namespace (`${utility.*}`), 11 configuration properties, and a 7-phase implementation plan (Phase 0 requires Worldstate and Workshop). No endpoints, no generated code, no service implementation exists.
+
+### Bug Count: 0
+
+No implementation exists to have bugs.
+
+### Top 3 Bugs
+
+*(None -- pre-implementation)*
+
+### Top 3 Enhancements
+
+| # | Enhancement | Description | Issue |
+|---|-------------|-------------|-------|
+| 1 | **Phase 2-3: Connection Graph + Flow Engine** | Create schemas, generate code, implement connection CRUD with location validation, BFS-based `FlowCalculator` with capacity-limited flow and condition-based reduction, `CoverageManager` with snapshot caching and debounced recalculation. | No issue |
+| 2 | **Phase 4: Coverage Events + Variable Provider** | Implement coverage change event publishing (degraded/restored) with configurable thresholds, `UtilityProviderFactory` for the `${utility.*}` ABML namespace, and coverage query endpoints (GetCoverage, GetCoveragePath, GetNetworkHealth, CompareCoverage). | No issue |
+| 3 | **Phase 7: DI Flow Modifier Pattern** | Implement `IUtilityFlowModifierProvider` interface in `bannou-service/Providers/` allowing Environment, Faction, and other L4 services to affect flow calculations without Utility depending on them. | No issue |
+
+### GH Issues
+
+```bash
+gh issue list --search "Utility:" --state open
 ```
 
 ---
