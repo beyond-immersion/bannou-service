@@ -263,6 +263,49 @@ WeatherEvent:
 - `location`: Affects a single location only (localized storm at a mountain peak)
 - `location_subtree`: Affects a location and all its descendants (forest fire in a region and all contained areas)
 
+### Resource Availability Computation
+
+Resource availability is a **single composite float** (0.0-1.0) per location representing ecological abundance. It is NOT per-resource-type -- Environment provides one aggregate value, and consumers (Loot, Workshop, Market) interpret it in their own domain. Resource types (food, timber, ore, etc.) are consumer-side concepts; Environment's abundance is biome-level ecological health.
+
+```
+ComputeResourceAvailability(location, gameTimeSnapshot):
+  template = resolveClimateTemplate(location)
+
+  # 1. Seasonal baseline from climate template
+  seasonalAvail = template.resourceAvailability[gameTimeSnapshot.season]
+  baseAbundance = seasonalAvail.abundanceLevel  # e.g., spring=0.8, winter=0.3
+
+  # 2. Season transition smoothing (same approach as temperature)
+  nextSeasonAvail = template.resourceAvailability[getNextSeason(gameTimeSnapshot, template)]
+  progress = gameTimeSnapshot.seasonProgress
+  smoothedAbundance = lerp(baseAbundance, nextSeasonAvail.abundanceLevel, progress * 0.5)
+
+  # 3. Weather impact modifier
+  currentWeather = resolveWeather(location, gameTimeSnapshot)
+  # Storms reduce availability, clear weather is neutral
+  weatherImpact = getWeatherResourceImpact(currentWeather.weatherCode)
+  # e.g., "storm" = -0.15, "drought" = -0.3, "clear" = 0.0, "rain" = +0.05
+  smoothedAbundance += weatherImpact
+
+  # 4. Weather event modifiers (stacked additively)
+  activeEvents = getActiveWeatherEvents(location, gameTimeSnapshot)
+  for event in activeEvents:
+    if event.resourceAvailabilityMultiplier != null:
+      smoothedAbundance *= event.resourceAvailabilityMultiplier
+
+  # 5. Clamp to [0.0, 1.0]
+  return clamp(smoothedAbundance, 0.0, 1.0)
+```
+
+**Weather-to-resource impact mapping**: The impact of weather codes on resource availability is defined per-climate-template as part of the weather distribution data. Each weather pattern has an implicit resource impact based on its nature: rain is generally positive (crops grow), storms are negative (damage to environment), drought is strongly negative (ecological stress). These are NOT hardcoded -- each climate template's weather patterns include `resourceImpactModifier` as an optional float alongside their existing `temperatureModifier`.
+
+**Persistence model**: Resource availability is NOT independently stored. It is computed as part of the condition snapshot and cached in `environment:conditions:snapshot:{locationId}` alongside temperature, weather, and atmospheric data. The `environment.resource-availability.changed` event is published when the computed availability crosses a configurable significance threshold (default: 0.1 change) during a refresh cycle, preventing event noise from minor fluctuations.
+
+**Consumer interpretation examples**:
+- **Loot** (L4): `forageDropRate = baseRate * environment.resource_availability * climate.forageModifier`
+- **Workshop** (L4): `farmingProductionRate = blueprintRate * environment.resource_availability`
+- **Market** (L4): `vendorFoodPriceMultiplier = 1.0 + (1.0 - environment.resource_availability) * scarcityPriceFactor`
+
 ---
 
 ## Dependencies (What This Plugin Relies On)
@@ -282,7 +325,7 @@ WeatherEvent:
 
 | Dependency | Usage | Behavior When Missing |
 |------------|-------|-----------------------|
-| lib-mapping (`IMappingClient`) | Publishing weather data to Mapping's `weather_effects` spatial layer for spatial weather queries. (L4) | Weather data is not published to the spatial index. Spatial weather queries return nothing. Environmental conditions still resolve for direct queries. |
+| lib-mapping (`IMappingClient`) | Publishing weather data to Mapping's `weather_effects` spatial layer for spatial weather queries. Resolved via `GetService<IMappingClient>()` + null check. See [Mapping Integration](#mapping-integration) below for the full API pattern, data model, and publication trigger. (L4) | Weather data is not published to the spatial index. Spatial weather queries return nothing. Environmental conditions still resolve correctly for direct API queries and variable provider reads. |
 | lib-realm (`IRealmClient`) | Querying realm default biome for locations without explicit biome metadata. (L2, but accessed via soft pattern because fallback is acceptable) | Locations without explicit biome metadata and without inherited biome from parent fall through to the game service-level fallback climate template. |
 | lib-analytics (`IAnalyticsClient`) | Publishing environmental statistics (weather distribution accuracy, override frequency, resource availability trends). (L4) | No analytics. Silent skip. |
 
@@ -293,7 +336,7 @@ WeatherEvent:
 | Dependent | Relationship |
 |-----------|-------------|
 | lib-actor (L2) | Actor discovers `EnvironmentProviderFactory` via `IEnumerable<IVariableProviderFactory>` DI injection; creates provider instances per entity for ABML behavior execution (`${environment.*}` variables). NPCs make weather-aware decisions: stay indoors during storms, wear warm clothes in cold, migrate during droughts. |
-| lib-ethology (L4) | Ethology's seasonal behavior modifier extension consumes `environment.conditions-changed` events to apply automatic environmental overrides to creature archetypes. Wolves are more aggressive in harsh winter; deer are more vigilant during storms. |
+| lib-ethology (L4) | Ethology's seasonal behavior modifier extension consumes `environment.conditions-changed` events to apply automatic environmental overrides to creature archetypes. Wolves are more aggressive in harsh winter; deer are more vigilant during storms. **Note**: This subscription is an Ethology-side concern -- Ethology must declare `x-event-subscriptions` for `environment.conditions-changed` in its own events schema. Environment just publishes the event; it has no awareness of Ethology as a consumer. |
 | lib-workshop (L4) | Workshop's seasonal production modifier extension queries current resource availability to adjust production rates. Farming blueprints produce at reduced rate during drought, increased rate during abundant seasons. |
 | lib-loot (L4, planned) | Loot table seasonal modifiers query current season + resource availability from Environment to adjust drop rates. Forageable items are scarcer in winter, abundant in autumn harvest. |
 | lib-market (L4, planned) | Market price modifiers adjust NPC vendor pricing based on resource availability. Scarcity drives prices up; abundance drives them down. |
@@ -346,6 +389,7 @@ WeatherEvent:
 |-------------|---------|
 | `climate:{gameServiceId}:{biomeCode}` | Climate template mutations |
 | `event:{scopeType}:{scopeId}` | Weather event creation/cancellation for a scope |
+| `refresh:{realmId}` | Per-realm condition refresh cycle (one worker instance per realm) |
 
 ---
 
@@ -365,13 +409,15 @@ WeatherEvent:
 
 ### Consumed Events
 
-| Topic | Handler | Action |
-|-------|---------|--------|
-| `worldstate.period-changed` | `HandlePeriodChangedAsync` | Re-compute and cache environmental conditions for all locations in the affected realm. Publish `conditions-changed` events where weather or temperature changed meaningfully. Primary trigger for environmental state updates. |
-| `worldstate.season-changed` | `HandleSeasonChangedAsync` | Trigger resource availability recalculation for all locations in the affected realm. Publish `resource-availability.changed`. Invalidate cached weather distributions (new season = new weather probabilities). |
-| `worldstate.day-changed` | `HandleDayChangedAsync` | Invalidate day-keyed weather cache entries for the realm (new game-day = new deterministic weather roll). Lightweight -- just cache invalidation. |
-| `location.created` | `HandleLocationCreatedAsync` | Resolve climate template binding for the new location (inherit biome from parent or use explicit biome metadata). |
-| `location.deleted` | `HandleLocationDeletedAsync` | Clean up any location-scoped weather events and cached conditions. |
+These MUST be declared as `x-event-subscriptions` in `environment-events.yaml` so the event controller is generated. Without schema-level subscription declarations, the handlers won't be wired up.
+
+| Topic | Handler | Event Model Fields | Action |
+|-------|---------|-------------------|--------|
+| `worldstate.period-changed` | `HandlePeriodChangedAsync` | `realmId`, `gameServiceId`, `period` (current period code), `previousPeriod`, `gameHour`, `gameDay`, `season`, `seasonProgress` | Primary trigger for environmental state updates. Acquires realm-scoped distributed lock (`refresh:{realmId}`), then re-computes condition snapshots for locations within the affected realm (scoped by `ConditionRefreshMode` -- all locations or active-only). Publishes `conditions-changed` events where weather or temperature changed meaningfully vs. the previous cached snapshot. Publishes to Mapping weather layer if enabled. |
+| `worldstate.season-changed` | `HandleSeasonChangedAsync` | `realmId`, `gameServiceId`, `season` (new season code), `previousSeason`, `year` | Trigger resource availability recalculation for all locations in the affected realm. Publish `resource-availability.changed`. Invalidate cached weather distributions (new season = new weather probability weights from climate template). Invalidate `ClimateTemplateCache` seasonal lookups. |
+| `worldstate.day-changed` | `HandleDayChangedAsync` | `realmId`, `gameServiceId`, `gameDay` (new day number), `year` | Invalidate day-keyed weather cache entries for the realm (`environment:weather:resolved:{realmId}:*:{previousGameDay}`). Lightweight -- cache invalidation only, no condition recomputation. New weather rolls will be computed lazily on next query or proactively on next worker refresh cycle. |
+| `location.created` | `HandleLocationCreatedAsync` | `locationId`, `realmId`, `parentLocationId`, `metadata` | Resolve climate template binding for the new location (inherit biome from parent or use explicit biome metadata). Create initial condition snapshot if the location has a resolvable climate template. |
+| `location.deleted` | `HandleLocationDeletedAsync` | `locationId`, `realmId` | Clean up any location-scoped weather events and cached conditions. Remove from active location tracking set if using `ActiveOnly` refresh mode. |
 
 ### Resource Cleanup (FOUNDATION TENETS)
 
@@ -390,7 +436,9 @@ WeatherEvent:
 | `ConditionCacheTtlSeconds` | `ENVIRONMENT_CONDITION_CACHE_TTL_SECONDS` | `60` | TTL for cached condition snapshots in Redis. Variable providers read from this cache. (range: 10-300) |
 | `WeatherCacheTtlSeconds` | `ENVIRONMENT_WEATHER_CACHE_TTL_SECONDS` | `600` | TTL for cached resolved weather per location per game-day in Redis. (range: 60-3600) |
 | `ClimateCacheTtlMinutes` | `ENVIRONMENT_CLIMATE_CACHE_TTL_MINUTES` | `60` | TTL for in-memory climate template cache. Templates change rarely. (range: 5-1440) |
-| `ConditionUpdateIntervalSeconds` | `ENVIRONMENT_CONDITION_UPDATE_INTERVAL_SECONDS` | `30` | Real-time seconds between background condition refresh cycles. (range: 5-300) |
+| `ConditionRefreshMode` | `ENVIRONMENT_CONDITION_REFRESH_MODE` | `AllLocations` | Controls which locations the background worker refreshes per realm cycle. `AllLocations`: every location in the realm is refreshed (safe default, ensures all condition caches are warm). `ActiveOnly`: only locations with active entities (actors, game sessions, or queries within `ActiveLocationWindowMinutes`) are refreshed -- dormant locations compute conditions lazily on first query. See Design Consideration #1 for trade-offs. |
+| `ActiveLocationWindowMinutes` | `ENVIRONMENT_ACTIVE_LOCATION_WINDOW_MINUTES` | `30` | When `ConditionRefreshMode` is `ActiveOnly`, locations are considered active if they had an entity or query within this window. (range: 5-1440) |
+| `ConditionUpdateIntervalSeconds` | `ENVIRONMENT_CONDITION_UPDATE_INTERVAL_SECONDS` | `30` | Real-time seconds between background condition refresh cycles per realm. (range: 5-300) |
 | `ConditionUpdateStartupDelaySeconds` | `ENVIRONMENT_CONDITION_UPDATE_STARTUP_DELAY_SECONDS` | `15` | Seconds to wait after startup before first condition refresh, allowing Worldstate to initialize. (range: 0-120) |
 | `MaxClimateTemplatesPerGameService` | `ENVIRONMENT_MAX_CLIMATE_TEMPLATES_PER_GAME_SERVICE` | `50` | Safety limit on climate templates per game service. (range: 5-200) |
 | `MaxActiveEventsPerScope` | `ENVIRONMENT_MAX_ACTIVE_EVENTS_PER_SCOPE` | `10` | Maximum concurrent weather events per realm or location scope. (range: 1-50) |
@@ -418,7 +466,7 @@ WeatherEvent:
 | `ILocationClient` | Location metadata: biome, altitude, parent hierarchy (L2 hard) |
 | `IGameServiceClient` | Game service existence validation (L2 hard) |
 | `IServiceProvider` | Runtime resolution of soft dependencies (lib-mapping, lib-realm) |
-| `EnvironmentConditionWorkerService` | Background `HostedService` that periodically refreshes environmental conditions for active realms. Publishes `conditions-changed` events when weather transitions occur. |
+| `EnvironmentConditionWorkerService` | Background `HostedService` that refreshes environmental conditions **per-realm** on a periodic cycle. Acquires a distributed lock per realm (`refresh:{realmId}`), iterates locations within that realm, computes condition snapshots, and publishes `conditions-changed` events where weather or temperature changed meaningfully. Each realm's refresh is independently locked for multi-instance safety -- two nodes can refresh different realms concurrently, but only one node processes a given realm at a time. Supports configurable `ConditionRefreshMode` (see Configuration): `AllLocations` (default, refresh every location in the realm) or `ActiveOnly` (refresh only locations with active entities -- actors, game sessions, or recent queries -- skipping dormant locations). |
 | `EnvironmentEventExpirationWorkerService` | Background `HostedService` that scans for expired weather events and deactivates them. Publishes `weather-event.ended` events. |
 | `EnvironmentProviderFactory` | Implements `IVariableProviderFactory` to provide `${environment.*}` variables to Actor's behavior system. |
 | `IWeatherResolver` / `WeatherResolver` | Internal helper for deterministic weather computation from climate templates, season, and location. |
@@ -430,6 +478,43 @@ WeatherEvent:
 | Factory | Namespace | Data Source | Registration |
 |---------|-----------|-------------|--------------|
 | `EnvironmentProviderFactory` | `${environment.*}` | Reads from condition snapshot cache (Redis). Resolves character's locationId and realmId via `ICharacterClient` or actor metadata. Provides computed temperature, weather, atmospheric conditions, and resource availability. | `IVariableProviderFactory` (DI singleton) |
+
+### Mapping Integration
+
+Environment publishes weather condition data to Mapping's `weather_effects` spatial layer (600s TTL) so that game clients and NPC perception can query environmental conditions spatially rather than by location ID.
+
+**Soft dependency pattern**:
+```csharp
+// In EnvironmentConditionWorkerService, after computing a batch of condition snapshots:
+var mappingClient = _serviceProvider.GetService<IMappingClient>();
+if (mappingClient == null)
+{
+    _logger.LogDebug("Mapping not enabled, skipping weather layer publication");
+    return; // Graceful degradation -- spatial queries unavailable, direct queries still work
+}
+```
+
+**Publication trigger**: The `EnvironmentConditionWorkerService` publishes to Mapping at the end of each realm's refresh cycle, batched by `MappingPublishBatchSize`. Only locations whose conditions actually changed since the last publication are included (compare current snapshot hash to previous).
+
+**Data model published per location**:
+```
+WeatherEffectSpatialData:
+  locationId:              Guid
+  realmId:                 Guid
+  weatherCode:             string     # Current weather pattern code
+  temperature:             float      # Computed temperature
+  precipitationType:       string     # "none", "rain", "snow", "sleet", "hail"
+  precipitationIntensity:  float      # 0.0-1.0
+  visibility:              float      # 0.0-1.0
+  windSpeed:               float      # 0.0-1.0 normalized
+  windDirection:           float      # 0.0-360.0 degrees
+  resourceAvailability:    float      # 0.0-1.0
+  hasActiveWeatherEvent:   bool       # Whether a divine/scheduled event is active
+  activeEventCode:         string?    # Event code if applicable
+  ttlSeconds:              int        # Matches ConditionCacheTtlSeconds * 2 (buffer for refresh cycles)
+```
+
+**API call**: Uses Mapping's spatial ingest endpoint (`/mapping/ingest/batch`) with channel `weather_effects` and the location's spatial coordinates from Location metadata. The `TtlWeatherEffects` Mapping configuration (600s TTL) auto-expires stale weather data if Environment stops publishing (e.g., during downtime or when `MappingPublishEnabled` is disabled).
 
 ---
 
@@ -459,7 +544,7 @@ All require `developer` role.
 
 - **DeprecateClimate** (`/environment/climate/deprecate`): Marks deprecated with reason. Existing locations continue resolving. New location bindings with this biome code emit a warning.
 
-- **BulkSeedClimates** (`/environment/climate/bulk-seed`): Bulk creation for world initialization. Idempotent with `updateExisting` flag.
+- **BulkSeedClimates** (`/environment/climate/bulk-seed`): Bulk creation for world initialization. Idempotent with `updateExisting` flag. Accepts an array of climate template definitions. This is the primary path from "service deployed" to "climates exist" -- called during world initialization alongside Location's bulk seeding. Follows Location's two-pass seeding pattern: first pass creates templates, second pass resolves any cross-references (templates referencing other templates' season codes). Designed for configuration-driven initialization where climate data is defined in YAML seed files and loaded via admin API at deployment time, the same pattern as Species and Location bulk seeding.
 
 ### Weather Event Management (5 endpoints)
 
@@ -473,9 +558,19 @@ All require `developer` role.
 
 - **ExtendWeatherEvent** (`/environment/weather-event/extend`): Extends an active event's end time. Cannot shorten (use cancel + create). Useful for divine actors prolonging a storm.
 
+### Weather Monitoring (2 endpoints)
+
+These endpoints exist for divine actors (via Puppetmaster ABML actions) and regional watchers to observe environmental conditions and decide when to intervene. Without monitoring, divine weather manipulation is one-way (gods can override but can't observe).
+
+- **GetRealmWeatherSummary** (`/environment/weather/realm-summary`): Returns aggregated weather statistics for an entire realm: location count per weather pattern, average temperature, extremes (coldest/hottest location), active weather event count, overall resource availability. Used by divine actors to make realm-level decisions ("is my realm in drought?", "how many locations are experiencing storms?"). Computed by reading cached condition snapshots, not re-computing.
+
+- **GetWeatherByRegion** (`/environment/weather/by-region`): Returns condition snapshots for all locations within a location subtree (a parent location and all descendants). Used by regional watchers monitoring their assigned territory. Accepts a `locationId` (the region root) and returns child location conditions grouped by weather pattern. Enables spatial monitoring patterns like "what percentage of my forest region is on fire/in drought/experiencing storms?"
+
+**Divine monitoring flow**: A storm god's ABML behavior uses `${environment.resource_availability}` and `${environment.weather}` variables for its own location context (via the variable provider), then calls `GetRealmWeatherSummary` or `GetWeatherByRegion` via Puppetmaster ABML actions for broader awareness. The god-actor also subscribes to `environment.conditions-changed` events (via actor event subscriptions in Puppetmaster) to reactively detect weather transitions across its domain. This provides both pull (query endpoints) and push (event subscription) monitoring paths.
+
 ### Resource Availability (2 endpoints)
 
-- **GetResourceAvailability** (`/environment/resource/get-availability`): Returns the current resource availability for a location, accounting for seasonal baseline, weather event modifiers, and divine overrides. Returns the float abundance level and contributing factors (base seasonal, event modifiers, net result).
+- **GetResourceAvailability** (`/environment/resource/get-availability`): Returns the current resource availability for a location, accounting for seasonal baseline, weather event modifiers, and divine overrides. Returns the float abundance level and contributing factors (base seasonal, event modifiers, net result). See [Resource Availability Computation](#resource-availability-computation) below for the algorithm.
 
 - **GetRealmResourceSummary** (`/environment/resource/realm-summary`): Returns aggregate resource availability across all locations in a realm, grouped by biome. Used by Market for realm-wide economic analysis and by regional watchers for ecological assessments.
 
@@ -738,11 +833,12 @@ flows:
 ### Phase 1: Climate Template Infrastructure
 
 - Create `environment-api.yaml` schema with all endpoints
-- Create `environment-events.yaml` schema
+- Create `environment-events.yaml` schema with `x-event-subscriptions` for all consumed events (worldstate.period-changed, worldstate.season-changed, worldstate.day-changed, location.created, location.deleted)
 - Create `environment-configuration.yaml` schema
 - Generate service code
 - Implement climate template CRUD (seed, get, list, update, deprecate, bulk-seed)
 - Implement climate template validation (seasonal curve coverage, weather distribution weights, baseline completeness)
+- Create Arcadia seed data files for default climate templates (temperate_forest, alpine, desert, tropical, tundra, underground, oceanic) in `provisioning/` alongside existing seed data, loaded via `BulkSeedClimates` during world initialization
 
 ### Phase 2: Deterministic Weather Resolution
 
@@ -877,7 +973,13 @@ Location (where)  ────────────────────�
 
 ### Design Considerations (Requires Planning)
 
-1. **Scale of condition computation for large worlds**: A realm with 10,000 locations needs condition snapshots for all of them. The background worker refreshes conditions on Worldstate period-changed events (~every 12 real minutes at 24:1 ratio). Processing 10,000 locations per refresh at 30 seconds interval is feasible with batch processing and caching, but the Mapping publishing step (pushing weather data to spatial index) may bottleneck. May need location-scoped refresh (only refresh locations with active entities) rather than realm-wide refresh.
+1. **Scale of condition computation for large worlds**: The background worker is **realm-scoped** -- one distributed lock per realm, one refresh cycle per realm, independently parallelizable across nodes. A realm with 10,000 locations processes them in batches within its refresh cycle (~every 30 real seconds at default interval). This is architecturally fixed: per-realm locks, per-realm iteration, per-realm Worldstate queries.
+
+   **Active-region-only optimization** (`ConditionRefreshMode` config): For realms with thousands of locations where most are dormant (no players, no active NPCs), the `ActiveOnly` mode skips locations that haven't been queried or had entity activity within the `ActiveLocationWindowMinutes` window. Active locations are tracked via a Redis sorted set (`environment:active:{realmId}` with timestamps as scores), updated whenever a condition query or variable provider reads a location's snapshot. Dormant locations still resolve conditions correctly -- they just compute lazily on first query rather than being pre-cached by the worker. Trade-offs:
+   - `AllLocations` (default): All condition caches are always warm. Mapping weather layer is always current for all locations. Higher CPU/Redis cost for large realms with many dormant areas.
+   - `ActiveOnly`: Only active locations pay refresh cost. Dormant locations have a cold-cache penalty on first query (~5-10ms compute vs <1ms cache hit). Mapping weather layer may be stale for dormant areas until queried. Better scaling for large worlds where <10% of locations are active at any given time.
+
+   The Mapping publishing step (pushing weather data to spatial index) is the primary bottleneck at scale. `MappingPublishBatchSize` bounds the per-cycle publish volume. In `ActiveOnly` mode, only active locations publish to Mapping, significantly reducing spatial index write pressure.
 
 2. **Climate template complexity vs. performance**: Rich climate templates with many weather patterns, complex temperature curves, and multiple seasonal baselines require non-trivial computation on every condition resolution. The `ClimateTemplateCache` mitigates MySQL queries, but the computation itself (seasonal interpolation, hourly curve evaluation, altitude adjustment) runs on every cache miss. Pre-computing daily condition tables per location (one computation per game-day per location) would amortize the cost.
 
