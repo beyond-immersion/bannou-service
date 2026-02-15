@@ -6,7 +6,7 @@
 > **State Store**: broadcast-platforms (MySQL), broadcast-sessions (Redis), broadcast-sentiment-buffer (Redis), broadcast-outputs (Redis), broadcast-cameras (Redis), broadcast-lock (Redis) — all planned
 > **Layer**: L3 AppFeatures
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists.
-> **Planning**: [STREAMING-ARCHITECTURE.md](../planning/STREAMING-ARCHITECTURE.md)
+> **Planning**: N/A
 
 ## Overview
 
@@ -81,7 +81,7 @@ Most sentiments in a pulse are anonymous -- just a category + intensity with no 
 
 ## The RTMP Broadcast System
 
-lib-broadcast manages FFmpeg processes for broadcasting content to RTMP endpoints (Twitch, YouTube, custom). This subsystem was originally designed as part of lib-voice (VOICE-STREAMING.md) and moved to lib-broadcast in the three-service architecture redesign.
+lib-broadcast manages FFmpeg processes for broadcasting content to RTMP endpoints (Twitch, YouTube, custom). This subsystem was originally designed as part of lib-voice and moved to lib-broadcast in the three-service architecture redesign.
 
 **Two distinct broadcast modes**: Server-side content broadcasting (game cameras, game audio) requires no player consent -- it's game content. Voice room broadcasting to external platforms requires explicit consent from ALL room participants via lib-voice's broadcast consent flow. lib-broadcast subscribes to voice consent events and acts accordingly; it never initiates voice broadcasting directly.
 
@@ -428,7 +428,7 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 
 ## Stubs & Unimplemented Features
 
-**Everything is unimplemented.** This is a pre-implementation architectural specification. No schema, no generated code, no service implementation exists. The following phases are planned per [STREAMING-ARCHITECTURE.md](../planning/STREAMING-ARCHITECTURE.md):
+**Everything is unimplemented.** This is a pre-implementation architectural specification. No schema, no generated code, no service implementation exists. The following phases are planned:
 
 ### Phase 1: Schema & Generation
 - Create broadcast-api.yaml schema with all endpoints (20 endpoints across 5 groups)
@@ -539,4 +539,4 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 
 ## Work Tracking
 
-*No active work items. Plugin is in pre-implementation phase. See [STREAMING-ARCHITECTURE.md](../planning/STREAMING-ARCHITECTURE.md) for the full planning document.*
+*No active work items. Plugin is in pre-implementation phase.*

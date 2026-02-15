@@ -4,7 +4,7 @@
 > **Schema**: schemas/voice-api.yaml
 > **Version**: 2.0.0
 > **State Store**: voice-statestore (Redis)
-> **Planning**: [STREAMING-ARCHITECTURE.md](../planning/STREAMING-ARCHITECTURE.md)
+> **Planning**: N/A
 
 ## Overview
 

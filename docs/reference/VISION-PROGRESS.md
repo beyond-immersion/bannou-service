@@ -1,6 +1,6 @@
 # Vision Progress: Cross-Service Architectural Audit
 
-> **Version**: 1.0
+> **Version**: 1.1
 > **Last Updated**: 2026-02-15
 > **Scope**: High-level alignment between VISION.md, PLAYER-VISION.md, BEHAVIORAL-BOOTSTRAP.md, and the 75-service plugin architecture
 > **Purpose**: Capture disconnects, resolved patterns, and open questions before proceeding to aspirational plugin specification
@@ -157,6 +157,82 @@ This ensures multi-instance consistency and makes death/birth rates tunable per 
 
 **Resolution**: All L4 services correctly use lib-resource `x-references` cleanup callbacks (per T28) instead of event subscriptions. No L4 service subscribes to `character.deleted`. Resource orchestrates cleanup atomically via prebound APIs with distributed locks.
 
+### R9. The Combat Dream: Cinematic Plugin + ABML as Universal Authoring Language
+
+**Original concern** (formerly O2): VISION.md describes the "Combat Dream" (Event Brain -> Mapping affordances -> Character capabilities -> Cinematic Interpreter -> Three-Version Temporal Desync) but no service owns cinematic interpretation, combat choreography, or temporal desync.
+
+**Resolution**: The answer emerges from two insights:
+
+**Insight 1: Combat decisions are behavioral, but choreography is a distinct computational domain.**
+
+[WHY-ARE-THERE-NO-SKILL-MAGIC-OR-COMBAT-PLUGINS.md](../faqs/WHY-ARE-THERE-NO-SKILL-MAGIC-OR-COMBAT-PLUGINS.md) correctly argues that combat *decisions* are behavioral compositions (Actor + variable providers + GOAP). But the *choreography* -- "wind up, fake left, strike right, follow through" -- is a different temporal scale (5-30s real-time sequences vs. 100-500ms cognitive ticks) and a different computational domain (dramatic composition, not decision-making).
+
+This parallels existing domains exactly:
+
+| Domain | SDK (Pure Computation) | Plugin (API Wrapper) | ABML Decides | SDK Expands Into |
+|---|---|---|---|---|
+| **Music** | MusicTheory + MusicStoryteller | lib-music (L4) | "play music for this mood" | Full composition (MIDI-JSON) |
+| **Narrative** | StorylineTheory + StorylineStoryteller | lib-storyline (L4) | "compose a story from this archive" | Narrative plan with phases |
+| **Spatial** | VoxelBuilder | consumed by lib-procedural | "expand this dungeon wing" | Voxel geometry |
+| **Choreography** | CinematicTheory (extension of behavior-compiler SDK) | **lib-cinematic (L4, new)** | "initiate combat encounter" | Choreographic sequence with QTE windows |
+
+**Insight 2: ABML is the universal authoring language, not just a behavior language.**
+
+ABML already serves multiple execution modes through the existing SDK and shared infrastructure:
+
+| Execution Mode | Where It Lives | Used For | Temporal Scale |
+|---|---|---|---|
+| **Compiled bytecode** (BehaviorModelInterpreter) | `sdks/behavior-compiler/Runtime/` | Performance-critical NPC behavior loops where higher-level decisions set inputs | 100-500ms ticks |
+| **Step-through document** (DocumentExecutor) | `bannou-service/Abml/Execution/` | Complex behaviors requiring variable providers and GOAP planning | Seconds to hours |
+| **Cinematic streaming** (CinematicInterpreter) | `sdks/behavior-compiler/Runtime/` | Streaming choreographic composition with continuation points | 5-30s real-time |
+
+The CinematicInterpreter **already exists** in the behavior-compiler SDK. It wraps BehaviorModelInterpreter with streaming composition and continuation point support. What's missing is:
+
+1. **Higher-level composition logic**: affordance evaluation, capability matching, dramatic pacing, agency-gated QTE insertion -- the "CinematicComposer" layer that takes encounter context and produces authored ABML cinematic documents
+2. **lib-cinematic plugin**: thin API wrapper so god-actors and Event Brain actors can call `/cinematic/compose`, `/cinematic/extend`, and `/cinematic/resolve-input` from their ABML behaviors
+
+The plugin would be a thin orchestration layer (same pattern as lib-music wrapping MusicTheory):
+
+| Endpoint | What It Does | Called By |
+|---|---|---|
+| `/cinematic/compose` | Participants + environment + constraints -> choreographic sequence | Event Brain actors via ABML |
+| `/cinematic/extend` | Existing sequence + continuation point + new context -> extension | Event Brain actors mid-encounter |
+| `/cinematic/resolve-input` | QTE definition + player input -> outcome + branch selection | Gardener (routing player influence into active cinematic) |
+| `/cinematic/list-templates` | Available action templates for a capability set | Behavior authoring tools |
+
+**Connection to Progressive Agency**: QTE/decision points in cinematics ARE the combat domain of Agency's progressive agency:
+
+| Spirit Fidelity | Combat UX | Cinematic System Behavior |
+|---|---|---|
+| None (new spirit) | Watch character fight autonomously | Full choreography, zero QTEs |
+| Low | Occasional "approach/retreat" nudges | Rare, simple decision points |
+| Medium | Timing windows appear | QTEs with moderate windows |
+| High | Stance + combo direction | Rich decision points, tight windows |
+| Master | Full martial choreography | Dense QTE sequences, style direction |
+
+The cinematic plugin reads `${spirit.domain.combat.fidelity}` (from Agency) to determine QTE density -- same choreography computation, different interaction windows based on the spirit's earned understanding. This directly implements the PLAYER-VISION.md gradient.
+
+**ABML as universal authoring format**: Beyond cinematics, ABML documents can author:
+
+| Content Type | Execution Backend | Consumer |
+|---|---|---|
+| NPC behaviors | Bytecode VM (Actor runtime) | lib-actor |
+| Choreography/timelines | CinematicInterpreter (streaming) | lib-cinematic (new) |
+| Dialogue/scripted exchanges | DocumentExecutor (step-through) | Any plugin via bannou-service |
+| Story scenarios | DocumentExecutor | lib-storyline |
+| Music composition parameters | DocumentExecutor | lib-music |
+| Dialing plans (SIP/voice) | DocumentExecutor | lib-voice |
+
+The key architectural property: **DocumentExecutor is in `bannou-service/`** (shared code), not in any plugin. Any service can execute ABML documents without depending on lib-behavior or lib-actor. The bytecode VM and CinematicInterpreter are in the behavior-compiler SDK, also independently referenceable. This means ABML authoring and execution are already decoupled from any specific plugin.
+
+### R10. Event Brain Actor Type Definition
+
+**Original concern** (formerly O8): Event Brain actors appear in Vision, Dungeon, and Behavioral Bootstrap docs but aren't formally defined in Actor or Behavior.
+
+**Resolution**: The investigation revealed that Event Brain is not a separate actor type but a **behavioral pattern** -- a character brain actor with extended perception scope. God-actors with the system realm pattern are character brain actors (bound to their divine character) that can also use `load_snapshot:` for ad-hoc data about arbitrary entities. The CinematicInterpreter already exists in the SDK to handle the streaming choreographic composition that Event Brains perform.
+
+The documentation gap is real (Actor's deep dive should describe this pattern), but the implementation architecture is sound. Event Brain = character brain + global event perception + load_snapshot + CinematicInterpreter for choreographic output. No new actor type needed.
+
 ---
 
 ## Open Issues
@@ -171,34 +247,7 @@ This ensures multi-instance consistency and makes death/birth rates tunable per 
 
 **Question**: What is the implementation timeline for Divine? Should it be the next major implementation target given how many systems depend on it?
 
-### O2. The Combat Dream Has No Service Home [SIGNIFICANT]
-
-**Priority**: P1 -- the most player-visible system has no clear architectural owner
-
-**Details**: VISION.md describes the "Combat Dream":
-
-```
-Event Brain -> Mapping affordances -> Character capabilities ->
-Cinematic Interpreter (streaming composition) ->
-Three-Version Temporal Desync (canonical past, participant present, spectator projection)
-```
-
-Scanning all 75 service descriptions, **no service owns cinematic interpretation, combat choreography, or temporal desync**:
-
-- Behavior mentions "streaming composition" and a "5-stage cognition pipeline"
-- Actor mentions "event coordinators"
-- But the Cinematic Interpreter is not a service
-- Three-Version Temporal Desync is not mentioned in any service description
-- "Event Brain" actors appear in Dungeon and Vision docs but aren't formally defined in Actor or Behavior
-
-**Possible answers**:
-1. A new service (e.g., `cinematic` or `combat-choreography`) at L4
-2. The combat dream is entirely behavioral -- ABML behavior documents + Actor runtime + Mapping affordance queries, with no new service required
-3. The cinematic interpreter is a client-side SDK (like MusicTheory), exempt from schema-first per Tenet 1 allowed exceptions
-
-**Question**: Which is it? If (2) or (3), the architecture needs documentation explaining how these pieces compose. If (1), a new service needs to be added to the hierarchy.
-
-### O3. Affix Metadata Bag Convention (T29 Violation) [SIGNIFICANT]
+### O2. Affix Metadata Bag Convention (T29 Violation) [SIGNIFICANT]
 
 **Priority**: P1 -- acknowledged tenet violation that must be resolved before implementation
 
@@ -213,7 +262,7 @@ This is the exact anti-pattern the tenets exist to prevent: cross-service data s
 
 **Question**: Which resolution approach should Affix follow?
 
-### O4. Transit and Environment Lack Variable Providers [MODERATE]
+### O3. Transit and Environment Lack Variable Providers [MODERATE]
 
 **Priority**: P2 -- NPCs cannot make spatially or environmentally aware decisions
 
@@ -230,7 +279,7 @@ Neither Transit nor Environment describe a Variable Provider Factory implementat
 
 **Question**: Should Transit and Environment add `${transit.*}` and `${environment.*}` variable provider implementations to their designs?
 
-### O5. Organization Lacks Economic GOAP Integration [MODERATE]
+### O4. Organization Lacks Economic GOAP Integration [MODERATE]
 
 **Priority**: P2 -- the organizational layer of the economy has no behavioral integration path
 
@@ -245,7 +294,7 @@ The Vision describes NPCs that "buy/sell/craft/trade based on needs, aspirations
 
 **Question**: Should Organization provide `${organization.*}` variables? How should NPC GOAP distinguish personal vs. organizational economic activity?
 
-### O6. Loot Treats L2 Dependencies as Soft [MINOR]
+### O5. Loot Treats L2 Dependencies as Soft [MINOR]
 
 **Priority**: P3 -- hierarchy violation, small fix
 
@@ -253,7 +302,7 @@ The Vision describes NPCs that "buy/sell/craft/trade based on needs, aspirations
 
 **Resolution**: Change Currency and Character to hard dependencies (constructor injection). Small documentation fix.
 
-### O7. Variable Provider Scaling at 100K NPCs [MINOR]
+### O6. Variable Provider Scaling at 100K NPCs [MINOR]
 
 **Priority**: P3 -- performance concern, not a correctness issue
 
@@ -280,16 +329,6 @@ At 100,000 concurrent NPCs with 100-500ms cognitive cycles, loading 13+ provider
 **Mitigating factors**: Not all NPCs need all providers. A blacksmith NPC needs `${craft.*}` and `${market.*}` but probably not `${hearsay.*}`. Behavior documents only reference the providers they use, so the Actor runtime can lazy-load only the required providers per actor. This is an optimization concern, not an architectural problem.
 
 **Question**: Should the Variable Provider Factory pattern document a lazy-loading strategy, or is the current "load all registered providers" approach sufficient for the target scale?
-
-### O8. Event Brain Actor Type Not Formally Defined [MINOR]
-
-**Priority**: P3 -- documentation gap, not an implementation gap
-
-**Details**: The Vision, Dungeon deep dive, and Behavioral Bootstrap all reference "Event Brain" actors as a distinct template type. Actor's generated service details mention "event coordinators" but don't formally define the Event Brain template or its capabilities distinct from character-brain actors.
-
-The behavioral bootstrap clarifies: god-actors with the system realm pattern are **character brain** actors (bound to their divine character) that can **also** use `load_snapshot:` for ad-hoc data about arbitrary entities. This hybrid mode is the Event Brain pattern -- a character brain with extended perception scope.
-
-**Question**: Should Actor's deep dive formally document Event Brain as a template type, or is it simply a behavioral pattern (character brain + global event perception + load_snapshot)?
 
 ---
 
@@ -325,17 +364,53 @@ Multiple services that list or query characters may need to exclude system realm
 
 ---
 
+## Key Architectural Pattern: ABML as Universal Authoring Language
+
+A second cross-cutting pattern emerged from resolving the Combat Dream (R9): ABML is not just a behavior language -- it is a universal authoring format for any domain that needs autonomous decision-making or time-sequenced composition. The existing infrastructure already supports this:
+
+### Execution Backends
+
+| Mode | Location | Consumer | When to Use |
+|---|---|---|---|
+| **Compiled bytecode** | `sdks/behavior-compiler/Runtime/BehaviorModelInterpreter.cs` | lib-actor (NPC brain loops), client SDKs | Performance-critical loops where higher-level decisions set the inputs; no GOAP needed at runtime |
+| **Step-through document** | `bannou-service/Abml/Execution/DocumentExecutor.cs` | Any plugin (shared code) | Complex behaviors requiring variable providers, GOAP planning, service API calls |
+| **Cinematic streaming** | `sdks/behavior-compiler/Runtime/CinematicInterpreter.cs` | lib-cinematic (new), lib-behavior | Streaming choreographic composition with continuation points and real-time extensions |
+
+### Authoring Domains
+
+| Domain | ABML Decides | Execution Backend | Plugin |
+|---|---|---|---|
+| NPC cognition | "What should I do?" | Bytecode VM (100-500ms ticks) | lib-actor |
+| Combat choreography | "How should this fight play out?" | CinematicInterpreter (5-30s sequences) | lib-cinematic (new) |
+| Narrative composition | "What story emerges from this archive?" | DocumentExecutor (hours of game-time) | lib-storyline |
+| Music authoring | "What mood should this music convey?" | DocumentExecutor -> MusicTheory SDK | lib-music |
+| Dialogue exchanges | "What should this character say?" | DocumentExecutor (seconds) | Any plugin |
+| God orchestration | "Should I intervene in this region?" | DocumentExecutor (days of game-time) | lib-puppetmaster / lib-gardener |
+| Dialing plans (SIP) | "How should this voice call be routed?" | DocumentExecutor | lib-voice |
+
+### Architectural Property
+
+**DocumentExecutor is in `bannou-service/`** (shared code), not in any plugin. Any service can execute ABML documents without depending on lib-behavior or lib-actor. The bytecode VM and CinematicInterpreter are in the behavior-compiler SDK, independently referenceable. This means ABML authoring and execution are decoupled from any specific plugin -- the language is infrastructure, not a feature.
+
+---
+
 ## Overall Assessment
 
-The 75-service architecture is remarkably coherent. The NPC cognition layers are well-differentiated, the economy item flows are consistent, the seed growth pipeline works uniformly, and the service hierarchy is respected almost everywhere. The system realm pattern (already documented in Divine) resolves the two highest-impact concerns (guardian spirit growth and twin spirits) without requiring new services.
+The 75-service architecture is remarkably coherent. The audit resolved 10 of the original concerns:
+
+- **System realm pattern** (R1-R3): Collapses guardian spirit growth, twin spirits, and Agency data source into existing L2 infrastructure
+- **NPC cognition differentiation** (R4): All 13+ variable provider namespaces are clearly orthogonal
+- **Economy consistency** (R5-R6, R8): Item flows, seed growth pipelines, and cleanup all follow uniform patterns
+- **Temporal mechanisms** (R7): Character-Lifecycle aging is correctly event-driven via Worldstate
+- **Combat dream** (R9-R10): Decomposes into CinematicTheory SDK extension + thin lib-cinematic plugin, following the Music/Storyline pattern; ABML recognized as universal authoring language
 
 The remaining open issues are:
-- **One critical blocker** (Divine is stubbed)
-- **Two significant design decisions** (combat dream ownership, affix metadata)
-- **Two moderate gaps** (transit/environment providers, organization GOAP)
-- **Three minor items** (loot hierarchy fix, scaling plan, event brain documentation)
+- **One critical blocker** (O1: Divine is stubbed -- blocks behavioral bootstrap, system realms, and content flywheel)
+- **One significant design decision** (O2: Affix metadata T29 violation)
+- **Two moderate gaps** (O3: Transit/Environment variable providers; O4: Organization economic GOAP)
+- **Two minor items** (O5: Loot hierarchy fix; O6: Variable provider scaling plan)
 
-None of the open issues represent architectural contradictions. They are design gaps -- places where pieces fit together logically but haven't been specified yet.
+None of the open issues represent architectural contradictions. They are design gaps -- places where pieces fit together logically but haven't been specified yet. The single most impactful action is implementing Divine (O1), which unblocks the behavioral bootstrap, proves out the system realm pattern for Nexius/Underworld, and enables the content flywheel's orchestration layer.
 
 ---
 

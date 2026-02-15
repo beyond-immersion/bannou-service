@@ -6,7 +6,7 @@
 > **State Store**: showtime-sessions (MySQL), showtime-audience-pool (Redis), showtime-audience-followers (MySQL), showtime-hype-trains (Redis), showtime-session-voice (Redis), showtime-lock (Redis) — all planned
 > **Layer**: L4 GameFeatures
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists.
-> **Planning**: [STREAMING-ARCHITECTURE.md](../planning/STREAMING-ARCHITECTURE.md)
+> **Planning**: N/A
 
 ## Overview
 
@@ -455,7 +455,7 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 
 ## Stubs & Unimplemented Features
 
-**Everything is unimplemented.** This is a pre-implementation architectural specification. No schema, no generated code, no service implementation exists. The following phases are planned per [STREAMING-ARCHITECTURE.md](../planning/STREAMING-ARCHITECTURE.md):
+**Everything is unimplemented.** This is a pre-implementation architectural specification. No schema, no generated code, no service implementation exists. The following phases are planned:
 
 ### Phase 1: Schema & Generation
 - Create showtime-api.yaml schema with all endpoints (19 endpoints across 5 groups)
@@ -695,4 +695,4 @@ This eliminates the hierarchy violation entirely. GameSession publishes events; 
 
 ## Work Tracking
 
-*No active work items. Plugin is in pre-implementation phase. See [STREAMING-ARCHITECTURE.md](../planning/STREAMING-ARCHITECTURE.md) for the full planning document.*
+*No active work items. Plugin is in pre-implementation phase.*
