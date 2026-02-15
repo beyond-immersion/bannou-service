@@ -1,12 +1,9 @@
 # Agency Plugin Deep Dive
 
-> **Service**: lib-agency
-> **Layer**: L4 GameFeatures
+> **Plugin**: lib-agency
 > **Schema**: `schemas/agency-api.yaml` (pre-implementation)
-> **Status**: Pre-implementation. No schema, no code.
-> **Depends On**: lib-state (L0), lib-messaging (L0), lib-mesh (L0), lib-seed (L2)
-> **Soft Dependencies**: lib-disposition (L4), lib-gardener (L4)
-> **Referenced By**: [BEHAVIORAL-BOOTSTRAP.md](../guides/BEHAVIORAL-BOOTSTRAP.md), [GARDENER.md](GARDENER.md), [PUPPETMASTER.md](PUPPETMASTER.md)
+> **Version**: Pre-implementation. No schema, no code.
+> **State Store**: agency-domains (MySQL), agency-modules (MySQL), agency-influences (MySQL), agency-manifests (Redis), agency-manifest-history (MySQL), agency-seed-config (Redis)
 
 ---
 
@@ -165,51 +162,6 @@ If Disposition is unavailable, compliance defaults to the configured `DefaultCom
    - Character complies or resists
 ```
 
-### The Co-Pilot Pattern
-
-The guardian spirit / character co-pilot relationship is the central player experience. Agency provides the data layer; the actual decision-making happens in Actor's ABML behavior evaluation.
-
-```
-Player Input (WebSocket binary message)
-    |
-    v
-Connect (zero-copy routing to Gardener endpoint)
-    |
-    v
-Gardener (identifies active garden context, active seed, active character)
-    |
-    v
-Agency /agency/influence/execute
-    - Validates: is this influence type enabled in the current manifest?
-    - Validates: rate limit not exceeded?
-    - Enriches: attaches compliance factors and perception type
-    |
-    v
-Gardener god-actor (see BEHAVIORAL-BOOTSTRAP.md)
-    - God perceives the influence as a perception event
-    - God may modulate (amplify/dampen based on deity personality)
-    - God may intercept (block if it conflicts with deity's current orchestration)
-    - God forwards (or not) to character's Actor
-    |
-    v
-Actor (injects perception into character's bounded perception queue)
-    |
-    v
-Character's ABML behavior evaluates:
-    IF ${spirit.compliance_base} > threshold
-       AND nudge_alignment(${personality.*}, influence.ComplianceFactors) > 0
-       AND ${spirit.influence.frequency} < spam_threshold
-    THEN execute influenced action
-    ELSE resist -> publish agency.influence.resisted event
-    |
-    v
-Result flows back:
-    - agency.influence.executed or agency.influence.resisted event
-    - Gardener god-actor perceives result, adjusts future behavior
-    - Disposition updates guardian feelings based on outcome
-      (successful compliance may increase trust; forced overrides increase resentment)
-```
-
 ### The Progressive UX Gradient
 
 PLAYER-VISION.md describes a gradient from "barely any influence" to "deep domain mastery." Agency implements this as a continuous expansion of the manifest:
@@ -226,7 +178,7 @@ The same spirit might be at depth 7 in combat and depth 2 in social -- they see 
 
 ---
 
-## Service Dependencies
+## Dependencies
 
 ### Hard Dependencies (L0, L1, L2)
 
@@ -249,6 +201,92 @@ The same spirit might be at depth 7 in combat and depth 2 in social -- they see 
 | Interface | Direction | Purpose |
 |-----------|-----------|---------|
 | `IVariableProviderFactory` | Agency -> Actor (L2) | Provides `${spirit.*}` namespace for ABML behavior evaluation |
+
+---
+
+## Dependents
+
+| Dependent | Relationship |
+|-----------|-------------|
+| lib-gardener (L4) | Calls `/agency/manifest/get` and `/agency/influence/execute` for player experience routing and spirit influence validation |
+| lib-actor (L2) | Consumes `${spirit.*}` variables via `IVariableProviderFactory` for ABML behavior evaluation in character cognition pipelines |
+| lib-disposition (L4) | Receives guardian feeling updates triggered by influence outcomes (compliance increases trust, forced overrides increase resentment) |
+
+---
+
+## State Storage
+
+**Status**: Pre-implementation. No state stores defined in `schemas/state-stores.yaml` yet.
+
+| Store Name | Backend | Contents |
+|------------|---------|----------|
+| `agency-domains` | MySQL | Domain definitions (code, display name, seed path mappings) |
+| `agency-modules` | MySQL | Module definitions (code, domain, threshold, fidelity curve, sort order) |
+| `agency-influences` | MySQL | Influence type definitions (code, domain, threshold, perception type, compliance factors) |
+| `agency-manifests` | Redis | Cached computed manifests per seed (JSON, TTL-based) |
+| `agency-manifest-history` | MySQL | Manifest change log (seedId, timestamp, delta, previous/new module states) |
+| `agency-seed-config` | Redis | Guardian seed type configuration per game service |
+
+---
+
+## Events
+
+### Published Events
+
+| Topic | Event Model | Description |
+|-------|-------------|-------------|
+| `agency.manifest.updated` | `AgencyManifestUpdatedEvent` | Manifest changed for a seed. Includes seedId, changed modules (enabled/disabled, fidelity changes), changed influences. Consumed by Gardener for client push. |
+| `agency.influence.executed` | `AgencyInfluenceExecutedEvent` | Spirit influence validated and enriched. Includes seedId, influenceCode, perceptionType, complianceFactors. Consumed by Gardener god-actor for modulation. |
+| `agency.influence.resisted` | `AgencyInfluenceResistedEvent` | Character resisted spirit influence. Includes seedId, characterId, influenceCode, complianceBase, resistanceReason. Published by Actor's ABML evaluation, relayed by Agency. |
+| `agency.influence.rejected` | `AgencyInfluenceRejectedEvent` | Influence not available in current manifest or rate-limited. Includes seedId, influenceCode, rejectionReason. |
+| `agency.domain.registered` | `AgencyDomainRegisteredEvent` | New UX domain registered. |
+| `agency.module.registered` | `AgencyModuleRegisteredEvent` | New UX module registered. Triggers manifest recomputation for all seeds with capabilities in this domain. |
+
+### Consumed Events
+
+| Topic | Event Model | Reaction |
+|-------|-------------|----------|
+| `seed.capability.updated` | `SeedCapabilityUpdatedEvent` | Recompute manifest for the affected seed. Debounced by `ManifestRecomputeDebounceMs`. |
+| `seed.growth.recorded` | `SeedGrowthRecordedEvent` | Check if any capability depth thresholds were crossed. If so, trigger manifest recomputation. |
+| `connect.session.disconnected` | `SessionDisconnectedEvent` | Optional: clear cached manifest for the disconnected seed (prevents stale cache). |
+
+---
+
+## Configuration
+
+**Status**: Pre-implementation. No configuration schema defined yet.
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `ManifestCacheTtlMinutes` | int | 30 | TTL for cached manifests in Redis |
+| `ManifestRecomputeDebounceMs` | int | 500 | Debounce interval for recomputation on rapid seed growth events |
+| `DefaultComplianceBase` | float | 0.5 | Default compliance when Disposition is unavailable |
+| `MaxModulesPerDomain` | int | 50 | Maximum modules per domain |
+| `MaxInfluencesPerDomain` | int | 30 | Maximum influence types per domain |
+| `InfluenceRateLimitPerSecond` | int | 5 | Max spirit influences per second per seed |
+| `FidelityLevels` | int | 5 | Number of discrete fidelity levels (1-N) |
+| `PushManifestOnCapabilityChange` | bool | true | Auto-push manifest updates when seed capabilities change |
+| `SeedTypeCode` | string | `guardian` | Default seed type code for guardian spirits |
+| `ComplianceResistanceDecayRate` | float | 0.1 | How quickly resistance-from-overuse decays per game-hour |
+| `ManifestHistoryRetentionDays` | int | 30 | How long to retain manifest change history |
+| `CrossSeedPollinationEnabled` | bool | true | Whether manifest draws capabilities from all account seeds |
+| `CrossSeedPollinationFactor` | float | 0.3 | Depth multiplier for cross-pollinated seed capabilities |
+
+---
+
+## DI Services & Helpers
+
+**Status**: Pre-implementation. Planned DI dependencies:
+
+| Service | Role |
+|---------|------|
+| `ILogger<AgencyService>` | Structured logging |
+| `AgencyServiceConfiguration` | Typed configuration access |
+| `IStateStoreFactory` | State store access (MySQL definitions, Redis manifests) |
+| `IMessageBus` | Event publishing and subscription |
+| `ISeedClient` | Read capability manifests from Seed (L2) |
+| `IServiceProvider` | Runtime resolution of soft dependencies (Disposition, Gardener) |
+| `SpiritProviderFactory` | `IVariableProviderFactory` implementation providing `${spirit.*}` namespace |
 
 ---
 
@@ -310,59 +348,37 @@ The same spirit might be at depth 7 in combat and depth 2 in social -- they see 
 
 ---
 
-## State Stores
+## Visual Aid
 
-| Store Name | Backend | Contents |
-|------------|---------|----------|
-| `agency-domains` | MySQL | Domain definitions (code, display name, seed path mappings) |
-| `agency-modules` | MySQL | Module definitions (code, domain, threshold, fidelity curve, sort order) |
-| `agency-influences` | MySQL | Influence type definitions (code, domain, threshold, perception type, compliance factors) |
-| `agency-manifests` | Redis | Cached computed manifests per seed (JSON, TTL-based) |
-| `agency-manifest-history` | MySQL | Manifest change log (seedId, timestamp, delta, previous/new module states) |
-| `agency-seed-config` | Redis | Guardian seed type configuration per game service |
+The Co-Pilot Pattern flow in the Architecture section above illustrates the end-to-end influence path (Player -> Connect -> Gardener -> Agency -> Gardener god-actor -> Actor -> Character ABML). The Progressive UX Gradient table shows how manifest content evolves with seed depth. These two diagrams capture the core data flow that is not obvious from the dependency and event tables alone.
 
 ---
 
-## Configuration Properties
+## Stubs & Unimplemented Features
 
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `ManifestCacheTtlMinutes` | int | 30 | TTL for cached manifests in Redis |
-| `ManifestRecomputeDebounceMs` | int | 500 | Debounce interval for recomputation on rapid seed growth events |
-| `DefaultComplianceBase` | float | 0.5 | Default compliance when Disposition is unavailable |
-| `MaxModulesPerDomain` | int | 50 | Maximum modules per domain |
-| `MaxInfluencesPerDomain` | int | 30 | Maximum influence types per domain |
-| `InfluenceRateLimitPerSecond` | int | 5 | Max spirit influences per second per seed |
-| `FidelityLevels` | int | 5 | Number of discrete fidelity levels (1-N) |
-| `PushManifestOnCapabilityChange` | bool | true | Auto-push manifest updates when seed capabilities change |
-| `SeedTypeCode` | string | `guardian` | Default seed type code for guardian spirits |
-| `ComplianceResistanceDecayRate` | float | 0.1 | How quickly resistance-from-overuse decays per game-hour |
-| `ManifestHistoryRetentionDays` | int | 30 | How long to retain manifest change history |
-| `CrossSeedPollinationEnabled` | bool | true | Whether manifest draws capabilities from all account seeds |
-| `CrossSeedPollinationFactor` | float | 0.3 | Depth multiplier for cross-pollinated seed capabilities |
+Pre-implementation. No schema, no code. All features described in this document are aspirational.
 
 ---
 
-## Events
+## Potential Extensions
 
-### Published Events
+1. **Influence combos.** Sequential influences within a time window combine into higher-level commands. Approach + Strike within 500ms = Charge. Combo definitions as registrable entities with sequence patterns and result perception types.
 
-| Topic | Event Model | Description |
-|-------|-------------|-------------|
-| `agency.manifest.updated` | `AgencyManifestUpdatedEvent` | Manifest changed for a seed. Includes seedId, changed modules (enabled/disabled, fidelity changes), changed influences. Consumed by Gardener for client push. |
-| `agency.influence.executed` | `AgencyInfluenceExecutedEvent` | Spirit influence validated and enriched. Includes seedId, influenceCode, perceptionType, complianceFactors. Consumed by Gardener god-actor for modulation. |
-| `agency.influence.resisted` | `AgencyInfluenceResistedEvent` | Character resisted spirit influence. Includes seedId, characterId, influenceCode, complianceBase, resistanceReason. Published by Actor's ABML evaluation, relayed by Agency. |
-| `agency.influence.rejected` | `AgencyInfluenceRejectedEvent` | Influence not available in current manifest or rate-limited. Includes seedId, influenceCode, rejectionReason. |
-| `agency.domain.registered` | `AgencyDomainRegisteredEvent` | New UX domain registered. |
-| `agency.module.registered` | `AgencyModuleRegisteredEvent` | New UX module registered. Triggers manifest recomputation for all seeds with capabilities in this domain. |
+2. **Character-specific manifest modifiers.** A character's personality or species modifies the effective manifest. A stubborn character reduces social domain fidelity by 20%. A magically-gifted species boosts magic domain fidelity by 30%. Applied as post-computation modifiers before caching.
 
-### Consumed Events
+3. **Manifest presets.** Pre-computed manifest configurations for specific scenarios (tutorial, arena combat, crafting session). Gardener or Puppetmaster god-actors can temporarily apply a preset, overriding the normal seed-based computation.
 
-| Topic | Event Model | Reaction |
-|-------|-------------|----------|
-| `seed.capability.updated` | `SeedCapabilityUpdatedEvent` | Recompute manifest for the affected seed. Debounced by `ManifestRecomputeDebounceMs`. |
-| `seed.growth.recorded` | `SeedGrowthRecordedEvent` | Check if any capability depth thresholds were crossed. If so, trigger manifest recomputation. |
-| `connect.session.disconnected` | `SessionDisconnectedEvent` | Optional: clear cached manifest for the disconnected seed (prevents stale cache). |
+4. **Spirit-to-spirit influence.** In the twin spirits / pair system (PLAYER-VISION.md), one spirit could influence the other's character. Requires cross-seed manifest evaluation, bond-based compliance modifiers (Seed bonds), and a communication channel through Gardener.
+
+5. **Spectator manifests.** Reduced-fidelity manifests for observing characters the spirit doesn't control. Useful for multiplayer observation and the Showtime streaming metagame. Could be a fixed "observer" manifest preset per domain.
+
+6. **Influence analytics dashboard.** Track acceptance/resistance rates per influence type, per domain, per character. Aggregate into gameplay balance metrics. Feed into Analytics (L4) for game designer insights.
+
+7. **Domain-specific compliance.** Instead of a single `compliance_base`, per-domain compliance based on influence history. A spirit that repeatedly forces combat against personality gets combat-specific resentment. Requires per-domain feeling tracking in Disposition.
+
+8. **Adaptive difficulty via manifest.** Gardener god-actors could temporarily boost or reduce module fidelity based on player performance, without changing the underlying seed depth. "Training wheels" that the god applies when the player is struggling.
+
+9. **Hacking mechanic (Omega realm).** PLAYER-VISION describes "hacking" as using UX modules on characters/seeds that haven't earned them. Mechanically: temporarily override the manifest with modules the seed hasn't naturally unlocked. The character resists more strongly (compliance penalty), results may be inferior (forced fidelity reduction), and there are social/ethical consequences.
 
 ---
 
@@ -437,76 +453,6 @@ perception_handler:
 
 ---
 
-## Stubs & Unimplemented Features
-
-Pre-implementation. No schema, no code. All features described in this document are aspirational.
-
----
-
-## Intentional Quirks
-
-1. **Fidelity levels are integers, not floats.** The client receives fidelity 1-5, not a continuous value. This is intentional -- UX modules should have discrete behavior modes (e.g., "show 3 stance options" vs "show 5 stance options"), not infinitely variable rendering. The continuous seed fidelity (0.0-1.0) is quantized into discrete module fidelity levels.
-
-2. **Compliance base is computed by Agency, not by ABML.** The formula for `${spirit.compliance_base}` is in Agency's variable provider, not in the behavior document. This means the compliance formula is service code, not authored content. This is deliberate: the base compliance is a system-level mechanic that should be consistent across all characters. ABML behaviors can modify the effective compliance via additional checks (personality alignment, resistance buildup, situational modifiers), but the base value is authoritative.
-
-3. **Influence execution does not directly call Actor.** Agency validates and enriches the influence, then returns the payload. Gardener (or the gardener god-actor, per BEHAVIORAL-BOOTSTRAP.md) is responsible for injecting the perception into Actor. This separation allows god-actors to modulate or intercept influences before they reach the character.
-
-4. **Cross-seed pollination is multiplicative, not additive.** A spirit with combat depth 10.0 on Seed 1 gets `10.0 * 0.3 = 3.0` combat depth contribution to Seed 2's manifest computation. This means cross-pollination provides a head start, not full capability transfer. The spirit still needs to develop domain depth on each seed for high-fidelity modules.
-
-5. **Rate limiting is per-seed, not per-session.** `InfluenceRateLimitPerSecond` applies to the seed (guardian spirit), not the WebSocket session. If a player reconnects rapidly, the rate limit persists because it's tracked against the seed ID in Redis, not the session.
-
----
-
-## Bugs (Fix Immediately)
-
-*(None -- pre-implementation)*
-
----
-
-## Design Considerations
-
-1. **Manifest push mechanism.** Agency publishes `agency.manifest.updated` as an event. Gardener subscribes and routes the manifest to the correct client session via the Entity Session Registry (Connect Issue #426). This keeps Agency session-unaware. Alternative: Agency pushes directly via Connect's per-session RabbitMQ queue, but this couples Agency to session infrastructure. Recommendation: event-based routing via Gardener.
-
-2. **Influence execution path.** The current design has Agency validate, Gardener god-actor modulate, and Actor inject. This is three hops. Alternative: Agency injects directly into Actor, bypassing the god-actor. This is faster but prevents gods from intercepting spirit nudges. The god-modulation path is architecturally important for the vision (gods curate player experience), so the three-hop path is correct despite latency.
-
-3. **Module definition ownership.** Options: (a) game designers register via admin API, (b) services self-register on startup (like Permission's service registration), (c) seed from configuration. Recommendation: seed from configuration with admin API for runtime additions. Module definitions are game design decisions, not service infrastructure.
-
-4. **Fidelity curve format.** The fidelity curve is a float array of depth thresholds for levels 1-N. Example: `[2.0, 3.5, 5.0, 7.0, 9.0]` means depth 2.0=level 1, depth 3.5=level 2, etc. Per-module arrays provide maximum flexibility. Alternative: a formula (linear, logarithmic). Arrays are simpler and more explicit.
-
-5. **Cross-seed capability aggregation.** PLAYER-VISION says "accumulated experience crosses seed boundaries." The `CrossSeedPollinationFactor` (default 0.3) determines how much cross-seed depth contributes. This should be tunable per game service -- some games may want 0.0 (no cross-pollination), others may want 0.5 (significant transfer). Stored in `agency-seed-config` per game service.
-
-6. **Compliance computation vs. raw data.** Agency computes `compliance_base` from Disposition's raw guardian feelings. Alternative: expose raw feelings and let ABML compute compliance. Tradeoff: Agency-computed gives a consistent base; ABML-computed gives full author control. Current design: Agency provides the base, ABML can modify via additional conditions. Both approaches have merit.
-
-7. **Entity Session Registry dependency.** Manifest push requires mapping seed -> account -> active session. Without the Entity Session Registry (Connect Issue #426), Agency needs Gardener to maintain session-to-seed mappings. This is acceptable for initial implementation but the Entity Session Registry is the long-term solution.
-
-8. **Influence persistence.** Should influence history (last_type, last_accepted, frequency) be persisted in Redis or held in-memory by the variable provider? Redis survives Actor restarts. In-memory is faster. Recommendation: Redis with a simple counter/last-value pattern (not full history -- that's in `agency-manifest-history`).
-
-9. **Realm-specific module sets.** Different realms may expose different UX modules (Omega cyberpunk has hacking modules, Arcadia has magic modules). GameServiceId on module definitions scopes modules to specific games. Realm-specific scoping would require a RealmId field. Deferred -- game-service scoping is sufficient for now.
-
----
-
-## Potential Extensions
-
-1. **Influence combos.** Sequential influences within a time window combine into higher-level commands. Approach + Strike within 500ms = Charge. Combo definitions as registrable entities with sequence patterns and result perception types.
-
-2. **Character-specific manifest modifiers.** A character's personality or species modifies the effective manifest. A stubborn character reduces social domain fidelity by 20%. A magically-gifted species boosts magic domain fidelity by 30%. Applied as post-computation modifiers before caching.
-
-3. **Manifest presets.** Pre-computed manifest configurations for specific scenarios (tutorial, arena combat, crafting session). Gardener or Puppetmaster god-actors can temporarily apply a preset, overriding the normal seed-based computation.
-
-4. **Spirit-to-spirit influence.** In the twin spirits / pair system (PLAYER-VISION.md), one spirit could influence the other's character. Requires cross-seed manifest evaluation, bond-based compliance modifiers (Seed bonds), and a communication channel through Gardener.
-
-5. **Spectator manifests.** Reduced-fidelity manifests for observing characters the spirit doesn't control. Useful for multiplayer observation and the Showtime streaming metagame. Could be a fixed "observer" manifest preset per domain.
-
-6. **Influence analytics dashboard.** Track acceptance/resistance rates per influence type, per domain, per character. Aggregate into gameplay balance metrics. Feed into Analytics (L4) for game designer insights.
-
-7. **Domain-specific compliance.** Instead of a single `compliance_base`, per-domain compliance based on influence history. A spirit that repeatedly forces combat against personality gets combat-specific resentment. Requires per-domain feeling tracking in Disposition.
-
-8. **Adaptive difficulty via manifest.** Gardener god-actors could temporarily boost or reduce module fidelity based on player performance, without changing the underlying seed depth. "Training wheels" that the god applies when the player is struggling.
-
-9. **Hacking mechanic (Omega realm).** PLAYER-VISION describes "hacking" as using UX modules on characters/seeds that haven't earned them. Mechanically: temporarily override the manifest with modules the seed hasn't naturally unlocked. The character resists more strongly (compliance penalty), results may be inferior (forced fidelity reduction), and there are social/ethical consequences.
-
----
-
 ## Implementation Plan
 
 ### Phase 1: Core Registry (6 endpoints)
@@ -546,19 +492,53 @@ Pre-implementation. No schema, no code. All features described in this document 
 - lib-seed (L2): Must be running for capability manifest reads
 - lib-disposition (L4): Should be running for compliance computation (soft dependency)
 - lib-gardener (L4): Should be running for manifest push and influence execution routing
-- Entity Session Registry (Connect Issue #426): Needed for session-aware manifest push
+- Entity Session Registry ([Connect Issue #426](https://github.com/beyond-immersion/bannou-service/issues/426)): Needed for session-aware manifest push
+
+---
+
+## Known Quirks & Caveats
+
+### Bugs (Fix Immediately)
+
+*(None -- pre-implementation)*
+
+### Intentional Quirks (Documented Behavior)
+
+1. **Fidelity levels are integers, not floats.** The client receives fidelity 1-5, not a continuous value. This is intentional -- UX modules should have discrete behavior modes (e.g., "show 3 stance options" vs "show 5 stance options"), not infinitely variable rendering. The continuous seed fidelity (0.0-1.0) is quantized into discrete module fidelity levels.
+
+2. **Compliance base is computed by Agency, not by ABML.** The formula for `${spirit.compliance_base}` is in Agency's variable provider, not in the behavior document. This means the compliance formula is service code, not authored content. This is deliberate: the base compliance is a system-level mechanic that should be consistent across all characters. ABML behaviors can modify the effective compliance via additional checks (personality alignment, resistance buildup, situational modifiers), but the base value is authoritative.
+
+3. **Influence execution does not directly call Actor.** Agency validates and enriches the influence, then returns the payload. Gardener (or the gardener god-actor, per BEHAVIORAL-BOOTSTRAP.md) is responsible for injecting the perception into Actor. This separation allows god-actors to modulate or intercept influences before they reach the character.
+
+4. **Cross-seed pollination is multiplicative, not additive.** A spirit with combat depth 10.0 on Seed 1 gets `10.0 * 0.3 = 3.0` combat depth contribution to Seed 2's manifest computation. This means cross-pollination provides a head start, not full capability transfer. The spirit still needs to develop domain depth on each seed for high-fidelity modules.
+
+5. **Rate limiting is per-seed, not per-session.** `InfluenceRateLimitPerSecond` applies to the seed (guardian spirit), not the WebSocket session. If a player reconnects rapidly, the rate limit persists because it's tracked against the seed ID in Redis, not the session.
+
+### Design Considerations (Requires Planning)
+
+1. **Manifest push mechanism.** Agency publishes `agency.manifest.updated` as an event. Gardener subscribes and routes the manifest to the correct client session via the Entity Session Registry ([Connect Issue #426](https://github.com/beyond-immersion/bannou-service/issues/426)). This keeps Agency session-unaware. Alternative: Agency pushes directly via Connect's per-session RabbitMQ queue, but this couples Agency to session infrastructure. Recommendation: event-based routing via Gardener.
+
+2. **Influence execution path.** The current design has Agency validate, Gardener god-actor modulate, and Actor inject. This is three hops. Alternative: Agency injects directly into Actor, bypassing the god-actor. This is faster but prevents gods from intercepting spirit nudges. The god-modulation path is architecturally important for the vision (gods curate player experience), so the three-hop path is correct despite latency.
+
+3. **Module definition ownership.** Options: (a) game designers register via admin API, (b) services self-register on startup (like Permission's service registration), (c) seed from configuration. Recommendation: seed from configuration with admin API for runtime additions. Module definitions are game design decisions, not service infrastructure.
+
+4. **Fidelity curve format.** The fidelity curve is a float array of depth thresholds for levels 1-N. Example: `[2.0, 3.5, 5.0, 7.0, 9.0]` means depth 2.0=level 1, depth 3.5=level 2, etc. Per-module arrays provide maximum flexibility. Alternative: a formula (linear, logarithmic). Arrays are simpler and more explicit.
+
+5. **Cross-seed capability aggregation.** PLAYER-VISION says "accumulated experience crosses seed boundaries." The `CrossSeedPollinationFactor` (default 0.3) determines how much cross-seed depth contributes. This should be tunable per game service -- some games may want 0.0 (no cross-pollination), others may want 0.5 (significant transfer). Stored in `agency-seed-config` per game service.
+
+6. **Compliance computation vs. raw data.** Agency computes `compliance_base` from Disposition's raw guardian feelings. Alternative: expose raw feelings and let ABML compute compliance. Tradeoff: Agency-computed gives a consistent base; ABML-computed gives full author control. Current design: Agency provides the base, ABML can modify via additional conditions. Both approaches have merit.
+
+7. **Entity Session Registry dependency.** Manifest push requires mapping seed -> account -> active session. Without the Entity Session Registry ([Connect Issue #426](https://github.com/beyond-immersion/bannou-service/issues/426)), Agency needs Gardener to maintain session-to-seed mappings. This is acceptable for initial implementation but the Entity Session Registry is the long-term solution.
+
+8. **Influence persistence.** Should influence history (last_type, last_accepted, frequency) be persisted in Redis or held in-memory by the variable provider? Redis survives Actor restarts. In-memory is faster. Recommendation: Redis with a simple counter/last-value pattern (not full history -- that's in `agency-manifest-history`).
+
+9. **Realm-specific module sets.** Different realms may expose different UX modules (Omega cyberpunk has hacking modules, Arcadia has magic modules). GameServiceId on module definitions scopes modules to specific games. Realm-specific scoping would require a RealmId field. Deferred -- game-service scoping is sufficient for now.
 
 ---
 
 ## Work Tracking
 
-### Open Issues
-
 *(No issues yet -- pre-implementation)*
-
-### Completed
-
-*(Nothing completed yet -- pre-implementation)*
 
 ---
 

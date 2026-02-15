@@ -65,9 +65,14 @@ The full morality pipeline requires five integration points to be complete: (1) 
 | lib-messaging (`IMessageBus`) | Publishing violation reported and cache rebuilt events; error event publication |
 | lib-contract (`IContractClient`) | Querying active contracts for characters, extracting behavioral clauses, reporting breaches on knowing violations (L1 hard dependency) |
 | lib-resource (`IResourceClient`) | Registering/unregistering character references, cleanup callback registration, and compression callback registration (L1 hard dependency) |
-| character-personality variable provider (soft L4 dependency) | Personality traits (`${personality.honesty}`, `${personality.loyalty}`, `${personality.agreeableness}`, `${personality.conscientiousness}`) for moral weighting of obligation costs; graceful degradation when unavailable |
-| lib-hearsay (`IHearsayClient`, soft L4 dependency, planned) | Belief-filtered norm costs: when available, Hearsay's `${hearsay.norm.believed_cost.<type>}` replaces raw Faction penalties with what the NPC *believes* the penalty to be. When unavailable, `NormResolutionMode` config determines fallback: `PerfectKnowledge` queries Faction directly, `UncertaintySimulation` applies random variance to simulate imperfect social knowledge |
-| lib-faction (`IFactionClient`, soft L4 dependency) | Queries applicable norms for characters via `QueryApplicableNorms` when Hearsay is unavailable and `NormResolutionMode` is `PerfectKnowledge`; provides ground-truth norm data for the fallback path |
+| character-personality variable provider (soft L4 dependency) | Personality traits (`${personality.honesty}`, `${personality.loyalty}`, `${personality.agreeableness}`, `${personality.conscientiousness}`) for moral weighting of obligation costs; graceful degradation when unavailable. Accessed via `IEnumerable<IVariableProviderFactory>` DI discovery, not a direct client dependency |
+
+**Planned Dependencies (not yet in code):**
+
+| Planned Dependency | Planned Usage |
+|--------------------|---------------|
+| lib-hearsay (`IHearsayClient`, soft L4) | Belief-filtered norm costs: Hearsay's `${hearsay.norm.believed_cost.<type>}` would replace raw Faction penalties with what the NPC *believes* the penalty to be. Config properties `NormResolutionMode` and `NormUncertaintyVariance` are pre-defined for this integration but not yet referenced in code |
+| lib-faction (`IFactionClient`, soft L4) | Query applicable norms for characters when Hearsay is unavailable. Would provide ground-truth norm data for the `PerfectKnowledge` fallback path. No `IFactionClient` injection exists in current code |
 
 ---
 

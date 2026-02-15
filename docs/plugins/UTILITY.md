@@ -1,4 +1,4 @@
-# Utility Service (lib-utility)
+# Utility Plugin Deep Dive
 
 > **Plugin**: lib-utility (not yet created)
 > **Schema**: `schemas/utility-api.yaml` (not yet created)

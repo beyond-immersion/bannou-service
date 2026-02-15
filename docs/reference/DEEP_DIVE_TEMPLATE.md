@@ -37,6 +37,12 @@ When building a deep dive for a plugin, follow this process:
 
 ### 1. Header
 
+Two standard header formats exist depending on implementation status. All deep dive documents MUST use one of these two patterns exactly. Do not invent custom header fields (`Depends On`, `Hard Dependencies`, `Soft Dependencies`, `Referenced By`, `Service`, etc.) -- dependencies belong in section 3.
+
+#### Implemented Plugin Header
+
+For plugins that have a schema and generated code (whether fully implemented, partially stubbed, or pre-implementation with a schema):
+
 ```markdown
 # {Service Name} Plugin Deep Dive
 
@@ -45,6 +51,34 @@ When building a deep dive for a plugin, follow this process:
 > **Version**: {version from schema}
 > **State Store**: {store name} ({backend})
 ```
+
+Optional additional fields (add after State Store, in this order):
+- `> **Status**: Pre-implementation (architectural specification)` — for plugins with schemas but no service logic yet
+- `> **Planning**: [{doc}]({path})` — link to a planning/design document if one exists
+- `> **Guide**: [{doc}]({path})` — link to a cross-service integration guide if one exists
+
+#### Aspirational Plugin Header
+
+For plugins with NO schema and NO code (pure design specifications):
+
+```markdown
+# {Service Name} Plugin Deep Dive
+
+> **Plugin**: lib-{service} (not yet created)
+> **Schema**: `schemas/{service}-api.yaml` (not yet created)
+> **Version**: N/A (Pre-Implementation)
+> **State Store**: {planned stores} — all planned
+> **Layer**: {L2 GameFoundation / L4 GameFeatures / etc.}
+> **Status**: Aspirational — no schema, no generated code, no service implementation exists.
+```
+
+The `Layer` field is included only in aspirational headers because implemented plugins declare their layer in the schema via `x-service-layer` (discoverable from generated code). Aspirational plugins have no schema, so the layer must be stated explicitly.
+
+**Common header mistakes to avoid:**
+- `# {Name} Service (lib-{name})` — use `# {Name} Plugin Deep Dive`
+- `# {Name} Service Deep Dive` — use `Plugin`, not `Service`
+- `> **Service**: lib-{name}` — use `**Plugin**`, not `**Service**`
+- Listing dependencies in the header — they belong in section 3
 
 ---
 
