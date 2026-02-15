@@ -1572,7 +1572,7 @@ TradeServiceConfiguration:
 | `IItemClient` | Item instance validation, template lookup |
 | `IInventoryClient` | Cargo transfer, local stock queries |
 | `IWorldstateClient` | Game-time queries for timestamps and period boundaries |
-| `IServiceProvider` | Runtime resolution of soft L4 dependencies (Escrow, Faction, Environment, Analytics, Market) |
+| `IServiceProvider` | Runtime resolution of soft L4 dependencies (Escrow, Faction, Environment, Analytics, Market, Hearsay) |
 | `IVariableProviderFactory` (implements) | Provides `${trade.*}` namespace to Actor (L2) |
 
 ---
@@ -1996,6 +1996,12 @@ When available, Market provides:
 - **Price data**: Current auction/vendor prices for supply/demand snapshots
 - **Listing counts**: Active listings as supply indicators
 - **Price change events**: Real-time price signal updates
+
+### Hearsay (L4) -- Soft Dependency
+
+When available, Hearsay provides:
+- **Belief-filtered price knowledge**: NPC market analysis results bounded by what the NPC has heard or experienced, not omniscient price data
+- **Rumor propagation**: Trade opportunity information spreads through social networks, creating imperfect information asymmetry between NPCs
 
 ### Divine Economic Intervention Integration
 

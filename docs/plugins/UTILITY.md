@@ -1,15 +1,15 @@
 # Utility Service (lib-utility)
 
-> **Status**: Aspirational (Pre-Implementation)
-> **Layer**: L4 GameFeatures
+> **Plugin**: lib-utility (not yet created)
 > **Schema**: `schemas/utility-api.yaml` (not yet created)
-> **Hard Dependencies**: Contract (L1), Location (L2), Worldstate (L2), Currency (L2), Workshop (L4)
-> **Soft Dependencies**: Faction (L4), Organization (L4), Environment (L4), Trade (L4)
-> **No schema, no code.**
+> **Version**: N/A (Pre-Implementation)
+> **State Store**: utility-networks (MySQL), utility-coverage (Redis), utility-sources (MySQL), utility-maintenance (MySQL), utility-locks (Redis) — all planned
+> **Layer**: L4 GameFeatures
+> **Status**: Aspirational — no schema, no generated code, no service implementation exists.
 
 ---
 
-## Service Overview
+## Overview
 
 The Utility service (L4 GameFeatures) manages infrastructure networks that continuously distribute resources across location hierarchies. It provides the topology, capacity modeling, and flow calculation that transforms Workshop point-production into location-wide service coverage -- answering "does this location have water, and where does it come from?" Where Workshop produces resources at a single point and Trade moves discrete shipments between locations, Utility models **continuous flow through persistent infrastructure** (aqueducts, sewer systems, power grids, magical conduits, messenger networks). The key gameplay consequence: when infrastructure breaks, downstream locations lose service, and the cascade of discovery, investigation, and repair creates emergent content.
 
@@ -834,26 +834,6 @@ Implement `IUtilityFlowModifierProvider` interface in `bannou-service/Providers/
 
 ---
 
-## Design Considerations
-
-1. **Flow calculation is O(V + E) per network**: For a network with 10,000 connections and 5,000 locations, recalculation is ~15,000 operations. With debouncing (2s default) and caching (5min TTL), this should handle frequent topology changes. At scale, consider per-subgraph recalculation (only recompute the affected subtree, not the entire network).
-
-2. **Workshop hard dependency at L4**: Unusual for a hard dependency. If this becomes architecturally concerning, consider making it soft with a "manual sources only" fallback (no Workshop auto-discovery, all sources registered manually with rates). This is less convenient but preserves hierarchy purity.
-
-3. **Junction distribution fairness**: Proportional-by-capacity is simple but may not match game design intent. Some games want priority-based distribution (military district gets water first, slums get remainder). The `IUtilityFlowModifierProvider` pattern (Phase 7) could address this by letting Faction inject priority weights.
-
-4. **Coverage ratio without demand data**: If Trade (which provides demand data) is unavailable, `coverageRatio` cannot be computed. The snapshot should clearly distinguish "supply rate is 35 units/gh, demand unknown" from "supply rate is 35 units/gh, demand is 50 units/gh, ratio is 0.7." The `coverageStatus` classification should still work on absolute thresholds when demand is unknown.
-
-5. **Bidirectional network cycles**: Power grids are naturally bidirectional with cycles. The BFS flow calculator must handle this (track visited nodes, detect cycles, prevent infinite traversal). `MaxFlowCalculationDepth` provides a safety bound.
-
-6. **Connection condition vs. binary status**: Some network types should have proportional flow reduction (water pipe at 50% condition delivers 50% flow). Others should be binary (a bridge either works or doesn't). The `conditionFlowMultiplier` flag on network type controls this.
-
-7. **Seeding infrastructure for world initialization**: New realms need initial infrastructure. Consider a bulk seed endpoint that accepts a list of connections + sources in one call, creates them all, then triggers a single coverage recalculation. Avoids N recalculations during world setup.
-
-8. **No direct player interaction**: Utility is internal-only. Players experience infrastructure through its effects (water available, power out) and through NPCs reacting to infrastructure state. Players may direct construction via Organization management, but they don't call Utility APIs directly.
-
----
-
 ## Known Quirks & Caveats
 
 ### Bugs (Fix Immediately)
@@ -866,7 +846,21 @@ Implement `IUtilityFlowModifierProvider` interface in `bannou-service/Providers/
 
 ### Design Considerations (Requires Planning)
 
-*(See Design Considerations section above -- all items require planning decisions before implementation)*
+1. **Flow calculation is O(V + E) per network**: For a network with 10,000 connections and 5,000 locations, recalculation is ~15,000 operations. With debouncing (2s default) and caching (5min TTL), this should handle frequent topology changes. At scale, consider per-subgraph recalculation (only recompute the affected subtree, not the entire network).
+
+2. **Workshop hard dependency at L4**: Unusual for a hard dependency. Per the service hierarchy, L4→L4 dependencies should use graceful degradation (soft). If this becomes architecturally concerning, consider making it soft with a "manual sources only" fallback (no Workshop auto-discovery, all sources registered manually with rates). This is less convenient but preserves hierarchy purity.
+
+3. **Junction distribution fairness**: Proportional-by-capacity is simple but may not match game design intent. Some games want priority-based distribution (military district gets water first, slums get remainder). The `IUtilityFlowModifierProvider` pattern (Phase 7) could address this by letting Faction inject priority weights.
+
+4. **Coverage ratio without demand data**: If Trade (which provides demand data) is unavailable, `coverageRatio` cannot be computed. The snapshot should clearly distinguish "supply rate is 35 units/gh, demand unknown" from "supply rate is 35 units/gh, demand is 50 units/gh, ratio is 0.7." The `coverageStatus` classification should still work on absolute thresholds when demand is unknown.
+
+5. **Bidirectional network cycles**: Power grids are naturally bidirectional with cycles. The BFS flow calculator must handle this (track visited nodes, detect cycles, prevent infinite traversal). `MaxFlowCalculationDepth` provides a safety bound.
+
+6. **Connection condition vs. binary status**: Some network types should have proportional flow reduction (water pipe at 50% condition delivers 50% flow). Others should be binary (a bridge either works or doesn't). The `conditionFlowMultiplier` flag on network type controls this.
+
+7. **Seeding infrastructure for world initialization**: New realms need initial infrastructure. Consider a bulk seed endpoint that accepts a list of connections + sources in one call, creates them all, then triggers a single coverage recalculation. Avoids N recalculations during world setup.
+
+8. **No direct player interaction**: Utility is internal-only. Players experience infrastructure through its effects (water available, power out) and through NPCs reacting to infrastructure state. Players may direct construction via Organization management, but they don't call Utility APIs directly.
 
 ---
 
