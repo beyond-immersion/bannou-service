@@ -932,11 +932,13 @@ transit.connection.status_changed:
     previousStatus: string
     newStatus: string
     reason: string
+    forceUpdated: boolean         # Whether this was a forceUpdate override
     realmId: uuid
   consumers:
     - Trade (L4): recalculates trade route viability
     - Actor (L2): NPCs may need to replan travel
     - Puppetmaster (L4): regional watchers notice road closures
+    - Quest (L2): connection-state objectives ("clear the blocked road")
 
 # Journey lifecycle events
 transit.journey.departed:
@@ -947,13 +949,16 @@ transit.journey.departed:
     entityType: string
     originLocationId: uuid
     destinationLocationId: uuid
-    modeCode: string
+    primaryModeCode: string
     estimatedArrivalGameTime: decimal
+    partySize: integer
     realmId: uuid
   consumers:
     - Trade (L4): tracks shipment progress
     - Analytics (L4): travel pattern aggregation
     - Puppetmaster (L4): regional watchers notice travelers
+    - Character History (L4): significant journeys become backstory elements
+    - Quest (L2): travel departure objectives ("leave the village")
 
 transit.journey.waypoint_reached:
   description: "A traveling entity reached an intermediate waypoint"
@@ -965,10 +970,12 @@ transit.journey.waypoint_reached:
     nextLocationId: uuid
     legIndex: integer
     remainingLegs: integer
+    connectionId: uuid           # Connection of the leg just completed
     realmId: uuid
   consumers:
     - Trade (L4): triggers border crossing checks at checkpoints
     - Location (L2): presence tracking updates
+    - Quest (L2): waypoint-based objectives ("pass through Riverside")
 
 transit.journey.arrived:
   description: "A traveling entity reached its destination"
@@ -978,15 +985,19 @@ transit.journey.arrived:
     entityType: string
     originLocationId: uuid
     destinationLocationId: uuid
-    modeCode: string
+    primaryModeCode: string
     totalGameHours: decimal
     totalDistanceKm: decimal
     interruptionCount: integer
+    legsCompleted: integer
     realmId: uuid
   consumers:
     - Trade (L4): completes shipment delivery
     - Location (L2): presence tracking updates
     - Analytics (L4): travel time statistics
+    - Character History (L4): significant journey completion for backstory
+    - Quest (L2): travel arrival objectives ("reach the Iron Mines")
+    - Seed (L2): travel proficiency growth (if mode has proficiencySeedTypeCode)
 
 transit.journey.interrupted:
   description: "A journey was interrupted (combat, event, breakdown)"
@@ -995,11 +1006,29 @@ transit.journey.interrupted:
     entityId: uuid
     entityType: string
     currentLocationId: uuid
+    currentLegIndex: integer
     reason: string
     realmId: uuid
   consumers:
     - Trade (L4): shipment delay notification
     - Puppetmaster (L4): may orchestrate rescue/encounter
+    - Analytics (L4): interruption hotspot tracking
+
+transit.journey.resumed:
+  description: "An interrupted journey was resumed"
+  payload:
+    journeyId: uuid
+    entityId: uuid
+    entityType: string
+    currentLocationId: uuid
+    destinationLocationId: uuid
+    currentLegIndex: integer
+    remainingLegs: integer
+    modeCode: string
+    realmId: uuid
+  consumers:
+    - Trade (L4): shipment back in transit
+    - Analytics (L4): interruption duration statistics
 
 transit.journey.abandoned:
   description: "A journey was abandoned before reaching destination"
@@ -1011,9 +1040,28 @@ transit.journey.abandoned:
     destinationLocationId: uuid
     abandonedAtLocationId: uuid
     reason: string
+    completedLegs: integer
+    totalLegs: integer
     realmId: uuid
   consumers:
     - Trade (L4): handles stranded shipments
+    - Character History (L4): significant travel failure for backstory
+    - Analytics (L4): abandonment pattern aggregation
+
+# Discovery events
+transit.discovery.revealed:
+  description: "A discoverable connection was revealed to an entity"
+  payload:
+    entityId: uuid
+    connectionId: uuid
+    fromLocationId: uuid
+    toLocationId: uuid
+    source: string              # "travel", "guide", "hearsay", "map", "quest_reward"
+    realmId: uuid
+  consumers:
+    - Collection (L2): route discovery → collection unlocks (e.g., "Explorer's Atlas")
+    - Quest (L2): travel-based objectives ("discover the hidden pass")
+    - Analytics (L4): discovery pattern tracking
 ```
 
 ### Lifecycle Events
@@ -1090,14 +1138,32 @@ TransitServiceConfiguration:
     CargoSpeedPenaltyThresholdKg:
       type: number
       default: 100.0
-      description: "Cargo weight above this threshold reduces speed. Speed reduction = (cargo - threshold) / (capacity - threshold) * 0.3"
+      description: "Cargo weight above this threshold reduces speed. Speed reduction = (cargo - threshold) / (capacity - threshold) * CargoSpeedPenaltyMaxRate"
       env: TRANSIT_CARGO_SPEED_PENALTY_THRESHOLD_KG
+
+    CargoSpeedPenaltyMaxRate:
+      type: number
+      default: 0.3
+      description: "Maximum speed reduction rate from cargo weight (0.3 = 30% speed reduction at full capacity)"
+      env: TRANSIT_CARGO_SPEED_PENALTY_MAX_RATE
 
     SeasonalConnectionCheckIntervalSeconds:
       type: integer
       default: 60
       description: "How often the background worker checks Worldstate for seasonal connection status changes"
       env: TRANSIT_SEASONAL_CONNECTION_CHECK_INTERVAL_SECONDS
+
+    DiscoveryCacheTtlSeconds:
+      type: integer
+      default: 600
+      description: "TTL for per-entity discovery cache in Redis (seconds). Route calculation checks this cache to filter discoverable connections."
+      env: TRANSIT_DISCOVERY_CACHE_TTL_SECONDS
+
+    DefaultProficiencyMaxBonus:
+      type: number
+      default: 0.3
+      description: "Default value for maxProficiencyBonus on modes when proficiencySeedTypeCode is set but maxProficiencyBonus is not explicitly configured"
+      env: TRANSIT_DEFAULT_PROFICIENCY_MAX_BONUS
 ```
 
 ---
@@ -1152,6 +1218,18 @@ transit-connection-graph:
     Serialized adjacency list for Dijkstra's algorithm.
     Rebuilt from MySQL on cache miss.
     Invalidated when connections are created/deleted/status-changed.
+
+transit-discovery:
+  backend: redis
+  description: "Per-entity connection discovery tracking"
+  key_format: "transit:discovery:{entityId}"
+  ttl_source: none (permanent until entity is deleted)
+  notes: |
+    Redis set per entity containing connection IDs they have discovered.
+    Checked during route calculation when entityId is provided to filter
+    discoverable connections. Written by discovery/reveal endpoint and
+    automatically on journey leg completion for discoverable connections.
+    Cleaned up via Resource CASCADE when the entity is deleted.
 ```
 
 ---
@@ -1181,7 +1259,13 @@ ${transit.mode.<code>.speed}:
   type: decimal
   description: "Effective speed in km/game-hour for this entity on this mode"
   example: "${transit.mode.wagon.speed}"
-  notes: "Accounts for cargo weight penalty if applicable"
+  notes: "Accounts for cargo weight penalty and Seed proficiency bonus if applicable"
+
+${transit.mode.<code>.proficiency}:
+  type: decimal
+  description: "Proficiency bonus from Seed growth (0.0 = novice, up to maxProficiencyBonus)"
+  example: "${transit.mode.horseback.proficiency}"
+  notes: "Only available when mode has proficiencySeedTypeCode set. Queries Seed service."
 
 ${transit.mode.<code>.preference_cost}:
   type: decimal
@@ -1229,6 +1313,17 @@ ${transit.nearest.<location_code>.best_mode}:
   type: string
   description: "Fastest available transit mode to reach the named location"
   example: "${transit.nearest.iron_mines.best_mode}"
+
+# Discovery state (per entity)
+${transit.discovered_connections}:
+  type: integer
+  description: "Total number of discoverable connections this entity has revealed"
+
+${transit.connection.<code>.discovered}:
+  type: boolean
+  description: "Has this entity discovered the named connection?"
+  example: "${transit.connection.smuggler_tunnel.discovered}"
+  notes: "Only meaningful for connections with discoverable=true. Always true for non-discoverable."
 ```
 
 ### GOAP Integration Example
@@ -1341,9 +1436,7 @@ Transit aggregates all provider results:
 
 ### Location (L2) -- Hard Dependency
 
-Transit connections reference Location entities by ID. On startup, Transit validates that referenced locations exist. Transit subscribes to `location.deleted` to handle location removal:
-- Connections referencing deleted locations are set to `status: closed` with reason `"location_deleted"`
-- Active journeys passing through deleted locations are interrupted
+Transit connections reference Location entities by ID. On startup, Transit validates that referenced locations exist. Location deletion is handled via Resource cleanup callbacks (see Resource integration below), not event subscriptions.
 
 Location knows nothing about Transit (correct hierarchy direction).
 
@@ -1391,6 +1484,20 @@ ACTOR (L2):
     → Reluctantly rides horse in emergency
 ```
 
+### Character (L2), Species (L2), Item (L2), Inventory (L2) -- Hard Dependencies
+
+Transit queries these services during mode compatibility checks (`check-availability`):
+- **Inventory**: Checks entity has required item tag (e.g., mount item for horseback)
+- **Character/Species**: Checks species compatibility for species-restricted modes
+- These are synchronous L2 service calls via lib-mesh, valid under the hierarchy
+
+### Seed (L2) -- Hard Dependency
+
+Transit queries Seed for proficiency bonuses when a mode has `proficiencySeedTypeCode` set:
+- **Speed bonus**: `effectiveSpeed = baseSpeed × (1 + proficiencyBonus)` where bonus is derived from Seed growth level
+- **Journey arrival**: Publishes `transit.journey.arrived` which Seed consumes to record travel experience growth
+- This is a direct L2-to-L2 dependency, not a DI provider pattern
+
 ### Trade (L4) -- Consumer
 
 Trade uses Transit for:
@@ -1398,10 +1505,43 @@ Trade uses Transit for:
 - **Route cost estimation**: `/trade/route/estimate-cost` calls `/transit/route/calculate` internally
 - **Shipment journeys**: Each shipment leg creates a transit journey for the carrier entity
 - **Connection status**: Trade routes are affected by connection closures (winter, war, destruction)
+- **Journey archives**: Trade queries `transit/journey/query-archive` for historical velocity calculations
+
+### Quest (L2) -- Consumer
+
+Quest consumes transit events for travel-based objectives:
+- **Departure objectives**: `transit.journey.departed` can fulfill "leave the village" milestones
+- **Arrival objectives**: `transit.journey.arrived` can fulfill "reach the Iron Mines" milestones
+- **Discovery objectives**: `transit.discovery.revealed` can fulfill "discover the hidden pass" milestones
+- Quest uses Contract infrastructure for milestone tracking; transit events report condition fulfillment
+
+### Collection (L2) -- Consumer
+
+Collection consumes `transit.discovery.revealed` for route discovery unlocks:
+- An "Explorer's Atlas" collection type could grant entries for discovered connections
+- A "Realm Cartographer" collection tracks percentage of realm connections discovered
+- Collection is a consumer only -- Transit publishes, Collection subscribes
+
+### Character History (L4) -- Consumer
+
+Character History consumes transit journey events for backstory generation:
+- **Significant journeys**: Long-distance arrivals, multi-leg completions
+- **Journey failures**: Abandoned journeys with high interruption counts
+- Significance thresholds are Character History's concern, not Transit's
+
+### Analytics (L4) -- Consumer
+
+Analytics consumes all transit journey events for aggregation:
+- Travel pattern analysis, mode popularity, connection utilization
+- Interruption frequency per connection (bandit hotspots, dangerous terrain)
+- Average travel times vs estimated times (route quality feedback)
 
 ### Resource (L1) -- Cleanup Integration
 
-Transit connections reference locations. When a location is deleted via Resource cleanup, Transit's `ISeededResourceProvider` implementation closes affected connections and interrupts active journeys.
+Transit registers as an `ISeededResourceProvider` with lib-resource for cleanup coordination:
+- **Location deletion (CASCADE)**: When a location is deleted, Resource calls Transit's cleanup callback. Transit closes all connections referencing the deleted location (`status: closed`, `reason: "location_deleted"`) and interrupts active journeys passing through it.
+- **Character deletion (CASCADE)**: Transit's cleanup callback clears discovery data for the deleted entity from the `transit-discovery` store and abandons any active journeys for that entity.
+- Transit does NOT subscribe to `location.deleted` or `character.deleted` events for cleanup -- this is handled exclusively through the Resource cleanup callback pattern per T28.
 
 ---
 
@@ -1464,33 +1604,37 @@ Journey events (departed, waypoint, arrived) flow through the standard lib-messa
 
 ### Potential Extensions
 
-1. **Transit mode evolution** (Seed integration): A character's proficiency with a mode improves over time. Horse riding skill (tracked via Seed growth) increases effective speed: `baseSpeed × (1 + skillBonus)`. The transit mode's requirements would specify a Seed type code, and the effective speed calculation queries the entity's Seed growth level.
+1. **Caravan formations**: Multiple entities traveling together as a group. Group speed = slowest member. Group risk = reduced (safety in numbers). Caravan as an entity type for journeys, with member tracking and formation bonuses. Faction merchant guilds could manage NPC caravans.
 
-2. **Caravan formations**: Multiple entities traveling together as a group. Group speed = slowest member. Group risk = reduced (safety in numbers). Caravan as an entity type for journeys, with member tracking and formation bonuses. Faction merchant guilds could manage NPC caravans.
+2. **Terrain speed modifiers**: Rather than a single speed per mode, modes could have per-terrain speed multipliers: `horseback.speed.road = 30, horseback.speed.trail = 20, horseback.speed.forest = 10`. This adds granularity to route calculation without changing the core architecture.
 
-3. **Connection discovery**: Characters don't know about all connections until they've traveled them or heard about them (via Hearsay). The variable provider would filter connections by "known" status, creating a fog-of-war effect on the connectivity graph. Direct observation during travel reveals connections permanently.
+3. **Fatigue and rest**: Long journeys accumulate fatigue. After a configurable threshold, the entity must rest (journey auto-pauses at next waypoint). Rest duration depends on mode and entity stamina. Creates natural stopping points at inns and camps.
 
-4. **Terrain speed modifiers**: Rather than a single speed per mode, modes could have per-terrain speed multipliers: `horseback.speed.road = 30, horseback.speed.trail = 20, horseback.speed.forest = 10`. This adds granularity to route calculation without changing the core architecture.
+4. **Weather-reactive connections**: Environment (L4) automatically calls `/transit/connection/update-status` when weather conditions make connections impassable. Storms close mountain passes; floods close river crossings; drought closes river boat routes. This is a pure consumer relationship -- Transit exposes the API, Environment calls it.
 
-5. **Fatigue and rest**: Long journeys accumulate fatigue. After a configurable threshold, the entity must rest (journey auto-pauses at next waypoint). Rest duration depends on mode and entity stamina. Creates natural stopping points at inns and camps.
+5. **Mount bonding**: Integration with Relationship (L2) for character-mount relationships. A well-bonded mount has higher effective speed and lower fatigue. Bond strength grows with travel distance. Follows the existing Relationship entity-to-entity model.
 
-6. **Weather-reactive connections**: Environment (L4) automatically calls `/transit/connection/update-status` when weather conditions make connections impassable. Storms close mountain passes; floods close river crossings; drought closes river boat routes. This is a pure consumer relationship -- Transit exposes the API, Environment calls it.
+### Resolved Design Decisions
 
-7. **Mount bonding**: Integration with Relationship (L2) for character-mount relationships. A well-bonded mount has higher effective speed and lower fatigue. Bond strength grows with travel distance. Follows the existing Relationship entity-to-entity model.
+1. **Connection granularity**: Allow arbitrary connections but tag them appropriately (`tags: ["portal"]`, `tags: ["trade_route"]`). Enables teleportation portals and long-distance shipping routes alongside physically meaningful roads.
 
-### Design Considerations
+2. **Journey auto-progression**: No. This violates the declarative lifecycle pattern. The game/Actor drives progression. Transit records and calculates but doesn't simulate.
 
-1. **Connection granularity**: Should connections exist between any two locations, or only between "neighboring" locations (same realm, adjacent in the hierarchy)? Allowing arbitrary connections enables teleportation portals and long-distance shipping routes. Restricting to neighbors keeps the graph physically meaningful. **Recommendation**: Allow arbitrary connections but tag them appropriately (`tags: ["portal"]`, `tags: ["trade_route"]`).
+3. **Intra-location transit**: No. Intra-location movement is Mapping's domain (spatial positioning) or the game client's domain (local navigation). Transit handles inter-location movement only.
 
-2. **Journey auto-progression**: Should Transit have a background worker that automatically advances journeys based on elapsed game-time? This would reduce the API call burden on Actor (NPCs wouldn't need to call advance/arrive explicitly). **Recommendation**: No -- this violates the declarative lifecycle pattern. The game/Actor drives progression. Transit records and calculates but doesn't simulate.
+4. **Multi-mode journeys**: Yes, core feature. Each leg specifies a `modeCode` that can override the journey's `primaryModeCode`. `preferMultiModal` flag on create/calculate selects best mode per leg automatically. Proficiency bonuses apply per-leg per-mode.
 
-3. **Intra-location transit**: Should Transit handle movement within a location (walking from the market to the docks within a city)? Location's hierarchy already models containment. **Recommendation**: No. Intra-location movement is Mapping's domain (spatial positioning) or the game client's domain (local navigation). Transit handles inter-location movement only.
+5. **Reverse connections**: Bidirectional connections share properties. For asymmetric connections (upstream/downstream), create two one-way connections with different speeds. Keeps the data model simple.
 
-4. **Multi-mode journeys**: Should a single journey support mode changes mid-route (walk to the river, then boat, then walk again)? **Recommendation**: Yes. Each leg can specify a different mode if the connection supports it. The journey's `modeCode` is the primary mode, but legs can override. This enables realistic multi-modal travel.
+6. **Transit and Mapping relationship**: Complementary, not overlapping. Mapping is continuous spatial data ("where exactly am I"), Transit is discrete connectivity ("how do I get from town A to town B"). No integration needed beyond both referencing Location entities.
 
-5. **Reverse connections**: When a connection is bidirectional, should the reverse direction have different properties (upstream river is slower)? **Recommendation**: Bidirectional connections share properties. For asymmetric connections (upstream/downstream), create two one-way connections with different speeds. This keeps the data model simple.
+7. **Cross-realm connections**: Not supported. All connections are realm-scoped. Cross-realm travel (if it ever exists) would be modeled as a destination within the originating realm. NPCs and transit never span realms.
 
-6. **Transit and Mapping relationship**: Mapping handles continuous spatial data (3D positions, affordances). Transit handles discrete connectivity (location-to-location edges). They serve different scales: Mapping is "where exactly am I in this room" while Transit is "how do I get from this town to that town." **Recommendation**: They are complementary, not overlapping. No integration needed beyond both referencing Location entities.
+8. **Connection discovery**: Core feature. Connections have `discoverable: boolean` flag. Per-entity discovery tracking in Redis. Route calculation filters by discovery status. Discovery via travel, explicit grant, or Hearsay integration.
+
+9. **Seed proficiency**: Core feature. Modes optionally reference `proficiencySeedTypeCode`. Entity's Seed growth level modifies effective speed. Connects Transit to the content flywheel.
+
+10. **Status transition concurrency**: Optimistic concurrency pattern with `currentStatus`/`newStatus` and `forceUpdate` bypass. Prevents silent status conflicts between independent actors while supporting administrative overrides.
 
 ---
 

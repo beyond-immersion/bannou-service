@@ -970,7 +970,9 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Game/application specific metadata
+          description: >-
+            Client-provided application-specific metadata.
+            No Bannou plugin reads specific keys from this field by convention.
         resolution:
           $ref: '#/components/schemas/EscrowResolution'
           description: How the escrow was resolved
@@ -1143,7 +1145,9 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Handler-specific data
+          description: >-
+            Custom asset handler-specific data.
+            No Bannou plugin reads specific keys from this field by convention.
         # Source tracking
         sourceOwnerId:
           type: string
@@ -1357,7 +1361,9 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Additional failure details
+          description: >-
+            Validation failure diagnostic details.
+            No Bannou plugin reads specific keys from this field by convention.
 
     AssetHandlerInfo:
       type: object
@@ -1470,7 +1476,9 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Application metadata
+          description: >-
+            Client-provided application-specific metadata.
+            No Bannou plugin reads specific keys from this field by convention.
         releaseMode:
           allOf:
             - $ref: '#/components/schemas/ReleaseMode'
@@ -1627,7 +1635,9 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Custom asset data
+          description: >-
+            Custom asset handler-specific data.
+            No Bannou plugin reads specific keys from this field by convention.
 
     ReleaseAllocationInput:
       type: object
@@ -2590,7 +2600,9 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Proof/evidence data
+          description: >-
+            Caller-provided proof/evidence data for condition verification.
+            No Bannou plugin reads specific keys from this field by convention.
         idempotencyKey:
           type: string
           description: Idempotency key

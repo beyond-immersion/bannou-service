@@ -1301,7 +1301,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Custom metadata key-value pairs (null if not needed)
+          description: >-
+            Client-provided custom metadata.
+            No Bannou plugin reads specific keys from this field by convention.
 
     CreateDocumentResponse:
       description: Response confirming document creation with assigned identifiers
@@ -1381,7 +1383,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: New custom metadata key-value pairs (null to keep unchanged)
+          description: >-
+            Updated client-provided custom metadata (null to keep unchanged).
+            No Bannou plugin reads specific keys from this field by convention.
 
     UpdateDocumentResponse:
       description: Response confirming document update with timestamp
@@ -1660,7 +1664,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Custom metadata key-value pairs (null if not needed)
+          description: >-
+            Client-provided custom metadata.
+            No Bannou plugin reads specific keys from this field by convention.
 
     ImportDocumentationResponse:
       description: Response reporting import results with counts and failure details
@@ -1909,7 +1915,9 @@ components:
         metadata:
           type: object
           additionalProperties: true
-          description: Custom metadata key-value pairs
+          description: >-
+            Client-provided custom metadata.
+            No Bannou plugin reads specific keys from this field by convention.
         createdAt:
           type: string
           format: date-time

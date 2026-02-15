@@ -1083,7 +1083,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional metadata for the location (JSON)
+          description: >-
+            Client-provided location metadata.
+            No Bannou plugin reads specific keys from this field by convention.
 
     UpdateLocationRequest:
       description: Request to update an existing location's properties
@@ -1136,7 +1138,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional metadata
+          description: >-
+            Updated client-provided location metadata.
+            No Bannou plugin reads specific keys from this field by convention.
 
     SetLocationParentRequest:
       description: Request to set or change a location's parent in the hierarchy
@@ -1333,7 +1337,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional metadata for the location (JSON)
+          description: >-
+            Client-provided location metadata.
+            No Bannou plugin reads specific keys from this field by convention.
 
     QueryLocationsByPositionRequest:
       description: Request to find all locations containing a spatial position
@@ -1445,7 +1451,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional metadata for the location (JSON)
+          description: >-
+            Client-provided location metadata.
+            No Bannou plugin reads specific keys from this field by convention.
         createdAt:
           type: string
           format: date-time
