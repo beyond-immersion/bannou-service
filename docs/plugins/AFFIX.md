@@ -1,10 +1,11 @@
 # Affix Plugin Deep Dive
 
-> **Plugin**: lib-affix
-> **Schema**: schemas/affix-api.yaml
-> **Version**: 1.0.0
-> **State Stores**: affix-definitions (MySQL), affix-implicit-mappings (MySQL), affix-pool-cache (Redis), affix-definition-cache (Redis), affix-lock (Redis)
-> **Status**: Pre-implementation (architectural specification)
+> **Plugin**: lib-affix (not yet created)
+> **Schema**: `schemas/affix-api.yaml` (not yet created)
+> **Version**: N/A (Pre-Implementation)
+> **State Store**: affix-definitions (MySQL), affix-implicit-mappings (MySQL), affix-pool-cache (Redis), affix-definition-cache (Redis), affix-lock (Redis) — all planned
+> **Layer**: L4 GameFeatures
+> **Status**: Aspirational — no schema, no generated code, no service implementation exists.
 > **Planning**: [ITEM-ECONOMY-PLUGINS.md](../plans/ITEM-ECONOMY-PLUGINS.md)
 
 ---
@@ -726,6 +727,10 @@ Mod Group Exclusivity Visualization
 
 ## Known Quirks & Caveats
 
+### Bugs (Fix Immediately)
+
+None. Plugin is aspirational — no code exists to have bugs.
+
 ### Intentional Quirks (Documented Behavior)
 
 1. **Affix slot types are opaque strings, not enums**: "prefix", "suffix", "implicit", "enchant" are conventions, not enforced values. Games define their own slot types. lib-affix validates slot type consistency (an affix must be applied to a slot matching its `slotType`) but doesn't restrict which string values are valid. Slot limit configuration references slot types by string.
@@ -763,6 +768,8 @@ Mod Group Exclusivity Visualization
 6. **Interaction with lib-save-load**: When saving game state, items carry their full affix metadata in `instanceMetadata`. lib-save-load persists this naturally. On load, no lib-affix interaction is needed (the data is self-contained). However, if affix definitions have changed between save and load (definition deprecation, tier rebalancing), the loaded items may reference outdated definitions. `ComputeItemStats` handles this gracefully (reads current definitions), but `GetItemAffixes` enrichment may show stale display names.
 
 7. **Variable provider equipment detection**: The `AffixItemEvaluationProviderFactory` needs to know which items are "equipped" for a character. This requires querying lib-inventory for equipment-type containers and their contents. If lib-inventory is unavailable (soft dependency), the variable provider returns empty. The definition of "equipped" is game-specific (which container types count as equipment slots).
+
+8. **Affix metadata convention and T29 compliance**: The current design stores affix instance data in `ItemInstance.instanceMetadata.affixes` and documents a convention for other services (lib-craft, lib-loot, lib-market) to read it by key name. This is the exact pattern FOUNDATION TENETS (T29: No Metadata Bag Contracts) forbids: "documenting convention as the interface contract between two services -- if it's not in a schema, it doesn't exist." The alternative is for lib-affix to own its own instance-level state store (e.g., `affix-instances` in MySQL, keyed by `itemInstanceId`) where it persists applied affixes in its own typed schema. Other services would query lib-affix's API rather than parsing metadata blobs from lib-item responses. This would be a significant architectural change from the current design and needs resolution before implementation begins. The "items in inventories" pattern used by lib-status and lib-collection (which use actual Item/Inventory primitives, not metadata bags) may offer a compliant alternative model.
 
 ---
 

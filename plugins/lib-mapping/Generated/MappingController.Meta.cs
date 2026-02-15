@@ -155,7 +155,7 @@ public partial class MappingController
                 "data": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "SCHEMA-LESS. Can contain anything.\nlib-mapping does not validate this.\nExamples: cover_rating, health, respawn_delay, etc.\n",
+                    "description": "Game-specific spatial object data. lib-mapping stores and returns this as-is. No Bannou plugin reads specific keys from this field by convention.",
                     "nullable": true
                 }
             }
@@ -678,7 +678,7 @@ public partial class MappingController
                 "data": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "SCHEMA-LESS. Can contain anything.\nlib-mapping does not validate this.\nExamples: cover_rating, health, respawn_delay, etc.\n",
+                    "description": "Game-specific spatial object data. lib-mapping stores and returns this as-is. No Bannou plugin reads specific keys from this field by convention.",
                     "nullable": true
                 }
             }
@@ -845,7 +845,7 @@ public partial class MappingController
                 "data": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Object state (for created/updated)",
+                    "description": "Game-specific object state data. No Bannou plugin reads specific keys from this field by convention.",
                     "nullable": true
                 }
             }
@@ -1179,7 +1179,7 @@ public partial class MappingController
                 "data": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Schema-less object data (publisher-defined)",
+                    "description": "Game-specific spatial object data. No Bannou plugin reads specific keys from this field by convention.",
                     "nullable": true
                 },
                 "version": {
@@ -1201,7 +1201,7 @@ public partial class MappingController
         },
         "MapKind": {
             "type": "string",
-            "description": "The category of spatial data this map contains.\ nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
+            "description": "The category of spatial data this map contains.\nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
             "enum": [
                 "terrain",
                 "static_geometry",
@@ -1476,7 +1476,7 @@ public partial class MappingController
                 "data": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Schema-less object data (publisher-defined)",
+                    "description": "Game-specific spatial object data. No Bannou plugin reads specific keys from this field by convention.",
                     "nullable": true
                 },
                 "version": {
@@ -1498,7 +1498,7 @@ public partial class MappingController
         },
         "MapKind": {
             "type": "string",
-            "description": "The category of spatial data this map contains.\nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
+            "description": "The category of spatial data this map contains.\ nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
             "enum": [
                 "terrain",
                 "static_geometry",
@@ -1791,7 +1791,7 @@ public partial class MappingController
                 "data": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Schema-less object data (publisher-defined)",
+                    "description": "Game-specific spatial object data. No Bannou plugin reads specific keys from this field by convention.",
                     "nullable": true
                 },
                 "version": {
@@ -1813,7 +1813,7 @@ public partial class MappingController
         },
         "MapKind": {
             "type": "string",
-            "description": "The category of spatial data this map contains.\nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
+            "description": "The category of spatial data this map contains.\ nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
             "enum": [
                 "terrain",
                 "static_geometry",
@@ -2085,7 +2085,7 @@ public partial class MappingController
                 "data": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Schema-less object data (publisher-defined)",
+                    "description": "Game-specific spatial object data. No Bannou plugin reads specific keys from this field by convention.",
                     "nullable": true
                 },
                 "version": {
@@ -2107,7 +2107,7 @@ public partial class MappingController
         },
         "MapKind": {
             "type": "string",
-            "description": "The category of spatial data this map contains.\nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
+            "description": "The category of spatial data this map contains.\ nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
             "enum": [
                 "terrain",
                 "static_geometry",
@@ -2330,19 +2330,19 @@ public partial class MappingController
                 "requires": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Required criteria. Object types, property constraints.\nExample: { \"objectTypes\": [\"boulder\"], \"cover_rating\": { \"min\": 0.5 } }\n",
+                    "description": "Game-specific required criteria for affordance matching. No Bannou plugin reads specific keys from this field by convention.",
                     "nullable": true
                 },
                 "prefers": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Preferred criteria (boost score but not required).\nExample: { \"elevation\": { \"prefer_higher\": true } }\n",
+                    "description": "Game-specific preferred criteria (boost score but not required). No Bannou plugin reads specific keys from this field by convention.",
                     "nullable": true
                 },
                 "excludes": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Exclusion criteria. Reject candidates matching these.\nExample: { \"hazards\": true, \"contested\": true }\n",
+                    "description": "Game-specific exclusion criteria for affordance matching. No Bannou plugin reads specific keys from this field by convention.",
                     "nullable": true
                 }
             }
@@ -2509,7 +2509,7 @@ public partial class MappingController
                 "features": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "What makes this location suitable.\nExample: { \"cover_rating\": 0.8, \"sightlines\": [\"north\"], \"terrain\": \"rocky\" }\n",
+                    "description": "Game-specific features of this affordance result. No Bannou plugin reads specific keys from this field by convention.",
                     "nullable": true
                 },
                 "objectIds": {
@@ -3097,7 +3097,7 @@ public partial class MappingController
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Additional metadata",
+                    "description": "Client-provided definition metadata. No Bannou plugin reads specific keys from this field by convention.",
                     "nullable": true
                 }
             }
@@ -3260,7 +3260,7 @@ public partial class MappingController
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Additional metadata (schema-less)",
+                    "description": "Client-provided definition metadata. No Bannou plugin reads specific keys from this field by convention.",
                     "nullable": true
                 },
                 "createdAt": {
@@ -3316,7 +3316,7 @@ public partial class MappingController
         },
         "MapKind": {
             "type": "string",
-            "description": "The category of spatial data this map contains.\ nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
+            "description": "The category of spatial data this map contains.\nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
             "enum": [
                 "terrain",
                 "static_geometry",
@@ -3513,7 +3513,7 @@ public partial class MappingController
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Additional metadata (schema-less)",
+                    "description": "Client-provided definition metadata. No Bannou plugin reads specific keys from this field by convention.",
                     "nullable": true
                 },
                 "createdAt": {
@@ -3569,7 +3569,7 @@ public partial class MappingController
         },
         "MapKind": {
             "type": "string",
-            "description": "The category of spatial data this map contains.\ nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
+            "description": "The category of spatial data this map contains.\nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
             "enum": [
                 "terrain",
                 "static_geometry",
@@ -3798,7 +3798,7 @@ public partial class MappingController
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Additional metadata (schema-less)",
+                    "description": "Client-provided definition metadata. No Bannou plugin reads specific keys from this field by convention.",
                     "nullable": true
                 },
                 "createdAt": {
@@ -3854,7 +3854,7 @@ public partial class MappingController
         },
         "MapKind": {
             "type": "string",
-            "description": "The category of spatial data this map contains.\nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
+            "description": "The category of spatial data this map contains.\ nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
             "enum": [
                 "terrain",
                 "static_geometry",
@@ -4027,7 +4027,7 @@ public partial class MappingController
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "New metadata (replaces existing)",
+                    "description": "Updated client-provided definition metadata (replaces existing). No Bannou plugin reads specific keys from this field by convention.",
                     "nullable": true
                 }
             }
@@ -4072,7 +4072,7 @@ public partial class MappingController
         },
         "MapKind": {
             "type": "string",
-            "description": "The category of spatial data this map contains.\ nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
+            "description": "The category of spatial data this map contains.\nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
             "enum": [
                 "terrain",
                 "static_geometry",
@@ -4190,7 +4190,7 @@ public partial class MappingController
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Additional metadata (schema-less)",
+                    "description": "Client-provided definition metadata. No Bannou plugin reads specific keys from this field by convention.",
                     "nullable": true
                 },
                 "createdAt": {
@@ -4246,7 +4246,7 @@ public partial class MappingController
         },
         "MapKind": {
             "type": "string",
-            "description": "The category of spatial data this map contains.\ nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
+            "description": "The category of spatial data this map contains.\nDifferent kinds have different update frequencies, storage models, and TTLs.\n",
             "enum": [
                 "terrain",
                 "static_geometry",

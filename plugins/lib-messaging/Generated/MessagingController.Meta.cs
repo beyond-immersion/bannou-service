@@ -100,7 +100,7 @@ public partial class MessagingController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Custom headers to include with the message"
+                    "description": "Caller-provided custom headers included with the message. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }

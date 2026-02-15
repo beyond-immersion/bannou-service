@@ -669,7 +669,7 @@ public partial class EncounterModel
     public System.Collections.Generic.ICollection<System.Guid> ParticipantIds { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
 
     /// <summary>
-    /// Additional encounter-specific data
+    /// Client-provided encounter-specific data. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -945,7 +945,7 @@ public partial class HistoricalParticipation
     public float Significance { get; set; } = 0.5F;
 
     /// <summary>
-    /// Event-specific details for behavior decisions
+    /// Client-provided event-specific details. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;
@@ -1245,7 +1245,7 @@ public partial class RealmHistoricalParticipation
     public float Impact { get; set; } = 0.5F;
 
     /// <summary>
-    /// Event-specific details for behavior decisions
+    /// Client-provided event-specific details. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("metadata")]
     public object? Metadata { get; set; } = default!;

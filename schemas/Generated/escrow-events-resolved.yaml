@@ -974,7 +974,9 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Handler-specific data
+          description: >-
+            Custom asset handler-specific data.
+            No Bannou plugin reads specific keys from this field by convention.
         # Source tracking
         sourceOwnerId:
           type: string

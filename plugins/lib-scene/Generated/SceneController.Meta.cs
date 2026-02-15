@@ -95,7 +95,7 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Scene-level metadata. Not interpreted by Scene service.\nExamples: author, thumbnail, editor preferences, generator config.\n"
+                    "description": "Client-only scene metadata (author, thumbnail, editor preferences). No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -200,14 +200,14 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, game.interactionType).\n"
+                    "description": "Client-only node annotations for game engines and editors. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "attachmentPoints": {
                     "type": "array",
                     "items": {
                         "$ref": "#/$defs/AttachmentPoint"
                     },
-                    "description": "Predefined locations for attaching child objects.\nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
+                    "description": "Predefined locations for attaching child objects.\ nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
                 },
                 "affordances": {
                     "type": "array",
@@ -414,7 +414,7 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Type-specific parameters. Examples:\n- sittable: { height: 0.5, facing: [0,0,1] }\n- door: { openAngle: 90, locked: false }\n- container: { capacity: 10, itemTypes: [\"weapon\", \"consumable\"] }\n"
+                    "description": "Game-specific affordance parameters interpreted by game engines and AI systems. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -571,7 +571,7 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Scene-level metadata. Not interpreted by Scene service.\nExamples: author, thumbnail, editor preferences, generator config.\n"
+                    "description": "Client-only scene metadata (author, thumbnail, editor preferences). No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -676,14 +676,14 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, game.interactionType).\n"
+                    "description": "Client-only node annotations for game engines and editors. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "attachmentPoints": {
                     "type": "array",
                     "items": {
                         "$ref": "#/$defs/AttachmentPoint"
                     },
-                    "description": "Predefined locations for attaching child objects.\nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
+                    "description": "Predefined locations for attaching child objects.\ nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
                 },
                 "affordances": {
                     "type": "array",
@@ -890,7 +890,7 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Type-specific parameters. Examples:\n- sittable: { height: 0.5, facing: [0,0,1] }\n- door: { openAngle: 90, locked: false }\n- container: { capacity: 10, itemTypes: [\"weapon\", \"consumable\"] }\n"
+                    "description": "Game-specific affordance parameters interpreted by game engines and AI systems. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -1167,7 +1167,7 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Scene-level metadata. Not interpreted by Scene service.\nExamples: author, thumbnail, editor preferences, generator config.\n"
+                    "description": "Client-only scene metadata (author, thumbnail, editor preferences). No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -1183,7 +1183,7 @@ public partial class SceneController
         },
         "SceneType": {
             "type": "string",
-            "description": "Scene classification for querying and validation rule lookup.\ nDifferent types may have different validation requirements per game.\n",
+            "description": "Scene classification for querying and validation rule lookup.\nDifferent types may have different validation requirements per game.\n",
             "enum": [
                 "unknown",
                 "region",
@@ -1272,14 +1272,14 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, game.interactionType).\n"
+                    "description": "Client-only node annotations for game engines and editors. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "attachmentPoints": {
                     "type": "array",
                     "items": {
                         "$ref": "#/$defs/AttachmentPoint"
                     },
-                    "description": "Predefined locations for attaching child objects.\nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
+                    "description": "Predefined locations for attaching child objects.\ nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
                 },
                 "affordances": {
                     "type": "array",
@@ -1486,7 +1486,7 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Type-specific parameters. Examples:\n- sittable: { height: 0.5, facing: [0,0,1] }\n- door: { openAngle: 90, locked: false }\n- container: { capacity: 10, itemTypes: [\"weapon\", \"consumable\"] }\n"
+                    "description": "Game-specific affordance parameters interpreted by game engines and AI systems. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -2047,7 +2047,7 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Scene-level metadata. Not interpreted by Scene service.\nExamples: author, thumbnail, editor preferences, generator config.\n"
+                    "description": "Client-only scene metadata (author, thumbnail, editor preferences). No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -2152,14 +2152,14 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, game.interactionType).\n"
+                    "description": "Client-only node annotations for game engines and editors. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "attachmentPoints": {
                     "type": "array",
                     "items": {
                         "$ref": "#/$defs/AttachmentPoint"
                     },
-                    "description": "Predefined locations for attaching child objects.\nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
+                    "description": "Predefined locations for attaching child objects.\ nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
                 },
                 "affordances": {
                     "type": "array",
@@ -2366,7 +2366,7 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Type-specific parameters. Examples:\n- sittable: { height: 0.5, facing: [0,0,1] }\n- door: { openAngle: 90, locked: false }\n- container: { capacity: 10, itemTypes: [\"weapon\", \"consumable\"] }\n"
+                    "description": "Game-specific affordance parameters interpreted by game engines and AI systems. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -2523,7 +2523,7 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Scene-level metadata. Not interpreted by Scene service.\nExamples: author, thumbnail, editor preferences, generator config.\n"
+                    "description": "Client-only scene metadata (author, thumbnail, editor preferences). No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -2628,14 +2628,14 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, game.interactionType).\n"
+                    "description": "Client-only node annotations for game engines and editors. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "attachmentPoints": {
                     "type": "array",
                     "items": {
                         "$ref": "#/$defs/AttachmentPoint"
                     },
-                    "description": "Predefined locations for attaching child objects.\nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
+                    "description": "Predefined locations for attaching child objects.\ nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
                 },
                 "affordances": {
                     "type": "array",
@@ -2842,7 +2842,7 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Type-specific parameters. Examples:\n- sittable: { height: 0.5, facing: [0,0,1] }\n- door: { openAngle: 90, locked: false }\n- container: { capacity: 10, itemTypes: [\"weapon\", \"consumable\"] }\n"
+                    "description": "Game-specific affordance parameters interpreted by game engines and AI systems. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -3180,7 +3180,7 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Scene-level metadata. Not interpreted by Scene service.\nExamples: author, thumbnail, editor preferences, generator config.\n"
+                    "description": "Client-only scene metadata (author, thumbnail, editor preferences). No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -3285,14 +3285,14 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, game.interactionType).\n"
+                    "description": "Client-only node annotations for game engines and editors. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "attachmentPoints": {
                     "type": "array",
                     "items": {
                         "$ref": "#/$defs/AttachmentPoint"
                     },
-                    "description": "Predefined locations for attaching child objects.\nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
+                    "description": "Predefined locations for attaching child objects.\ nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
                 },
                 "affordances": {
                     "type": "array",
@@ -3499,7 +3499,7 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Type-specific parameters. Examples:\n- sittable: { height: 0.5, facing: [0,0,1] }\n- door: { openAngle: 90, locked: false }\n- container: { capacity: 10, itemTypes: [\"weapon\", \"consumable\"] }\n"
+                    "description": "Game-specific affordance parameters interpreted by game engines and AI systems. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -3648,7 +3648,7 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional context for the error"
+                    "description": "Client-only validation error context. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -3763,7 +3763,7 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Caller-provided metadata passed to event"
+                    "description": "Caller-provided metadata passed through to instantiation events. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -3973,7 +3973,7 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Caller-provided metadata"
+                    "description": "Caller-provided metadata passed through to destruction events. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -4185,7 +4185,7 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Scene-level metadata. Not interpreted by Scene service.\nExamples: author, thumbnail, editor preferences, generator config.\n"
+                    "description": "Client-only scene metadata (author, thumbnail, editor preferences). No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -4290,14 +4290,14 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, game.interactionType).\n"
+                    "description": "Client-only node annotations for game engines and editors. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "attachmentPoints": {
                     "type": "array",
                     "items": {
                         "$ref": "#/$defs/AttachmentPoint"
                     },
-                    "description": "Predefined locations for attaching child objects.\nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
+                    "description": "Predefined locations for attaching child objects.\ nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
                 },
                 "affordances": {
                     "type": "array",
@@ -4504,7 +4504,7 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Type-specific parameters. Examples:\n- sittable: { height: 0.5, facing: [0,0,1] }\n- door: { openAngle: 90, locked: false }\n- container: { capacity: 10, itemTypes: [\"weapon\", \"consumable\"] }\n"
+                    "description": "Game-specific affordance parameters interpreted by game engines and AI systems. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -4733,7 +4733,7 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Scene-level metadata. Not interpreted by Scene service.\nExamples: author, thumbnail, editor preferences, generator config.\n"
+                    "description": "Client-only scene metadata (author, thumbnail, editor preferences). No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -4838,7 +4838,7 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, game.interactionType).\n"
+                    "description": "Client-only node annotations for game engines and editors. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "attachmentPoints": {
                     "type": "array",
@@ -4862,7 +4862,7 @@ public partial class SceneController
                 "markerType": {
                     "$ref": "#/$defs/MarkerType",
                     "nullable": true,
-                    "description": "Type of marker for marker nodes.\nOnly relevant when nodeType is 'marker'.\n"
+                    "description": "Type of marker for marker nodes.\ nOnly relevant when nodeType is 'marker'.\n"
                 },
                 "volumeShape": {
                     "$ref": "#/$defs/VolumeShape",
@@ -5052,7 +5052,7 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Type-specific parameters. Examples:\n- sittable: { height: 0.5, facing: [0,0,1] }\n- door: { openAngle: 90, locked: false }\n- container: { capacity: 10, itemTypes: [\"weapon\", \"consumable\"] }\n"
+                    "description": "Game-specific affordance parameters interpreted by game engines and AI systems. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -5219,7 +5219,7 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Scene-level metadata. Not interpreted by Scene service.\nExamples: author, thumbnail, editor preferences, generator config.\n"
+                    "description": "Client-only scene metadata (author, thumbnail, editor preferences). No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -5324,7 +5324,7 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, game.interactionType).\n"
+                    "description": "Client-only node annotations for game engines and editors. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "attachmentPoints": {
                     "type": "array",
@@ -5348,7 +5348,7 @@ public partial class SceneController
                 "markerType": {
                     "$ref": "#/$defs/MarkerType",
                     "nullable": true,
-                    "description": "Type of marker for marker nodes.\nOnly relevant when nodeType is 'marker'.\n"
+                    "description": "Type of marker for marker nodes.\ nOnly relevant when nodeType is 'marker'.\n"
                 },
                 "volumeShape": {
                     "$ref": "#/$defs/VolumeShape",
@@ -5538,7 +5538,7 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Type-specific parameters. Examples:\n- sittable: { height: 0.5, facing: [0,0,1] }\n- door: { openAngle: 90, locked: false }\n- container: { capacity: 10, itemTypes: [\"weapon\", \"consumable\"] }\n"
+                    "description": "Game-specific affordance parameters interpreted by game engines and AI systems. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -7214,7 +7214,7 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Scene-level metadata. Not interpreted by Scene service.\nExamples: author, thumbnail, editor preferences, generator config.\n"
+                    "description": "Client-only scene metadata (author, thumbnail, editor preferences). No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -7319,14 +7319,14 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, game.interactionType).\n"
+                    "description": "Client-only node annotations for game engines and editors. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "attachmentPoints": {
                     "type": "array",
                     "items": {
                         "$ref": "#/$defs/AttachmentPoint"
                     },
-                    "description": "Predefined locations for attaching child objects.\nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
+                    "description": "Predefined locations for attaching child objects.\ nUsed by Scene Composer for furniture decoration, wall accessories, etc.\n"
                 },
                 "affordances": {
                     "type": "array",
@@ -7533,7 +7533,7 @@ public partial class SceneController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Type-specific parameters. Examples:\n- sittable: { height: 0.5, facing: [0,0,1] }\n- door: { openAngle: 90, locked: false }\n- container: { capacity: 10, itemTypes: [\"weapon\", \"consumable\"] }\n"
+                    "description": "Game-specific affordance parameters interpreted by game engines and AI systems. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },

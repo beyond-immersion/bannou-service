@@ -15546,7 +15546,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Default configuration passed to behavior execution
+          description: >-
+            Game-specific configuration passed to ABML behavior execution scope.
+            No Bannou plugin reads specific keys from this field by convention.
         autoSpawn:
           description: Auto-spawn configuration for instantiate-on-access
           nullable: true
@@ -15570,9 +15572,10 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: |
-            Static template-level cognition overrides. Applied as the first layer
-            in the three-layer override composition (template → instance → ABML metadata).
+          description: >-
+            Static template-level cognition overrides (polymorphic JSON).
+            Deserialized internally to CognitionOverrides type with discriminated
+            subtypes.
         createdAt:
           type: string
           format: date-time
@@ -15860,11 +15863,10 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: |
-            Type-specific parameters. Examples:
-            - sittable: { height: 0.5, facing: [0,0,1] }
-            - door: { openAngle: 90, locked: false }
-            - container: { capacity: 10, itemTypes: ["weapon", "consumable"] }
+          description: >-
+            Game-specific affordance parameters interpreted by game engines and AI
+            systems.
+            No Bannou plugin reads specific keys from this field by convention.
     AffordanceFreshness:
       type: string
       description: Controls caching behavior for affordance queries
@@ -15892,9 +15894,9 @@ components:
         features:
           type: object
           additionalProperties: true
-          description: |
-            What makes this location suitable.
-            Example: { "cover_rating": 0.8, "sightlines": ["north"], "terrain": "rocky" }
+          description: >-
+            Game-specific features of this affordance result.
+            No Bannou plugin reads specific keys from this field by convention.
           nullable: true
         objectIds:
           type: array
@@ -19360,7 +19362,8 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: What the entity wants to do
+          description: "Client-only proposed action data. No Bannou plugin reads specific
+            keys from this field by convention."
     CheckConstraintResponse:
       type: object
       description: Constraint check result
@@ -20723,7 +20726,8 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Evidence of completion
+          description: "Client-only evidence data. No Bannou plugin reads specific
+            keys from this field by convention."
     CompleteScenarioRequest:
       type: object
       description: Request to complete a scenario
@@ -21658,6 +21662,96 @@ components:
       - none
       - session
       - lifecycle
+    ContractClauseAsset:
+      type: object
+      description: An asset requirement within a clause definition
+      additionalProperties: false
+      required:
+      - type
+      - code
+      - amount
+      properties:
+        type:
+          type: string
+          description: Asset type (currency, item)
+        code:
+          type: string
+          description: Asset code identifier
+        amount:
+          type: number
+          description: Required amount of the asset
+    ContractClauseDefinition:
+      type: object
+      description: A clause definition for contract execution specifying asset 
+        transfers, fees, or requirements
+      additionalProperties: false
+      required:
+      - id
+      - type
+      properties:
+        id:
+          type: string
+          description: Unique identifier for this clause within the contract
+        type:
+          type: string
+          description: Clause type code (fee, distribution, currency_transfer, 
+            item_transfer, asset_requirement)
+        party:
+          type: string
+          nullable: true
+          description: Party role reference for this clause
+        amount:
+          type: string
+          nullable: true
+          description: Amount value (numeric string for template substitution 
+            support)
+        amountType:
+          type: string
+          nullable: true
+          description: How to interpret the amount (flat, percentage, remainder)
+        sourceWallet:
+          type: string
+          nullable: true
+          description: Source wallet identifier or template variable reference
+        destinationWallet:
+          type: string
+          nullable: true
+          description: Destination wallet identifier or template variable 
+            reference
+        recipientWallet:
+          type: string
+          nullable: true
+          description: Recipient wallet for fee clauses or template variable 
+            reference
+        currencyCode:
+          type: string
+          nullable: true
+          description: Currency code for currency-based clauses
+        sourceContainer:
+          type: string
+          nullable: true
+          description: Source container identifier or template variable 
+            reference for item clauses
+        destinationContainer:
+          type: string
+          nullable: true
+          description: Destination container identifier or template variable 
+            reference for item clauses
+        itemCode:
+          type: string
+          nullable: true
+          description: Item code for item-based clauses
+        checkLocation:
+          type: string
+          nullable: true
+          description: Location template variable reference for asset 
+            requirement checks
+        assets:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/ContractClauseAsset'
+          description: Asset requirements for asset_requirement clause type
     ContractInstanceResponse:
       type: object
       description: Contract instance details
@@ -21738,7 +21832,8 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Game-specific metadata
+          description: "Client-only game metadata. No Bannou plugin reads specific
+            keys from this field by convention."
         createdAt:
           type: string
           format: date-time
@@ -21800,12 +21895,14 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Instance-level metadata
+          description: "Client-only instance metadata. No Bannou plugin reads specific
+            keys from this field by convention."
         runtimeState:
           type: object
           additionalProperties: true
           nullable: true
-          description: Runtime state metadata
+          description: "Client-only runtime state. No Bannou plugin reads specific
+            keys from this field by convention."
     ContractPartyInput:
       type: object
       description: Party input for contract creation
@@ -21974,7 +22071,8 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Game-specific metadata
+          description: "Client-only game metadata. No Bannou plugin reads specific
+            keys from this field by convention."
         isActive:
           type: boolean
           description: Whether template is active
@@ -22021,11 +22119,36 @@ components:
           type: string
           nullable: true
           description: Time to cure breach (ISO 8601 duration)
+        exclusivity:
+          type: boolean
+          nullable: true
+          description: Whether this contract has an exclusivity clause 
+            preventing the entity from entering similar contracts
+        nonCompete:
+          type: boolean
+          nullable: true
+          description: Whether this contract has a non-compete clause
+        timeCommitment:
+          type: boolean
+          nullable: true
+          description: Whether this contract has a time commitment clause
+        timeCommitmentType:
+          type: string
+          nullable: true
+          description: Type of time commitment (exclusive or partial)
+        clauses:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/ContractClauseDefinition'
+          description: Clause definitions for contract execution (fees, 
+            distributions, asset requirements)
         customTerms:
           type: object
           additionalProperties: true
           nullable: true
-          description: Game-specific custom terms
+          description: "Client-only custom terms. No Bannou plugin reads specific
+            keys from this field by convention."
     ControllingFactionResponse:
       type: object
       description: The faction controlling a location
@@ -22310,7 +22433,10 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Default configuration passed to behavior execution
+          description: >-
+            Game-specific configuration passed to ABML behavior execution scope.
+            No Bannou plugin reads specific keys from this field by convention.
+            Different ABML behaviors define their own expected configuration structure.
         autoSpawn:
           description: Auto-spawn configuration for instantiate-on-access
           nullable: true
@@ -22338,9 +22464,13 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: |
-            Static template-level cognition overrides. Applied as the first layer
-            in the three-layer override composition (template → instance → ABML metadata).
+          description: >-
+            Static template-level cognition overrides (polymorphic JSON).
+            Deserialized internally to CognitionOverrides type with discriminated
+            subtypes.
+            Applied as the first layer in the three-layer override composition
+            (template, instance, ABML metadata). Structure defined by ICognitionOverride
+            interface hierarchy in bannou-service/Behavior/.
     CreateArchiveRequest:
       description: Request to create a point-in-time snapshot of namespace 
         documentation
@@ -22753,7 +22883,8 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Instance-level game metadata
+          description: "Client-only game metadata. No Bannou plugin reads specific
+            keys from this field by convention."
     CreateDefinitionRequest:
       type: object
       description: Request to create a map definition
@@ -22780,7 +22911,9 @@ components:
         metadata:
           type: object
           additionalProperties: true
-          description: Additional metadata
+          description: >-
+            Client-provided definition metadata.
+            No Bannou plugin reads specific keys from this field by convention.
           nullable: true
     CreateDeityRequest:
       type: object
@@ -23023,7 +23156,9 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Application metadata
+          description: >-
+            Client-provided application-specific metadata.
+            No Bannou plugin reads specific keys from this field by convention.
         releaseMode:
           allOf:
           - $ref: '#/components/schemas/ReleaseMode'
@@ -23456,7 +23591,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional leaderboard-specific metadata
+          description: >-
+            Client-provided leaderboard-specific metadata.
+            No Bannou plugin reads specific keys from this field by convention.
     CreateMetabundleRequest:
       type: object
       additionalProperties: false
@@ -23849,7 +23986,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Seed-type-specific initial metadata.
+          description: >-
+            Client-provided seed-type-specific initial data.
+            No Bannou plugin reads specific keys from this field by convention.
     CreateSlotRequest:
       description: Request to create a new save slot for an entity.
       type: object
@@ -24506,23 +24645,23 @@ components:
         requires:
           type: object
           additionalProperties: true
-          description: |
-            Required criteria. Object types, property constraints.
-            Example: { "objectTypes": ["boulder"], "cover_rating": { "min": 0.5 } }
+          description: >-
+            Game-specific required criteria for affordance matching.
+            No Bannou plugin reads specific keys from this field by convention.
           nullable: true
         prefers:
           type: object
           additionalProperties: true
-          description: |
-            Preferred criteria (boost score but not required).
-            Example: { "elevation": { "prefer_higher": true } }
+          description: >-
+            Game-specific preferred criteria (boost score but not required).
+            No Bannou plugin reads specific keys from this field by convention.
           nullable: true
         excludes:
           type: object
           additionalProperties: true
-          description: |
-            Exclusion criteria. Reject candidates matching these.
-            Example: { "hazards": true, "contested": true }
+          description: >-
+            Game-specific exclusion criteria for affordance matching.
+            No Bannou plugin reads specific keys from this field by convention.
           nullable: true
     CustomScripts:
       description: Custom script injection configuration for adding JavaScript 
@@ -25666,7 +25805,9 @@ components:
         metadata:
           type: object
           additionalProperties: true
-          description: Custom metadata key-value pairs
+          description: >-
+            Client-provided custom metadata.
+            No Bannou plugin reads specific keys from this field by convention.
         createdAt:
           type: string
           format: date-time
@@ -26105,7 +26246,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional encounter-specific data
+          description: >-
+            Client-provided encounter-specific data.
+            No Bannou plugin reads specific keys from this field by convention.
         createdAt:
           type: string
           format: date-time
@@ -26799,7 +26942,9 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Game/application specific metadata
+          description: >-
+            Client-provided application-specific metadata.
+            No Bannou plugin reads specific keys from this field by convention.
         resolution:
           $ref: '#/components/schemas/EscrowResolution'
           description: How the escrow was resolved
@@ -26895,7 +27040,9 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Handler-specific data
+          description: >-
+            Custom asset handler-specific data.
+            No Bannou plugin reads specific keys from this field by convention.
         sourceOwnerId:
           type: string
           format: uuid
@@ -27024,7 +27171,9 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Custom asset data
+          description: >-
+            Custom asset handler-specific data.
+            No Bannou plugin reads specific keys from this field by convention.
     EscrowConsent:
       type: object
       description: Records a party consent decision
@@ -28324,7 +28473,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Action-specific data
+          description: >-
+            Game-specific action data.
+            No Bannou plugin reads specific keys from this field by convention.
         targetId:
           type: string
           format: uuid
@@ -28346,12 +28497,16 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Action result data
+          description: >-
+            Game-specific action result data.
+            No Bannou plugin reads specific keys from this field by convention.
         newGameState:
           type: object
           additionalProperties: true
           nullable: true
-          description: Updated game state (if applicable)
+          description: >-
+            Updated game state (if applicable).
+            No Bannou plugin reads specific keys from this field by convention.
     GameActionType:
       type: string
       description: Type of game action
@@ -28396,8 +28551,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Game-specific character data for this player (null if 
-            none provided)
+          description: >-
+            Game-specific character data for this player.
+            No Bannou plugin reads specific keys from this field by convention.
         voiceSessionId:
           type: string
           format: uuid
@@ -28464,7 +28620,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Game-specific configuration settings
+          description: >-
+            Game-specific configuration settings.
+            No Bannou plugin reads specific keys from this field by convention.
         reservations:
           type: array
           items:
@@ -31986,7 +32144,10 @@ components:
     HazardInfo:
       type: object
       additionalProperties: true
-      description: Information about a hazard in range
+      description: >-
+        Information about a hazard in range.
+        Core properties are schema-defined; additionalProperties allows game-specific
+        hazard data. No Bannou plugin reads specific extension keys by convention.
       properties:
         hazardType:
           type: string
@@ -32089,7 +32250,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Event-specific details for behavior decisions
+          description: >-
+            Client-provided event-specific details.
+            No Bannou plugin reads specific keys from this field by convention.
         createdAt:
           type: string
           format: date-time
@@ -33020,7 +33183,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional metadata
+          description: >-
+            Client-provided leaderboard-specific metadata.
+            No Bannou plugin reads specific keys from this field by convention.
     LeaderboardEntriesResponse:
       type: object
       description: Response containing leaderboard entries
@@ -33075,7 +33240,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Entry metadata
+          description: >-
+            Client-provided entry metadata.
+            No Bannou plugin reads specific keys from this field by convention.
     LeaveGameSessionByIdRequest:
       type: object
       description: Request to leave a specific game session by ID
@@ -36162,7 +36329,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional metadata for the location (JSON)
+          description: >-
+            Client-provided location metadata.
+            No Bannou plugin reads specific keys from this field by convention.
         createdAt:
           type: string
           format: date-time
@@ -36363,7 +36532,9 @@ components:
         metadata:
           type: object
           additionalProperties: true
-          description: Additional metadata (schema-less)
+          description: >-
+            Client-provided definition metadata.
+            No Bannou plugin reads specific keys from this field by convention.
           nullable: true
         createdAt:
           type: string
@@ -36428,7 +36599,9 @@ components:
         data:
           type: object
           additionalProperties: true
-          description: Schema-less object data (publisher-defined)
+          description: >-
+            Game-specific spatial object data.
+            No Bannou plugin reads specific keys from this field by convention.
           nullable: true
         version:
           type: integer
@@ -37450,7 +37623,10 @@ components:
     NearbyObject:
       type: object
       additionalProperties: true
-      description: Information about a nearby object perceived by the character
+      description: >-
+        Information about a nearby object perceived by the character.
+        Core properties are schema-defined; additionalProperties allows game-specific
+        object data. No Bannou plugin reads specific extension keys by convention.
       properties:
         objectId:
           type: string
@@ -38325,9 +38501,11 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: |
-            Perception-specific data. For perceptionType="spatial", this can contain
-            game-specific spatial context in any format the game server defines.
+          description: >-
+            Game-specific perception payload passed to ABML behavior execution scope.
+            No Bannou plugin reads specific keys from this field by convention.
+            Different perception types carry different data structures defined by
+            the game.
         urgency:
           type: number
           format: float
@@ -40644,7 +40822,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Event-specific details for behavior decisions
+          description: >-
+            Client-provided event-specific details.
+            No Bannou plugin reads specific keys from this field by convention.
         createdAt:
           type: string
           format: date-time
@@ -40807,6 +40987,7 @@ components:
       - name
       - gameServiceId
       - isActive
+      - isSystemType
       - isDeprecated
       - createdAt
       - updatedAt
@@ -40836,6 +41017,10 @@ components:
         isActive:
           type: boolean
           description: Whether the realm is currently active for gameplay
+        isSystemType:
+          type: boolean
+          description: Whether this realm is a system infrastructure realm 
+            (e.g., VOID). System realms cannot be merged as source.
         isDeprecated:
           type: boolean
           description: Whether this realm is deprecated and cannot be used for 
@@ -40853,7 +41038,8 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional custom metadata for the realm
+          description: Client-only metadata. No Bannou plugin reads specific 
+            keys from this field by convention.
         createdAt:
           type: string
           format: date-time
@@ -41464,7 +41650,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Type-specific relationship data
+          description: >-
+            Client-provided relationship data.
+            No Bannou plugin reads specific keys from this field by convention.
         createdAt:
           type: string
           format: date-time
@@ -41590,7 +41778,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional custom metadata for the relationship type
+          description: >-
+            Client-provided relationship type metadata.
+            No Bannou plugin reads specific keys from this field by convention.
         createdAt:
           type: string
           format: date-time
@@ -43638,9 +43828,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: |
-            Scene-level metadata. Not interpreted by Scene service.
-            Examples: author, thumbnail, editor preferences, generator config.
+          description: >-
+            Client-only scene metadata (author, thumbnail, editor preferences).
+            No Bannou plugin reads specific keys from this field by convention.
         createdAt:
           type: string
           format: date-time
@@ -43712,9 +43902,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: |
-            Consumer-specific data stored without interpretation.
-            Use namespaced keys (e.g., render.castShadows, game.interactionType).
+          description: >-
+            Client-only node annotations for game engines and editors.
+            No Bannou plugin reads specific keys from this field by convention.
         attachmentPoints:
           type: array
           items:
@@ -45010,12 +45200,11 @@ components:
     SpatialContext:
       type: object
       additionalProperties: true
-      description: |
+      description: >-
         Spatial context derived from game server's authoritative spatial state.
-        Included in perception events to give NPC actors awareness of their environment
-        without requiring direct map subscriptions.
-
-        Note: additionalProperties=true allows game-specific extensions.
+        Included in perception events to give NPC actors awareness of their environment.
+        Core properties are schema-defined; additionalProperties allows game-specific
+        spatial extensions. No Bannou plugin reads specific extension keys by convention.
       properties:
         terrainType:
           type: string
@@ -45075,12 +45264,16 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Override template defaults
+          description: >-
+            Game-specific configuration overrides merged with template defaults.
+            No Bannou plugin reads specific keys from this field by convention.
         initialState:
           type: object
           additionalProperties: true
           nullable: true
-          description: Initial state passed to behavior
+          description: >-
+            Initial actor state snapshot. Deserialized internally to ActorStateSnapshot.
+            No Bannou plugin reads specific keys from this field by convention.
         characterId:
           type: string
           format: uuid
@@ -45170,7 +45363,8 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Base trait modifiers for this species
+          description: "Client-only trait modifiers. No Bannou plugin reads specific
+            keys from this field by convention."
         realmIds:
           type: array
           items:
@@ -45181,7 +45375,8 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional metadata for the species
+          description: "Client-only metadata. No Bannou plugin reads specific keys
+            from this field by convention."
         createdAt:
           type: string
           format: date-time
@@ -45333,7 +45528,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Optional initial data for the encounter
+          description: >-
+            Game-specific encounter initialization data passed to ABML behavior scope.
+            No Bannou plugin reads specific keys from this field by convention.
     StartWatcherRequest:
       type: object
       additionalProperties: false
@@ -47427,7 +47624,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Updated configuration settings
+          description: >-
+            Updated game-specific configuration for ABML behavior execution scope.
+            No Bannou plugin reads specific keys from this field by convention.
         autoSpawn:
           description: Updated auto-spawn configuration
           nullable: true
@@ -47450,9 +47649,10 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: |
-            Updated static template-level cognition overrides. Applied as the first layer
-            in the three-layer override composition.
+          description: >-
+            Updated cognition overrides (polymorphic JSON).
+            Deserialized internally to CognitionOverrides type with discriminated
+            subtypes.
     UpdateBoardTemplateRequest:
       type: object
       description: Request to update mutable fields of a board template
@@ -47635,7 +47835,8 @@ components:
         data:
           type: object
           additionalProperties: true
-          description: Metadata to set or merge
+          description: "Client-only metadata payload. No Bannou plugin reads specific
+            keys from this field by convention."
     UpdateDefinitionRequest:
       type: object
       description: Request to update a map definition
@@ -47667,7 +47868,9 @@ components:
         metadata:
           type: object
           additionalProperties: true
-          description: New metadata (replaces existing)
+          description: >-
+            Updated client-provided definition metadata (replaces existing).
+            No Bannou plugin reads specific keys from this field by convention.
           nullable: true
     UpdateDeityRequest:
       type: object
@@ -48497,7 +48700,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Metadata fields to merge (set key to null to delete).
+          description: >-
+            Client-provided metadata fields to merge (set key to null to delete).
+            No Bannou plugin reads specific keys from this field by convention.
     UpdateSeedTypeRequest:
       type: object
       description: Request to update a seed type definition.
@@ -48780,8 +48985,10 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional context data passed to contract template value
-            substitution
+          description: >-
+            Caller-provided context merged into contract gameMetadata for template
+            value substitution.
+            No Bannou plugin reads specific keys from this field by convention.
     UseItemResponse:
       type: object
       description: Response containing the result of an item use attempt
@@ -48854,14 +49061,17 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Evidence data for this milestone completion (passed to 
-            contract)
+          description: >-
+            Evidence data passed through to Contract milestone completion.
+            No Bannou plugin reads specific keys from this field by convention.
         context:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional context data passed to contract template value
-            substitution
+          description: >-
+            Caller-provided context merged into contract gameMetadata for template
+            value substitution.
+            No Bannou plugin reads specific keys from this field by convention.
     UseItemStepResponse:
       type: object
       description: Response from completing a multi-step item use milestone
@@ -49303,7 +49513,9 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Additional failure details
+          description: >-
+            Validation failure diagnostic details.
+            No Bannou plugin reads specific keys from this field by convention.
     ValidationFailureType:
       type: string
       description: |
@@ -49508,7 +49720,9 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-          description: Proof/evidence data
+          description: >-
+            Caller-provided proof/evidence data for condition verification.
+            No Bannou plugin reads specific keys from this field by convention.
         idempotencyKey:
           type: string
           description: Idempotency key

@@ -115,7 +115,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Application metadata"
+                    "description": "Client-provided application-specific metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "releaseMode": {
                     "allOf": [
@@ -143,7 +143,7 @@ public partial class EscrowController
         },
         "EscrowType": {
             "type": "string",
-            "description": "Type of escrow agreement.\ n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
+            "description": "Type of escrow agreement.\n- two_party: Simple trade escrow between Party A and Party B\n- multi_party: N parties with complex deposit/receive rules\n- conditional: Release based on external condition or contract fulfillment\n- auction: Winner-takes-all with refunds to losers\n",
             "enum": [
                 "two_party",
                 "multi_party",
@@ -344,13 +344,13 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Custom asset data"
+                    "description": "Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
         "AssetType": {
             "type": "string",
-            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\ n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\ n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
+            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
             "enum": [
                 "currency",
                 "item",
@@ -614,7 +614,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Game/application specific metadata"
+                    "description": "Client-provided application-specific metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "resolution": {
                     "$ref": "#/$defs/EscrowResolution",
@@ -896,7 +896,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Handler-specific data"
+                    "description": "Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "sourceOwnerId": {
                     "type": "string",
@@ -1101,7 +1101,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "pending_deposits",
                 "partially_funded",
@@ -1161,7 +1161,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Additional failure details"
+                    "description": "Validation failure diagnostic details. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -1498,7 +1498,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Game/application specific metadata"
+                    "description": "Client-provided application-specific metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "resolution": {
                     "$ref": "#/$defs/EscrowResolution",
@@ -1780,7 +1780,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Handler-specific data"
+                    "description": "Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "sourceOwnerId": {
                     "type": "string",
@@ -1985,7 +1985,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "pending_deposits",
                 "partially_funded",
@@ -2045,7 +2045,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Additional failure details"
+                    "description": "Validation failure diagnostic details. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -2434,7 +2434,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Game/application specific metadata"
+                    "description": "Client-provided application-specific metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "resolution": {
                     "$ref": "#/$defs/EscrowResolution",
@@ -2716,7 +2716,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Handler-specific data"
+                    "description": "Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "sourceOwnerId": {
                     "type": "string",
@@ -2921,7 +2921,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "pending_deposits",
                 "partially_funded",
@@ -2981,7 +2981,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Additional failure details"
+                    "description": "Validation failure diagnostic details. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -3382,13 +3382,13 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Custom asset data"
+                    "description": "Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
         "AssetType": {
             "type": "string",
-            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\ n- custom: Custom asset type via registered handler\n",
+            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
             "enum": [
                 "currency",
                 "item",
@@ -3604,7 +3604,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Game/application specific metadata"
+                    "description": "Client-provided application-specific metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "resolution": {
                     "$ref": "#/$defs/EscrowResolution",
@@ -3886,7 +3886,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Handler-specific data"
+                    "description": "Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "sourceOwnerId": {
                     "type": "string",
@@ -4091,7 +4091,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "pending_deposits",
                 "partially_funded",
@@ -4151,7 +4151,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Additional failure details"
+                    "description": "Validation failure diagnostic details. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -4430,13 +4430,13 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Custom asset data"
+                    "description": "Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
         "AssetType": {
             "type": "string",
-            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\ n- custom: Custom asset type via registered handler\n",
+            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
             "enum": [
                 "currency",
                 "item",
@@ -4713,7 +4713,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Handler-specific data"
+                    "description": "Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "sourceOwnerId": {
                     "type": "string",
@@ -5067,7 +5067,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Game/application specific metadata"
+                    "description": "Client-provided application-specific metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "resolution": {
                     "$ref": "#/$defs/EscrowResolution",
@@ -5349,7 +5349,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Handler-specific data"
+                    "description": "Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "sourceOwnerId": {
                     "type": "string",
@@ -5554,7 +5554,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "pending_deposits",
                 "partially_funded",
@@ -5614,7 +5614,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Additional failure details"
+                    "description": "Validation failure diagnostic details. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -6132,7 +6132,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Game/application specific metadata"
+                    "description": "Client-provided application-specific metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "resolution": {
                     "$ref": "#/$defs/EscrowResolution",
@@ -6414,7 +6414,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Handler-specific data"
+                    "description": "Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "sourceOwnerId": {
                     "type": "string",
@@ -6619,7 +6619,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "pending_deposits",
                 "partially_funded",
@@ -6679,7 +6679,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Additional failure details"
+                    "description": "Validation failure diagnostic details. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -7067,7 +7067,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Game/application specific metadata"
+                    "description": "Client-provided application-specific metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "resolution": {
                     "$ref": "#/$defs/EscrowResolution",
@@ -7349,7 +7349,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Handler-specific data"
+                    "description": "Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "sourceOwnerId": {
                     "type": "string",
@@ -7554,7 +7554,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "pending_deposits",
                 "partially_funded",
@@ -7614,7 +7614,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Additional failure details"
+                    "description": "Validation failure diagnostic details. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -7974,7 +7974,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Game/application specific metadata"
+                    "description": "Client-provided application-specific metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "resolution": {
                     "$ref": "#/$defs/EscrowResolution",
@@ -8256,7 +8256,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Handler-specific data"
+                    "description": "Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "sourceOwnerId": {
                     "type": "string",
@@ -8461,7 +8461,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "pending_deposits",
                 "partially_funded",
@@ -8521,7 +8521,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Additional failure details"
+                    "description": "Validation failure diagnostic details. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -8889,7 +8889,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Game/application specific metadata"
+                    "description": "Client-provided application-specific metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "resolution": {
                     "$ref": "#/$defs/EscrowResolution",
@@ -9171,7 +9171,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Handler-specific data"
+                    "description": "Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "sourceOwnerId": {
                     "type": "string",
@@ -9376,7 +9376,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "pending_deposits",
                 "partially_funded",
@@ -9436,7 +9436,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Additional failure details"
+                    "description": "Validation failure diagnostic details. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -10027,13 +10027,13 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Custom asset data"
+                    "description": "Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
         "AssetType": {
             "type": "string",
-            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\ n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\ n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
+            "description": "Type of asset held in escrow.\n- currency: Currency amount held in escrow wallet\n- item: Item instance held in escrow container\n- item_stack: Stackable items (quantity) held in escrow container\n- contract: Contract instance locked under escrow guardianship\n- custom: Custom asset type via registered handler\n",
             "enum": [
                 "currency",
                 "item",
@@ -10239,7 +10239,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Game/application specific metadata"
+                    "description": "Client-provided application-specific metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "resolution": {
                     "$ref": "#/$defs/EscrowResolution",
@@ -10521,7 +10521,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Handler-specific data"
+                    "description": "Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "sourceOwnerId": {
                     "type": "string",
@@ -10726,7 +10726,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "pending_deposits",
                 "partially_funded",
@@ -10786,7 +10786,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Additional failure details"
+                    "description": "Validation failure diagnostic details. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -10958,7 +10958,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Proof/evidence data"
+                    "description": "Caller-provided proof/evidence data for condition verification. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "idempotencyKey": {
                     "type": "string",
@@ -11160,7 +11160,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Game/application specific metadata"
+                    "description": "Client-provided application-specific metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "resolution": {
                     "$ref": "#/$defs/EscrowResolution",
@@ -11442,7 +11442,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Handler-specific data"
+                    "description": "Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "sourceOwnerId": {
                     "type": "string",
@@ -11647,7 +11647,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "pending_deposits",
                 "partially_funded",
@@ -11707,7 +11707,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Additional failure details"
+                    "description": "Validation failure diagnostic details. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -11908,7 +11908,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Additional failure details"
+                    "description": "Validation failure diagnostic details. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -11925,7 +11925,7 @@ public partial class EscrowController
         },
         "ValidationFailureType": {
             "type": "string",
-            "description": "Type of validation failure detected.\n- asset_missing: Asset no longer exists in escrow custody\n- asset_mutated: Asset properties changed (e.g., item durability)\n- asset_expired: Asset has a time-based expiration that triggered\ n- balance_mismatch: Wallet balance does not match expected held amount\n",
+            "description": "Type of validation failure detected.\n- asset_missing: Asset no longer exists in escrow custody\n- asset_mutated: Asset properties changed (e.g., item durability)\n- asset_expired: Asset has a time-based expiration that triggered\n- balance_mismatch: Wallet balance does not match expected held amount\n",
             "enum": [
                 "asset_missing",
                 "asset_mutated",
@@ -12100,7 +12100,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Game/application specific metadata"
+                    "description": "Client-provided application-specific metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "resolution": {
                     "$ref": "#/$defs/EscrowResolution",
@@ -12382,7 +12382,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Handler-specific data"
+                    "description": "Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "sourceOwnerId": {
                     "type": "string",
@@ -12919,7 +12919,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Game/application specific metadata"
+                    "description": "Client-provided application-specific metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "resolution": {
                     "$ref": "#/$defs/EscrowResolution",
@@ -13201,7 +13201,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Handler-specific data"
+                    "description": "Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "sourceOwnerId": {
                     "type": "string",
@@ -13406,7 +13406,7 @@ public partial class EscrowController
         },
         "EscrowStatus": {
             "type": "string",
-            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\ n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\ n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
+            "description": "Current status of the escrow agreement.\n- pending_deposits: Waiting for parties to deposit\n- partially_funded: Some but not all deposits received\n- funded: All deposits received, awaiting consent/condition\n- pending_consent: Some consents received, waiting for more\n- pending_condition: Waiting for contract fulfillment or external verification\n- finalizing: Running contract finalizer prebound APIs (transient)\ n- releasing: Release in progress (transient)\n- released: Assets transferred to recipients\n- refunding: Refund in progress (transient)\n- refunded: Assets returned to depositors\n- disputed: In dispute, arbiter must resolve\ n- expired: Timed out without completion\n- cancelled: Cancelled before funding complete\n- validation_failed: Held assets changed, awaiting re-affirmation\n",
             "enum": [
                 "pending_deposits",
                 "partially_funded",
@@ -13466,7 +13466,7 @@ public partial class EscrowController
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": true,
-                    "description": "Additional failure details"
+                    "description": "Validation failure diagnostic details. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },

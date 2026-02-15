@@ -71,8 +71,9 @@ paths:
         : \"string\",\n                    \"format\": \"duration\",\n                    \"nullable\": true,\n          \
         \          \"description\": \"Message expiration time (ISO 8601 duration format)\"\n                },\n         \
         \       \"headers\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Custom headers to include with the
-        message\"\n                }\n            }\n        }\n    }\n}"
+        \                    \"nullable\": true,\n                    \"description\": \"Caller-provided custom headers included
+        with the message. No Bannou plugin reads specific keys from this field by convention.\"\n                }\n     \
+        \       }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/PublishEventResponse\"\
         ,\n    \"$defs\": {\n        \"PublishEventResponse\": {\n            \"description\": \"Response confirming event
         publication with message identifier\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
@@ -276,7 +277,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Custom headers to include with the message
+          description: >-
+            Caller-provided custom headers included with the message.
+            No Bannou plugin reads specific keys from this field by convention.
     PublishEventResponse:
       description: Response confirming event publication with message identifier
       type: object

@@ -67,7 +67,7 @@ public partial class RelationshipController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Type-specific relationship data (JSON)"
+                    "description": "Client-provided relationship data. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -138,7 +138,7 @@ public partial class RelationshipController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Type-specific relationship data"
+                    "description": "Client-provided relationship data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -300,7 +300,7 @@ public partial class RelationshipController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Type-specific relationship data"
+                    "description": "Client-provided relationship data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -536,7 +536,7 @@ public partial class RelationshipController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Type-specific relationship data"
+                    "description": "Client-provided relationship data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -778,7 +778,7 @@ public partial class RelationshipController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Type-specific relationship data"
+                    "description": "Client-provided relationship data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -1008,7 +1008,7 @@ public partial class RelationshipController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Type-specific relationship data"
+                    "description": "Client-provided relationship data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -1111,7 +1111,7 @@ public partial class RelationshipController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Updated type-specific relationship data"
+                    "description": "Updated client-provided relationship data. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -1182,7 +1182,7 @@ public partial class RelationshipController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Type-specific relationship data"
+                    "description": "Client-provided relationship data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -1585,7 +1585,7 @@ public partial class RelationshipController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional custom metadata for the relationship type"
+                    "description": "Client-provided relationship type metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -1777,7 +1777,7 @@ public partial class RelationshipController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional custom metadata for the relationship type"
+                    "description": "Client-provided relationship type metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -1996,7 +1996,7 @@ public partial class RelationshipController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional custom metadata for the relationship type"
+                    "description": "Client-provided relationship type metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -2213,7 +2213,7 @@ public partial class RelationshipController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional custom metadata for the relationship type"
+                    "description": "Client-provided relationship type metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -2538,7 +2538,7 @@ public partial class RelationshipController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional custom metadata for the relationship type"
+                    "description": "Client-provided relationship type metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -2672,7 +2672,7 @@ public partial class RelationshipController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the relationship type"
+                    "description": "Client-provided relationship type metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -2772,7 +2772,7 @@ public partial class RelationshipController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional custom metadata for the relationship type"
+                    "description": "Client-provided relationship type metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -2904,7 +2904,7 @@ public partial class RelationshipController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata"
+                    "description": "Updated client-provided relationship type metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -3004,7 +3004,7 @@ public partial class RelationshipController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional custom metadata for the relationship type"
+                    "description": "Client-provided relationship type metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -3284,7 +3284,7 @@ public partial class RelationshipController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional custom metadata for the relationship type"
+                    "description": "Client-provided relationship type metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -3474,7 +3474,7 @@ public partial class RelationshipController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional custom metadata for the relationship type"
+                    "description": "Client-provided relationship type metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -3784,7 +3784,7 @@ public partial class RelationshipController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional custom metadata for the relationship type (null if none)"
+                    "description": "Client-provided relationship type metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }

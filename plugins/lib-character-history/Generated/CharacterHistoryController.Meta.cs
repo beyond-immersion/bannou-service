@@ -76,7 +76,7 @@ public partial class CharacterHistoryController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Optional event-specific details"
+                    "description": "Client-provided event-specific details. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -175,7 +175,7 @@ public partial class CharacterHistoryController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Event-specific details for behavior decisions"
+                    "description": "Client-provided event-specific details. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -438,7 +438,7 @@ public partial class CharacterHistoryController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Event-specific details for behavior decisions"
+                    "description": "Client-provided event-specific details. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -694,7 +694,7 @@ public partial class CharacterHistoryController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Event-specific details for behavior decisions"
+                    "description": "Client-provided event-specific details. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -2074,7 +2074,7 @@ public partial class CharacterHistoryController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Event-specific details for behavior decisions"
+                    "description": "Client-provided event-specific details. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",

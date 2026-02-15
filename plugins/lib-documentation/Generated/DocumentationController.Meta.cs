@@ -583,7 +583,7 @@ public partial class DocumentationController
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Custom metadata key-value pairs"
+                    "description": "Client-provided custom metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -1555,7 +1555,7 @@ public partial class DocumentationController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Custom metadata key-value pairs (null if not needed)"
+                    "description": "Client-provided custom metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -1745,7 +1745,7 @@ public partial class DocumentationController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "New custom metadata key-value pairs (null to keep unchanged)"
+                    "description": "Updated client-provided custom metadata (null to keep unchanged). No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -2514,7 +2514,7 @@ public partial class DocumentationController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Custom metadata key-value pairs (null if not needed)"
+                    "description": "Client-provided custom metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },

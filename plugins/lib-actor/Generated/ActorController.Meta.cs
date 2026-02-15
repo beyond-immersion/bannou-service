@@ -43,7 +43,7 @@ public partial class ActorController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Default configuration passed to behavior execution"
+                    "description": "Game-specific configuration passed to ABML behavior execution scope. No Bannou plugin reads specific keys from this field by convention. Different ABML behaviors define their own expected configuration structure."
                 },
                 "autoSpawn": {
                     "description": "Auto-spawn configuration for instantiate-on-access",
@@ -68,13 +68,13 @@ public partial class ActorController
                 "cognitionTemplateId": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Cognition template ID for this actor type. Primary source for cognition\npipeline resolution. When null, falls back to ABML metadata, then category default.\ nExamples: \"humanoid-cognition-base\", \"creature-cognition-base\", \"object-cognition-base\"\n"
+                    "description": "Cognition template ID for this actor type. Primary source for cognition\npipeline resolution. When null, falls back to ABML metadata, then category default.\nExamples: \"humanoid-cognition-base\", \"creature-cognition-base\", \"object-cognition-base\"\n"
                 },
                 "cognitionOverrides": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Static template-level cognition overrides. Applied as the first layer\nin the three-layer override composition (template \u2192 instance \u2192 ABML metadata).\n"
+                    "description": "Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes. Applied as the first layer in the three-layer override composition (template, instance, ABML metadata). Structure defined by ICognitionOverride interface hierarchy in bannou-service/Behavior/."
                 }
             }
         },
@@ -147,7 +147,7 @@ public partial class ActorController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Default configuration passed to behavior execution"
+                    "description": "Game-specific configuration passed to ABML behavior execution scope. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "autoSpawn": {
                     "description": "Auto-spawn configuration for instantiate-on-access",
@@ -169,13 +169,13 @@ public partial class ActorController
                 "cognitionTemplateId": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Cognition template ID for this actor type. Primary source for cognition\npipeline resolution. When null, falls back to ABML metadata, then category default.\n"
+                    "description": "Cognition template ID for this actor type. Primary source for cognition\ npipeline resolution. When null, falls back to ABML metadata, then category default.\n"
                 },
                 "cognitionOverrides": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Static template-level cognition overrides. Applied as the first layer\nin the three-layer override composition (template \u2192 instance \u2192 ABML metadata).\n"
+                    "description": "Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes."
                 },
                 "createdAt": {
                     "type": "string",
@@ -339,7 +339,7 @@ public partial class ActorController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Default configuration passed to behavior execution"
+                    "description": "Game-specific configuration passed to ABML behavior execution scope. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "autoSpawn": {
                     "description": "Auto-spawn configuration for instantiate-on-access",
@@ -361,13 +361,13 @@ public partial class ActorController
                 "cognitionTemplateId": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Cognition template ID for this actor type. Primary source for cognition\npipeline resolution. When null, falls back to ABML metadata, then category default.\n"
+                    "description": "Cognition template ID for this actor type. Primary source for cognition\ npipeline resolution. When null, falls back to ABML metadata, then category default.\n"
                 },
                 "cognitionOverrides": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Static template-level cognition overrides. Applied as the first layer\nin the three-layer override composition (template \u2192 instance \u2192 ABML metadata).\n"
+                    "description": "Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes."
                 },
                 "createdAt": {
                     "type": "string",
@@ -552,7 +552,7 @@ public partial class ActorController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Default configuration passed to behavior execution"
+                    "description": "Game-specific configuration passed to ABML behavior execution scope. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "autoSpawn": {
                     "description": "Auto-spawn configuration for instantiate-on-access",
@@ -574,13 +574,13 @@ public partial class ActorController
                 "cognitionTemplateId": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Cognition template ID for this actor type. Primary source for cognition\ npipeline resolution. When null, falls back to ABML metadata, then category default.\n"
+                    "description": "Cognition template ID for this actor type. Primary source for cognition\npipeline resolution. When null, falls back to ABML metadata, then category default.\n"
                 },
                 "cognitionOverrides": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Static template-level cognition overrides. Applied as the first layer\nin the three-layer override composition (template \u2192 instance \u2192 ABML metadata).\n"
+                    "description": "Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes."
                 },
                 "createdAt": {
                     "type": "string",
@@ -707,7 +707,7 @@ public partial class ActorController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Updated configuration settings"
+                    "description": "Updated game-specific configuration for ABML behavior execution scope. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "autoSpawn": {
                     "description": "Updated auto-spawn configuration",
@@ -727,13 +727,13 @@ public partial class ActorController
                 "cognitionTemplateId": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Updated cognition template ID. Set to override the cognition pipeline\nfor actors created from this template.\n"
+                    "description": "Updated cognition template ID. Set to override the cognition pipeline\ nfor actors created from this template.\n"
                 },
                 "cognitionOverrides": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Updated static template-level cognition overrides. Applied as the first layer\nin the three-layer override composition.\n"
+                    "description": "Updated cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes."
                 }
             }
         },
@@ -806,7 +806,7 @@ public partial class ActorController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Default configuration passed to behavior execution"
+                    "description": "Game-specific configuration passed to ABML behavior execution scope. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "autoSpawn": {
                     "description": "Auto-spawn configuration for instantiate-on-access",
@@ -828,13 +828,13 @@ public partial class ActorController
                 "cognitionTemplateId": {
                     "type": "string",
                     "nullable": true,
-                    "description": "Cognition template ID for this actor type. Primary source for cognition\npipeline resolution. When null, falls back to ABML metadata, then category default.\n"
+                    "description": "Cognition template ID for this actor type. Primary source for cognition\ npipeline resolution. When null, falls back to ABML metadata, then category default.\n"
                 },
                 "cognitionOverrides": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Static template-level cognition overrides. Applied as the first layer\nin the three-layer override composition (template \u2192 instance \u2192 ABML metadata).\n"
+                    "description": "Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes."
                 },
                 "createdAt": {
                     "type": "string",
@@ -1072,13 +1072,13 @@ public partial class ActorController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Override template defaults"
+                    "description": "Game-specific configuration overrides merged with template defaults. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "initialState": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Initial state passed to behavior"
+                    "description": "Initial actor state snapshot. Deserialized internally to ActorStateSnapshot. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "characterId": {
                     "type": "string",
@@ -1906,7 +1906,7 @@ public partial class ActorController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Perception-specific data. For perceptionType=\"spatial\", this can contain\ ngame-specific spatial context in any format the game server defines.\n"
+                    "description": "Game-specific perception payload passed to ABML behavior execution scope. No Bannou plugin reads specific keys from this field by convention. Different perception types carry different data structures defined by the game."
                 },
                 "urgency": {
                     "type": "number",
@@ -1945,7 +1945,7 @@ public partial class ActorController
         "SpatialContext": {
             "type": "object",
             "additionalProperties": true,
-            "description": "Spatial context derived from game server's authoritative spatial state.\nIncluded in perception events to give NPC actors awareness of their environment\nwithout requiring direct map subscriptions.\n\nNote: additionalProperties=true allows game-specific extensions.\n",
+            "description": "Spatial context derived from game server's authoritative spatial state. Included in perception events to give NPC actors awareness of their environment. Core properties are schema-defined; additionalProperties allows game-specific spatial extensions. No Bannou plugin reads specific extension keys by convention.",
             "properties": {
                 "terrainType": {
                     "type": "string",
@@ -1998,7 +1998,7 @@ public partial class ActorController
         "NearbyObject": {
             "type": "object",
             "additionalProperties": true,
-            "description": "Information about a nearby object perceived by the character",
+            "description": "Information about a nearby object perceived by the character. Core properties are schema-defined; additionalProperties allows game-specific object data. No Bannou plugin reads specific extension keys by convention.",
             "properties": {
                 "objectId": {
                     "type": "string",
@@ -2059,7 +2059,7 @@ public partial class ActorController
         "HazardInfo": {
             "type": "object",
             "additionalProperties": true,
-            "description": "Information about a hazard in range",
+            "description": "Information about a hazard in range. Core properties are schema-defined; additionalProperties allows game-specific hazard data. No Bannou plugin reads specific extension keys by convention.",
             "properties": {
                 "hazardType": {
                     "type": "string",
@@ -2234,7 +2234,7 @@ public partial class ActorController
         "OptionsQueryContext": {
             "type": "object",
             "additionalProperties": true,
-            "description": "Context provided with a fresh query. Injected as a perception to the actor\nto trigger context-sensitive option recomputation.\n",
+            "description": "Context provided with a fresh query. Injected as a perception to the actor to trigger context-sensitive option recomputation. Core properties are schema-defined; use customContext for game-specific extensions. No Bannou plugin reads specific extension keys by convention.",
             "properties": {
                 "combatState": {
                     "type": "string",
@@ -2277,7 +2277,7 @@ public partial class ActorController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Actor-specific context data"
+                    "description": "Game-specific context data passed through to ABML behavior scope. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -2347,7 +2347,7 @@ public partial class ActorController
         "ActorOption": {
             "type": "object",
             "additionalProperties": true,
-            "description": "A single option available to the actor. The standardized fields enable\nEvent Brain to reason about options; additional fields allow actor-specific data.\n",
+            "description": "A single option available to the actor. Core properties (actionId, preference, risk, available, etc.) are schema-defined and used by Actor internally. additionalProperties allows game-specific option extensions. No Bannou plugin reads specific extension keys by convention.",
             "required": [
                 "actionId",
                 "preference",
@@ -2363,7 +2363,7 @@ public partial class ActorController
                     "format": "float",
                     "minimum": 0,
                     "maximum": 1,
-                    "description": "How much the actor prefers this option (0-1), based on personality,\ncombat preferences, current state, etc. Higher = more preferred.\n"
+                    "description": "How much the actor prefers this option (0-1), based on personality,\ ncombat preferences, current state, etc. Higher = more preferred.\n"
                 },
                 "risk": {
                     "type": "number",
@@ -2534,7 +2534,7 @@ public partial class ActorController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Optional initial data for the encounter"
+                    "description": "Game-specific encounter initialization data passed to ABML behavior scope. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -2920,7 +2920,7 @@ public partial class ActorController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Custom encounter-specific data"
+                    "description": "Game-specific encounter state data passed to ABML behavior scope. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }

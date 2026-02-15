@@ -12123,7 +12123,7 @@ export interface components {
       category: string;
       /** @description Reference to behavior in lib-assets */
       behaviorRef: string;
-      /** @description Default configuration passed to behavior execution */
+      /** @description Game-specific configuration passed to ABML behavior execution scope. No Bannou plugin reads specific keys from this field by convention. */
       configuration?: {
         [key: string]: unknown;
       } | null;
@@ -12140,10 +12140,7 @@ export interface components {
        *     pipeline resolution. When null, falls back to ABML metadata, then category default.
        */
       cognitionTemplateId?: string | null;
-      /**
-       * @description Static template-level cognition overrides. Applied as the first layer
-       *     in the three-layer override composition (template → instance → ABML metadata).
-       */
+      /** @description Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes. */
       cognitionOverrides?: {
         [key: string]: unknown;
       } | null;
@@ -12331,12 +12328,7 @@ export interface components {
     Affordance: {
       /** @description The type of affordance */
       type: components['schemas']['AffordanceType'];
-      /**
-       * @description Type-specific parameters. Examples:
-       *     - sittable: { height: 0.5, facing: [0,0,1] }
-       *     - door: { openAngle: 90, locked: false }
-       *     - container: { capacity: 10, itemTypes: ["weapon", "consumable"] }
-       */
+      /** @description Game-specific affordance parameters interpreted by game engines and AI systems. No Bannou plugin reads specific keys from this field by convention. */
       parameters?: {
         [key: string]: unknown;
       } | null;
@@ -12355,10 +12347,7 @@ export interface components {
       bounds?: components['schemas']['Bounds'];
       /** @description How well this location affords the action (0-1) */
       score?: number;
-      /**
-       * @description What makes this location suitable.
-       *     Example: { "cover_rating": 0.8, "sightlines": ["north"], "terrain": "rocky" }
-       */
+      /** @description Game-specific features of this affordance result. No Bannou plugin reads specific keys from this field by convention. */
       features?: {
         [key: string]: unknown;
       } | null;
@@ -14714,7 +14703,7 @@ export interface components {
       entityType: components['schemas']['EntityType'];
       /** @description Type of constraint to check */
       constraintType: components['schemas']['ConstraintType'];
-      /** @description What the entity wants to do */
+      /** @description Client-only proposed action data. No Bannou plugin reads specific keys from this field by convention. */
       proposedAction?: {
         [key: string]: unknown;
       } | null;
@@ -15572,7 +15561,7 @@ export interface components {
       contractId: string;
       /** @description Milestone to complete */
       milestoneCode: string;
-      /** @description Evidence of completion */
+      /** @description Client-only evidence data. No Bannou plugin reads specific keys from this field by convention. */
       evidence?: {
         [key: string]: unknown;
       } | null;
@@ -16157,6 +16146,46 @@ export interface components {
      * @enum {string}
      */
     ContractBindingType: 'none' | 'session' | 'lifecycle';
+    /** @description An asset requirement within a clause definition */
+    ContractClauseAsset: {
+      /** @description Asset type (currency, item) */
+      type: string;
+      /** @description Asset code identifier */
+      code: string;
+      /** @description Required amount of the asset */
+      amount: number;
+    };
+    /** @description A clause definition for contract execution specifying asset transfers, fees, or requirements */
+    ContractClauseDefinition: {
+      /** @description Unique identifier for this clause within the contract */
+      id: string;
+      /** @description Clause type code (fee, distribution, currency_transfer, item_transfer, asset_requirement) */
+      type: string;
+      /** @description Party role reference for this clause */
+      party?: string | null;
+      /** @description Amount value (numeric string for template substitution support) */
+      amount?: string | null;
+      /** @description How to interpret the amount (flat, percentage, remainder) */
+      amountType?: string | null;
+      /** @description Source wallet identifier or template variable reference */
+      sourceWallet?: string | null;
+      /** @description Destination wallet identifier or template variable reference */
+      destinationWallet?: string | null;
+      /** @description Recipient wallet for fee clauses or template variable reference */
+      recipientWallet?: string | null;
+      /** @description Currency code for currency-based clauses */
+      currencyCode?: string | null;
+      /** @description Source container identifier or template variable reference for item clauses */
+      sourceContainer?: string | null;
+      /** @description Destination container identifier or template variable reference for item clauses */
+      destinationContainer?: string | null;
+      /** @description Item code for item-based clauses */
+      itemCode?: string | null;
+      /** @description Location template variable reference for asset requirement checks */
+      checkLocation?: string | null;
+      /** @description Asset requirements for asset_requirement clause type */
+      assets?: components['schemas']['ContractClauseAsset'][] | null;
+    };
     /** @description Contract instance details */
     ContractInstanceResponse: {
       /**
@@ -16208,7 +16237,7 @@ export interface components {
        * @description When contract was terminated
        */
       terminatedAt?: string | null;
-      /** @description Game-specific metadata */
+      /** @description Client-only game metadata. No Bannou plugin reads specific keys from this field by convention. */
       gameMetadata?: {
         [key: string]: unknown;
       } | null;
@@ -16248,11 +16277,11 @@ export interface components {
        * @description Contract instance ID
        */
       contractId: string;
-      /** @description Instance-level metadata */
+      /** @description Client-only instance metadata. No Bannou plugin reads specific keys from this field by convention. */
       instanceData?: {
         [key: string]: unknown;
       } | null;
-      /** @description Runtime state metadata */
+      /** @description Client-only runtime state. No Bannou plugin reads specific keys from this field by convention. */
       runtimeState?: {
         [key: string]: unknown;
       } | null;
@@ -16362,7 +16391,7 @@ export interface components {
       defaultEnforcementMode: components['schemas']['EnforcementMode'];
       /** @description Whether contracts can be transferred */
       transferable?: boolean;
-      /** @description Game-specific metadata */
+      /** @description Client-only game metadata. No Bannou plugin reads specific keys from this field by convention. */
       gameMetadata?: {
         [key: string]: unknown;
       } | null;
@@ -16395,7 +16424,17 @@ export interface components {
       breachThreshold?: number | null;
       /** @description Time to cure breach (ISO 8601 duration) */
       gracePeriodForCure?: string | null;
-      /** @description Game-specific custom terms */
+      /** @description Whether this contract has an exclusivity clause preventing the entity from entering similar contracts */
+      exclusivity?: boolean | null;
+      /** @description Whether this contract has a non-compete clause */
+      nonCompete?: boolean | null;
+      /** @description Whether this contract has a time commitment clause */
+      timeCommitment?: boolean | null;
+      /** @description Type of time commitment (exclusive or partial) */
+      timeCommitmentType?: string | null;
+      /** @description Clause definitions for contract execution (fees, distributions, asset requirements) */
+      clauses?: components['schemas']['ContractClauseDefinition'][] | null;
+      /** @description Client-only custom terms. No Bannou plugin reads specific keys from this field by convention. */
       customTerms?: {
         [key: string]: unknown;
       } | null;
@@ -16576,7 +16615,7 @@ export interface components {
       category: string;
       /** @description Reference to behavior in lib-assets (e.g., "asset://behaviors/npc-brain-v1") */
       behaviorRef: string;
-      /** @description Default configuration passed to behavior execution */
+      /** @description Game-specific configuration passed to ABML behavior execution scope. No Bannou plugin reads specific keys from this field by convention. Different ABML behaviors define their own expected configuration structure. */
       configuration?: {
         [key: string]: unknown;
       } | null;
@@ -16603,10 +16642,7 @@ export interface components {
        *     Examples: "humanoid-cognition-base", "creature-cognition-base", "object-cognition-base"
        */
       cognitionTemplateId?: string | null;
-      /**
-       * @description Static template-level cognition overrides. Applied as the first layer
-       *     in the three-layer override composition (template → instance → ABML metadata).
-       */
+      /** @description Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes. Applied as the first layer in the three-layer override composition (template, instance, ABML metadata). Structure defined by ICognitionOverride interface hierarchy in bannou-service/Behavior/. */
       cognitionOverrides?: {
         [key: string]: unknown;
       } | null;
@@ -16872,7 +16908,7 @@ export interface components {
       effectiveUntil?: string | null;
       /** @description Related escrow IDs */
       escrowIds?: string[] | null;
-      /** @description Instance-level game metadata */
+      /** @description Client-only game metadata. No Bannou plugin reads specific keys from this field by convention. */
       gameMetadata?: {
         [key: string]: unknown;
       } | null;
@@ -16887,7 +16923,7 @@ export interface components {
       layers?: components['schemas']['LayerDefinition'][] | null;
       /** @description Default bounds for regions using this definition */
       defaultBounds?: components['schemas']['Bounds'];
-      /** @description Additional metadata */
+      /** @description Client-provided definition metadata. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -17030,7 +17066,7 @@ export interface components {
       referenceId?: string | null;
       /** @description Human-readable description */
       description?: string | null;
-      /** @description Application metadata */
+      /** @description Client-provided application-specific metadata. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -17305,7 +17341,7 @@ export interface components {
        * @default true
        */
       isPublic: boolean;
-      /** @description Additional leaderboard-specific metadata */
+      /** @description Client-provided leaderboard-specific metadata. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -17540,7 +17576,7 @@ export interface components {
       gameServiceId?: string | null;
       /** @description Human-readable name. Auto-generated if omitted. */
       displayName?: string | null;
-      /** @description Seed-type-specific initial metadata. */
+      /** @description Client-provided seed-type-specific initial data. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -17990,24 +18026,15 @@ export interface components {
     CustomAffordance: {
       /** @description Human-readable description of this affordance */
       description?: string | null;
-      /**
-       * @description Required criteria. Object types, property constraints.
-       *     Example: { "objectTypes": ["boulder"], "cover_rating": { "min": 0.5 } }
-       */
+      /** @description Game-specific required criteria for affordance matching. No Bannou plugin reads specific keys from this field by convention. */
       requires?: {
         [key: string]: unknown;
       } | null;
-      /**
-       * @description Preferred criteria (boost score but not required).
-       *     Example: { "elevation": { "prefer_higher": true } }
-       */
+      /** @description Game-specific preferred criteria (boost score but not required). No Bannou plugin reads specific keys from this field by convention. */
       prefers?: {
         [key: string]: unknown;
       } | null;
-      /**
-       * @description Exclusion criteria. Reject candidates matching these.
-       *     Example: { "hazards": true, "contested": true }
-       */
+      /** @description Game-specific exclusion criteria for affordance matching. No Bannou plugin reads specific keys from this field by convention. */
       excludes?: {
         [key: string]: unknown;
       } | null;
@@ -18758,7 +18785,7 @@ export interface components {
       tags?: string[];
       /** @description IDs of related documents */
       relatedDocuments?: string[];
-      /** @description Custom metadata key-value pairs */
+      /** @description Client-provided custom metadata. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       };
@@ -19037,7 +19064,7 @@ export interface components {
       outcome: components['schemas']['EncounterOutcome'];
       /** @description All character IDs involved in the encounter */
       participantIds: string[];
-      /** @description Additional encounter-specific data */
+      /** @description Client-provided encounter-specific data. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -19526,7 +19553,7 @@ export interface components {
       referenceId?: string | null;
       /** @description Human-readable description */
       description?: string | null;
-      /** @description Game/application specific metadata */
+      /** @description Client-provided application-specific metadata. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -19588,7 +19615,7 @@ export interface components {
       customAssetType?: string | null;
       /** @description Custom asset identifier */
       customAssetId?: string | null;
-      /** @description Handler-specific data */
+      /** @description Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention. */
       customAssetData?: {
         [key: string]: unknown;
       } | null;
@@ -19672,7 +19699,7 @@ export interface components {
       customAssetType?: string | null;
       /** @description Custom asset ID */
       customAssetId?: string | null;
-      /** @description Custom asset data */
+      /** @description Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention. */
       customAssetData?: {
         [key: string]: unknown;
       } | null;
@@ -20576,7 +20603,7 @@ export interface components {
       gameType: string;
       /** @description Type of game action to perform */
       actionType: components['schemas']['GameActionType'];
-      /** @description Action-specific data */
+      /** @description Game-specific action data. No Bannou plugin reads specific keys from this field by convention. */
       actionData?: {
         [key: string]: unknown;
       } | null;
@@ -20593,11 +20620,11 @@ export interface components {
        * @description Unique identifier for this action instance
        */
       actionId: string;
-      /** @description Action result data */
+      /** @description Game-specific action result data. No Bannou plugin reads specific keys from this field by convention. */
       result?: {
         [key: string]: unknown;
       } | null;
-      /** @description Updated game state (if applicable) */
+      /** @description Updated game state (if applicable). No Bannou plugin reads specific keys from this field by convention. */
       newGameState?: {
         [key: string]: unknown;
       } | null;
@@ -20628,7 +20655,7 @@ export interface components {
        * @description Timestamp when the player joined the session
        */
       joinedAt: string;
-      /** @description Game-specific character data for this player (null if none provided) */
+      /** @description Game-specific character data for this player. No Bannou plugin reads specific keys from this field by convention. */
       characterData?: {
         [key: string]: unknown;
       } | null;
@@ -20677,7 +20704,7 @@ export interface components {
        * @description Timestamp when the session was created
        */
       createdAt: string;
-      /** @description Game-specific configuration settings */
+      /** @description Game-specific configuration settings. No Bannou plugin reads specific keys from this field by convention. */
       gameSettings?: {
         [key: string]: unknown;
       } | null;
@@ -23094,7 +23121,7 @@ export interface components {
       /** @description Current stack count if found (null if not present) */
       stackCount?: number | null;
     };
-    /** @description Information about a hazard in range */
+    /** @description Information about a hazard in range. Core properties are schema-defined; additionalProperties allows game-specific hazard data. No Bannou plugin reads specific extension keys by convention. */
     HazardInfo: {
       /** @description Type of hazard (fire, poison, radiation, deep_water, etc.) */
       hazardType?: string;
@@ -23170,7 +23197,7 @@ export interface components {
        * @default 0.5
        */
       significance: number;
-      /** @description Event-specific details for behavior decisions */
+      /** @description Client-provided event-specific details. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -23811,7 +23838,7 @@ export interface components {
        * @description When the leaderboard was created
        */
       createdAt: string;
-      /** @description Additional metadata */
+      /** @description Client-provided leaderboard-specific metadata. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -23849,7 +23876,7 @@ export interface components {
       rank: number;
       /** @description Cached display name for the entity */
       displayName?: string | null;
-      /** @description Entry metadata */
+      /** @description Client-provided entry metadata. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -25854,7 +25881,7 @@ export interface components {
       coordinateMode?: components['schemas']['CoordinateMode'];
       /** @description Origin point for local or inherited coordinate systems */
       localOrigin?: components['schemas']['Position3D'] | null;
-      /** @description Additional metadata for the location (JSON) */
+      /** @description Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -25999,7 +26026,7 @@ export interface components {
       layers?: components['schemas']['LayerDefinition'][] | null;
       /** @description Default bounds for regions using this definition */
       defaultBounds?: components['schemas']['Bounds'];
-      /** @description Additional metadata (schema-less) */
+      /** @description Client-provided definition metadata. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -26052,7 +26079,7 @@ export interface components {
       position?: components['schemas']['Position3D'];
       /** @description Bounding box for area objects */
       bounds?: components['schemas']['Bounds'];
-      /** @description Schema-less object data (publisher-defined) */
+      /** @description Game-specific spatial object data. No Bannou plugin reads specific keys from this field by convention. */
       data?: {
         [key: string]: unknown;
       } | null;
@@ -26693,7 +26720,7 @@ export interface components {
       /** @description Nested child navigation items for dropdowns */
       children?: components['schemas']['NavigationItem'][];
     };
-    /** @description Information about a nearby object perceived by the character */
+    /** @description Information about a nearby object perceived by the character. Core properties are schema-defined; additionalProperties allows game-specific object data. No Bannou plugin reads specific extension keys by convention. */
     NearbyObject: {
       /**
        * Format: uuid
@@ -27259,10 +27286,7 @@ export interface components {
       sourceId: string;
       /** @description Type of source (character, npc, object, environment, coordinator, scheduled, message) */
       sourceType?: components['schemas']['PerceptionSourceType'] | null;
-      /**
-       * @description Perception-specific data. For perceptionType="spatial", this can contain
-       *     game-specific spatial context in any format the game server defines.
-       */
+      /** @description Game-specific perception payload passed to ABML behavior execution scope. No Bannou plugin reads specific keys from this field by convention. Different perception types carry different data structures defined by the game. */
       data?: {
         [key: string]: unknown;
       } | null;
@@ -28749,7 +28773,7 @@ export interface components {
        * @default 0.5
        */
       impact: number;
-      /** @description Event-specific details for behavior decisions */
+      /** @description Client-provided event-specific details. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -28874,6 +28898,8 @@ export interface components {
       category?: string | null;
       /** @description Whether the realm is currently active for gameplay */
       isActive: boolean;
+      /** @description Whether this realm is a system infrastructure realm (e.g., VOID). System realms cannot be merged as source. */
+      isSystemType: boolean;
       /** @description Whether this realm is deprecated and cannot be used for new entities */
       isDeprecated: boolean;
       /**
@@ -28883,7 +28909,7 @@ export interface components {
       deprecatedAt?: string | null;
       /** @description Optional reason for deprecation */
       deprecationReason?: string | null;
-      /** @description Additional custom metadata for the realm */
+      /** @description Client-only metadata. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -29254,7 +29280,7 @@ export interface components {
        * @description In-game timestamp when relationship ended, null if still active
        */
       endedAt?: string | null;
-      /** @description Type-specific relationship data */
+      /** @description Client-provided relationship data. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -29330,7 +29356,7 @@ export interface components {
       deprecationReason?: string | null;
       /** @description Depth in the hierarchy (0 for root types) */
       depth: number;
-      /** @description Additional custom metadata for the relationship type */
+      /** @description Client-provided relationship type metadata. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -30682,10 +30708,7 @@ export interface components {
       root: components['schemas']['SceneNode'];
       /** @description Searchable tags for filtering scenes */
       tags?: string[];
-      /**
-       * @description Scene-level metadata. Not interpreted by Scene service.
-       *     Examples: author, thumbnail, editor preferences, generator config.
-       */
+      /** @description Client-only scene metadata (author, thumbnail, editor preferences). No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -30742,10 +30765,7 @@ export interface components {
       sortOrder: number;
       /** @description Arbitrary tags for consumer filtering (e.g., entrance, spawn, interactive) */
       tags?: string[];
-      /**
-       * @description Consumer-specific data stored without interpretation.
-       *     Use namespaced keys (e.g., render.castShadows, game.interactionType).
-       */
+      /** @description Client-only node annotations for game engines and editors. No Bannou plugin reads specific keys from this field by convention. */
       annotations?: {
         [key: string]: unknown;
       } | null;
@@ -31579,13 +31599,7 @@ export interface components {
        */
       existingStackInstanceId?: string | null;
     };
-    /**
-     * @description Spatial context derived from game server's authoritative spatial state.
-     *     Included in perception events to give NPC actors awareness of their environment
-     *     without requiring direct map subscriptions.
-     *
-     *     Note: additionalProperties=true allows game-specific extensions.
-     */
+    /** @description Spatial context derived from game server's authoritative spatial state. Included in perception events to give NPC actors awareness of their environment. Core properties are schema-defined; additionalProperties allows game-specific spatial extensions. No Bannou plugin reads specific extension keys by convention. */
     SpatialContext: {
       /** @description Terrain type at character position (grass, stone, water, etc.) */
       terrainType?: string | null;
@@ -31616,11 +31630,11 @@ export interface components {
       templateId: string;
       /** @description Optional custom actor ID (auto-generated if not provided) */
       actorId?: string | null;
-      /** @description Override template defaults */
+      /** @description Game-specific configuration overrides merged with template defaults. No Bannou plugin reads specific keys from this field by convention. */
       configurationOverrides?: {
         [key: string]: unknown;
       } | null;
-      /** @description Initial state passed to behavior */
+      /** @description Initial actor state snapshot. Deserialized internally to ActorStateSnapshot. No Bannou plugin reads specific keys from this field by convention. */
       initialState?: {
         [key: string]: unknown;
       } | null;
@@ -31671,13 +31685,13 @@ export interface components {
       baseLifespan?: number | null;
       /** @description Age at which the species reaches maturity */
       maturityAge?: number | null;
-      /** @description Base trait modifiers for this species */
+      /** @description Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention. */
       traitModifiers?: {
         [key: string]: unknown;
       } | null;
       /** @description Realms where this species is available */
       realmIds?: string[];
-      /** @description Additional metadata for the species */
+      /** @description Client-only metadata. No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -31787,7 +31801,7 @@ export interface components {
       encounterType: string;
       /** @description Character IDs of participants in the encounter */
       participants: string[];
-      /** @description Optional initial data for the encounter */
+      /** @description Game-specific encounter initialization data passed to ABML behavior scope. No Bannou plugin reads specific keys from this field by convention. */
       initialData?: {
         [key: string]: unknown;
       } | null;
@@ -33167,7 +33181,7 @@ export interface components {
       templateId: string;
       /** @description New behavior reference (triggers behavior.updated subscription) */
       behaviorRef?: string | null;
-      /** @description Updated configuration settings */
+      /** @description Updated game-specific configuration for ABML behavior execution scope. No Bannou plugin reads specific keys from this field by convention. */
       configuration?: {
         [key: string]: unknown;
       } | null;
@@ -33182,10 +33196,7 @@ export interface components {
        *     for actors created from this template.
        */
       cognitionTemplateId?: string | null;
-      /**
-       * @description Updated static template-level cognition overrides. Applied as the first layer
-       *     in the three-layer override composition.
-       */
+      /** @description Updated cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes. */
       cognitionOverrides?: {
         [key: string]: unknown;
       } | null;
@@ -33286,7 +33297,7 @@ export interface components {
       contractId: string;
       /** @description Which metadata to update */
       metadataType: components['schemas']['MetadataType'];
-      /** @description Metadata to set or merge */
+      /** @description Client-only metadata payload. No Bannou plugin reads specific keys from this field by convention. */
       data: {
         [key: string]: unknown;
       };
@@ -33306,7 +33317,7 @@ export interface components {
       layers?: components['schemas']['LayerDefinition'][] | null;
       /** @description New default bounds */
       defaultBounds?: components['schemas']['Bounds'];
-      /** @description New metadata (replaces existing) */
+      /** @description Updated client-provided definition metadata (replaces existing). No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -33766,7 +33777,7 @@ export interface components {
       seedId: string;
       /** @description New display name. */
       displayName?: string | null;
-      /** @description Metadata fields to merge (set key to null to delete). */
+      /** @description Client-provided metadata fields to merge (set key to null to delete). No Bannou plugin reads specific keys from this field by convention. */
       metadata?: {
         [key: string]: unknown;
       } | null;
@@ -33936,7 +33947,7 @@ export interface components {
       targetId?: string | null;
       /** @description Type of target entity when targetId is provided */
       targetType?: string | null;
-      /** @description Additional context data passed to contract template value substitution */
+      /** @description Caller-provided context merged into contract gameMetadata for template value substitution. No Bannou plugin reads specific keys from this field by convention. */
       context?: {
         [key: string]: unknown;
       } | null;
@@ -33986,11 +33997,11 @@ export interface components {
       userType: string;
       /** @description Milestone code to complete in the use behavior contract */
       milestoneCode: string;
-      /** @description Evidence data for this milestone completion (passed to contract) */
+      /** @description Evidence data passed through to Contract milestone completion. No Bannou plugin reads specific keys from this field by convention. */
       evidence?: {
         [key: string]: unknown;
       } | null;
-      /** @description Additional context data passed to contract template value substitution */
+      /** @description Caller-provided context merged into contract gameMetadata for template value substitution. No Bannou plugin reads specific keys from this field by convention. */
       context?: {
         [key: string]: unknown;
       } | null;
@@ -34255,7 +34266,7 @@ export interface components {
       affectedPartyId: string;
       /** @description Type of the affected party */
       affectedPartyType: components['schemas']['EntityType'];
-      /** @description Additional failure details */
+      /** @description Validation failure diagnostic details. No Bannou plugin reads specific keys from this field by convention. */
       details?: {
         [key: string]: unknown;
       } | null;
@@ -34386,7 +34397,7 @@ export interface components {
       verifierId: string;
       /** @description Verifier entity type */
       verifierType: components['schemas']['EntityType'];
-      /** @description Proof/evidence data */
+      /** @description Caller-provided proof/evidence data for condition verification. No Bannou plugin reads specific keys from this field by convention. */
       verificationData?: {
         [key: string]: unknown;
       } | null;

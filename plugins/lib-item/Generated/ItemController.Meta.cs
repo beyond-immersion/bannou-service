@@ -4161,7 +4161,7 @@ public partial class ItemController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional context data passed to contract template value substitution"
+                    "description": "Caller-provided context merged into contract gameMetadata for template value substitution. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -4322,13 +4322,13 @@ public partial class ItemController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Evidence data for this milestone completion (passed to contract)"
+                    "description": "Evidence data passed through to Contract milestone completion. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "context": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional context data passed to contract template value substitution"
+                    "description": "Caller-provided context merged into contract gameMetadata for template value substitution. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }

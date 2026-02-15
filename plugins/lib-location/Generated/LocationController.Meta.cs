@@ -152,7 +152,7 @@ public partial class LocationController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the location (JSON)"
+                    "description": "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -403,7 +403,7 @@ public partial class LocationController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the location (JSON)"
+                    "description": "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -729,7 +729,7 @@ public partial class LocationController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the location (JSON)"
+                    "description": "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -1055,7 +1055,7 @@ public partial class LocationController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the location (JSON)"
+                    "description": "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -1381,7 +1381,7 @@ public partial class LocationController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the location (JSON)"
+                    "description": "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -1707,7 +1707,7 @@ public partial class LocationController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the location (JSON)"
+                    "description": "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -1990,7 +1990,7 @@ public partial class LocationController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the location (JSON)"
+                    "description": "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -2463,7 +2463,7 @@ public partial class LocationController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the location (JSON)"
+                    "description": "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -2661,7 +2661,7 @@ public partial class LocationController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the location (JSON)"
+                    "description": "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -2814,7 +2814,7 @@ public partial class LocationController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the location (JSON)"
+                    "description": "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -3002,7 +3002,7 @@ public partial class LocationController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata"
+                    "description": "Updated client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -3155,7 +3155,7 @@ public partial class LocationController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the location (JSON)"
+                    "description": "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -3404,7 +3404,7 @@ public partial class LocationController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the location (JSON)"
+                    "description": "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -3647,7 +3647,7 @@ public partial class LocationController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the location (JSON)"
+                    "description": "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -3980,7 +3980,7 @@ public partial class LocationController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the location (JSON)"
+                    "description": "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -4229,7 +4229,7 @@ public partial class LocationController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the location (JSON)"
+                    "description": "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -4472,7 +4472,7 @@ public partial class LocationController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the location (JSON)"
+                    "description": "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -4899,7 +4899,7 @@ public partial class LocationController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the location (JSON)"
+                    "description": "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -5111,7 +5111,7 @@ public partial class LocationController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the location (JSON)"
+                    "description": "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },

@@ -158,7 +158,7 @@ public partial class GameSessionController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Game-specific configuration settings"
+                    "description": "Game-specific configuration settings. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "reservations": {
                     "type": "array",
@@ -237,7 +237,7 @@ public partial class GameSessionController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Game-specific character data for this player (null if none provided)"
+                    "description": "Game-specific character data for this player. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "voiceSessionId": {
                     "type": "string",
@@ -386,7 +386,7 @@ public partial class GameSessionController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Game-specific configuration settings (null to use defaults)"
+                    "description": "Game-specific configuration settings. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "sessionType": {
                     "$ref": "#/$defs/SessionType",
@@ -498,7 +498,7 @@ public partial class GameSessionController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Game-specific configuration settings"
+                    "description": "Game-specific configuration settings. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "reservations": {
                     "type": "array",
@@ -577,7 +577,7 @@ public partial class GameSessionController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Game-specific character data for this player (null if none provided)"
+                    "description": "Game-specific character data for this player. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "voiceSessionId": {
                     "type": "string",
@@ -778,7 +778,7 @@ public partial class GameSessionController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Game-specific configuration settings"
+                    "description": "Game-specific configuration settings. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "reservations": {
                     "type": "array",
@@ -857,7 +857,7 @@ public partial class GameSessionController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Game-specific character data for this player (null if none provided)"
+                    "description": "Game-specific character data for this player. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "voiceSessionId": {
                     "type": "string",
@@ -1000,7 +1000,7 @@ public partial class GameSessionController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Game-specific character data (null if no character data)"
+                    "description": "Game-specific character data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "voiceEndpoint": {
                     "$ref": "#/$defs/VoiceSipEndpoint",
@@ -1061,7 +1061,7 @@ public partial class GameSessionController
                 "gameData": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Initial game state data"
+                    "description": "Game-specific initial state data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "newPermissions": {
                     "type": "array",
@@ -1545,7 +1545,7 @@ public partial class GameSessionController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Action-specific data"
+                    "description": "Game-specific action data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "targetId": {
                     "type": "string",
@@ -1592,13 +1592,13 @@ public partial class GameSessionController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Action result data"
+                    "description": "Game-specific action result data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "newGameState": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Updated game state (if applicable)"
+                    "description": "Updated game state (if applicable). No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -1701,7 +1701,7 @@ public partial class GameSessionController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Game-specific character data (null if no character data)"
+                    "description": "Game-specific character data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "voiceEndpoint": {
                     "$ref": "#/$defs/VoiceSipEndpoint",
@@ -1762,7 +1762,7 @@ public partial class GameSessionController
                 "gameData": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Initial game state data"
+                    "description": "Game-specific initial state data. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "newPermissions": {
                     "type": "array",

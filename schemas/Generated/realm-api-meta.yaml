@@ -70,33 +70,36 @@ paths:
         ,\n    \"$defs\": {\n        \"RealmResponse\": {\n            \"description\": \"Complete realm information returned
         from API operations\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n        \
         \    \"required\": [\n                \"realmId\",\n                \"code\",\n                \"name\",\n       \
-        \         \"gameServiceId\",\n                \"isActive\",\n                \"isDeprecated\",\n                \"\
-        createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n                \"realmId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Unique identifier of the realm\"\n                },\n                \"code\": {\n             \
-        \       \"type\": \"string\",\n                    \"description\": \"Unique code for the realm (e.g., \\\"REALM_1\\\
-        \", \\\"REALM_2\\\")\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Display name for the realm\"\n                },\n                \"gameServiceId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"ID of the game service this realm belongs to\"\n                },\n                \"description\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Detailed description of the realm\"\n                },\n                \"category\": {\n                   \
-        \ \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Category
-        for grouping realms\"\n                },\n                \"isActive\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"description\": \"Whether the realm is currently active for gameplay\"\n                },\n\
-        \                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether this realm is deprecated and cannot be used for new entities\"\n                },\n                \"\
-        deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n   \
-        \                 \"nullable\": true,\n                    \"description\": \"Timestamp when this realm was deprecated\"\
-        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
-        \              \"nullable\": true,\n                    \"description\": \"Optional reason for deprecation\"\n   \
-        \             },\n                \"metadata\": {\n                    \"type\": \"object\",\n                   \
-        \ \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\": \"\
-        Additional custom metadata for the realm\"\n                },\n                \"createdAt\": {\n               \
+        \         \"gameServiceId\",\n                \"isActive\",\n                \"isSystemType\",\n                \"\
+        isDeprecated\",\n                \"createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\"\
+        : {\n                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"Unique identifier of the realm\"\n                },\n           \
+        \     \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique code for
+        the realm (e.g., \\\"REALM_1\\\", \\\"REALM_2\\\")\"\n                },\n                \"name\": {\n          \
+        \          \"type\": \"string\",\n                    \"description\": \"Display name for the realm\"\n          \
+        \      },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"description\": \"ID of the game service this realm belongs to\"\n     \
+        \           },\n                \"description\": {\n                    \"type\": \"string\",\n                  \
+        \  \"nullable\": true,\n                    \"description\": \"Detailed description of the realm\"\n             \
+        \   },\n                \"category\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Category for grouping realms\"\n                },\n             \
+        \   \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the
+        realm is currently active for gameplay\"\n                },\n                \"isSystemType\": {\n              \
+        \      \"type\": \"boolean\",\n                    \"description\": \"Whether this realm is a system infrastructure
+        realm (e.g., VOID). System realms cannot be merged as source.\"\n                },\n                \"isDeprecated\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether this realm is deprecated
+        and cannot be used for new entities\"\n                },\n                \"deprecatedAt\": {\n                 \
+        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Timestamp when this realm was deprecated\"\n                },\n         \
+        \       \"deprecationReason\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Optional reason for deprecation\"\n                },\n                \"\
+        metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"Client-only metadata. No Bannou plugin
+        reads specific keys from this field by convention.\"\n                },\n                \"createdAt\": {\n     \
+        \               \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Timestamp when the realm was created\"\n                },\n                \"updatedAt\": {\n               \
         \     \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\":
-        \"Timestamp when the realm was created\"\n                },\n                \"updatedAt\": {\n                 \
-        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
-        Timestamp when the realm was last updated\"\n                }\n            }\n        }\n    }\n}"
+        \"Timestamp when the realm was last updated\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get realm by ID\",\n    \"description\": \"\",\n    \"tags\": [\n     \
         \   \"Realm\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getRealm\"\n}"
   /realm/get-by-code:
@@ -136,33 +139,36 @@ paths:
         ,\n    \"$defs\": {\n        \"RealmResponse\": {\n            \"description\": \"Complete realm information returned
         from API operations\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n        \
         \    \"required\": [\n                \"realmId\",\n                \"code\",\n                \"name\",\n       \
-        \         \"gameServiceId\",\n                \"isActive\",\n                \"isDeprecated\",\n                \"\
-        createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n                \"realmId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Unique identifier of the realm\"\n                },\n                \"code\": {\n             \
-        \       \"type\": \"string\",\n                    \"description\": \"Unique code for the realm (e.g., \\\"REALM_1\\\
-        \", \\\"REALM_2\\\")\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Display name for the realm\"\n                },\n                \"gameServiceId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"ID of the game service this realm belongs to\"\n                },\n                \"description\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Detailed description of the realm\"\n                },\n                \"category\": {\n                   \
-        \ \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Category
-        for grouping realms\"\n                },\n                \"isActive\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"description\": \"Whether the realm is currently active for gameplay\"\n                },\n\
-        \                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether this realm is deprecated and cannot be used for new entities\"\n                },\n                \"\
-        deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n   \
-        \                 \"nullable\": true,\n                    \"description\": \"Timestamp when this realm was deprecated\"\
-        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
-        \              \"nullable\": true,\n                    \"description\": \"Optional reason for deprecation\"\n   \
-        \             },\n                \"metadata\": {\n                    \"type\": \"object\",\n                   \
-        \ \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\": \"\
-        Additional custom metadata for the realm\"\n                },\n                \"createdAt\": {\n               \
+        \         \"gameServiceId\",\n                \"isActive\",\n                \"isSystemType\",\n                \"\
+        isDeprecated\",\n                \"createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\"\
+        : {\n                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"Unique identifier of the realm\"\n                },\n           \
+        \     \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique code for
+        the realm (e.g., \\\"REALM_1\\\", \\\"REALM_2\\\")\"\n                },\n                \"name\": {\n          \
+        \          \"type\": \"string\",\n                    \"description\": \"Display name for the realm\"\n          \
+        \      },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"description\": \"ID of the game service this realm belongs to\"\n     \
+        \           },\n                \"description\": {\n                    \"type\": \"string\",\n                  \
+        \  \"nullable\": true,\n                    \"description\": \"Detailed description of the realm\"\n             \
+        \   },\n                \"category\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Category for grouping realms\"\n                },\n             \
+        \   \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the
+        realm is currently active for gameplay\"\n                },\n                \"isSystemType\": {\n              \
+        \      \"type\": \"boolean\",\n                    \"description\": \"Whether this realm is a system infrastructure
+        realm (e.g., VOID). System realms cannot be merged as source.\"\n                },\n                \"isDeprecated\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether this realm is deprecated
+        and cannot be used for new entities\"\n                },\n                \"deprecatedAt\": {\n                 \
+        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Timestamp when this realm was deprecated\"\n                },\n         \
+        \       \"deprecationReason\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Optional reason for deprecation\"\n                },\n                \"\
+        metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"Client-only metadata. No Bannou plugin
+        reads specific keys from this field by convention.\"\n                },\n                \"createdAt\": {\n     \
+        \               \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Timestamp when the realm was created\"\n                },\n                \"updatedAt\": {\n               \
         \     \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\":
-        \"Timestamp when the realm was created\"\n                },\n                \"updatedAt\": {\n                 \
-        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
-        Timestamp when the realm was last updated\"\n                }\n            }\n        }\n    }\n}"
+        \"Timestamp when the realm was last updated\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get realm by code\",\n    \"description\": \"Retrieve a realm using its
         unique code (e.g., \\\"REALM_1\\\", \\\"REALM_2\\\")\",\n    \"tags\": [\n        \"Realm\"\n    ],\n    \"deprecated\"\
         : false,\n    \"operationId\": \"getRealmByCode\"\n}"
@@ -222,34 +228,37 @@ paths:
         \                }\n            }\n        },\n        \"RealmResponse\": {\n            \"description\": \"Complete
         realm information returned from API operations\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"required\": [\n                \"realmId\",\n                \"code\",\n                \"\
-        name\",\n                \"gameServiceId\",\n                \"isActive\",\n                \"isDeprecated\",\n  \
-        \              \"createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n    \
-        \            \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n\
-        \                    \"description\": \"Unique identifier of the realm\"\n                },\n                \"code\"\
-        : {\n                    \"type\": \"string\",\n                    \"description\": \"Unique code for the realm (e.g.,
-        \\\"REALM_1\\\", \\\"REALM_2\\\")\"\n                },\n                \"name\": {\n                    \"type\"\
-        : \"string\",\n                    \"description\": \"Display name for the realm\"\n                },\n         \
-        \       \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\"\
-        ,\n                    \"description\": \"ID of the game service this realm belongs to\"\n                },\n   \
-        \             \"description\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Detailed description of the realm\"\n                },\n                \"\
-        category\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n              \
-        \      \"description\": \"Category for grouping realms\"\n                },\n                \"isActive\": {\n  \
-        \                  \"type\": \"boolean\",\n                    \"description\": \"Whether the realm is currently active
-        for gameplay\"\n                },\n                \"isDeprecated\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"description\": \"Whether this realm is deprecated and cannot be used for new entities\"\n\
-        \                },\n                \"deprecatedAt\": {\n                    \"type\": \"string\",\n            \
-        \        \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Timestamp when this realm was deprecated\"\n                },\n                \"deprecationReason\": {\n   \
-        \                 \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Optional reason for deprecation\"\n                },\n                \"metadata\": {\n                    \"\
-        type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n\
-        \                    \"description\": \"Additional custom metadata for the realm\"\n                },\n         \
-        \       \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Timestamp when the realm was created\"\n                },\n           \
-        \     \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
-        \                    \"description\": \"Timestamp when the realm was last updated\"\n                }\n         \
-        \   }\n        }\n    }\n}"
+        name\",\n                \"gameServiceId\",\n                \"isActive\",\n                \"isSystemType\",\n  \
+        \              \"isDeprecated\",\n                \"createdAt\",\n                \"updatedAt\"\n            ],\n\
+        \            \"properties\": {\n                \"realmId\": {\n                    \"type\": \"string\",\n      \
+        \              \"format\": \"uuid\",\n                    \"description\": \"Unique identifier of the realm\"\n  \
+        \              },\n                \"code\": {\n                    \"type\": \"string\",\n                    \"\
+        description\": \"Unique code for the realm (e.g., \\\"REALM_1\\\", \\\"REALM_2\\\")\"\n                },\n      \
+        \          \"name\": {\n                    \"type\": \"string\",\n                    \"description\": \"Display
+        name for the realm\"\n                },\n                \"gameServiceId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"description\": \"ID of the game service this realm
+        belongs to\"\n                },\n                \"description\": {\n                    \"type\": \"string\",\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Detailed description of the realm\"\
+        \n                },\n                \"category\": {\n                    \"type\": \"string\",\n               \
+        \     \"nullable\": true,\n                    \"description\": \"Category for grouping realms\"\n               \
+        \ },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
+        : \"Whether the realm is currently active for gameplay\"\n                },\n                \"isSystemType\": {\n\
+        \                    \"type\": \"boolean\",\n                    \"description\": \"Whether this realm is a system
+        infrastructure realm (e.g., VOID). System realms cannot be merged as source.\"\n                },\n             \
+        \   \"isDeprecated\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether
+        this realm is deprecated and cannot be used for new entities\"\n                },\n                \"deprecatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"Timestamp when this realm was deprecated\"\n     \
+        \           },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n            \
+        \        \"nullable\": true,\n                    \"description\": \"Optional reason for deprecation\"\n         \
+        \       },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-only metadata. No
+        Bannou plugin reads specific keys from this field by convention.\"\n                },\n                \"createdAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"Timestamp when the realm was created\"\n                },\n                \"updatedAt\":
+        {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                   \
+        \ \"description\": \"Timestamp when the realm was last updated\"\n                }\n            }\n        }\n  \
+        \  }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List all realms\",\n    \"description\": \"Retrieve all realms with optional
         filtering\",\n    \"tags\": [\n        \"Realm\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listRealms\"\
         \n}"
@@ -297,40 +306,46 @@ paths:
         \                    \"description\": \"Category for grouping (e.g., \\\"MAIN\\\", \\\"SPECIAL\\\")\"\n          \
         \      },\n                \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
         : true,\n                    \"description\": \"Whether the realm is currently active for gameplay\"\n           \
-        \     },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Additional metadata for the
-        realm (JSON)\"\n                }\n            }\n        }\n    }\n}"
+        \     },\n                \"isSystemType\": {\n                    \"type\": \"boolean\",\n                    \"\
+        default\": false,\n                    \"description\": \"Whether this realm is a system infrastructure realm (e.g.,
+        VOID). System realms cannot be merged as source.\"\n                },\n                \"metadata\": {\n        \
+        \            \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Client-only metadata. No Bannou plugin reads specific keys from this
+        field by convention.\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RealmResponse\"\
         ,\n    \"$defs\": {\n        \"RealmResponse\": {\n            \"description\": \"Complete realm information returned
         from API operations\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n        \
         \    \"required\": [\n                \"realmId\",\n                \"code\",\n                \"name\",\n       \
-        \         \"gameServiceId\",\n                \"isActive\",\n                \"isDeprecated\",\n                \"\
-        createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n                \"realmId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Unique identifier of the realm\"\n                },\n                \"code\": {\n             \
-        \       \"type\": \"string\",\n                    \"description\": \"Unique code for the realm (e.g., \\\"REALM_1\\\
-        \", \\\"REALM_2\\\")\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Display name for the realm\"\n                },\n                \"gameServiceId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"ID of the game service this realm belongs to\"\n                },\n                \"description\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Detailed description of the realm\"\n                },\n                \"category\": {\n                   \
-        \ \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Category
-        for grouping realms\"\n                },\n                \"isActive\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"description\": \"Whether the realm is currently active for gameplay\"\n                },\n\
-        \                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether this realm is deprecated and cannot be used for new entities\"\n                },\n                \"\
-        deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n   \
-        \                 \"nullable\": true,\n                    \"description\": \"Timestamp when this realm was deprecated\"\
-        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
-        \              \"nullable\": true,\n                    \"description\": \"Optional reason for deprecation\"\n   \
-        \             },\n                \"metadata\": {\n                    \"type\": \"object\",\n                   \
-        \ \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\": \"\
-        Additional custom metadata for the realm\"\n                },\n                \"createdAt\": {\n               \
+        \         \"gameServiceId\",\n                \"isActive\",\n                \"isSystemType\",\n                \"\
+        isDeprecated\",\n                \"createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\"\
+        : {\n                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"Unique identifier of the realm\"\n                },\n           \
+        \     \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique code for
+        the realm (e.g., \\\"REALM_1\\\", \\\"REALM_2\\\")\"\n                },\n                \"name\": {\n          \
+        \          \"type\": \"string\",\n                    \"description\": \"Display name for the realm\"\n          \
+        \      },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"description\": \"ID of the game service this realm belongs to\"\n     \
+        \           },\n                \"description\": {\n                    \"type\": \"string\",\n                  \
+        \  \"nullable\": true,\n                    \"description\": \"Detailed description of the realm\"\n             \
+        \   },\n                \"category\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Category for grouping realms\"\n                },\n             \
+        \   \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the
+        realm is currently active for gameplay\"\n                },\n                \"isSystemType\": {\n              \
+        \      \"type\": \"boolean\",\n                    \"description\": \"Whether this realm is a system infrastructure
+        realm (e.g., VOID). System realms cannot be merged as source.\"\n                },\n                \"isDeprecated\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether this realm is deprecated
+        and cannot be used for new entities\"\n                },\n                \"deprecatedAt\": {\n                 \
+        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Timestamp when this realm was deprecated\"\n                },\n         \
+        \       \"deprecationReason\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Optional reason for deprecation\"\n                },\n                \"\
+        metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"Client-only metadata. No Bannou plugin
+        reads specific keys from this field by convention.\"\n                },\n                \"createdAt\": {\n     \
+        \               \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Timestamp when the realm was created\"\n                },\n                \"updatedAt\": {\n               \
         \     \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\":
-        \"Timestamp when the realm was created\"\n                },\n                \"updatedAt\": {\n                 \
-        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
-        Timestamp when the realm was last updated\"\n                }\n            }\n        }\n    }\n}"
+        \"Timestamp when the realm was last updated\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create new realm\",\n    \"description\": \"\",\n    \"tags\": [\n    \
         \    \"Realm Admin\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"createRealm\"\n}"
   /realm/update:
@@ -375,41 +390,47 @@ paths:
         \             \"type\": \"string\",\n                    \"maxLength\": 50,\n                    \"nullable\": true,\n\
         \                    \"description\": \"Category for grouping\"\n                },\n                \"isActive\"\
         : {\n                    \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Whether the realm is currently active\"\n                },\n                \"metadata\": {\n               \
-        \     \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Additional metadata\"\n                }\n            }\n        }\n\
-        \    }\n}"
+        : \"Whether the realm is currently active\"\n                },\n                \"isSystemType\": {\n           \
+        \         \"type\": \"boolean\",\n                    \"nullable\": true,\n                    \"description\": \"\
+        Whether this realm is a system infrastructure realm (e.g., VOID). System realms cannot be merged as source.\"\n  \
+        \              },\n                \"metadata\": {\n                    \"type\": \"object\",\n                  \
+        \  \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\":
+        \"Client-only metadata. No Bannou plugin reads specific keys from this field by convention.\"\n                }\n\
+        \            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RealmResponse\"\
         ,\n    \"$defs\": {\n        \"RealmResponse\": {\n            \"description\": \"Complete realm information returned
         from API operations\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n        \
         \    \"required\": [\n                \"realmId\",\n                \"code\",\n                \"name\",\n       \
-        \         \"gameServiceId\",\n                \"isActive\",\n                \"isDeprecated\",\n                \"\
-        createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n                \"realmId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Unique identifier of the realm\"\n                },\n                \"code\": {\n             \
-        \       \"type\": \"string\",\n                    \"description\": \"Unique code for the realm (e.g., \\\"REALM_1\\\
-        \", \\\"REALM_2\\\")\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Display name for the realm\"\n                },\n                \"gameServiceId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"ID of the game service this realm belongs to\"\n                },\n                \"description\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Detailed description of the realm\"\n                },\n                \"category\": {\n                   \
-        \ \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Category
-        for grouping realms\"\n                },\n                \"isActive\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"description\": \"Whether the realm is currently active for gameplay\"\n                },\n\
-        \                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether this realm is deprecated and cannot be used for new entities\"\n                },\n                \"\
-        deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n   \
-        \                 \"nullable\": true,\n                    \"description\": \"Timestamp when this realm was deprecated\"\
-        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
-        \              \"nullable\": true,\n                    \"description\": \"Optional reason for deprecation\"\n   \
-        \             },\n                \"metadata\": {\n                    \"type\": \"object\",\n                   \
-        \ \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\": \"\
-        Additional custom metadata for the realm\"\n                },\n                \"createdAt\": {\n               \
+        \         \"gameServiceId\",\n                \"isActive\",\n                \"isSystemType\",\n                \"\
+        isDeprecated\",\n                \"createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\"\
+        : {\n                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"Unique identifier of the realm\"\n                },\n           \
+        \     \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique code for
+        the realm (e.g., \\\"REALM_1\\\", \\\"REALM_2\\\")\"\n                },\n                \"name\": {\n          \
+        \          \"type\": \"string\",\n                    \"description\": \"Display name for the realm\"\n          \
+        \      },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"description\": \"ID of the game service this realm belongs to\"\n     \
+        \           },\n                \"description\": {\n                    \"type\": \"string\",\n                  \
+        \  \"nullable\": true,\n                    \"description\": \"Detailed description of the realm\"\n             \
+        \   },\n                \"category\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Category for grouping realms\"\n                },\n             \
+        \   \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the
+        realm is currently active for gameplay\"\n                },\n                \"isSystemType\": {\n              \
+        \      \"type\": \"boolean\",\n                    \"description\": \"Whether this realm is a system infrastructure
+        realm (e.g., VOID). System realms cannot be merged as source.\"\n                },\n                \"isDeprecated\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether this realm is deprecated
+        and cannot be used for new entities\"\n                },\n                \"deprecatedAt\": {\n                 \
+        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Timestamp when this realm was deprecated\"\n                },\n         \
+        \       \"deprecationReason\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Optional reason for deprecation\"\n                },\n                \"\
+        metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"Client-only metadata. No Bannou plugin
+        reads specific keys from this field by convention.\"\n                },\n                \"createdAt\": {\n     \
+        \               \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Timestamp when the realm was created\"\n                },\n                \"updatedAt\": {\n               \
         \     \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\":
-        \"Timestamp when the realm was created\"\n                },\n                \"updatedAt\": {\n                 \
-        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
-        Timestamp when the realm was last updated\"\n                }\n            }\n        }\n    }\n}"
+        \"Timestamp when the realm was last updated\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update realm\",\n    \"description\": \"\",\n    \"tags\": [\n        \"\
         Realm Admin\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateRealm\"\n}"
   /realm/delete:
@@ -496,33 +517,36 @@ paths:
         ,\n    \"$defs\": {\n        \"RealmResponse\": {\n            \"description\": \"Complete realm information returned
         from API operations\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n        \
         \    \"required\": [\n                \"realmId\",\n                \"code\",\n                \"name\",\n       \
-        \         \"gameServiceId\",\n                \"isActive\",\n                \"isDeprecated\",\n                \"\
-        createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n                \"realmId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Unique identifier of the realm\"\n                },\n                \"code\": {\n             \
-        \       \"type\": \"string\",\n                    \"description\": \"Unique code for the realm (e.g., \\\"REALM_1\\\
-        \", \\\"REALM_2\\\")\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Display name for the realm\"\n                },\n                \"gameServiceId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"ID of the game service this realm belongs to\"\n                },\n                \"description\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Detailed description of the realm\"\n                },\n                \"category\": {\n                   \
-        \ \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Category
-        for grouping realms\"\n                },\n                \"isActive\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"description\": \"Whether the realm is currently active for gameplay\"\n                },\n\
-        \                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether this realm is deprecated and cannot be used for new entities\"\n                },\n                \"\
-        deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n   \
-        \                 \"nullable\": true,\n                    \"description\": \"Timestamp when this realm was deprecated\"\
-        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
-        \              \"nullable\": true,\n                    \"description\": \"Optional reason for deprecation\"\n   \
-        \             },\n                \"metadata\": {\n                    \"type\": \"object\",\n                   \
-        \ \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\": \"\
-        Additional custom metadata for the realm\"\n                },\n                \"createdAt\": {\n               \
+        \         \"gameServiceId\",\n                \"isActive\",\n                \"isSystemType\",\n                \"\
+        isDeprecated\",\n                \"createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\"\
+        : {\n                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"Unique identifier of the realm\"\n                },\n           \
+        \     \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique code for
+        the realm (e.g., \\\"REALM_1\\\", \\\"REALM_2\\\")\"\n                },\n                \"name\": {\n          \
+        \          \"type\": \"string\",\n                    \"description\": \"Display name for the realm\"\n          \
+        \      },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"description\": \"ID of the game service this realm belongs to\"\n     \
+        \           },\n                \"description\": {\n                    \"type\": \"string\",\n                  \
+        \  \"nullable\": true,\n                    \"description\": \"Detailed description of the realm\"\n             \
+        \   },\n                \"category\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Category for grouping realms\"\n                },\n             \
+        \   \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the
+        realm is currently active for gameplay\"\n                },\n                \"isSystemType\": {\n              \
+        \      \"type\": \"boolean\",\n                    \"description\": \"Whether this realm is a system infrastructure
+        realm (e.g., VOID). System realms cannot be merged as source.\"\n                },\n                \"isDeprecated\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether this realm is deprecated
+        and cannot be used for new entities\"\n                },\n                \"deprecatedAt\": {\n                 \
+        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Timestamp when this realm was deprecated\"\n                },\n         \
+        \       \"deprecationReason\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Optional reason for deprecation\"\n                },\n                \"\
+        metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"Client-only metadata. No Bannou plugin
+        reads specific keys from this field by convention.\"\n                },\n                \"createdAt\": {\n     \
+        \               \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Timestamp when the realm was created\"\n                },\n                \"updatedAt\": {\n               \
         \     \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\":
-        \"Timestamp when the realm was created\"\n                },\n                \"updatedAt\": {\n                 \
-        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
-        Timestamp when the realm was last updated\"\n                }\n            }\n        }\n    }\n}"
+        \"Timestamp when the realm was last updated\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Deprecate a realm\",\n    \"description\": \"Soft-delete a realm by marking
         it as deprecated.\\nDeprecated realms:\\n- Remain queryable for historical data\\n- Cannot be used for creating new
         entities (characters, locations, etc.)\\n- Can be hard-deleted after all references are removed\\n\",\n    \"tags\"\
@@ -567,33 +591,36 @@ paths:
         ,\n    \"$defs\": {\n        \"RealmResponse\": {\n            \"description\": \"Complete realm information returned
         from API operations\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n        \
         \    \"required\": [\n                \"realmId\",\n                \"code\",\n                \"name\",\n       \
-        \         \"gameServiceId\",\n                \"isActive\",\n                \"isDeprecated\",\n                \"\
-        createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\": {\n                \"realmId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"Unique identifier of the realm\"\n                },\n                \"code\": {\n             \
-        \       \"type\": \"string\",\n                    \"description\": \"Unique code for the realm (e.g., \\\"REALM_1\\\
-        \", \\\"REALM_2\\\")\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
-        ,\n                    \"description\": \"Display name for the realm\"\n                },\n                \"gameServiceId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        description\": \"ID of the game service this realm belongs to\"\n                },\n                \"description\"\
-        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Detailed description of the realm\"\n                },\n                \"category\": {\n                   \
-        \ \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"Category
-        for grouping realms\"\n                },\n                \"isActive\": {\n                    \"type\": \"boolean\"\
-        ,\n                    \"description\": \"Whether the realm is currently active for gameplay\"\n                },\n\
-        \                \"isDeprecated\": {\n                    \"type\": \"boolean\",\n                    \"description\"\
-        : \"Whether this realm is deprecated and cannot be used for new entities\"\n                },\n                \"\
-        deprecatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n   \
-        \                 \"nullable\": true,\n                    \"description\": \"Timestamp when this realm was deprecated\"\
-        \n                },\n                \"deprecationReason\": {\n                    \"type\": \"string\",\n      \
-        \              \"nullable\": true,\n                    \"description\": \"Optional reason for deprecation\"\n   \
-        \             },\n                \"metadata\": {\n                    \"type\": \"object\",\n                   \
-        \ \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\": \"\
-        Additional custom metadata for the realm\"\n                },\n                \"createdAt\": {\n               \
+        \         \"gameServiceId\",\n                \"isActive\",\n                \"isSystemType\",\n                \"\
+        isDeprecated\",\n                \"createdAt\",\n                \"updatedAt\"\n            ],\n            \"properties\"\
+        : {\n                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
+        uuid\",\n                    \"description\": \"Unique identifier of the realm\"\n                },\n           \
+        \     \"code\": {\n                    \"type\": \"string\",\n                    \"description\": \"Unique code for
+        the realm (e.g., \\\"REALM_1\\\", \\\"REALM_2\\\")\"\n                },\n                \"name\": {\n          \
+        \          \"type\": \"string\",\n                    \"description\": \"Display name for the realm\"\n          \
+        \      },\n                \"gameServiceId\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"uuid\",\n                    \"description\": \"ID of the game service this realm belongs to\"\n     \
+        \           },\n                \"description\": {\n                    \"type\": \"string\",\n                  \
+        \  \"nullable\": true,\n                    \"description\": \"Detailed description of the realm\"\n             \
+        \   },\n                \"category\": {\n                    \"type\": \"string\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Category for grouping realms\"\n                },\n             \
+        \   \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether the
+        realm is currently active for gameplay\"\n                },\n                \"isSystemType\": {\n              \
+        \      \"type\": \"boolean\",\n                    \"description\": \"Whether this realm is a system infrastructure
+        realm (e.g., VOID). System realms cannot be merged as source.\"\n                },\n                \"isDeprecated\"\
+        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether this realm is deprecated
+        and cannot be used for new entities\"\n                },\n                \"deprecatedAt\": {\n                 \
+        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Timestamp when this realm was deprecated\"\n                },\n         \
+        \       \"deprecationReason\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Optional reason for deprecation\"\n                },\n                \"\
+        metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n  \
+        \                  \"nullable\": true,\n                    \"description\": \"Client-only metadata. No Bannou plugin
+        reads specific keys from this field by convention.\"\n                },\n                \"createdAt\": {\n     \
+        \               \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
+        : \"Timestamp when the realm was created\"\n                },\n                \"updatedAt\": {\n               \
         \     \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\":
-        \"Timestamp when the realm was created\"\n                },\n                \"updatedAt\": {\n                 \
-        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
-        Timestamp when the realm was last updated\"\n                }\n            }\n        }\n    }\n}"
+        \"Timestamp when the realm was last updated\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Restore a deprecated realm\",\n    \"description\": \"Remove the deprecated
         status from a realm, making it\\navailable for new entities again.\\n\",\n    \"tags\": [\n        \"Realm Admin\"\
         \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"undeprecateRealm\"\n}"
@@ -837,9 +864,12 @@ paths:
         : \"Category for grouping realms (e.g., \\\"MAIN\\\", \\\"SPECIAL\\\", \\\"TEST\\\")\"\n                },\n     \
         \           \"isActive\": {\n                    \"type\": \"boolean\",\n                    \"default\": true,\n\
         \                    \"description\": \"Whether the realm is currently active for gameplay\"\n                },\n\
-        \                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Additional custom metadata
-        for the realm (JSON)\"\n                }\n            }\n        }\n    }\n}"
+        \                \"isSystemType\": {\n                    \"type\": \"boolean\",\n                    \"default\"\
+        : false,\n                    \"description\": \"Whether this realm is a system infrastructure realm (e.g., VOID).
+        System realms cannot be merged as source.\"\n                },\n                \"metadata\": {\n               \
+        \     \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Client-only metadata. No Bannou plugin reads specific keys from this
+        field by convention.\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SeedRealmsResponse\"\
         ,\n    \"$defs\": {\n        \"SeedRealmsResponse\": {\n            \"description\": \"Summary of a realm seeding
         operation including counts and errors\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -949,11 +979,16 @@ components:
           type: boolean
           default: true
           description: Whether the realm is currently active for gameplay
+        isSystemType:
+          type: boolean
+          default: false
+          description: Whether this realm is a system infrastructure realm (e.g., VOID). System realms cannot be merged 
+            as source.
         metadata:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional metadata for the realm (JSON)
+          description: Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     UpdateRealmRequest:
       description: Request to update an existing realm's properties
       type: object
@@ -990,11 +1025,16 @@ components:
           type: boolean
           nullable: true
           description: Whether the realm is currently active
+        isSystemType:
+          type: boolean
+          nullable: true
+          description: Whether this realm is a system infrastructure realm (e.g., VOID). System realms cannot be merged 
+            as source.
         metadata:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional metadata
+          description: Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     DeleteRealmRequest:
       description: Request to permanently delete a realm from the system
       type: object
@@ -1157,11 +1197,16 @@ components:
           type: boolean
           default: true
           description: Whether the realm is currently active for gameplay
+        isSystemType:
+          type: boolean
+          default: false
+          description: Whether this realm is a system infrastructure realm (e.g., VOID). System realms cannot be merged 
+            as source.
         metadata:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional custom metadata for the realm (JSON)
+          description: Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
     RealmResponse:
       description: Complete realm information returned from API operations
       type: object
@@ -1172,6 +1217,7 @@ components:
       - name
       - gameServiceId
       - isActive
+      - isSystemType
       - isDeprecated
       - createdAt
       - updatedAt
@@ -1201,6 +1247,10 @@ components:
         isActive:
           type: boolean
           description: Whether the realm is currently active for gameplay
+        isSystemType:
+          type: boolean
+          description: Whether this realm is a system infrastructure realm (e.g., VOID). System realms cannot be merged 
+            as source.
         isDeprecated:
           type: boolean
           description: Whether this realm is deprecated and cannot be used for new entities
@@ -1217,7 +1267,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional custom metadata for the realm
+          description: Client-only metadata. No Bannou plugin reads specific keys from this field by convention.
         createdAt:
           type: string
           format: date-time

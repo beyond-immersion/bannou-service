@@ -102,7 +102,7 @@ public partial class ContractController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Template-level game-specific metadata"
+                    "description": "Client-only game metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -182,11 +182,39 @@ public partial class ContractController
                     "nullable": true,
                     "description": "Time to cure breach (ISO 8601 duration)"
                 },
+                "exclusivity": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this contract has an exclusivity clause preventing the entity from entering similar contracts"
+                },
+                "nonCompete": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this contract has a non-compete clause"
+                },
+                "timeCommitment": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this contract has a time commitment clause"
+                },
+                "timeCommitmentType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Type of time commitment (exclusive or partial)"
+                },
+                "clauses": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ContractClauseDefinition"
+                    },
+                    "description": "Clause definitions for contract execution (fees, distributions, asset requirements)"
+                },
                 "customTerms": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Game-specific custom terms"
+                    "description": "Client-only custom terms. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -208,6 +236,112 @@ public partial class ContractController
                 "unilateral_immediate",
                 "non_terminable"
             ]
+        },
+        "ContractClauseDefinition": {
+            "type": "object",
+            "description": "A clause definition for contract execution specifying asset transfers, fees, or requirements",
+            "additionalProperties": false,
+            "required": [
+                "id",
+                "type"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Unique identifier for this clause within the contract"
+                },
+                "type": {
+                    "type": "string",
+                    "description": "Clause type code (fee, distribution, currency_transfer, item_transfer, asset_requirement)"
+                },
+                "party": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Party role reference for this clause"
+                },
+                "amount": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Amount value (numeric string for template substitution support)"
+                },
+                "amountType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "How to interpret the amount (flat, percentage, remainder)"
+                },
+                "sourceWallet": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Source wallet identifier or template variable reference"
+                },
+                "destinationWallet": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Destination wallet identifier or template variable reference"
+                },
+                "recipientWallet": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Recipient wallet for fee clauses or template variable reference"
+                },
+                "currencyCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Currency code for currency-based clauses"
+                },
+                "sourceContainer": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Source container identifier or template variable reference for item clauses"
+                },
+                "destinationContainer": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Destination container identifier or template variable reference for item clauses"
+                },
+                "itemCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Item code for item-based clauses"
+                },
+                "checkLocation": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Location template variable reference for asset requirement checks"
+                },
+                "assets": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ContractClauseAsset"
+                    },
+                    "description": "Asset requirements for asset_requirement clause type"
+                }
+            }
+        },
+        "ContractClauseAsset": {
+            "type": "object",
+            "description": "An asset requirement within a clause definition",
+            "additionalProperties": false,
+            "required": [
+                "type",
+                "code",
+                "amount"
+            ],
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "description": "Asset type (currency, item)"
+                },
+                "code": {
+                    "type": "string",
+                    "description": "Asset code identifier"
+                },
+                "amount": {
+                    "type": "number",
+                    "description": "Required amount of the asset"
+                }
+            }
         },
         "MilestoneDefinition": {
             "type": "object",
@@ -519,7 +653,7 @@ public partial class ContractController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Game-specific metadata"
+                    "description": "Client-only game metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "isActive": {
                     "type": "boolean",
@@ -614,11 +748,39 @@ public partial class ContractController
                     "nullable": true,
                     "description": "Time to cure breach (ISO 8601 duration)"
                 },
+                "exclusivity": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this contract has an exclusivity clause preventing the entity from entering similar contracts"
+                },
+                "nonCompete": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this contract has a non-compete clause"
+                },
+                "timeCommitment": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this contract has a time commitment clause"
+                },
+                "timeCommitmentType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Type of time commitment (exclusive or partial)"
+                },
+                "clauses": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ContractClauseDefinition"
+                    },
+                    "description": "Clause definitions for contract execution (fees, distributions, asset requirements)"
+                },
                 "customTerms": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Game-specific custom terms"
+                    "description": "Client-only custom terms. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -640,6 +802,112 @@ public partial class ContractController
                 "unilateral_immediate",
                 "non_terminable"
             ]
+        },
+        "ContractClauseDefinition": {
+            "type": "object",
+            "description": "A clause definition for contract execution specifying asset transfers, fees, or requirements",
+            "additionalProperties": false,
+            "required": [
+                "id",
+                "type"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Unique identifier for this clause within the contract"
+                },
+                "type": {
+                    "type": "string",
+                    "description": "Clause type code (fee, distribution, currency_transfer, item_transfer, asset_requirement)"
+                },
+                "party": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Party role reference for this clause"
+                },
+                "amount": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Amount value (numeric string for template substitution support)"
+                },
+                "amountType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "How to interpret the amount (flat, percentage, remainder)"
+                },
+                "sourceWallet": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Source wallet identifier or template variable reference"
+                },
+                "destinationWallet": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Destination wallet identifier or template variable reference"
+                },
+                "recipientWallet": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Recipient wallet for fee clauses or template variable reference"
+                },
+                "currencyCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Currency code for currency-based clauses"
+                },
+                "sourceContainer": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Source container identifier or template variable reference for item clauses"
+                },
+                "destinationContainer": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Destination container identifier or template variable reference for item clauses"
+                },
+                "itemCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Item code for item-based clauses"
+                },
+                "checkLocation": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Location template variable reference for asset requirement checks"
+                },
+                "assets": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ContractClauseAsset"
+                    },
+                    "description": "Asset requirements for asset_requirement clause type"
+                }
+            }
+        },
+        "ContractClauseAsset": {
+            "type": "object",
+            "description": "An asset requirement within a clause definition",
+            "additionalProperties": false,
+            "required": [
+                "type",
+                "code",
+                "amount"
+            ],
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "description": "Asset type (currency, item)"
+                },
+                "code": {
+                    "type": "string",
+                    "description": "Asset code identifier"
+                },
+                "amount": {
+                    "type": "number",
+                    "description": "Required amount of the asset"
+                }
+            }
         },
         "MilestoneDefinition": {
             "type": "object",
@@ -1034,7 +1302,7 @@ public partial class ContractController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Game-specific metadata"
+                    "description": "Client-only game metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "isActive": {
                     "type": "boolean",
@@ -1129,11 +1397,39 @@ public partial class ContractController
                     "nullable": true,
                     "description": "Time to cure breach (ISO 8601 duration)"
                 },
+                "exclusivity": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this contract has an exclusivity clause preventing the entity from entering similar contracts"
+                },
+                "nonCompete": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this contract has a non-compete clause"
+                },
+                "timeCommitment": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this contract has a time commitment clause"
+                },
+                "timeCommitmentType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Type of time commitment (exclusive or partial)"
+                },
+                "clauses": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ContractClauseDefinition"
+                    },
+                    "description": "Clause definitions for contract execution (fees, distributions, asset requirements)"
+                },
                 "customTerms": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Game-specific custom terms"
+                    "description": "Client-only custom terms. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -1155,6 +1451,112 @@ public partial class ContractController
                 "unilateral_immediate",
                 "non_terminable"
             ]
+        },
+        "ContractClauseDefinition": {
+            "type": "object",
+            "description": "A clause definition for contract execution specifying asset transfers, fees, or requirements",
+            "additionalProperties": false,
+            "required": [
+                "id",
+                "type"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Unique identifier for this clause within the contract"
+                },
+                "type": {
+                    "type": "string",
+                    "description": "Clause type code (fee, distribution, currency_transfer, item_transfer, asset_requirement)"
+                },
+                "party": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Party role reference for this clause"
+                },
+                "amount": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Amount value (numeric string for template substitution support)"
+                },
+                "amountType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "How to interpret the amount (flat, percentage, remainder)"
+                },
+                "sourceWallet": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Source wallet identifier or template variable reference"
+                },
+                "destinationWallet": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Destination wallet identifier or template variable reference"
+                },
+                "recipientWallet": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Recipient wallet for fee clauses or template variable reference"
+                },
+                "currencyCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Currency code for currency-based clauses"
+                },
+                "sourceContainer": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Source container identifier or template variable reference for item clauses"
+                },
+                "destinationContainer": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Destination container identifier or template variable reference for item clauses"
+                },
+                "itemCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Item code for item-based clauses"
+                },
+                "checkLocation": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Location template variable reference for asset requirement checks"
+                },
+                "assets": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ContractClauseAsset"
+                    },
+                    "description": "Asset requirements for asset_requirement clause type"
+                }
+            }
+        },
+        "ContractClauseAsset": {
+            "type": "object",
+            "description": "An asset requirement within a clause definition",
+            "additionalProperties": false,
+            "required": [
+                "type",
+                "code",
+                "amount"
+            ],
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "description": "Asset type (currency, item)"
+                },
+                "code": {
+                    "type": "string",
+                    "description": "Asset code identifier"
+                },
+                "amount": {
+                    "type": "number",
+                    "description": "Required amount of the asset"
+                }
+            }
         },
         "MilestoneDefinition": {
             "type": "object",
@@ -1593,7 +1995,7 @@ public partial class ContractController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Game-specific metadata"
+                    "description": "Client-only game metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "isActive": {
                     "type": "boolean",
@@ -1688,11 +2090,39 @@ public partial class ContractController
                     "nullable": true,
                     "description": "Time to cure breach (ISO 8601 duration)"
                 },
+                "exclusivity": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this contract has an exclusivity clause preventing the entity from entering similar contracts"
+                },
+                "nonCompete": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this contract has a non-compete clause"
+                },
+                "timeCommitment": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this contract has a time commitment clause"
+                },
+                "timeCommitmentType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Type of time commitment (exclusive or partial)"
+                },
+                "clauses": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ContractClauseDefinition"
+                    },
+                    "description": "Clause definitions for contract execution (fees, distributions, asset requirements)"
+                },
                 "customTerms": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Game-specific custom terms"
+                    "description": "Client-only custom terms. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -1714,6 +2144,112 @@ public partial class ContractController
                 "unilateral_immediate",
                 "non_terminable"
             ]
+        },
+        "ContractClauseDefinition": {
+            "type": "object",
+            "description": "A clause definition for contract execution specifying asset transfers, fees, or requirements",
+            "additionalProperties": false,
+            "required": [
+                "id",
+                "type"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Unique identifier for this clause within the contract"
+                },
+                "type": {
+                    "type": "string",
+                    "description": "Clause type code (fee, distribution, currency_transfer, item_transfer, asset_requirement)"
+                },
+                "party": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Party role reference for this clause"
+                },
+                "amount": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Amount value (numeric string for template substitution support)"
+                },
+                "amountType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "How to interpret the amount (flat, percentage, remainder)"
+                },
+                "sourceWallet": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Source wallet identifier or template variable reference"
+                },
+                "destinationWallet": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Destination wallet identifier or template variable reference"
+                },
+                "recipientWallet": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Recipient wallet for fee clauses or template variable reference"
+                },
+                "currencyCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Currency code for currency-based clauses"
+                },
+                "sourceContainer": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Source container identifier or template variable reference for item clauses"
+                },
+                "destinationContainer": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Destination container identifier or template variable reference for item clauses"
+                },
+                "itemCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Item code for item-based clauses"
+                },
+                "checkLocation": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Location template variable reference for asset requirement checks"
+                },
+                "assets": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ContractClauseAsset"
+                    },
+                    "description": "Asset requirements for asset_requirement clause type"
+                }
+            }
+        },
+        "ContractClauseAsset": {
+            "type": "object",
+            "description": "An asset requirement within a clause definition",
+            "additionalProperties": false,
+            "required": [
+                "type",
+                "code",
+                "amount"
+            ],
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "description": "Asset type (currency, item)"
+                },
+                "code": {
+                    "type": "string",
+                    "description": "Asset code identifier"
+                },
+                "amount": {
+                    "type": "number",
+                    "description": "Required amount of the asset"
+                }
+            }
         },
         "MilestoneDefinition": {
             "type": "object",
@@ -2035,7 +2571,7 @@ public partial class ContractController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Updated game metadata"
+                    "description": "Client-only game metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -2128,7 +2664,7 @@ public partial class ContractController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Game-specific metadata"
+                    "description": "Client-only game metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "isActive": {
                     "type": "boolean",
@@ -2223,11 +2759,39 @@ public partial class ContractController
                     "nullable": true,
                     "description": "Time to cure breach (ISO 8601 duration)"
                 },
+                "exclusivity": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this contract has an exclusivity clause preventing the entity from entering similar contracts"
+                },
+                "nonCompete": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this contract has a non-compete clause"
+                },
+                "timeCommitment": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this contract has a time commitment clause"
+                },
+                "timeCommitmentType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Type of time commitment (exclusive or partial)"
+                },
+                "clauses": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ContractClauseDefinition"
+                    },
+                    "description": "Clause definitions for contract execution (fees, distributions, asset requirements)"
+                },
                 "customTerms": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Game-specific custom terms"
+                    "description": "Client-only custom terms. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -2249,6 +2813,112 @@ public partial class ContractController
                 "unilateral_immediate",
                 "non_terminable"
             ]
+        },
+        "ContractClauseDefinition": {
+            "type": "object",
+            "description": "A clause definition for contract execution specifying asset transfers, fees, or requirements",
+            "additionalProperties": false,
+            "required": [
+                "id",
+                "type"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Unique identifier for this clause within the contract"
+                },
+                "type": {
+                    "type": "string",
+                    "description": "Clause type code (fee, distribution, currency_transfer, item_transfer, asset_requirement)"
+                },
+                "party": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Party role reference for this clause"
+                },
+                "amount": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Amount value (numeric string for template substitution support)"
+                },
+                "amountType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "How to interpret the amount (flat, percentage, remainder)"
+                },
+                "sourceWallet": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Source wallet identifier or template variable reference"
+                },
+                "destinationWallet": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Destination wallet identifier or template variable reference"
+                },
+                "recipientWallet": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Recipient wallet for fee clauses or template variable reference"
+                },
+                "currencyCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Currency code for currency-based clauses"
+                },
+                "sourceContainer": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Source container identifier or template variable reference for item clauses"
+                },
+                "destinationContainer": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Destination container identifier or template variable reference for item clauses"
+                },
+                "itemCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Item code for item-based clauses"
+                },
+                "checkLocation": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Location template variable reference for asset requirement checks"
+                },
+                "assets": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ContractClauseAsset"
+                    },
+                    "description": "Asset requirements for asset_requirement clause type"
+                }
+            }
+        },
+        "ContractClauseAsset": {
+            "type": "object",
+            "description": "An asset requirement within a clause definition",
+            "additionalProperties": false,
+            "required": [
+                "type",
+                "code",
+                "amount"
+            ],
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "description": "Asset type (currency, item)"
+                },
+                "code": {
+                    "type": "string",
+                    "description": "Asset code identifier"
+                },
+                "amount": {
+                    "type": "number",
+                    "description": "Required amount of the asset"
+                }
+            }
         },
         "MilestoneDefinition": {
             "type": "object",
@@ -2672,7 +3342,7 @@ public partial class ContractController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Instance-level game metadata"
+                    "description": "Client-only game metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -2742,11 +3412,39 @@ public partial class ContractController
                     "nullable": true,
                     "description": "Time to cure breach (ISO 8601 duration)"
                 },
+                "exclusivity": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this contract has an exclusivity clause preventing the entity from entering similar contracts"
+                },
+                "nonCompete": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this contract has a non-compete clause"
+                },
+                "timeCommitment": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this contract has a time commitment clause"
+                },
+                "timeCommitmentType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Type of time commitment (exclusive or partial)"
+                },
+                "clauses": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ContractClauseDefinition"
+                    },
+                    "description": "Clause definitions for contract execution (fees, distributions, asset requirements)"
+                },
                 "customTerms": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Game-specific custom terms"
+                    "description": "Client-only custom terms. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -2768,6 +3466,112 @@ public partial class ContractController
                 "unilateral_immediate",
                 "non_terminable"
             ]
+        },
+        "ContractClauseDefinition": {
+            "type": "object",
+            "description": "A clause definition for contract execution specifying asset transfers, fees, or requirements",
+            "additionalProperties": false,
+            "required": [
+                "id",
+                "type"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Unique identifier for this clause within the contract"
+                },
+                "type": {
+                    "type": "string",
+                    "description": "Clause type code (fee, distribution, currency_transfer, item_transfer, asset_requirement)"
+                },
+                "party": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Party role reference for this clause"
+                },
+                "amount": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Amount value (numeric string for template substitution support)"
+                },
+                "amountType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "How to interpret the amount (flat, percentage, remainder)"
+                },
+                "sourceWallet": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Source wallet identifier or template variable reference"
+                },
+                "destinationWallet": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Destination wallet identifier or template variable reference"
+                },
+                "recipientWallet": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Recipient wallet for fee clauses or template variable reference"
+                },
+                "currencyCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Currency code for currency-based clauses"
+                },
+                "sourceContainer": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Source container identifier or template variable reference for item clauses"
+                },
+                "destinationContainer": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Destination container identifier or template variable reference for item clauses"
+                },
+                "itemCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Item code for item-based clauses"
+                },
+                "checkLocation": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Location template variable reference for asset requirement checks"
+                },
+                "assets": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ContractClauseAsset"
+                    },
+                    "description": "Asset requirements for asset_requirement clause type"
+                }
+            }
+        },
+        "ContractClauseAsset": {
+            "type": "object",
+            "description": "An asset requirement within a clause definition",
+            "additionalProperties": false,
+            "required": [
+                "type",
+                "code",
+                "amount"
+            ],
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "description": "Asset type (currency, item)"
+                },
+                "code": {
+                    "type": "string",
+                    "description": "Asset code identifier"
+                },
+                "amount": {
+                    "type": "number",
+                    "description": "Required amount of the asset"
+                }
+            }
         }
     }
 }
@@ -2876,7 +3680,7 @@ public partial class ContractController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Game-specific metadata"
+                    "description": "Client-only game metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -2995,11 +3799,39 @@ public partial class ContractController
                     "nullable": true,
                     "description": "Time to cure breach (ISO 8601 duration)"
                 },
+                "exclusivity": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this contract has an exclusivity clause preventing the entity from entering similar contracts"
+                },
+                "nonCompete": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this contract has a non-compete clause"
+                },
+                "timeCommitment": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this contract has a time commitment clause"
+                },
+                "timeCommitmentType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Type of time commitment (exclusive or partial)"
+                },
+                "clauses": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ContractClauseDefinition"
+                    },
+                    "description": "Clause definitions for contract execution (fees, distributions, asset requirements)"
+                },
                 "customTerms": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Game-specific custom terms"
+                    "description": "Client-only custom terms. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -3021,6 +3853,112 @@ public partial class ContractController
                 "unilateral_immediate",
                 "non_terminable"
             ]
+        },
+        "ContractClauseDefinition": {
+            "type": "object",
+            "description": "A clause definition for contract execution specifying asset transfers, fees, or requirements",
+            "additionalProperties": false,
+            "required": [
+                "id",
+                "type"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Unique identifier for this clause within the contract"
+                },
+                "type": {
+                    "type": "string",
+                    "description": "Clause type code (fee, distribution, currency_transfer, item_transfer, asset_requirement)"
+                },
+                "party": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Party role reference for this clause"
+                },
+                "amount": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Amount value (numeric string for template substitution support)"
+                },
+                "amountType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "How to interpret the amount (flat, percentage, remainder)"
+                },
+                "sourceWallet": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Source wallet identifier or template variable reference"
+                },
+                "destinationWallet": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Destination wallet identifier or template variable reference"
+                },
+                "recipientWallet": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Recipient wallet for fee clauses or template variable reference"
+                },
+                "currencyCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Currency code for currency-based clauses"
+                },
+                "sourceContainer": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Source container identifier or template variable reference for item clauses"
+                },
+                "destinationContainer": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Destination container identifier or template variable reference for item clauses"
+                },
+                "itemCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Item code for item-based clauses"
+                },
+                "checkLocation": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Location template variable reference for asset requirement checks"
+                },
+                "assets": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ContractClauseAsset"
+                    },
+                    "description": "Asset requirements for asset_requirement clause type"
+                }
+            }
+        },
+        "ContractClauseAsset": {
+            "type": "object",
+            "description": "An asset requirement within a clause definition",
+            "additionalProperties": false,
+            "required": [
+                "type",
+                "code",
+                "amount"
+            ],
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "description": "Asset type (currency, item)"
+                },
+                "code": {
+                    "type": "string",
+                    "description": "Asset code identifier"
+                },
+                "amount": {
+                    "type": "number",
+                    "description": "Required amount of the asset"
+                }
+            }
         },
         "MilestoneInstanceResponse": {
             "type": "object",
@@ -3292,7 +4230,7 @@ public partial class ContractController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Game-specific metadata"
+                    "description": "Client-only game metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -3411,11 +4349,39 @@ public partial class ContractController
                     "nullable": true,
                     "description": "Time to cure breach (ISO 8601 duration)"
                 },
+                "exclusivity": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this contract has an exclusivity clause preventing the entity from entering similar contracts"
+                },
+                "nonCompete": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this contract has a non-compete clause"
+                },
+                "timeCommitment": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this contract has a time commitment clause"
+                },
+                "timeCommitmentType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Type of time commitment (exclusive or partial)"
+                },
+                "clauses": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ContractClauseDefinition"
+                    },
+                    "description": "Clause definitions for contract execution (fees, distributions, asset requirements)"
+                },
                 "customTerms": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Game-specific custom terms"
+                    "description": "Client-only custom terms. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -3437,6 +4403,112 @@ public partial class ContractController
                 "unilateral_immediate",
                 "non_terminable"
             ]
+        },
+        "ContractClauseDefinition": {
+            "type": "object",
+            "description": "A clause definition for contract execution specifying asset transfers, fees, or requirements",
+            "additionalProperties": false,
+            "required": [
+                "id",
+                "type"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Unique identifier for this clause within the contract"
+                },
+                "type": {
+                    "type": "string",
+                    "description": "Clause type code (fee, distribution, currency_transfer, item_transfer, asset_requirement)"
+                },
+                "party": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Party role reference for this clause"
+                },
+                "amount": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Amount value (numeric string for template substitution support)"
+                },
+                "amountType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "How to interpret the amount (flat, percentage, remainder)"
+                },
+                "sourceWallet": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Source wallet identifier or template variable reference"
+                },
+                "destinationWallet": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Destination wallet identifier or template variable reference"
+                },
+                "recipientWallet": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Recipient wallet for fee clauses or template variable reference"
+                },
+                "currencyCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Currency code for currency-based clauses"
+                },
+                "sourceContainer": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Source container identifier or template variable reference for item clauses"
+                },
+                "destinationContainer": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Destination container identifier or template variable reference for item clauses"
+                },
+                "itemCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Item code for item-based clauses"
+                },
+                "checkLocation": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Location template variable reference for asset requirement checks"
+                },
+                "assets": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ContractClauseAsset"
+                    },
+                    "description": "Asset requirements for asset_requirement clause type"
+                }
+            }
+        },
+        "ContractClauseAsset": {
+            "type": "object",
+            "description": "An asset requirement within a clause definition",
+            "additionalProperties": false,
+            "required": [
+                "type",
+                "code",
+                "amount"
+            ],
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "description": "Asset type (currency, item)"
+                },
+                "code": {
+                    "type": "string",
+                    "description": "Asset code identifier"
+                },
+                "amount": {
+                    "type": "number",
+                    "description": "Required amount of the asset"
+                }
+            }
         },
         "MilestoneInstanceResponse": {
             "type": "object",
@@ -3719,7 +4791,7 @@ public partial class ContractController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Game-specific metadata"
+                    "description": "Client-only game metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -3838,11 +4910,39 @@ public partial class ContractController
                     "nullable": true,
                     "description": "Time to cure breach (ISO 8601 duration)"
                 },
+                "exclusivity": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this contract has an exclusivity clause preventing the entity from entering similar contracts"
+                },
+                "nonCompete": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this contract has a non-compete clause"
+                },
+                "timeCommitment": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this contract has a time commitment clause"
+                },
+                "timeCommitmentType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Type of time commitment (exclusive or partial)"
+                },
+                "clauses": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ContractClauseDefinition"
+                    },
+                    "description": "Clause definitions for contract execution (fees, distributions, asset requirements)"
+                },
                 "customTerms": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Game-specific custom terms"
+                    "description": "Client-only custom terms. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -3864,6 +4964,112 @@ public partial class ContractController
                 "unilateral_immediate",
                 "non_terminable"
             ]
+        },
+        "ContractClauseDefinition": {
+            "type": "object",
+            "description": "A clause definition for contract execution specifying asset transfers, fees, or requirements",
+            "additionalProperties": false,
+            "required": [
+                "id",
+                "type"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Unique identifier for this clause within the contract"
+                },
+                "type": {
+                    "type": "string",
+                    "description": "Clause type code (fee, distribution, currency_transfer, item_transfer, asset_requirement)"
+                },
+                "party": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Party role reference for this clause"
+                },
+                "amount": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Amount value (numeric string for template substitution support)"
+                },
+                "amountType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "How to interpret the amount (flat, percentage, remainder)"
+                },
+                "sourceWallet": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Source wallet identifier or template variable reference"
+                },
+                "destinationWallet": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Destination wallet identifier or template variable reference"
+                },
+                "recipientWallet": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Recipient wallet for fee clauses or template variable reference"
+                },
+                "currencyCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Currency code for currency-based clauses"
+                },
+                "sourceContainer": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Source container identifier or template variable reference for item clauses"
+                },
+                "destinationContainer": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Destination container identifier or template variable reference for item clauses"
+                },
+                "itemCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Item code for item-based clauses"
+                },
+                "checkLocation": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Location template variable reference for asset requirement checks"
+                },
+                "assets": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ContractClauseAsset"
+                    },
+                    "description": "Asset requirements for asset_requirement clause type"
+                }
+            }
+        },
+        "ContractClauseAsset": {
+            "type": "object",
+            "description": "An asset requirement within a clause definition",
+            "additionalProperties": false,
+            "required": [
+                "type",
+                "code",
+                "amount"
+            ],
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "description": "Asset type (currency, item)"
+                },
+                "code": {
+                    "type": "string",
+                    "description": "Asset code identifier"
+                },
+                "amount": {
+                    "type": "number",
+                    "description": "Required amount of the asset"
+                }
+            }
         },
         "MilestoneInstanceResponse": {
             "type": "object",
@@ -4135,7 +5341,7 @@ public partial class ContractController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Game-specific metadata"
+                    "description": "Client-only game metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -4254,11 +5460,39 @@ public partial class ContractController
                     "nullable": true,
                     "description": "Time to cure breach (ISO 8601 duration)"
                 },
+                "exclusivity": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this contract has an exclusivity clause preventing the entity from entering similar contracts"
+                },
+                "nonCompete": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this contract has a non-compete clause"
+                },
+                "timeCommitment": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this contract has a time commitment clause"
+                },
+                "timeCommitmentType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Type of time commitment (exclusive or partial)"
+                },
+                "clauses": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ContractClauseDefinition"
+                    },
+                    "description": "Clause definitions for contract execution (fees, distributions, asset requirements)"
+                },
                 "customTerms": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Game-specific custom terms"
+                    "description": "Client-only custom terms. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -4280,6 +5514,112 @@ public partial class ContractController
                 "unilateral_immediate",
                 "non_terminable"
             ]
+        },
+        "ContractClauseDefinition": {
+            "type": "object",
+            "description": "A clause definition for contract execution specifying asset transfers, fees, or requirements",
+            "additionalProperties": false,
+            "required": [
+                "id",
+                "type"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Unique identifier for this clause within the contract"
+                },
+                "type": {
+                    "type": "string",
+                    "description": "Clause type code (fee, distribution, currency_transfer, item_transfer, asset_requirement)"
+                },
+                "party": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Party role reference for this clause"
+                },
+                "amount": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Amount value (numeric string for template substitution support)"
+                },
+                "amountType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "How to interpret the amount (flat, percentage, remainder)"
+                },
+                "sourceWallet": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Source wallet identifier or template variable reference"
+                },
+                "destinationWallet": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Destination wallet identifier or template variable reference"
+                },
+                "recipientWallet": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Recipient wallet for fee clauses or template variable reference"
+                },
+                "currencyCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Currency code for currency-based clauses"
+                },
+                "sourceContainer": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Source container identifier or template variable reference for item clauses"
+                },
+                "destinationContainer": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Destination container identifier or template variable reference for item clauses"
+                },
+                "itemCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Item code for item-based clauses"
+                },
+                "checkLocation": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Location template variable reference for asset requirement checks"
+                },
+                "assets": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ContractClauseAsset"
+                    },
+                    "description": "Asset requirements for asset_requirement clause type"
+                }
+            }
+        },
+        "ContractClauseAsset": {
+            "type": "object",
+            "description": "An asset requirement within a clause definition",
+            "additionalProperties": false,
+            "required": [
+                "type",
+                "code",
+                "amount"
+            ],
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "description": "Asset type (currency, item)"
+                },
+                "code": {
+                    "type": "string",
+                    "description": "Asset code identifier"
+                },
+                "amount": {
+                    "type": "number",
+                    "description": "Required amount of the asset"
+                }
+            }
         },
         "MilestoneInstanceResponse": {
             "type": "object",
@@ -4624,7 +5964,7 @@ public partial class ContractController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Game-specific metadata"
+                    "description": "Client-only game metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -4743,11 +6083,39 @@ public partial class ContractController
                     "nullable": true,
                     "description": "Time to cure breach (ISO 8601 duration)"
                 },
+                "exclusivity": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this contract has an exclusivity clause preventing the entity from entering similar contracts"
+                },
+                "nonCompete": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this contract has a non-compete clause"
+                },
+                "timeCommitment": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this contract has a time commitment clause"
+                },
+                "timeCommitmentType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Type of time commitment (exclusive or partial)"
+                },
+                "clauses": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ContractClauseDefinition"
+                    },
+                    "description": "Clause definitions for contract execution (fees, distributions, asset requirements)"
+                },
                 "customTerms": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Game-specific custom terms"
+                    "description": "Client-only custom terms. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -4769,6 +6137,112 @@ public partial class ContractController
                 "unilateral_immediate",
                 "non_terminable"
             ]
+        },
+        "ContractClauseDefinition": {
+            "type": "object",
+            "description": "A clause definition for contract execution specifying asset transfers, fees, or requirements",
+            "additionalProperties": false,
+            "required": [
+                "id",
+                "type"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Unique identifier for this clause within the contract"
+                },
+                "type": {
+                    "type": "string",
+                    "description": "Clause type code (fee, distribution, currency_transfer, item_transfer, asset_requirement)"
+                },
+                "party": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Party role reference for this clause"
+                },
+                "amount": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Amount value (numeric string for template substitution support)"
+                },
+                "amountType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "How to interpret the amount (flat, percentage, remainder)"
+                },
+                "sourceWallet": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Source wallet identifier or template variable reference"
+                },
+                "destinationWallet": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Destination wallet identifier or template variable reference"
+                },
+                "recipientWallet": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Recipient wallet for fee clauses or template variable reference"
+                },
+                "currencyCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Currency code for currency-based clauses"
+                },
+                "sourceContainer": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Source container identifier or template variable reference for item clauses"
+                },
+                "destinationContainer": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Destination container identifier or template variable reference for item clauses"
+                },
+                "itemCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Item code for item-based clauses"
+                },
+                "checkLocation": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Location template variable reference for asset requirement checks"
+                },
+                "assets": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ContractClauseAsset"
+                    },
+                    "description": "Asset requirements for asset_requirement clause type"
+                }
+            }
+        },
+        "ContractClauseAsset": {
+            "type": "object",
+            "description": "An asset requirement within a clause definition",
+            "additionalProperties": false,
+            "required": [
+                "type",
+                "code",
+                "amount"
+            ],
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "description": "Asset type (currency, item)"
+                },
+                "code": {
+                    "type": "string",
+                    "description": "Asset code identifier"
+                },
+                "amount": {
+                    "type": "number",
+                    "description": "Required amount of the asset"
+                }
+            }
         },
         "MilestoneInstanceResponse": {
             "type": "object",
@@ -5057,7 +6531,7 @@ public partial class ContractController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Game-specific metadata"
+                    "description": "Client-only game metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -5176,11 +6650,39 @@ public partial class ContractController
                     "nullable": true,
                     "description": "Time to cure breach (ISO 8601 duration)"
                 },
+                "exclusivity": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this contract has an exclusivity clause preventing the entity from entering similar contracts"
+                },
+                "nonCompete": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this contract has a non-compete clause"
+                },
+                "timeCommitment": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this contract has a time commitment clause"
+                },
+                "timeCommitmentType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Type of time commitment (exclusive or partial)"
+                },
+                "clauses": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ContractClauseDefinition"
+                    },
+                    "description": "Clause definitions for contract execution (fees, distributions, asset requirements)"
+                },
                 "customTerms": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Game-specific custom terms"
+                    "description": "Client-only custom terms. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -5202,6 +6704,112 @@ public partial class ContractController
                 "unilateral_immediate",
                 "non_terminable"
             ]
+        },
+        "ContractClauseDefinition": {
+            "type": "object",
+            "description": "A clause definition for contract execution specifying asset transfers, fees, or requirements",
+            "additionalProperties": false,
+            "required": [
+                "id",
+                "type"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Unique identifier for this clause within the contract"
+                },
+                "type": {
+                    "type": "string",
+                    "description": "Clause type code (fee, distribution, currency_transfer, item_transfer, asset_requirement)"
+                },
+                "party": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Party role reference for this clause"
+                },
+                "amount": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Amount value (numeric string for template substitution support)"
+                },
+                "amountType": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "How to interpret the amount (flat, percentage, remainder)"
+                },
+                "sourceWallet": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Source wallet identifier or template variable reference"
+                },
+                "destinationWallet": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Destination wallet identifier or template variable reference"
+                },
+                "recipientWallet": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Recipient wallet for fee clauses or template variable reference"
+                },
+                "currencyCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Currency code for currency-based clauses"
+                },
+                "sourceContainer": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Source container identifier or template variable reference for item clauses"
+                },
+                "destinationContainer": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Destination container identifier or template variable reference for item clauses"
+                },
+                "itemCode": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Item code for item-based clauses"
+                },
+                "checkLocation": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Location template variable reference for asset requirement checks"
+                },
+                "assets": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                        "$ref": "#/$defs/ContractClauseAsset"
+                    },
+                    "description": "Asset requirements for asset_requirement clause type"
+                }
+            }
+        },
+        "ContractClauseAsset": {
+            "type": "object",
+            "description": "An asset requirement within a clause definition",
+            "additionalProperties": false,
+            "required": [
+                "type",
+                "code",
+                "amount"
+            ],
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "description": "Asset type (currency, item)"
+                },
+                "code": {
+                    "type": "string",
+                    "description": "Asset code identifier"
+                },
+                "amount": {
+                    "type": "number",
+                    "description": "Required amount of the asset"
+                }
+            }
         },
         "MilestoneInstanceResponse": {
             "type": "object",
@@ -5631,7 +7239,7 @@ public partial class ContractController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Evidence of completion"
+                    "description": "Client-only evidence data. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -6842,7 +8450,7 @@ public partial class ContractController
                 "data": {
                     "type": "object",
                     "additionalProperties": true,
-                    "description": "Metadata to set or merge"
+                    "description": "Client-only metadata payload. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -6880,13 +8488,13 @@ public partial class ContractController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Instance-level metadata"
+                    "description": "Client-only instance metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "runtimeState": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Runtime state metadata"
+                    "description": "Client-only runtime state. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -6996,13 +8604,13 @@ public partial class ContractController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Instance-level metadata"
+                    "description": "Client-only instance metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "runtimeState": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Runtime state metadata"
+                    "description": "Client-only runtime state. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -7098,7 +8706,7 @@ public partial class ContractController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "What the entity wants to do"
+                    "description": "Client-only proposed action data. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -7941,13 +9549,13 @@ public partial class ContractController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Template variable to request field mapping"
+                    "description": "Client-only request field mapping. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "responseMapping": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Response field to result mapping"
+                    "description": "Client-only response field mapping. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }

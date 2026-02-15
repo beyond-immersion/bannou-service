@@ -313,13 +313,16 @@ The god-actor sits in the influence path because gods should be able to:
 | Concern | Owned By | Interaction |
 |---------|----------|-------------|
 | Deity identity (name, domains, personality) | Divine | Managers call Divine API to create/retrieve |
-| Deity economy (divinity balance, earning, spending) | Divine (via Currency) | God-actors call Divine API for balance checks |
+| God character record | Character (in divine system realm) | Divine creates on deity creation; Actor binds as character brain |
+| Deity economy (divinity balance, earning, spending) | Divine (via Currency) | Scoped to divine system realm; god-actors call Divine API |
 | Follower management | Divine (via Relationship) | God-actors call Divine API to manage attention slots |
 | Blessing orchestration | Divine (via Collection + Status) | God-actors call Divine API to grant blessings |
 | Deity ABML behavior | Resource (seeded) / Asset (hot-reload) | Actor loads via IBehaviorDocumentProvider |
-| Runtime cognition | Actor | God-actors are actors; they think via ABML/GOAP |
+| Runtime cognition | Actor | Character brain with full variable provider chain |
 
-The separation: **Divine owns the god's persistent state. Actor owns the god's runtime brain. Puppetmaster owns the god's lifecycle management.**
+The separation: **Divine owns the god's persistent state. Character (system realm) owns the god's entity identity. Actor owns the god's runtime brain. Puppetmaster owns the god's lifecycle management.**
+
+See [God-Actors as Character Brains](#god-actors-as-character-brains-system-realm-pattern) below for the full system realm pattern, and [DIVINE.md: God Characters in System Realms](../plugins/DIVINE.md#god-characters-in-system-realms) for the architectural concept.
 
 ---
 
@@ -332,6 +335,77 @@ The separation: **Divine owns the god's persistent state. Actor owns the god's r
 | Spirit influence validation | Gardener -> Agency | Gardener calls Agency to validate influence against manifest |
 | Compliance variables | Agency -> Actor | Agency provides `${spirit.*}` via Variable Provider Factory |
 | Influence execution | Agency -> Gardener god -> Actor | Agency validates, Gardener god-actor modulates, Actor injects perception |
+
+---
+
+## God-Actors as Character Brains (System Realm Pattern)
+
+> See [DIVINE.md: God Characters in System Realms](../plugins/DIVINE.md#god-characters-in-system-realms) for the full architectural concept. This section covers the behavioral bootstrap implications.
+
+### The Pattern
+
+Realm's `isSystemType` flag enables a divine system realm (e.g., `PANTHEON`) where every deity has a Character record. This transforms god-actors from **event brain** actors (using `load_snapshot:` for ad-hoc data) into **character brain** actors (with automatic variable provider binding to their own divine character).
+
+The existing bootstrap phases do not structurally change. The divine character record is created as part of deity initialization (Phase 3 -- `/divine/deity/create` internally creates the character), and the Puppetmaster Manager passes `characterId` when spawning god-actors (Phase 4). This is internal to the Divine service's implementation, not a change to the bootstrap sequence itself.
+
+The god-actor's character brain binding is **permanent** -- it is always bound to the god's divine system realm character for the actor's entire lifetime. This gives every god-actor automatic access to `${personality.*}`, `${encounters.*}`, `${backstory.*}`, `${quest.*}`, `${world.*}`, and `${obligations.*}` through the standard Variable Provider Factory chain. God-actors can still use `load_snapshot:` for data about arbitrary mortal entities -- the character brain binding adds self-data, it doesn't remove event brain capabilities.
+
+### Avatar Manifestation in the Flywheel
+
+The divine character pattern enables a new content flywheel pathway via avatar manifestation. Avatars are a **steady-state behavioral decision**, not a bootstrap concern -- the god's ABML behavior decides when to manifest, and the Divine service's avatar API handles the orchestration and economy.
+
+```
+God perceives archive (resource.compressed)
+    │
+    ├── Evaluates relevance to domain (standard flywheel path)
+    │
+    └── Decides to manifest avatar in physical world
+        │
+        ▼
+    God calls /divine/avatar/manifest
+        ├── Divine calculates divinity cost (scales with recency of last avatar death)
+        ├── Divine debits divinity from god's wallet
+        ├── Divine creates Character in physical realm
+        ├── Divine creates Relationship (divine_manifestation)
+        ├── Divine spawns Actor for avatar (separate character brain)
+        └── Divine registers watch so god perceives avatar events
+        │
+        ▼
+    Avatar lives as a real character in the world
+    Players interact with avatar, generate history and encounters
+    Avatar may reveal divine nature, grant quests, bestow blessings
+        │
+        ▼
+    Avatar dies (killed by players, sacrifices self, mortal lifespan)
+        │
+        ├── Death archive enters content flywheel (standard path)
+        │   └── Other gods may evaluate this archive
+        │
+        └── God perceives avatar death via watch system
+            ├── Divine updates tracking (lastAvatarDeathAt, clears activeAvatar)
+            └── God reacts based on ${personality.*}:
+                grief, vengeance quest, quiet resignation
+                (spawning a new avatar costs MORE divinity if done too soon)
+```
+
+Avatar manifestation is ABML behavior authoring mediated by Divine's avatar API. The economy layer ensures gods can't spam avatars -- divinity costs scale with recency, creating a natural cooldown that the god's GOAP planner must account for when deciding whether to manifest.
+
+### Ownership Table Update
+
+| Concern | Owned By | Interaction |
+|---------|----------|-------------|
+| Deity identity | Divine | Managers call Divine API to create/retrieve |
+| **God character record** | **Character (in divine system realm)** | **Divine creates on deity creation; Actor binds as character brain** |
+| **Divine genealogy** | **Relationship** | **Parent/child, spouse, rivalry bonds between god characters** |
+| **God personality** | **Character Personality** | **Standard trait axes; god-actor reads via ${personality.*}** |
+| **God memories of mortals** | **Character Encounter** | **Standard encounter tracking; god-actor reads via ${encounters.*}** |
+| Deity economy | Divine (via Currency) | Scoped to divine system realm |
+| Follower management | Divine (via Relationship) | Deity-character follower bonds |
+| Blessing orchestration | Divine (via Collection + Status) | God-actors call Divine API |
+| Deity ABML behavior | Resource (seeded) / Asset (hot-reload) | Actor loads via IBehaviorDocumentProvider |
+| Runtime cognition | Actor | **Character brain with full variable provider chain** |
+| **Avatar manifestation** | **Divine (orchestrates Character + Relationship + Actor)** | **God-actor calls `/divine/avatar/manifest`; Divine handles economy, creation, tracking** |
+| **Avatar lifecycle** | **Divine (tracking) + Actor (runtime) + watch system (perception)** | **Divine tracks active avatar and death timestamps; god-actor monitors via watch** |
 
 ---
 

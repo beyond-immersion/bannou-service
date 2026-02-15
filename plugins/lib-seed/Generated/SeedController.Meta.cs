@@ -59,7 +59,7 @@ public partial class SeedController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Seed-type-specific initial metadata."
+                    "description": "Client-provided seed-type-specific initial data. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -820,7 +820,7 @@ public partial class SeedController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Metadata fields to merge (set key to null to delete)."
+                    "description": "Client-provided metadata fields to merge (set key to null to delete). No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }

@@ -116,7 +116,7 @@ public partial class SpeciesController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Base trait modifiers for this species"
+                    "description": "Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "realmIds": {
                     "type": "array",
@@ -130,7 +130,7 @@ public partial class SpeciesController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the species"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -305,7 +305,7 @@ public partial class SpeciesController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Base trait modifiers for this species"
+                    "description": "Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "realmIds": {
                     "type": "array",
@@ -319,7 +319,7 @@ public partial class SpeciesController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the species"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -542,7 +542,7 @@ public partial class SpeciesController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Base trait modifiers for this species"
+                    "description": "Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "realmIds": {
                     "type": "array",
@@ -556,7 +556,7 @@ public partial class SpeciesController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the species"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -777,7 +777,7 @@ public partial class SpeciesController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Base trait modifiers for this species"
+                    "description": "Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "realmIds": {
                     "type": "array",
@@ -791,7 +791,7 @@ public partial class SpeciesController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the species"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -925,7 +925,7 @@ public partial class SpeciesController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Base trait modifiers for this species (JSON)"
+                    "description": "Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "realmIds": {
                     "type": "array",
@@ -940,7 +940,7 @@ public partial class SpeciesController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the species"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -1023,7 +1023,7 @@ public partial class SpeciesController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Base trait modifiers for this species"
+                    "description": "Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "realmIds": {
                     "type": "array",
@@ -1037,7 +1037,7 @@ public partial class SpeciesController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the species"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -1169,13 +1169,13 @@ public partial class SpeciesController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Base trait modifiers for this species"
+                    "description": "Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -1258,7 +1258,7 @@ public partial class SpeciesController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Base trait modifiers for this species"
+                    "description": "Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "realmIds": {
                     "type": "array",
@@ -1272,7 +1272,7 @@ public partial class SpeciesController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the species"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -1535,7 +1535,7 @@ public partial class SpeciesController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Base trait modifiers for this species"
+                    "description": "Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "realmIds": {
                     "type": "array",
@@ -1549,7 +1549,7 @@ public partial class SpeciesController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the species"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -1722,7 +1722,7 @@ public partial class SpeciesController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Base trait modifiers for this species"
+                    "description": "Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "realmIds": {
                     "type": "array",
@@ -1736,7 +1736,7 @@ public partial class SpeciesController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the species"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -2046,7 +2046,7 @@ public partial class SpeciesController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Base trait modifiers for this species"
+                    "description": "Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "realmIds": {
                     "type": "array",
@@ -2060,7 +2060,7 @@ public partial class SpeciesController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the species"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -2239,7 +2239,7 @@ public partial class SpeciesController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Base trait modifiers for this species"
+                    "description": "Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "realmIds": {
                     "type": "array",
@@ -2253,7 +2253,7 @@ public partial class SpeciesController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the species"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -2400,7 +2400,7 @@ public partial class SpeciesController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Base trait modifiers for this species (null if none)"
+                    "description": "Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "realmCodes": {
                     "type": "array",
@@ -2414,7 +2414,7 @@ public partial class SpeciesController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the species (null if none)"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }

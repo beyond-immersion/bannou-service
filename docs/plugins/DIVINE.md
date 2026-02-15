@@ -21,6 +21,141 @@ Pantheon management service (L4 GameFeatures) for deity entities, divinity econo
 
 ---
 
+## God Characters in System Realms
+
+> **Status**: Architectural concept. All dependencies are existing services; no new service code required beyond Divine's planned implementation and authored ABML behavior documents. This section documents a design pattern enabled by Realm's `isSystemType` flag.
+
+### The Insight
+
+Realm's `isSystemType` flag creates conceptual namespaces for entities that exist outside physical reality. A divine system realm (e.g., `PANTHEON` with `isSystemType: true`) allows every deity to have a **Character record** -- and the moment a god is a character, the entire L2/L4 entity stack activates for them with zero new infrastructure:
+
+| Existing Service | What Gods Get For Free |
+|---|---|
+| **Character** (L2) | Identity record, realm binding, species association, alive/dead lifecycle |
+| **Species** (L2) | A "divine" species in the system realm -- type taxonomy, trait modifiers |
+| **Relationship** (L2) | Divine genealogy: parent/child, spouse, sibling, rival between gods |
+| **Character Personality** (L4) | God personality traits on bipolar axes -- quantified, evolvable, available as `${personality.*}` |
+| **Character History** (L4) | Divine historical events -- wars between gods, realm creation, betrayals |
+| **Character Encounter** (L4) | Gods' memories of notable mortal interactions, grudges, favorites |
+| **Seed** (L2) | Deity domain power seed can be character-owned (already planned) |
+| **Collection** (L2) | Already used for permanent blessings -- gods could also collect divine artifacts |
+| **Actor** (L2) | God-actors bind to their character, becoming **character brain** actors with all variable providers |
+
+### God-Actors as Character Brains
+
+The [Behavioral Bootstrap](../guides/BEHAVIORAL-BOOTSTRAP.md) pattern currently conceptualizes god-actors as event brain actors that use `load_snapshot:` for ad-hoc data about arbitrary entities. With a divine character record, god-actors become **character brain actors** with automatic variable provider binding:
+
+```
+God-actor (character brain, bound to divine system realm character)
+├── ${personality.*}     ← CharacterPersonality (the god's own quantified personality)
+├── ${encounters.*}      ← CharacterEncounter (memories of mortal interactions)
+├── ${backstory.*}       ← CharacterHistory (the god's mythology and divine history)
+├── ${quest.*}           ← Quest (divine quests the god is tracking)
+├── ${world.*}           ← Worldstate (current game time, season)
+├── ${obligations.*}     ← Obligation (divine contracts the god is bound by)
+└── ...can still use load_snapshot: for ad-hoc mortal data (event brain capability)
+```
+
+No new variable providers are needed. The standard character brain infrastructure provides everything. A god's ABML behavior can naturally reference `${personality.mercy}` to decide intervention thresholds, `${encounters.last_hostile_days}` to check grudges against specific mortals, and `${backstory.origin}` to reason about its own mythology.
+
+This also obsoletes Potential Extension #7 (`IDivineVariableProviderFactory`) -- gods don't need a custom variable provider because they ARE characters and get all character-based providers automatically. A separate `${divine.*}` provider may still be useful for exposing divine-specific data (blessing counts, divinity balance, domain power) to other actors' behaviors, but gods themselves get their own cognition data through the standard character brain path.
+
+### Avatar Manifestation Pattern
+
+Gods in the system realm can manifest avatars in physical realms -- separate Character records with their own independent actors. The god-actor remains permanently bound to its divine system realm character; the avatar is a wholly separate entity created and managed through the god's runtime behavior.
+
+```
+DIVINE_REALM (system realm, isSystemType: true)
+├── Moira (Character, species: "Fate Weaver", alive)
+│   └── Actor (character brain, long-running, PERMANENT binding)
+│       ├── Perceives world events globally via watch system
+│       ├── Decides to manifest in the physical world
+│       └── Calls /divine/avatar/manifest (spends divinity, creates avatar)
+│
+ARCADIA (physical realm)
+└── "The Veiled Oracle" (Character, species: "Human", alive)
+    ├── Created by Divine service (orchestrates character + relationship + actor)
+    ├── Linked to Moira via Relationship (divine_manifestation type)
+    └── Actor (character brain, SEPARATE independent instance)
+        ├── Personality derived from Moira's, filtered through mortal form
+        ├── Interacts with players and NPCs as any character would
+        ├── Can be killed → death archive feeds content flywheel
+        └── Moira perceives avatar death via watch system, reacts
+```
+
+The god-actor's character brain binding to its divine character is **permanent and never changes**. The avatar is a separate character with its own separate actor. When the avatar dies, the avatar's actor stops, but the god-actor continues uninterrupted with full access to its own `${personality.*}`, `${encounters.*}`, etc.
+
+**Avatar creation is a Divine API operation, not raw service composition.** The god-actor calls `/divine/avatar/manifest`, which orchestrates the multi-service creation and enforces divine economy rules:
+
+1. Validate deity is Active and has no existing avatar (or enforce max concurrent avatars)
+2. Calculate divinity cost -- base cost scaled by recency of last avatar death (spawning a replacement immediately after one was killed costs significantly more than waiting)
+3. Debit divinity from the deity's wallet
+4. Create Character in the target physical realm
+5. Create `divine_manifestation` Relationship linking deity character to avatar character
+6. Spawn Actor for the avatar character with the specified behavior document
+7. Register watch on avatar character (so the god perceives avatar events)
+8. Track active avatar on `DeityModel` (`activeAvatarCharacterId`, `lastAvatarDeathAt`)
+9. Publish `divine.avatar.manifested` event
+
+When the god's watch system detects the avatar's death, it should call `/divine/avatar/on-death` to update tracking state (`lastAvatarDeathAt`, clear `activeAvatarCharacterId`), which feeds the cooldown cost calculation for the next manifestation.
+
+```yaml
+# Avatar manifestation (in god's behavior document)
+- call: /divine/avatar/manifest
+    with:
+      deityId: ${self.deity_id}
+      realmId: ${target_realm_id}
+      name: ${avatar_name}
+      speciesId: ${mortal_species_id}
+      behaviorDocumentId: ${avatar_behavior_ref}
+    into: avatar_result
+
+# Watch the avatar for lifecycle events
+- watch:
+    resource_type: character
+    resource_id: ${avatar_result.avatarCharacterId}
+```
+
+This keeps avatar lifecycle within Divine's orchestration domain -- costs, cooldowns, tracking, and economy are all mediated by the service that owns the god's persistent state, not scattered across raw API calls in behavior documents.
+
+### Divinity Currency Convention
+
+With system realms, divinity currency should use `realm_specific` scope pointed at the divine system realm. This is a deployment convention, not a schema change -- the existing `CurrencyScope` enum already supports it:
+
+- God wallets are scoped to the divine system realm (semantically correct -- divinity "lives" there)
+- Querying "all wallets in the divine realm" yields all god wallets naturally
+- Global and multi-realm currencies remain unaffected (`realmId` stays optional on currency)
+
+### Broader System Realm Implications
+
+The divine system realm establishes a reusable pattern for other conceptual entity spaces:
+
+| System Realm | Purpose | Entities |
+|---|---|---|
+| **DIVINE / PANTHEON** | The gods | God characters, divine species, divine genealogy, divine history |
+| **VOID** | The between-space | Already exists as seeding convention; could house void-specific entities |
+| **UNDERWORLD** | Death/afterlife | Dead characters transferred here instead of archived; afterlife gameplay per VISION.md soul architecture |
+| **NEXIUS** | Goddess of connections | Guardian spirits as characters; pair bonds as Relationships; spirit evolution as character growth |
+
+The **Underworld** is particularly relevant to the content flywheel. VISION.md describes death as transformation with aspiration-based afterlife pathways. If the underworld is a system realm, dead characters are "transferred" there (realm transfer, not deletion), continue as actors running afterlife behaviors, and generate encounters and history that feed back into the living world's narrative generation.
+
+**Guardian spirits as Nexius characters** would give the pair bond from PLAYER-VISION.md a concrete implementation: a Relationship between two characters in the Nexius realm. Spirit evolution becomes character growth via Seed. Twin spirits are linked via relationship types. Same pattern as divine characters applied to the player's own metaphysical entity.
+
+### What Needs to Change
+
+Almost nothing in the codebase. The changes are:
+
+1. **Seed the divine system realm** via `/realm/seed` with `isSystemType: true` -- configuration, not code
+2. **Register a divine species** in that realm -- seed data, not code
+3. **Divine implementation**: When creating a deity, also create a Character in the divine realm; store `characterId` on `DeityModel` -- part of planned implementation (currently stubbed)
+4. **God-actor spawning**: Spawn as character brain actors bound to their divine character -- behavioral bootstrap change
+5. **Avatar behaviors**: Author ABML behavior documents for manifestation lifecycle -- pure content authoring
+6. **Seed data**: A `divine_manifestation` relationship type, a `divine` species, divine personality trait profiles -- all registered on startup
+
+Some services that list characters may want to exclude system realms by default. Character's `listByRealm` already filters by realm, so queries against physical realms naturally exclude gods without code changes.
+
+---
+
 ## Dependencies (What This Plugin Relies On)
 
 ### Hard Dependencies (constructor injection -- crash if missing)
@@ -302,10 +437,13 @@ All 22 endpoints are currently stubbed (return `NotImplemented`). The following 
 4. **Domain Contests**: When two gods share domain influence, divinity generation splits by relative power with challenge mechanics.
 5. **Deity-Deity Rivalries**: Active rivalry mechanics where gods sabotage each other's followers. Relationship records exist; behavioral consequences are deferred.
 6. **Client Events**: `divine-client-events.yaml` for pushing blessing notifications, divine attention alerts, and divinity milestones to connected WebSocket clients.
-7. **Variable Provider Factory**: `IDivineVariableProviderFactory` for ABML behavior expressions (`${divine.blessing_tier}`, `${divine.patron_deity}`, `${divine.divinity_earned}`).
+7. **Variable Provider Factory**: `IDivineVariableProviderFactory` for ABML behavior expressions (`${divine.blessing_tier}`, `${divine.patron_deity}`, `${divine.divinity_earned}`). **Note**: The [System Realm pattern](#god-characters-in-system-realms) partially obsoletes this -- gods as character brains get `${personality.*}`, `${encounters.*}`, `${backstory.*}` etc. for free. A `${divine.*}` provider remains useful for exposing divine-specific data (divinity balance, domain power, blessing counts) to *other* actors' behaviors (e.g., an NPC checking its patron god's mood).
 8. **Economic Deity Behaviors**: Specialized ABML behavior documents for economic deities that monitor money velocity via analytics, spawn narrative intervention events (business opportunities, dropped wallets, thefts, treasure discoveries) to maintain healthy velocity, and respect location-level stagnation policies. God personalities (subtlety, chaos affinity, favored targets) modulate intervention style and frequency. GOAP flows evaluate velocity thresholds, hoarding detection, and intervention cooldowns. See [Economy System Guide](../guides/ECONOMY-SYSTEM.md#5-divine-economic-intervention) for the full design.
 9. **Deity Realm Economic Assignment**: Track which realms each economic deity watches, with per-deity personality parameters (intervention frequency, subtlety, favored targets, chaos affinity) that affect how they maintain economic health. Multiple gods per realm creates emergent economic dynamics from competing intervention styles.
 10. **Housing Garden Divine Behaviors**: ABML behavior documents for gods tending housing gardens -- managing seasonal decoration changes, NPC servant arrivals, visitor events, environmental reactions (storms damaging roofs, gardens blooming), and gating voxel construction capabilities based on the housing seed's growth phase. The same divine actor that tends a physical realm region can also tend a player's housing garden, deciding what happens in the home (a visiting merchant NPC, a stray cat adopting the player, a gift left by a divine patron). This is a behavior authoring task composed entirely from existing service APIs (Gardener, Scene, Item/Inventory, Seed), not a service implementation task. See [Gardener: Housing Garden Pattern](GARDENER.md#housing-garden-pattern-no-plugin-required) and [VOXEL-BUILDER-SDK.md](../planning/VOXEL-BUILDER-SDK.md).
+11. **Avatar Manifestation API + Behaviors**: Divine API endpoints (`/divine/avatar/manifest`, `/divine/avatar/on-death`, `/divine/avatar/recall`) for gods to create physical-realm avatars with divinity cost mechanics. Base cost scaled by recency of last avatar death -- spawning a replacement immediately is expensive, waiting is cheap. `DeityModel` tracks `activeAvatarCharacterId` and `lastAvatarDeathAt`. The API orchestrates Character creation, Relationship linking, Actor spawning, and watch registration. ABML behavior documents then define when and why a god chooses to manifest (domain relevance, narrative opportunity, follower need). See [Avatar Manifestation Pattern](#avatar-manifestation-pattern).
+12. **Underworld System Realm**: A system realm for afterlife gameplay. Dead characters are transferred (realm transfer, not deletion) to the underworld realm, continue as actors running afterlife behaviors, and generate history/encounters that feed back into the living world's narrative generation. Per VISION.md's soul architecture (logos bundle + pneuma shell + sense of self), death is transformation. The underworld system realm makes this literal: the character persists in a different conceptual space.
+13. **Guardian Spirit Characters (Nexius Realm)**: Guardian spirits as Character records in a Nexius system realm. Pair bonds from PLAYER-VISION.md become Relationships between Nexius characters. Spirit evolution becomes character growth via Seed. The same pattern as divine characters applied to the player's metaphysical entity. Would give the Agency service concrete character data to work with for manifest computation.
 
 ## Known Quirks & Caveats
 

@@ -65,7 +65,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: "Additional custom key-value data associated with the relationship"
+          description: "Client-provided relationship data. No Bannou plugin reads specific keys from this field by convention."
         createdAt: &id010
           type: string
           format: date-time
@@ -233,7 +233,8 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: "Additional custom metadata for the relationship type"
+          description: "Client-provided relationship type metadata. No Bannou plugin reads specific keys from this field by
+            convention."
         createdAt: &id027
           type: string
           format: date-time

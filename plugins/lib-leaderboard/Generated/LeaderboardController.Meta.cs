@@ -85,7 +85,7 @@ public partial class LeaderboardController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional leaderboard-specific metadata"
+                    "description": "Client-provided leaderboard-specific metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -191,7 +191,7 @@ public partial class LeaderboardController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata"
+                    "description": "Client-provided leaderboard-specific metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -382,7 +382,7 @@ public partial class LeaderboardController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata"
+                    "description": "Client-provided leaderboard-specific metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -590,7 +590,7 @@ public partial class LeaderboardController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata"
+                    "description": "Client-provided leaderboard-specific metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -798,7 +798,7 @@ public partial class LeaderboardController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata"
+                    "description": "Client-provided leaderboard-specific metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -1013,7 +1013,7 @@ public partial class LeaderboardController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Optional metadata about this score (e.g., how it was achieved)"
+                    "description": "Client-provided score metadata (e.g., how the score was achieved). No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -1537,7 +1537,7 @@ public partial class LeaderboardController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Entry metadata"
+                    "description": "Client-provided entry metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -1725,7 +1725,7 @@ public partial class LeaderboardController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Entry metadata"
+                    "description": "Client-provided entry metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }

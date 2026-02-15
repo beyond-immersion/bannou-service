@@ -196,6 +196,27 @@ When an Event Brain needs to evaluate multiple characters (e.g., all raid partic
 
 See [ACTOR.md](ACTOR.md) for the Variable Provider Factory pattern used by Character Brains.
 
+### Resource Template System
+
+The `ResourceArchiveProvider` uses `IResourceTemplate` definitions (registered in `bannou-service/ResourceTemplates/`) for typed deserialization of snapshot entries. Each template maps a compression callback source type (e.g., `character-personality`) to a short namespace (e.g., `personality`) and provides:
+
+- **Typed deserialization** of compressed archive entries (GZip Base64 → typed C# objects)
+- **Path navigation** within deserialized data for ABML expression evaluation
+- **Valid path enumeration** for compile-time ABML path validation (in the ABML SemanticAnalyzer)
+
+Templates are generated from compression response schemas using `x-resource-template` and `x-template-namespace` schema extensions. ABML behavior documents declare which resource templates they use via the `resource_templates` metadata field, enabling the compiler to validate that expressions like `${candidate.personality.aggression}` reference valid paths before execution.
+
+Currently registered templates: `character-base`, `character-personality`, `character-history`, `character-encounter`, `character-quest` (priority 50), `character-storyline` (priority 60).
+
+### Design Decision: Separate Provider Systems
+
+Character Brain actors use dedicated live variable providers (`PersonalityProvider`, `EncountersProvider`, etc.) for self-data, while Event Brain actors use `ResourceArchiveProvider` for snapshot-based data about arbitrary entities. These are intentionally kept separate:
+
+- **Character Brains** need optimized live-data paths bound to one character with provider-specific caching
+- **Event Brains** need generic archive access for arbitrary entities with shared TTL-based caching
+
+Unification was considered (having Character Brains also use ResourceArchiveProvider for self-data) but rejected because the live provider path is more efficient for self-data and doesn't require snapshot creation overhead. A future optimization could have ResourceArchiveProvider delegate to live providers for self-data queries, but this is not currently needed.
+
 ---
 
 ## ABML Action Handlers
@@ -443,6 +464,9 @@ When a lifecycle event arrives (e.g., `personality.updated`):
 
 3. ~~**ResourceSnapshotCache TTL Configuration**~~: **FIXED** (2026-02-11) - Added `SnapshotCacheTtlSeconds` config property (default 300s, minimum 1s). ResourceSnapshotCache now injects `PuppetmasterServiceConfiguration` and uses the config value instead of hardcoded 5-minute TTL.
 
+4. **Actor-to-Actor Communication Commands**: Event actors currently communicate with character actors only via perception injection through the Watch system (`WatchPerception`). Higher-level ABML commands would simplify behavior authoring for orchestration flows: `actor_command:` for one-way commands (e.g., "start cutscene", "offer quest") and `actor_query:` for request/response patterns (e.g., "what is your current storyline participation?"). Depends on Stub #1 (watcher-actor integration) being complete first, since watchers need to actually spawn actors before they can send commands to them.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-15:https://github.com/beyond-immersion/bannou-service/issues/438 -->
+
 ---
 
 ## Potential Extensions
@@ -460,6 +484,8 @@ When a lifecycle event arrives (e.g., `personality.updated`):
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/399 -->
 
 5. ~~**Realm Deactivation Handling**~~: **FIXED** (2026-02-11) - Added `realm.deleted` and `realm.updated` event subscriptions. Deleted realms stop all watchers with reason `realm_deleted`. Deactivated realms (`isActive` changed to `false`) stop watchers with reason `realm_deactivated`. Reactivated realms auto-start default watchers.
+
+6. **Per-Resource-Type Snapshot TTL**: Currently `SnapshotCacheTtlSeconds` applies globally to all resource types. Different data types have different volatility -- personality rarely changes (could cache 60+ minutes) while encounter data changes with gameplay interactions (should cache ~5-10 minutes). A per-resource-type TTL override via schema extension (`x-snapshot-ttl-minutes` on compression response schemas) would enable more efficient caching. The `IResourceTemplate` infrastructure already exists to carry this metadata; the `ResourceSnapshotCache` would need to query the template registry for per-type overrides before falling back to the global default.
 
 ---
 

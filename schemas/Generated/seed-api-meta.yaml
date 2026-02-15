@@ -63,8 +63,9 @@ paths:
         \         \"displayName\": {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n\
         \                    \"description\": \"Human-readable name. Auto-generated if omitted.\"\n                },\n  \
         \              \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Seed-type-specific initial
-        metadata.\"\n                }\n            }\n        }\n    }\n}"
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-provided seed-type-specific
+        initial data. No Bannou plugin reads specific keys from this field by convention.\"\n                }\n         \
+        \   }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SeedResponse\"\
         ,\n    \"$defs\": {\n        \"SeedResponse\": {\n            \"type\": \"object\",\n            \"description\":
         \"Full seed entity response.\",\n            \"required\": [\n                \"seedId\",\n                \"ownerId\"\
@@ -332,8 +333,9 @@ paths:
         \           },\n                \"displayName\": {\n                    \"type\": \"string\",\n                  \
         \  \"nullable\": true,\n                    \"description\": \"New display name.\"\n                },\n         \
         \       \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\":
-        true,\n                    \"nullable\": true,\n                    \"description\": \"Metadata fields to merge (set
-        key to null to delete).\"\n                }\n            }\n        }\n    }\n}"
+        true,\n                    \"nullable\": true,\n                    \"description\": \"Client-provided metadata fields
+        to merge (set key to null to delete). No Bannou plugin reads specific keys from this field by convention.\"\n    \
+        \            }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SeedResponse\"\
         ,\n    \"$defs\": {\n        \"SeedResponse\": {\n            \"type\": \"object\",\n            \"description\":
         \"Full seed entity response.\",\n            \"required\": [\n                \"seedId\",\n                \"ownerId\"\
@@ -2098,7 +2100,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Seed-type-specific initial metadata.
+          description: >-
+            Client-provided seed-type-specific initial data.
+            No Bannou plugin reads specific keys from this field by convention.
     GetSeedRequest:
       type: object
       description: Request to get a seed by ID.
@@ -2182,7 +2186,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Metadata fields to merge (set key to null to delete).
+          description: >-
+            Client-provided metadata fields to merge (set key to null to delete).
+            No Bannou plugin reads specific keys from this field by convention.
     ActivateSeedRequest:
       type: object
       description: Request to activate a seed.

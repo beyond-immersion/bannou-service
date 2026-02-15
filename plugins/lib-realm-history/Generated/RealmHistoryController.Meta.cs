@@ -76,7 +76,7 @@ public partial class RealmHistoryController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Optional event-specific details"
+                    "description": "Client-provided event-specific details. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         },
@@ -177,7 +177,7 @@ public partial class RealmHistoryController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Event-specific details for behavior decisions"
+                    "description": "Client-provided event-specific details. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -444,7 +444,7 @@ public partial class RealmHistoryController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Event-specific details for behavior decisions"
+                    "description": "Client-provided event-specific details. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -702,7 +702,7 @@ public partial class RealmHistoryController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Event-specific details for behavior decisions"
+                    "description": "Client-provided event-specific details. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -2176,7 +2176,7 @@ public partial class RealmHistoryController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Event-specific details for behavior decisions"
+                    "description": "Client-provided event-specific details. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -2241,7 +2241,7 @@ public partial class RealmHistoryController
                     "items": {
                         "type": "string"
                     },
-                    "description": "Major historical events as text summaries.\ne.g., [\"Defended against the Northern Invasion\", \"Treaty of Stormgate established peace\"]\n"
+                    "description": "Major historical events as text summaries.\ ne.g., [\"Defended against the Northern Invasion\", \"Treaty of Stormgate established peace\"]\n"
                 }
             }
         }

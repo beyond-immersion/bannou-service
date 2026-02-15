@@ -606,7 +606,7 @@
         </member>
         <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.EncounterModel.Metadata">
             <summary>
-            Additional encounter-specific data
+            Client-provided encounter-specific data. No Bannou plugin reads specific keys from this field by convention.
             </summary>
         </member>
         <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.EncounterModel.CreatedAt">
@@ -755,7 +755,7 @@
         </member>
         <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.HistoricalParticipation.Metadata">
             <summary>
-            Event-specific details for behavior decisions
+            Client-provided event-specific details. No Bannou plugin reads specific keys from this field by convention.
             </summary>
         </member>
         <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.HistoricalParticipation.CreatedAt">
@@ -896,7 +896,7 @@
         </member>
         <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.RealmHistoricalParticipation.Metadata">
             <summary>
-            Event-specific details for behavior decisions
+            Client-provided event-specific details. No Bannou plugin reads specific keys from this field by convention.
             </summary>
         </member>
         <member name="P:BeyondImmersion.Bannou.StorylineTheory.Archives.RealmHistoricalParticipation.CreatedAt">

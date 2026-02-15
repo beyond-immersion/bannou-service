@@ -56,6 +56,7 @@ public partial class RealmController
                 "name",
                 "gameServiceId",
                 "isActive",
+                "isSystemType",
                 "isDeprecated",
                 "createdAt",
                 "updatedAt"
@@ -93,6 +94,10 @@ public partial class RealmController
                     "type": "boolean",
                     "description": "Whether the realm is currently active for gameplay"
                 },
+                "isSystemType": {
+                    "type": "boolean",
+                    "description": "Whether this realm is a system infrastructure realm (e.g., VOID). System realms cannot be merged as source."
+                },
                 "isDeprecated": {
                     "type": "boolean",
                     "description": "Whether this realm is deprecated and cannot be used for new entities"
@@ -112,7 +117,7 @@ public partial class RealmController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional custom metadata for the realm"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -227,6 +232,7 @@ public partial class RealmController
                 "name",
                 "gameServiceId",
                 "isActive",
+                "isSystemType",
                 "isDeprecated",
                 "createdAt",
                 "updatedAt"
@@ -264,6 +270,10 @@ public partial class RealmController
                     "type": "boolean",
                     "description": "Whether the realm is currently active for gameplay"
                 },
+                "isSystemType": {
+                    "type": "boolean",
+                    "description": "Whether this realm is a system infrastructure realm (e.g., VOID). System realms cannot be merged as source."
+                },
                 "isDeprecated": {
                     "type": "boolean",
                     "description": "Whether this realm is deprecated and cannot be used for new entities"
@@ -283,7 +293,7 @@ public partial class RealmController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional custom metadata for the realm"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -456,6 +466,7 @@ public partial class RealmController
                 "name",
                 "gameServiceId",
                 "isActive",
+                "isSystemType",
                 "isDeprecated",
                 "createdAt",
                 "updatedAt"
@@ -493,6 +504,10 @@ public partial class RealmController
                     "type": "boolean",
                     "description": "Whether the realm is currently active for gameplay"
                 },
+                "isSystemType": {
+                    "type": "boolean",
+                    "description": "Whether this realm is a system infrastructure realm (e.g., VOID). System realms cannot be merged as source."
+                },
                 "isDeprecated": {
                     "type": "boolean",
                     "description": "Whether this realm is deprecated and cannot be used for new entities"
@@ -512,7 +527,7 @@ public partial class RealmController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional custom metadata for the realm"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -636,11 +651,16 @@ public partial class RealmController
                     "default": true,
                     "description": "Whether the realm is currently active for gameplay"
                 },
+                "isSystemType": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether this realm is a system infrastructure realm (e.g., VOID). System realms cannot be merged as source."
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata for the realm (JSON)"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -663,6 +683,7 @@ public partial class RealmController
                 "name",
                 "gameServiceId",
                 "isActive",
+                "isSystemType",
                 "isDeprecated",
                 "createdAt",
                 "updatedAt"
@@ -700,6 +721,10 @@ public partial class RealmController
                     "type": "boolean",
                     "description": "Whether the realm is currently active for gameplay"
                 },
+                "isSystemType": {
+                    "type": "boolean",
+                    "description": "Whether this realm is a system infrastructure realm (e.g., VOID). System realms cannot be merged as source."
+                },
                 "isDeprecated": {
                     "type": "boolean",
                     "description": "Whether this realm is deprecated and cannot be used for new entities"
@@ -719,7 +744,7 @@ public partial class RealmController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional custom metadata for the realm"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -841,11 +866,16 @@ public partial class RealmController
                     "nullable": true,
                     "description": "Whether the realm is currently active"
                 },
+                "isSystemType": {
+                    "type": "boolean",
+                    "nullable": true,
+                    "description": "Whether this realm is a system infrastructure realm (e.g., VOID). System realms cannot be merged as source."
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional metadata"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }
@@ -868,6 +898,7 @@ public partial class RealmController
                 "name",
                 "gameServiceId",
                 "isActive",
+                "isSystemType",
                 "isDeprecated",
                 "createdAt",
                 "updatedAt"
@@ -905,6 +936,10 @@ public partial class RealmController
                     "type": "boolean",
                     "description": "Whether the realm is currently active for gameplay"
                 },
+                "isSystemType": {
+                    "type": "boolean",
+                    "description": "Whether this realm is a system infrastructure realm (e.g., VOID). System realms cannot be merged as source."
+                },
                 "isDeprecated": {
                     "type": "boolean",
                     "description": "Whether this realm is deprecated and cannot be used for new entities"
@@ -924,7 +959,7 @@ public partial class RealmController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional custom metadata for the realm"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -1127,6 +1162,7 @@ public partial class RealmController
                 "name",
                 "gameServiceId",
                 "isActive",
+                "isSystemType",
                 "isDeprecated",
                 "createdAt",
                 "updatedAt"
@@ -1164,6 +1200,10 @@ public partial class RealmController
                     "type": "boolean",
                     "description": "Whether the realm is currently active for gameplay"
                 },
+                "isSystemType": {
+                    "type": "boolean",
+                    "description": "Whether this realm is a system infrastructure realm (e.g., VOID). System realms cannot be merged as source."
+                },
                 "isDeprecated": {
                     "type": "boolean",
                     "description": "Whether this realm is deprecated and cannot be used for new entities"
@@ -1183,7 +1223,7 @@ public partial class RealmController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional custom metadata for the realm"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -1296,6 +1336,7 @@ public partial class RealmController
                 "name",
                 "gameServiceId",
                 "isActive",
+                "isSystemType",
                 "isDeprecated",
                 "createdAt",
                 "updatedAt"
@@ -1333,6 +1374,10 @@ public partial class RealmController
                     "type": "boolean",
                     "description": "Whether the realm is currently active for gameplay"
                 },
+                "isSystemType": {
+                    "type": "boolean",
+                    "description": "Whether this realm is a system infrastructure realm (e.g., VOID). System realms cannot be merged as source."
+                },
                 "isDeprecated": {
                     "type": "boolean",
                     "description": "Whether this realm is deprecated and cannot be used for new entities"
@@ -1352,7 +1397,7 @@ public partial class RealmController
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional custom metadata for the realm"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 },
                 "createdAt": {
                     "type": "string",
@@ -1923,11 +1968,16 @@ public partial class RealmController
                     "default": true,
                     "description": "Whether the realm is currently active for gameplay"
                 },
+                "isSystemType": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether this realm is a system infrastructure realm (e.g., VOID). System realms cannot be merged as source."
+                },
                 "metadata": {
                     "type": "object",
                     "additionalProperties": true,
                     "nullable": true,
-                    "description": "Additional custom metadata for the realm (JSON)"
+                    "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
                 }
             }
         }

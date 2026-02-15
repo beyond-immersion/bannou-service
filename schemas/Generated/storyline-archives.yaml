@@ -424,7 +424,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional encounter-specific data
+          description: >-
+            Client-provided encounter-specific data.
+            No Bannou plugin reads specific keys from this field by convention.
         createdAt:
           type: string
           format: date-time
@@ -596,7 +598,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Event-specific details for behavior decisions
+          description: >-
+            Client-provided event-specific details.
+            No Bannou plugin reads specific keys from this field by convention.
         createdAt:
           type: string
           format: date-time
@@ -765,7 +769,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Event-specific details for behavior decisions
+          description: >-
+            Client-provided event-specific details.
+            No Bannou plugin reads specific keys from this field by convention.
         createdAt:
           type: string
           format: date-time

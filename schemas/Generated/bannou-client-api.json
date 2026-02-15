@@ -23342,7 +23342,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Default configuration passed to behavior execution"
+            "description": "Game-specific configuration passed to ABML behavior execution scope. No Bannou plugin reads specific keys from this field by convention."
           },
           "autoSpawn": {
             "description": "Auto-spawn configuration for instantiate-on-access",
@@ -23370,7 +23370,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Static template-level cognition overrides. Applied as the first layer\nin the three-layer override composition (template \u2192 instance \u2192 ABML metadata).\n"
+            "description": "Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes."
           },
           "createdAt": {
             "type": "string",
@@ -23736,7 +23736,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Type-specific parameters. Examples:\n- sittable: { height: 0.5, facing: [0,0,1] }\n- door: { openAngle: 90, locked: false }\n- container: { capacity: 10, itemTypes: [\"weapon\", \"consumable\"] }\n"
+            "description": "Game-specific affordance parameters interpreted by game engines and AI systems. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -23772,7 +23772,7 @@
           "features": {
             "type": "object",
             "additionalProperties": true,
-            "description": "What makes this location suitable.\nExample: { \"cover_rating\": 0.8, \"sightlines\": [\"north\"], \"terrain\": \"rocky\" }\n",
+            "description": "Game-specific features of this affordance result. No Bannou plugin reads specific keys from this field by convention.",
             "nullable": true
           },
           "objectIds": {
@@ -28091,7 +28091,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "What the entity wants to do"
+            "description": "Client-only proposed action data. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -29722,7 +29722,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Evidence of completion"
+            "description": "Client-only evidence data. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -30900,6 +30900,112 @@
           "lifecycle"
         ]
       },
+      "ContractClauseAsset": {
+        "type": "object",
+        "description": "An asset requirement within a clause definition",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "code",
+          "amount"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Asset type (currency, item)"
+          },
+          "code": {
+            "type": "string",
+            "description": "Asset code identifier"
+          },
+          "amount": {
+            "type": "number",
+            "description": "Required amount of the asset"
+          }
+        }
+      },
+      "ContractClauseDefinition": {
+        "type": "object",
+        "description": "A clause definition for contract execution specifying asset transfers, fees, or requirements",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "type"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for this clause within the contract"
+          },
+          "type": {
+            "type": "string",
+            "description": "Clause type code (fee, distribution, currency_transfer, item_transfer, asset_requirement)"
+          },
+          "party": {
+            "type": "string",
+            "nullable": true,
+            "description": "Party role reference for this clause"
+          },
+          "amount": {
+            "type": "string",
+            "nullable": true,
+            "description": "Amount value (numeric string for template substitution support)"
+          },
+          "amountType": {
+            "type": "string",
+            "nullable": true,
+            "description": "How to interpret the amount (flat, percentage, remainder)"
+          },
+          "sourceWallet": {
+            "type": "string",
+            "nullable": true,
+            "description": "Source wallet identifier or template variable reference"
+          },
+          "destinationWallet": {
+            "type": "string",
+            "nullable": true,
+            "description": "Destination wallet identifier or template variable reference"
+          },
+          "recipientWallet": {
+            "type": "string",
+            "nullable": true,
+            "description": "Recipient wallet for fee clauses or template variable reference"
+          },
+          "currencyCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Currency code for currency-based clauses"
+          },
+          "sourceContainer": {
+            "type": "string",
+            "nullable": true,
+            "description": "Source container identifier or template variable reference for item clauses"
+          },
+          "destinationContainer": {
+            "type": "string",
+            "nullable": true,
+            "description": "Destination container identifier or template variable reference for item clauses"
+          },
+          "itemCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "Item code for item-based clauses"
+          },
+          "checkLocation": {
+            "type": "string",
+            "nullable": true,
+            "description": "Location template variable reference for asset requirement checks"
+          },
+          "assets": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/ContractClauseAsset"
+            },
+            "description": "Asset requirements for asset_requirement clause type"
+          }
+        }
+      },
       "ContractInstanceResponse": {
         "type": "object",
         "description": "Contract instance details",
@@ -30998,7 +31104,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Game-specific metadata"
+            "description": "Client-only game metadata. No Bannou plugin reads specific keys from this field by convention."
           },
           "createdAt": {
             "type": "string",
@@ -31079,13 +31185,13 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Instance-level metadata"
+            "description": "Client-only instance metadata. No Bannou plugin reads specific keys from this field by convention."
           },
           "runtimeState": {
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Runtime state metadata"
+            "description": "Client-only runtime state. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -31298,7 +31404,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Game-specific metadata"
+            "description": "Client-only game metadata. No Bannou plugin reads specific keys from this field by convention."
           },
           "isActive": {
             "type": "boolean",
@@ -31358,11 +31464,39 @@
             "nullable": true,
             "description": "Time to cure breach (ISO 8601 duration)"
           },
+          "exclusivity": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether this contract has an exclusivity clause preventing the entity from entering similar contracts"
+          },
+          "nonCompete": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether this contract has a non-compete clause"
+          },
+          "timeCommitment": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether this contract has a time commitment clause"
+          },
+          "timeCommitmentType": {
+            "type": "string",
+            "nullable": true,
+            "description": "Type of time commitment (exclusive or partial)"
+          },
+          "clauses": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/ContractClauseDefinition"
+            },
+            "description": "Clause definitions for contract execution (fees, distributions, asset requirements)"
+          },
           "customTerms": {
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Game-specific custom terms"
+            "description": "Client-only custom terms. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -31719,7 +31853,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Default configuration passed to behavior execution"
+            "description": "Game-specific configuration passed to ABML behavior execution scope. No Bannou plugin reads specific keys from this field by convention. Different ABML behaviors define their own expected configuration structure."
           },
           "autoSpawn": {
             "description": "Auto-spawn configuration for instantiate-on-access",
@@ -31750,7 +31884,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Static template-level cognition overrides. Applied as the first layer\nin the three-layer override composition (template \u2192 instance \u2192 ABML metadata).\n"
+            "description": "Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes. Applied as the first layer in the three-layer override composition (template, instance, ABML metadata). Structure defined by ICognitionOverride interface hierarchy in bannou-service/Behavior/."
           }
         }
       },
@@ -32257,7 +32391,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Instance-level game metadata"
+            "description": "Client-only game metadata. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -32293,7 +32427,7 @@
           "metadata": {
             "type": "object",
             "additionalProperties": true,
-            "description": "Additional metadata",
+            "description": "Client-provided definition metadata. No Bannou plugin reads specific keys from this field by convention.",
             "nullable": true
           }
         }
@@ -32594,7 +32728,7 @@
             "type": "object",
             "nullable": true,
             "additionalProperties": true,
-            "description": "Application metadata"
+            "description": "Client-provided application-specific metadata. No Bannou plugin reads specific keys from this field by convention."
           },
           "releaseMode": {
             "allOf": [
@@ -33107,7 +33241,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Additional leaderboard-specific metadata"
+            "description": "Client-provided leaderboard-specific metadata. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -33576,7 +33710,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Seed-type-specific initial metadata."
+            "description": "Client-provided seed-type-specific initial data. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -34377,19 +34511,19 @@
           "requires": {
             "type": "object",
             "additionalProperties": true,
-            "description": "Required criteria. Object types, property constraints.\nExample: { \"objectTypes\": [\"boulder\"], \"cover_rating\": { \"min\": 0.5 } }\n",
+            "description": "Game-specific required criteria for affordance matching. No Bannou plugin reads specific keys from this field by convention.",
             "nullable": true
           },
           "prefers": {
             "type": "object",
             "additionalProperties": true,
-            "description": "Preferred criteria (boost score but not required).\nExample: { \"elevation\": { \"prefer_higher\": true } }\n",
+            "description": "Game-specific preferred criteria (boost score but not required). No Bannou plugin reads specific keys from this field by convention.",
             "nullable": true
           },
           "excludes": {
             "type": "object",
             "additionalProperties": true,
-            "description": "Exclusion criteria. Reject candidates matching these.\nExample: { \"hazards\": true, \"contested\": true }\n",
+            "description": "Game-specific exclusion criteria for affordance matching. No Bannou plugin reads specific keys from this field by convention.",
             "nullable": true
           }
         }
@@ -35846,7 +35980,7 @@
           "metadata": {
             "type": "object",
             "additionalProperties": true,
-            "description": "Custom metadata key-value pairs"
+            "description": "Client-provided custom metadata. No Bannou plugin reads specific keys from this field by convention."
           },
           "createdAt": {
             "type": "string",
@@ -36391,7 +36525,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Additional encounter-specific data"
+            "description": "Client-provided encounter-specific data. No Bannou plugin reads specific keys from this field by convention."
           },
           "createdAt": {
             "type": "string",
@@ -37265,7 +37399,7 @@
             "type": "object",
             "nullable": true,
             "additionalProperties": true,
-            "description": "Game/application specific metadata"
+            "description": "Client-provided application-specific metadata. No Bannou plugin reads specific keys from this field by convention."
           },
           "resolution": {
             "$ref": "#/components/schemas/EscrowResolution",
@@ -37384,7 +37518,7 @@
             "type": "object",
             "nullable": true,
             "additionalProperties": true,
-            "description": "Handler-specific data"
+            "description": "Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention."
           },
           "sourceOwnerId": {
             "type": "string",
@@ -37550,7 +37684,7 @@
             "type": "object",
             "nullable": true,
             "additionalProperties": true,
-            "description": "Custom asset data"
+            "description": "Custom asset handler-specific data. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -39117,7 +39251,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Action-specific data"
+            "description": "Game-specific action data. No Bannou plugin reads specific keys from this field by convention."
           },
           "targetId": {
             "type": "string",
@@ -39144,13 +39278,13 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Action result data"
+            "description": "Game-specific action result data. No Bannou plugin reads specific keys from this field by convention."
           },
           "newGameState": {
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Updated game state (if applicable)"
+            "description": "Updated game state (if applicable). No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -39204,7 +39338,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Game-specific character data for this player (null if none provided)"
+            "description": "Game-specific character data for this player. No Bannou plugin reads specific keys from this field by convention."
           },
           "voiceSessionId": {
             "type": "string",
@@ -39285,7 +39419,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Game-specific configuration settings"
+            "description": "Game-specific configuration settings. No Bannou plugin reads specific keys from this field by convention."
           },
           "reservations": {
             "type": "array",
@@ -43800,7 +43934,7 @@
       "HazardInfo": {
         "type": "object",
         "additionalProperties": true,
-        "description": "Information about a hazard in range",
+        "description": "Information about a hazard in range. Core properties are schema-defined; additionalProperties allows game-specific hazard data. No Bannou plugin reads specific extension keys by convention.",
         "properties": {
           "hazardType": {
             "type": "string",
@@ -43926,7 +44060,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Event-specific details for behavior decisions"
+            "description": "Client-provided event-specific details. No Bannou plugin reads specific keys from this field by convention."
           },
           "createdAt": {
             "type": "string",
@@ -45082,7 +45216,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Additional metadata"
+            "description": "Client-provided leaderboard-specific metadata. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -45153,7 +45287,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Entry metadata"
+            "description": "Client-provided entry metadata. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -49168,7 +49302,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Additional metadata for the location (JSON)"
+            "description": "Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention."
           },
           "createdAt": {
             "type": "string",
@@ -49414,7 +49548,7 @@
           "metadata": {
             "type": "object",
             "additionalProperties": true,
-            "description": "Additional metadata (schema-less)",
+            "description": "Client-provided definition metadata. No Bannou plugin reads specific keys from this field by convention.",
             "nullable": true
           },
           "createdAt": {
@@ -49491,7 +49625,7 @@
           "data": {
             "type": "object",
             "additionalProperties": true,
-            "description": "Schema-less object data (publisher-defined)",
+            "description": "Game-specific spatial object data. No Bannou plugin reads specific keys from this field by convention.",
             "nullable": true
           },
           "version": {
@@ -50761,7 +50895,7 @@
       "NearbyObject": {
         "type": "object",
         "additionalProperties": true,
-        "description": "Information about a nearby object perceived by the character",
+        "description": "Information about a nearby object perceived by the character. Core properties are schema-defined; additionalProperties allows game-specific object data. No Bannou plugin reads specific extension keys by convention.",
         "properties": {
           "objectId": {
             "type": "string",
@@ -51855,7 +51989,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Perception-specific data. For perceptionType=\"spatial\", this can contain\ngame-specific spatial context in any format the game server defines.\n"
+            "description": "Game-specific perception payload passed to ABML behavior execution scope. No Bannou plugin reads specific keys from this field by convention. Different perception types carry different data structures defined by the game."
           },
           "urgency": {
             "type": "number",
@@ -54796,7 +54930,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Event-specific details for behavior decisions"
+            "description": "Client-provided event-specific details. No Bannou plugin reads specific keys from this field by convention."
           },
           "createdAt": {
             "type": "string",
@@ -54991,6 +55125,7 @@
           "name",
           "gameServiceId",
           "isActive",
+          "isSystemType",
           "isDeprecated",
           "createdAt",
           "updatedAt"
@@ -55028,6 +55163,10 @@
             "type": "boolean",
             "description": "Whether the realm is currently active for gameplay"
           },
+          "isSystemType": {
+            "type": "boolean",
+            "description": "Whether this realm is a system infrastructure realm (e.g., VOID). System realms cannot be merged as source."
+          },
           "isDeprecated": {
             "type": "boolean",
             "description": "Whether this realm is deprecated and cannot be used for new entities"
@@ -55047,7 +55186,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Additional custom metadata for the realm"
+            "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
           },
           "createdAt": {
             "type": "string",
@@ -55790,7 +55929,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Type-specific relationship data"
+            "description": "Client-provided relationship data. No Bannou plugin reads specific keys from this field by convention."
           },
           "createdAt": {
             "type": "string",
@@ -55939,7 +56078,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Additional custom metadata for the relationship type"
+            "description": "Client-provided relationship type metadata. No Bannou plugin reads specific keys from this field by convention."
           },
           "createdAt": {
             "type": "string",
@@ -58494,7 +58633,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Scene-level metadata. Not interpreted by Scene service.\nExamples: author, thumbnail, editor preferences, generator config.\n"
+            "description": "Client-only scene metadata (author, thumbnail, editor preferences). No Bannou plugin reads specific keys from this field by convention."
           },
           "createdAt": {
             "type": "string",
@@ -58580,7 +58719,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Consumer-specific data stored without interpretation.\nUse namespaced keys (e.g., render.castShadows, game.interactionType).\n"
+            "description": "Client-only node annotations for game engines and editors. No Bannou plugin reads specific keys from this field by convention."
           },
           "attachmentPoints": {
             "type": "array",
@@ -60203,7 +60342,7 @@
       "SpatialContext": {
         "type": "object",
         "additionalProperties": true,
-        "description": "Spatial context derived from game server's authoritative spatial state.\nIncluded in perception events to give NPC actors awareness of their environment\nwithout requiring direct map subscriptions.\n\nNote: additionalProperties=true allows game-specific extensions.\n",
+        "description": "Spatial context derived from game server's authoritative spatial state. Included in perception events to give NPC actors awareness of their environment. Core properties are schema-defined; additionalProperties allows game-specific spatial extensions. No Bannou plugin reads specific extension keys by convention.",
         "properties": {
           "terrainType": {
             "type": "string",
@@ -60275,13 +60414,13 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Override template defaults"
+            "description": "Game-specific configuration overrides merged with template defaults. No Bannou plugin reads specific keys from this field by convention."
           },
           "initialState": {
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Initial state passed to behavior"
+            "description": "Initial actor state snapshot. Deserialized internally to ActorStateSnapshot. No Bannou plugin reads specific keys from this field by convention."
           },
           "characterId": {
             "type": "string",
@@ -60391,7 +60530,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Base trait modifiers for this species"
+            "description": "Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention."
           },
           "realmIds": {
             "type": "array",
@@ -60405,7 +60544,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Additional metadata for the species"
+            "description": "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
           },
           "createdAt": {
             "type": "string",
@@ -60585,7 +60724,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Optional initial data for the encounter"
+            "description": "Game-specific encounter initialization data passed to ABML behavior scope. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -63196,7 +63335,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Updated configuration settings"
+            "description": "Updated game-specific configuration for ABML behavior execution scope. No Bannou plugin reads specific keys from this field by convention."
           },
           "autoSpawn": {
             "description": "Updated auto-spawn configuration",
@@ -63222,7 +63361,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Updated static template-level cognition overrides. Applied as the first layer\nin the three-layer override composition.\n"
+            "description": "Updated cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes."
           }
         }
       },
@@ -63456,7 +63595,7 @@
           "data": {
             "type": "object",
             "additionalProperties": true,
-            "description": "Metadata to set or merge"
+            "description": "Client-only metadata payload. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -63498,7 +63637,7 @@
           "metadata": {
             "type": "object",
             "additionalProperties": true,
-            "description": "New metadata (replaces existing)",
+            "description": "Updated client-provided definition metadata (replaces existing). No Bannou plugin reads specific keys from this field by convention.",
             "nullable": true
           }
         }
@@ -64565,7 +64704,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Metadata fields to merge (set key to null to delete)."
+            "description": "Client-provided metadata fields to merge (set key to null to delete). No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -64908,7 +65047,7 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Additional context data passed to contract template value substitution"
+            "description": "Caller-provided context merged into contract gameMetadata for template value substitution. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -64995,13 +65134,13 @@
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Evidence data for this milestone completion (passed to contract)"
+            "description": "Evidence data passed through to Contract milestone completion. No Bannou plugin reads specific keys from this field by convention."
           },
           "context": {
             "type": "object",
             "additionalProperties": true,
             "nullable": true,
-            "description": "Additional context data passed to contract template value substitution"
+            "description": "Caller-provided context merged into contract gameMetadata for template value substitution. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -65559,7 +65698,7 @@
             "type": "object",
             "nullable": true,
             "additionalProperties": true,
-            "description": "Additional failure details"
+            "description": "Validation failure diagnostic details. No Bannou plugin reads specific keys from this field by convention."
           }
         }
       },
@@ -65815,7 +65954,7 @@
             "type": "object",
             "nullable": true,
             "additionalProperties": true,
-            "description": "Proof/evidence data"
+            "description": "Caller-provided proof/evidence data for condition verification. No Bannou plugin reads specific keys from this field by convention."
           },
           "idempotencyKey": {
             "type": "string",

@@ -110,15 +110,16 @@ paths:
         : 1.0,\n                    \"default\": 0.5,\n                    \"description\": \"How significant this event was
         for the character\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\"\
         ,\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n                \
-        \    \"description\": \"Optional event-specific details\"\n                }\n            }\n        },\n        \"\
-        EventCategory\": {\n            \"type\": \"string\",\n            \"description\": \"Categories of historical events
-        that characters can participate in\",\n            \"enum\": [\n                \"WAR\",\n                \"NATURAL_DISASTER\"\
-        ,\n                \"POLITICAL\",\n                \"ECONOMIC\",\n                \"RELIGIOUS\",\n               \
-        \ \"CULTURAL\",\n                \"PERSONAL\"\n            ]\n        },\n        \"ParticipationRole\": {\n     \
-        \       \"type\": \"string\",\n            \"description\": \"How the character participated in the historical event\"\
-        ,\n            \"enum\": [\n                \"LEADER\",\n                \"COMBATANT\",\n                \"VICTIM\"\
-        ,\n                \"WITNESS\",\n                \"BENEFICIARY\",\n                \"CONSPIRATOR\",\n            \
-        \    \"HERO\",\n                \"SURVIVOR\"\n            ]\n        }\n    }\n}"
+        \    \"description\": \"Client-provided event-specific details. No Bannou plugin reads specific keys from this field
+        by convention.\"\n                }\n            }\n        },\n        \"EventCategory\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Categories of historical events that characters can participate in\"\
+        ,\n            \"enum\": [\n                \"WAR\",\n                \"NATURAL_DISASTER\",\n                \"POLITICAL\"\
+        ,\n                \"ECONOMIC\",\n                \"RELIGIOUS\",\n                \"CULTURAL\",\n                \"\
+        PERSONAL\"\n            ]\n        },\n        \"ParticipationRole\": {\n            \"type\": \"string\",\n     \
+        \       \"description\": \"How the character participated in the historical event\",\n            \"enum\": [\n  \
+        \              \"LEADER\",\n                \"COMBATANT\",\n                \"VICTIM\",\n                \"WITNESS\"\
+        ,\n                \"BENEFICIARY\",\n                \"CONSPIRATOR\",\n                \"HERO\",\n               \
+        \ \"SURVIVOR\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/HistoricalParticipation\"\
         ,\n    \"$defs\": {\n        \"HistoricalParticipation\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Record of a character's participation in a historical event\",\n            \"additionalProperties\": false,\n\
@@ -142,18 +143,18 @@ paths:
         \   \"maximum\": 1.0,\n                    \"default\": 0.5,\n                    \"description\": \"How significant
         this event was for the character (0.0 to 1.0).\\nAffects behavior system weighting of this memory.\\n\"\n        \
         \        },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Event-specific details for
-        behavior decisions\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"When this record was created\"\
-        \n                }\n            }\n        },\n        \"EventCategory\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"Categories of historical events that characters can participate in\",\n          \
-        \  \"enum\": [\n                \"WAR\",\n                \"NATURAL_DISASTER\",\n                \"POLITICAL\",\n\
-        \                \"ECONOMIC\",\n                \"RELIGIOUS\",\n                \"CULTURAL\",\n                \"\
-        PERSONAL\"\n            ]\n        },\n        \"ParticipationRole\": {\n            \"type\": \"string\",\n     \
-        \       \"description\": \"How the character participated in the historical event\",\n            \"enum\": [\n  \
-        \              \"LEADER\",\n                \"COMBATANT\",\n                \"VICTIM\",\n                \"WITNESS\"\
-        ,\n                \"BENEFICIARY\",\n                \"CONSPIRATOR\",\n                \"HERO\",\n               \
-        \ \"SURVIVOR\"\n            ]\n        }\n    }\n}"
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-provided event-specific
+        details. No Bannou plugin reads specific keys from this field by convention.\"\n                },\n             \
+        \   \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"When this record was created\"\n                }\n            }\n       \
+        \ },\n        \"EventCategory\": {\n            \"type\": \"string\",\n            \"description\": \"Categories of
+        historical events that characters can participate in\",\n            \"enum\": [\n                \"WAR\",\n     \
+        \           \"NATURAL_DISASTER\",\n                \"POLITICAL\",\n                \"ECONOMIC\",\n               \
+        \ \"RELIGIOUS\",\n                \"CULTURAL\",\n                \"PERSONAL\"\n            ]\n        },\n       \
+        \ \"ParticipationRole\": {\n            \"type\": \"string\",\n            \"description\": \"How the character participated
+        in the historical event\",\n            \"enum\": [\n                \"LEADER\",\n                \"COMBATANT\",\n\
+        \                \"VICTIM\",\n                \"WITNESS\",\n                \"BENEFICIARY\",\n                \"CONSPIRATOR\"\
+        ,\n                \"HERO\",\n                \"SURVIVOR\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Record character participation in a historical event\",\n    \"description\"\
         : \"Records that a character participated in a historical event. Events are\\nidentified by eventId (typically managed
         by a game-specific event system).\\nThe significance rating affects how strongly this event influences behavior.\\\
@@ -241,18 +242,18 @@ paths:
         : 1.0,\n                    \"default\": 0.5,\n                    \"description\": \"How significant this event was
         for the character (0.0 to 1.0).\\nAffects behavior system weighting of this memory.\\n\"\n                },\n   \
         \             \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Event-specific details for
-        behavior decisions\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"When this record was created\"\
-        \n                }\n            }\n        },\n        \"EventCategory\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"Categories of historical events that characters can participate in\",\n          \
-        \  \"enum\": [\n                \"WAR\",\n                \"NATURAL_DISASTER\",\n                \"POLITICAL\",\n\
-        \                \"ECONOMIC\",\n                \"RELIGIOUS\",\n                \"CULTURAL\",\n                \"\
-        PERSONAL\"\n            ]\n        },\n        \"ParticipationRole\": {\n            \"type\": \"string\",\n     \
-        \       \"description\": \"How the character participated in the historical event\",\n            \"enum\": [\n  \
-        \              \"LEADER\",\n                \"COMBATANT\",\n                \"VICTIM\",\n                \"WITNESS\"\
-        ,\n                \"BENEFICIARY\",\n                \"CONSPIRATOR\",\n                \"HERO\",\n               \
-        \ \"SURVIVOR\"\n            ]\n        }\n    }\n}"
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-provided event-specific
+        details. No Bannou plugin reads specific keys from this field by convention.\"\n                },\n             \
+        \   \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"When this record was created\"\n                }\n            }\n       \
+        \ },\n        \"EventCategory\": {\n            \"type\": \"string\",\n            \"description\": \"Categories of
+        historical events that characters can participate in\",\n            \"enum\": [\n                \"WAR\",\n     \
+        \           \"NATURAL_DISASTER\",\n                \"POLITICAL\",\n                \"ECONOMIC\",\n               \
+        \ \"RELIGIOUS\",\n                \"CULTURAL\",\n                \"PERSONAL\"\n            ]\n        },\n       \
+        \ \"ParticipationRole\": {\n            \"type\": \"string\",\n            \"description\": \"How the character participated
+        in the historical event\",\n            \"enum\": [\n                \"LEADER\",\n                \"COMBATANT\",\n\
+        \                \"VICTIM\",\n                \"WITNESS\",\n                \"BENEFICIARY\",\n                \"CONSPIRATOR\"\
+        ,\n                \"HERO\",\n                \"SURVIVOR\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get all historical events a character participated in\",\n    \"description\"\
         : \"Retrieves all historical event participation records for a character.\\nSupports filtering by event category and
         minimum significance.\\n\",\n    \"tags\": [\n        \"Historical Events\"\n    ],\n    \"deprecated\": false,\n\
@@ -336,18 +337,18 @@ paths:
         : 1.0,\n                    \"default\": 0.5,\n                    \"description\": \"How significant this event was
         for the character (0.0 to 1.0).\\nAffects behavior system weighting of this memory.\\n\"\n                },\n   \
         \             \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Event-specific details for
-        behavior decisions\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"When this record was created\"\
-        \n                }\n            }\n        },\n        \"EventCategory\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"Categories of historical events that characters can participate in\",\n          \
-        \  \"enum\": [\n                \"WAR\",\n                \"NATURAL_DISASTER\",\n                \"POLITICAL\",\n\
-        \                \"ECONOMIC\",\n                \"RELIGIOUS\",\n                \"CULTURAL\",\n                \"\
-        PERSONAL\"\n            ]\n        },\n        \"ParticipationRole\": {\n            \"type\": \"string\",\n     \
-        \       \"description\": \"How the character participated in the historical event\",\n            \"enum\": [\n  \
-        \              \"LEADER\",\n                \"COMBATANT\",\n                \"VICTIM\",\n                \"WITNESS\"\
-        ,\n                \"BENEFICIARY\",\n                \"CONSPIRATOR\",\n                \"HERO\",\n               \
-        \ \"SURVIVOR\"\n            ]\n        }\n    }\n}"
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-provided event-specific
+        details. No Bannou plugin reads specific keys from this field by convention.\"\n                },\n             \
+        \   \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"When this record was created\"\n                }\n            }\n       \
+        \ },\n        \"EventCategory\": {\n            \"type\": \"string\",\n            \"description\": \"Categories of
+        historical events that characters can participate in\",\n            \"enum\": [\n                \"WAR\",\n     \
+        \           \"NATURAL_DISASTER\",\n                \"POLITICAL\",\n                \"ECONOMIC\",\n               \
+        \ \"RELIGIOUS\",\n                \"CULTURAL\",\n                \"PERSONAL\"\n            ]\n        },\n       \
+        \ \"ParticipationRole\": {\n            \"type\": \"string\",\n            \"description\": \"How the character participated
+        in the historical event\",\n            \"enum\": [\n                \"LEADER\",\n                \"COMBATANT\",\n\
+        \                \"VICTIM\",\n                \"WITNESS\",\n                \"BENEFICIARY\",\n                \"CONSPIRATOR\"\
+        ,\n                \"HERO\",\n                \"SURVIVOR\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get all characters who participated in a historical event\",\n    \"description\"\
         : \"Retrieves all characters who participated in a specific historical event.\\nUseful for generating event summaries
         or finding related characters.\\n\",\n    \"tags\": [\n        \"Historical Events\"\n    ],\n    \"deprecated\":
@@ -892,44 +893,44 @@ paths:
         \   \"maximum\": 1.0,\n                    \"default\": 0.5,\n                    \"description\": \"How significant
         this event was for the character (0.0 to 1.0).\\nAffects behavior system weighting of this memory.\\n\"\n        \
         \        },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Event-specific details for
-        behavior decisions\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"When this record was created\"\
-        \n                }\n            }\n        },\n        \"EventCategory\": {\n            \"type\": \"string\",\n\
-        \            \"description\": \"Categories of historical events that characters can participate in\",\n          \
-        \  \"enum\": [\n                \"WAR\",\n                \"NATURAL_DISASTER\",\n                \"POLITICAL\",\n\
-        \                \"ECONOMIC\",\n                \"RELIGIOUS\",\n                \"CULTURAL\",\n                \"\
-        PERSONAL\"\n            ]\n        },\n        \"ParticipationRole\": {\n            \"type\": \"string\",\n     \
-        \       \"description\": \"How the character participated in the historical event\",\n            \"enum\": [\n  \
-        \              \"LEADER\",\n                \"COMBATANT\",\n                \"VICTIM\",\n                \"WITNESS\"\
-        ,\n                \"BENEFICIARY\",\n                \"CONSPIRATOR\",\n                \"HERO\",\n               \
-        \ \"SURVIVOR\"\n            ]\n        },\n        \"BackstoryResponse\": {\n            \"type\": \"object\",\n \
-        \           \"description\": \"Complete backstory data for a character\",\n            \"additionalProperties\": false,\n\
-        \            \"required\": [\n                \"characterId\",\n                \"elements\"\n            ],\n   \
-        \         \"properties\": {\n                \"characterId\": {\n                    \"type\": \"string\",\n     \
-        \               \"format\": \"uuid\",\n                    \"description\": \"ID of the character this backstory belongs
-        to\"\n                },\n                \"elements\": {\n                    \"type\": \"array\",\n            \
-        \        \"items\": {\n                        \"$ref\": \"#/$defs/BackstoryElement\"\n                    },\n  \
-        \                  \"description\": \"All backstory elements for this character\"\n                },\n          \
-        \      \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"nullable\": true,\n                    \"description\": \"When this backstory was first created\"\
-        \n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        When this backstory was last modified\"\n                }\n            }\n        },\n        \"BackstoryElement\"\
-        : {\n            \"type\": \"object\",\n            \"description\": \"A machine-readable backstory element for behavior
-        system consumption\",\n            \"additionalProperties\": false,\n            \"required\": [\n               \
-        \ \"elementType\",\n                \"key\",\n                \"value\"\n            ],\n            \"properties\"\
-        : {\n                \"elementType\": {\n                    \"$ref\": \"#/$defs/BackstoryElementType\",\n       \
-        \             \"description\": \"Category of this backstory element\"\n                },\n                \"key\"\
-        : {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                    \"maxLength\"\
-        : 100,\n                    \"description\": \"Machine-readable key (e.g., \\\"homeland\\\", \\\"trained_by\\\", \\\
-        \"past_job\\\").\\nUsed by behavior system to query specific aspects.\\n\"\n                },\n                \"\
-        value\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n                   \
-        \ \"maxLength\": 500,\n                    \"description\": \"Machine-readable value (e.g., \\\"northlands\\\", \\\
-        \"knights_guild\\\", \\\"blacksmith\\\").\\nReferenced in behavior rules.\\n\"\n                },\n             \
-        \   \"strength\": {\n                    \"type\": \"number\",\n                    \"format\": \"float\",\n     \
-        \               \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"default\": 0.5,\n\
-        \                    \"description\": \"How strongly this element affects behavior (0.0 to 1.0).\\nHigher strength
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-provided event-specific
+        details. No Bannou plugin reads specific keys from this field by convention.\"\n                },\n             \
+        \   \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"When this record was created\"\n                }\n            }\n       \
+        \ },\n        \"EventCategory\": {\n            \"type\": \"string\",\n            \"description\": \"Categories of
+        historical events that characters can participate in\",\n            \"enum\": [\n                \"WAR\",\n     \
+        \           \"NATURAL_DISASTER\",\n                \"POLITICAL\",\n                \"ECONOMIC\",\n               \
+        \ \"RELIGIOUS\",\n                \"CULTURAL\",\n                \"PERSONAL\"\n            ]\n        },\n       \
+        \ \"ParticipationRole\": {\n            \"type\": \"string\",\n            \"description\": \"How the character participated
+        in the historical event\",\n            \"enum\": [\n                \"LEADER\",\n                \"COMBATANT\",\n\
+        \                \"VICTIM\",\n                \"WITNESS\",\n                \"BENEFICIARY\",\n                \"CONSPIRATOR\"\
+        ,\n                \"HERO\",\n                \"SURVIVOR\"\n            ]\n        },\n        \"BackstoryResponse\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Complete backstory data for a character\",\n\
+        \            \"additionalProperties\": false,\n            \"required\": [\n                \"characterId\",\n   \
+        \             \"elements\"\n            ],\n            \"properties\": {\n                \"characterId\": {\n  \
+        \                  \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"ID of the character this backstory belongs to\"\n                },\n                \"elements\": {\n       \
+        \             \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/BackstoryElement\"\
+        \n                    },\n                    \"description\": \"All backstory elements for this character\"\n   \
+        \             },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                  \
+        \  \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"description\": \"When
+        this backstory was first created\"\n                },\n                \"updatedAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n         \
+        \           \"description\": \"When this backstory was last modified\"\n                }\n            }\n       \
+        \ },\n        \"BackstoryElement\": {\n            \"type\": \"object\",\n            \"description\": \"A machine-readable
+        backstory element for behavior system consumption\",\n            \"additionalProperties\": false,\n            \"\
+        required\": [\n                \"elementType\",\n                \"key\",\n                \"value\"\n           \
+        \ ],\n            \"properties\": {\n                \"elementType\": {\n                    \"$ref\": \"#/$defs/BackstoryElementType\"\
+        ,\n                    \"description\": \"Category of this backstory element\"\n                },\n             \
+        \   \"key\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n               \
+        \     \"maxLength\": 100,\n                    \"description\": \"Machine-readable key (e.g., \\\"homeland\\\", \\\
+        \"trained_by\\\", \\\"past_job\\\").\\nUsed by behavior system to query specific aspects.\\n\"\n                },\n\
+        \                \"value\": {\n                    \"type\": \"string\",\n                    \"minLength\": 1,\n\
+        \                    \"maxLength\": 500,\n                    \"description\": \"Machine-readable value (e.g., \\\"\
+        northlands\\\", \\\"knights_guild\\\", \\\"blacksmith\\\").\\nReferenced in behavior rules.\\n\"\n               \
+        \ },\n                \"strength\": {\n                    \"type\": \"number\",\n                    \"format\":
+        \"float\",\n                    \"minimum\": 0.0,\n                    \"maximum\": 1.0,\n                    \"default\"\
+        : 0.5,\n                    \"description\": \"How strongly this element affects behavior (0.0 to 1.0).\\nHigher strength
         = greater influence on decisions.\\n\"\n                },\n                \"relatedEntityId\": {\n             \
         \       \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n\
         \                    \"description\": \"Optional related entity (location, organization, character)\"\n          \
@@ -1102,7 +1103,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Event-specific details for behavior decisions
+          description: >-
+            Client-provided event-specific details.
+            No Bannou plugin reads specific keys from this field by convention.
         createdAt:
           type: string
           format: date-time
@@ -1224,7 +1227,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Optional event-specific details
+          description: >-
+            Client-provided event-specific details.
+            No Bannou plugin reads specific keys from this field by convention.
     GetParticipationRequest:
       type: object
       description: Request payload for getting a character's event participation

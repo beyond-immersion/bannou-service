@@ -18,8 +18,9 @@ info:
     **Authority Model**: Authority over a map channel (region + kind) is established at
     creation or checkout. Publishers must include authorityToken in requests.
 
-    **Schema-less Payloads**: Map objects are "bags of data" with additionalProperties: true.
-    Only objectType is indexed; lib-mapping passes data through without validation.
+    **Game-Specific Payloads**: Map object data uses additionalProperties: true for
+    game-specific spatial data. No Bannou plugin reads specific keys by convention;
+    only objectType is indexed. lib-mapping passes data through without validation.
 
     **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
     1. Read docs/reference/SCHEMA-RULES.md
@@ -110,23 +111,23 @@ paths:
         \          },\n                \"bounds\": {\n                    \"$ref\": \"#/$defs/Bounds\",\n                \
         \    \"description\": \"Bounds for area objects\",\n                    \"nullable\": true\n                },\n \
         \               \"data\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"description\": \"SCHEMA-LESS. Can contain anything.\\nlib-mapping does not validate
-        this.\\nExamples: cover_rating, health, respawn_delay, etc.\\n\",\n                    \"nullable\": true\n      \
-        \          }\n            }\n        },\n        \"Position3D\": {\n            \"type\": \"object\",\n          \
-        \  \"description\": \"A point in 3D space\",\n            \"required\": [\n                \"x\",\n              \
-        \  \"y\",\n                \"z\"\n            ],\n            \"properties\": {\n                \"x\": {\n      \
-        \              \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\"\
-        : \"X coordinate (typically east-west)\"\n                },\n                \"y\": {\n                    \"type\"\
-        : \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"Y coordinate (typically
-        up-down / elevation)\"\n                },\n                \"z\": {\n                    \"type\": \"number\",\n\
-        \                    \"format\": \"double\",\n                    \"description\": \"Z coordinate (typically north-south)\"\
-        \n                }\n            }\n        },\n        \"Bounds\": {\n            \"type\": \"object\",\n       \
-        \     \"description\": \"An axis-aligned bounding box in 3D space\",\n            \"required\": [\n              \
-        \  \"min\",\n                \"max\"\n            ],\n            \"properties\": {\n                \"min\": {\n\
-        \                    \"$ref\": \"#/$defs/Position3D\",\n                    \"description\": \"Minimum corner (lowest
-        x, y, z values)\"\n                },\n                \"max\": {\n                    \"$ref\": \"#/$defs/Position3D\"\
-        ,\n                    \"description\": \"Maximum corner (highest x, y, z values)\"\n                }\n         \
-        \   }\n        }\n    }\n}"
+        : true,\n                    \"description\": \"Game-specific spatial object data. lib-mapping stores and returns
+        this as-is. No Bannou plugin reads specific keys from this field by convention.\",\n                    \"nullable\"\
+        : true\n                }\n            }\n        },\n        \"Position3D\": {\n            \"type\": \"object\"\
+        ,\n            \"description\": \"A point in 3D space\",\n            \"required\": [\n                \"x\",\n  \
+        \              \"y\",\n                \"z\"\n            ],\n            \"properties\": {\n                \"x\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        description\": \"X coordinate (typically east-west)\"\n                },\n                \"y\": {\n            \
+        \        \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\":
+        \"Y coordinate (typically up-down / elevation)\"\n                },\n                \"z\": {\n                 \
+        \   \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"Z coordinate
+        (typically north-south)\"\n                }\n            }\n        },\n        \"Bounds\": {\n            \"type\"\
+        : \"object\",\n            \"description\": \"An axis-aligned bounding box in 3D space\",\n            \"required\"\
+        : [\n                \"min\",\n                \"max\"\n            ],\n            \"properties\": {\n          \
+        \      \"min\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n                    \"description\": \"\
+        Minimum corner (lowest x, y, z values)\"\n                },\n                \"max\": {\n                    \"$ref\"\
+        : \"#/$defs/Position3D\",\n                    \"description\": \"Maximum corner (highest x, y, z values)\"\n    \
+        \            }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/AuthorityGrant\"\
         ,\n    \"$defs\": {\n        \"AuthorityGrant\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Granted authority over a map channel\",\n            \"required\": [\n                \"channelId\",\n       \
@@ -311,9 +312,9 @@ paths:
         \          },\n                \"bounds\": {\n                    \"$ref\": \"#/$defs/Bounds\",\n                \
         \    \"description\": \"Bounds for area objects\",\n                    \"nullable\": true\n                },\n \
         \               \"data\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"description\": \"SCHEMA-LESS. Can contain anything.\\nlib-mapping does not validate
-        this.\\nExamples: cover_rating, health, respawn_delay, etc.\\n\",\n                    \"nullable\": true\n      \
-        \          }\n            }\n        }\n    }\n}"
+        : true,\n                    \"description\": \"Game-specific spatial object data. lib-mapping stores and returns
+        this as-is. No Bannou plugin reads specific keys from this field by convention.\",\n                    \"nullable\"\
+        : true\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/PublishMapUpdateResponse\"\
         ,\n    \"$defs\": {\n        \"PublishMapUpdateResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response to publish request\",\n            \"properties\": {\n                \"accepted\": {\n             \
@@ -376,25 +377,26 @@ paths:
         ,\n                    \"nullable\": true\n                },\n                \"bounds\": {\n                   \
         \ \"$ref\": \"#/$defs/Bounds\",\n                    \"description\": \"Object bounds (for create/update)\",\n   \
         \                 \"nullable\": true\n                },\n                \"data\": {\n                    \"type\"\
-        : \"object\",\n                    \"additionalProperties\": true,\n                    \"description\": \"Object
-        state (for created/updated)\",\n                    \"nullable\": true\n                }\n            }\n       \
-        \ },\n        \"ObjectAction\": {\n            \"type\": \"string\",\n            \"description\": \"Type of change
-        to a map object\",\n            \"enum\": [\n                \"created\",\n                \"updated\",\n        \
-        \        \"deleted\"\n            ]\n        },\n        \"Position3D\": {\n            \"type\": \"object\",\n  \
-        \          \"description\": \"A point in 3D space\",\n            \"required\": [\n                \"x\",\n      \
-        \          \"y\",\n                \"z\"\n            ],\n            \"properties\": {\n                \"x\": {\n\
-        \                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\"\
-        : \"X coordinate (typically east-west)\"\n                },\n                \"y\": {\n                    \"type\"\
-        : \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"Y coordinate (typically
-        up-down / elevation)\"\n                },\n                \"z\": {\n                    \"type\": \"number\",\n\
-        \                    \"format\": \"double\",\n                    \"description\": \"Z coordinate (typically north-south)\"\
-        \n                }\n            }\n        },\n        \"Bounds\": {\n            \"type\": \"object\",\n       \
-        \     \"description\": \"An axis-aligned bounding box in 3D space\",\n            \"required\": [\n              \
-        \  \"min\",\n                \"max\"\n            ],\n            \"properties\": {\n                \"min\": {\n\
-        \                    \"$ref\": \"#/$defs/Position3D\",\n                    \"description\": \"Minimum corner (lowest
-        x, y, z values)\"\n                },\n                \"max\": {\n                    \"$ref\": \"#/$defs/Position3D\"\
-        ,\n                    \"description\": \"Maximum corner (highest x, y, z values)\"\n                }\n         \
-        \   }\n        }\n    }\n}"
+        : \"object\",\n                    \"additionalProperties\": true,\n                    \"description\": \"Game-specific
+        object state data. No Bannou plugin reads specific keys from this field by convention.\",\n                    \"\
+        nullable\": true\n                }\n            }\n        },\n        \"ObjectAction\": {\n            \"type\"\
+        : \"string\",\n            \"description\": \"Type of change to a map object\",\n            \"enum\": [\n       \
+        \         \"created\",\n                \"updated\",\n                \"deleted\"\n            ]\n        },\n   \
+        \     \"Position3D\": {\n            \"type\": \"object\",\n            \"description\": \"A point in 3D space\",\n\
+        \            \"required\": [\n                \"x\",\n                \"y\",\n                \"z\"\n            ],\n\
+        \            \"properties\": {\n                \"x\": {\n                    \"type\": \"number\",\n            \
+        \        \"format\": \"double\",\n                    \"description\": \"X coordinate (typically east-west)\"\n  \
+        \              },\n                \"y\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"double\",\n                    \"description\": \"Y coordinate (typically up-down / elevation)\"\n           \
+        \     },\n                \"z\": {\n                    \"type\": \"number\",\n                    \"format\": \"\
+        double\",\n                    \"description\": \"Z coordinate (typically north-south)\"\n                }\n    \
+        \        }\n        },\n        \"Bounds\": {\n            \"type\": \"object\",\n            \"description\": \"\
+        An axis-aligned bounding box in 3D space\",\n            \"required\": [\n                \"min\",\n             \
+        \   \"max\"\n            ],\n            \"properties\": {\n                \"min\": {\n                    \"$ref\"\
+        : \"#/$defs/Position3D\",\n                    \"description\": \"Minimum corner (lowest x, y, z values)\"\n     \
+        \           },\n                \"max\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n              \
+        \      \"description\": \"Maximum corner (highest x, y, z values)\"\n                }\n            }\n        }\n\
+        \    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/PublishObjectChangesResponse\"\
         ,\n    \"$defs\": {\n        \"PublishObjectChangesResponse\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Response to object changes publish\",\n            \"properties\": {\n                \"accepted\"\
@@ -497,35 +499,35 @@ paths:
         objects\",\n                    \"nullable\": true\n                },\n                \"bounds\": {\n          \
         \          \"$ref\": \"#/$defs/Bounds\",\n                    \"description\": \"Bounding box for area objects\",\n\
         \                    \"nullable\": true\n                },\n                \"data\": {\n                    \"type\"\
-        : \"object\",\n                    \"additionalProperties\": true,\n                    \"description\": \"Schema-less
-        object data (publisher-defined)\",\n                    \"nullable\": true\n                },\n                \"\
-        version\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n           \
-        \         \"description\": \"Monotonic version for ordering\"\n                },\n                \"createdAt\":
-        {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                   \
-        \ \"description\": \"When the object was first created\"\n                },\n                \"updatedAt\": {\n \
-        \                   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
-        description\": \"When the object was last updated\"\n                }\n            }\n        },\n        \"MapKind\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"The category of spatial data this map contains.\\
-        nDifferent kinds have different update frequencies, storage models, and TTLs.\\n\",\n            \"enum\": [\n   \
-        \             \"terrain\",\n                \"static_geometry\",\n                \"navigation\",\n              \
-        \  \"resources\",\n                \"spawn_points\",\n                \"points_of_interest\",\n                \"\
-        dynamic_objects\",\n                \"hazards\",\n                \"weather_effects\",\n                \"ownership\"\
-        ,\n                \"combat_effects\",\n                \"visual_effects\"\n            ]\n        },\n        \"\
-        Position3D\": {\n            \"type\": \"object\",\n            \"description\": \"A point in 3D space\",\n      \
-        \      \"required\": [\n                \"x\",\n                \"y\",\n                \"z\"\n            ],\n  \
-        \          \"properties\": {\n                \"x\": {\n                    \"type\": \"number\",\n              \
-        \      \"format\": \"double\",\n                    \"description\": \"X coordinate (typically east-west)\"\n    \
-        \            },\n                \"y\": {\n                    \"type\": \"number\",\n                    \"format\"\
-        : \"double\",\n                    \"description\": \"Y coordinate (typically up-down / elevation)\"\n           \
-        \     },\n                \"z\": {\n                    \"type\": \"number\",\n                    \"format\": \"\
-        double\",\n                    \"description\": \"Z coordinate (typically north-south)\"\n                }\n    \
-        \        }\n        },\n        \"Bounds\": {\n            \"type\": \"object\",\n            \"description\": \"\
-        An axis-aligned bounding box in 3D space\",\n            \"required\": [\n                \"min\",\n             \
-        \   \"max\"\n            ],\n            \"properties\": {\n                \"min\": {\n                    \"$ref\"\
-        : \"#/$defs/Position3D\",\n                    \"description\": \"Minimum corner (lowest x, y, z values)\"\n     \
-        \           },\n                \"max\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n              \
-        \      \"description\": \"Maximum corner (highest x, y, z values)\"\n                }\n            }\n        }\n\
-        \    }\n}"
+        : \"object\",\n                    \"additionalProperties\": true,\n                    \"description\": \"Game-specific
+        spatial object data. No Bannou plugin reads specific keys from this field by convention.\",\n                    \"\
+        nullable\": true\n                },\n                \"version\": {\n                    \"type\": \"integer\",\n\
+        \                    \"format\": \"int64\",\n                    \"description\": \"Monotonic version for ordering\"\
+        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
+        \      \"format\": \"date-time\",\n                    \"description\": \"When the object was first created\"\n  \
+        \              },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                 \
+        \   \"format\": \"date-time\",\n                    \"description\": \"When the object was last updated\"\n      \
+        \          }\n            }\n        },\n        \"MapKind\": {\n            \"type\": \"string\",\n            \"\
+        description\": \"The category of spatial data this map contains.\\nDifferent kinds have different update frequencies,
+        storage models, and TTLs.\\n\",\n            \"enum\": [\n                \"terrain\",\n                \"static_geometry\"\
+        ,\n                \"navigation\",\n                \"resources\",\n                \"spawn_points\",\n          \
+        \      \"points_of_interest\",\n                \"dynamic_objects\",\n                \"hazards\",\n             \
+        \   \"weather_effects\",\n                \"ownership\",\n                \"combat_effects\",\n                \"\
+        visual_effects\"\n            ]\n        },\n        \"Position3D\": {\n            \"type\": \"object\",\n      \
+        \      \"description\": \"A point in 3D space\",\n            \"required\": [\n                \"x\",\n          \
+        \      \"y\",\n                \"z\"\n            ],\n            \"properties\": {\n                \"x\": {\n  \
+        \                  \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\"\
+        : \"X coordinate (typically east-west)\"\n                },\n                \"y\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"Y coordinate (typically
+        up-down / elevation)\"\n                },\n                \"z\": {\n                    \"type\": \"number\",\n\
+        \                    \"format\": \"double\",\n                    \"description\": \"Z coordinate (typically north-south)\"\
+        \n                }\n            }\n        },\n        \"Bounds\": {\n            \"type\": \"object\",\n       \
+        \     \"description\": \"An axis-aligned bounding box in 3D space\",\n            \"required\": [\n              \
+        \  \"min\",\n                \"max\"\n            ],\n            \"properties\": {\n                \"min\": {\n\
+        \                    \"$ref\": \"#/$defs/Position3D\",\n                    \"description\": \"Minimum corner (lowest
+        x, y, z values)\"\n                },\n                \"max\": {\n                    \"$ref\": \"#/$defs/Position3D\"\
+        ,\n                    \"description\": \"Maximum corner (highest x, y, z values)\"\n                }\n         \
+        \   }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Request full snapshot for cold start\",\n    \"description\": \"Consumers
         use this when starting up to get initial state.\\nReturns current snapshot of requested region/kinds.\\nFor very large
         maps, payloadRef points to lib-asset storage.\\n\",\n    \"tags\": [\n        \"Runtime\"\n    ],\n    \"deprecated\"\
@@ -605,34 +607,35 @@ paths:
         \                },\n                \"bounds\": {\n                    \"$ref\": \"#/$defs/Bounds\",\n          \
         \          \"description\": \"Bounding box for area objects\",\n                    \"nullable\": true\n         \
         \       },\n                \"data\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"description\": \"Schema-less object data (publisher-defined)\",\n                 \
-        \   \"nullable\": true\n                },\n                \"version\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"format\": \"int64\",\n                    \"description\": \"Monotonic version for ordering\"\
-        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"When the object was first created\"\n  \
-        \              },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                 \
-        \   \"format\": \"date-time\",\n                    \"description\": \"When the object was last updated\"\n      \
-        \          }\n            }\n        },\n        \"MapKind\": {\n            \"type\": \"string\",\n            \"\
-        description\": \"The category of spatial data this map contains.\\nDifferent kinds have different update frequencies,
-        storage models, and TTLs.\\n\",\n            \"enum\": [\n                \"terrain\",\n                \"static_geometry\"\
-        ,\n                \"navigation\",\n                \"resources\",\n                \"spawn_points\",\n          \
-        \      \"points_of_interest\",\n                \"dynamic_objects\",\n                \"hazards\",\n             \
-        \   \"weather_effects\",\n                \"ownership\",\n                \"combat_effects\",\n                \"\
-        visual_effects\"\n            ]\n        },\n        \"Position3D\": {\n            \"type\": \"object\",\n      \
-        \      \"description\": \"A point in 3D space\",\n            \"required\": [\n                \"x\",\n          \
-        \      \"y\",\n                \"z\"\n            ],\n            \"properties\": {\n                \"x\": {\n  \
-        \                  \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\"\
-        : \"X coordinate (typically east-west)\"\n                },\n                \"y\": {\n                    \"type\"\
-        : \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"Y coordinate (typically
-        up-down / elevation)\"\n                },\n                \"z\": {\n                    \"type\": \"number\",\n\
-        \                    \"format\": \"double\",\n                    \"description\": \"Z coordinate (typically north-south)\"\
-        \n                }\n            }\n        },\n        \"Bounds\": {\n            \"type\": \"object\",\n       \
-        \     \"description\": \"An axis-aligned bounding box in 3D space\",\n            \"required\": [\n              \
-        \  \"min\",\n                \"max\"\n            ],\n            \"properties\": {\n                \"min\": {\n\
-        \                    \"$ref\": \"#/$defs/Position3D\",\n                    \"description\": \"Minimum corner (lowest
-        x, y, z values)\"\n                },\n                \"max\": {\n                    \"$ref\": \"#/$defs/Position3D\"\
-        ,\n                    \"description\": \"Maximum corner (highest x, y, z values)\"\n                }\n         \
-        \   }\n        }\n    }\n}"
+        : true,\n                    \"description\": \"Game-specific spatial object data. No Bannou plugin reads specific
+        keys from this field by convention.\",\n                    \"nullable\": true\n                },\n             \
+        \   \"version\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n     \
+        \               \"description\": \"Monotonic version for ordering\"\n                },\n                \"createdAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"When the object was first created\"\n                },\n                \"updatedAt\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
+        description\": \"When the object was last updated\"\n                }\n            }\n        },\n        \"MapKind\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"The category of spatial data this map contains.\\
+        nDifferent kinds have different update frequencies, storage models, and TTLs.\\n\",\n            \"enum\": [\n   \
+        \             \"terrain\",\n                \"static_geometry\",\n                \"navigation\",\n              \
+        \  \"resources\",\n                \"spawn_points\",\n                \"points_of_interest\",\n                \"\
+        dynamic_objects\",\n                \"hazards\",\n                \"weather_effects\",\n                \"ownership\"\
+        ,\n                \"combat_effects\",\n                \"visual_effects\"\n            ]\n        },\n        \"\
+        Position3D\": {\n            \"type\": \"object\",\n            \"description\": \"A point in 3D space\",\n      \
+        \      \"required\": [\n                \"x\",\n                \"y\",\n                \"z\"\n            ],\n  \
+        \          \"properties\": {\n                \"x\": {\n                    \"type\": \"number\",\n              \
+        \      \"format\": \"double\",\n                    \"description\": \"X coordinate (typically east-west)\"\n    \
+        \            },\n                \"y\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"double\",\n                    \"description\": \"Y coordinate (typically up-down / elevation)\"\n           \
+        \     },\n                \"z\": {\n                    \"type\": \"number\",\n                    \"format\": \"\
+        double\",\n                    \"description\": \"Z coordinate (typically north-south)\"\n                }\n    \
+        \        }\n        },\n        \"Bounds\": {\n            \"type\": \"object\",\n            \"description\": \"\
+        An axis-aligned bounding box in 3D space\",\n            \"required\": [\n                \"min\",\n             \
+        \   \"max\"\n            ],\n            \"properties\": {\n                \"min\": {\n                    \"$ref\"\
+        : \"#/$defs/Position3D\",\n                    \"description\": \"Minimum corner (lowest x, y, z values)\"\n     \
+        \           },\n                \"max\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n              \
+        \      \"description\": \"Maximum corner (highest x, y, z values)\"\n                }\n            }\n        }\n\
+        \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Query map data at a specific point\",\n    \"description\": \"Returns all
         map data at a point across requested kinds.\\nUsed by behavior stacks for contextual decisions.\\nOptionally includes
         objects within radius.\\n\",\n    \"tags\": [\n        \"Query\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -718,34 +721,35 @@ paths:
         \          },\n                \"bounds\": {\n                    \"$ref\": \"#/$defs/Bounds\",\n                \
         \    \"description\": \"Bounding box for area objects\",\n                    \"nullable\": true\n               \
         \ },\n                \"data\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"description\": \"Schema-less object data (publisher-defined)\",\n                 \
-        \   \"nullable\": true\n                },\n                \"version\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"format\": \"int64\",\n                    \"description\": \"Monotonic version for ordering\"\
-        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"When the object was first created\"\n  \
-        \              },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                 \
-        \   \"format\": \"date-time\",\n                    \"description\": \"When the object was last updated\"\n      \
-        \          }\n            }\n        },\n        \"MapKind\": {\n            \"type\": \"string\",\n            \"\
-        description\": \"The category of spatial data this map contains.\\nDifferent kinds have different update frequencies,
-        storage models, and TTLs.\\n\",\n            \"enum\": [\n                \"terrain\",\n                \"static_geometry\"\
-        ,\n                \"navigation\",\n                \"resources\",\n                \"spawn_points\",\n          \
-        \      \"points_of_interest\",\n                \"dynamic_objects\",\n                \"hazards\",\n             \
-        \   \"weather_effects\",\n                \"ownership\",\n                \"combat_effects\",\n                \"\
-        visual_effects\"\n            ]\n        },\n        \"Position3D\": {\n            \"type\": \"object\",\n      \
-        \      \"description\": \"A point in 3D space\",\n            \"required\": [\n                \"x\",\n          \
-        \      \"y\",\n                \"z\"\n            ],\n            \"properties\": {\n                \"x\": {\n  \
-        \                  \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\"\
-        : \"X coordinate (typically east-west)\"\n                },\n                \"y\": {\n                    \"type\"\
-        : \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"Y coordinate (typically
-        up-down / elevation)\"\n                },\n                \"z\": {\n                    \"type\": \"number\",\n\
-        \                    \"format\": \"double\",\n                    \"description\": \"Z coordinate (typically north-south)\"\
-        \n                }\n            }\n        },\n        \"Bounds\": {\n            \"type\": \"object\",\n       \
-        \     \"description\": \"An axis-aligned bounding box in 3D space\",\n            \"required\": [\n              \
-        \  \"min\",\n                \"max\"\n            ],\n            \"properties\": {\n                \"min\": {\n\
-        \                    \"$ref\": \"#/$defs/Position3D\",\n                    \"description\": \"Minimum corner (lowest
-        x, y, z values)\"\n                },\n                \"max\": {\n                    \"$ref\": \"#/$defs/Position3D\"\
-        ,\n                    \"description\": \"Maximum corner (highest x, y, z values)\"\n                }\n         \
-        \   }\n        }\n    }\n}"
+        : true,\n                    \"description\": \"Game-specific spatial object data. No Bannou plugin reads specific
+        keys from this field by convention.\",\n                    \"nullable\": true\n                },\n             \
+        \   \"version\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n     \
+        \               \"description\": \"Monotonic version for ordering\"\n                },\n                \"createdAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"When the object was first created\"\n                },\n                \"updatedAt\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
+        description\": \"When the object was last updated\"\n                }\n            }\n        },\n        \"MapKind\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"The category of spatial data this map contains.\\
+        nDifferent kinds have different update frequencies, storage models, and TTLs.\\n\",\n            \"enum\": [\n   \
+        \             \"terrain\",\n                \"static_geometry\",\n                \"navigation\",\n              \
+        \  \"resources\",\n                \"spawn_points\",\n                \"points_of_interest\",\n                \"\
+        dynamic_objects\",\n                \"hazards\",\n                \"weather_effects\",\n                \"ownership\"\
+        ,\n                \"combat_effects\",\n                \"visual_effects\"\n            ]\n        },\n        \"\
+        Position3D\": {\n            \"type\": \"object\",\n            \"description\": \"A point in 3D space\",\n      \
+        \      \"required\": [\n                \"x\",\n                \"y\",\n                \"z\"\n            ],\n  \
+        \          \"properties\": {\n                \"x\": {\n                    \"type\": \"number\",\n              \
+        \      \"format\": \"double\",\n                    \"description\": \"X coordinate (typically east-west)\"\n    \
+        \            },\n                \"y\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"double\",\n                    \"description\": \"Y coordinate (typically up-down / elevation)\"\n           \
+        \     },\n                \"z\": {\n                    \"type\": \"number\",\n                    \"format\": \"\
+        double\",\n                    \"description\": \"Z coordinate (typically north-south)\"\n                }\n    \
+        \        }\n        },\n        \"Bounds\": {\n            \"type\": \"object\",\n            \"description\": \"\
+        An axis-aligned bounding box in 3D space\",\n            \"required\": [\n                \"min\",\n             \
+        \   \"max\"\n            ],\n            \"properties\": {\n                \"min\": {\n                    \"$ref\"\
+        : \"#/$defs/Position3D\",\n                    \"description\": \"Minimum corner (lowest x, y, z values)\"\n     \
+        \           },\n                \"max\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n              \
+        \      \"description\": \"Maximum corner (highest x, y, z values)\"\n                }\n            }\n        }\n\
+        \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Query map data within bounds\",\n    \"description\": \"Returns map data
         within a bounding box.\\nFor event actors needing region overview.\\nLimited to maxObjects per kind.\\n\",\n    \"\
         tags\": [\n        \"Query\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"queryBounds\"\n}"
@@ -823,34 +827,35 @@ paths:
         \          },\n                \"bounds\": {\n                    \"$ref\": \"#/$defs/Bounds\",\n                \
         \    \"description\": \"Bounding box for area objects\",\n                    \"nullable\": true\n               \
         \ },\n                \"data\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"description\": \"Schema-less object data (publisher-defined)\",\n                 \
-        \   \"nullable\": true\n                },\n                \"version\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"format\": \"int64\",\n                    \"description\": \"Monotonic version for ordering\"\
-        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"When the object was first created\"\n  \
-        \              },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                 \
-        \   \"format\": \"date-time\",\n                    \"description\": \"When the object was last updated\"\n      \
-        \          }\n            }\n        },\n        \"MapKind\": {\n            \"type\": \"string\",\n            \"\
-        description\": \"The category of spatial data this map contains.\\nDifferent kinds have different update frequencies,
-        storage models, and TTLs.\\n\",\n            \"enum\": [\n                \"terrain\",\n                \"static_geometry\"\
-        ,\n                \"navigation\",\n                \"resources\",\n                \"spawn_points\",\n          \
-        \      \"points_of_interest\",\n                \"dynamic_objects\",\n                \"hazards\",\n             \
-        \   \"weather_effects\",\n                \"ownership\",\n                \"combat_effects\",\n                \"\
-        visual_effects\"\n            ]\n        },\n        \"Position3D\": {\n            \"type\": \"object\",\n      \
-        \      \"description\": \"A point in 3D space\",\n            \"required\": [\n                \"x\",\n          \
-        \      \"y\",\n                \"z\"\n            ],\n            \"properties\": {\n                \"x\": {\n  \
-        \                  \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\"\
-        : \"X coordinate (typically east-west)\"\n                },\n                \"y\": {\n                    \"type\"\
-        : \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"Y coordinate (typically
-        up-down / elevation)\"\n                },\n                \"z\": {\n                    \"type\": \"number\",\n\
-        \                    \"format\": \"double\",\n                    \"description\": \"Z coordinate (typically north-south)\"\
-        \n                }\n            }\n        },\n        \"Bounds\": {\n            \"type\": \"object\",\n       \
-        \     \"description\": \"An axis-aligned bounding box in 3D space\",\n            \"required\": [\n              \
-        \  \"min\",\n                \"max\"\n            ],\n            \"properties\": {\n                \"min\": {\n\
-        \                    \"$ref\": \"#/$defs/Position3D\",\n                    \"description\": \"Minimum corner (lowest
-        x, y, z values)\"\n                },\n                \"max\": {\n                    \"$ref\": \"#/$defs/Position3D\"\
-        ,\n                    \"description\": \"Maximum corner (highest x, y, z values)\"\n                }\n         \
-        \   }\n        }\n    }\n}"
+        : true,\n                    \"description\": \"Game-specific spatial object data. No Bannou plugin reads specific
+        keys from this field by convention.\",\n                    \"nullable\": true\n                },\n             \
+        \   \"version\": {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n     \
+        \               \"description\": \"Monotonic version for ordering\"\n                },\n                \"createdAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"When the object was first created\"\n                },\n                \"updatedAt\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
+        description\": \"When the object was last updated\"\n                }\n            }\n        },\n        \"MapKind\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"The category of spatial data this map contains.\\
+        nDifferent kinds have different update frequencies, storage models, and TTLs.\\n\",\n            \"enum\": [\n   \
+        \             \"terrain\",\n                \"static_geometry\",\n                \"navigation\",\n              \
+        \  \"resources\",\n                \"spawn_points\",\n                \"points_of_interest\",\n                \"\
+        dynamic_objects\",\n                \"hazards\",\n                \"weather_effects\",\n                \"ownership\"\
+        ,\n                \"combat_effects\",\n                \"visual_effects\"\n            ]\n        },\n        \"\
+        Position3D\": {\n            \"type\": \"object\",\n            \"description\": \"A point in 3D space\",\n      \
+        \      \"required\": [\n                \"x\",\n                \"y\",\n                \"z\"\n            ],\n  \
+        \          \"properties\": {\n                \"x\": {\n                    \"type\": \"number\",\n              \
+        \      \"format\": \"double\",\n                    \"description\": \"X coordinate (typically east-west)\"\n    \
+        \            },\n                \"y\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"double\",\n                    \"description\": \"Y coordinate (typically up-down / elevation)\"\n           \
+        \     },\n                \"z\": {\n                    \"type\": \"number\",\n                    \"format\": \"\
+        double\",\n                    \"description\": \"Z coordinate (typically north-south)\"\n                }\n    \
+        \        }\n        },\n        \"Bounds\": {\n            \"type\": \"object\",\n            \"description\": \"\
+        An axis-aligned bounding box in 3D space\",\n            \"required\": [\n                \"min\",\n             \
+        \   \"max\"\n            ],\n            \"properties\": {\n                \"min\": {\n                    \"$ref\"\
+        : \"#/$defs/Position3D\",\n                    \"description\": \"Minimum corner (lowest x, y, z values)\"\n     \
+        \           },\n                \"max\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n              \
+        \      \"description\": \"Maximum corner (highest x, y, z values)\"\n                }\n            }\n        }\n\
+        \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Find all objects of a type in region\",\n    \"description\": \"Returns
         all objects matching an objectType filter.\\nFor event actors asking \\\"where are all the boulder clusters?\\\"\\\
         n\",\n    \"tags\": [\n        \"Query\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"queryObjectsByType\"\
@@ -925,32 +930,32 @@ paths:
         : {\n                \"description\": {\n                    \"type\": \"string\",\n                    \"description\"\
         : \"Human-readable description of this affordance\",\n                    \"nullable\": true\n                },\n\
         \                \"requires\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"description\": \"Required criteria. Object types, property constraints.\\nExample:
-        { \\\"objectTypes\\\": [\\\"boulder\\\"], \\\"cover_rating\\\": { \\\"min\\\": 0.5 } }\\n\",\n                   \
-        \ \"nullable\": true\n                },\n                \"prefers\": {\n                    \"type\": \"object\"\
-        ,\n                    \"additionalProperties\": true,\n                    \"description\": \"Preferred criteria
-        (boost score but not required).\\nExample: { \\\"elevation\\\": { \\\"prefer_higher\\\": true } }\\n\",\n        \
-        \            \"nullable\": true\n                },\n                \"excludes\": {\n                    \"type\"\
-        : \"object\",\n                    \"additionalProperties\": true,\n                    \"description\": \"Exclusion
-        criteria. Reject candidates matching these.\\nExample: { \\\"hazards\\\": true, \\\"contested\\\": true }\\n\",\n\
-        \                    \"nullable\": true\n                }\n            }\n        },\n        \"Bounds\": {\n   \
-        \         \"type\": \"object\",\n            \"description\": \"An axis-aligned bounding box in 3D space\",\n    \
-        \        \"required\": [\n                \"min\",\n                \"max\"\n            ],\n            \"properties\"\
-        : {\n                \"min\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n                    \"description\"\
-        : \"Minimum corner (lowest x, y, z values)\"\n                },\n                \"max\": {\n                   \
-        \ \"$ref\": \"#/$defs/Position3D\",\n                    \"description\": \"Maximum corner (highest x, y, z values)\"\
-        \n                }\n            }\n        },\n        \"Position3D\": {\n            \"type\": \"object\",\n   \
-        \         \"description\": \"A point in 3D space\",\n            \"required\": [\n                \"x\",\n       \
-        \         \"y\",\n                \"z\"\n            ],\n            \"properties\": {\n                \"x\": {\n\
-        \                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\"\
-        : \"X coordinate (typically east-west)\"\n                },\n                \"y\": {\n                    \"type\"\
-        : \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"Y coordinate (typically
-        up-down / elevation)\"\n                },\n                \"z\": {\n                    \"type\": \"number\",\n\
-        \                    \"format\": \"double\",\n                    \"description\": \"Z coordinate (typically north-south)\"\
-        \n                }\n            }\n        },\n        \"ActorCapabilities\": {\n            \"type\": \"object\"\
-        ,\n            \"description\": \"Actor-specific capabilities that affect affordance evaluation.\\nSame location may
-        afford different actions to different actor types.\\n\",\n            \"properties\": {\n                \"size\"\
-        : {\n                    \"$ref\": \"#/$defs/ActorSize\",\n                    \"description\": \"Affects cover requirements
+        : true,\n                    \"description\": \"Game-specific required criteria for affordance matching. No Bannou
+        plugin reads specific keys from this field by convention.\",\n                    \"nullable\": true\n           \
+        \     },\n                \"prefers\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"description\": \"Game-specific preferred criteria (boost score but not required). No
+        Bannou plugin reads specific keys from this field by convention.\",\n                    \"nullable\": true\n    \
+        \            },\n                \"excludes\": {\n                    \"type\": \"object\",\n                    \"\
+        additionalProperties\": true,\n                    \"description\": \"Game-specific exclusion criteria for affordance
+        matching. No Bannou plugin reads specific keys from this field by convention.\",\n                    \"nullable\"\
+        : true\n                }\n            }\n        },\n        \"Bounds\": {\n            \"type\": \"object\",\n \
+        \           \"description\": \"An axis-aligned bounding box in 3D space\",\n            \"required\": [\n        \
+        \        \"min\",\n                \"max\"\n            ],\n            \"properties\": {\n                \"min\"\
+        : {\n                    \"$ref\": \"#/$defs/Position3D\",\n                    \"description\": \"Minimum corner
+        (lowest x, y, z values)\"\n                },\n                \"max\": {\n                    \"$ref\": \"#/$defs/Position3D\"\
+        ,\n                    \"description\": \"Maximum corner (highest x, y, z values)\"\n                }\n         \
+        \   }\n        },\n        \"Position3D\": {\n            \"type\": \"object\",\n            \"description\": \"A
+        point in 3D space\",\n            \"required\": [\n                \"x\",\n                \"y\",\n              \
+        \  \"z\"\n            ],\n            \"properties\": {\n                \"x\": {\n                    \"type\": \"\
+        number\",\n                    \"format\": \"double\",\n                    \"description\": \"X coordinate (typically
+        east-west)\"\n                },\n                \"y\": {\n                    \"type\": \"number\",\n          \
+        \          \"format\": \"double\",\n                    \"description\": \"Y coordinate (typically up-down / elevation)\"\
+        \n                },\n                \"z\": {\n                    \"type\": \"number\",\n                    \"\
+        format\": \"double\",\n                    \"description\": \"Z coordinate (typically north-south)\"\n           \
+        \     }\n            }\n        },\n        \"ActorCapabilities\": {\n            \"type\": \"object\",\n        \
+        \    \"description\": \"Actor-specific capabilities that affect affordance evaluation.\\nSame location may afford
+        different actions to different actor types.\\n\",\n            \"properties\": {\n                \"size\": {\n  \
+        \                  \"$ref\": \"#/$defs/ActorSize\",\n                    \"description\": \"Affects cover requirements
         and passage width\"\n                },\n                \"height\": {\n                    \"type\": \"number\",\n\
         \                    \"description\": \"Actor height in meters (affects cover, sightlines)\",\n                  \
         \  \"nullable\": true\n                },\n                \"canClimb\": {\n                    \"type\": \"boolean\"\
@@ -989,37 +994,37 @@ paths:
         \"number\",\n                    \"minimum\": 0,\n                    \"maximum\": 1,\n                    \"description\"\
         : \"How well this location affords the action (0-1)\"\n                },\n                \"features\": {\n     \
         \               \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"\
-        description\": \"What makes this location suitable.\\nExample: { \\\"cover_rating\\\": 0.8, \\\"sightlines\\\": [\\\
-        \"north\\\"], \\\"terrain\\\": \\\"rocky\\\" }\\n\",\n                    \"nullable\": true\n                },\n\
-        \                \"objectIds\": {\n                    \"type\": \"array\",\n                    \"items\": {\n  \
-        \                      \"type\": \"string\",\n                        \"format\": \"uuid\"\n                    },\n\
-        \                    \"description\": \"Map objects contributing to this affordance\",\n                    \"nullable\"\
-        : true\n                }\n            }\n        },\n        \"Position3D\": {\n            \"type\": \"object\"\
-        ,\n            \"description\": \"A point in 3D space\",\n            \"required\": [\n                \"x\",\n  \
-        \              \"y\",\n                \"z\"\n            ],\n            \"properties\": {\n                \"x\"\
-        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
-        description\": \"X coordinate (typically east-west)\"\n                },\n                \"y\": {\n            \
-        \        \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\":
-        \"Y coordinate (typically up-down / elevation)\"\n                },\n                \"z\": {\n                 \
-        \   \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"Z coordinate
-        (typically north-south)\"\n                }\n            }\n        },\n        \"Bounds\": {\n            \"type\"\
-        : \"object\",\n            \"description\": \"An axis-aligned bounding box in 3D space\",\n            \"required\"\
-        : [\n                \"min\",\n                \"max\"\n            ],\n            \"properties\": {\n          \
-        \      \"min\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n                    \"description\": \"\
-        Minimum corner (lowest x, y, z values)\"\n                },\n                \"max\": {\n                    \"$ref\"\
-        : \"#/$defs/Position3D\",\n                    \"description\": \"Maximum corner (highest x, y, z values)\"\n    \
-        \            }\n            }\n        },\n        \"AffordanceQueryMetadata\": {\n            \"type\": \"object\"\
-        ,\n            \"description\": \"Metadata about the affordance query execution\",\n            \"properties\": {\n\
-        \                \"kindsSearched\": {\n                    \"type\": \"array\",\n                    \"items\": {\n\
-        \                        \"type\": \"string\"\n                    },\n                    \"description\": \"Map
-        kinds that were queried\",\n                    \"nullable\": true\n                },\n                \"objectsEvaluated\"\
-        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Number of candidate objects
-        evaluated\"\n                },\n                \"candidatesGenerated\": {\n                    \"type\": \"integer\"\
-        ,\n                    \"description\": \"Number of candidate positions generated\"\n                },\n        \
-        \        \"searchDurationMs\": {\n                    \"type\": \"integer\",\n                    \"description\"\
-        : \"Query execution time in milliseconds\"\n                },\n                \"cacheHit\": {\n                \
-        \    \"type\": \"boolean\",\n                    \"description\": \"Whether results came from cache\"\n          \
-        \      }\n            }\n        }\n    }\n}"
+        description\": \"Game-specific features of this affordance result. No Bannou plugin reads specific keys from this
+        field by convention.\",\n                    \"nullable\": true\n                },\n                \"objectIds\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\",\n                        \"format\": \"uuid\"\n                    },\n                    \"description\"\
+        : \"Map objects contributing to this affordance\",\n                    \"nullable\": true\n                }\n  \
+        \          }\n        },\n        \"Position3D\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"A point in 3D space\",\n            \"required\": [\n                \"x\",\n                \"y\",\n        \
+        \        \"z\"\n            ],\n            \"properties\": {\n                \"x\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"X coordinate (typically
+        east-west)\"\n                },\n                \"y\": {\n                    \"type\": \"number\",\n          \
+        \          \"format\": \"double\",\n                    \"description\": \"Y coordinate (typically up-down / elevation)\"\
+        \n                },\n                \"z\": {\n                    \"type\": \"number\",\n                    \"\
+        format\": \"double\",\n                    \"description\": \"Z coordinate (typically north-south)\"\n           \
+        \     }\n            }\n        },\n        \"Bounds\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"An axis-aligned bounding box in 3D space\",\n            \"required\": [\n                \"min\",\n         \
+        \       \"max\"\n            ],\n            \"properties\": {\n                \"min\": {\n                    \"\
+        $ref\": \"#/$defs/Position3D\",\n                    \"description\": \"Minimum corner (lowest x, y, z values)\"\n\
+        \                },\n                \"max\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n         \
+        \           \"description\": \"Maximum corner (highest x, y, z values)\"\n                }\n            }\n     \
+        \   },\n        \"AffordanceQueryMetadata\": {\n            \"type\": \"object\",\n            \"description\": \"\
+        Metadata about the affordance query execution\",\n            \"properties\": {\n                \"kindsSearched\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"description\": \"Map kinds that were queried\",\n    \
+        \                \"nullable\": true\n                },\n                \"objectsEvaluated\": {\n               \
+        \     \"type\": \"integer\",\n                    \"description\": \"Number of candidate objects evaluated\"\n   \
+        \             },\n                \"candidatesGenerated\": {\n                    \"type\": \"integer\",\n       \
+        \             \"description\": \"Number of candidate positions generated\"\n                },\n                \"\
+        searchDurationMs\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Query execution
+        time in milliseconds\"\n                },\n                \"cacheHit\": {\n                    \"type\": \"boolean\"\
+        ,\n                    \"description\": \"Whether results came from cache\"\n                }\n            }\n  \
+        \      }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Find locations that afford a specific action or scene type\",\n    \"description\"\
         : \"Affordance queries answer \\\"where can I do X?\\\" by combining\\nmultiple map kinds and applying game-specific
         scoring logic.\\n\\nUsed by Event Brain for procedural scene orchestration:\\n- \\\"Find ambush locations\\\"\\n-
@@ -1226,11 +1231,71 @@ paths:
         : true\n                },\n                \"defaultBounds\": {\n                    \"$ref\": \"#/$defs/Bounds\"\
         ,\n                    \"description\": \"Default bounds for regions using this definition\",\n                  \
         \  \"nullable\": true\n                },\n                \"metadata\": {\n                    \"type\": \"object\"\
-        ,\n                    \"additionalProperties\": true,\n                    \"description\": \"Additional metadata\"\
-        ,\n                    \"nullable\": true\n                }\n            }\n        },\n        \"LayerDefinition\"\
-        : {\n            \"type\": \"object\",\n            \"description\": \"Configuration for a specific layer within a
-        map definition\",\n            \"required\": [\n                \"kind\"\n            ],\n            \"properties\"\
-        : {\n                \"kind\": {\n                    \"$ref\": \"#/$defs/MapKind\",\n                    \"description\"\
+        ,\n                    \"additionalProperties\": true,\n                    \"description\": \"Client-provided definition
+        metadata. No Bannou plugin reads specific keys from this field by convention.\",\n                    \"nullable\"\
+        : true\n                }\n            }\n        },\n        \"LayerDefinition\": {\n            \"type\": \"object\"\
+        ,\n            \"description\": \"Configuration for a specific layer within a map definition\",\n            \"required\"\
+        : [\n                \"kind\"\n            ],\n            \"properties\": {\n                \"kind\": {\n      \
+        \              \"$ref\": \"#/$defs/MapKind\",\n                    \"description\": \"The layer kind\"\n         \
+        \       },\n                \"storageMode\": {\n                    \"type\": \"string\",\n                    \"\
+        enum\": [\n                        \"durable\",\n                        \"cached\",\n                        \"ephemeral\"\
+        \n                    ],\n                    \"default\": \"cached\",\n                    \"description\": \"How
+        this layer's data should be stored\"\n                },\n                \"ttlSeconds\": {\n                    \"\
+        type\": \"integer\",\n                    \"description\": \"TTL for cached/ephemeral data (0 = no TTL)\",\n     \
+        \               \"nullable\": true\n                },\n                \"defaultNonAuthorityHandling\": {\n     \
+        \               \"$ref\": \"#/$defs/NonAuthorityHandlingMode\",\n                    \"description\": \"Default non-authority
+        handling for channels using this layer\"\n                },\n                \"cellSize\": {\n                  \
+        \  \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"Spatial
+        cell size for indexing (default from config if not set)\",\n                    \"nullable\": true\n             \
+        \   }\n            }\n        },\n        \"MapKind\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"The category of spatial data this map contains.\\nDifferent kinds have different update frequencies, storage models,
+        and TTLs.\\n\",\n            \"enum\": [\n                \"terrain\",\n                \"static_geometry\",\n   \
+        \             \"navigation\",\n                \"resources\",\n                \"spawn_points\",\n               \
+        \ \"points_of_interest\",\n                \"dynamic_objects\",\n                \"hazards\",\n                \"\
+        weather_effects\",\n                \"ownership\",\n                \"combat_effects\",\n                \"visual_effects\"\
+        \n            ]\n        },\n        \"NonAuthorityHandlingMode\": {\n            \"type\": \"string\",\n        \
+        \    \"description\": \"How to handle publish attempts from non-authority sources\",\n            \"enum\": [\n  \
+        \              \"reject_and_alert\",\n                \"accept_and_alert\",\n                \"reject_silent\"\n \
+        \           ],\n            \"default\": \"reject_and_alert\"\n        },\n        \"Bounds\": {\n            \"type\"\
+        : \"object\",\n            \"description\": \"An axis-aligned bounding box in 3D space\",\n            \"required\"\
+        : [\n                \"min\",\n                \"max\"\n            ],\n            \"properties\": {\n          \
+        \      \"min\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n                    \"description\": \"\
+        Minimum corner (lowest x, y, z values)\"\n                },\n                \"max\": {\n                    \"$ref\"\
+        : \"#/$defs/Position3D\",\n                    \"description\": \"Maximum corner (highest x, y, z values)\"\n    \
+        \            }\n            }\n        },\n        \"Position3D\": {\n            \"type\": \"object\",\n        \
+        \    \"description\": \"A point in 3D space\",\n            \"required\": [\n                \"x\",\n            \
+        \    \"y\",\n                \"z\"\n            ],\n            \"properties\": {\n                \"x\": {\n    \
+        \                \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\"\
+        : \"X coordinate (typically east-west)\"\n                },\n                \"y\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"Y coordinate (typically
+        up-down / elevation)\"\n                },\n                \"z\": {\n                    \"type\": \"number\",\n\
+        \                    \"format\": \"double\",\n                    \"description\": \"Z coordinate (typically north-south)\"\
+        \n                }\n            }\n        }\n    }\n}"
+      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/MapDefinition\"\
+        ,\n    \"$defs\": {\n        \"MapDefinition\": {\n            \"type\": \"object\",\n            \"description\"\
+        : \"A map definition template that describes the structure of a region\",\n            \"required\": [\n         \
+        \       \"definitionId\",\n                \"name\",\n                \"createdAt\"\n            ],\n            \"\
+        properties\": {\n                \"definitionId\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for this definition\"\n     \
+        \           },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Human-readable name\"\n                },\n                \"description\": {\n                    \"type\": \"\
+        string\",\n                    \"description\": \"Description of the map template\",\n                    \"nullable\"\
+        : true\n                },\n                \"layers\": {\n                    \"type\": \"array\",\n            \
+        \        \"items\": {\n                        \"$ref\": \"#/$defs/LayerDefinition\"\n                    },\n   \
+        \                 \"description\": \"Layer configurations for this map\",\n                    \"nullable\": true\n\
+        \                },\n                \"defaultBounds\": {\n                    \"$ref\": \"#/$defs/Bounds\",\n   \
+        \                 \"description\": \"Default bounds for regions using this definition\",\n                    \"nullable\"\
+        : true\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n         \
+        \           \"additionalProperties\": true,\n                    \"description\": \"Client-provided definition metadata.
+        No Bannou plugin reads specific keys from this field by convention.\",\n                    \"nullable\": true\n \
+        \               },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"date-time\",\n                    \"description\": \"When the definition was created\"\n      \
+        \          },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"date-time\",\n                    \"description\": \"When the definition was last updated\",\n       \
+        \             \"nullable\": true\n                }\n            }\n        },\n        \"LayerDefinition\": {\n \
+        \           \"type\": \"object\",\n            \"description\": \"Configuration for a specific layer within a map
+        definition\",\n            \"required\": [\n                \"kind\"\n            ],\n            \"properties\":
+        {\n                \"kind\": {\n                    \"$ref\": \"#/$defs/MapKind\",\n                    \"description\"\
         : \"The layer kind\"\n                },\n                \"storageMode\": {\n                    \"type\": \"string\"\
         ,\n                    \"enum\": [\n                        \"durable\",\n                        \"cached\",\n  \
         \                      \"ephemeral\"\n                    ],\n                    \"default\": \"cached\",\n     \
@@ -1265,65 +1330,6 @@ paths:
         : \"Y coordinate (typically up-down / elevation)\"\n                },\n                \"z\": {\n               \
         \     \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"\
         Z coordinate (typically north-south)\"\n                }\n            }\n        }\n    }\n}"
-      x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/MapDefinition\"\
-        ,\n    \"$defs\": {\n        \"MapDefinition\": {\n            \"type\": \"object\",\n            \"description\"\
-        : \"A map definition template that describes the structure of a region\",\n            \"required\": [\n         \
-        \       \"definitionId\",\n                \"name\",\n                \"createdAt\"\n            ],\n            \"\
-        properties\": {\n                \"definitionId\": {\n                    \"type\": \"string\",\n                \
-        \    \"format\": \"uuid\",\n                    \"description\": \"Unique identifier for this definition\"\n     \
-        \           },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"Human-readable name\"\n                },\n                \"description\": {\n                    \"type\": \"\
-        string\",\n                    \"description\": \"Description of the map template\",\n                    \"nullable\"\
-        : true\n                },\n                \"layers\": {\n                    \"type\": \"array\",\n            \
-        \        \"items\": {\n                        \"$ref\": \"#/$defs/LayerDefinition\"\n                    },\n   \
-        \                 \"description\": \"Layer configurations for this map\",\n                    \"nullable\": true\n\
-        \                },\n                \"defaultBounds\": {\n                    \"$ref\": \"#/$defs/Bounds\",\n   \
-        \                 \"description\": \"Default bounds for regions using this definition\",\n                    \"nullable\"\
-        : true\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n         \
-        \           \"additionalProperties\": true,\n                    \"description\": \"Additional metadata (schema-less)\"\
-        ,\n                    \"nullable\": true\n                },\n                \"createdAt\": {\n                \
-        \    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
-        When the definition was created\"\n                },\n                \"updatedAt\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the definition
-        was last updated\",\n                    \"nullable\": true\n                }\n            }\n        },\n      \
-        \  \"LayerDefinition\": {\n            \"type\": \"object\",\n            \"description\": \"Configuration for a specific
-        layer within a map definition\",\n            \"required\": [\n                \"kind\"\n            ],\n        \
-        \    \"properties\": {\n                \"kind\": {\n                    \"$ref\": \"#/$defs/MapKind\",\n        \
-        \            \"description\": \"The layer kind\"\n                },\n                \"storageMode\": {\n       \
-        \             \"type\": \"string\",\n                    \"enum\": [\n                        \"durable\",\n     \
-        \                   \"cached\",\n                        \"ephemeral\"\n                    ],\n                 \
-        \   \"default\": \"cached\",\n                    \"description\": \"How this layer's data should be stored\"\n  \
-        \              },\n                \"ttlSeconds\": {\n                    \"type\": \"integer\",\n               \
-        \     \"description\": \"TTL for cached/ephemeral data (0 = no TTL)\",\n                    \"nullable\": true\n \
-        \               },\n                \"defaultNonAuthorityHandling\": {\n                    \"$ref\": \"#/$defs/NonAuthorityHandlingMode\"\
-        ,\n                    \"description\": \"Default non-authority handling for channels using this layer\"\n       \
-        \         },\n                \"cellSize\": {\n                    \"type\": \"number\",\n                    \"format\"\
-        : \"double\",\n                    \"description\": \"Spatial cell size for indexing (default from config if not set)\"\
-        ,\n                    \"nullable\": true\n                }\n            }\n        },\n        \"MapKind\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"The category of spatial data this map contains.\\
-        nDifferent kinds have different update frequencies, storage models, and TTLs.\\n\",\n            \"enum\": [\n   \
-        \             \"terrain\",\n                \"static_geometry\",\n                \"navigation\",\n              \
-        \  \"resources\",\n                \"spawn_points\",\n                \"points_of_interest\",\n                \"\
-        dynamic_objects\",\n                \"hazards\",\n                \"weather_effects\",\n                \"ownership\"\
-        ,\n                \"combat_effects\",\n                \"visual_effects\"\n            ]\n        },\n        \"\
-        NonAuthorityHandlingMode\": {\n            \"type\": \"string\",\n            \"description\": \"How to handle publish
-        attempts from non-authority sources\",\n            \"enum\": [\n                \"reject_and_alert\",\n         \
-        \       \"accept_and_alert\",\n                \"reject_silent\"\n            ],\n            \"default\": \"reject_and_alert\"\
-        \n        },\n        \"Bounds\": {\n            \"type\": \"object\",\n            \"description\": \"An axis-aligned
-        bounding box in 3D space\",\n            \"required\": [\n                \"min\",\n                \"max\"\n    \
-        \        ],\n            \"properties\": {\n                \"min\": {\n                    \"$ref\": \"#/$defs/Position3D\"\
-        ,\n                    \"description\": \"Minimum corner (lowest x, y, z values)\"\n                },\n         \
-        \       \"max\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n                    \"description\": \"\
-        Maximum corner (highest x, y, z values)\"\n                }\n            }\n        },\n        \"Position3D\": {\n\
-        \            \"type\": \"object\",\n            \"description\": \"A point in 3D space\",\n            \"required\"\
-        : [\n                \"x\",\n                \"y\",\n                \"z\"\n            ],\n            \"properties\"\
-        : {\n                \"x\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\"\
-        ,\n                    \"description\": \"X coordinate (typically east-west)\"\n                },\n             \
-        \   \"y\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n           \
-        \         \"description\": \"Y coordinate (typically up-down / elevation)\"\n                },\n                \"\
-        z\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                 \
-        \   \"description\": \"Z coordinate (typically north-south)\"\n                }\n            }\n        }\n    }\n\
-        }"
       x-endpoint-info-json: "{\n    \"summary\": \"Create a map definition template\",\n    \"description\": \"Creates a new
         map definition (template) that describes the structure\\nof a region. Definitions are templates that can be used to
         bootstrap\\nchannels with predefined layer configurations.\\n\",\n    \"tags\": [\n        \"Definition\"\n    ],\n\
@@ -1374,50 +1380,50 @@ paths:
         \                },\n                \"defaultBounds\": {\n                    \"$ref\": \"#/$defs/Bounds\",\n   \
         \                 \"description\": \"Default bounds for regions using this definition\",\n                    \"nullable\"\
         : true\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n         \
-        \           \"additionalProperties\": true,\n                    \"description\": \"Additional metadata (schema-less)\"\
-        ,\n                    \"nullable\": true\n                },\n                \"createdAt\": {\n                \
-        \    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
-        When the definition was created\"\n                },\n                \"updatedAt\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the definition
-        was last updated\",\n                    \"nullable\": true\n                }\n            }\n        },\n      \
-        \  \"LayerDefinition\": {\n            \"type\": \"object\",\n            \"description\": \"Configuration for a specific
-        layer within a map definition\",\n            \"required\": [\n                \"kind\"\n            ],\n        \
-        \    \"properties\": {\n                \"kind\": {\n                    \"$ref\": \"#/$defs/MapKind\",\n        \
-        \            \"description\": \"The layer kind\"\n                },\n                \"storageMode\": {\n       \
-        \             \"type\": \"string\",\n                    \"enum\": [\n                        \"durable\",\n     \
-        \                   \"cached\",\n                        \"ephemeral\"\n                    ],\n                 \
-        \   \"default\": \"cached\",\n                    \"description\": \"How this layer's data should be stored\"\n  \
-        \              },\n                \"ttlSeconds\": {\n                    \"type\": \"integer\",\n               \
-        \     \"description\": \"TTL for cached/ephemeral data (0 = no TTL)\",\n                    \"nullable\": true\n \
-        \               },\n                \"defaultNonAuthorityHandling\": {\n                    \"$ref\": \"#/$defs/NonAuthorityHandlingMode\"\
-        ,\n                    \"description\": \"Default non-authority handling for channels using this layer\"\n       \
-        \         },\n                \"cellSize\": {\n                    \"type\": \"number\",\n                    \"format\"\
-        : \"double\",\n                    \"description\": \"Spatial cell size for indexing (default from config if not set)\"\
-        ,\n                    \"nullable\": true\n                }\n            }\n        },\n        \"MapKind\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"The category of spatial data this map contains.\\
-        nDifferent kinds have different update frequencies, storage models, and TTLs.\\n\",\n            \"enum\": [\n   \
-        \             \"terrain\",\n                \"static_geometry\",\n                \"navigation\",\n              \
-        \  \"resources\",\n                \"spawn_points\",\n                \"points_of_interest\",\n                \"\
-        dynamic_objects\",\n                \"hazards\",\n                \"weather_effects\",\n                \"ownership\"\
-        ,\n                \"combat_effects\",\n                \"visual_effects\"\n            ]\n        },\n        \"\
-        NonAuthorityHandlingMode\": {\n            \"type\": \"string\",\n            \"description\": \"How to handle publish
-        attempts from non-authority sources\",\n            \"enum\": [\n                \"reject_and_alert\",\n         \
-        \       \"accept_and_alert\",\n                \"reject_silent\"\n            ],\n            \"default\": \"reject_and_alert\"\
-        \n        },\n        \"Bounds\": {\n            \"type\": \"object\",\n            \"description\": \"An axis-aligned
-        bounding box in 3D space\",\n            \"required\": [\n                \"min\",\n                \"max\"\n    \
-        \        ],\n            \"properties\": {\n                \"min\": {\n                    \"$ref\": \"#/$defs/Position3D\"\
-        ,\n                    \"description\": \"Minimum corner (lowest x, y, z values)\"\n                },\n         \
-        \       \"max\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n                    \"description\": \"\
-        Maximum corner (highest x, y, z values)\"\n                }\n            }\n        },\n        \"Position3D\": {\n\
-        \            \"type\": \"object\",\n            \"description\": \"A point in 3D space\",\n            \"required\"\
-        : [\n                \"x\",\n                \"y\",\n                \"z\"\n            ],\n            \"properties\"\
-        : {\n                \"x\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\"\
-        ,\n                    \"description\": \"X coordinate (typically east-west)\"\n                },\n             \
-        \   \"y\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n           \
-        \         \"description\": \"Y coordinate (typically up-down / elevation)\"\n                },\n                \"\
-        z\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                 \
-        \   \"description\": \"Z coordinate (typically north-south)\"\n                }\n            }\n        }\n    }\n\
-        }"
+        \           \"additionalProperties\": true,\n                    \"description\": \"Client-provided definition metadata.
+        No Bannou plugin reads specific keys from this field by convention.\",\n                    \"nullable\": true\n \
+        \               },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"date-time\",\n                    \"description\": \"When the definition was created\"\n      \
+        \          },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"date-time\",\n                    \"description\": \"When the definition was last updated\",\n       \
+        \             \"nullable\": true\n                }\n            }\n        },\n        \"LayerDefinition\": {\n \
+        \           \"type\": \"object\",\n            \"description\": \"Configuration for a specific layer within a map
+        definition\",\n            \"required\": [\n                \"kind\"\n            ],\n            \"properties\":
+        {\n                \"kind\": {\n                    \"$ref\": \"#/$defs/MapKind\",\n                    \"description\"\
+        : \"The layer kind\"\n                },\n                \"storageMode\": {\n                    \"type\": \"string\"\
+        ,\n                    \"enum\": [\n                        \"durable\",\n                        \"cached\",\n  \
+        \                      \"ephemeral\"\n                    ],\n                    \"default\": \"cached\",\n     \
+        \               \"description\": \"How this layer's data should be stored\"\n                },\n                \"\
+        ttlSeconds\": {\n                    \"type\": \"integer\",\n                    \"description\": \"TTL for cached/ephemeral
+        data (0 = no TTL)\",\n                    \"nullable\": true\n                },\n                \"defaultNonAuthorityHandling\"\
+        : {\n                    \"$ref\": \"#/$defs/NonAuthorityHandlingMode\",\n                    \"description\": \"\
+        Default non-authority handling for channels using this layer\"\n                },\n                \"cellSize\":
+        {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        description\": \"Spatial cell size for indexing (default from config if not set)\",\n                    \"nullable\"\
+        : true\n                }\n            }\n        },\n        \"MapKind\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"The category of spatial data this map contains.\\nDifferent kinds have different update
+        frequencies, storage models, and TTLs.\\n\",\n            \"enum\": [\n                \"terrain\",\n            \
+        \    \"static_geometry\",\n                \"navigation\",\n                \"resources\",\n                \"spawn_points\"\
+        ,\n                \"points_of_interest\",\n                \"dynamic_objects\",\n                \"hazards\",\n \
+        \               \"weather_effects\",\n                \"ownership\",\n                \"combat_effects\",\n      \
+        \          \"visual_effects\"\n            ]\n        },\n        \"NonAuthorityHandlingMode\": {\n            \"\
+        type\": \"string\",\n            \"description\": \"How to handle publish attempts from non-authority sources\",\n\
+        \            \"enum\": [\n                \"reject_and_alert\",\n                \"accept_and_alert\",\n         \
+        \       \"reject_silent\"\n            ],\n            \"default\": \"reject_and_alert\"\n        },\n        \"Bounds\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"An axis-aligned bounding box in 3D space\"\
+        ,\n            \"required\": [\n                \"min\",\n                \"max\"\n            ],\n            \"\
+        properties\": {\n                \"min\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n             \
+        \       \"description\": \"Minimum corner (lowest x, y, z values)\"\n                },\n                \"max\":
+        {\n                    \"$ref\": \"#/$defs/Position3D\",\n                    \"description\": \"Maximum corner (highest
+        x, y, z values)\"\n                }\n            }\n        },\n        \"Position3D\": {\n            \"type\":
+        \"object\",\n            \"description\": \"A point in 3D space\",\n            \"required\": [\n                \"\
+        x\",\n                \"y\",\n                \"z\"\n            ],\n            \"properties\": {\n             \
+        \   \"x\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n           \
+        \         \"description\": \"X coordinate (typically east-west)\"\n                },\n                \"y\": {\n\
+        \                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\"\
+        : \"Y coordinate (typically up-down / elevation)\"\n                },\n                \"z\": {\n               \
+        \     \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"\
+        Z coordinate (typically north-south)\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get a map definition by ID\",\n    \"description\": \"Returns the full
         map definition including all layer configurations.\",\n    \"tags\": [\n        \"Definition\"\n    ],\n    \"deprecated\"\
         : false,\n    \"operationId\": \"getDefinition\"\n}"
@@ -1477,49 +1483,50 @@ paths:
         : \"#/$defs/Bounds\",\n                    \"description\": \"Default bounds for regions using this definition\",\n\
         \                    \"nullable\": true\n                },\n                \"metadata\": {\n                   \
         \ \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"description\"\
-        : \"Additional metadata (schema-less)\",\n                    \"nullable\": true\n                },\n           \
-        \     \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
-        \                    \"description\": \"When the definition was created\"\n                },\n                \"\
-        updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n      \
-        \              \"description\": \"When the definition was last updated\",\n                    \"nullable\": true\n\
-        \                }\n            }\n        },\n        \"LayerDefinition\": {\n            \"type\": \"object\",\n\
-        \            \"description\": \"Configuration for a specific layer within a map definition\",\n            \"required\"\
-        : [\n                \"kind\"\n            ],\n            \"properties\": {\n                \"kind\": {\n      \
-        \              \"$ref\": \"#/$defs/MapKind\",\n                    \"description\": \"The layer kind\"\n         \
-        \       },\n                \"storageMode\": {\n                    \"type\": \"string\",\n                    \"\
-        enum\": [\n                        \"durable\",\n                        \"cached\",\n                        \"ephemeral\"\
-        \n                    ],\n                    \"default\": \"cached\",\n                    \"description\": \"How
-        this layer's data should be stored\"\n                },\n                \"ttlSeconds\": {\n                    \"\
-        type\": \"integer\",\n                    \"description\": \"TTL for cached/ephemeral data (0 = no TTL)\",\n     \
-        \               \"nullable\": true\n                },\n                \"defaultNonAuthorityHandling\": {\n     \
-        \               \"$ref\": \"#/$defs/NonAuthorityHandlingMode\",\n                    \"description\": \"Default non-authority
-        handling for channels using this layer\"\n                },\n                \"cellSize\": {\n                  \
-        \  \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"Spatial
-        cell size for indexing (default from config if not set)\",\n                    \"nullable\": true\n             \
-        \   }\n            }\n        },\n        \"MapKind\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"The category of spatial data this map contains.\\nDifferent kinds have different update frequencies, storage models,
-        and TTLs.\\n\",\n            \"enum\": [\n                \"terrain\",\n                \"static_geometry\",\n   \
-        \             \"navigation\",\n                \"resources\",\n                \"spawn_points\",\n               \
-        \ \"points_of_interest\",\n                \"dynamic_objects\",\n                \"hazards\",\n                \"\
-        weather_effects\",\n                \"ownership\",\n                \"combat_effects\",\n                \"visual_effects\"\
-        \n            ]\n        },\n        \"NonAuthorityHandlingMode\": {\n            \"type\": \"string\",\n        \
-        \    \"description\": \"How to handle publish attempts from non-authority sources\",\n            \"enum\": [\n  \
-        \              \"reject_and_alert\",\n                \"accept_and_alert\",\n                \"reject_silent\"\n \
-        \           ],\n            \"default\": \"reject_and_alert\"\n        },\n        \"Bounds\": {\n            \"type\"\
-        : \"object\",\n            \"description\": \"An axis-aligned bounding box in 3D space\",\n            \"required\"\
-        : [\n                \"min\",\n                \"max\"\n            ],\n            \"properties\": {\n          \
-        \      \"min\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n                    \"description\": \"\
-        Minimum corner (lowest x, y, z values)\"\n                },\n                \"max\": {\n                    \"$ref\"\
-        : \"#/$defs/Position3D\",\n                    \"description\": \"Maximum corner (highest x, y, z values)\"\n    \
-        \            }\n            }\n        },\n        \"Position3D\": {\n            \"type\": \"object\",\n        \
-        \    \"description\": \"A point in 3D space\",\n            \"required\": [\n                \"x\",\n            \
-        \    \"y\",\n                \"z\"\n            ],\n            \"properties\": {\n                \"x\": {\n    \
-        \                \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\"\
-        : \"X coordinate (typically east-west)\"\n                },\n                \"y\": {\n                    \"type\"\
-        : \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"Y coordinate (typically
-        up-down / elevation)\"\n                },\n                \"z\": {\n                    \"type\": \"number\",\n\
-        \                    \"format\": \"double\",\n                    \"description\": \"Z coordinate (typically north-south)\"\
-        \n                }\n            }\n        }\n    }\n}"
+        : \"Client-provided definition metadata. No Bannou plugin reads specific keys from this field by convention.\",\n\
+        \                    \"nullable\": true\n                },\n                \"createdAt\": {\n                  \
+        \  \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
+        When the definition was created\"\n                },\n                \"updatedAt\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the definition
+        was last updated\",\n                    \"nullable\": true\n                }\n            }\n        },\n      \
+        \  \"LayerDefinition\": {\n            \"type\": \"object\",\n            \"description\": \"Configuration for a specific
+        layer within a map definition\",\n            \"required\": [\n                \"kind\"\n            ],\n        \
+        \    \"properties\": {\n                \"kind\": {\n                    \"$ref\": \"#/$defs/MapKind\",\n        \
+        \            \"description\": \"The layer kind\"\n                },\n                \"storageMode\": {\n       \
+        \             \"type\": \"string\",\n                    \"enum\": [\n                        \"durable\",\n     \
+        \                   \"cached\",\n                        \"ephemeral\"\n                    ],\n                 \
+        \   \"default\": \"cached\",\n                    \"description\": \"How this layer's data should be stored\"\n  \
+        \              },\n                \"ttlSeconds\": {\n                    \"type\": \"integer\",\n               \
+        \     \"description\": \"TTL for cached/ephemeral data (0 = no TTL)\",\n                    \"nullable\": true\n \
+        \               },\n                \"defaultNonAuthorityHandling\": {\n                    \"$ref\": \"#/$defs/NonAuthorityHandlingMode\"\
+        ,\n                    \"description\": \"Default non-authority handling for channels using this layer\"\n       \
+        \         },\n                \"cellSize\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        : \"double\",\n                    \"description\": \"Spatial cell size for indexing (default from config if not set)\"\
+        ,\n                    \"nullable\": true\n                }\n            }\n        },\n        \"MapKind\": {\n\
+        \            \"type\": \"string\",\n            \"description\": \"The category of spatial data this map contains.\\
+        nDifferent kinds have different update frequencies, storage models, and TTLs.\\n\",\n            \"enum\": [\n   \
+        \             \"terrain\",\n                \"static_geometry\",\n                \"navigation\",\n              \
+        \  \"resources\",\n                \"spawn_points\",\n                \"points_of_interest\",\n                \"\
+        dynamic_objects\",\n                \"hazards\",\n                \"weather_effects\",\n                \"ownership\"\
+        ,\n                \"combat_effects\",\n                \"visual_effects\"\n            ]\n        },\n        \"\
+        NonAuthorityHandlingMode\": {\n            \"type\": \"string\",\n            \"description\": \"How to handle publish
+        attempts from non-authority sources\",\n            \"enum\": [\n                \"reject_and_alert\",\n         \
+        \       \"accept_and_alert\",\n                \"reject_silent\"\n            ],\n            \"default\": \"reject_and_alert\"\
+        \n        },\n        \"Bounds\": {\n            \"type\": \"object\",\n            \"description\": \"An axis-aligned
+        bounding box in 3D space\",\n            \"required\": [\n                \"min\",\n                \"max\"\n    \
+        \        ],\n            \"properties\": {\n                \"min\": {\n                    \"$ref\": \"#/$defs/Position3D\"\
+        ,\n                    \"description\": \"Minimum corner (lowest x, y, z values)\"\n                },\n         \
+        \       \"max\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n                    \"description\": \"\
+        Maximum corner (highest x, y, z values)\"\n                }\n            }\n        },\n        \"Position3D\": {\n\
+        \            \"type\": \"object\",\n            \"description\": \"A point in 3D space\",\n            \"required\"\
+        : [\n                \"x\",\n                \"y\",\n                \"z\"\n            ],\n            \"properties\"\
+        : {\n                \"x\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\"\
+        ,\n                    \"description\": \"X coordinate (typically east-west)\"\n                },\n             \
+        \   \"y\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n           \
+        \         \"description\": \"Y coordinate (typically up-down / elevation)\"\n                },\n                \"\
+        z\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                 \
+        \   \"description\": \"Z coordinate (typically north-south)\"\n                }\n            }\n        }\n    }\n\
+        }"
       x-endpoint-info-json: "{\n    \"summary\": \"List map definitions with optional filters\",\n    \"description\": \"\
         Returns a paginated list of map definitions.\",\n    \"tags\": [\n        \"Definition\"\n    ],\n    \"deprecated\"\
         : false,\n    \"operationId\": \"listDefinitions\"\n}"
@@ -1564,46 +1571,46 @@ paths:
         \                    \"nullable\": true\n                },\n                \"defaultBounds\": {\n              \
         \      \"$ref\": \"#/$defs/Bounds\",\n                    \"description\": \"New default bounds\",\n             \
         \       \"nullable\": true\n                },\n                \"metadata\": {\n                    \"type\": \"\
-        object\",\n                    \"additionalProperties\": true,\n                    \"description\": \"New metadata
-        (replaces existing)\",\n                    \"nullable\": true\n                }\n            }\n        },\n   \
-        \     \"LayerDefinition\": {\n            \"type\": \"object\",\n            \"description\": \"Configuration for
-        a specific layer within a map definition\",\n            \"required\": [\n                \"kind\"\n            ],\n\
-        \            \"properties\": {\n                \"kind\": {\n                    \"$ref\": \"#/$defs/MapKind\",\n\
-        \                    \"description\": \"The layer kind\"\n                },\n                \"storageMode\": {\n\
-        \                    \"type\": \"string\",\n                    \"enum\": [\n                        \"durable\",\n\
-        \                        \"cached\",\n                        \"ephemeral\"\n                    ],\n            \
-        \        \"default\": \"cached\",\n                    \"description\": \"How this layer's data should be stored\"\
-        \n                },\n                \"ttlSeconds\": {\n                    \"type\": \"integer\",\n            \
-        \        \"description\": \"TTL for cached/ephemeral data (0 = no TTL)\",\n                    \"nullable\": true\n\
-        \                },\n                \"defaultNonAuthorityHandling\": {\n                    \"$ref\": \"#/$defs/NonAuthorityHandlingMode\"\
-        ,\n                    \"description\": \"Default non-authority handling for channels using this layer\"\n       \
-        \         },\n                \"cellSize\": {\n                    \"type\": \"number\",\n                    \"format\"\
-        : \"double\",\n                    \"description\": \"Spatial cell size for indexing (default from config if not set)\"\
-        ,\n                    \"nullable\": true\n                }\n            }\n        },\n        \"MapKind\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"The category of spatial data this map contains.\\
-        nDifferent kinds have different update frequencies, storage models, and TTLs.\\n\",\n            \"enum\": [\n   \
-        \             \"terrain\",\n                \"static_geometry\",\n                \"navigation\",\n              \
-        \  \"resources\",\n                \"spawn_points\",\n                \"points_of_interest\",\n                \"\
-        dynamic_objects\",\n                \"hazards\",\n                \"weather_effects\",\n                \"ownership\"\
-        ,\n                \"combat_effects\",\n                \"visual_effects\"\n            ]\n        },\n        \"\
-        NonAuthorityHandlingMode\": {\n            \"type\": \"string\",\n            \"description\": \"How to handle publish
-        attempts from non-authority sources\",\n            \"enum\": [\n                \"reject_and_alert\",\n         \
-        \       \"accept_and_alert\",\n                \"reject_silent\"\n            ],\n            \"default\": \"reject_and_alert\"\
-        \n        },\n        \"Bounds\": {\n            \"type\": \"object\",\n            \"description\": \"An axis-aligned
-        bounding box in 3D space\",\n            \"required\": [\n                \"min\",\n                \"max\"\n    \
-        \        ],\n            \"properties\": {\n                \"min\": {\n                    \"$ref\": \"#/$defs/Position3D\"\
-        ,\n                    \"description\": \"Minimum corner (lowest x, y, z values)\"\n                },\n         \
-        \       \"max\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n                    \"description\": \"\
-        Maximum corner (highest x, y, z values)\"\n                }\n            }\n        },\n        \"Position3D\": {\n\
-        \            \"type\": \"object\",\n            \"description\": \"A point in 3D space\",\n            \"required\"\
-        : [\n                \"x\",\n                \"y\",\n                \"z\"\n            ],\n            \"properties\"\
-        : {\n                \"x\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\"\
-        ,\n                    \"description\": \"X coordinate (typically east-west)\"\n                },\n             \
-        \   \"y\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n           \
-        \         \"description\": \"Y coordinate (typically up-down / elevation)\"\n                },\n                \"\
-        z\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                 \
-        \   \"description\": \"Z coordinate (typically north-south)\"\n                }\n            }\n        }\n    }\n\
-        }"
+        object\",\n                    \"additionalProperties\": true,\n                    \"description\": \"Updated client-provided
+        definition metadata (replaces existing). No Bannou plugin reads specific keys from this field by convention.\",\n\
+        \                    \"nullable\": true\n                }\n            }\n        },\n        \"LayerDefinition\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"Configuration for a specific layer within a
+        map definition\",\n            \"required\": [\n                \"kind\"\n            ],\n            \"properties\"\
+        : {\n                \"kind\": {\n                    \"$ref\": \"#/$defs/MapKind\",\n                    \"description\"\
+        : \"The layer kind\"\n                },\n                \"storageMode\": {\n                    \"type\": \"string\"\
+        ,\n                    \"enum\": [\n                        \"durable\",\n                        \"cached\",\n  \
+        \                      \"ephemeral\"\n                    ],\n                    \"default\": \"cached\",\n     \
+        \               \"description\": \"How this layer's data should be stored\"\n                },\n                \"\
+        ttlSeconds\": {\n                    \"type\": \"integer\",\n                    \"description\": \"TTL for cached/ephemeral
+        data (0 = no TTL)\",\n                    \"nullable\": true\n                },\n                \"defaultNonAuthorityHandling\"\
+        : {\n                    \"$ref\": \"#/$defs/NonAuthorityHandlingMode\",\n                    \"description\": \"\
+        Default non-authority handling for channels using this layer\"\n                },\n                \"cellSize\":
+        {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        description\": \"Spatial cell size for indexing (default from config if not set)\",\n                    \"nullable\"\
+        : true\n                }\n            }\n        },\n        \"MapKind\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"The category of spatial data this map contains.\\nDifferent kinds have different update
+        frequencies, storage models, and TTLs.\\n\",\n            \"enum\": [\n                \"terrain\",\n            \
+        \    \"static_geometry\",\n                \"navigation\",\n                \"resources\",\n                \"spawn_points\"\
+        ,\n                \"points_of_interest\",\n                \"dynamic_objects\",\n                \"hazards\",\n \
+        \               \"weather_effects\",\n                \"ownership\",\n                \"combat_effects\",\n      \
+        \          \"visual_effects\"\n            ]\n        },\n        \"NonAuthorityHandlingMode\": {\n            \"\
+        type\": \"string\",\n            \"description\": \"How to handle publish attempts from non-authority sources\",\n\
+        \            \"enum\": [\n                \"reject_and_alert\",\n                \"accept_and_alert\",\n         \
+        \       \"reject_silent\"\n            ],\n            \"default\": \"reject_and_alert\"\n        },\n        \"Bounds\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"An axis-aligned bounding box in 3D space\"\
+        ,\n            \"required\": [\n                \"min\",\n                \"max\"\n            ],\n            \"\
+        properties\": {\n                \"min\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n             \
+        \       \"description\": \"Minimum corner (lowest x, y, z values)\"\n                },\n                \"max\":
+        {\n                    \"$ref\": \"#/$defs/Position3D\",\n                    \"description\": \"Maximum corner (highest
+        x, y, z values)\"\n                }\n            }\n        },\n        \"Position3D\": {\n            \"type\":
+        \"object\",\n            \"description\": \"A point in 3D space\",\n            \"required\": [\n                \"\
+        x\",\n                \"y\",\n                \"z\"\n            ],\n            \"properties\": {\n             \
+        \   \"x\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n           \
+        \         \"description\": \"X coordinate (typically east-west)\"\n                },\n                \"y\": {\n\
+        \                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\"\
+        : \"Y coordinate (typically up-down / elevation)\"\n                },\n                \"z\": {\n               \
+        \     \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"\
+        Z coordinate (typically north-south)\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/MapDefinition\"\
         ,\n    \"$defs\": {\n        \"MapDefinition\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"A map definition template that describes the structure of a region\",\n            \"required\": [\n         \
@@ -1619,50 +1626,50 @@ paths:
         \                },\n                \"defaultBounds\": {\n                    \"$ref\": \"#/$defs/Bounds\",\n   \
         \                 \"description\": \"Default bounds for regions using this definition\",\n                    \"nullable\"\
         : true\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n         \
-        \           \"additionalProperties\": true,\n                    \"description\": \"Additional metadata (schema-less)\"\
-        ,\n                    \"nullable\": true\n                },\n                \"createdAt\": {\n                \
-        \    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
-        When the definition was created\"\n                },\n                \"updatedAt\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the definition
-        was last updated\",\n                    \"nullable\": true\n                }\n            }\n        },\n      \
-        \  \"LayerDefinition\": {\n            \"type\": \"object\",\n            \"description\": \"Configuration for a specific
-        layer within a map definition\",\n            \"required\": [\n                \"kind\"\n            ],\n        \
-        \    \"properties\": {\n                \"kind\": {\n                    \"$ref\": \"#/$defs/MapKind\",\n        \
-        \            \"description\": \"The layer kind\"\n                },\n                \"storageMode\": {\n       \
-        \             \"type\": \"string\",\n                    \"enum\": [\n                        \"durable\",\n     \
-        \                   \"cached\",\n                        \"ephemeral\"\n                    ],\n                 \
-        \   \"default\": \"cached\",\n                    \"description\": \"How this layer's data should be stored\"\n  \
-        \              },\n                \"ttlSeconds\": {\n                    \"type\": \"integer\",\n               \
-        \     \"description\": \"TTL for cached/ephemeral data (0 = no TTL)\",\n                    \"nullable\": true\n \
-        \               },\n                \"defaultNonAuthorityHandling\": {\n                    \"$ref\": \"#/$defs/NonAuthorityHandlingMode\"\
-        ,\n                    \"description\": \"Default non-authority handling for channels using this layer\"\n       \
-        \         },\n                \"cellSize\": {\n                    \"type\": \"number\",\n                    \"format\"\
-        : \"double\",\n                    \"description\": \"Spatial cell size for indexing (default from config if not set)\"\
-        ,\n                    \"nullable\": true\n                }\n            }\n        },\n        \"MapKind\": {\n\
-        \            \"type\": \"string\",\n            \"description\": \"The category of spatial data this map contains.\\
-        nDifferent kinds have different update frequencies, storage models, and TTLs.\\n\",\n            \"enum\": [\n   \
-        \             \"terrain\",\n                \"static_geometry\",\n                \"navigation\",\n              \
-        \  \"resources\",\n                \"spawn_points\",\n                \"points_of_interest\",\n                \"\
-        dynamic_objects\",\n                \"hazards\",\n                \"weather_effects\",\n                \"ownership\"\
-        ,\n                \"combat_effects\",\n                \"visual_effects\"\n            ]\n        },\n        \"\
-        NonAuthorityHandlingMode\": {\n            \"type\": \"string\",\n            \"description\": \"How to handle publish
-        attempts from non-authority sources\",\n            \"enum\": [\n                \"reject_and_alert\",\n         \
-        \       \"accept_and_alert\",\n                \"reject_silent\"\n            ],\n            \"default\": \"reject_and_alert\"\
-        \n        },\n        \"Bounds\": {\n            \"type\": \"object\",\n            \"description\": \"An axis-aligned
-        bounding box in 3D space\",\n            \"required\": [\n                \"min\",\n                \"max\"\n    \
-        \        ],\n            \"properties\": {\n                \"min\": {\n                    \"$ref\": \"#/$defs/Position3D\"\
-        ,\n                    \"description\": \"Minimum corner (lowest x, y, z values)\"\n                },\n         \
-        \       \"max\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n                    \"description\": \"\
-        Maximum corner (highest x, y, z values)\"\n                }\n            }\n        },\n        \"Position3D\": {\n\
-        \            \"type\": \"object\",\n            \"description\": \"A point in 3D space\",\n            \"required\"\
-        : [\n                \"x\",\n                \"y\",\n                \"z\"\n            ],\n            \"properties\"\
-        : {\n                \"x\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\"\
-        ,\n                    \"description\": \"X coordinate (typically east-west)\"\n                },\n             \
-        \   \"y\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n           \
-        \         \"description\": \"Y coordinate (typically up-down / elevation)\"\n                },\n                \"\
-        z\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                 \
-        \   \"description\": \"Z coordinate (typically north-south)\"\n                }\n            }\n        }\n    }\n\
-        }"
+        \           \"additionalProperties\": true,\n                    \"description\": \"Client-provided definition metadata.
+        No Bannou plugin reads specific keys from this field by convention.\",\n                    \"nullable\": true\n \
+        \               },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                \
+        \    \"format\": \"date-time\",\n                    \"description\": \"When the definition was created\"\n      \
+        \          },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"\
+        format\": \"date-time\",\n                    \"description\": \"When the definition was last updated\",\n       \
+        \             \"nullable\": true\n                }\n            }\n        },\n        \"LayerDefinition\": {\n \
+        \           \"type\": \"object\",\n            \"description\": \"Configuration for a specific layer within a map
+        definition\",\n            \"required\": [\n                \"kind\"\n            ],\n            \"properties\":
+        {\n                \"kind\": {\n                    \"$ref\": \"#/$defs/MapKind\",\n                    \"description\"\
+        : \"The layer kind\"\n                },\n                \"storageMode\": {\n                    \"type\": \"string\"\
+        ,\n                    \"enum\": [\n                        \"durable\",\n                        \"cached\",\n  \
+        \                      \"ephemeral\"\n                    ],\n                    \"default\": \"cached\",\n     \
+        \               \"description\": \"How this layer's data should be stored\"\n                },\n                \"\
+        ttlSeconds\": {\n                    \"type\": \"integer\",\n                    \"description\": \"TTL for cached/ephemeral
+        data (0 = no TTL)\",\n                    \"nullable\": true\n                },\n                \"defaultNonAuthorityHandling\"\
+        : {\n                    \"$ref\": \"#/$defs/NonAuthorityHandlingMode\",\n                    \"description\": \"\
+        Default non-authority handling for channels using this layer\"\n                },\n                \"cellSize\":
+        {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        description\": \"Spatial cell size for indexing (default from config if not set)\",\n                    \"nullable\"\
+        : true\n                }\n            }\n        },\n        \"MapKind\": {\n            \"type\": \"string\",\n\
+        \            \"description\": \"The category of spatial data this map contains.\\nDifferent kinds have different update
+        frequencies, storage models, and TTLs.\\n\",\n            \"enum\": [\n                \"terrain\",\n            \
+        \    \"static_geometry\",\n                \"navigation\",\n                \"resources\",\n                \"spawn_points\"\
+        ,\n                \"points_of_interest\",\n                \"dynamic_objects\",\n                \"hazards\",\n \
+        \               \"weather_effects\",\n                \"ownership\",\n                \"combat_effects\",\n      \
+        \          \"visual_effects\"\n            ]\n        },\n        \"NonAuthorityHandlingMode\": {\n            \"\
+        type\": \"string\",\n            \"description\": \"How to handle publish attempts from non-authority sources\",\n\
+        \            \"enum\": [\n                \"reject_and_alert\",\n                \"accept_and_alert\",\n         \
+        \       \"reject_silent\"\n            ],\n            \"default\": \"reject_and_alert\"\n        },\n        \"Bounds\"\
+        : {\n            \"type\": \"object\",\n            \"description\": \"An axis-aligned bounding box in 3D space\"\
+        ,\n            \"required\": [\n                \"min\",\n                \"max\"\n            ],\n            \"\
+        properties\": {\n                \"min\": {\n                    \"$ref\": \"#/$defs/Position3D\",\n             \
+        \       \"description\": \"Minimum corner (lowest x, y, z values)\"\n                },\n                \"max\":
+        {\n                    \"$ref\": \"#/$defs/Position3D\",\n                    \"description\": \"Maximum corner (highest
+        x, y, z values)\"\n                }\n            }\n        },\n        \"Position3D\": {\n            \"type\":
+        \"object\",\n            \"description\": \"A point in 3D space\",\n            \"required\": [\n                \"\
+        x\",\n                \"y\",\n                \"z\"\n            ],\n            \"properties\": {\n             \
+        \   \"x\": {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n           \
+        \         \"description\": \"X coordinate (typically east-west)\"\n                },\n                \"y\": {\n\
+        \                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\"\
+        : \"Y coordinate (typically up-down / elevation)\"\n                },\n                \"z\": {\n               \
+        \     \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"\
+        Z coordinate (typically north-south)\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update a map definition\",\n    \"description\": \"Updates an existing
         map definition. Cannot change the definition ID.\\nLayer configurations can be modified.\\n\",\n    \"tags\": [\n\
         \        \"Definition\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateDefinition\"\n}"
@@ -1852,10 +1859,9 @@ components:
         data:
           type: object
           additionalProperties: true
-          description: |
-            SCHEMA-LESS. Can contain anything.
-            lib-mapping does not validate this.
-            Examples: cover_rating, health, respawn_delay, etc.
+          description: >-
+            Game-specific spatial object data. lib-mapping stores and returns this as-is.
+            No Bannou plugin reads specific keys from this field by convention.
           nullable: true
     MapObject:
       type: object
@@ -1893,7 +1899,9 @@ components:
         data:
           type: object
           additionalProperties: true
-          description: Schema-less object data (publisher-defined)
+          description: >-
+            Game-specific spatial object data.
+            No Bannou plugin reads specific keys from this field by convention.
           nullable: true
         version:
           type: integer
@@ -1936,7 +1944,9 @@ components:
         data:
           type: object
           additionalProperties: true
-          description: Object state (for created/updated)
+          description: >-
+            Game-specific object state data.
+            No Bannou plugin reads specific keys from this field by convention.
           nullable: true
     AuthorityGrant:
       type: object
@@ -2036,23 +2046,23 @@ components:
         requires:
           type: object
           additionalProperties: true
-          description: |
-            Required criteria. Object types, property constraints.
-            Example: { "objectTypes": ["boulder"], "cover_rating": { "min": 0.5 } }
+          description: >-
+            Game-specific required criteria for affordance matching.
+            No Bannou plugin reads specific keys from this field by convention.
           nullable: true
         prefers:
           type: object
           additionalProperties: true
-          description: |
-            Preferred criteria (boost score but not required).
-            Example: { "elevation": { "prefer_higher": true } }
+          description: >-
+            Game-specific preferred criteria (boost score but not required).
+            No Bannou plugin reads specific keys from this field by convention.
           nullable: true
         excludes:
           type: object
           additionalProperties: true
-          description: |
-            Exclusion criteria. Reject candidates matching these.
-            Example: { "hazards": true, "contested": true }
+          description: >-
+            Game-specific exclusion criteria for affordance matching.
+            No Bannou plugin reads specific keys from this field by convention.
           nullable: true
     CreateChannelRequest:
       type: object
@@ -2476,9 +2486,9 @@ components:
         features:
           type: object
           additionalProperties: true
-          description: |
-            What makes this location suitable.
-            Example: { "cover_rating": 0.8, "sightlines": ["north"], "terrain": "rocky" }
+          description: >-
+            Game-specific features of this affordance result.
+            No Bannou plugin reads specific keys from this field by convention.
           nullable: true
         objectIds:
           type: array
@@ -2650,7 +2660,9 @@ components:
         metadata:
           type: object
           additionalProperties: true
-          description: Additional metadata (schema-less)
+          description: >-
+            Client-provided definition metadata.
+            No Bannou plugin reads specific keys from this field by convention.
           nullable: true
         createdAt:
           type: string
@@ -2716,7 +2728,9 @@ components:
         metadata:
           type: object
           additionalProperties: true
-          description: Additional metadata
+          description: >-
+            Client-provided definition metadata.
+            No Bannou plugin reads specific keys from this field by convention.
           nullable: true
     GetDefinitionRequest:
       type: object
@@ -2793,7 +2807,9 @@ components:
         metadata:
           type: object
           additionalProperties: true
-          description: New metadata (replaces existing)
+          description: >-
+            Updated client-provided definition metadata (replaces existing).
+            No Bannou plugin reads specific keys from this field by convention.
           nullable: true
     DeleteDefinitionRequest:
       type: object

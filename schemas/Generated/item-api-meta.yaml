@@ -1664,8 +1664,9 @@ paths:
         \ \"type\": \"string\",\n                    \"maxLength\": 64,\n                    \"nullable\": true,\n       \
         \             \"description\": \"Type of target entity when targetId is provided\"\n                },\n         \
         \       \"context\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Additional context data passed to
-        contract template value substitution\"\n                }\n            }\n        }\n    }\n}"
+        \                    \"nullable\": true,\n                    \"description\": \"Caller-provided context merged into
+        contract gameMetadata for template value substitution. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UseItemResponse\"\
         ,\n    \"$defs\": {\n        \"UseItemResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response containing the result of an item use attempt\",\n            \"additionalProperties\": false,\n     \
@@ -1743,10 +1744,12 @@ paths:
         ,\n                    \"maxLength\": 64,\n                    \"description\": \"Milestone code to complete in the
         use behavior contract\"\n                },\n                \"evidence\": {\n                    \"type\": \"object\"\
         ,\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n                \
-        \    \"description\": \"Evidence data for this milestone completion (passed to contract)\"\n                },\n \
-        \               \"context\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Additional context data passed
-        to contract template value substitution\"\n                }\n            }\n        }\n    }\n}"
+        \    \"description\": \"Evidence data passed through to Contract milestone completion. No Bannou plugin reads specific
+        keys from this field by convention.\"\n                },\n                \"context\": {\n                    \"\
+        type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n\
+        \                    \"description\": \"Caller-provided context merged into contract gameMetadata for template value
+        substitution. No Bannou plugin reads specific keys from this field by convention.\"\n                }\n         \
+        \   }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/UseItemStepResponse\"\
         ,\n    \"$defs\": {\n        \"UseItemStepResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Response from completing a multi-step item use milestone\",\n            \"additionalProperties\": false,\n  \
@@ -3224,7 +3227,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional context data passed to contract template value substitution
+          description: >-
+            Caller-provided context merged into contract gameMetadata for template value substitution.
+            No Bannou plugin reads specific keys from this field by convention.
     UseItemResponse:
       type: object
       description: Response containing the result of an item use attempt
@@ -3293,12 +3298,16 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Evidence data for this milestone completion (passed to contract)
+          description: >-
+            Evidence data passed through to Contract milestone completion.
+            No Bannou plugin reads specific keys from this field by convention.
         context:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional context data passed to contract template value substitution
+          description: >-
+            Caller-provided context merged into contract gameMetadata for template value substitution.
+            No Bannou plugin reads specific keys from this field by convention.
     UseItemStepResponse:
       type: object
       description: Response from completing a multi-step item use milestone

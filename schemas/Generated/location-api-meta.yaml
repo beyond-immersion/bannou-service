@@ -112,21 +112,22 @@ paths:
         \             \"type\": \"object\"\n                        }\n                    ],\n                    \"nullable\"\
         : true,\n                    \"description\": \"Origin point for local or inherited coordinate systems\"\n       \
         \         },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Additional metadata for the
-        location (JSON)\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location
-        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
-        \                   \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location
-        was last updated\"\n                }\n            }\n        },\n        \"LocationType\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"Type classification for locations\",\n            \"enum\": [\n    \
-        \            \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n                \"DISTRICT\"\
-        ,\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\"\
-        ,\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n        },\n        \"BoundsPrecision\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Precision level of spatial bounds for a location\"\
-        ,\n            \"enum\": [\n                \"exact\",\n                \"approximate\",\n                \"none\"\
-        \n            ]\n        },\n        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How this location's coordinate system relates to its parent\",\n            \"enum\": [\n                \"inherit\"\
-        ,\n                \"local\",\n                \"portal\"\n            ]\n        }\n    }\n}"
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-provided location
+        metadata. No Bannou plugin reads specific keys from this field by convention.\"\n                },\n            \
+        \    \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"Timestamp when the location was created\"\n                },\n          \
+        \      \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"Timestamp when the location was last updated\"\n                }\n    \
+        \        }\n        },\n        \"LocationType\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Type classification for locations\",\n            \"enum\": [\n                \"CONTINENT\",\n              \
+        \  \"REGION\",\n                \"CITY\",\n                \"DISTRICT\",\n                \"BUILDING\",\n        \
+        \        \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\",\n                \"DUNGEON\",\n\
+        \                \"OTHER\"\n            ]\n        },\n        \"BoundsPrecision\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Precision level of spatial bounds for a location\",\n            \"enum\": [\n \
+        \               \"exact\",\n                \"approximate\",\n                \"none\"\n            ]\n        },\n\
+        \        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\": \"How this location's
+        coordinate system relates to its parent\",\n            \"enum\": [\n                \"inherit\",\n              \
+        \  \"local\",\n                \"portal\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get location by ID\",\n    \"description\": \"\",\n    \"tags\": [\n  \
         \      \"Location\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getLocation\"\n}"
   /location/get-by-code:
@@ -203,21 +204,22 @@ paths:
         \             \"type\": \"object\"\n                        }\n                    ],\n                    \"nullable\"\
         : true,\n                    \"description\": \"Origin point for local or inherited coordinate systems\"\n       \
         \         },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Additional metadata for the
-        location (JSON)\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location
-        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
-        \                   \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location
-        was last updated\"\n                }\n            }\n        },\n        \"LocationType\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"Type classification for locations\",\n            \"enum\": [\n    \
-        \            \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n                \"DISTRICT\"\
-        ,\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\"\
-        ,\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n        },\n        \"BoundsPrecision\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Precision level of spatial bounds for a location\"\
-        ,\n            \"enum\": [\n                \"exact\",\n                \"approximate\",\n                \"none\"\
-        \n            ]\n        },\n        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How this location's coordinate system relates to its parent\",\n            \"enum\": [\n                \"inherit\"\
-        ,\n                \"local\",\n                \"portal\"\n            ]\n        }\n    }\n}"
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-provided location
+        metadata. No Bannou plugin reads specific keys from this field by convention.\"\n                },\n            \
+        \    \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"Timestamp when the location was created\"\n                },\n          \
+        \      \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"Timestamp when the location was last updated\"\n                }\n    \
+        \        }\n        },\n        \"LocationType\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Type classification for locations\",\n            \"enum\": [\n                \"CONTINENT\",\n              \
+        \  \"REGION\",\n                \"CITY\",\n                \"DISTRICT\",\n                \"BUILDING\",\n        \
+        \        \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\",\n                \"DUNGEON\",\n\
+        \                \"OTHER\"\n            ]\n        },\n        \"BoundsPrecision\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Precision level of spatial bounds for a location\",\n            \"enum\": [\n \
+        \               \"exact\",\n                \"approximate\",\n                \"none\"\n            ]\n        },\n\
+        \        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\": \"How this location's
+        coordinate system relates to its parent\",\n            \"enum\": [\n                \"inherit\",\n              \
+        \  \"local\",\n                \"portal\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get location by code and realm\",\n    \"description\": \"Retrieve a location
         using its unique code within a specific realm\",\n    \"tags\": [\n        \"Location\"\n    ],\n    \"deprecated\"\
         : false,\n    \"operationId\": \"getLocationByCode\"\n}"
@@ -319,21 +321,21 @@ paths:
         \               \"nullable\": true,\n                    \"description\": \"Origin point for local or inherited coordinate
         systems\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n      \
         \              \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Additional metadata for the location (JSON)\"\n                },\n                \"createdAt\": {\n        \
-        \            \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the location was created\"\n                },\n                \"updatedAt\": {\n            \
-        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the location was last updated\"\n                }\n            }\n        },\n        \"LocationType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n    \
-        \        \"enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n   \
-        \             \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\"\
-        ,\n                \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n     \
-        \   },\n        \"BoundsPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision
-        level of spatial bounds for a location\",\n            \"enum\": [\n                \"exact\",\n                \"\
-        approximate\",\n                \"none\"\n            ]\n        },\n        \"CoordinateMode\": {\n            \"\
-        type\": \"string\",\n            \"description\": \"How this location's coordinate system relates to its parent\"\
-        ,\n            \"enum\": [\n                \"inherit\",\n                \"local\",\n                \"portal\"\n\
-        \            ]\n        }\n    }\n}"
+        : \"Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention.\"\n   \
+        \             },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                  \
+        \  \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location was created\"\n\
+        \                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location was last updated\"\
+        \n                }\n            }\n        },\n        \"LocationType\": {\n            \"type\": \"string\",\n \
+        \           \"description\": \"Type classification for locations\",\n            \"enum\": [\n                \"CONTINENT\"\
+        ,\n                \"REGION\",\n                \"CITY\",\n                \"DISTRICT\",\n                \"BUILDING\"\
+        ,\n                \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\",\n                \"DUNGEON\"\
+        ,\n                \"OTHER\"\n            ]\n        },\n        \"BoundsPrecision\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"Precision level of spatial bounds for a location\",\n            \"enum\"\
+        : [\n                \"exact\",\n                \"approximate\",\n                \"none\"\n            ]\n     \
+        \   },\n        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\": \"How this
+        location's coordinate system relates to its parent\",\n            \"enum\": [\n                \"inherit\",\n   \
+        \             \"local\",\n                \"portal\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List locations with filtering\",\n    \"description\": \"Retrieve locations
         with optional realm, parent, and type filtering\",\n    \"tags\": [\n        \"Location\"\n    ],\n    \"deprecated\"\
         : false,\n    \"operationId\": \"listLocations\"\n}"
@@ -437,21 +439,21 @@ paths:
         \               \"nullable\": true,\n                    \"description\": \"Origin point for local or inherited coordinate
         systems\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n      \
         \              \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Additional metadata for the location (JSON)\"\n                },\n                \"createdAt\": {\n        \
-        \            \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the location was created\"\n                },\n                \"updatedAt\": {\n            \
-        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the location was last updated\"\n                }\n            }\n        },\n        \"LocationType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n    \
-        \        \"enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n   \
-        \             \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\"\
-        ,\n                \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n     \
-        \   },\n        \"BoundsPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision
-        level of spatial bounds for a location\",\n            \"enum\": [\n                \"exact\",\n                \"\
-        approximate\",\n                \"none\"\n            ]\n        },\n        \"CoordinateMode\": {\n            \"\
-        type\": \"string\",\n            \"description\": \"How this location's coordinate system relates to its parent\"\
-        ,\n            \"enum\": [\n                \"inherit\",\n                \"local\",\n                \"portal\"\n\
-        \            ]\n        }\n    }\n}"
+        : \"Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention.\"\n   \
+        \             },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                  \
+        \  \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location was created\"\n\
+        \                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location was last updated\"\
+        \n                }\n            }\n        },\n        \"LocationType\": {\n            \"type\": \"string\",\n \
+        \           \"description\": \"Type classification for locations\",\n            \"enum\": [\n                \"CONTINENT\"\
+        ,\n                \"REGION\",\n                \"CITY\",\n                \"DISTRICT\",\n                \"BUILDING\"\
+        ,\n                \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\",\n                \"DUNGEON\"\
+        ,\n                \"OTHER\"\n            ]\n        },\n        \"BoundsPrecision\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"Precision level of spatial bounds for a location\",\n            \"enum\"\
+        : [\n                \"exact\",\n                \"approximate\",\n                \"none\"\n            ]\n     \
+        \   },\n        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\": \"How this
+        location's coordinate system relates to its parent\",\n            \"enum\": [\n                \"inherit\",\n   \
+        \             \"local\",\n                \"portal\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List all locations in a realm (primary query pattern)\",\n    \"description\"\
         : \"Returns all locations within a specific realm, optionally filtered by\\nlocation type and parent. This is the
         primary access pattern for\\nrealm-scoped location queries.\\n\",\n    \"tags\": [\n        \"Location\"\n    ],\n\
@@ -558,21 +560,21 @@ paths:
         \               \"nullable\": true,\n                    \"description\": \"Origin point for local or inherited coordinate
         systems\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n      \
         \              \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Additional metadata for the location (JSON)\"\n                },\n                \"createdAt\": {\n        \
-        \            \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the location was created\"\n                },\n                \"updatedAt\": {\n            \
-        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the location was last updated\"\n                }\n            }\n        },\n        \"LocationType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n    \
-        \        \"enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n   \
-        \             \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\"\
-        ,\n                \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n     \
-        \   },\n        \"BoundsPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision
-        level of spatial bounds for a location\",\n            \"enum\": [\n                \"exact\",\n                \"\
-        approximate\",\n                \"none\"\n            ]\n        },\n        \"CoordinateMode\": {\n            \"\
-        type\": \"string\",\n            \"description\": \"How this location's coordinate system relates to its parent\"\
-        ,\n            \"enum\": [\n                \"inherit\",\n                \"local\",\n                \"portal\"\n\
-        \            ]\n        }\n    }\n}"
+        : \"Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention.\"\n   \
+        \             },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                  \
+        \  \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location was created\"\n\
+        \                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location was last updated\"\
+        \n                }\n            }\n        },\n        \"LocationType\": {\n            \"type\": \"string\",\n \
+        \           \"description\": \"Type classification for locations\",\n            \"enum\": [\n                \"CONTINENT\"\
+        ,\n                \"REGION\",\n                \"CITY\",\n                \"DISTRICT\",\n                \"BUILDING\"\
+        ,\n                \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\",\n                \"DUNGEON\"\
+        ,\n                \"OTHER\"\n            ]\n        },\n        \"BoundsPrecision\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"Precision level of spatial bounds for a location\",\n            \"enum\"\
+        : [\n                \"exact\",\n                \"approximate\",\n                \"none\"\n            ]\n     \
+        \   },\n        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\": \"How this
+        location's coordinate system relates to its parent\",\n            \"enum\": [\n                \"inherit\",\n   \
+        \             \"local\",\n                \"portal\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get child locations for a parent location\",\n    \"description\": \"Retrieve
         all locations that have the specified location as their parent.\\nUseful for getting all cities in a region, all buildings
         in a city, etc.\\n\",\n    \"tags\": [\n        \"Location\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -677,21 +679,21 @@ paths:
         \               \"nullable\": true,\n                    \"description\": \"Origin point for local or inherited coordinate
         systems\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n      \
         \              \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Additional metadata for the location (JSON)\"\n                },\n                \"createdAt\": {\n        \
-        \            \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the location was created\"\n                },\n                \"updatedAt\": {\n            \
-        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the location was last updated\"\n                }\n            }\n        },\n        \"LocationType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n    \
-        \        \"enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n   \
-        \             \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\"\
-        ,\n                \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n     \
-        \   },\n        \"BoundsPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision
-        level of spatial bounds for a location\",\n            \"enum\": [\n                \"exact\",\n                \"\
-        approximate\",\n                \"none\"\n            ]\n        },\n        \"CoordinateMode\": {\n            \"\
-        type\": \"string\",\n            \"description\": \"How this location's coordinate system relates to its parent\"\
-        ,\n            \"enum\": [\n                \"inherit\",\n                \"local\",\n                \"portal\"\n\
-        \            ]\n        }\n    }\n}"
+        : \"Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention.\"\n   \
+        \             },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                  \
+        \  \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location was created\"\n\
+        \                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location was last updated\"\
+        \n                }\n            }\n        },\n        \"LocationType\": {\n            \"type\": \"string\",\n \
+        \           \"description\": \"Type classification for locations\",\n            \"enum\": [\n                \"CONTINENT\"\
+        ,\n                \"REGION\",\n                \"CITY\",\n                \"DISTRICT\",\n                \"BUILDING\"\
+        ,\n                \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\",\n                \"DUNGEON\"\
+        ,\n                \"OTHER\"\n            ]\n        },\n        \"BoundsPrecision\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"Precision level of spatial bounds for a location\",\n            \"enum\"\
+        : [\n                \"exact\",\n                \"approximate\",\n                \"none\"\n            ]\n     \
+        \   },\n        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\": \"How this
+        location's coordinate system relates to its parent\",\n            \"enum\": [\n                \"inherit\",\n   \
+        \             \"local\",\n                \"portal\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get root locations in a realm\",\n    \"description\": \"Returns all top-level
         locations in a realm (locations with no parent).\\nThese are typically regions or major areas within the realm.\\\
         n\",\n    \"tags\": [\n        \"Location\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"listRootLocations\"\
@@ -785,21 +787,21 @@ paths:
         \               \"nullable\": true,\n                    \"description\": \"Origin point for local or inherited coordinate
         systems\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n      \
         \              \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Additional metadata for the location (JSON)\"\n                },\n                \"createdAt\": {\n        \
-        \            \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the location was created\"\n                },\n                \"updatedAt\": {\n            \
-        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the location was last updated\"\n                }\n            }\n        },\n        \"LocationType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n    \
-        \        \"enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n   \
-        \             \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\"\
-        ,\n                \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n     \
-        \   },\n        \"BoundsPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision
-        level of spatial bounds for a location\",\n            \"enum\": [\n                \"exact\",\n                \"\
-        approximate\",\n                \"none\"\n            ]\n        },\n        \"CoordinateMode\": {\n            \"\
-        type\": \"string\",\n            \"description\": \"How this location's coordinate system relates to its parent\"\
-        ,\n            \"enum\": [\n                \"inherit\",\n                \"local\",\n                \"portal\"\n\
-        \            ]\n        }\n    }\n}"
+        : \"Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention.\"\n   \
+        \             },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                  \
+        \  \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location was created\"\n\
+        \                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location was last updated\"\
+        \n                }\n            }\n        },\n        \"LocationType\": {\n            \"type\": \"string\",\n \
+        \           \"description\": \"Type classification for locations\",\n            \"enum\": [\n                \"CONTINENT\"\
+        ,\n                \"REGION\",\n                \"CITY\",\n                \"DISTRICT\",\n                \"BUILDING\"\
+        ,\n                \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\",\n                \"DUNGEON\"\
+        ,\n                \"OTHER\"\n            ]\n        },\n        \"BoundsPrecision\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"Precision level of spatial bounds for a location\",\n            \"enum\"\
+        : [\n                \"exact\",\n                \"approximate\",\n                \"none\"\n            ]\n     \
+        \   },\n        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\": \"How this
+        location's coordinate system relates to its parent\",\n            \"enum\": [\n                \"inherit\",\n   \
+        \             \"local\",\n                \"portal\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get all ancestors of a location\",\n    \"description\": \"Returns the
         full ancestry chain from the specified location up to the\\nroot location (parentLocationId=null). For example, for
         a specific building\\nmight return [district, city, region].\\n\",\n    \"tags\": [\n        \"Location\"\n    ],\n\
@@ -974,21 +976,21 @@ paths:
         \               \"nullable\": true,\n                    \"description\": \"Origin point for local or inherited coordinate
         systems\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n      \
         \              \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Additional metadata for the location (JSON)\"\n                },\n                \"createdAt\": {\n        \
-        \            \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the location was created\"\n                },\n                \"updatedAt\": {\n            \
-        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the location was last updated\"\n                }\n            }\n        },\n        \"LocationType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n    \
-        \        \"enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n   \
-        \             \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\"\
-        ,\n                \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n     \
-        \   },\n        \"BoundsPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision
-        level of spatial bounds for a location\",\n            \"enum\": [\n                \"exact\",\n                \"\
-        approximate\",\n                \"none\"\n            ]\n        },\n        \"CoordinateMode\": {\n            \"\
-        type\": \"string\",\n            \"description\": \"How this location's coordinate system relates to its parent\"\
-        ,\n            \"enum\": [\n                \"inherit\",\n                \"local\",\n                \"portal\"\n\
-        \            ]\n        }\n    }\n}"
+        : \"Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention.\"\n   \
+        \             },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                  \
+        \  \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location was created\"\n\
+        \                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location was last updated\"\
+        \n                }\n            }\n        },\n        \"LocationType\": {\n            \"type\": \"string\",\n \
+        \           \"description\": \"Type classification for locations\",\n            \"enum\": [\n                \"CONTINENT\"\
+        ,\n                \"REGION\",\n                \"CITY\",\n                \"DISTRICT\",\n                \"BUILDING\"\
+        ,\n                \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\",\n                \"DUNGEON\"\
+        ,\n                \"OTHER\"\n            ]\n        },\n        \"BoundsPrecision\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"Precision level of spatial bounds for a location\",\n            \"enum\"\
+        : [\n                \"exact\",\n                \"approximate\",\n                \"none\"\n            ]\n     \
+        \   },\n        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\": \"How this
+        location's coordinate system relates to its parent\",\n            \"enum\": [\n                \"inherit\",\n   \
+        \             \"local\",\n                \"portal\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get all descendants of a location\",\n    \"description\": \"Returns all
         locations that are descendants of the specified location\\n(direct children, grandchildren, etc.). Useful for finding
         all places\\nwithin a region or city.\\n\",\n    \"tags\": [\n        \"Location\"\n    ],\n    \"deprecated\": false,\n\
@@ -1051,17 +1053,17 @@ paths:
         \    ],\n                    \"nullable\": true,\n                    \"description\": \"Origin point for local or
         inherited coordinate systems\"\n                },\n                \"metadata\": {\n                    \"type\"\
         : \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\": true,\n    \
-        \                \"description\": \"Additional metadata for the location (JSON)\"\n                }\n           \
-        \ }\n        },\n        \"LocationType\": {\n            \"type\": \"string\",\n            \"description\": \"Type
-        classification for locations\",\n            \"enum\": [\n                \"CONTINENT\",\n                \"REGION\"\
-        ,\n                \"CITY\",\n                \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\"\
-        ,\n                \"LANDMARK\",\n                \"WILDERNESS\",\n                \"DUNGEON\",\n                \"\
-        OTHER\"\n            ]\n        },\n        \"BoundsPrecision\": {\n            \"type\": \"string\",\n          \
-        \  \"description\": \"Precision level of spatial bounds for a location\",\n            \"enum\": [\n             \
-        \   \"exact\",\n                \"approximate\",\n                \"none\"\n            ]\n        },\n        \"\
-        CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\": \"How this location's coordinate
-        system relates to its parent\",\n            \"enum\": [\n                \"inherit\",\n                \"local\"\
-        ,\n                \"portal\"\n            ]\n        }\n    }\n}"
+        \                \"description\": \"Client-provided location metadata. No Bannou plugin reads specific keys from this
+        field by convention.\"\n                }\n            }\n        },\n        \"LocationType\": {\n            \"\
+        type\": \"string\",\n            \"description\": \"Type classification for locations\",\n            \"enum\": [\n\
+        \                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n                \"DISTRICT\"\
+        ,\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\"\
+        ,\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n        },\n        \"BoundsPrecision\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Precision level of spatial bounds for a location\"\
+        ,\n            \"enum\": [\n                \"exact\",\n                \"approximate\",\n                \"none\"\
+        \n            ]\n        },\n        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"How this location's coordinate system relates to its parent\",\n            \"enum\": [\n                \"inherit\"\
+        ,\n                \"local\",\n                \"portal\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LocationResponse\"\
         ,\n    \"$defs\": {\n        \"LocationResponse\": {\n            \"description\": \"Complete location data returned
         from API operations\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n        \
@@ -1101,21 +1103,22 @@ paths:
         \             \"type\": \"object\"\n                        }\n                    ],\n                    \"nullable\"\
         : true,\n                    \"description\": \"Origin point for local or inherited coordinate systems\"\n       \
         \         },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Additional metadata for the
-        location (JSON)\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location
-        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
-        \                   \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location
-        was last updated\"\n                }\n            }\n        },\n        \"LocationType\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"Type classification for locations\",\n            \"enum\": [\n    \
-        \            \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n                \"DISTRICT\"\
-        ,\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\"\
-        ,\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n        },\n        \"BoundsPrecision\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Precision level of spatial bounds for a location\"\
-        ,\n            \"enum\": [\n                \"exact\",\n                \"approximate\",\n                \"none\"\
-        \n            ]\n        },\n        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How this location's coordinate system relates to its parent\",\n            \"enum\": [\n                \"inherit\"\
-        ,\n                \"local\",\n                \"portal\"\n            ]\n        }\n    }\n}"
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-provided location
+        metadata. No Bannou plugin reads specific keys from this field by convention.\"\n                },\n            \
+        \    \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"Timestamp when the location was created\"\n                },\n          \
+        \      \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"Timestamp when the location was last updated\"\n                }\n    \
+        \        }\n        },\n        \"LocationType\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Type classification for locations\",\n            \"enum\": [\n                \"CONTINENT\",\n              \
+        \  \"REGION\",\n                \"CITY\",\n                \"DISTRICT\",\n                \"BUILDING\",\n        \
+        \        \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\",\n                \"DUNGEON\",\n\
+        \                \"OTHER\"\n            ]\n        },\n        \"BoundsPrecision\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Precision level of spatial bounds for a location\",\n            \"enum\": [\n \
+        \               \"exact\",\n                \"approximate\",\n                \"none\"\n            ]\n        },\n\
+        \        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\": \"How this location's
+        coordinate system relates to its parent\",\n            \"enum\": [\n                \"inherit\",\n              \
+        \  \"local\",\n                \"portal\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create new location\",\n    \"description\": \"\",\n    \"tags\": [\n \
         \       \"Location Admin\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"createLocation\"\n}"
   /location/update:
@@ -1171,17 +1174,18 @@ paths:
         \                       }\n                    ],\n                    \"nullable\": true,\n                    \"\
         description\": \"Origin point for local or inherited coordinate systems\"\n                },\n                \"\
         metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n  \
-        \                  \"nullable\": true,\n                    \"description\": \"Additional metadata\"\n           \
-        \     }\n            }\n        },\n        \"LocationType\": {\n            \"type\": \"string\",\n            \"\
-        description\": \"Type classification for locations\",\n            \"enum\": [\n                \"CONTINENT\",\n \
-        \               \"REGION\",\n                \"CITY\",\n                \"DISTRICT\",\n                \"BUILDING\"\
-        ,\n                \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\",\n                \"DUNGEON\"\
-        ,\n                \"OTHER\"\n            ]\n        },\n        \"BoundsPrecision\": {\n            \"type\": \"\
-        string\",\n            \"description\": \"Precision level of spatial bounds for a location\",\n            \"enum\"\
-        : [\n                \"exact\",\n                \"approximate\",\n                \"none\"\n            ]\n     \
-        \   },\n        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\": \"How this
-        location's coordinate system relates to its parent\",\n            \"enum\": [\n                \"inherit\",\n   \
-        \             \"local\",\n                \"portal\"\n            ]\n        }\n    }\n}"
+        \                  \"nullable\": true,\n                    \"description\": \"Updated client-provided location metadata.
+        No Bannou plugin reads specific keys from this field by convention.\"\n                }\n            }\n        },\n\
+        \        \"LocationType\": {\n            \"type\": \"string\",\n            \"description\": \"Type classification
+        for locations\",\n            \"enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n         \
+        \       \"CITY\",\n                \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n     \
+        \           \"LANDMARK\",\n                \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\
+        \n            ]\n        },\n        \"BoundsPrecision\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Precision level of spatial bounds for a location\",\n            \"enum\": [\n                \"exact\",\n   \
+        \             \"approximate\",\n                \"none\"\n            ]\n        },\n        \"CoordinateMode\": {\n\
+        \            \"type\": \"string\",\n            \"description\": \"How this location's coordinate system relates to
+        its parent\",\n            \"enum\": [\n                \"inherit\",\n                \"local\",\n               \
+        \ \"portal\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/LocationResponse\"\
         ,\n    \"$defs\": {\n        \"LocationResponse\": {\n            \"description\": \"Complete location data returned
         from API operations\",\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n        \
@@ -1221,21 +1225,22 @@ paths:
         \             \"type\": \"object\"\n                        }\n                    ],\n                    \"nullable\"\
         : true,\n                    \"description\": \"Origin point for local or inherited coordinate systems\"\n       \
         \         },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Additional metadata for the
-        location (JSON)\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location
-        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
-        \                   \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location
-        was last updated\"\n                }\n            }\n        },\n        \"LocationType\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"Type classification for locations\",\n            \"enum\": [\n    \
-        \            \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n                \"DISTRICT\"\
-        ,\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\"\
-        ,\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n        },\n        \"BoundsPrecision\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Precision level of spatial bounds for a location\"\
-        ,\n            \"enum\": [\n                \"exact\",\n                \"approximate\",\n                \"none\"\
-        \n            ]\n        },\n        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How this location's coordinate system relates to its parent\",\n            \"enum\": [\n                \"inherit\"\
-        ,\n                \"local\",\n                \"portal\"\n            ]\n        }\n    }\n}"
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-provided location
+        metadata. No Bannou plugin reads specific keys from this field by convention.\"\n                },\n            \
+        \    \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"Timestamp when the location was created\"\n                },\n          \
+        \      \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"Timestamp when the location was last updated\"\n                }\n    \
+        \        }\n        },\n        \"LocationType\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Type classification for locations\",\n            \"enum\": [\n                \"CONTINENT\",\n              \
+        \  \"REGION\",\n                \"CITY\",\n                \"DISTRICT\",\n                \"BUILDING\",\n        \
+        \        \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\",\n                \"DUNGEON\",\n\
+        \                \"OTHER\"\n            ]\n        },\n        \"BoundsPrecision\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Precision level of spatial bounds for a location\",\n            \"enum\": [\n \
+        \               \"exact\",\n                \"approximate\",\n                \"none\"\n            ]\n        },\n\
+        \        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\": \"How this location's
+        coordinate system relates to its parent\",\n            \"enum\": [\n                \"inherit\",\n              \
+        \  \"local\",\n                \"portal\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update location\",\n    \"description\": \"\",\n    \"tags\": [\n     \
         \   \"Location Admin\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateLocation\"\n}"
   /location/set-parent:
@@ -1318,21 +1323,22 @@ paths:
         \             \"type\": \"object\"\n                        }\n                    ],\n                    \"nullable\"\
         : true,\n                    \"description\": \"Origin point for local or inherited coordinate systems\"\n       \
         \         },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Additional metadata for the
-        location (JSON)\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location
-        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
-        \                   \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location
-        was last updated\"\n                }\n            }\n        },\n        \"LocationType\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"Type classification for locations\",\n            \"enum\": [\n    \
-        \            \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n                \"DISTRICT\"\
-        ,\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\"\
-        ,\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n        },\n        \"BoundsPrecision\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Precision level of spatial bounds for a location\"\
-        ,\n            \"enum\": [\n                \"exact\",\n                \"approximate\",\n                \"none\"\
-        \n            ]\n        },\n        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How this location's coordinate system relates to its parent\",\n            \"enum\": [\n                \"inherit\"\
-        ,\n                \"local\",\n                \"portal\"\n            ]\n        }\n    }\n}"
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-provided location
+        metadata. No Bannou plugin reads specific keys from this field by convention.\"\n                },\n            \
+        \    \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"Timestamp when the location was created\"\n                },\n          \
+        \      \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"Timestamp when the location was last updated\"\n                }\n    \
+        \        }\n        },\n        \"LocationType\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Type classification for locations\",\n            \"enum\": [\n                \"CONTINENT\",\n              \
+        \  \"REGION\",\n                \"CITY\",\n                \"DISTRICT\",\n                \"BUILDING\",\n        \
+        \        \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\",\n                \"DUNGEON\",\n\
+        \                \"OTHER\"\n            ]\n        },\n        \"BoundsPrecision\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Precision level of spatial bounds for a location\",\n            \"enum\": [\n \
+        \               \"exact\",\n                \"approximate\",\n                \"none\"\n            ]\n        },\n\
+        \        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\": \"How this location's
+        coordinate system relates to its parent\",\n            \"enum\": [\n                \"inherit\",\n              \
+        \  \"local\",\n                \"portal\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Set or change the parent of a location\",\n    \"description\": \"Update
         a location's parent, moving it in the hierarchy.\\nValidates that:\\n- New parent exists and is in the same realm\\
         n- No circular reference would be created\\n- Updates depth for location and all descendants\\n\",\n    \"tags\":
@@ -1410,21 +1416,22 @@ paths:
         \             \"type\": \"object\"\n                        }\n                    ],\n                    \"nullable\"\
         : true,\n                    \"description\": \"Origin point for local or inherited coordinate systems\"\n       \
         \         },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Additional metadata for the
-        location (JSON)\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location
-        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
-        \                   \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location
-        was last updated\"\n                }\n            }\n        },\n        \"LocationType\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"Type classification for locations\",\n            \"enum\": [\n    \
-        \            \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n                \"DISTRICT\"\
-        ,\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\"\
-        ,\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n        },\n        \"BoundsPrecision\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Precision level of spatial bounds for a location\"\
-        ,\n            \"enum\": [\n                \"exact\",\n                \"approximate\",\n                \"none\"\
-        \n            ]\n        },\n        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How this location's coordinate system relates to its parent\",\n            \"enum\": [\n                \"inherit\"\
-        ,\n                \"local\",\n                \"portal\"\n            ]\n        }\n    }\n}"
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-provided location
+        metadata. No Bannou plugin reads specific keys from this field by convention.\"\n                },\n            \
+        \    \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"Timestamp when the location was created\"\n                },\n          \
+        \      \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"Timestamp when the location was last updated\"\n                }\n    \
+        \        }\n        },\n        \"LocationType\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Type classification for locations\",\n            \"enum\": [\n                \"CONTINENT\",\n              \
+        \  \"REGION\",\n                \"CITY\",\n                \"DISTRICT\",\n                \"BUILDING\",\n        \
+        \        \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\",\n                \"DUNGEON\",\n\
+        \                \"OTHER\"\n            ]\n        },\n        \"BoundsPrecision\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Precision level of spatial bounds for a location\",\n            \"enum\": [\n \
+        \               \"exact\",\n                \"approximate\",\n                \"none\"\n            ]\n        },\n\
+        \        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\": \"How this location's
+        coordinate system relates to its parent\",\n            \"enum\": [\n                \"inherit\",\n              \
+        \  \"local\",\n                \"portal\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Remove parent from a location (make it a root location)\",\n    \"description\"\
         : \"Remove the parent of a location, making it a top-level root location\\nwithin its realm. Updates depth for location
         and all descendants.\\n\",\n    \"tags\": [\n        \"Location Admin\"\n    ],\n    \"deprecated\": false,\n    \"\
@@ -1550,21 +1557,22 @@ paths:
         \             \"type\": \"object\"\n                        }\n                    ],\n                    \"nullable\"\
         : true,\n                    \"description\": \"Origin point for local or inherited coordinate systems\"\n       \
         \         },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Additional metadata for the
-        location (JSON)\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location
-        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
-        \                   \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location
-        was last updated\"\n                }\n            }\n        },\n        \"LocationType\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"Type classification for locations\",\n            \"enum\": [\n    \
-        \            \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n                \"DISTRICT\"\
-        ,\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\"\
-        ,\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n        },\n        \"BoundsPrecision\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Precision level of spatial bounds for a location\"\
-        ,\n            \"enum\": [\n                \"exact\",\n                \"approximate\",\n                \"none\"\
-        \n            ]\n        },\n        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How this location's coordinate system relates to its parent\",\n            \"enum\": [\n                \"inherit\"\
-        ,\n                \"local\",\n                \"portal\"\n            ]\n        }\n    }\n}"
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-provided location
+        metadata. No Bannou plugin reads specific keys from this field by convention.\"\n                },\n            \
+        \    \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"Timestamp when the location was created\"\n                },\n          \
+        \      \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"Timestamp when the location was last updated\"\n                }\n    \
+        \        }\n        },\n        \"LocationType\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Type classification for locations\",\n            \"enum\": [\n                \"CONTINENT\",\n              \
+        \  \"REGION\",\n                \"CITY\",\n                \"DISTRICT\",\n                \"BUILDING\",\n        \
+        \        \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\",\n                \"DUNGEON\",\n\
+        \                \"OTHER\"\n            ]\n        },\n        \"BoundsPrecision\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Precision level of spatial bounds for a location\",\n            \"enum\": [\n \
+        \               \"exact\",\n                \"approximate\",\n                \"none\"\n            ]\n        },\n\
+        \        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\": \"How this location's
+        coordinate system relates to its parent\",\n            \"enum\": [\n                \"inherit\",\n              \
+        \  \"local\",\n                \"portal\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Transfer a location to a different realm\",\n    \"description\": \"Moves
         a location from its current realm to a target realm.\\nUpdates all realm-scoped indexes (code-index, realm-index,
         parent/root indexes).\\nThe transferred location becomes a root location in the target realm (parent cleared).\\nReturns
@@ -1651,21 +1659,22 @@ paths:
         \             \"type\": \"object\"\n                        }\n                    ],\n                    \"nullable\"\
         : true,\n                    \"description\": \"Origin point for local or inherited coordinate systems\"\n       \
         \         },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Additional metadata for the
-        location (JSON)\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location
-        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
-        \                   \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location
-        was last updated\"\n                }\n            }\n        },\n        \"LocationType\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"Type classification for locations\",\n            \"enum\": [\n    \
-        \            \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n                \"DISTRICT\"\
-        ,\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\"\
-        ,\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n        },\n        \"BoundsPrecision\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Precision level of spatial bounds for a location\"\
-        ,\n            \"enum\": [\n                \"exact\",\n                \"approximate\",\n                \"none\"\
-        \n            ]\n        },\n        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How this location's coordinate system relates to its parent\",\n            \"enum\": [\n                \"inherit\"\
-        ,\n                \"local\",\n                \"portal\"\n            ]\n        }\n    }\n}"
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-provided location
+        metadata. No Bannou plugin reads specific keys from this field by convention.\"\n                },\n            \
+        \    \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"Timestamp when the location was created\"\n                },\n          \
+        \      \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"Timestamp when the location was last updated\"\n                }\n    \
+        \        }\n        },\n        \"LocationType\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Type classification for locations\",\n            \"enum\": [\n                \"CONTINENT\",\n              \
+        \  \"REGION\",\n                \"CITY\",\n                \"DISTRICT\",\n                \"BUILDING\",\n        \
+        \        \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\",\n                \"DUNGEON\",\n\
+        \                \"OTHER\"\n            ]\n        },\n        \"BoundsPrecision\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Precision level of spatial bounds for a location\",\n            \"enum\": [\n \
+        \               \"exact\",\n                \"approximate\",\n                \"none\"\n            ]\n        },\n\
+        \        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\": \"How this location's
+        coordinate system relates to its parent\",\n            \"enum\": [\n                \"inherit\",\n              \
+        \  \"local\",\n                \"portal\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Deprecate a location\",\n    \"description\": \"Soft-delete a location
         by marking it as deprecated.\\nDeprecated locations:\\n- Remain queryable for historical data\\n- Cannot be used for
         placing new entities\\n- Can be hard-deleted after all references are removed\\n\",\n    \"tags\": [\n        \"Location
@@ -1745,21 +1754,22 @@ paths:
         \             \"type\": \"object\"\n                        }\n                    ],\n                    \"nullable\"\
         : true,\n                    \"description\": \"Origin point for local or inherited coordinate systems\"\n       \
         \         },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Additional metadata for the
-        location (JSON)\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location
-        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
-        \                   \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location
-        was last updated\"\n                }\n            }\n        },\n        \"LocationType\": {\n            \"type\"\
-        : \"string\",\n            \"description\": \"Type classification for locations\",\n            \"enum\": [\n    \
-        \            \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n                \"DISTRICT\"\
-        ,\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\"\
-        ,\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n        },\n        \"BoundsPrecision\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Precision level of spatial bounds for a location\"\
-        ,\n            \"enum\": [\n                \"exact\",\n                \"approximate\",\n                \"none\"\
-        \n            ]\n        },\n        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How this location's coordinate system relates to its parent\",\n            \"enum\": [\n                \"inherit\"\
-        ,\n                \"local\",\n                \"portal\"\n            ]\n        }\n    }\n}"
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-provided location
+        metadata. No Bannou plugin reads specific keys from this field by convention.\"\n                },\n            \
+        \    \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"Timestamp when the location was created\"\n                },\n          \
+        \      \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
+        ,\n                    \"description\": \"Timestamp when the location was last updated\"\n                }\n    \
+        \        }\n        },\n        \"LocationType\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"Type classification for locations\",\n            \"enum\": [\n                \"CONTINENT\",\n              \
+        \  \"REGION\",\n                \"CITY\",\n                \"DISTRICT\",\n                \"BUILDING\",\n        \
+        \        \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\",\n                \"DUNGEON\",\n\
+        \                \"OTHER\"\n            ]\n        },\n        \"BoundsPrecision\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Precision level of spatial bounds for a location\",\n            \"enum\": [\n \
+        \               \"exact\",\n                \"approximate\",\n                \"none\"\n            ]\n        },\n\
+        \        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\": \"How this location's
+        coordinate system relates to its parent\",\n            \"enum\": [\n                \"inherit\",\n              \
+        \  \"local\",\n                \"portal\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Restore a deprecated location\",\n    \"description\": \"Remove the deprecated
         status from a location, making it\\navailable for entity placement again.\\n\",\n    \"tags\": [\n        \"Location
         Admin\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"undeprecateLocation\"\n}"
@@ -1908,21 +1918,21 @@ paths:
         \               \"nullable\": true,\n                    \"description\": \"Origin point for local or inherited coordinate
         systems\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n      \
         \              \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Additional metadata for the location (JSON)\"\n                },\n                \"createdAt\": {\n        \
-        \            \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the location was created\"\n                },\n                \"updatedAt\": {\n            \
-        \        \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\"\
-        : \"Timestamp when the location was last updated\"\n                }\n            }\n        },\n        \"LocationType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n    \
-        \        \"enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n   \
-        \             \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\"\
-        ,\n                \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n     \
-        \   },\n        \"BoundsPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision
-        level of spatial bounds for a location\",\n            \"enum\": [\n                \"exact\",\n                \"\
-        approximate\",\n                \"none\"\n            ]\n        },\n        \"CoordinateMode\": {\n            \"\
-        type\": \"string\",\n            \"description\": \"How this location's coordinate system relates to its parent\"\
-        ,\n            \"enum\": [\n                \"inherit\",\n                \"local\",\n                \"portal\"\n\
-        \            ]\n        }\n    }\n}"
+        : \"Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention.\"\n   \
+        \             },\n                \"createdAt\": {\n                    \"type\": \"string\",\n                  \
+        \  \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location was created\"\n\
+        \                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n               \
+        \     \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the location was last updated\"\
+        \n                }\n            }\n        },\n        \"LocationType\": {\n            \"type\": \"string\",\n \
+        \           \"description\": \"Type classification for locations\",\n            \"enum\": [\n                \"CONTINENT\"\
+        ,\n                \"REGION\",\n                \"CITY\",\n                \"DISTRICT\",\n                \"BUILDING\"\
+        ,\n                \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\",\n                \"DUNGEON\"\
+        ,\n                \"OTHER\"\n            ]\n        },\n        \"BoundsPrecision\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"Precision level of spatial bounds for a location\",\n            \"enum\"\
+        : [\n                \"exact\",\n                \"approximate\",\n                \"none\"\n            ]\n     \
+        \   },\n        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\": \"How this
+        location's coordinate system relates to its parent\",\n            \"enum\": [\n                \"inherit\",\n   \
+        \             \"local\",\n                \"portal\"\n            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Find locations containing a spatial position\",\n    \"description\": \"\
         Given a Position3D and realmId, returns all locations whose bounds contain\\nthat position, ordered by depth descending
         (most specific first). Only\\nlocations with spatial bounds data are considered. A position is \\\"in\\\" a\\nlocation
@@ -1994,17 +2004,17 @@ paths:
         \       \"nullable\": true,\n                    \"description\": \"Origin point for local or inherited coordinate
         systems\"\n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n      \
         \              \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Additional metadata for the location (JSON)\"\n                }\n            }\n        },\n        \"LocationType\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Type classification for locations\",\n    \
-        \        \"enum\": [\n                \"CONTINENT\",\n                \"REGION\",\n                \"CITY\",\n   \
-        \             \"DISTRICT\",\n                \"BUILDING\",\n                \"ROOM\",\n                \"LANDMARK\"\
-        ,\n                \"WILDERNESS\",\n                \"DUNGEON\",\n                \"OTHER\"\n            ]\n     \
-        \   },\n        \"BoundsPrecision\": {\n            \"type\": \"string\",\n            \"description\": \"Precision
-        level of spatial bounds for a location\",\n            \"enum\": [\n                \"exact\",\n                \"\
-        approximate\",\n                \"none\"\n            ]\n        },\n        \"CoordinateMode\": {\n            \"\
-        type\": \"string\",\n            \"description\": \"How this location's coordinate system relates to its parent\"\
-        ,\n            \"enum\": [\n                \"inherit\",\n                \"local\",\n                \"portal\"\n\
-        \            ]\n        }\n    }\n}"
+        : \"Client-provided location metadata. No Bannou plugin reads specific keys from this field by convention.\"\n   \
+        \             }\n            }\n        },\n        \"LocationType\": {\n            \"type\": \"string\",\n     \
+        \       \"description\": \"Type classification for locations\",\n            \"enum\": [\n                \"CONTINENT\"\
+        ,\n                \"REGION\",\n                \"CITY\",\n                \"DISTRICT\",\n                \"BUILDING\"\
+        ,\n                \"ROOM\",\n                \"LANDMARK\",\n                \"WILDERNESS\",\n                \"DUNGEON\"\
+        ,\n                \"OTHER\"\n            ]\n        },\n        \"BoundsPrecision\": {\n            \"type\": \"\
+        string\",\n            \"description\": \"Precision level of spatial bounds for a location\",\n            \"enum\"\
+        : [\n                \"exact\",\n                \"approximate\",\n                \"none\"\n            ]\n     \
+        \   },\n        \"CoordinateMode\": {\n            \"type\": \"string\",\n            \"description\": \"How this
+        location's coordinate system relates to its parent\",\n            \"enum\": [\n                \"inherit\",\n   \
+        \             \"local\",\n                \"portal\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SeedLocationsResponse\"\
         ,\n    \"$defs\": {\n        \"SeedLocationsResponse\": {\n            \"description\": \"Summary of a seed operation
         including counts of created, updated, and skipped locations\",\n            \"type\": \"object\",\n            \"\
@@ -2600,7 +2610,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional metadata for the location (JSON)
+          description: >-
+            Client-provided location metadata.
+            No Bannou plugin reads specific keys from this field by convention.
     UpdateLocationRequest:
       description: Request to update an existing location's properties
       type: object
@@ -2652,7 +2664,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional metadata
+          description: >-
+            Updated client-provided location metadata.
+            No Bannou plugin reads specific keys from this field by convention.
     SetLocationParentRequest:
       description: Request to set or change a location's parent in the hierarchy
       type: object
@@ -2839,7 +2853,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional metadata for the location (JSON)
+          description: >-
+            Client-provided location metadata.
+            No Bannou plugin reads specific keys from this field by convention.
     QueryLocationsByPositionRequest:
       description: Request to find all locations containing a spatial position
       type: object
@@ -2949,7 +2965,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional metadata for the location (JSON)
+          description: >-
+            Client-provided location metadata.
+            No Bannou plugin reads specific keys from this field by convention.
         createdAt:
           type: string
           format: date-time

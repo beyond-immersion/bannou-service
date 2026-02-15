@@ -99,17 +99,18 @@ paths:
         ,\n                    \"nullable\": true,\n                    \"description\": \"Age at which the species reaches
         maturity\"\n                },\n                \"traitModifiers\": {\n                    \"type\": \"object\",\n\
         \                    \"additionalProperties\": true,\n                    \"nullable\": true,\n                  \
-        \  \"description\": \"Base trait modifiers for this species\"\n                },\n                \"realmIds\": {\n\
-        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"\
-        string\",\n                        \"format\": \"uuid\"\n                    },\n                    \"description\"\
-        : \"Realms where this species is available\"\n                },\n                \"metadata\": {\n              \
-        \      \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Additional metadata for the species\"\n                },\n      \
-        \          \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Timestamp when the species was created\"\n                },\n         \
-        \       \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Timestamp when the species was last updated\"\n                }\n     \
-        \       }\n        }\n    }\n}"
+        \  \"description\": \"Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                },\n                \"realmIds\": {\n                    \"type\": \"array\",\n                \
+        \    \"items\": {\n                        \"type\": \"string\",\n                        \"format\": \"uuid\"\n \
+        \                   },\n                    \"description\": \"Realms where this species is available\"\n        \
+        \        },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-only metadata. No
+        Bannou plugin reads specific keys from this field by convention.\"\n                },\n                \"createdAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"Timestamp when the species was created\"\n                },\n                \"updatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"Timestamp when the species was last updated\"\n                }\n            }\n        }\n\
+        \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get species by ID\",\n    \"description\": \"\",\n    \"tags\": [\n   \
         \     \"Species\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"getSpecies\"\n}"
   /species/get-by-code:
@@ -173,17 +174,18 @@ paths:
         ,\n                    \"nullable\": true,\n                    \"description\": \"Age at which the species reaches
         maturity\"\n                },\n                \"traitModifiers\": {\n                    \"type\": \"object\",\n\
         \                    \"additionalProperties\": true,\n                    \"nullable\": true,\n                  \
-        \  \"description\": \"Base trait modifiers for this species\"\n                },\n                \"realmIds\": {\n\
-        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"\
-        string\",\n                        \"format\": \"uuid\"\n                    },\n                    \"description\"\
-        : \"Realms where this species is available\"\n                },\n                \"metadata\": {\n              \
-        \      \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Additional metadata for the species\"\n                },\n      \
-        \          \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Timestamp when the species was created\"\n                },\n         \
-        \       \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Timestamp when the species was last updated\"\n                }\n     \
-        \       }\n        }\n    }\n}"
+        \  \"description\": \"Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                },\n                \"realmIds\": {\n                    \"type\": \"array\",\n                \
+        \    \"items\": {\n                        \"type\": \"string\",\n                        \"format\": \"uuid\"\n \
+        \                   },\n                    \"description\": \"Realms where this species is available\"\n        \
+        \        },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-only metadata. No
+        Bannou plugin reads specific keys from this field by convention.\"\n                },\n                \"createdAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"Timestamp when the species was created\"\n                },\n                \"updatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"Timestamp when the species was last updated\"\n                }\n            }\n        }\n\
+        \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get species by code\",\n    \"description\": \"Retrieve a species using
         its unique code (e.g., \\\"HUMAN\\\", \\\"ELF\\\", \\\"DWARF\\\")\",\n    \"tags\": [\n        \"Species\"\n    ],\n\
         \    \"deprecated\": false,\n    \"operationId\": \"getSpeciesByCode\"\n}"
@@ -263,17 +265,18 @@ paths:
         \     },\n                \"maturityAge\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
         : true,\n                    \"description\": \"Age at which the species reaches maturity\"\n                },\n\
         \                \"traitModifiers\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Base trait modifiers for
-        this species\"\n                },\n                \"realmIds\": {\n                    \"type\": \"array\",\n  \
-        \                  \"items\": {\n                        \"type\": \"string\",\n                        \"format\"\
-        : \"uuid\"\n                    },\n                    \"description\": \"Realms where this species is available\"\
-        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
-        \     \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Additional metadata for the species\"\n                },\n                \"createdAt\": {\n                \
-        \    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
-        Timestamp when the species was created\"\n                },\n                \"updatedAt\": {\n                 \
-        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
-        Timestamp when the species was last updated\"\n                }\n            }\n        }\n    }\n}"
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-only trait modifiers.
+        No Bannou plugin reads specific keys from this field by convention.\"\n                },\n                \"realmIds\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\",\n                        \"format\": \"uuid\"\n                    },\n                    \"description\"\
+        : \"Realms where this species is available\"\n                },\n                \"metadata\": {\n              \
+        \      \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Client-only metadata. No Bannou plugin reads specific keys from this
+        field by convention.\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the species
+        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the species
+        was last updated\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List all species\",\n    \"description\": \"Retrieve all species with optional
         realm filtering\",\n    \"tags\": [\n        \"Species\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
         : \"listSpecies\"\n}"
@@ -353,17 +356,18 @@ paths:
         \     },\n                \"maturityAge\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
         : true,\n                    \"description\": \"Age at which the species reaches maturity\"\n                },\n\
         \                \"traitModifiers\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Base trait modifiers for
-        this species\"\n                },\n                \"realmIds\": {\n                    \"type\": \"array\",\n  \
-        \                  \"items\": {\n                        \"type\": \"string\",\n                        \"format\"\
-        : \"uuid\"\n                    },\n                    \"description\": \"Realms where this species is available\"\
-        \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
-        \     \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Additional metadata for the species\"\n                },\n                \"createdAt\": {\n                \
-        \    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
-        Timestamp when the species was created\"\n                },\n                \"updatedAt\": {\n                 \
-        \   \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"\
-        Timestamp when the species was last updated\"\n                }\n            }\n        }\n    }\n}"
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-only trait modifiers.
+        No Bannou plugin reads specific keys from this field by convention.\"\n                },\n                \"realmIds\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\",\n                        \"format\": \"uuid\"\n                    },\n                    \"description\"\
+        : \"Realms where this species is available\"\n                },\n                \"metadata\": {\n              \
+        \      \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Client-only metadata. No Bannou plugin reads specific keys from this
+        field by convention.\"\n                },\n                \"createdAt\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the species
+        was created\"\n                },\n                \"updatedAt\": {\n                    \"type\": \"string\",\n \
+        \                   \"format\": \"date-time\",\n                    \"description\": \"Timestamp when the species
+        was last updated\"\n                }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List species available in a realm\",\n    \"description\": \"Retrieve all
         species that are available in a specific realm\",\n    \"tags\": [\n        \"Species\"\n    ],\n    \"deprecated\"\
         : false,\n    \"operationId\": \"listSpeciesByRealm\"\n}"
@@ -415,14 +419,15 @@ paths:
         \         \"minimum\": 0,\n                    \"nullable\": true,\n                    \"description\": \"Age at
         which the species reaches maturity\"\n                },\n                \"traitModifiers\": {\n                \
         \    \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Base trait modifiers for this species (JSON)\"\n                },\n\
-        \                \"realmIds\": {\n                    \"type\": \"array\",\n                    \"items\": {\n   \
-        \                     \"type\": \"string\",\n                        \"format\": \"uuid\"\n                    },\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Initial realms where this species
-        is available (null to skip realm assignment)\"\n                },\n                \"metadata\": {\n            \
-        \        \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Additional metadata for the species\"\n                }\n       \
-        \     }\n        }\n    }\n}"
+        : true,\n                    \"description\": \"Client-only trait modifiers. No Bannou plugin reads specific keys
+        from this field by convention.\"\n                },\n                \"realmIds\": {\n                    \"type\"\
+        : \"array\",\n                    \"items\": {\n                        \"type\": \"string\",\n                  \
+        \      \"format\": \"uuid\"\n                    },\n                    \"nullable\": true,\n                   \
+        \ \"description\": \"Initial realms where this species is available (null to skip realm assignment)\"\n          \
+        \      },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-only metadata. No
+        Bannou plugin reads specific keys from this field by convention.\"\n                }\n            }\n        }\n\
+        \    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SpeciesResponse\"\
         ,\n    \"$defs\": {\n        \"SpeciesResponse\": {\n            \"description\": \"Complete species data including
         all attributes and realm associations\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -451,17 +456,18 @@ paths:
         ,\n                    \"nullable\": true,\n                    \"description\": \"Age at which the species reaches
         maturity\"\n                },\n                \"traitModifiers\": {\n                    \"type\": \"object\",\n\
         \                    \"additionalProperties\": true,\n                    \"nullable\": true,\n                  \
-        \  \"description\": \"Base trait modifiers for this species\"\n                },\n                \"realmIds\": {\n\
-        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"\
-        string\",\n                        \"format\": \"uuid\"\n                    },\n                    \"description\"\
-        : \"Realms where this species is available\"\n                },\n                \"metadata\": {\n              \
-        \      \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Additional metadata for the species\"\n                },\n      \
-        \          \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Timestamp when the species was created\"\n                },\n         \
-        \       \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Timestamp when the species was last updated\"\n                }\n     \
-        \       }\n        }\n    }\n}"
+        \  \"description\": \"Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                },\n                \"realmIds\": {\n                    \"type\": \"array\",\n                \
+        \    \"items\": {\n                        \"type\": \"string\",\n                        \"format\": \"uuid\"\n \
+        \                   },\n                    \"description\": \"Realms where this species is available\"\n        \
+        \        },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-only metadata. No
+        Bannou plugin reads specific keys from this field by convention.\"\n                },\n                \"createdAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"Timestamp when the species was created\"\n                },\n                \"updatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"Timestamp when the species was last updated\"\n                }\n            }\n        }\n\
+        \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Create new species\",\n    \"description\": \"\",\n    \"tags\": [\n  \
         \      \"Species Admin\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"createSpecies\"\n}"
   /species/update:
@@ -511,9 +517,10 @@ paths:
         \           \"nullable\": true,\n                    \"description\": \"Age at which the species reaches maturity\"\
         \n                },\n                \"traitModifiers\": {\n                    \"type\": \"object\",\n         \
         \           \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Base trait modifiers for this species\"\n                },\n                \"metadata\": {\n               \
-        \     \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Additional metadata\"\n                }\n            }\n        }\n\
+        : \"Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention.\"\n         \
+        \       },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-only metadata. No
+        Bannou plugin reads specific keys from this field by convention.\"\n                }\n            }\n        }\n\
         \    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SpeciesResponse\"\
         ,\n    \"$defs\": {\n        \"SpeciesResponse\": {\n            \"description\": \"Complete species data including
@@ -543,17 +550,18 @@ paths:
         ,\n                    \"nullable\": true,\n                    \"description\": \"Age at which the species reaches
         maturity\"\n                },\n                \"traitModifiers\": {\n                    \"type\": \"object\",\n\
         \                    \"additionalProperties\": true,\n                    \"nullable\": true,\n                  \
-        \  \"description\": \"Base trait modifiers for this species\"\n                },\n                \"realmIds\": {\n\
-        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"\
-        string\",\n                        \"format\": \"uuid\"\n                    },\n                    \"description\"\
-        : \"Realms where this species is available\"\n                },\n                \"metadata\": {\n              \
-        \      \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Additional metadata for the species\"\n                },\n      \
-        \          \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Timestamp when the species was created\"\n                },\n         \
-        \       \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Timestamp when the species was last updated\"\n                }\n     \
-        \       }\n        }\n    }\n}"
+        \  \"description\": \"Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                },\n                \"realmIds\": {\n                    \"type\": \"array\",\n                \
+        \    \"items\": {\n                        \"type\": \"string\",\n                        \"format\": \"uuid\"\n \
+        \                   },\n                    \"description\": \"Realms where this species is available\"\n        \
+        \        },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-only metadata. No
+        Bannou plugin reads specific keys from this field by convention.\"\n                },\n                \"createdAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"Timestamp when the species was created\"\n                },\n                \"updatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"Timestamp when the species was last updated\"\n                }\n            }\n        }\n\
+        \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Update species\",\n    \"description\": \"\",\n    \"tags\": [\n      \
         \  \"Species Admin\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"updateSpecies\"\n}"
   /species/delete:
@@ -664,17 +672,18 @@ paths:
         ,\n                    \"nullable\": true,\n                    \"description\": \"Age at which the species reaches
         maturity\"\n                },\n                \"traitModifiers\": {\n                    \"type\": \"object\",\n\
         \                    \"additionalProperties\": true,\n                    \"nullable\": true,\n                  \
-        \  \"description\": \"Base trait modifiers for this species\"\n                },\n                \"realmIds\": {\n\
-        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"\
-        string\",\n                        \"format\": \"uuid\"\n                    },\n                    \"description\"\
-        : \"Realms where this species is available\"\n                },\n                \"metadata\": {\n              \
-        \      \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Additional metadata for the species\"\n                },\n      \
-        \          \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Timestamp when the species was created\"\n                },\n         \
-        \       \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Timestamp when the species was last updated\"\n                }\n     \
-        \       }\n        }\n    }\n}"
+        \  \"description\": \"Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                },\n                \"realmIds\": {\n                    \"type\": \"array\",\n                \
+        \    \"items\": {\n                        \"type\": \"string\",\n                        \"format\": \"uuid\"\n \
+        \                   },\n                    \"description\": \"Realms where this species is available\"\n        \
+        \        },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-only metadata. No
+        Bannou plugin reads specific keys from this field by convention.\"\n                },\n                \"createdAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"Timestamp when the species was created\"\n                },\n                \"updatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"Timestamp when the species was last updated\"\n                }\n            }\n        }\n\
+        \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Deprecate a species\",\n    \"description\": \"Soft-delete a species by
         marking it as deprecated.\\nDeprecated species:\\n- Remain queryable for historical data\\n- Cannot be used for creating
         new characters\\n- Can be merged into other species using the merge endpoint\\n- Can be hard-deleted after all references
@@ -744,17 +753,18 @@ paths:
         ,\n                    \"nullable\": true,\n                    \"description\": \"Age at which the species reaches
         maturity\"\n                },\n                \"traitModifiers\": {\n                    \"type\": \"object\",\n\
         \                    \"additionalProperties\": true,\n                    \"nullable\": true,\n                  \
-        \  \"description\": \"Base trait modifiers for this species\"\n                },\n                \"realmIds\": {\n\
-        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"\
-        string\",\n                        \"format\": \"uuid\"\n                    },\n                    \"description\"\
-        : \"Realms where this species is available\"\n                },\n                \"metadata\": {\n              \
-        \      \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Additional metadata for the species\"\n                },\n      \
-        \          \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Timestamp when the species was created\"\n                },\n         \
-        \       \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Timestamp when the species was last updated\"\n                }\n     \
-        \       }\n        }\n    }\n}"
+        \  \"description\": \"Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                },\n                \"realmIds\": {\n                    \"type\": \"array\",\n                \
+        \    \"items\": {\n                        \"type\": \"string\",\n                        \"format\": \"uuid\"\n \
+        \                   },\n                    \"description\": \"Realms where this species is available\"\n        \
+        \        },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-only metadata. No
+        Bannou plugin reads specific keys from this field by convention.\"\n                },\n                \"createdAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"Timestamp when the species was created\"\n                },\n                \"updatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"Timestamp when the species was last updated\"\n                }\n            }\n        }\n\
+        \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Restore a deprecated species\",\n    \"description\": \"Remove the deprecated
         status from a species, making it\\navailable for new characters again.\\n\",\n    \"tags\": [\n        \"Species Admin\"\
         \n    ],\n    \"deprecated\": false,\n    \"operationId\": \"undeprecateSpecies\"\n}"
@@ -895,17 +905,18 @@ paths:
         ,\n                    \"nullable\": true,\n                    \"description\": \"Age at which the species reaches
         maturity\"\n                },\n                \"traitModifiers\": {\n                    \"type\": \"object\",\n\
         \                    \"additionalProperties\": true,\n                    \"nullable\": true,\n                  \
-        \  \"description\": \"Base trait modifiers for this species\"\n                },\n                \"realmIds\": {\n\
-        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"\
-        string\",\n                        \"format\": \"uuid\"\n                    },\n                    \"description\"\
-        : \"Realms where this species is available\"\n                },\n                \"metadata\": {\n              \
-        \      \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Additional metadata for the species\"\n                },\n      \
-        \          \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Timestamp when the species was created\"\n                },\n         \
-        \       \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Timestamp when the species was last updated\"\n                }\n     \
-        \       }\n        }\n    }\n}"
+        \  \"description\": \"Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                },\n                \"realmIds\": {\n                    \"type\": \"array\",\n                \
+        \    \"items\": {\n                        \"type\": \"string\",\n                        \"format\": \"uuid\"\n \
+        \                   },\n                    \"description\": \"Realms where this species is available\"\n        \
+        \        },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-only metadata. No
+        Bannou plugin reads specific keys from this field by convention.\"\n                },\n                \"createdAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"Timestamp when the species was created\"\n                },\n                \"updatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"Timestamp when the species was last updated\"\n                }\n            }\n        }\n\
+        \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Add species to a realm\",\n    \"description\": \"Make a species available
         in an additional realm\",\n    \"tags\": [\n        \"Species Admin\"\n    ],\n    \"deprecated\": false,\n    \"\
         operationId\": \"addSpeciesToRealm\"\n}"
@@ -973,17 +984,18 @@ paths:
         ,\n                    \"nullable\": true,\n                    \"description\": \"Age at which the species reaches
         maturity\"\n                },\n                \"traitModifiers\": {\n                    \"type\": \"object\",\n\
         \                    \"additionalProperties\": true,\n                    \"nullable\": true,\n                  \
-        \  \"description\": \"Base trait modifiers for this species\"\n                },\n                \"realmIds\": {\n\
-        \                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\": \"\
-        string\",\n                        \"format\": \"uuid\"\n                    },\n                    \"description\"\
-        : \"Realms where this species is available\"\n                },\n                \"metadata\": {\n              \
-        \      \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Additional metadata for the species\"\n                },\n      \
-        \          \"createdAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Timestamp when the species was created\"\n                },\n         \
-        \       \"updatedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\"\
-        ,\n                    \"description\": \"Timestamp when the species was last updated\"\n                }\n     \
-        \       }\n        }\n    }\n}"
+        \  \"description\": \"Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention.\"\
+        \n                },\n                \"realmIds\": {\n                    \"type\": \"array\",\n                \
+        \    \"items\": {\n                        \"type\": \"string\",\n                        \"format\": \"uuid\"\n \
+        \                   },\n                    \"description\": \"Realms where this species is available\"\n        \
+        \        },\n                \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-only metadata. No
+        Bannou plugin reads specific keys from this field by convention.\"\n                },\n                \"createdAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"Timestamp when the species was created\"\n                },\n                \"updatedAt\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"description\": \"Timestamp when the species was last updated\"\n                }\n            }\n        }\n\
+        \    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Remove species from a realm\",\n    \"description\": \"Remove a species
         from a realm (species must not have characters in that realm)\",\n    \"tags\": [\n        \"Species Admin\"\n   \
         \ ],\n    \"deprecated\": false,\n    \"operationId\": \"removeSpeciesFromRealm\"\n}"
@@ -1040,14 +1052,15 @@ paths:
         \ },\n                \"maturityAge\": {\n                    \"type\": \"integer\",\n                    \"nullable\"\
         : true,\n                    \"description\": \"Age at maturity (null for default)\"\n                },\n       \
         \         \"traitModifiers\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
-        : true,\n                    \"nullable\": true,\n                    \"description\": \"Base trait modifiers for
-        this species (null if none)\"\n                },\n                \"realmCodes\": {\n                    \"type\"\
-        : \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n                   \
-        \ },\n                    \"nullable\": true,\n                    \"description\": \"Codes of realms where this species
-        is available (null to skip realm assignment)\"\n                },\n                \"metadata\": {\n            \
-        \        \"type\": \"object\",\n                    \"additionalProperties\": true,\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Additional metadata for the species (null if none)\"\n           \
-        \     }\n            }\n        }\n    }\n}"
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-only trait modifiers.
+        No Bannou plugin reads specific keys from this field by convention.\"\n                },\n                \"realmCodes\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Codes of realms where this species is available (null to skip realm assignment)\"\n                },\n      \
+        \          \"metadata\": {\n                    \"type\": \"object\",\n                    \"additionalProperties\"\
+        : true,\n                    \"nullable\": true,\n                    \"description\": \"Client-only metadata. No
+        Bannou plugin reads specific keys from this field by convention.\"\n                }\n            }\n        }\n\
+        \    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/SeedSpeciesResponse\"\
         ,\n    \"$defs\": {\n        \"SeedSpeciesResponse\": {\n            \"description\": \"Summary of a bulk species
         seeding operation with counts and errors\",\n            \"type\": \"object\",\n            \"additionalProperties\"\
@@ -1192,7 +1205,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Base trait modifiers for this species (JSON)
+          description: "Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention."
         realmIds:
           type: array
           items:
@@ -1204,7 +1217,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional metadata for the species
+          description: "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
     UpdateSpeciesRequest:
       description: Request to update an existing species with partial attribute changes
       type: object
@@ -1250,12 +1263,12 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Base trait modifiers for this species
+          description: "Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention."
         metadata:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional metadata
+          description: "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
     DeleteSpeciesRequest:
       description: Request to hard-delete a deprecated species with no remaining references
       type: object
@@ -1400,7 +1413,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Base trait modifiers for this species (null if none)
+          description: "Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention."
         realmCodes:
           type: array
           items:
@@ -1411,7 +1424,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional metadata for the species (null if none)
+          description: "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
     SpeciesResponse:
       description: Complete species data including all attributes and realm associations
       type: object
@@ -1470,7 +1483,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Base trait modifiers for this species
+          description: "Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention."
         realmIds:
           type: array
           items:
@@ -1481,7 +1494,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional metadata for the species
+          description: "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
         createdAt:
           type: string
           format: date-time

@@ -106,16 +106,16 @@ paths:
         \            \"default\": 0.5,\n                    \"description\": \"How significant this event was for the realm\"\
         \n                },\n                \"metadata\": {\n                    \"type\": \"object\",\n               \
         \     \"additionalProperties\": true,\n                    \"nullable\": true,\n                    \"description\"\
-        : \"Optional event-specific details\"\n                }\n            }\n        },\n        \"RealmEventCategory\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"Categories of historical events that realms
-        can participate in\",\n            \"enum\": [\n                \"FOUNDING\",\n                \"WAR\",\n        \
-        \        \"TREATY\",\n                \"CATACLYSM\",\n                \"DISCOVERY\",\n                \"MIGRATION\"\
-        ,\n                \"CULTURAL_SHIFT\",\n                \"ECONOMIC_CHANGE\",\n                \"POLITICAL_UPHEAVAL\"\
-        \n            ]\n        },\n        \"RealmEventRole\": {\n            \"type\": \"string\",\n            \"description\"\
-        : \"How the realm participated in the historical event\",\n            \"enum\": [\n                \"ORIGIN\",\n\
-        \                \"AGGRESSOR\",\n                \"DEFENDER\",\n                \"MEDIATOR\",\n                \"\
-        AFFECTED\",\n                \"BENEFICIARY\",\n                \"INSTIGATOR\",\n                \"NEUTRAL_PARTY\"\n\
-        \            ]\n        }\n    }\n}"
+        : \"Client-provided event-specific details. No Bannou plugin reads specific keys from this field by convention.\"\n\
+        \                }\n            }\n        },\n        \"RealmEventCategory\": {\n            \"type\": \"string\"\
+        ,\n            \"description\": \"Categories of historical events that realms can participate in\",\n            \"\
+        enum\": [\n                \"FOUNDING\",\n                \"WAR\",\n                \"TREATY\",\n                \"\
+        CATACLYSM\",\n                \"DISCOVERY\",\n                \"MIGRATION\",\n                \"CULTURAL_SHIFT\",\n\
+        \                \"ECONOMIC_CHANGE\",\n                \"POLITICAL_UPHEAVAL\"\n            ]\n        },\n       \
+        \ \"RealmEventRole\": {\n            \"type\": \"string\",\n            \"description\": \"How the realm participated
+        in the historical event\",\n            \"enum\": [\n                \"ORIGIN\",\n                \"AGGRESSOR\",\n\
+        \                \"DEFENDER\",\n                \"MEDIATOR\",\n                \"AFFECTED\",\n                \"BENEFICIARY\"\
+        ,\n                \"INSTIGATOR\",\n                \"NEUTRAL_PARTY\"\n            ]\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/RealmHistoricalParticipation\"\
         ,\n    \"$defs\": {\n        \"RealmHistoricalParticipation\": {\n            \"type\": \"object\",\n            \"\
         description\": \"Record of a realm's participation in a historical event\",\n            \"additionalProperties\"\
@@ -139,18 +139,19 @@ paths:
         : 1.0,\n                    \"default\": 0.5,\n                    \"description\": \"How significant this event was
         for the realm (0.0 to 1.0).\\nAffects behavior system weighting.\\n\"\n                },\n                \"metadata\"\
         : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Event-specific details for behavior decisions\"\
-        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"When this record was created\"\n       \
-        \         }\n            }\n        },\n        \"RealmEventCategory\": {\n            \"type\": \"string\",\n   \
-        \         \"description\": \"Categories of historical events that realms can participate in\",\n            \"enum\"\
-        : [\n                \"FOUNDING\",\n                \"WAR\",\n                \"TREATY\",\n                \"CATACLYSM\"\
-        ,\n                \"DISCOVERY\",\n                \"MIGRATION\",\n                \"CULTURAL_SHIFT\",\n         \
-        \       \"ECONOMIC_CHANGE\",\n                \"POLITICAL_UPHEAVAL\"\n            ]\n        },\n        \"RealmEventRole\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"How the realm participated in the historical
-        event\",\n            \"enum\": [\n                \"ORIGIN\",\n                \"AGGRESSOR\",\n                \"\
-        DEFENDER\",\n                \"MEDIATOR\",\n                \"AFFECTED\",\n                \"BENEFICIARY\",\n    \
-        \            \"INSTIGATOR\",\n                \"NEUTRAL_PARTY\"\n            ]\n        }\n    }\n}"
+        \        \"nullable\": true,\n                    \"description\": \"Client-provided event-specific details. No Bannou
+        plugin reads specific keys from this field by convention.\"\n                },\n                \"createdAt\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
+        description\": \"When this record was created\"\n                }\n            }\n        },\n        \"RealmEventCategory\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Categories of historical events that realms
+        can participate in\",\n            \"enum\": [\n                \"FOUNDING\",\n                \"WAR\",\n        \
+        \        \"TREATY\",\n                \"CATACLYSM\",\n                \"DISCOVERY\",\n                \"MIGRATION\"\
+        ,\n                \"CULTURAL_SHIFT\",\n                \"ECONOMIC_CHANGE\",\n                \"POLITICAL_UPHEAVAL\"\
+        \n            ]\n        },\n        \"RealmEventRole\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"How the realm participated in the historical event\",\n            \"enum\": [\n                \"ORIGIN\",\n\
+        \                \"AGGRESSOR\",\n                \"DEFENDER\",\n                \"MEDIATOR\",\n                \"\
+        AFFECTED\",\n                \"BENEFICIARY\",\n                \"INSTIGATOR\",\n                \"NEUTRAL_PARTY\"\n\
+        \            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Record realm participation in a historical event\",\n    \"description\"\
         : \"Records that a realm participated in a historical event. Events are\\nidentified by eventId (typically managed
         by a game-specific event system).\\nThe impact level affects how strongly this event influences behavior.\\n\",\n\
@@ -239,18 +240,19 @@ paths:
         : 1.0,\n                    \"default\": 0.5,\n                    \"description\": \"How significant this event was
         for the realm (0.0 to 1.0).\\nAffects behavior system weighting.\\n\"\n                },\n                \"metadata\"\
         : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Event-specific details for behavior decisions\"\
-        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"When this record was created\"\n       \
-        \         }\n            }\n        },\n        \"RealmEventCategory\": {\n            \"type\": \"string\",\n   \
-        \         \"description\": \"Categories of historical events that realms can participate in\",\n            \"enum\"\
-        : [\n                \"FOUNDING\",\n                \"WAR\",\n                \"TREATY\",\n                \"CATACLYSM\"\
-        ,\n                \"DISCOVERY\",\n                \"MIGRATION\",\n                \"CULTURAL_SHIFT\",\n         \
-        \       \"ECONOMIC_CHANGE\",\n                \"POLITICAL_UPHEAVAL\"\n            ]\n        },\n        \"RealmEventRole\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"How the realm participated in the historical
-        event\",\n            \"enum\": [\n                \"ORIGIN\",\n                \"AGGRESSOR\",\n                \"\
-        DEFENDER\",\n                \"MEDIATOR\",\n                \"AFFECTED\",\n                \"BENEFICIARY\",\n    \
-        \            \"INSTIGATOR\",\n                \"NEUTRAL_PARTY\"\n            ]\n        }\n    }\n}"
+        \        \"nullable\": true,\n                    \"description\": \"Client-provided event-specific details. No Bannou
+        plugin reads specific keys from this field by convention.\"\n                },\n                \"createdAt\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
+        description\": \"When this record was created\"\n                }\n            }\n        },\n        \"RealmEventCategory\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Categories of historical events that realms
+        can participate in\",\n            \"enum\": [\n                \"FOUNDING\",\n                \"WAR\",\n        \
+        \        \"TREATY\",\n                \"CATACLYSM\",\n                \"DISCOVERY\",\n                \"MIGRATION\"\
+        ,\n                \"CULTURAL_SHIFT\",\n                \"ECONOMIC_CHANGE\",\n                \"POLITICAL_UPHEAVAL\"\
+        \n            ]\n        },\n        \"RealmEventRole\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"How the realm participated in the historical event\",\n            \"enum\": [\n                \"ORIGIN\",\n\
+        \                \"AGGRESSOR\",\n                \"DEFENDER\",\n                \"MEDIATOR\",\n                \"\
+        AFFECTED\",\n                \"BENEFICIARY\",\n                \"INSTIGATOR\",\n                \"NEUTRAL_PARTY\"\n\
+        \            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get all historical events a realm participated in\",\n    \"description\"\
         : \"Retrieves all historical event participation records for a realm.\\nSupports filtering by event category and minimum
         impact.\\n\",\n    \"tags\": [\n        \"Historical Events\"\n    ],\n    \"deprecated\": false,\n    \"operationId\"\
@@ -334,18 +336,19 @@ paths:
         : 1.0,\n                    \"default\": 0.5,\n                    \"description\": \"How significant this event was
         for the realm (0.0 to 1.0).\\nAffects behavior system weighting.\\n\"\n                },\n                \"metadata\"\
         : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Event-specific details for behavior decisions\"\
-        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"When this record was created\"\n       \
-        \         }\n            }\n        },\n        \"RealmEventCategory\": {\n            \"type\": \"string\",\n   \
-        \         \"description\": \"Categories of historical events that realms can participate in\",\n            \"enum\"\
-        : [\n                \"FOUNDING\",\n                \"WAR\",\n                \"TREATY\",\n                \"CATACLYSM\"\
-        ,\n                \"DISCOVERY\",\n                \"MIGRATION\",\n                \"CULTURAL_SHIFT\",\n         \
-        \       \"ECONOMIC_CHANGE\",\n                \"POLITICAL_UPHEAVAL\"\n            ]\n        },\n        \"RealmEventRole\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"How the realm participated in the historical
-        event\",\n            \"enum\": [\n                \"ORIGIN\",\n                \"AGGRESSOR\",\n                \"\
-        DEFENDER\",\n                \"MEDIATOR\",\n                \"AFFECTED\",\n                \"BENEFICIARY\",\n    \
-        \            \"INSTIGATOR\",\n                \"NEUTRAL_PARTY\"\n            ]\n        }\n    }\n}"
+        \        \"nullable\": true,\n                    \"description\": \"Client-provided event-specific details. No Bannou
+        plugin reads specific keys from this field by convention.\"\n                },\n                \"createdAt\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
+        description\": \"When this record was created\"\n                }\n            }\n        },\n        \"RealmEventCategory\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Categories of historical events that realms
+        can participate in\",\n            \"enum\": [\n                \"FOUNDING\",\n                \"WAR\",\n        \
+        \        \"TREATY\",\n                \"CATACLYSM\",\n                \"DISCOVERY\",\n                \"MIGRATION\"\
+        ,\n                \"CULTURAL_SHIFT\",\n                \"ECONOMIC_CHANGE\",\n                \"POLITICAL_UPHEAVAL\"\
+        \n            ]\n        },\n        \"RealmEventRole\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"How the realm participated in the historical event\",\n            \"enum\": [\n                \"ORIGIN\",\n\
+        \                \"AGGRESSOR\",\n                \"DEFENDER\",\n                \"MEDIATOR\",\n                \"\
+        AFFECTED\",\n                \"BENEFICIARY\",\n                \"INSTIGATOR\",\n                \"NEUTRAL_PARTY\"\n\
+        \            ]\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get all realms that participated in a historical event\",\n    \"description\"\
         : \"Retrieves all realms that participated in a specific historical event.\\nUseful for generating event summaries
         or finding related realms.\\n\",\n    \"tags\": [\n        \"Historical Events\"\n    ],\n    \"deprecated\": false,\n\
@@ -921,30 +924,31 @@ paths:
         : 1.0,\n                    \"default\": 0.5,\n                    \"description\": \"How significant this event was
         for the realm (0.0 to 1.0).\\nAffects behavior system weighting.\\n\"\n                },\n                \"metadata\"\
         : {\n                    \"type\": \"object\",\n                    \"additionalProperties\": true,\n            \
-        \        \"nullable\": true,\n                    \"description\": \"Event-specific details for behavior decisions\"\
-        \n                },\n                \"createdAt\": {\n                    \"type\": \"string\",\n              \
-        \      \"format\": \"date-time\",\n                    \"description\": \"When this record was created\"\n       \
-        \         }\n            }\n        },\n        \"RealmEventCategory\": {\n            \"type\": \"string\",\n   \
-        \         \"description\": \"Categories of historical events that realms can participate in\",\n            \"enum\"\
-        : [\n                \"FOUNDING\",\n                \"WAR\",\n                \"TREATY\",\n                \"CATACLYSM\"\
-        ,\n                \"DISCOVERY\",\n                \"MIGRATION\",\n                \"CULTURAL_SHIFT\",\n         \
-        \       \"ECONOMIC_CHANGE\",\n                \"POLITICAL_UPHEAVAL\"\n            ]\n        },\n        \"RealmEventRole\"\
-        : {\n            \"type\": \"string\",\n            \"description\": \"How the realm participated in the historical
-        event\",\n            \"enum\": [\n                \"ORIGIN\",\n                \"AGGRESSOR\",\n                \"\
-        DEFENDER\",\n                \"MEDIATOR\",\n                \"AFFECTED\",\n                \"BENEFICIARY\",\n    \
-        \            \"INSTIGATOR\",\n                \"NEUTRAL_PARTY\"\n            ]\n        },\n        \"RealmHistorySummaryResponse\"\
-        : {\n            \"type\": \"object\",\n            \"description\": \"Generated text summaries for realm archival\"\
-        ,\n            \"additionalProperties\": false,\n            \"required\": [\n                \"realmId\",\n     \
-        \           \"keyLorePoints\",\n                \"majorHistoricalEvents\"\n            ],\n            \"properties\"\
-        : {\n                \"realmId\": {\n                    \"type\": \"string\",\n                    \"format\": \"\
-        uuid\",\n                    \"description\": \"ID of the realm summarized\"\n                },\n               \
-        \ \"keyLorePoints\": {\n                    \"type\": \"array\",\n                    \"items\": {\n             \
-        \           \"type\": \"string\"\n                    },\n                    \"description\": \"Key lore elements
-        as text summaries.\\ne.g., [\\\"Founded during Year of the Dragon\\\", \\\"Primary export: Iron ore\\\"]\\n\"\n  \
-        \              },\n                \"majorHistoricalEvents\": {\n                    \"type\": \"array\",\n      \
-        \              \"items\": {\n                        \"type\": \"string\"\n                    },\n              \
-        \      \"description\": \"Major historical events as text summaries.\\ne.g., [\\\"Defended against the Northern Invasion\\\
-        \", \\\"Treaty of Stormgate established peace\\\"]\\n\"\n                }\n            }\n        }\n    }\n}"
+        \        \"nullable\": true,\n                    \"description\": \"Client-provided event-specific details. No Bannou
+        plugin reads specific keys from this field by convention.\"\n                },\n                \"createdAt\": {\n\
+        \                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                    \"\
+        description\": \"When this record was created\"\n                }\n            }\n        },\n        \"RealmEventCategory\"\
+        : {\n            \"type\": \"string\",\n            \"description\": \"Categories of historical events that realms
+        can participate in\",\n            \"enum\": [\n                \"FOUNDING\",\n                \"WAR\",\n        \
+        \        \"TREATY\",\n                \"CATACLYSM\",\n                \"DISCOVERY\",\n                \"MIGRATION\"\
+        ,\n                \"CULTURAL_SHIFT\",\n                \"ECONOMIC_CHANGE\",\n                \"POLITICAL_UPHEAVAL\"\
+        \n            ]\n        },\n        \"RealmEventRole\": {\n            \"type\": \"string\",\n            \"description\"\
+        : \"How the realm participated in the historical event\",\n            \"enum\": [\n                \"ORIGIN\",\n\
+        \                \"AGGRESSOR\",\n                \"DEFENDER\",\n                \"MEDIATOR\",\n                \"\
+        AFFECTED\",\n                \"BENEFICIARY\",\n                \"INSTIGATOR\",\n                \"NEUTRAL_PARTY\"\n\
+        \            ]\n        },\n        \"RealmHistorySummaryResponse\": {\n            \"type\": \"object\",\n      \
+        \      \"description\": \"Generated text summaries for realm archival\",\n            \"additionalProperties\": false,\n\
+        \            \"required\": [\n                \"realmId\",\n                \"keyLorePoints\",\n                \"\
+        majorHistoricalEvents\"\n            ],\n            \"properties\": {\n                \"realmId\": {\n         \
+        \           \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"description\"\
+        : \"ID of the realm summarized\"\n                },\n                \"keyLorePoints\": {\n                    \"\
+        type\": \"array\",\n                    \"items\": {\n                        \"type\": \"string\"\n             \
+        \       },\n                    \"description\": \"Key lore elements as text summaries.\\ne.g., [\\\"Founded during
+        Year of the Dragon\\\", \\\"Primary export: Iron ore\\\"]\\n\"\n                },\n                \"majorHistoricalEvents\"\
+        : {\n                    \"type\": \"array\",\n                    \"items\": {\n                        \"type\"\
+        : \"string\"\n                    },\n                    \"description\": \"Major historical events as text summaries.\\
+        ne.g., [\\\"Defended against the Northern Invasion\\\", \\\"Treaty of Stormgate established peace\\\"]\\n\"\n    \
+        \            }\n            }\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get realm history data for compression\",\n    \"description\": \"Returns
         complete realm history data (lore elements, event participations)\\nfor archive storage. Called during realm archival
         process by the\\nResource service compression system.\\n\",\n    \"tags\": [\n        \"Compression\"\n    ],\n  \
@@ -1094,7 +1098,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Event-specific details for behavior decisions
+          description: >-
+            Client-provided event-specific details.
+            No Bannou plugin reads specific keys from this field by convention.
         createdAt:
           type: string
           format: date-time
@@ -1216,7 +1222,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Optional event-specific details
+          description: >-
+            Client-provided event-specific details.
+            No Bannou plugin reads specific keys from this field by convention.
     GetRealmParticipationRequest:
       type: object
       description: Request payload for getting a realm's event participation
