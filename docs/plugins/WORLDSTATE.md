@@ -213,6 +213,7 @@ GameTimeSnapshot:
   period: string                       # Current day period code from calendar (e.g., "dawn")
   season: string                       # Current season code from calendar (e.g., "spring")
   seasonIndex: int                     # Current season ordinal (0-based)
+  seasonProgress: float                # 0.0-1.0 progress through the current season. Computed from day-of-season / days-in-season using the calendar template's season-to-month mappings. Useful for smooth interpolation (temperature curves, resource availability) rather than discrete season boundaries. Already exposed as ${world.season_progress} in the variable provider; including it in the snapshot avoids consumers recomputing it.
   totalGameSecondsSinceEpoch: long     # Absolute game-seconds since realm epoch
   timeRatio: float                     # Current game-seconds per real-second
   timestamp: DateTimeOffset            # Real-world UTC timestamp of this snapshot

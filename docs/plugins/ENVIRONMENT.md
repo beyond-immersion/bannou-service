@@ -74,6 +74,9 @@ ClimateTemplate:
           temperatureModifier: float     # Additive temp modifier while this weather is active
           visibilityMultiplier: float    # 1.0 = normal, 0.3 = heavy fog, 0.1 = blizzard
           precipitationIntensity: float  # 0.0 = none, 1.0 = maximum
+          precipitationType: string      # "none", "rain", "snow", "sleet", "hail". Determines precipitation form. For temperature-sensitive types ("rain"/"snow"), the resolver applies a crossover rule: rain below 0°C becomes snow, snow above 5°C becomes rain, between 0-5°C becomes sleet.
+          cloudCover: float              # 0.0-1.0. Cloud coverage during this weather pattern. clear=0.1, cloudy=0.6, overcast=0.95, storm=1.0, etc.
+          resourceImpactModifier: float  # Additive impact on resource availability. rain=+0.05, storm=-0.15, drought=-0.3, clear=0.0. See Resource Availability Computation.
 
   # Atmospheric baselines (per season)
   atmosphericBaselines:
@@ -123,6 +126,7 @@ LocationClimateBinding:
   climateTemplateId: Guid                # Resolved from biomeCode + gameServiceId
   altitude:          float               # Stored by Environment at binding creation (queried from Location)
   depth:             float               # For underground locations (0 for surface)
+  isIndoor:          bool                # True for enclosed locations (buildings, caves, taverns). Indoor locations skip weather computation entirely: no weather, no wind, full visibility. Temperature uses biome base modified by depth only. Default: false.
   isInherited:       bool                # True if inherited from parent binding
   createdAt:         DateTime
   updatedAt:         DateTime
@@ -138,8 +142,19 @@ LocationClimateBinding:
 **Resolution hierarchy** (all within Environment's own data):
 1. Location has an explicit binding in Environment → use it
 2. Location's parent has a binding in Environment → inherit (walk up the location tree via `ILocationClient`)
-3. No binding found in hierarchy → use realm's default biome (set via Environment configuration)
-4. No realm default → use a game service-level fallback template
+3. No binding found in hierarchy → use realm's default biome from `RealmEnvironmentConfig` (Environment's own per-realm config, managed via `/environment/realm-config/set`)
+4. No realm default → use the global `DefaultBiomeCode` configuration fallback
+
+**RealmEnvironmentConfig** (Environment-owned per-realm configuration):
+```
+RealmEnvironmentConfig:
+  realmId:            Guid
+  gameServiceId:      Guid
+  defaultBiomeCode:   string              # Fallback biome for locations with no binding in hierarchy
+  createdAt:          DateTime
+  updatedAt:          DateTime
+```
+Managed via `/environment/realm-config/set` (developer role). Seeded alongside climate templates during world initialization. Different realms need different defaults (Arcadia=temperate, Fantasia=tropical). Stored in `environment-climate` (MySQL) alongside climate templates.
 
 **Why Environment owns this data**: Biome codes are an ecological concept. They belong in the service that defines ecology (Environment, L4). Storing them in Location (L2) metadata would mean: non-game deployments carry biome data for no reason, Location's storage/migration must preserve data it doesn't understand, no referential integrity between biome codes and climate templates, no lifecycle management when biome codes change, and invisible cross-service coupling that no tooling can detect. See FOUNDATION TENETS Tenet 29 for the full rationale.
 
@@ -150,13 +165,21 @@ This means a city location inherits the biome of its parent region (via Environm
 Temperature is computed, not stored. Given a location and a game-time snapshot, the temperature is:
 
 ```
-ComputeTemperature(location, gameTimeSnapshot):
+ComputeTemperature(location, binding, gameTimeSnapshot):
+  # 0. Indoor short-circuit: enclosed locations skip weather entirely
+  if binding.isIndoor:
+    template = resolveClimateTemplate(location)
+    currentCurve = template.temperatureCurves[gameTimeSnapshot.season]
+    baseTemp = (currentCurve.baseMinTemp + currentCurve.baseMaxTemp) / 2
+    baseTemp += binding.depth * template.depthTemperatureRate  # caves warm with depth
+    return baseTemp
+
   template = resolveClimateTemplate(location)
 
   # 1. Get seasonal base temperature
   currentSeason = gameTimeSnapshot.season
   nextSeason = getNextSeason(gameTimeSnapshot, template)
-  seasonProgress = gameTimeSnapshot.seasonProgress  # 0.0-1.0 from Worldstate
+  seasonProgress = gameTimeSnapshot.seasonProgress  # 0.0-1.0 from Worldstate's GameTimeSnapshot
 
   currentCurve = template.temperatureCurves[currentSeason]
   nextCurve = template.temperatureCurves[nextSeason]
@@ -258,8 +281,8 @@ WeatherEvent:
   windSpeedMultiplier: float?            # Multiply base wind speed
   resourceAvailabilityMultiplier: float? # Multiply seasonal resource availability
 
-  # Timing
-  startGameTime:     long                # Game-seconds-since-epoch when event begins
+  # Timing (always game-time, sourced from Worldstate)
+  startGameTime:     long?               # Game-seconds-since-epoch when event begins. null = starts immediately (handler fills from Worldstate's current game time per IMPLEMENTATION TENETS: no sentinel values).
   endGameTime:       long?               # null = indefinite (must be ended explicitly)
 
   # Source tracking
@@ -270,7 +293,7 @@ WeatherEvent:
   createdAt:         DateTime
 ```
 
-**Event stacking**: Multiple events can affect the same location. They stack additively for modifiers and use last-wins for overrides. A drought (resource -0.5) and a divine blessing (resource +0.3) stack to net -0.2. A hard temperature override from a blizzard event takes precedence over seasonal temperature.
+**Event stacking**: Multiple events can affect the same location. They stack additively for modifiers. For hard overrides (weatherCode, temperatureOverride), **scope specificity wins**: `location` overrides `location_subtree` overrides `realm`. Within the same scope level, the most recently created event wins. A drought (resource -0.5) and a divine blessing (resource +0.3) stack to net -0.2. A location-specific divine storm's weatherCode override takes precedence over a realm-wide drought's weatherCode override at that location, regardless of creation order. A hard temperature override from a blizzard event takes precedence over seasonal temperature.
 
 **Event scope types**:
 - `realm`: Affects all locations in the realm (realm-wide drought, volcanic winter)
@@ -294,12 +317,11 @@ ComputeResourceAvailability(location, gameTimeSnapshot):
   progress = gameTimeSnapshot.seasonProgress
   smoothedAbundance = lerp(baseAbundance, nextSeasonAvail.abundanceLevel, progress * 0.5)
 
-  # 3. Weather impact modifier
+  # 3. Weather impact modifier (from climate template's weather distribution)
   currentWeather = resolveWeather(location, gameTimeSnapshot)
-  # Storms reduce availability, clear weather is neutral
-  weatherImpact = getWeatherResourceImpact(currentWeather.weatherCode)
+  # Each weather pattern defines its own resourceImpactModifier in the climate template
   # e.g., "storm" = -0.15, "drought" = -0.3, "clear" = 0.0, "rain" = +0.05
-  smoothedAbundance += weatherImpact
+  smoothedAbundance += currentWeather.resourceImpactModifier
 
   # 4. Weather event modifiers (stacked additively)
   activeEvents = getActiveWeatherEvents(location, gameTimeSnapshot)
@@ -311,7 +333,7 @@ ComputeResourceAvailability(location, gameTimeSnapshot):
   return clamp(smoothedAbundance, 0.0, 1.0)
 ```
 
-**Weather-to-resource impact mapping**: The impact of weather codes on resource availability is defined per-climate-template as part of the weather distribution data. Each weather pattern has an implicit resource impact based on its nature: rain is generally positive (crops grow), storms are negative (damage to environment), drought is strongly negative (ecological stress). These are NOT hardcoded -- each climate template's weather patterns include `resourceImpactModifier` as an optional float alongside their existing `temperatureModifier`.
+**Weather-to-resource impact mapping**: The impact of weather on resource availability is defined per-climate-template as part of each weather distribution pattern's `resourceImpactModifier` field. Each weather pattern declares its own ecological impact: rain is generally positive (+0.05, crops grow), storms are negative (-0.15, damage to environment), drought is strongly negative (-0.3, ecological stress), clear is neutral (0.0). These are NOT hardcoded weather-code-to-impact lookups -- each climate template's weather patterns define their own `resourceImpactModifier` alongside `temperatureModifier` and other weather-specific fields, allowing the same weather code to have different ecological impacts in different biomes.
 
 **Persistence model**: Resource availability is NOT independently stored. It is computed as part of the condition snapshot and cached in `environment:conditions:snapshot:{locationId}` alongside temperature, weather, and atmospheric data. The `environment.resource-availability.changed` event is published when the computed availability crosses a configurable significance threshold (default: 0.1 change) during a refresh cycle, preventing event noise from minor fluctuations.
 
@@ -355,9 +377,9 @@ ComputeResourceAvailability(location, gameTimeSnapshot):
 | lib-loot (L4, planned) | Loot table seasonal modifiers query current season + resource availability from Environment to adjust drop rates. Forageable items are scarcer in winter, abundant in autumn harvest. |
 | lib-market (L4, planned) | Market price modifiers adjust NPC vendor pricing based on resource availability. Scarcity drives prices up; abundance drives them down. |
 | lib-mapping (L4) | Mapping receives weather data published to its `weather_effects` spatial layer, enabling spatial weather queries for game clients and NPC perception. |
-| lib-puppetmaster (L4) | Regional watcher behaviors (storm gods, nature deities) create and manage weather events through ABML actions (`register_weather_event`, `cancel_weather_event`, `extend_weather_event`). **Environment provides the ABML action handlers** (registered as `IAbmlActionHandler` in DI) that Puppetmaster's action execution framework discovers and invokes. Puppetmaster launches the divine actors; Environment provides the weather manipulation actions those actors can use. |
+| lib-puppetmaster (L4) | Regional watcher behaviors (storm gods, nature deities) create and manage weather events through ABML actions (`register_weather_event`, `cancel_weather_event`, `extend_weather_event`). **Environment provides the ABML action handlers** (implementing `IActionHandler` in `bannou-service/Abml/Execution/`) that Actor's `IActionHandlerRegistry` discovers and invokes during behavior execution. Puppetmaster launches the divine actors; Environment provides the weather manipulation actions those actors can use. |
 | lib-storyline (L4) | Storyline's scenario preconditions can reference environmental state (drought conditions trigger famine storylines, volcanic winter enables survival narratives). |
-| lib-transit (L4, planned) | Transit route activation conditions reference environmental state. Mountain pass closed during blizzard, river crossing impassable during flood, desert route dangerous during heat wave. Route availability queries Environment for current conditions at waypoint locations. |
+| lib-transit (L2) | Transit discovers `EnvironmentTransitCostModifierProvider` via `IEnumerable<ITransitCostModifierProvider>` DI injection. Environment implements the `ITransitCostModifierProvider` interface (defined in `bannou-service/Providers/`) to provide weather-based travel cost modifiers: speed reduction during storms, risk increase during blizzards, impassability during extreme weather events. Transit (L2) cannot depend on Environment (L4) events — the DI provider pattern is the correct upward data flow mechanism, same as Variable Provider Factory. Transit is always enabled on game nodes. |
 | lib-utility (L4, planned) | Utility scoring for NPC decision-making incorporates environmental conditions as utility modifiers. Weather-aware NPCs weigh outdoor actions lower during storms, value shelter higher in cold, and prefer travel in clear weather. |
 | lib-craft (L4, planned) | Certain crafting recipes could reference environmental conditions (outdoor forge requires non-rain weather, ice sculpting requires freezing temperature). |
 | lib-disposition (L4, planned) | Environmental conditions could feed into NPC mood as a modifier source. Persistent rain lowers mood; warm sunny days improve it. |
@@ -434,6 +456,7 @@ These MUST be declared as `x-event-subscriptions` in `environment-events.yaml` s
 | `worldstate.season-changed` | `HandleSeasonChangedAsync` | `realmId`, `gameServiceId`, `season` (new season code), `previousSeason`, `year` | Trigger resource availability recalculation for all locations in the affected realm. Publish `resource-availability.changed`. Invalidate cached weather distributions (new season = new weather probability weights from climate template). Invalidate `ClimateTemplateCache` seasonal lookups. |
 | `worldstate.day-changed` | `HandleDayChangedAsync` | `realmId`, `gameServiceId`, `gameDay` (new day number), `year` | Invalidate day-keyed weather cache entries for the realm (`environment:weather:resolved:{realmId}:*:{previousGameDay}`). Lightweight -- cache invalidation only, no condition recomputation. New weather rolls will be computed lazily on next query or proactively on next worker refresh cycle. |
 | `location.created` | `HandleLocationCreatedAsync` | `locationId`, `realmId`, `parentLocationId` | Check if parent location has a climate binding in Environment's store. If so, create an inherited binding for the new location. Does NOT read Location metadata — biome data is Environment's own domain. Initial condition snapshot is created if the new location resolves a climate template through the inherited binding. |
+| `location.updated` | `HandleLocationUpdatedAsync` | `locationId`, `realmId`, `parentLocationId`, `previousParentLocationId` | If `parentLocationId` changed (location reparented), re-evaluate inherited climate bindings: if the binding was inherited from the old parent's subtree, re-resolve from the new parent's subtree. Explicit (non-inherited) bindings are unaffected. Location reparenting is rare but must not leave stale inherited bindings. |
 | `location.deleted` | `HandleLocationDeletedAsync` | `locationId`, `realmId` | Clean up any location-scoped weather events and cached conditions. Remove from active location tracking set if using `ActiveOnly` refresh mode. |
 
 ### Resource Cleanup (FOUNDATION TENETS)
@@ -450,7 +473,8 @@ These MUST be declared as `x-event-subscriptions` in `environment-events.yaml` s
 
 | Property | Env Var | Default | Purpose |
 |----------|---------|---------|---------|
-| `ConditionCacheTtlSeconds` | `ENVIRONMENT_CONDITION_CACHE_TTL_SECONDS` | `60` | TTL for cached condition snapshots in Redis. Variable providers read from this cache. (range: 10-300) |
+| `ConditionCacheTtlSeconds` | `ENVIRONMENT_CONDITION_CACHE_TTL_SECONDS` | `60` | TTL for cached condition snapshots in Redis. Background worker writes here; in-memory cache reads from here on miss. (range: 10-300) |
+| `ConditionSnapshotCacheTtlSeconds` | `ENVIRONMENT_CONDITION_SNAPSHOT_CACHE_TTL_SECONDS` | `5` | TTL for in-memory condition snapshot cache (`IConditionSnapshotCache`). Variable providers read from this cache first, falling back to Redis, then computation. Short TTL (5-10s) balances freshness against Redis load at NPC scale. (range: 1-30) |
 | `WeatherCacheTtlSeconds` | `ENVIRONMENT_WEATHER_CACHE_TTL_SECONDS` | `600` | TTL for cached resolved weather per location per game-day in Redis. (range: 60-3600) |
 | `ClimateCacheTtlMinutes` | `ENVIRONMENT_CLIMATE_CACHE_TTL_MINUTES` | `60` | TTL for in-memory climate template cache. Templates change rarely. (range: 5-1440) |
 | `ConditionRefreshMode` | `ENVIRONMENT_CONDITION_REFRESH_MODE` | `AllLocations` | Controls which locations the background worker refreshes per realm cycle. `AllLocations`: every location in the realm is refreshed (safe default, ensures all condition caches are warm). `ActiveOnly`: only locations with active entities (actors, game sessions, or queries within `ActiveLocationWindowMinutes`) are refreshed -- dormant locations compute conditions lazily on first query. See Design Consideration #1 for trade-offs. |
@@ -488,12 +512,14 @@ These MUST be declared as `x-event-subscriptions` in `environment-events.yaml` s
 | `EnvironmentConditionWorkerService` | Background `HostedService` that refreshes environmental conditions **per-realm** on a periodic cycle. Acquires a distributed lock per realm (`refresh:{realmId}`), iterates locations within that realm, computes condition snapshots, and publishes `conditions-changed` events where weather or temperature changed meaningfully. Each realm's refresh is independently locked for multi-instance safety -- two nodes can refresh different realms concurrently, but only one node processes a given realm at a time. Supports configurable `ConditionRefreshMode` (see Configuration): `AllLocations` (default, refresh every location in the realm) or `ActiveOnly` (refresh only locations with active entities -- actors, game sessions, or recent queries -- skipping dormant locations). **Optimization**: The worker should fetch the `GameTimeSnapshot` from Worldstate once per realm per refresh cycle, then pass it to all location condition computations within that cycle. Worldstate time doesn't change between location iterations within a single refresh — fetching per-location would be wasteful network traffic for identical results. |
 | `EnvironmentEventExpirationWorkerService` | Background `HostedService` that scans for expired weather events and deactivates them. Publishes `weather-event.ended` events. |
 | `EnvironmentProviderFactory` | Implements `IVariableProviderFactory` to provide `${environment.*}` variables to Actor's behavior system. |
-| `RegisterWeatherEventActionHandler` | ABML action handler (`register_weather_event`) enabling divine actors to create weather events via behavior expressions. Registered as `IAbmlActionHandler` in DI. Calls Environment's `CreateWeatherEvent` API internally. Used by Puppetmaster-launched divine actors. |
-| `CancelWeatherEventActionHandler` | ABML action handler (`cancel_weather_event`) enabling divine actors to cancel weather events they created. Validates `sourceId` matches the calling actor. |
-| `ExtendWeatherEventActionHandler` | ABML action handler (`extend_weather_event`) enabling divine actors to extend weather event durations. |
-| `IWeatherResolver` / `WeatherResolver` | Internal helper for deterministic weather computation from climate templates, season, and location. |
-| `ITemperatureCalculator` / `TemperatureCalculator` | Internal helper for temperature computation with seasonal curves, altitude, weather modifiers, and noise. |
+| `EnvironmentTransitCostModifierProvider` | Implements `ITransitCostModifierProvider` (defined in `bannou-service/Providers/`) to provide weather-based travel cost modifiers to Transit (L2). Returns speed multiplier (storms slow travel), risk modifier (blizzards increase danger), and impassability flag (extreme events block routes). Transit discovers via `IEnumerable<ITransitCostModifierProvider>`. |
+| `RegisterWeatherEventActionHandler` | ABML action handler (`register_weather_event`) enabling divine actors to create weather events via behavior expressions. Implements `IActionHandler` (in `bannou-service/Abml/Execution/`) and is discovered by Actor's `IActionHandlerRegistry`. Calls Environment's `CreateWeatherEvent` API internally. Used by Puppetmaster-launched divine actors. |
+| `CancelWeatherEventActionHandler` | ABML action handler (`cancel_weather_event`) implementing `IActionHandler`. Enables divine actors to cancel weather events they created. Validates `sourceId` matches the calling actor. |
+| `ExtendWeatherEventActionHandler` | ABML action handler (`extend_weather_event`) implementing `IActionHandler`. Enables divine actors to extend weather event durations. |
+| `IWeatherResolver` / `WeatherResolver` | Internal helper for deterministic weather computation from climate templates, season, and location. Applies indoor short-circuit for `isIndoor` bindings. |
+| `ITemperatureCalculator` / `TemperatureCalculator` | Internal helper for temperature computation with seasonal curves, altitude, weather modifiers, and noise. Applies indoor short-circuit for `isIndoor` bindings. |
 | `IClimateTemplateCache` / `ClimateTemplateCache` | In-memory TTL cache for climate templates. Templates change rarely; caching avoids MySQL queries on every condition computation. |
+| `IConditionSnapshotCache` / `ConditionSnapshotCache` | In-memory TTL cache (5-10s) for condition snapshots, layered on top of the Redis condition cache. Backed by `ConcurrentDictionary<(Guid realmId, Guid locationId), ConditionSnapshotModel>` with `ConditionSnapshotCacheTtlSeconds` expiry. Critical for NPC scale: at 100,000+ actors ticking every 100-500ms, the variable provider would otherwise hit Redis 200K-1M times/second. This cache absorbs that load — actors at the same location within the same TTL window share the same in-memory snapshot. Follows the same pattern as Worldstate's `IRealmClockCache`. The background worker writes to both Redis and this in-memory cache on each refresh cycle. |
 
 ### Variable Provider Factory
 
@@ -712,9 +738,12 @@ Implements `IVariableProviderFactory` (via `EnvironmentProviderFactory`). Loads 
 
 **Provider initialization**: When `CreateAsync(entityId, ct)` is called, the factory:
 1. Resolves the entity's `locationId` and `realmId`. For characters: via `ICharacterClient` (cached per-entity). For actors: the Actor runtime passes `locationId` as actor context metadata — Environment reads it from the provider context rather than making a service call. This is critical because actor ticks are high-frequency; a service call per tick per actor would be prohibitive.
-2. Reads the condition snapshot from `environment:conditions:snapshot:{locationId}` (TTL-based)
-3. If cache miss, computes conditions from climate template + Worldstate + weather resolution
-4. Returns an `EnvironmentProvider` populated with the current condition snapshot
+2. Reads the condition snapshot from `IConditionSnapshotCache` (in-memory, 5s TTL)
+3. On in-memory cache miss, reads from `environment:conditions:snapshot:{locationId}` (Redis, 60s TTL)
+4. On Redis cache miss, computes conditions from climate template + Worldstate + weather resolution, writes to both Redis and in-memory cache
+5. Returns an `EnvironmentProvider` populated with the current condition snapshot
+
+**Three-tier cache rationale**: At 100,000+ NPCs with 100-500ms ticks, actors at the same location share the same in-memory snapshot within the 5s window. This reduces Redis operations from ~1M/sec to ~10K/sec (one per unique location per TTL window). The 5s TTL means weather changes propagate within 5 seconds to NPC behavior — well within acceptable latency for weather phenomena that last minutes to hours.
 
 **Actor context metadata dependency**: The Actor runtime (L2) must include `locationId` in the actor's execution context metadata so that variable provider factories can resolve spatial state without making per-tick service calls. This is an Actor-side contract: when Actor calls `CreateAsync` on `IVariableProviderFactory` implementations, the execution context should carry the actor's current locationId. This pattern benefits all spatially-aware providers (Environment, Faction territory, Transit routes), not just Environment.
 
@@ -859,23 +888,24 @@ flows:
 ### Phase 1: Climate Template Infrastructure
 
 - Create `environment-api.yaml` schema with all endpoints
-- Create `environment-events.yaml` schema with `x-event-subscriptions` for all consumed events (worldstate.period-changed, worldstate.season-changed, worldstate.day-changed, location.created, location.deleted)
+- Create `environment-events.yaml` schema with `x-event-subscriptions` for all consumed events (worldstate.period-changed, worldstate.season-changed, worldstate.day-changed, location.created, location.updated, location.deleted)
 - Create `environment-configuration.yaml` schema
 - Generate service code
 - Implement climate template CRUD (seed, get, list, update, deprecate, bulk-seed)
 - Implement climate template validation (seasonal curve coverage, weather distribution weights, baseline completeness)
-- Implement location-climate binding CRUD (create, get, update, delete, bulk-seed) — Environment owns its own biome-to-location mappings per FOUNDATION TENETS T29
+- Implement location-climate binding CRUD (create, get, update, delete, bulk-seed) — Environment owns its own biome-to-location mappings per FOUNDATION TENETS T29. The `isIndoor` flag is part of the binding model from the start (default: false), enabling indoor short-circuit in weather/temperature computation
 - Implement binding inheritance resolution (walk up location tree via `ILocationClient` to find nearest ancestor binding)
-- Create Arcadia seed data files for default climate templates (temperate_forest, alpine, desert, tropical, tundra, underground, oceanic) AND default location-climate bindings in `provisioning/` alongside existing seed data, loaded via `BulkSeedClimates` and `BulkSeedBindings` during world initialization
+- Implement `RealmEnvironmentConfig` CRUD (`/environment/realm-config/set`, `/environment/realm-config/get`) for per-realm default biome codes. Stored in `environment-climate` (MySQL) alongside climate templates. Seeded alongside climate templates during world initialization
+- Create Arcadia seed data files for default climate templates (temperate_forest, alpine, desert, tropical, tundra, underground, oceanic), default location-climate bindings, and per-realm `RealmEnvironmentConfig` entries in `provisioning/` alongside existing seed data, loaded via `BulkSeedClimates`, `BulkSeedBindings`, and `SetRealmConfig` during world initialization
 
 ### Phase 2: Deterministic Weather Resolution
 
 - Implement `WeatherResolver` with hash-based deterministic weather from climate templates
+- Implement indoor short-circuit: `isIndoor` bindings skip weather computation entirely (no weather, no wind, full visibility; temperature uses biome base + depth modifier only)
 - Implement weather segment duration and transition dampening (deterministic hash-based, not probabilistic — see `WeatherTransitionDampening` config)
 - Implement location-scoped weather inheritance (walk up location tree)
 - Implement day-keyed weather cache with TTL
 - Implement `GetConditions` endpoint with full condition snapshot computation
-- Consider including indoor/outdoor short-circuit (`isIndoor` flag on `LocationClimateBinding`) — see Extension #7 for rationale
 
 ### Phase 3: Temperature Computation
 
@@ -905,12 +935,23 @@ flows:
 
 - Implement `EnvironmentConditionWorkerService` for periodic condition refresh (cache GameTimeSnapshot per-realm per-cycle)
 - Implement Worldstate event handlers (period-changed, season-changed, day-changed)
+- Implement Location event handlers (location.created, location.updated, location.deleted)
 - Implement Mapping weather layer publishing (soft dependency)
 - Implement resource availability computation and events (using `ResourceAvailabilityChangeThreshold` to gate event publication)
 - Implement resource cleanup endpoints
-- Implement ABML action handlers (`register_weather_event`, `cancel_weather_event`, `extend_weather_event`) as `IAbmlActionHandler` DI services
-- Create `environment-client-events.yaml` schema for weather transition push events via `IClientEventPublisher`
+- Implement ABML action handlers (`register_weather_event`, `cancel_weather_event`, `extend_weather_event`) as `IActionHandler` DI services discovered by `IActionHandlerRegistry`
+- Implement `EnvironmentTransitCostModifierProvider` for `ITransitCostModifierProvider` DI integration with Transit (L2)
+- Create `environment-client-events.yaml` schema for weather transition push events via `IClientEventPublisher`. Published when weather changes at a player's location (not continuously). One event per weather transition per player location — detect transition → publish service event → publish client event
 - Integration testing with Ethology, Workshop, Loot consumers
+
+### Bootstrap Sequence
+
+Environment's startup sequence follows the behavioral bootstrap lifecycle:
+
+1. **ConfigureServices**: Register DI services — `EnvironmentProviderFactory` as `IVariableProviderFactory`, `EnvironmentTransitCostModifierProvider` as `ITransitCostModifierProvider`, ABML action handlers as `IActionHandler`, internal helpers (`IWeatherResolver`, `ITemperatureCalculator`, `IClimateTemplateCache`, `IConditionSnapshotCache`), background workers (`EnvironmentConditionWorkerService`, `EnvironmentEventExpirationWorkerService`)
+2. **ConfigureApplication**: Middleware registration (none expected for Environment)
+3. **OnStartAsync**: State store initialization — create 5 stores via `IStateStoreFactory`. Load `ClimateTemplateCache` from MySQL. No cross-service calls at this phase
+4. **OnRunningAsync**: Cross-service API calls safe here. Register resource cleanup callbacks with lib-resource (`/environment/cleanup-by-realm`, `/environment/cleanup-by-game-service`, `/environment/cleanup-by-location`). Validate Worldstate is reachable (hard dependency). Background workers begin their periodic cycles after `ConditionUpdateStartupDelaySeconds` delay
 
 ---
 
@@ -928,13 +969,9 @@ flows:
 
 6. **Climate change over game-years**: Climate template parameter drift over long time scales. A realm experiencing deforestation (tracked by Realm-History or Storyline) gradually shifts temperature curves warmer and resource availability lower. Implemented as per-realm climate modifier history similar to Worldstate's ratio segments.
 
-7. **Indoor/outdoor detection** *(candidate for Phase 2)*: Locations marked as "indoor" in their Environment climate binding skip weather computation entirely (buildings, caves, enclosed structures). The condition snapshot for indoor locations returns the biome's base temperature modified by depth (caves get warmer) with no weather, no wind, and full visibility. This is a boolean flag (`isIndoor`) on Environment's `LocationClimateBinding`, not Location metadata. **This should be considered for inclusion in Phase 2 rather than deferral**: without indoor/outdoor, every location computes weather — including buildings, taverns, and caves where weather is meaningless. The `isIndoor` flag is a single boolean on the binding model and a short-circuit in the weather resolver. The implementation cost is trivial; the architectural correctness benefit is significant (NPCs don't "check weather" while standing inside a building).
+7. **Biome transition zones**: Locations at the boundary between two biomes blend climate templates rather than using one or the other. A forest-edge location between temperate forest and alpine gets 60/40 blended temperature curves and weather distributions. Implemented as a secondary biome code with a blend weight.
 
-8. **Client events for weather display** *(candidate for Phase 6)*: `environment-client-events.yaml` for pushing weather transitions to connected WebSocket clients. Published when weather changes at a player's location (not continuously). Low-bandwidth: one event per weather transition per player location, not per game-tick. **Should be included in Phase 6 alongside other integrations**: Phase 6 already implements the `EnvironmentConditionWorkerService` that detects weather transitions. Adding client event publication at transition boundaries is a natural extension — detect transition → publish service event → publish client event. Without client events, game clients must poll for weather changes, which contradicts Bannou's WebSocket-first architecture. The schema (`environment-client-events.yaml`) and `IClientEventPublisher` integration are lightweight additions.
-
-9. **Biome transition zones**: Locations at the boundary between two biomes blend climate templates rather than using one or the other. A forest-edge location between temperate forest and alpine gets 60/40 blended temperature curves and weather distributions. Implemented as a secondary biome code with a blend weight.
-
-10. **Seasonal migration triggers**: Publish advisory events when environmental conditions cross species-relevant thresholds (first frost, sustained drought, first snow). Ethology and Actor behaviors can subscribe to these for migration decision support. Not weather events (those are overrides) -- these are observations about the deterministic weather crossing significant boundaries.
+8. **Seasonal migration triggers**: Publish advisory events when environmental conditions cross species-relevant thresholds (first frost, sustained drought, first snow). Ethology and Actor behaviors can subscribe to these for migration decision support. Not weather events (those are overrides) -- these are observations about the deterministic weather crossing significant boundaries.
 
 ---
 
@@ -994,13 +1031,15 @@ Location (where)  ────────────────────�
 
 6. **Divine overrides are absolute**: A weather event with `weatherCode: "storm"` replaces the deterministic weather completely for the duration. There's no "divine influence" weighting where the override blends with natural weather. The god either controls the weather or doesn't. This prevents confusing states where the weather is "half storm, half clear."
 
-7. **Condition cache is eventually consistent**: When weather transitions occur (new weather segment, weather event starts/ends), the condition cache is invalidated. But entities mid-behavior-tick use their cached condition snapshot until the next tick. At the default 60-second cache TTL, environmental changes propagate within ~1 minute. This is acceptable for weather changes (which are gradual) but means an instantaneous divine storm takes up to a minute to affect NPC behavior.
+7. **Three-tier condition cache is eventually consistent**: Condition snapshots flow through three cache tiers: in-memory (`IConditionSnapshotCache`, 5s TTL) → Redis (`environment:conditions:snapshot`, 60s TTL) → full computation. When weather transitions occur, the background worker writes to both Redis and in-memory caches. Entities mid-behavior-tick use their cached snapshot until the next tick. At the in-memory 5s TTL, environmental changes propagate within ~5 seconds to NPC behavior. The 60s Redis TTL bounds the worst case for cold-start reads. This is acceptable for weather changes (which last minutes to hours) but means an instantaneous divine storm takes up to 5 seconds (not 60) to affect NPC behavior at the in-memory tier.
 
 8. **No wind simulation**: Wind speed and direction are looked up from climate template baselines + weather modifiers. Wind doesn't flow, interact with terrain, or create downstream effects. It's a data value that behaviors reference (`${environment.wind.speed}` for "is it too windy to fire arrows?"), not a physics simulation.
 
 9. **Altitude is from Environment's own binding, not Mapping**: Temperature altitude modifiers use the altitude stored in Environment's location-climate binding (captured from Location's spatial coordinates at binding creation time), not the Mapping service's 3D coordinates. This is intentional -- Mapping is a soft dependency, and altitude for temperature purposes is a coarse location-level property, not a per-coordinate value. A mountaintop location has altitude 3000 regardless of where within that location an entity stands.
 
 10. **Weather segment boundaries can cause brief inconsistencies**: When a weather segment expires and a new one is computed, entities querying conditions during the transition may briefly see different weather depending on whether their cached snapshot pre-dates the transition. The `ConditionCacheTtlSeconds` bounds this window. In practice, weather transitions are every 4-24 game-hours (10-60 real minutes), so this is rarely observable.
+
+11. **Indoor locations are weather-exempt by design**: Locations with `isIndoor: true` on their `LocationClimateBinding` skip weather computation entirely. Their condition snapshot returns: no weather code, no precipitation, no wind, full visibility (1.0), and temperature computed solely from the biome's seasonal base modified by depth (caves warm with depth). This means ABML expressions like `${environment.weather.is_storm}` are always false for indoor locations — NPCs inside buildings never "check weather" because there is no weather to check. If a game needs indoor weather effects (a magical storm inside a castle), use a weather event scoped to that specific location, which overrides the indoor short-circuit.
 
 ### Design Considerations (Requires Planning)
 
@@ -1014,9 +1053,9 @@ Location (where)  ────────────────────�
 
 2. **Climate template complexity vs. performance**: Rich climate templates with many weather patterns, complex temperature curves, and multiple seasonal baselines require non-trivial computation on every condition resolution. The `ClimateTemplateCache` mitigates MySQL queries, but the computation itself (seasonal interpolation, hourly curve evaluation, altitude adjustment) runs on every cache miss. Pre-computing daily condition tables per location (one computation per game-day per location) would amortize the cost.
 
-3. **Weather event cleanup after divine actor death**: When a divine actor (via Puppetmaster) creates weather events and then the actor is stopped (realm deleted, god defeated), the weather events should be cleaned up. The `sourceType`/`sourceId` fields enable this -- the actor cleanup callback should cancel all events created by that actor. Need to ensure the cleanup path is wired through Puppetmaster's actor lifecycle.
+3. **Weather event cleanup after divine actor death**: When a divine actor (via Puppetmaster) creates weather events and then the actor is stopped (realm deleted, god defeated), the weather events should be cleaned up. The `sourceType`/`sourceId` fields enable this -- the actor cleanup callback calls `CancelWeatherEventsBySource` to cancel all events created by that actor (publishes `weather-event.ended` with reason "source_removed" for each). This cleanup path must be wired through Puppetmaster's actor lifecycle: when an actor is stopped, Puppetmaster should call Environment's bulk cancel endpoint as part of actor teardown.
 
-4. **Integration ordering with Ethology**: Ethology's potential extension #1 (seasonal behavioral modifiers) subscribes to `environment.conditions-changed` to create automatic ethology overrides. This creates a publish-subscribe chain: Worldstate → Environment → Ethology → Actor. The latency through this chain should be bounded. At TTL defaults (60s environment cache, 60s ethology manifest cache), changes propagate within ~2 minutes.
+4. **Condition → behavior cascade latency**: Environmental changes ripple through a publish-subscribe chain: Worldstate publishes `period-changed` → Environment recomputes conditions and publishes `conditions-changed` → Ethology creates/updates behavioral overrides → Actor reads new variable values on next tick. With three-tier caching, the Environment leg propagates in ~5 seconds (in-memory TTL). The Ethology leg depends on its own cache TTL. The full chain latency is bounded by the sum of cache TTLs in the path. At defaults, changes propagate within ~1-2 minutes end-to-end. This is acceptable for weather phenomena that persist for 10-60+ real minutes. Sudden divine events (instant storm) propagate faster because they invalidate condition caches immediately rather than waiting for the background worker cycle.
 
 5. **Offline/downtime weather catch-up**: When the service starts after downtime, Worldstate catches up game-time (advance policy). Environment should NOT recompute conditions for every missed weather segment during catch-up. Instead, compute current conditions from the current game-time snapshot (deterministic weather is reproducible from the current state) and publish a single `conditions-changed` event. Consumers handle catch-up via their own mechanisms (Workshop materializes missed production, Loot regenerates tables).
 
