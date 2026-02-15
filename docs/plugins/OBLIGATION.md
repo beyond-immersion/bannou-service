@@ -16,7 +16,7 @@ Contract-aware obligation tracking for NPC cognition (L4 GameFeatures), bridging
 
 ## Core Mechanics
 
-**Two-Layer Design**: Works standalone with raw contract penalties. When personality data is available (soft L4 dependency via character-personality's variable provider), obligation costs are enriched with trait-weighted moral reasoning. Without personality enrichment, costs are the unweighted base penalties from contract behavioral clauses.
+**Three-Layer Design**: Works standalone with raw contract penalties (Layer 1). When personality data is available (soft L4 dependency via character-personality's variable provider), obligation costs are enriched with trait-weighted moral reasoning (Layer 2). When Hearsay data is available (soft L4 dependency, planned), norm costs use belief-filtered penalties reflecting what the NPC *believes* social rules to be, not ground truth (Layer 3). Each enrichment layer is independently optional and gracefully degrades. The `NormResolutionMode` configuration controls the fallback when Hearsay is unavailable: `PerfectKnowledge` (default) queries Faction directly for ground-truth norms, while `UncertaintySimulation` applies random variance to simulate imperfect social knowledge without the full belief propagation system.
 
 **Core Flow**:
 1. Contract activated -> obligation service extracts behavioral clauses -> caches per-party
@@ -66,6 +66,8 @@ The full morality pipeline requires five integration points to be complete: (1) 
 | lib-contract (`IContractClient`) | Querying active contracts for characters, extracting behavioral clauses, reporting breaches on knowing violations (L1 hard dependency) |
 | lib-resource (`IResourceClient`) | Registering/unregistering character references, cleanup callback registration, and compression callback registration (L1 hard dependency) |
 | character-personality variable provider (soft L4 dependency) | Personality traits (`${personality.honesty}`, `${personality.loyalty}`, `${personality.agreeableness}`, `${personality.conscientiousness}`) for moral weighting of obligation costs; graceful degradation when unavailable |
+| lib-hearsay (`IHearsayClient`, soft L4 dependency, planned) | Belief-filtered norm costs: when available, Hearsay's `${hearsay.norm.believed_cost.<type>}` replaces raw Faction penalties with what the NPC *believes* the penalty to be. When unavailable, `NormResolutionMode` config determines fallback: `PerfectKnowledge` queries Faction directly, `UncertaintySimulation` applies random variance to simulate imperfect social knowledge |
+| lib-faction (`IFactionClient`, soft L4 dependency) | Queries applicable norms for characters via `QueryApplicableNorms` when Hearsay is unavailable and `NormResolutionMode` is `PerfectKnowledge`; provides ground-truth norm data for the fallback path |
 
 ---
 
@@ -144,6 +146,8 @@ The full morality pipeline requires five integration points to be complete: (1) 
 | `DefaultPageSize` | `OBLIGATION_DEFAULT_PAGE_SIZE` | `20` | Default page size for paginated queries (range: 1-100) |
 | `LockTimeoutSeconds` | `OBLIGATION_LOCK_TIMEOUT_SECONDS` | `30` | Timeout in seconds for distributed locks on obligation cache operations (range: 5-120) |
 | `MaxActiveContractsQuery` | `OBLIGATION_MAX_ACTIVE_CONTRACTS_QUERY` | `100` | Maximum number of active contracts to query per character during cache rebuild (range: 10-500) |
+| `NormResolutionMode` | `OBLIGATION_NORM_RESOLUTION_MODE` | `PerfectKnowledge` | How norm costs are resolved when Hearsay is unavailable: `PerfectKnowledge` (query Faction directly) or `UncertaintySimulation` (apply random variance to simulate imperfect knowledge) |
+| `NormUncertaintyVariance` | `OBLIGATION_NORM_UNCERTAINTY_VARIANCE` | `0.2` | Max variance (+/-) applied to norm penalties in UncertaintySimulation mode (range: 0.0-0.5; only used when NormResolutionMode is UncertaintySimulation) |
 
 ---
 
@@ -281,6 +285,8 @@ None — all 11 endpoints are fully implemented with complete business logic, er
 ## Potential Extensions
 
 - **Cognition stage integration**: A 6th cognition stage (`evaluate_consequences`) inserted into the Actor behavior pipeline between `store_memory` and `evaluate_goal_impact`. Opt-in via `conscience: true` ABML metadata flag. The obligation service provides the data; the cognition stage integration lives in lib-actor/lib-behavior. This is the key remaining piece for the "second thoughts" feature to be active in NPC behavior.
+
+- **Hearsay-filtered norm costs (planned)**: When lib-hearsay is available, obligation costs for faction norms should use belief-filtered penalties (`${hearsay.norm.believed_cost.<type>}`) instead of raw Faction penalties. This creates information asymmetry: NPCs in remote areas may not know about newly enacted laws, and NPCs in rumor-dense areas may overestimate penalties. The `NormResolutionMode` configuration provides the fallback behavior when Hearsay is unavailable: `PerfectKnowledge` queries Faction directly (NPCs know all norms instantly), `UncertaintySimulation` applies `NormUncertaintyVariance` as random +/- variance to penalties (a lightweight approximation of imperfect knowledge without Hearsay's full belief propagation and convergence system).
 
 - **Location-aware norm weighting**: The `EvaluateAction` request accepts a `locationId` field, but location-based cost adjustment (e.g., lawless district reduces norm penalties) is not yet implemented. Could query lib-faction's norm resolution hierarchy or use location metadata directly to modulate base penalties per-location.
 

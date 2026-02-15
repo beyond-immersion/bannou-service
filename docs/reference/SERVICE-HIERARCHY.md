@@ -106,6 +106,7 @@ These services provide the core application infrastructure that ANY Bannou deplo
 |---------|------|
 | **account** | User account management (CRUD, OAuth linking) |
 | **auth** | Authentication, JWT tokens, session management |
+| **chat** | Universal typed message channel primitives |
 | **connect** | WebSocket gateway, binary protocol routing |
 | **permission** | RBAC permission management, capability manifests |
 | **contract** | Binding agreements, term validation, prebound template execution |
@@ -146,6 +147,8 @@ These services provide the core game infrastructure - worlds, characters, specie
 | **quest** | Objective-based progression system |
 | **seed** | Generic progressive growth primitives |
 | **collection** | Universal content unlock and archive system |
+| **transit** | Geographic connectivity graph, transit modes, journey tracking |
+| **worldstate** | Per-realm game clock, calendar system, temporal event broadcasting |
 
 **Rules**:
 - May depend on Layer 0, Layer 1, and other L2 services
@@ -175,6 +178,7 @@ These services provide optional capabilities that enhance ANY Bannou deployment 
 | **documentation** | Knowledge base for users, developers, and AI agents |
 | **website** | Public web interface (registration, news, status) |
 | **voice** | Voice room coordination (P2P and scaled tier) |
+| **broadcast** | Streaming platform integration |
 
 **Rules**:
 - May depend on Layer 0 and Layer 1
@@ -214,6 +218,30 @@ These services provide optional game-specific capabilities - NPCs, matchmaking, 
 | **realm-history** | Realm historical events, lore |
 | **license** | Grid-based progression boards via itemized contracts |
 | **storyline** | Seeded narrative generation from compressed archives |
+| **divine** | Pantheon management, divinity economy, blessing orchestration |
+| **faction** | Seed-based faction growth, norms, territory, guild memberships |
+| **gardener** | Player experience orchestration, garden lifecycle |
+| **obligation** | Contract-aware obligation tracking for NPC cognition |
+| **status** | Unified entity effects query layer (buffs, blessings, penalties) |
+| **affix** | Item modifier definition and generation |
+| **agency** | Guardian spirit progressive agency, UX manifest engine |
+| **arbitration** | Dispute resolution orchestration |
+| **character-lifecycle** | Generational cycle orchestration, genetic heritage |
+| **craft** | Recipe-based crafting orchestration |
+| **disposition** | Emotional synthesis and aspirational drives |
+| **dungeon** | Dungeon-as-actor lifecycle orchestration |
+| **environment** | Weather simulation, temperature modeling, ecological resources |
+| **ethology** | Species-level behavioral archetype registry, nature resolution |
+| **hearsay** | Social information propagation, belief formation |
+| **lexicon** | Structured world knowledge ontology, concept decomposition |
+| **loot** | Loot table management and generation |
+| **market** | Marketplace orchestration (auctions, NPC vendors) |
+| **organization** | Legal entity management |
+| **procedural** | Houdini-based procedural 3D asset generation |
+| **showtime** | In-game streaming metagame |
+| **trade** | Economic logistics, trade routes, supply/demand dynamics |
+| **utility** | Infrastructure network topology, flow calculation, coverage cascading |
+| **workshop** | Time-based automated production, lazy evaluation |
 
 **Analytics Note**: Analytics is classified as L4 not because it *depends* on game services, but because it *observes* them via event subscriptions. It subscribes to events from L2 services (game-session) and L4 services (character-history, realm-history) for aggregation. Unlike typical L4 services:
 - Analytics does NOT invoke L2/L4 service APIs (it only consumes events)
@@ -399,24 +427,6 @@ public class CharacterServiceEvents
 ```
 
 **Key Insight**: Character defines `character.reference.registered` in its own schema. It has no knowledge of Actor, Encounter, or any other service. Those services have the dependency - they must know about Character's event contract to publish to it.
-
-### Alternative: Cleanup Responsibility at Consumer Layer
-
-Higher-layer services handle their own cleanup when foundational entities are deleted:
-
-```csharp
-// Actor service (L4) - cleans up when character is deleted
-public class ActorServiceEvents
-{
-    [EventSubscription("character.deleted")]  // Actor depends on Character's event - correct!
-    public async Task HandleCharacterDeleted(CharacterDeletedEvent evt, ...)
-    {
-        await CleanupActorsForCharacter(evt.CharacterId);
-    }
-}
-```
-
-This is simpler but means the foundational service can't gate deletion on active references.
 
 ---
 
@@ -802,10 +812,10 @@ Discuss with the team before violating the hierarchy. Document any approved exce
 | Layer | Services |
 |-------|----------|
 | **L0** | state, messaging, mesh (required); telemetry (optional)† |
-| **L1** | account, auth, connect, permission, contract, resource |
-| **L2** | game-service, realm, character, species, location, relationship, subscription, currency, item, inventory, game-session, actor, quest, seed, collection |
-| **L3** | asset, orchestrator, documentation, website, voice |
-| **L4** | analytics*, behavior, puppetmaster, mapping, scene, matchmaking, leaderboard, achievement, save-load, music, escrow, character-personality, character-history, character-encounter, realm-history, license, storyline |
+| **L1** | account, auth, chat, connect, permission, contract, resource |
+| **L2** | game-service, realm, character, species, location, relationship, subscription, currency, item, inventory, game-session, actor, quest, seed, collection, transit, worldstate |
+| **L3** | asset, orchestrator, documentation, website, voice, broadcast |
+| **L4** | analytics*, behavior, puppetmaster, mapping, scene, matchmaking, leaderboard, achievement, save-load, music, escrow, character-personality, character-history, character-encounter, character-lifecycle, realm-history, license, storyline, divine, faction, gardener, obligation, status, affix, agency, arbitration, craft, disposition, dungeon, environment, ethology, hearsay, lexicon, loot, market, organization, procedural, showtime, trade, utility, workshop |
 | **L5** | (reserved for third-party plugins and internal meta-services) |
 
 † Telemetry is the only optional L0 component. When enabled, it loads FIRST so infrastructure plugins can use `ITelemetryProvider` for instrumentation. When disabled, they receive `NullTelemetryProvider`.

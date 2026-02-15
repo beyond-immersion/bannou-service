@@ -3,10 +3,12 @@
 > **Status**: Aspirational (Pre-Implementation)
 > **Layer**: L4 GameFeatures
 > **Schema**: `schemas/trade-api.yaml` (not yet created)
-> **Hard Dependencies**: Transit (L2), Currency (L2), Item (L2), Inventory (L2), Worldstate (L2)
-> **Soft Dependencies**: Escrow (L4), Faction (L4), Environment (L4), Analytics (L4), Market (L4), Contract (L1)
+> **Hard Dependencies**: Transit (L2), Currency (L2), Item (L2), Inventory (L2), Worldstate (L2), Contract (L1)
+> **Soft Dependencies**: Escrow (L4), Faction (L4), Environment (L4), Analytics (L4), Market (L4)
 > **Planning Reference**: `docs/planning/ECONOMY-CURRENCY-ARCHITECTURE.md` (Parts 2, 7)
 > **No schema, no code.**
+>
+> **Hierarchy note**: Transit, Worldstate, and Environment are aspirational services not yet listed in SERVICE-HIERARCHY.md. Their L2/L4 classifications follow from their design intents (Transit/Worldstate = foundational game infrastructure; Environment = optional game feature). SERVICE-HIERARCHY.md must be updated to include these services before implementation begins. Workshop, Organization, and Hearsay are also referenced in this document as aspirational concepts without existing deep dives or hierarchy assignments.
 
 ---
 
@@ -1246,7 +1248,9 @@ EconomicVelocityMetrics:
     - Only considers items the NPC produces/consumes or knows about
     - priceAwareness affects accuracy of price data
     - NPC may not know about all opportunities (imperfect information)
-    Integrates with Hearsay if available for belief-filtered price knowledge.
+    Integrates with Hearsay if available for belief-filtered price knowledge
+    (Hearsay is an aspirational service for NPC information propagation --
+    no deep dive or hierarchy assignment exists yet).
 ```
 
 ### Supply/Demand Queries
@@ -1392,7 +1396,6 @@ trade.tariff.collected:
   payload: { tariffRecordId, policyId, shipmentId, amount, realmId }
   consumers:
     - Analytics (L4): customs revenue tracking
-    - Currency (L2): reflected in transaction history
 
 trade.tariff.evaded:
   payload: { tariffRecordId, policyId, shipmentId, estimatedAmount, realmId }
@@ -1403,8 +1406,9 @@ trade.tariff.evaded:
 # Tax events
 trade.tax.assessment_created:
   payload: { assessmentId, policyId, taxpayerId, taxpayerType, taxDue, dueDate, realmId }
-  consumers:
-    - Actor (L2): NPC tax collectors receive collection tasks
+  # NOTE: Actor (L2) cannot subscribe to this L4 event per T27.
+  # Tax collector NPCs receive this data via ${trade.tax_debt.*} Variable Provider
+  # or Trade calls Actor's API directly (L4→L2 is valid direction).
 
 trade.tax.payment_received:
   payload: { assessmentId, taxpayerId, amount, remainingDue, realmId }
@@ -1426,7 +1430,9 @@ trade.supply_demand.shift:
   payload: { locationId, realmId, templateId, previousSupplyLevel, newSupplyLevel, priceChange }
   consumers:
     - Market (L4): vendor catalog pricing adjustment
-    - Actor (L2): NPC economic behavior adjustment
+  # NOTE: Actor (L2) cannot subscribe to this L4 event per T27.
+  # NPC economic behavior accesses supply/demand data via ${trade.supply.*}
+  # and ${trade.demand.*} Variable Provider (pull-based, hierarchy-safe).
 
 # Route events
 trade.route.created:
@@ -1434,8 +1440,9 @@ trade.route.created:
 
 trade.route.status_changed:
   payload: { routeId, code, previousStatus, newStatus, reason, realmId }
-  consumers:
-    - Actor (L2): merchant NPCs replan trade activities
+  # NOTE: Actor (L2) cannot subscribe to this L4 event per T27.
+  # Merchant NPCs access route status via ${trade.*} Variable Provider
+  # or Trade provides a DI Listener interface for route change notifications.
 ```
 
 ---
@@ -1990,6 +1997,69 @@ Tax assessment runs against eligible taxpayers per realm per policy. With progre
 6. **Relationship with lib-market**: Market handles exchange at a point (auctions, vendors). Trade handles logistics between points. They share supply/demand concepts but own different data. **Recommendation**: Trade subscribes to Market's price events for supply/demand enrichment. Market subscribes to Trade's shipment arrival events for supply updates. Neither depends on the other -- both work independently but are richer together.
 
 7. **Workshop integration**: Workshop produces goods over game-time. Trade ships goods over game-time. Together they form a production-to-market pipeline. **Recommendation**: No direct integration. Workshop deposits outputs into an inventory container. Trade reads inventory levels for supply/demand. NPC GOAP connects them: "Workshop produced iron → inventory full → GOAP goal: sell_surplus → create shipment to capital." The integration is behavioral, not mechanical.
+
+---
+
+## Tenet Compliance Notes
+
+### T25: Enum Type Safety (MUST FIX at schema creation time)
+
+The data models in this deep dive use `string` with inline value comments for many fields that should be proper schema-defined enums. When creating `trade-api.yaml`, the following fields MUST be defined as enum types in `components/schemas`:
+
+| Model | Field | Values | Suggested Enum Name |
+|-------|-------|--------|---------------------|
+| TradeRoute | status | active, closed, dangerous, seasonal | TradeRouteStatus |
+| Shipment | status | preparing, in_transit, at_checkpoint, arrived, lost, seized, abandoned | ShipmentStatus |
+| Shipment | custodyMode | escrow, carrier, virtual | CustodyMode |
+| ShipmentIncident | incidentType | bandit_attack, storm, customs_inspection, spoilage, breakdown, smuggling_detected | ShipmentIncidentType |
+| ShipmentIncident | outcome | escaped, lost_cargo, delayed, seized | IncidentOutcome |
+| TariffPolicy | scope | realm_wide, specific_border, category | TariffScope |
+| TariffPolicy | direction | import, export, both | TariffDirection |
+| TariffPolicy | collectionMode | automatic, assessed, advisory | CollectionMode |
+| TariffPolicy | status | active, suspended, wartime | TariffPolicyStatus |
+| TariffRecord | collectionStatus | pending, collected, partial, evaded, exempt | TariffCollectionStatus |
+| TariffRecord | borderType | internal, external | BorderType |
+| TariffExemption | exemptionType | full, partial | ExemptionType |
+| ContrabandDefinition | severity | restricted, prohibited, capital_offense | ContrabandSeverity |
+| TaxPolicy | taxType | transaction, income, property, wealth, sales, custom | TaxType |
+| TaxPolicy | collectionTarget | void, realm_treasury, faction_treasury | TaxCollectionTarget |
+| TaxAssessment | status | pending, partial, paid, overdue, defaulted | TaxAssessmentStatus |
+| EconomicVelocityMetrics | velocityTrend | accelerating, stable, decelerating, stagnant | VelocityTrend |
+
+For polymorphic `ownerType`/`carrierType`/`taxpayerType` fields: use the shared `EntityType` enum from `common-api.yaml` where values are known, or use opaque strings only if the set of valid types must remain extensible across layers (per T25 exception #3).
+
+### T25: Untyped Object Fields (MUST FIX at schema creation time)
+
+The following fields use `type: object` without property definitions and need proper typed schemas:
+
+| Model | Field | Fix |
+|-------|-------|-----|
+| TradeRoute | riskProfile | Define `RiskProfile` schema with typed risk-level counts |
+| TradeRoute | seasonalAvailability | Define typed array of `SeasonalAvailabilityEntry` (like Transit does) |
+| EconomicVelocityMetrics | faucetsByType | Define `FaucetBreakdown` with known faucet type keys |
+| EconomicVelocityMetrics | sinksByType | Define `SinkBreakdown` with known sink type keys |
+| Route estimate-cost | riskAssessment | Define `RiskAssessment` schema with `expectedLoss`, `worstCase` |
+
+If faucet/sink type keys must be extensible, use `additionalProperties: true` with a clear "client-only / analytics-only" description per SCHEMA-RULES.md metadata bag rules.
+
+### T27: Cross-Service Communication (FIXED in this document)
+
+Several events originally listed Actor (L2) and Currency (L2) as consumers. These have been corrected:
+- **Actor cannot subscribe to Trade events** (L2 subscribing to L4 violates T27). NPC economic behavior uses `${trade.*}` Variable Provider instead.
+- **Currency does not need to subscribe to tariff events** — Trade calls Currency's API directly for tariff/tax collection, so Currency already has the transaction data.
+
+### T28: Resource Cleanup (GAP)
+
+Trade stores NPC economic profiles keyed by `characterId` (L2 entity). Per T28, Trade must:
+1. Register character references via lib-resource when creating NPC profiles
+2. Implement cleanup callback endpoint (e.g., `/trade/cleanup-by-character`) for cascading deletion
+3. Similarly for realm references in tariff/tax/contraband policies and supply/demand snapshots
+
+No cleanup endpoints are currently defined in the API section. These must be added at schema creation time.
+
+### Endpoint Count
+
+The document states 38 endpoints. Manual count yields 37. Verify at schema creation time.
 
 ---
 

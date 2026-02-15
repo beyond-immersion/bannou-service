@@ -259,7 +259,7 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS, T28):
 
 ## Variable Provider: `${faction.*}` Namespace
 
-Implements `IVariableProviderFactory` (via `FactionProviderFactory`) providing the following variables to Actor (L2) via the Variable Provider Factory pattern for ABML behavior expressions. Loads the character's faction memberships from the membership list store and enriches with faction details.
+Implements `IVariableProviderFactory` (via `FactionProviderFactory`) providing the following variables to Actor (L2) via the Variable Provider Factory pattern for ABML behavior expressions. Loads the character's faction memberships from the membership list store, enriches with faction details, and resolves membership-scoped norms (highest penalty per violation type across all membership factions).
 
 **Aggregate variables:**
 
@@ -268,6 +268,15 @@ Implements `IVariableProviderFactory` (via `FactionProviderFactory`) providing t
 | `${faction.count}` | int | Number of factions the character belongs to |
 | `${faction.names}` | List&lt;string&gt; | Names of all factions |
 | `${faction.codes}` | List&lt;string&gt; | Codes of all factions |
+| `${faction.primary_faction}` | string? | Code of the highest-role faction (Leader > Officer > Member) |
+| `${faction.norm_count}` | int | Total unique violation types with norms across all membership factions |
+
+**Norm variables** (accessed by violation type code, case-insensitive):
+
+| Variable | Type | Description |
+|----------|------|-------------|
+| `${faction.has_norm.TYPE}` | bool | Whether any membership faction defines a norm for this violation type |
+| `${faction.norm_penalty.TYPE}` | float | Highest penalty across all membership factions for this violation type (0 if none) |
 
 **Per-faction variables** (accessed by faction code, case-insensitive):
 
@@ -282,17 +291,13 @@ Implements `IVariableProviderFactory` (via `FactionProviderFactory`) providing t
 
 Returns `FactionProvider.Empty` for non-character actors or characters with no faction memberships.
 
-**Implementation Gap vs. Plan**: The original plan (Issue #410 comment + `~/.claude/plans/glittery-jingling-meadow.md`) specified additional variables that are **not yet implemented**:
+**Remaining Gap: Territory Context Variable**
 
 | Planned Variable | Status | Impact |
 |-----------------|--------|--------|
-| `${faction.primary_faction}` | **Missing** | No "highest-role faction" identification for behavior shortcuts |
-| `${faction.primary_faction_phase}` | **Missing** | Depends on primary faction concept |
-| `${faction.has_norm.<type>}` | **Missing** | ABML cannot check norm existence per violation type |
-| `${faction.norm_penalty.<type>}` | **Missing** | ABML cannot read base penalty per violation type |
-| `${faction.in_controlled_territory}` | **Missing** | ABML cannot check territory control context |
+| `${faction.in_controlled_territory}` | **Not yet implemented** | ABML cannot check territory control context |
 
-The norm and territory variables are the critical integration point for lib-obligation's `evaluate_consequences` cognition stage. Without them, the GOAP cost modifier pipeline cannot access faction norm data through ABML expressions. The current provider only exposes membership data. Implementing the missing variables requires the provider to query norm stores and territory stores (with the character's current location as context, which may need to be passed through the `CreateAsync` call).
+The territory variable requires knowing the character's current location, which is not available through the `IVariableProviderFactory.CreateAsync(Guid? entityId)` interface. Implementing this requires either: (a) subscribing to `location.entity.arrived`/`location.entity.departed` events to maintain a character-location cache in Faction's own state stores, or (b) enhancing the provider factory interface to accept additional execution context. The membership-scoped norm variables above are sufficient for lib-obligation's `evaluate_consequences` cognition stage; territory-scoped norms are resolved by the full `QueryApplicableNorms` API endpoint which accepts a `locationId` parameter.
 
 ## Visual Aid
 

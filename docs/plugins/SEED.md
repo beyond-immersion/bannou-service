@@ -22,6 +22,7 @@ Generic progressive growth primitive (L2 GameFoundation) for game entities. Seed
 | lib-messaging (`IMessageBus`) | Publishing lifecycle and growth events; error event publication |
 | `ICollectionUnlockListener` (DI provider) | `SeedCollectionUnlockListener` registered as singleton; receives Collection entry unlock notifications via in-process DI dispatch for guaranteed delivery |
 | lib-game-service (`IGameServiceClient`) | Validates game service existence during seed creation and type registration (L2 hard dependency) |
+| lib-worldstate (`IWorldstateClient`, L2, **required future migration**) | Decay worker MUST transition from real-time intervals to game-time via Worldstate's `GetElapsedGameTime` API. At the default 24:1 time ratio, real-time decay is 24x slower than it should be per game-day. Seeds representing guardian spirits, dungeon cores, and faction growth all evolve in the simulated world's time, not server time. Migration adds a `DecayTimeSource` config property (enum: `RealTime`, `GameTime`; default `GameTime` once Worldstate is implemented). |
 
 ---
 
@@ -298,8 +299,11 @@ Manifest version is monotonically incremented from the previous cached version.
 - **Bond shared growth applied regardless of partner activity**: When a bonded seed records growth, the `BondSharedGrowthMultiplier` is applied if the bond is active. The partner seed does not need to be simultaneously active or growing. This means a bonded seed always gets boosted growth even if the partner is dormant or archived. Whether this is the intended semantic needs clarification.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-09:https://github.com/beyond-immersion/bannou-service/issues/367 -->
 
+- **Decay worker uses real-time, should use game-time**: The decay background worker (`SeedDecayWorkerService`) uses `DateTimeOffset.UtcNow` and real-time `Task.Delay` intervals. In a world with a 24:1 game-time ratio, decay applied per real-time cycle is 24x slower than intended per game-day. Guardian spirits, dungeon cores, faction seeds, and all other seed types evolve in the simulated world's time. When Worldstate (L2) is implemented, the decay worker must call `GetElapsedGameTime` to compute game-days elapsed since last decay cycle, then apply `GrowthDecayRatePerDay` against game-days rather than real-days. The `DecayWorkerIntervalSeconds` config remains the real-time check frequency; the decay amount per cycle is computed from game-time elapsed.
+
 ---
 
 ## Work Tracking
 
 - [#361](https://github.com/beyond-immersion/bannou-service/issues/361) - Variable provider factory for Actor behavior system (implemented: `SeedProviderFactory`, `SeedProvider`, `SeedDataCache`)
+- [#434](https://github.com/beyond-immersion/bannou-service/issues/434) - Seed decay worker must transition from real-time to game-time via Worldstate (blocked by Worldstate implementation)

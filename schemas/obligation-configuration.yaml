@@ -73,3 +73,29 @@ x-service-configuration:
       minimum: 10
       maximum: 500
       env: OBLIGATION_MAX_ACTIVE_CONTRACTS_QUERY
+
+    # Norm Resolution Configuration
+    NormResolutionMode:
+      type: string
+      description: |
+        How norm-based obligation costs are resolved when the Hearsay service is unavailable.
+        PerfectKnowledge: Query Faction directly for ground-truth norms (NPC knows all applicable norms instantly).
+        UncertaintySimulation: Apply a configurable random variance to norm penalties, simulating imperfect social knowledge without Hearsay's full belief propagation system.
+        When Hearsay IS available, this setting is ignored and belief-filtered costs are used instead.
+      default: PerfectKnowledge
+      enum:
+        - PerfectKnowledge
+        - UncertaintySimulation
+      env: OBLIGATION_NORM_RESOLUTION_MODE
+
+    NormUncertaintyVariance:
+      type: number
+      format: float
+      description: |
+        Maximum variance applied to norm penalties when NormResolutionMode is UncertaintySimulation.
+        A value of 0.3 means penalties are randomly adjusted by up to +/-30% per evaluation.
+        Only used when NormResolutionMode is UncertaintySimulation; ignored in PerfectKnowledge mode.
+      default: 0.2
+      minimum: 0.0
+      maximum: 0.5
+      env: OBLIGATION_NORM_UNCERTAINTY_VARIANCE

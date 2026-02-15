@@ -298,15 +298,15 @@ When the rolling average price for an item shifts meaningfully (configurable thr
 | lib-inventory (`IInventoryClient`) | Item movement between seller/buyer/vendor inventories (L2) |
 | lib-game-service (`IGameServiceClient`) | Validating game service existence for market scoping (L2) |
 | lib-resource (`IResourceClient`) | Reference tracking, cleanup callback registration (L1) |
+| lib-character (`ICharacterClient`) | Vendor NPC existence validation (L2) |
+| lib-location (`ILocationClient`) | Market location validation for market definitions (L2) |
 
 ### Soft Dependencies (runtime resolution via `IServiceProvider` -- graceful degradation)
 
 | Dependency | Usage | Behavior When Missing |
 |------------|-------|-----------------------|
 | lib-escrow (`IEscrowClient`) | Item custody during active auction listings | Auctions disabled; vendor buy/sell still works (no custody needed for immediate purchase). Returns `ServiceUnavailable` for auction endpoints. |
-| lib-character (`ICharacterClient`) | Vendor NPC existence validation | Vendor creation skips character validation; caller responsible for valid characterId |
 | lib-analytics (`IAnalyticsClient`) | Publishing economic events for velocity tracking | Market operates without analytics integration; price history still maintained locally |
-| lib-location (`ILocationClient`) | Market location validation for market definitions | Market creation skips location validation |
 
 ---
 
@@ -415,9 +415,9 @@ Paginated queries by templateId, realmId, granularity, date range use `IJsonQuer
 | `market.vendor.restocked` | `MarketVendorRestockedEvent` | Vendor stock replenished (background or manual) |
 | `market.vendor.price-changed` | `MarketVendorPriceChangedEvent` | Vendor adjusted item price (dynamic/personality-driven) |
 | `market.price.changed` | `MarketPriceChangedEvent` | Rolling average price shifted beyond threshold |
-| `market-definition.created` | `MarketDefinitionCreatedEvent` | Market definition created (lifecycle) |
-| `market-definition.updated` | `MarketDefinitionUpdatedEvent` | Market definition updated (lifecycle) |
-| `market-definition.deleted` | `MarketDefinitionDeletedEvent` | Market definition deleted (lifecycle) |
+| `market-definition.created` | `MarketDefinitionCreatedEvent` | Market definition created (x-lifecycle auto-generated) |
+| `market-definition.updated` | `MarketDefinitionUpdatedEvent` | Market definition updated (x-lifecycle auto-generated) |
+| `market-definition.deleted` | `MarketDefinitionDeletedEvent` | Market definition deleted (x-lifecycle auto-generated) |
 | `market.settlement.failed` | `MarketSettlementFailedEvent` | Settlement worker failed to settle a listing (error event) |
 
 ### Consumed Events
@@ -478,7 +478,9 @@ Paginated queries by templateId, realmId, granularity, date range use `IJsonQuer
 | `IInventoryClient` | Item movement between parties (L2 hard) |
 | `IGameServiceClient` | Game service validation (L2 hard) |
 | `IResourceClient` | Reference tracking, cleanup callbacks (L1 hard) |
-| `IServiceProvider` | Runtime resolution of soft L4 dependencies (Escrow, Character, Analytics, Location) |
+| `ICharacterClient` | Vendor NPC existence validation (L2 hard) |
+| `ILocationClient` | Market location validation (L2 hard) |
+| `IServiceProvider` | Runtime resolution of soft L4 dependencies (Escrow, Analytics) |
 
 ### Background Workers
 
@@ -519,7 +521,7 @@ All workers acquire distributed locks before processing to ensure multi-instance
 
 All endpoints require `developer` role.
 
-- **Create** (`/market/definition/create`): Validates game service existence. Validates code uniqueness per game service. Optionally validates location existence (soft). Saves definition with fee config and supported currencies. Publishes `market-definition.created`.
+- **Create** (`/market/definition/create`): Validates game service existence. Validates code uniqueness per game service. Validates location existence if locationId provided (L2 hard). Saves definition with fee config and supported currencies. Publishes `market-definition.created`.
 - **Get** (`/market/definition/get`): Load from MySQL by marketId. 404 if not found.
 - **GetByCode** (`/market/definition/get-by-code`): JSON query by gameServiceId + code. 404 if not found.
 - **List** (`/market/definition/list`): Paged JSON query with required gameServiceId filter, optional realmId, status, and locationId filters.
@@ -536,7 +538,7 @@ All endpoints require `developer` role.
 
 ### Vendor Operations (7 endpoints)
 
-- **CreateVendor** (`/market/vendor/create`): Validates game service and realm. Optionally validates character existence (soft). Creates vendor currency wallet via `ICurrencyClient` (owner = vendorId, ownerType = vendor). Saves catalog model. Returns vendor with empty stock list.
+- **CreateVendor** (`/market/vendor/create`): Validates game service and realm. Validates character existence (L2 hard). Creates vendor currency wallet via `ICurrencyClient` (owner = vendorId, ownerType = vendor). Saves catalog model. Returns vendor with empty stock list.
 - **GetVendor** (`/market/vendor/get`): Load vendor by vendorId. Enriches with current stock summary from Redis.
 - **GetVendorByCharacter** (`/market/vendor/get-by-character`): Lookup by characterId. 404 if character has no vendor catalog.
 - **GetCatalog** (`/market/vendor/catalog`): Returns full vendor catalog -- all stocked items with current prices, stock levels, buyback info, and requirement summaries. This is the player-facing "browse shop" endpoint.
@@ -596,6 +598,8 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 |  |  Item -------- item validation, instance creation              |     |
 |  |  Inventory --- item movement (seller -> escrow -> buyer,       |     |
 |  |                vendor <-> customer)                            |     |
+|  |  Character --- NPC vendor existence validation                 |     |
+|  |  Location ---- market location validation                      |     |
 |  |  Resource ---- cleanup coordination on entity deletion         |     |
 |  +-------------------------------------------------------------+     |
 |           |                                                            |
@@ -604,9 +608,7 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 |  | Optional Features (L4, graceful degradation)                  |     |
 |  |                                                                |     |
 |  |  Escrow ------- item custody during active auction listings    |     |
-|  |  Character ---- NPC vendor existence validation                |     |
 |  |  Analytics ---- economic velocity event publishing             |     |
-|  |  Location ----- market location validation                     |     |
 |  +-------------------------------------------------------------+     |
 |                                                                        |
 |  Background Workers                                                    |
@@ -700,6 +702,47 @@ NPC Vendor Economic Cycle
    acquire cheaper iron -> prices    |                      |
    adjust naturally via NPC GOAP]    |                      |
 ```
+
+---
+
+## Tenet Compliance Notes
+
+### T25: String Fields Requiring Enum Definitions
+
+When creating `market-api.yaml`, the following fields described as strings in this document MUST be defined as proper enum types in the schema:
+
+| Field | Used In | Values | Required Enum |
+|-------|---------|--------|---------------|
+| Catalog type | `VendorCatalogModel` | `static`, `dynamic`, `personality_driven` | `CatalogType` |
+| Listing status | `AuctionListingModel` | `Active`, `Sold`, `Cancelled`, `Expired` | `ListingStatus` |
+| Market definition status | `MarketDefinitionModel` | *(not enumerated -- define during schema creation)* | `MarketDefinitionStatus` |
+| Vendor status | `VendorCatalogModel` | *(not enumerated -- define during schema creation)* | `VendorStatus` |
+| Price history granularity | `PriceHistoryEntryModel` | `hour`, `day`, `week` | `PriceGranularity` |
+| Search sort order | Auction search request | `price_asc`, `price_desc`, `time_remaining`, `bid_count` | `AuctionSortOrder` |
+| Seller type | `AuctionListingModel` | `character`, `guild`, `npc`, `system` | `MarketEntityType` (shared with bidder/buyer) |
+| Price trend | Variable provider | `up`, `down`, `stable` | `PriceTrend` |
+| Supply signal | Variable provider | `scarce`, `normal`, `abundant` | `SupplySignal` |
+| Bid status | `AuctionBidModel` | *(not enumerated -- define during schema creation)* | `BidStatus` |
+
+### T4 / T2: Dependency Classification (Corrected)
+
+Character (L2) and Location (L2) were originally listed as soft dependencies with graceful degradation. Per T4 and SERVICE-HIERARCHY.md: when L4 is enabled, ALL of L2 must be running. L2 dependencies MUST be hard (constructor injection, crash at startup if missing). These have been moved to the hard dependencies table in this document.
+
+Only Escrow (L4) and Analytics (L4) remain as soft dependencies, which is correct -- L4-to-L4 dependencies require graceful degradation.
+
+### T28: Resource Cleanup (Compliant)
+
+This document correctly defines cleanup endpoints for character, realm, and game-service entity types with CASCADE policy via lib-resource. No gaps identified.
+
+### T27: Event Flow Direction (Compliant)
+
+All consumed events flow in the correct direction: Market (L4) subscribes to `currency.hold.expired` from Currency (L2). Higher-layer consuming lower-layer events is the correct T27 pattern.
+
+All published events are consumed by same-layer or observing services (Analytics L4, divine actors via events). No lower-layer services are listed as consumers.
+
+### Endpoint Count
+
+Manual count: 5 (definition) + 6 (auction) + 7 (vendor) + 4 (stock) + 3 (price) + 3 (cleanup) = **28 endpoints**. Matches GENERATED-SERVICE-DETAILS.md.
 
 ---
 

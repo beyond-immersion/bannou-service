@@ -20,6 +20,7 @@ Multi-currency management service (L2 GameFoundation) for game economies. Handle
 | lib-state (`IStateStoreFactory`) | MySQL persistence for definitions, wallets, balances, transactions, holds; Redis caching for balances and holds; Redis idempotency store |
 | lib-state (`IDistributedLockProvider`) | Balance-level locks for atomic credit/debit/transfer/hold-creation; hold-level locks for capture serialization; wallet-level locks for close operations; index-level locks for list operations; autogain locks to prevent concurrent modification |
 | lib-messaging (`IMessageBus`) | Publishing all currency events (balance, wallet lifecycle, autogain, cap, hold, exchange rate); error event publishing via TryPublishErrorAsync |
+| lib-worldstate (`IWorldstateClient`, L2, **required future migration**) | Autogain worker MUST transition from real-time intervals to game-time via Worldstate's `GetElapsedGameTime` API. At the default 24:1 time ratio, real-time autogain dramatically under-credits compared to game-time. This affects the living economy: NPC passive income must track the simulated world's time, not server time. Migration requires adding an `AutogainTimeSource` config property (enum: `RealTime`, `GameTime`; default `GameTime` once Worldstate is implemented). |
 
 ---
 
@@ -462,6 +463,8 @@ No bugs identified. All enum types are stored as proper enums in models; string 
 
 8. **BatchCredit non-atomicity has confusing retry semantics**: If a batch credit is partially completed and the process crashes, the batch-level idempotency key is not yet recorded (line 1225: recorded after all ops). On retry, individual sub-operation keys return Conflict status, which is recorded as `Success=false` in the results. The caller receives a response showing "failures" for already-completed operations, which may be misinterpreted as actual failures.
 
+9. **Autogain uses real-time, should use game-time**: The autogain background worker (`CurrencyAutogainTaskService`) uses `DateTimeOffset.UtcNow` and real-time `Task.Delay` intervals. In a living world with a 24:1 game-time ratio, NPCs earning passive income in real-time receive 24x less income than they should per game-day. When Worldstate (L2) is implemented, the autogain worker must call `GetElapsedGameTime` to compute game-time elapsed since last accrual, then apply the autogain rate against game-time rather than real-time. This ensures the NPC-driven economy scales correctly with the world's simulated time. Both `Lazy` mode (on-demand calculation) and `Task` mode (background worker) need this transition.
+
 ---
 
 ## Work Tracking
@@ -471,3 +474,4 @@ This section tracks active development work on items from the quirks/bugs lists 
 ### Pending Design
 
 - **Global supply analytics** - Needs design decisions on aggregation strategy, minted/burned semantics, and escrow integration. Issue: https://github.com/beyond-immersion/bannou-service/issues/211
+- [#433](https://github.com/beyond-immersion/bannou-service/issues/433) - Currency autogain must transition from real-time to game-time via Worldstate (blocked by Worldstate implementation)

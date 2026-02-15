@@ -32,6 +32,21 @@ using BeyondImmersion.BannouService.Configuration;
 
 namespace BeyondImmersion.BannouService.Obligation;
 
+
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+/// <summary>
+/// How norm-based obligation costs are resolved when the Hearsay service is unavailable.
+    /// PerfectKnowledge: Query Faction directly for ground-truth norms (NPC knows all applicable norms instantly).
+    /// UncertaintySimulation: Apply a configurable random variance to norm penalties, simulating imperfect social knowledge without Hearsay's full belief propagation system.
+    /// When Hearsay IS available, this setting is ignored and belief-filtered costs are used instead.
+/// </summary>
+public enum NormResolutionMode
+{
+    PerfectKnowledge,
+    UncertaintySimulation,
+}
+#pragma warning restore CS1591
+
 /// <summary>
 /// Configuration class for Obligation service.
 /// Properties are automatically bound from environment variables.
@@ -100,5 +115,23 @@ public class ObligationServiceConfiguration : IServiceConfiguration
     /// </summary>
     [ConfigRange(Minimum = 10, Maximum = 500)]
     public int MaxActiveContractsQuery { get; set; } = 100;
+
+    /// <summary>
+    /// How norm-based obligation costs are resolved when the Hearsay service is unavailable.
+    /// PerfectKnowledge: Query Faction directly for ground-truth norms (NPC knows all applicable norms instantly).
+    /// UncertaintySimulation: Apply a configurable random variance to norm penalties, simulating imperfect social knowledge without Hearsay's full belief propagation system.
+    /// When Hearsay IS available, this setting is ignored and belief-filtered costs are used instead.
+    /// Environment variable: OBLIGATION_NORM_RESOLUTION_MODE
+    /// </summary>
+    public NormResolutionMode NormResolutionMode { get; set; } = NormResolutionMode.PerfectKnowledge;
+
+    /// <summary>
+    /// Maximum variance applied to norm penalties when NormResolutionMode is UncertaintySimulation.
+    /// A value of 0.3 means penalties are randomly adjusted by up to +/-30% per evaluation.
+    /// Only used when NormResolutionMode is UncertaintySimulation; ignored in PerfectKnowledge mode.
+    /// Environment variable: OBLIGATION_NORM_UNCERTAINTY_VARIANCE
+    /// </summary>
+    [ConfigRange(Minimum = 0.0, Maximum = 0.5)]
+    public double NormUncertaintyVariance { get; set; } = 0.2;
 
 }
