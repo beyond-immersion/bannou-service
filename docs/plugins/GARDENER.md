@@ -31,6 +31,36 @@ Each garden has:
 - **Entity associations** -- collections, inventories, characters available in this context
 - **A gardener behavior** (or manual API calls) controlling what the player experiences
 
+### Housing Garden Pattern (No Plugin Required)
+
+Player housing does not require a dedicated `lib-housing` plugin. It composes entirely from existing primitives -- the same pattern as the void/discovery experience, and structurally identical to the dungeon master's Pattern A full-garden experience. See [VOXEL-BUILDER-SDK.md](../planning/VOXEL-BUILDER-SDK.md) for the SDK that enables interactive voxel construction within housing gardens.
+
+| Housing Concern | Solved By |
+|----------------|-----------|
+| "A conceptual space the player inhabits" | **Gardener** (garden type: `housing`) |
+| "Capabilities emerge from growth" | **Seed** (housing seed type -- phases unlock rooms, decorations, NPC servants, visitor capacity) |
+| "Physical layout stored persistently" | **Scene** (node tree of housing objects, including `voxel` node types for player-built structures) + **Save-Load** (versioned persistence with chunk-level delta saves for voxel data) |
+| "Interactive voxel building" | **Voxel Builder SDK** (pure computation -- brush, fill, mirror, WFC generation; engine bridges render; runs on both client and server) |
+| "Rendered to the client on demand" | **Scene Composer SDK** + **Voxel Builder SDK** (engine bridges render the scene graph and voxel nodes respectively) |
+| "A god tends the space" | **Divine/Puppetmaster** (gardener god-actor manages the housing experience per [BEHAVIORAL-BOOTSTRAP.md](../guides/BEHAVIORAL-BOOTSTRAP.md)) |
+| "Items placed in the space" | **Inventory** (housing container) + **Item** (furniture/decorations as item instances with `placed_scene_id`/`placed_node_id` custom stats) |
+| "Visitors can enter" | **Game Session** (housing visit = game session) + **Permission** (owner/visitor/trusted_friend role matrix) |
+| "Entity events route to player" | **Entity Session Registry** in Connect (L1), per [Issue #426](https://github.com/beyond-immersion/bannou-service/issues/426) |
+
+The flow mirrors the void experience exactly:
+
+1. Player selects housing seed from the void (garden-to-garden transition: discovery → housing)
+2. Gardener creates `housing` garden instance, binds per-garden entity associations (housing seed, inventory, scene)
+3. Gardener god-actor begins tending (spawns NPC servants, manages visitors, seasonal changes, event reactions)
+4. Scene data loaded → SceneComposer renders the node tree, VoxelBuilder renders voxel nodes
+5. Player interacts: placing furniture goes through Inventory/Item (ABML behavior: checkout scene → remove item from inventory → add node with item metadata → commit), voxel editing goes through the SDK's operation system
+6. Seed grows as player engages → unlocks capabilities (bigger space, more decoration slots, crafting stations, garden plots)
+7. Save-Load persists the scene + voxel delta saves (chunk-aligned .bvox format means only modified 16x16x16 chunks re-serialize); Asset stores the base voxel data in MinIO
+
+**Item ↔ Scene node binding** is handled by convention: Item instances use `customStats` to track placement (`placed_scene_id`, `placed_node_id`), and Scene nodes carry `annotations.item.instanceId` referencing back. The gardener behavior enforces consistency, with Scene checkout as the implicit transaction boundary. If the scene commit fails after an inventory removal, the behavior compensates by returning the item to inventory.
+
+**Why this works without a plugin**: The garden IS the housing instance. The seed IS the capability system. Scene IS the layout. Save-Load IS the persistence. The Voxel Builder SDK IS the construction tool. The gardener god-actor IS the experience manager. There is no remaining concern that needs a dedicated service -- only authored content (housing seed type definitions, gardener behavior documents, item templates for furniture, Scene validation rules for spatial constraints).
+
 ### Gardener Behavior Actor Pattern (Divine Actor Unification)
 
 The gardener behavior actor is a **divine actor** -- the same entity type that Puppetmaster launches as regional watchers to orchestrate NPC experiences in physical realms. From a god's perspective, tending a player's conceptual garden and tending a physical realm region are the same operation with different tools. The Gardener service provides the tools (garden instances, POIs, scenarios, entity associations); the divine actor's ABML behavior document determines when and how to use them.
@@ -472,7 +502,7 @@ Player connects → Gardener triggers divine actor for garden-tending
 
 12. **Garden-to-garden transitions**: The current implementation destroys the garden instance on scenario entry (`EnterScenarioAsync` deletes garden + POIs). The target architecture replaces this with garden-to-garden transitions where the gardener behavior continuously manages the player's context across garden types (discovery → lobby → in-game → post-game → discovery). The player is always in some garden; Gardener is always active.
 
-13. **Multiple garden types**: Only the void/discovery garden type is implemented (POIs, drift metrics, weighted scoring). Lobby gardens, in-game gardens, housing gardens, post-game gardens, and cooperative gardens are not implemented. Each type requires its own behavioral patterns and entity association rules.
+13. **Multiple garden types**: Only the void/discovery garden type is implemented (POIs, drift metrics, weighted scoring). Lobby gardens, in-game gardens, housing gardens, post-game gardens, and cooperative gardens are not implemented. Each type requires its own behavioral patterns and entity association rules. The housing garden type is a key validation case for the multi-garden architecture -- it composes Scene (layout), Seed (progression), Save-Load (persistence), Voxel Builder SDK (interactive construction), and Item/Inventory (furnishings) entirely through gardener behaviors with no dedicated plugin. See [Housing Garden Pattern](#housing-garden-pattern-no-plugin-required) above and [VOXEL-BUILDER-SDK.md](../planning/VOXEL-BUILDER-SDK.md).
 
 14. **Per-garden entity associations**: Gardens do not currently track associated entities (characters, collections, inventories, wallets). The target architecture gives each garden its own set of entities that the player can interact with, managed dynamically by the gardener behavior. For example, a lobby garden offers character selection from a roster; an in-game garden binds the selected character and its inventory/wallet.
 
@@ -617,7 +647,7 @@ Player connects → Gardener triggers divine actor for garden-tending
 - [ ] **Stub #4**: Wire up `PersistentEntryEnabled` and `GardenMinigamesEnabled` phase config flags to service logic
 - [ ] **Stub #11**: Divine actor as gardener pattern -- launch per-player divine actor (via Puppetmaster) with gardener behavior document instead of background workers
 - [ ] **Stub #12**: Garden-to-garden transitions replacing destroy-on-scenario-entry
-- [ ] **Stub #13**: Multiple garden types (lobby, in-game, housing, post-game, cooperative)
+- [ ] **Stub #13**: Multiple garden types (lobby, in-game, housing, post-game, cooperative). Housing garden is the first validation target -- see [Housing Garden Pattern](#housing-garden-pattern-no-plugin-required) and [VOXEL-BUILDER-SDK.md](../planning/VOXEL-BUILDER-SDK.md)
 - [ ] **Stub #14**: Per-garden entity associations (characters, collections, inventories, wallets)
 - [ ] **Stub #16**: Dynamic character switching within a garden (entity binding updates on switch)
 
@@ -629,3 +659,4 @@ Player connects → Gardener triggers divine actor for garden-tending
 - [ ] **Design #8**: Design divine gardener behavior document structure (base/default behavior, per-game customization, ABML action handlers for Gardener APIs)
 - [ ] **Design #9**: Design garden type abstraction (registry, behavioral patterns, entity association rules)
 - [ ] **Design #10**: Design garden-to-garden transition mechanics (state persistence, actor lifecycle, game session relationship)
+- [ ] **Design #11**: Design housing garden ABML behaviors -- item placement (checkout→move→commit), voxel editing permissions (gated by seed capabilities), visitor management (permission role matrix), and item↔scene node binding convention. See [Issue #432](https://github.com/beyond-immersion/bannou-service/issues/432) and [VOXEL-BUILDER-SDK.md](../planning/VOXEL-BUILDER-SDK.md)

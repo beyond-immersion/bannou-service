@@ -12,7 +12,9 @@
 
 Per-realm game time authority, calendar system, and temporal event broadcasting service (L2 GameFoundation). Maps real-world time to configurable game-time progression with per-realm time ratios, calendar templates (configurable days, months, seasons, years as opaque strings), and day-period cycles (dawn, morning, afternoon, evening, night). Publishes boundary events at game-time transitions (new day, season, year, period) consumed by other services for time-aligned processing. Provides the `${world.*}` variable namespace to the Actor service's behavior system via the Variable Provider Factory pattern, enabling NPCs to make time-aware decisions. Also provides a time-elapsed query API for lazy evaluation patterns (computing game-time duration between two real timestamps accounting for ratio changes and pauses). Internal-only, never internet-facing.
 
-**The problem this solves**: The codebase is haunted by a clock that doesn't exist. ABML behaviors reference `${world.time.period}` and `${world.weather.temperature}` with no provider. Storyline declares `TimeOfDay` trigger conditions with nothing to evaluate them. Encounters and relationships have `inGameTime` fields that callers provide with no authority to consult. Trade routes have `seasonalAvailability` flags with no seasons. Market explicitly punts game-time analysis to callers. Economy planning documents reference seasonal trade, deity harvest cycles, and tick-based processing -- all assuming a clock service that was never built. Worldstate fills this gap as the single authoritative source of "what time is it in the game world?"
+**The problem this solves**: The codebase is haunted by a clock that doesn't exist. ABML behaviors reference `${world.time.period}` with no provider. Storyline declares `TimeOfDay` trigger conditions with nothing to evaluate them. Encounters and relationships have `inGameTime` fields that callers provide with no authority to consult. Trade routes have `seasonalAvailability` flags with no seasons. Market explicitly punts game-time analysis to callers. Economy planning documents reference seasonal trade, deity harvest cycles, and tick-based processing -- all assuming a clock service that was never built. Worldstate fills this gap as the single authoritative source of "what time is it in the game world?"
+
+**Note on weather variables**: Some early ABML behavior examples (e.g., `humanoid-base.abml.yml`) reference `${world.weather.temperature}` and `${world.weather.raining}`. These references are **incorrect** -- weather and atmospheric conditions are the `${environment.*}` namespace owned by lib-environment (L4), not the `${world.*}` namespace owned by worldstate. Similarly, `guard-patrol.abml.yml` references `${world.patrol_routes[...]}` which is not temporal data and does not belong in the `world` namespace. These example behavior files predate the final namespace design and need updating as a cleanup item.
 
 **What this service IS**:
 1. A **game clock** -- per-realm time that advances as a configurable multiple of real time
@@ -214,6 +216,7 @@ Services receiving catch-up events with `daysCrossed > 1` can process the time g
 | lib-messaging (`IMessageBus`) | Publishing boundary events (day-changed, season-changed, etc.), error event publication |
 | lib-realm (`IRealmClient`) | Validating realm existence during clock initialization (L2) |
 | lib-game-service (`IGameServiceClient`) | Validating game service existence during calendar template creation (L2) |
+| lib-character (`ICharacterClient`) | Resolving characterId → realmId in the `WorldProviderFactory` variable provider. Actors pass entityId (characterId) to the factory; the factory needs to know which realm the character is in to query the correct realm clock. Cached per-character with short TTL. (L2) |
 
 ### Soft Dependencies (runtime resolution via `IServiceProvider` -- graceful degradation)
 
@@ -225,7 +228,7 @@ None. Worldstate is a pure temporal authority with no optional dependencies. All
 
 | Dependent | Relationship |
 |-----------|-------------|
-| lib-actor (L2) | Actor discovers `WorldProviderFactory` via `IEnumerable<IVariableProviderFactory>` DI injection; creates `WorldProvider` instances per character for ABML behavior execution (`${world.*}` variables). Provider resolves the character's realm via `ICharacterClient`, then queries worldstate for that realm's current time. |
+| lib-actor (L2) | Actor discovers `WorldProviderFactory` via `IEnumerable<IVariableProviderFactory>` DI injection; creates `WorldProvider` instances per entity for ABML behavior execution (`${world.*}` variables). The Actor runtime can optionally provide `realmId` in the actor's context metadata (avoiding a service call); when not provided, the factory resolves the character's realm via `ICharacterClient` (cached with short TTL), then queries worldstate for that realm's current time. |
 | lib-currency (L2, future) | Currency autogain worker can optionally use `GetElapsedGameTime` for game-time-based passive income instead of real-time. Requires configuration flag (`AutogainTimeSource: "game"`) to opt in. |
 | lib-seed (L2, future) | Seed decay worker can optionally use `GetElapsedGameTime` for game-time-based growth decay instead of real-time. |
 | lib-workshop (L4, planned) | Uses `GetElapsedGameTime` for computing production output over game-time intervals. Subscribes to boundary events for materialization triggers. |
@@ -292,10 +295,12 @@ None. Worldstate is a pure temporal authority with no optional dependencies. All
 
 | Topic | Handler | Action |
 |-------|---------|--------|
-| `realm.created` | `HandleRealmCreatedAsync` | Auto-initializes a realm clock using the game service's default calendar template and time ratio. Sets epoch to current real time, game time to year 0, day 1, hour 0. |
+| `realm.created` | `HandleRealmCreatedAsync` | Logs that a new realm was created. Does NOT auto-initialize a clock -- clock initialization requires an explicit `InitializeRealmClock` call (or admin tooling) because the caller must specify which calendar template to use. If `DefaultCalendarTemplateCode` is configured, the handler logs the suggestion but takes no action. This avoids silent clock creation with potentially wrong calendar bindings. |
 | `realm.deleted` | `HandleRealmDeletedAsync` | Cleans up realm clock, ratio history, and realm configuration. |
 
 ### Resource Cleanup (FOUNDATION TENETS)
+
+Worldstate registers as a cleanup callback provider via `x-references` in the API schema. When lib-resource coordinates deletion of a referenced resource, it calls the cleanup endpoints below. These are declared in `worldstate-api.yaml` via the `x-references` extension attribute.
 
 | Target Resource | Source Type | On Delete | Cleanup Endpoint |
 |----------------|-------------|-----------|-----------------|
@@ -318,6 +323,7 @@ None. Worldstate is a pure temporal authority with no optional dependencies. All
 | `CalendarCacheTtlMinutes` | `WORLDSTATE_CALENDAR_CACHE_TTL_MINUTES` | `60` | TTL for in-memory calendar template cache (range: 1-1440). Calendar structures change rarely. |
 | `MaxCalendarsPerGameService` | `WORLDSTATE_MAX_CALENDARS_PER_GAME_SERVICE` | `10` | Safety limit on calendar templates per game service (range: 1-100). |
 | `RatioHistoryRetentionDays` | `WORLDSTATE_RATIO_HISTORY_RETENTION_DAYS` | `90` | Days of ratio history to retain. Older segments are compacted (merged into single segments). Range: 7-365. |
+| `DefaultCalendarTemplateCode` | `WORLDSTATE_DEFAULT_CALENDAR_TEMPLATE_CODE` | `""` | Default calendar template code used as fallback when `InitializeRealmClock` is called without specifying a template. Empty string = no default (caller must specify). When set, `InitializeRealmClock` with null `calendarTemplateCode` falls back to this value. |
 | `DistributedLockTimeoutSeconds` | `WORLDSTATE_DISTRIBUTED_LOCK_TIMEOUT_SECONDS` | `10` | Timeout for distributed lock acquisition (range: 5-60). |
 
 ---
@@ -333,8 +339,9 @@ None. Worldstate is a pure temporal authority with no optional dependencies. All
 | `IDistributedLockProvider` | Distributed lock acquisition (L0) |
 | `IRealmClient` | Realm existence validation (L2 hard dependency) |
 | `IGameServiceClient` | Game service existence validation (L2 hard dependency) |
+| `ICharacterClient` | Character-to-realm resolution for variable provider (L2 hard dependency). Used by `WorldProviderFactory` to resolve entityId → realmId when the Actor runtime does not provide realmId in context. |
 | `WorldstateClockWorkerService` | Background `HostedService` that advances realm clocks on `ClockTickIntervalSeconds` interval. Acquires per-realm distributed locks to prevent concurrent advancement in multi-node deployments. |
-| `WorldProviderFactory` | Implements `IVariableProviderFactory` to provide `${world.*}` variables to Actor's behavior system. Creates `WorldProvider` instances from cached realm clock data. |
+| `WorldProviderFactory` | Implements `IVariableProviderFactory` to provide `${world.*}` variables to Actor's behavior system. Creates `WorldProvider` instances from cached realm clock data. Accepts optional `realmId` from actor context; falls back to `ICharacterClient` lookup when not provided. |
 | `IWorldstateTimeCalculator` / `WorldstateTimeCalculator` | Internal helper for calendar math: converting total game-seconds to year/month/day/hour, resolving day periods and seasons, computing elapsed game-time across ratio segments. |
 | `IRealmClockCache` / `RealmClockCache` | In-memory TTL cache for realm clock data used by the variable provider. Prevents Redis round-trips on every ABML variable resolution. Backed by `ConcurrentDictionary` with `ClockCacheTtlSeconds` expiry. |
 | `ICalendarTemplateCache` / `CalendarTemplateCache` | In-memory TTL cache for calendar templates. Calendars change rarely; caching avoids MySQL queries on every clock tick. |
@@ -343,11 +350,13 @@ None. Worldstate is a pure temporal authority with no optional dependencies. All
 
 | Factory | Namespace | Data Source | Registration |
 |---------|-----------|-------------|--------------|
-| `WorldProviderFactory` | `${world.*}` | Reads realm clock from Redis (via `IRealmClockCache`); resolves character's realmId via `ICharacterClient` (cached); provides computed time variables | `IVariableProviderFactory` (DI singleton) |
+| `WorldProviderFactory` | `${world.*}` | Reads realm clock from Redis (via `IRealmClockCache`). Accepts optional `realmId` from actor context metadata; when not provided, resolves character's realmId via `ICharacterClient` (cached). Provides computed time variables. | `IVariableProviderFactory` (DI singleton) |
 
 ---
 
 ## API Endpoints (Implementation Notes)
+
+**Total: 17 endpoints** (4 clock queries + 3 clock admin + 5 calendar management + 3 realm configuration + 2 cleanup)
 
 ### Clock Queries (4 endpoints)
 
@@ -363,7 +372,7 @@ None. Worldstate is a pure temporal authority with no optional dependencies. All
 
 All require `developer` role.
 
-- **InitializeRealmClock** (`/worldstate/clock/initialize`): Manually initializes a clock for a realm. Normally auto-initialized on `realm.created` event, but this endpoint allows explicit initialization with custom epoch, starting year, and time ratio. Validates realm exists. Creates ratio history initial segment. Publishes `realm-clock.initialized`.
+- **InitializeRealmClock** (`/worldstate/clock/initialize`): Initializes a clock for a realm. The primary path from "realm exists" to "realm has a clock." Request includes `realmId` (required), `calendarTemplateCode` (nullable -- falls back to `DefaultCalendarTemplateCode` config if null; returns error if both are null/empty), optional `epoch` (defaults to current real time), optional `startingYear` (defaults to 0), optional `timeRatio` (falls back to `DefaultTimeRatio` config), optional `downtimePolicy` (falls back to `DefaultDowntimePolicy` config). Validates: realm exists, calendar template exists for the realm's game service, realm doesn't already have a clock (Conflict). Creates realm config, initial ratio history segment, and Redis clock cache entry. Publishes `realm-clock.initialized`.
 
 - **SetTimeRatio** (`/worldstate/clock/set-ratio`): Changes the time ratio for a realm. Materializes current clock state (flush to latest game time), records new ratio segment in history, updates the realm clock. Publishes `worldstate.ratio-changed`. Setting ratio to 0.0 pauses the clock.
 
@@ -383,9 +392,17 @@ All require `developer` role.
 
 - **DeleteCalendar** (`/worldstate/calendar/delete`): Deletes a calendar template. Fails with `Conflict` if any active realm clocks reference this template. Acquires distributed lock.
 
+### Realm Configuration (3 endpoints)
+
+- **GetRealmConfig** (`/worldstate/realm-config/get`): Returns the realm's worldstate configuration: calendar template code, current time ratio, downtime policy, epoch, whether the clock is initialized and active. If no clock is initialized for the realm, returns `NotFound`. Used by admin dashboards and diagnostic tools.
+
+- **UpdateRealmConfig** (`/worldstate/realm-config/update`): Updates realm-level configuration. Acquires distributed lock. Partial update (only non-null fields applied). Supports changing: `downtimePolicy` (safe to change at any time), `calendarTemplateCode` (validates template exists; takes effect on next clock tick -- see Quirk #4). **Cannot change via this endpoint**: time ratio (use `SetTimeRatio` which records history), epoch (immutable after initialization). Requires `developer` role.
+
+- **ListRealmClocks** (`/worldstate/realm-config/list`): Lists all active realm clocks with summary info: realmId, calendarTemplateCode, currentTimeRatio, current season, current year, last advanced timestamp. Supports pagination and optional `gameServiceId` filter. Used by admin dashboards and monitoring. Requires `developer` role.
+
 ### Cleanup (2 endpoints)
 
-Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
+Resource-managed cleanup via lib-resource (per FOUNDATION TENETS). These endpoints are called by lib-resource when coordinating deletion of referenced resources, declared via `x-references` in the API schema:
 
 - **CleanupByRealm** (`/worldstate/cleanup-by-realm`): Removes realm clock, ratio history, and realm configuration for a realm.
 - **CleanupByGameService** (`/worldstate/cleanup-by-game-service`): Removes all calendar templates and realm configurations for a game service.
@@ -464,10 +481,11 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 
 Implements `IVariableProviderFactory` (via `WorldProviderFactory`) providing the following variables to Actor (L2) via the Variable Provider Factory pattern. Loads from the in-memory realm clock cache (`IRealmClockCache`).
 
-**Provider initialization**: When `CreateAsync(characterId, ct)` is called, the factory:
-1. Resolves the character's `realmId` via `ICharacterClient` (cached per-character)
-2. Reads the realm clock from `IRealmClockCache` (TTL-based, avoids Redis per-resolution)
-3. Returns a `WorldProvider` populated with the current game time snapshot
+**Provider initialization**: When `CreateAsync(entityId, ct)` is called, the factory:
+1. Checks if `realmId` is available in the actor's context metadata (Actor runtime can provide this directly, avoiding a service call)
+2. If not available, resolves the character's `realmId` via `ICharacterClient` (cached per-character with short TTL)
+3. Reads the realm clock from `IRealmClockCache` (TTL-based, avoids Redis per-resolution)
+4. Returns a `WorldProvider` populated with the current game time snapshot
 
 ### Time Variables
 
@@ -583,7 +601,8 @@ flows:
 - Implement calendar validation (period coverage, season-month mapping, structural consistency)
 
 ### Phase 2: Realm Clock Core
-- Implement realm clock initialization (manual + auto from realm.created event)
+- Implement realm clock initialization (explicit via `InitializeRealmClock` endpoint with nullable calendarTemplateCode + config fallback)
+- Implement `realm.created` event handler (logging only, no auto-initialization)
 - Implement clock advancement background worker
 - Implement Redis cache for hot clock reads
 - Implement boundary detection and event publishing
@@ -603,10 +622,11 @@ flows:
 - Implement character-to-realm resolution caching
 - Integration testing with Actor runtime (verify `${world.time.period}` resolves)
 
-### Phase 5: Administrative & Cleanup
+### Phase 5: Administrative, Configuration & Cleanup
 - Implement `AdvanceClock` for testing/admin
 - Implement `BatchGetRealmTimes`
-- Implement resource cleanup endpoints
+- Implement `GetRealmConfig`, `UpdateRealmConfig`, `ListRealmClocks` (realm configuration management)
+- Implement resource cleanup endpoints (declared via `x-references` in API schema)
 - Implement `realm.deleted` event handler
 - Integration testing with other L2 services
 
@@ -640,6 +660,8 @@ flows:
 
 ### Intentional Quirks (Documented Behavior)
 
+0. **ABML behavior namespace cleanup needed**: Several example behavior files reference variables under the `${world.*}` namespace that do NOT belong to worldstate: `${world.weather.temperature}` and `${world.weather.raining}` (these are `${environment.*}` variables from lib-environment L4), and `${world.patrol_routes[...]}` (operational data, not temporal). These example files predate the final namespace design and need updating. The `${world.*}` namespace owned by worldstate is strictly temporal: time, calendar, and season data.
+
 1. **Realm clocks are independent**: Two realms running on the same server can be in different seasons, years, or even different calendar systems entirely. There is no global game time. This is intentional -- Arcadia, Fantasia, and Omega are peer worlds that may have different temporal scales.
 
 2. **Hour-changed events are frequent**: At 24:1 ratio, `worldstate.hour-changed` fires every ~2.5 real minutes. Services should subscribe only to the granularity they need. Most services want `day-changed` (hourly real-time) or `season-changed` (~every 3 real days).
@@ -652,7 +674,7 @@ flows:
 
 6. **Ratio of 0.0 is a valid pause**: Setting a realm's time ratio to 0.0 freezes its clock. `GetElapsedGameTime` returns 0 game-seconds for any real-time range that falls within a 0.0-ratio segment. This is the canonical way to pause a realm's temporal progression.
 
-7. **Character-to-realm resolution is cached**: The variable provider factory caches the mapping of characterId → realmId. If a character changes realms, the cache serves stale data until TTL expires. The TTL (`ClockCacheTtlSeconds`, default 10s) is short enough that this resolves quickly, but there is a brief window where a character who just teleported between realms sees the old realm's time.
+7. **Character-to-realm resolution is cached (when used)**: The variable provider factory supports two paths for realm resolution: (a) the Actor runtime provides `realmId` directly in context metadata (preferred -- zero service calls), or (b) the factory resolves characterId → realmId via `ICharacterClient` (cached per-character with `ClockCacheTtlSeconds` TTL, default 10s). When using path (b), if a character changes realms, the cache serves stale data until TTL expires. The TTL is short enough that this resolves quickly, but there is a brief window where a character who just teleported between realms sees the old realm's time. Path (a) avoids this entirely.
 
 ### Design Considerations (Requires Planning)
 

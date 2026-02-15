@@ -404,6 +404,12 @@ Optimistic Concurrency Pattern (Checkout)
 
 7. **Node-level search**: Index node names and refIds in a secondary search structure to support the `node_name` match type without loading full scene documents.
 
+8. **Voxel node type**: A `voxel` node type referencing `.bvox` assets from the Voxel Builder SDK ([VOXEL-BUILDER-SDK.md](../planning/VOXEL-BUILDER-SDK.md)). Voxel nodes carry annotations for grid scale (`voxel.gridScale`), meshing strategy (`voxel.mesher`: greedy/culled/marching-cubes), and collision mesher. The SceneComposer SDK's engine bridge delegates voxel node rendering to the VoxelBuilder engine bridge. Key consumers: player housing (interactive voxel construction within housing gardens), dungeon cores (chamber reshaping), NPC builders (structure construction). Voxel assets stored in MinIO via the Asset service, with chunk-level delta saves through Save-Load for modified housing/dungeon grids.
+
+9. **Item-scene node binding via annotations**: Convention for tracking item instance placement within scenes. Scene nodes carry `annotations.item.instanceId` referencing the placed Item instance; the Item instance carries `customStats` with `placed_scene_id` and `placed_node_id` back-references. Consistency enforced by ABML gardener behaviors using Scene's checkout/commit as the transaction boundary. Enables the housing garden pattern where furniture items move between Inventory containers and Scene node trees. See [Gardener: Housing Garden Pattern](GARDENER.md#housing-garden-pattern-no-plugin-required).
+
+10. **Housing-specific Scene validation rules**: Authored validation rules (via existing `/scene/register-validation-rules`) for housing scenes: maximum furniture per room (require_tag with max count), forbidden node types per zone (forbid_tag for forge-in-bedroom), spatial overlap prevention (requires custom_expression implementation). These are data, not code -- game designers author rules that the Scene service validates on commit.
+
 ---
 
 ## Known Quirks & Caveats

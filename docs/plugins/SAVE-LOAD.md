@@ -469,6 +469,8 @@ Circuit Breaker State Machine
 
 7. **Retention policy per-slot**: Allow slots to define custom retention policies beyond MaxVersions and RetentionDays (e.g., keep first version of each day, weekly snapshots).
 
+8. **Voxel housing persistence via chunk-level deltas**: The Voxel Builder SDK's `.bvox` format ([VOXEL-BUILDER-SDK.md](../planning/VOXEL-BUILDER-SDK.md)) is chunk-aligned (16x16x16 blocks with LZ4 compression), enabling natural integration with Save-Load's delta save system. When a player modifies their housing voxels, only modified chunks re-serialize (~4KB compressed per dirty chunk). Save-Load stores the base `.bvox` in MinIO via the Asset service; incremental edits are stored as chunk-scoped binary deltas. The `BSDIFF`/`XDELTA` delta algorithms (Stubs #1/#2) become relevant here -- JSON Patch doesn't apply to binary voxel data, so binary delta is the correct algorithm for `.bvox` saves. Polymorphic ownership enables `ownerType: seed`, `ownerId: housingSeedId` for housing save slots. See [Gardener: Housing Garden Pattern](GARDENER.md#housing-garden-pattern-no-plugin-required).
+
 ---
 
 ## Known Quirks & Caveats
