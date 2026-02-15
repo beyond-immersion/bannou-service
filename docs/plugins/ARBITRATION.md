@@ -5,7 +5,7 @@
 > **Version**: 1.0.0
 > **State Stores**: arbitration-cases (MySQL), arbitration-rulings (MySQL), arbitration-evidence (MySQL), arbitration-arbiters (Redis), arbitration-cache (Redis), arbitration-lock (Redis)
 > **Status**: Pre-implementation (architectural specification)
-> **Planning**: [DISSOLUTION-DESIGN.md](../planning/DISSOLUTION-DESIGN.md), [MORALITY-SYSTEM-NEXT-STEPS.md](../planning/MORALITY-SYSTEM-NEXT-STEPS.md)
+> **Planning**: [MORALITY-SYSTEM-NEXT-STEPS.md](../planning/MORALITY-SYSTEM-NEXT-STEPS.md)
 
 ## Overview
 
@@ -17,7 +17,7 @@ Authoritative dispute resolution service (L4 GameFeatures) for competing claims 
 
 **Critical architectural insight**: Arbitration does not adjudicate -- it orchestrates the adjudication process. The arbiter (an NPC, a faction leader, a divine actor) makes the actual ruling decision. Arbitration provides the procedural framework, tracks the case state, enforces deadlines, and executes the ruling's consequences via prebound API calls. This is the same "orchestration not intelligence" principle that governs Quest (quest doesn't decide when objectives are complete -- the world does) and Escrow (escrow doesn't decide if conditions are met -- the arbiter does).
 
-**Sovereignty is prerequisite**: Arbitration is meaningful only when factions distinguish between legal authority (Sovereign/Delegated) and social influence. Without sovereignty, there is no principled way to determine who has jurisdiction, whose procedures apply, or what weight a ruling carries. The `authorityLevel` field on FactionModel (described in [DISSOLUTION-DESIGN.md](../planning/DISSOLUTION-DESIGN.md)) must exist before arbitration can function. See the [Faction Sovereignty Dependency](#faction-sovereignty-dependency) section for details.
+**Sovereignty is prerequisite**: Arbitration is meaningful only when factions distinguish between legal authority (Sovereign/Delegated) and social influence. Without sovereignty, there is no principled way to determine who has jurisdiction, whose procedures apply, or what weight a ruling carries. The `authorityLevel` field on FactionModel (described in [Faction deep dive Design Consideration #6](FACTION.md#design-considerations-requires-planning)) must exist before arbitration can function. See the [Faction Sovereignty Dependency](#faction-sovereignty-dependency) section for details.
 
 **Case types are opaque strings**: `dissolution`, `property_dispute`, `criminal_proceeding`, `trade_dispute`, `custody_inheritance`, `sovereignty_recognition`, `contract_conflict` are all just case types with different procedural templates. The arbitration service doesn't hardcode any case-type-specific logic -- it provides the framework for any authoritative resolution process. New case types require only a new procedural template in Contract and a governance data entry in the jurisdictional faction.
 
@@ -25,7 +25,7 @@ Authoritative dispute resolution service (L4 GameFeatures) for competing claims 
 
 **Zero Arcadia-specific content**: lib-arbitration is a generic dispute resolution service. Arcadia's specific procedural templates (dissolution-standard, dissolution-religious-annulment, exile-punitive, criminal-trial-standard), arbiter selection rules, and cultural attitudes toward litigation are configured through contract templates and faction governance data at deployment time, not baked into lib-arbitration.
 
-**Current status**: Pre-implementation. No schema, no code. This deep dive is an architectural specification based on [DISSOLUTION-DESIGN.md](../planning/DISSOLUTION-DESIGN.md) and the broader orchestration patterns established by lib-quest, lib-escrow, and lib-divine. Internal-only, never internet-facing.
+**Current status**: Pre-implementation. No schema, no code. This deep dive is an architectural specification based on the broader orchestration patterns established by lib-quest, lib-escrow, and lib-divine. Sovereignty prerequisites are documented in [Faction deep dive Design Consideration #6](FACTION.md#design-considerations-requires-planning) and [Obligation deep dive multi-channel costs](OBLIGATION.md#design-considerations-requires-planning). Internal-only, never internet-facing.
 
 ---
 
@@ -576,7 +576,7 @@ When a case is filed, jurisdiction determination walks the authority hierarchy:
 
 ### What Must Change in lib-faction
 
-The following changes to lib-faction are prerequisites for lib-arbitration (documented in [DISSOLUTION-DESIGN.md](../planning/DISSOLUTION-DESIGN.md)):
+The following changes to lib-faction are prerequisites for lib-arbitration (documented in [Faction deep dive Design Consideration #6](FACTION.md#design-considerations-requires-planning)):
 
 - **Schema change**: Add `authorityLevel` enum field (`Influence`, `Delegated`, `Sovereign`) to `faction-api.yaml`
 - **Model change**: Add field to `FactionModel`
@@ -589,7 +589,7 @@ The following changes to lib-faction are prerequisites for lib-arbitration (docu
 ### What Must Change in lib-obligation
 
 - **Cost tagging**: Tag violation costs as `legal` vs. `social` vs. `personal` based on source faction's authority level
-- **Multi-channel costs**: Separate entries per violation type per authority channel (see [DISSOLUTION-DESIGN.md Q11](#))
+- **Multi-channel costs**: Separate entries per violation type per authority channel (see [Obligation deep dive Design Considerations](OBLIGATION.md#design-considerations-requires-planning))
 
 ---
 
@@ -884,4 +884,4 @@ Divine arbitration is never guaranteed. Gods have their own priorities, attentio
 
 ## Work Tracking
 
-*No active work items. Plugin is in pre-implementation phase. Prerequisites (Faction sovereignty, Obligation multi-channel costs) must be completed first. See [DISSOLUTION-DESIGN.md](../planning/DISSOLUTION-DESIGN.md) for the dependency chain.*
+*No active work items. Plugin is in pre-implementation phase. Prerequisites (Faction sovereignty, Obligation multi-channel costs) must be completed first. See [Faction deep dive Design Consideration #6](FACTION.md#design-considerations-requires-planning) and [Obligation deep dive Design Considerations](OBLIGATION.md#design-considerations-requires-planning) for the dependency chain.*

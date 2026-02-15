@@ -425,6 +425,41 @@ None currently.
 
 5. **Missing lib-contract integration for guild charters (plan gap)**: Issue #410 decision Q3 states: "When a character joins a faction (formal guild membership), the guild contract is created explicitly through lib-contract." The plan lists `lib-contract (L1) — formal membership agreements, guild charters` as a dependency. The current implementation does not use `IContractClient` at all -- membership is managed directly without contract backing. This means guild charters are not formalized as binding agreements, and lib-obligation cannot discover faction-sourced contractual obligations through lib-contract.
 
+6. **Faction sovereignty: authorityLevel field and governance data model (prerequisite for lib-arbitration)**: The current norm resolution hierarchy treats all factions equally -- norms differ only in numerical weight and hierarchy position (most specific wins). This breaks down when factions **contradict** each other on binary or procedural questions (e.g., a guild permits divorce but the territorial sovereign forbids it). The resolution is distinguishing **legal authority** from **social influence** via a new `authorityLevel` field on FactionModel:
+
+    | Level | Meaning | Enforcement Power |
+    |-------|---------|-------------------|
+    | **Influence** | Default. Social norms only. | Cannot arbitrate or enforce legally. Imposes GOAP cost modifiers and reputation damage only. |
+    | **Delegated** | Authority granted by a sovereign. | Inherits sovereign's law. Can add local rules within scope of delegation. Can arbitrate within delegated jurisdiction. |
+    | **Sovereign** | Law-making authority. | Final word within controlled territory. Defines what is legal vs. illegal. Can arbitrate, exile, impose legal penalties. |
+
+    **Norm resolution changes from "most specific wins" to authority-aware hierarchy**:
+    1. Find the sovereign in the territory hierarchy (walk up faction parents until Sovereign)
+    2. Sovereign's norms = LAWS (high enforcement weight, triggers guard/justice system)
+    3. Delegated authority norms = LOCAL LAWS (override sovereign on specifics, inherit on gaps)
+    4. Influence norms = SOCIAL COSTS (existing behavior -- GOAP cost modifiers, reputation damage)
+    5. Guild membership norms = PERSONAL OBLIGATIONS (existing behavior)
+    6. A nested sovereign (enclave) overrides the outer sovereign completely within its territory
+
+    **IsRealmBaseline integration**: The realm baseline faction should automatically be Sovereign -- it's the realm-wide legal authority by definition. `DesignateRealmBaseline` should set `AuthorityLevel = Sovereign` (or validate that it's already Sovereign). A realm can have multiple Sovereign factions (the baseline + enclaves), but only one realm baseline.
+
+    **Enclave sovereignty**: Sovereignty applies at the location boundary. Nesting is naturally bounded by lib-location's hierarchy and `MaxHierarchyDepth` (currently 5). A dwarven enclave controlling a nested Location node within a human kingdom switches legal jurisdiction at the boundary -- same as existing territory-controlling faction transitions. `QueryApplicableNorms` already takes a `locationId` parameter; the sovereignty enhancement changes how it interprets the controlling faction's authority level.
+
+    **Governance data model (procedural norms)**: Sovereign and Delegated factions gain a new norm type alongside cost norms: `{ caseType, templateCode, governanceParameters }`, gated by `governance.arbitrate.*` seed capability. This associates case types (opaque strings like `dissolution`, `criminal_proceeding`, `trade_dispute`) with contract template codes in lib-contract. lib-arbitration queries this governance data to instantiate the correct procedural template for cases filed within the jurisdiction.
+
+    **New endpoints needed**: (a) Delegation endpoint for sovereign factions to grant `Delegated` authority to child factions, (b) `QueryGovernanceData` -- given a location and case type, resolve the jurisdictional faction and return its procedural template reference and governance parameters.
+
+    **Sovereignty acquisition paths** (initial implementation: first two only):
+    - Realm baseline: `DesignateRealmBaseline` automatically sets Sovereign
+    - Delegation: sovereign grants Delegated authority to a child faction
+    - Conquest: seed-gated `sovereignty.claim` capability at dominant growth phase (future)
+    - Treaty: via lib-arbitration `sovereignty_recognition` case type (future)
+    - Divine mandate: via Puppetmaster regional watcher (future)
+
+    **Backward-compatible**: If no sovereign exists (sovereignty not yet implemented for a deployment), `QueryApplicableNorms` continues with the existing "most specific wins" behavior -- all norms are social/personal. The legal channel only activates when a Sovereign faction exists.
+
+    This is the single largest prerequisite for lib-arbitration. See the [Arbitration deep dive's Faction Sovereignty Dependency section](ARBITRATION.md#faction-sovereignty-dependency) for the complete list of changes from lib-arbitration's perspective, and the [Obligation deep dive's multi-channel costs design consideration](OBLIGATION.md#design-considerations-requires-planning) for how costs become authority-tagged.
+
 ## Work Tracking
 
 - **GitHub Issue**: [#410 - Feature: Second Thoughts -- Prospective Consequence Evaluation for NPC Cognition](https://github.com/beyond-immersion/bannou-service/issues/410)

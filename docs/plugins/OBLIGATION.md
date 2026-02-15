@@ -355,6 +355,23 @@ All 11 API endpoints are fully implemented. The following supporting integration
 - **Faction-to-contract bridge**: Faction norms (violation types + base penalties + severity) need to flow into the obligation system through the contract pipeline. The #410 design represents social norms as implicit contract templates -- faction membership automatically creates contracts with behavioral clauses matching the faction's norms. The mechanism for this automatic contract creation on faction join/leave is not yet implemented. This is the bridge that makes faction norms visible to obligation's cost computation without a direct faction dependency.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-12:https://github.com/beyond-immersion/bannou-service/issues/410 -->
 
+- **Multi-channel obligation costs (authority-tagged)**: When faction sovereignty is implemented (see [Faction deep dive Design Consideration #6](FACTION.md#design-considerations-requires-planning)), obligation costs should be tagged by authority channel based on the source faction's `authorityLevel`:
+
+    | Channel | Source | Semantics | Consequence |
+    |---------|--------|-----------|-------------|
+    | **Legal** | Sovereign/Delegated faction norms | One per violation type (most specific sovereign wins within territory) | Guards, arrest, trial, imprisonment, fines |
+    | **Social** | Influence faction norms | One per violation type (most specific influence faction wins) | Reputation damage, gossip, encounter memories, relationship penalties |
+    | **Personal** | Direct contract behavioral clauses | Always stack (multiple contracts possible) | Contract breach, formal consequences per contract terms |
+
+    The obligation manifest entry becomes: `{ violationType, basePenalty, weightedPenalty, authorityLevel: Legal|Social|Personal, sourceFactionId?, sourceContractId? }`.
+
+    The GOAP planner sees the **total cost** (sum across channels) for action evaluation. But the `evaluate_consequences` cognition stage and post-violation feedback use the channel breakdown to trigger appropriate consequences:
+    - **Legal violation** → publishes event consumed by sovereign faction's enforcement system (guard NPCs react)
+    - **Social violation** → publishes event consumed by encounter/reputation systems (witnesses gossip)
+    - **Personal violation** → triggers contract breach via existing `BreachReportEnabled` mechanism
+
+    **Backward-compatible**: If no sovereign exists (faction sovereignty not yet implemented for a deployment), everything is social/personal as it is today. The legal channel only activates when a sovereign faction exists with norms for that violation type. This is a prerequisite for lib-arbitration (see [Arbitration deep dive](ARBITRATION.md)).
+
 ---
 
 ## Work Tracking

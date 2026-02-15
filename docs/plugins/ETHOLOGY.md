@@ -1,10 +1,11 @@
 # Ethology Plugin Deep Dive
 
-> **Plugin**: lib-ethology
-> **Schema**: schemas/ethology-api.yaml
-> **Version**: 1.0.0
-> **State Stores**: ethology-archetypes (MySQL), ethology-overrides (MySQL), ethology-cache (Redis), ethology-lock (Redis)
-> **Status**: Pre-implementation (architectural specification)
+> **Plugin**: lib-ethology (not yet created)
+> **Schema**: `schemas/ethology-api.yaml` (not yet created)
+> **Version**: N/A (Pre-Implementation)
+> **State Store**: ethology-archetypes (MySQL), ethology-overrides (MySQL), ethology-cache (Redis), ethology-lock (Redis) — all planned
+> **Layer**: L4 GameFeatures
+> **Status**: Aspirational — no schema, no generated code, no service implementation exists.
 
 ## Overview
 
@@ -26,11 +27,11 @@ Species-level behavioral archetype registry and nature resolution service (L4 Ga
 For non-character entities -- wolves, bears, monsters, dungeon creatures, wildlife -- **none of these providers fire.** The actor loads `creature_base.yaml` and gets hardcoded context defaults:
 
 ```yaml
-context:
-  aggression_level: 0.5     # Same for every creature
+variables:
+  hunger_threshold: 0.7     # Same for every creature
+  fear_threshold: 0.5       # Same for every creature
   territory_radius: 50.0    # Same for every creature
-  fear_threshold: 0.3       # Same for every creature
-  hunger_threshold: 0.6     # Same for every creature
+  aggression_level: 0.3     # Same for every creature
 ```
 
 Every wolf is identical. Every bear is identical. A wolf and a bear sharing the same behavior document have the same defaults. The only differentiation mechanism is which ABML document loads (via the variant chain), not what values feed into that document. This is the gap.
@@ -57,7 +58,7 @@ Individual noise is **deterministic** -- hash the entity ID + trait code to get 
 
 **Zero Arcadia-specific content**: lib-ethology is a generic behavioral archetype service. Arcadia's specific axes (aggression, territoriality, pack behavior) are configured through archetype definitions at deployment time, not baked into lib-ethology. A horror game could define axes like `stalking_patience` and `ambush_preference`. A farming sim could define `tamability` and `herd_cohesion`. The service is axis-agnostic -- it stores float values against string-coded behavioral axes, not a fixed set of traits.
 
-**Current status**: Pre-implementation. No schema, no code. This deep dive is an architectural specification based on analysis of the behavioral gap identified across creature cognition templates, the archetype definition system, and the variable provider landscape. The `creature_base.yaml` behavior and `archetype-definitions.yaml` schema already exist with creature support, but lack a structured data source for per-species, per-environment, per-individual behavioral variation. Internal-only, never internet-facing.
+**Current status**: Pre-implementation. No schema, no code. This deep dive is an architectural specification based on analysis of the behavioral gap identified across creature cognition templates and the variable provider landscape. The `creature_base.yaml` behavior already exists with hardcoded variables for creature NPCs, and `archetype-definitions.yaml` defines Intent Channel configurations for creature entity types, but neither provides a structured data source for per-species, per-environment, per-individual behavioral variation. Internal-only, never internet-facing.
 
 ---
 

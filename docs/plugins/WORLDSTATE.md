@@ -10,46 +10,13 @@
 
 ## Overview
 
-Per-realm game time authority, calendar system, and temporal event broadcasting service (L2 GameFoundation). Maps real-world time to configurable game-time progression with per-realm time ratios, calendar templates (configurable days, months, seasons, years as opaque strings), and day-period cycles (dawn, morning, afternoon, evening, night). Publishes boundary events at game-time transitions (new day, season, year, period) consumed by other services for time-aligned processing. Provides the `${world.*}` variable namespace to the Actor service's behavior system via the Variable Provider Factory pattern, enabling NPCs to make time-aware decisions. Also provides a time-elapsed query API for lazy evaluation patterns (computing game-time duration between two real timestamps accounting for ratio changes and pauses). Internal-only, never internet-facing.
-
-**The problem this solves**: The codebase is haunted by a clock that doesn't exist. ABML behaviors reference `${world.time.period}` with no provider. Storyline declares `TimeOfDay` trigger conditions with nothing to evaluate them. Encounters and relationships have `inGameTime` fields that callers provide with no authority to consult. Trade routes have `seasonalAvailability` flags with no seasons. Market explicitly punts game-time analysis to callers. Economy planning documents reference seasonal trade, deity harvest cycles, and tick-based processing -- all assuming a clock service that was never built. Worldstate fills this gap as the single authoritative source of "what time is it in the game world?"
-
-**Note on weather variables**: Some early ABML behavior examples (e.g., `humanoid-base.abml.yml`) reference `${world.weather.temperature}` and `${world.weather.raining}`. These references are **incorrect** -- weather and atmospheric conditions are the `${environment.*}` namespace owned by lib-environment (L4), not the `${world.*}` namespace owned by worldstate. Similarly, `guard-patrol.abml.yml` references `${world.patrol_routes[...]}` which is not temporal data and does not belong in the `world` namespace. These example behavior files predate the final namespace design and need updating as a cleanup item.
-
-**What this service IS**:
-1. A **game clock** -- per-realm time that advances as a configurable multiple of real time
-2. A **calendar** -- days, months, seasons, years as configurable templates (opaque strings, not hardcoded)
-3. A **variable provider** -- `${world.*}` namespace for ABML behavior expressions
-4. A **boundary event broadcaster** -- publishes `worldstate.day-changed`, `worldstate.season-changed`, etc. for service-level tick processing
-5. A **time-elapsed calculator** -- answers "how much game-time passed between these two real timestamps?" for lazy evaluation patterns used by autogain, seed decay, workshop production, and similar time-based processing
-
-**What this service is NOT**:
-- **Not weather simulation** -- weather, temperature, atmospheric conditions are L4 concerns that consume season/time-of-day data from worldstate
-- **Not ecology** -- resource availability, deforestation, biome state are L4 concerns
-- **Not a world simulation engine** -- it's a clock, a calendar, and a broadcast system
-- **Not a spatial service** -- "where" things happen is Location and Mapping's concern
-
-**The default Arcadia time scale** (configurable per realm, per game):
-
-| Real Time | Game Time | Ratio |
-|-----------|-----------|-------|
-| 1 real second | 24 game seconds | 24:1 |
-| 1 real minute | 24 game minutes | 24:1 |
-| 1 real hour | 1 game day (24 game hours) | 24:1 |
-| 1 real day | 24 game days ≈ 1 game month | 24:1 |
-| 12 real days | 1 game year (12 months) | 24:1 |
-| ~2.6 real years (960 days) | 80 game years (1 saeculum) | 24:1 |
-| ~8 real months | 1 turning (20 game years) | 24:1 |
-
-At a ratio of 24:1, a server running for 5 real years experiences nearly 2 full saeculums (160 game years). Generational play, seasonal cycles, and the content flywheel all operate at viable cadences without acceleration tricks.
-
-**Zero game-specific content**: lib-worldstate is a generic temporal service. Arcadia's specific calendar (month names, season names, day-period boundaries), time ratio, and saeculum concept are configured through calendar template seeding and configuration at deployment time. A mobile farming game might use a 1:1 ratio with 4 real-time seasons. An idle game might use 1000:1 with 2-minute "days." All equally valid configurations.
-
-**Current status**: Pre-implementation. No schema, no code. This deep dive is an architectural specification based on analysis of the temporal gap across the entire codebase -- the `${world.*}` variable references in ABML behaviors, the `TimeOfDay` trigger in Storyline, the `inGameTime` fields in Encounter and Relationship schemas, the `seasonalAvailability` in economy architecture, and the Currency autogain/Seed decay workers that currently use real-world time exclusively. Internal-only, never internet-facing.
+Per-realm game time authority, calendar system, and temporal event broadcasting service (L2 GameFoundation). Maps real-world time to configurable game-time progression with per-realm time ratios, calendar templates (configurable days, months, seasons, years), and day-period cycles. Publishes boundary events at game-time transitions consumed by other services for time-aligned processing, and provides the `${world.*}` variable namespace to the Actor behavior system via the Variable Provider Factory pattern. Also provides a time-elapsed query API for lazy evaluation patterns (computing game-time duration between two real timestamps accounting for ratio changes and pauses). Game-agnostic: calendar structures, time ratios, and day-period definitions are configured per game service. Internal-only, never internet-facing.
 
 ---
 
 ## Core Concepts
+
+The codebase is haunted by a clock that doesn't exist. ABML behaviors reference `${world.time.period}` with no provider. Storyline declares `TimeOfDay` trigger conditions with nothing to evaluate them. Encounters and relationships have `inGameTime` fields that callers provide with no authority to consult. Trade routes have `seasonalAvailability` flags with no seasons. Market explicitly punts game-time analysis to callers. Economy planning documents reference seasonal trade, deity harvest cycles, and tick-based processing -- all assuming a clock service that was never built. Worldstate fills this gap as the single authoritative source of "what time is it in the game world?"
 
 ### Realm Clock
 
@@ -180,6 +147,20 @@ This handles ratio changes, pauses (ratio = 0.0 during maintenance), and acceler
 
 **Pause as ratio 0**: Setting `timeRatio = 0.0` freezes a realm's clock. This is recorded as a segment in the history with reason `Pause`. When resumed, a new segment with the original ratio starts (reason `Resume`). `GetElapsedGameTime` correctly returns 0 game-seconds for the paused period.
 
+**The default Arcadia time scale** (configurable per realm, per game):
+
+| Real Time | Game Time | Ratio |
+|-----------|-----------|-------|
+| 1 real second | 24 game seconds | 24:1 |
+| 1 real minute | 24 game minutes | 24:1 |
+| 1 real hour | 1 game day (24 game hours) | 24:1 |
+| 1 real day | 24 game days ≈ 1 game month | 24:1 |
+| 12 real days | 1 game year (12 months) | 24:1 |
+| ~2.6 real years (960 days) | 80 game years (1 saeculum) | 24:1 |
+| ~8 real months | 1 turning (20 game years) | 24:1 |
+
+At a ratio of 24:1, a server running for 5 real years experiences nearly 2 full saeculums (160 game years). Generational play, seasonal cycles, and the content flywheel all operate at viable cadences without acceleration tricks.
+
 ### Boundary Events
 
 When the clock crosses a named boundary (new hour, new period, new day, new season, new year), events are published to the message bus. These are **service-level triggers**, not actor-level -- individual actors query `${world.*}` variables on their own tick and don't subscribe to these events.
@@ -233,6 +214,25 @@ WorldstateDayChangedEvent:
 ```
 
 Services receiving catch-up events with `daysCrossed > 1` can process the time gap in bulk rather than iterating per-day.
+
+---
+
+## Design Philosophy
+
+**What this service IS**:
+1. A **game clock** -- per-realm time that advances as a configurable multiple of real time
+2. A **calendar** -- days, months, seasons, years as configurable templates (opaque strings, not hardcoded)
+3. A **variable provider** -- `${world.*}` namespace for ABML behavior expressions
+4. A **boundary event broadcaster** -- publishes `worldstate.day-changed`, `worldstate.season-changed`, etc. for service-level tick processing
+5. A **time-elapsed calculator** -- answers "how much game-time passed between these two real timestamps?" for lazy evaluation patterns used by autogain, seed decay, workshop production, and similar time-based processing
+
+**What this service is NOT**:
+- **Not weather simulation** -- weather, temperature, atmospheric conditions are L4 concerns that consume season/time-of-day data from worldstate
+- **Not ecology** -- resource availability, deforestation, biome state are L4 concerns
+- **Not a world simulation engine** -- it's a clock, a calendar, and a broadcast system
+- **Not a spatial service** -- "where" things happen is Location and Mapping's concern
+
+Arcadia's specific calendar (month names, season names, day-period boundaries), time ratio, and saeculum concept are configured through calendar template seeding and configuration at deployment time. A mobile farming game might use a 1:1 ratio with 4 real-time seasons. An idle game might use 1000:1 with 2-minute "days." All equally valid configurations.
 
 ---
 

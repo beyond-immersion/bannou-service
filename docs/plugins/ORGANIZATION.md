@@ -5,7 +5,7 @@
 > **Version**: 1.0.0
 > **State Stores**: organization-entities (MySQL), organization-members (MySQL), organization-roles (MySQL), organization-assets (MySQL), organization-succession (MySQL), organization-cache (Redis), organization-lock (Redis)
 > **Status**: Pre-implementation (architectural specification)
-> **Planning**: [DISSOLUTION-DESIGN.md](../planning/DISSOLUTION-DESIGN.md)
+> **Related**: [Faction Sovereignty Design](FACTION.md#design-considerations-requires-planning), [Arbitration](ARBITRATION.md)
 
 ## Overview
 
@@ -15,7 +15,7 @@ Legal entity management service (L4 GameFeatures) for organizations that own ass
 
 **The living economy substrate**: From the [Vision](../../arcadia-kb/VISION.md): "The economy must be NPC-driven, not player-driven. Supply, demand, pricing, and trade routes emerge from NPC behavior -- what they need, what they produce, what they want." Without lib-organization, "NPC runs a shop" is a behavior pattern with no structural backing. With lib-organization, the shop is a legal entity with inventory, a currency wallet, employees, trade agreements, and a succession plan -- and when the shopkeeper dies, succession rules determine what happens to it. Organizations are the structural skeleton that NPC economic behavior hangs on.
 
-**Family-as-organization**: A household is an organization. It has shared assets (family home, savings, heirlooms), internal roles (head of household, heir, dependents, elders), succession rules (primogeniture, equal division, matrilineal, elective), and legal status within the sovereign's framework (recognized family, noble house, outlawed clan). The [Dungeon deep dive](DUNGEON.md)'s "household split" mechanic and the [Dissolution design](../planning/DISSOLUTION-DESIGN.md)'s divorce/exile patterns are all organization dissolution -- breaking apart a legal entity's structure, dividing its assets, and managing the aftermath.
+**Family-as-organization**: A household is an organization. It has shared assets (family home, savings, heirlooms), internal roles (head of household, heir, dependents, elders), succession rules (primogeniture, equal division, matrilineal, elective), and legal status within the sovereign's framework (recognized family, noble house, outlawed clan). The [Dungeon deep dive](DUNGEON.md)'s "household split" mechanic and the [Arbitration deep dive](ARBITRATION.md)'s divorce/exile case types are all organization dissolution -- breaking apart a legal entity's structure, dividing its assets, and managing the aftermath.
 
 **The Quest/Escrow/Arbitration parallel**: Organization follows the same pattern as other L4 orchestration layers -- it composes L0/L1/L2 primitives into a higher-level game concept. Quest composes Contract into objectives. Escrow composes Contract + Currency + Item into exchanges. Arbitration composes Contract + Faction into dispute resolution. Organization composes Currency + Inventory + Contract + Relationship + Location into legal entities.
 
@@ -29,7 +29,7 @@ Legal entity management service (L4 GameFeatures) for organizations that own ass
 
 **Zero Arcadia-specific content**: lib-organization is a generic organizational entity service. Arcadia's specific organization types (clans, guilds, noble houses), their governance relationships with factions, and their economic roles are configured through seed types, contract templates, and faction governance data at deployment time, not baked into lib-organization.
 
-**Current status**: Pre-implementation. No schema, no code. This deep dive is an architectural specification based on [DISSOLUTION-DESIGN.md](../planning/DISSOLUTION-DESIGN.md) and the broader architectural patterns established by lib-faction, lib-divine, and lib-dungeon. Internal-only, never internet-facing.
+**Current status**: Pre-implementation. No schema, no code. This deep dive is an architectural specification based on the broader architectural patterns established by lib-faction, lib-divine, and lib-dungeon. Sovereignty prerequisites are documented in [Faction deep dive Design Consideration #6](FACTION.md#design-considerations-requires-planning). Internal-only, never internet-facing.
 
 ---
 
@@ -407,7 +407,7 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 **Everything is unimplemented.** This is a pre-implementation architectural specification. No schema, no generated code, no service implementation exists. The following phases are planned:
 
 ### Phase 0: Prerequisites
-- Faction sovereignty (`authorityLevel`) must be implemented (see [DISSOLUTION-DESIGN.md](../planning/DISSOLUTION-DESIGN.md))
+- Faction sovereignty (`authorityLevel`) must be implemented (see [Faction deep dive Design Consideration #6](FACTION.md#design-considerations-requires-planning))
 - lib-arbitration should exist for dissolution and succession contests (can proceed without -- uses deterministic fallbacks)
 
 ### Phase 1: Core Organization Infrastructure
@@ -1087,4 +1087,4 @@ How organizations participate in the NPC-driven economy through GOAP-based econo
 
 ## Work Tracking
 
-*No active work items. Plugin is in pre-implementation phase. This is the largest of the three changes described in [DISSOLUTION-DESIGN.md](../planning/DISSOLUTION-DESIGN.md) and the most independent -- it can be built incrementally without waiting for sovereignty or arbitration, starting with basic organization CRUD and member management. See the phased implementation plan above.*
+*No active work items. Plugin is in pre-implementation phase. This is the largest of the three changes in the sovereignty/arbitration/organization triad and the most independent -- it can be built incrementally without waiting for sovereignty or arbitration, starting with basic organization CRUD and member management. See the phased implementation plan above.*

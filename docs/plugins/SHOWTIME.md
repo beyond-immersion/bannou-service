@@ -9,25 +9,13 @@
 
 ## Overview
 
-In-game streaming metagame service (L4 GameFeatures) for simulated audience pools, hype train mechanics, streamer career progression, and real-simulated audience blending. The game-facing layer of the streaming stack -- everything that makes streaming a game mechanic rather than just a platform integration.
-
-**Composability**: Stream session identity and audience simulation are owned here. Platform integration is lib-broadcast (L3). Voice rooms are lib-voice (L3). Streamer career growth is Seed (`streamer` seed type). Streaming milestone unlocks are Collection. Virtual tips are Currency (`stream_tip` currency type). Sponsorship deals are Contract. Streamer-follower bonds are Relationship. lib-showtime orchestrates the metagame connecting these primitives.
-
-**The divine actor parallel**: The streaming metagame follows the same structural pattern as lib-divine -- an L4 orchestration layer that composes existing Bannou primitives (Seed, Currency, Collection, Contract, Relationship) to deliver game mechanics. Where lib-divine orchestrates blessings and divinity economy, lib-showtime orchestrates audience dynamics and streamer career. They are parallel orchestration layers composing the same underlying primitives, not the same service. This mirrors how Quest and Escrow both compose Contract but provide different game-flavored APIs.
-
-**Simulated audiences are always available**: lib-showtime works without lib-broadcast (L3) entirely. When no real platform data is available, the service operates on 100% simulated audiences. When lib-broadcast is available, real audience sentiment pulses are blended seamlessly into the simulated pool. This makes the metagame testable, deployable, and playable without any external platform dependency.
-
-**The natural Turing test**: Simulated audience members behave predictably within their personality parameters. Real-derived audience members inherit the genuine unpredictability of human behavior -- unexpected excitement, inexplicable departures, returning after long absences. The game NEVER reveals which audience members are real. Keen players may develop theories, and that speculation IS the metagame.
-
-**Realm-specific manifestation**: In Omega (cyberpunk meta-dashboard), streaming is explicit -- players see audience stats, manage their stream, and compete with other streamers. In Arcadia, the same mechanics manifest as "performing for a crowd" -- a bard performing at a tavern, a gladiator entertaining an arena, a craftsman demonstrating mastery. The underlying system is identical; the UX presentation varies by realm. lib-showtime provides the mechanics; the client renders realm-appropriate UX.
-
-**Zero Arcadia-specific content**: lib-showtime is a generic audience simulation and streamer career service. Which audience personality types exist, how hype trains escalate, and what streaming milestones unlock are all configured through seed types, collection types, and configuration, not baked into lib-showtime.
-
-**Current status**: Pre-implementation. No schema, no code. This deep dive is an architectural specification based on [STREAMING-ARCHITECTURE.md](../planning/STREAMING-ARCHITECTURE.md). Internal-only, never internet-facing.
+In-game streaming metagame service (L4 GameFeatures) for simulated audience pools, hype train mechanics, streamer career progression, and real-simulated audience blending. The game-facing layer of the streaming stack -- everything that makes streaming a game mechanic rather than just a platform integration. Game-agnostic: audience personality types, hype train escalation, and streaming milestones are all configured through seed types, collection types, and configuration. Internal-only, never internet-facing.
 
 ---
 
 ## The Simulated Audience System
+
+lib-showtime works without lib-broadcast (L3) entirely. When no real platform data is available, the service operates on 100% simulated audiences. When lib-broadcast is available, real audience sentiment pulses are blended seamlessly into the simulated pool. This makes the metagame testable, deployable, and playable without any external platform dependency.
 
 Simulated audience members are lightweight data objects that model viewer behavior through personality flags, interest profiles, and engagement state. They are NOT actors -- they don't run ABML behaviors or consume actor pool resources. They are state objects with deterministic behavior rules evaluated during session ticks.
 
@@ -113,6 +101,8 @@ High-level hype trains generate events that feed the content flywheel:
 ---
 
 ## The Real vs. Simulated Audience Blending
+
+Simulated audience members behave predictably within their personality parameters. Real-derived audience members inherit the genuine unpredictability of human behavior -- unexpected excitement, inexplicable departures, returning after long absences. The game NEVER reveals which audience members are real. Keen players may develop theories, and that speculation IS the metagame.
 
 When lib-broadcast (L3) publishes `stream.audience.pulse` events, lib-showtime translates them into audience member state changes:
 
@@ -531,7 +521,7 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 
 7. **Variable Provider Factory**: `IShowtimeVariableProviderFactory` for ABML behavior expressions (`${streaming.audience_size}`, `${streaming.hype_level}`, `${streaming.career_phase}`). Could enable NPCs to react to streaming activity (a bard NPC performs harder when the audience is large).
 
-8. **Realm-specific audience manifestation**: In Arcadia, audience members could manifest as visible NPCs in the game world (a crowd gathering to watch a gladiator fight). In Omega, they appear as floating avatars. The audience data is the same; the rendering differs.
+8. **Realm-specific manifestation**: In Omega (cyberpunk meta-dashboard), streaming is explicit -- players see audience stats, manage their stream, and compete with other streamers. In Arcadia, the same mechanics manifest as "performing for a crowd" -- a bard performing at a tavern, a gladiator entertaining an arena, a craftsman demonstrating mastery. The underlying system is identical; the UX presentation varies by realm. Additionally, audience members could manifest as visible NPCs in the game world (a crowd gathering to watch a gladiator fight in Arcadia, floating avatars in Omega). lib-showtime provides the mechanics; the client renders realm-appropriate UX.
 
 9. **Leaderboard integration**: Streamer rankings by follower count, total watch hours, peak hype level, world-first discoveries. Natural integration with the existing Leaderboard service.
 
@@ -581,6 +571,10 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 ---
 
 ## Composability Map
+
+Stream session identity and audience simulation are owned here. Platform integration is lib-broadcast (L3). Voice rooms are lib-voice (L3). Streamer career growth is Seed (`streamer` seed type). Streaming milestone unlocks are Collection. Virtual tips are Currency (`stream_tip` currency type). Sponsorship deals are Contract. Streamer-follower bonds are Relationship. lib-showtime orchestrates the metagame connecting these primitives.
+
+The streaming metagame follows the same structural pattern as lib-divine -- an L4 orchestration layer that composes existing Bannou primitives (Seed, Currency, Collection, Contract, Relationship) to deliver game mechanics. Where lib-divine orchestrates blessings and divinity economy, lib-showtime orchestrates audience dynamics and streamer career. They are parallel orchestration layers composing the same underlying primitives, not the same service. This mirrors how Quest and Escrow both compose Contract but provide different game-flavored APIs.
 
 ### Seed: Streamer Career
 
