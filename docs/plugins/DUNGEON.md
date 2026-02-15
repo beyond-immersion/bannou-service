@@ -9,23 +9,7 @@
 
 ## Overview
 
-Dungeon lifecycle orchestration service (L4 GameFeatures) for living dungeon entities that perceive, grow, and act autonomously within the Bannou actor system. A thin orchestration layer (like Divine over Currency/Seed/Collection, Quest over Contract, Escrow over Currency/Item) that composes existing Bannou primitives to deliver dungeon-as-actor game mechanics.
-
-**Composability**: Dungeon core identity is owned here. Dungeon behavior is Actor (event brain) via Puppetmaster. Dungeon growth is Seed (`dungeon_core` seed type). Dungeon master bond is Contract. Mana economy is Currency. Physical layout is Save-Load + Mapping. Visual composition is Scene. Memory items are Item. Monster spawning and trap activation are dungeon-specific APIs orchestrated by lib-dungeon. Player-facing dungeon master experience is Gardener (dungeon garden type). Procedural chamber generation is a future integration with lib-procedural (Houdini backend).
-
-**The divine actor parallel**: Dungeon cores follow the same structural pattern as divine actors -- event brain actors launched via Puppetmaster, backed by seeds for progressive growth, with a currency-based economy and bonded relationships. The difference is in the *ceremony*: lib-divine orchestrates blessings, divinity economy, and follower management; lib-dungeon orchestrates monster spawning, trap activation, memory manifestation, and master bonds. They are parallel orchestration layers composing the same underlying primitives (Actor, Seed, Currency, Contract, Gardener), not the same service. This mirrors how Quest and Escrow both compose Contract but provide different game-flavored APIs.
-
-**Critical architectural insight**: Dungeon cores influence characters through the character's own Actor, not directly. A dungeon core's Actor (event brain) monitors domain events and makes decisions; the bonded master's character Actor receives commands as perceptions, gated by the master's `dungeon_master` seed capabilities. This is the same indirect influence pattern used by divine actors (gods influence through the character's Actor, not by controlling the character directly).
-
-**Two mastery patterns**: When a character bonds with a dungeon core, the relationship takes one of two forms depending on the player's choice and the household context. **Pattern A (Full Split)**: The character separates from their household (a contractual split governed by faction norms and obligation), and the player commits one of their 3 account seed slots to a `dungeon_master` seed. The dungeon becomes a separate game -- selectable from the void as an independent experience with its own garden. **Pattern B (Bonded Role)**: The character stays in their household and gains a character-level `dungeon_master` seed. The dungeon influence layers onto gameplay while the player is actively controlling that character, but drops away when switching to another household member. Pattern A is a specific case of the general household split mechanic (which applies to branch families, divorces, and any household fragmentation). Pattern B is a "side gig" that doesn't change the account structure.
-
-**The dungeon as garden**: In Pattern A, the dungeon IS the player's garden -- a full conceptual space with its own UX surface, entity associations, and gardener behavior (the dungeon core actor). In Pattern B, the dungeon influence is transient -- it layers onto the existing garden while the bonded character is selected but doesn't replace it. For adventurers entering the dungeon, it is always a physical game location regardless of which pattern the master chose.
-
-**Two seed types, one pair**: The dungeon system introduces two seed types that grow in parallel: `dungeon_core` (the dungeon's own progressive growth -- mana capacity, genetic library, trap sophistication, spatial control, memory depth) and `dungeon_master` (the bonded entity's growth in the mastery role -- perception, command, channeling, coordination). The `dungeon_master` seed can be account-owned (Pattern A -- the spirit's relationship to the dungeon, persisting across character death) or character-owned (Pattern B -- one character's role, tied to that character's lifecycle). Seeds track growth in *roles*, not growth in *entities*.
-
-**Zero Arcadia-specific content**: lib-dungeon is a generic dungeon management service. Arcadia's personality types (martial, memorial, festive, scholarly), specific creature species, and narrative manifestation styles are configured through ABML behaviors and seed type definitions at deployment time, not baked into lib-dungeon.
-
-**Current status**: Pre-implementation. No schema, no code. This deep dive is an architectural specification based on the broader architectural patterns established by lib-divine, lib-gardener, and lib-puppetmaster. Internal-only, never internet-facing.
+Dungeon lifecycle orchestration service (L4 GameFeatures) for living dungeon entities that perceive, grow, and act autonomously within the Bannou actor system. A thin orchestration layer (like Divine over Currency/Seed/Collection, Quest over Contract, Escrow over Currency/Item) that composes existing Bannou primitives to deliver dungeon-as-actor game mechanics. Game-agnostic: dungeon personality types, creature species, and narrative manifestation styles are configured through ABML behaviors and seed type definitions at deployment time. Internal-only, never internet-facing.
 
 ---
 
@@ -195,6 +179,8 @@ The dungeon core actor still runs autonomously -- it just has no garden to tend 
 
 ## The Asymmetric Bond Pattern
 
+Dungeon cores influence characters through the character's own Actor, not directly. A dungeon core's Actor (event brain) monitors domain events and makes decisions; the bonded master's character Actor receives commands as perceptions, gated by the master's `dungeon_master` seed capabilities. This is the same indirect influence pattern used by divine actors (gods influence through the character's Actor, not by controlling the character directly).
+
 The dungeon-master relationship follows the same structural pattern as the player-character relationship, but manifests differently depending on the mastery pattern:
 
 ```
@@ -251,6 +237,8 @@ The partner is not always a character. Corrupted bonds use a monster (actor-mana
 ---
 
 ## Seed Types
+
+The dungeon system introduces two seed types that grow in parallel: `dungeon_core` (the dungeon's own progressive growth -- mana capacity, genetic library, trap sophistication, spatial control, memory depth) and `dungeon_master` (the bonded entity's growth in the mastery role -- perception, command, channeling, coordination). The `dungeon_master` seed can be account-owned (Pattern A -- the spirit's relationship to the dungeon, persisting across character death) or character-owned (Pattern B -- one character's role, tied to that character's lifecycle). Seeds track growth in *roles*, not growth in *entities*.
 
 ### dungeon_core (The Dungeon's Growth)
 
@@ -703,6 +691,8 @@ Bond formation is entirely Contract-driven. The contract template (`dungeon-mast
 
 ## Visual Aid
 
+Dungeon core identity is owned here. Dungeon behavior is Actor (event brain) via Puppetmaster. Dungeon growth is Seed (`dungeon_core` seed type). Dungeon master bond is Contract. Mana economy is Currency. Physical layout is Save-Load + Mapping. Visual composition is Scene. Memory items are Item. Monster spawning and trap activation are dungeon-specific APIs orchestrated by lib-dungeon. Player-facing dungeon master experience is Gardener (dungeon garden type). Procedural chamber generation is a future integration with lib-procedural (Houdini backend).
+
 ### Pattern A: Full Split (Account-Level)
 
 ```
@@ -913,10 +903,18 @@ Bond formation is entirely Contract-driven. The contract template (`dungeon-mast
 
 6. **Entity Session Registry for dungeon master (Pattern A only)**: The dungeon master's garden needs entity session registrations (dungeon -> session, inhabitants -> session, master character -> session) via the Entity Session Registry in Connect (L1). This depends on the Entity Session Registry being implemented first (see [Gardener Design #7](GARDENER.md)). Pattern B does not need entity session registration for the dungeon -- the character's existing entity session registrations suffice.
 
-7. **Household split mechanic (cross-cutting dependency)**: Pattern A depends on a general household split mechanic that doesn't exist yet. This mechanic is needed for the game regardless of dungeons (branch families, divorces, exile) and involves Contract (split terms), Faction (cultural norms determining amicability), Obligation (post-split moral costs), Relationship (bond type changes), and Seed (potential account seed creation). lib-dungeon consumes the result of a household split but does not implement it. The split mechanic must be designed as a cross-cutting feature involving multiple services. Pattern B has no dependency on the household split mechanic.
+7. **Household split mechanic (cross-cutting dependency)**: Pattern A depends on a general household split mechanic that doesn't exist yet. This mechanic is needed for the game regardless of dungeons (branch families, divorces, exile) and involves Contract (split terms), Faction (cultural norms determining amicability), Obligation (post-split moral costs), Relationship (bond type changes), Seed (potential account seed creation), and Organization (the household IS an organization per Organization.md -- the split is an organization dissolution). lib-dungeon consumes the result of a household split but does not implement it. The split mechanic must be designed as a cross-cutting feature involving multiple services. Pattern B has no dependency on the household split mechanic. Additional implications from cross-service analysis:
+   - **Temporal delay**: Arbitration's procedural templates impose timelines (`waitingPeriodDays` governance parameter). Pattern A is not instant -- the split proceeds through filing, service, response, evidence, ruling, appeal window, and enforcement phases. The `dungeon_master` seed promotion (Design Consideration #8) cannot occur until the ruling is enforced. Character death during proceedings, player withdrawal (`WithdrawCase`), and the intermediate state (Pattern B remains active during proceedings) all need design.
+   - **Household seed impact**: Per Organization.md Design Consideration #4, the household organization's own seed (type `household`) should lose growth proportional to the departing member. This is a separate concern from the `dungeon_master` seed promotion (#437) -- it requires lib-seed to support growth transfer between seeds.
+   - **Disposition consequences**: Remaining household members develop emotional responses via Disposition (resentment, grief, relief). The departed character may develop feelings about their former family (guilt, relief, longing). The guardian spirit's relationship with the departed character changes. These emotional states feed into NPC GOAP decisions and the content flywheel when characters are archived.
+   - **Asset division**: Organization.md tracks registered assets (wallets, inventories, locations, contracts). The departing character takes their share per the arbitration ruling's terms, orchestrated through Escrow.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-15:https://github.com/beyond-immersion/bannou-service/issues/436 -->
 
-8. **Seed promotion mechanic**: Pattern A requires a mechanism to "promote" a character-owned dungeon_master seed to account-owned. The seed always starts character-owned (Pattern B is the default on bond formation). Promotion happens when the player commits an account seed slot through the household split flow. This requires lib-seed to support re-parenting a seed from one owner type to another (character -> account) while preserving all growth data. Alternatively, the promotion could create a new account-owned seed and transfer growth from the character-owned one.
+8. **Seed promotion mechanic**: Pattern A requires a mechanism to "promote" a character-owned dungeon_master seed to account-owned. The seed always starts character-owned (Pattern B is the default on bond formation). Promotion happens when the player commits an account seed slot through the household split flow. This requires lib-seed to support re-parenting a seed from one owner type to another (character -> account) while preserving all growth data. Alternatively, the promotion could create a new account-owned seed and transfer growth from the character-owned one. Additional constraints from cross-service analysis:
+   - **Timing dependency on #7**: Seed promotion is a consequence of the household split completing (Design Consideration #7), not a standalone operation. The promotion should execute as a prebound API call in the arbitration ruling's enforcement phase. The player's choice initiates the process but does not trigger immediate promotion.
+   - **Account seed slot validation**: The account must have an available seed slot (out of the 3 maximum). If all slots are full, Pattern A cannot proceed until the player releases a slot. This validation must occur before the arbitration case is filed, not at enforcement time (to avoid wasted proceedings).
+   - **Distinct from household seed splitting**: The `dungeon_master` seed being promoted (owner type change) is separate from the household organization seed being split (growth transfer). Both happen in the same flow but are different seed operations requiring different lib-seed APIs. See Organization.md Design Consideration #4.
+   - **Reverse promotion is deliberately unsupported**: Once the character has left the household, they're gone. The reverse (Pattern A back to B) is not possible -- the household split is permanent. This is a deliberate non-requirement.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-15:https://github.com/beyond-immersion/bannou-service/issues/437 -->
 
 9. **Pattern B transient UX routing**: When the player switches characters within a garden, the dungeon UX modules need to appear/disappear based on whether the currently-controlled character has a dungeon_master seed. This requires the client's UX capability manifest to be dynamically updated on character switch -- likely via the same Permission/Connect capability manifest push mechanism, extended to include seed-derived UX capabilities.

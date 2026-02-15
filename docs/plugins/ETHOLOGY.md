@@ -9,9 +9,13 @@
 
 ## Overview
 
-Species-level behavioral archetype registry and nature resolution service (L4 GameFeatures) for providing structured behavioral defaults to any entity that runs through the Actor behavior system. The missing middle ground between "hardcoded behavior document defaults" (every wolf is identical) and "full character cognitive stack" (9 variable providers, per-entity persistent state). Without this service, non-character entities have zero individuality -- a wolf behaves exactly like every other wolf, a bear uses the same defaults as a boar, and the living world feels mechanical rather than alive at the ecosystem level.
+Species-level behavioral archetype registry and nature resolution service (L4 GameFeatures) for providing structured behavioral defaults to any entity that runs through the Actor behavior system. The missing middle ground between "hardcoded behavior document defaults" (every wolf is identical) and "full character cognitive stack" (9 variable providers, per-entity persistent state). A structured definition of species-level behavioral baselines with hierarchical overrides (realm, location) and per-individual deterministic noise, exposed as a variable provider to the Actor behavior system. Game-agnostic: behavioral axes are opaque strings -- a horror game could define `stalking_patience` and `ambush_preference`, a farming sim could define `tamability` and `herd_cohesion`. Internal-only, never internet-facing.
 
-**The gap this fills**: The Actor behavior system has a clean, rich cognitive stack for characters:
+---
+
+## Core Mechanics: Behavioral Archetypes
+
+The Actor behavior system has a clean, rich cognitive stack for characters:
 
 | Provider | Service | What It Answers |
 |----------|---------|----------------|
@@ -35,13 +39,9 @@ variables:
   aggression_level: 0.3     # Same for every creature
 ```
 
-Every wolf is identical. Every bear is identical. A wolf and a bear sharing the same behavior document have the same defaults. The only differentiation mechanism is which ABML document loads (via the variant chain), not what values feed into that document. This is the gap.
+Every wolf is identical. Every bear is identical. A wolf and a bear sharing the same behavior document have the same defaults. The only differentiation mechanism is which ABML document loads (via the variant chain), not what values feed into that document.
 
-**What this is NOT**: This is not a genome service. Dungeon creatures are pneuma echoes -- they don't have DNA, don't breed, don't pass traits to offspring. Character genetics belongs to Character-Lifecycle's Heritage Engine. This is not a personality service -- personality is individual experience-driven temperament (nurture), while nature is species-defined behavioral tendency (what you ARE by birth). This is not a seed type -- seeds are progressive growth that starts empty and accumulates over time; a wolf doesn't progressively earn being territorial, it IS territorial from the moment it exists.
-
-**What this IS**: A structured definition of species-level behavioral baselines with hierarchical overrides (realm, location) and per-individual deterministic noise, exposed as a variable provider to the Actor behavior system. Ethology is the scientific study of animal behavior, especially innate behavioral patterns -- exactly the concept that's missing.
-
-**Three-layer resolution**: Nature values are computed from three layers:
+Nature values are computed from three layers:
 
 | Layer | Source | Example |
 |-------|--------|---------|
@@ -49,21 +49,7 @@ Every wolf is identical. Every bear is identical. A wolf and a bear sharing the 
 | **Environmental override** | Realm and location modifications | "Ironpeak wolves: aggression +0.15 (harsh environment)" |
 | **Individual noise** | Deterministic hash from entity ID | "This wolf: aggression +0.03 (consistent per-entity)" |
 
-Individual noise is **deterministic** -- hash the entity ID + trait code to get a consistent offset within a configured noise amplitude. No per-entity storage needed. The same wolf always has the same noise. This is cheap, stateless, and supports 100,000+ creatures without per-entity state store entries.
-
-**Character delegation**: When the nature provider encounters a character ID, it checks whether Heritage data is available. If Heritage is loaded (the full cognitive stack is active), Heritage values take precedence -- genetics are more specific than species archetypes. If Heritage is unavailable (character created without lifecycle tracking, or Character-Lifecycle plugin not enabled), the provider falls back to species archetype + noise. This makes `${nature.*}` the universal baseline that Heritage refines for characters.
-
-**The living ecosystem thesis**: From the [Vision](../../arcadia-kb/VISION.md): "The world is alive whether or not a player is watching." For this to feel true at the ecosystem level, animals and creatures need perceptible individuality. The alpha wolf that's slightly more aggressive and territorial than the omega. The old bear that's less curious and more cautious. The pack of wild dogs where each has distinct behavioral tendencies. Without per-individual variation, ecosystems feel like tiled patterns rather than living populations.
-
-**Dungeon creature integration**: VISION.md describes `${dungeon.genetic_library.*}` -- the dungeon core's catalog of monster types. When a dungeon spawns a creature, the creature needs behavioral defaults. lib-ethology provides those defaults via the species archetype. The dungeon core can optionally apply its own modifications (empowered monsters, mutated behaviors) as overrides registered at the dungeon-instance level, layering dungeon aesthetics on top of species baselines.
-
-**Zero Arcadia-specific content**: lib-ethology is a generic behavioral archetype service. Arcadia's specific axes (aggression, territoriality, pack behavior) are configured through archetype definitions at deployment time, not baked into lib-ethology. A horror game could define axes like `stalking_patience` and `ambush_preference`. A farming sim could define `tamability` and `herd_cohesion`. The service is axis-agnostic -- it stores float values against string-coded behavioral axes, not a fixed set of traits.
-
-**Current status**: Pre-implementation. No schema, no code. This deep dive is an architectural specification based on analysis of the behavioral gap identified across creature cognition templates and the variable provider landscape. The `creature_base.yaml` behavior already exists with hardcoded variables for creature NPCs, and `archetype-definitions.yaml` defines Intent Channel configurations for creature entity types, but neither provides a structured data source for per-species, per-environment, per-individual behavioral variation. Internal-only, never internet-facing.
-
----
-
-## Core Mechanics: Behavioral Archetypes
+From the [Vision](../../arcadia-kb/VISION.md): "The world is alive whether or not a player is watching." For this to feel true at the ecosystem level, animals and creatures need perceptible individuality. The alpha wolf that's slightly more aggressive and territorial than the omega. The old bear that's less curious and more cautious. The pack of wild dogs where each has distinct behavioral tendencies. Without per-individual variation, ecosystems feel like tiled patterns rather than living populations.
 
 ### Archetype Definition
 
@@ -247,6 +233,8 @@ The deer in that area become more vigilant and skittish -- not because someone s
 
 ## Core Mechanics: Individual Noise
 
+Individual noise is **deterministic** -- hash the entity ID + trait code to get a consistent offset within a configured noise amplitude. No per-entity storage needed. The same wolf always has the same noise. This is cheap, stateless, and supports 100,000+ creatures without per-entity state store entries.
+
 ### Deterministic Noise Function
 
 Individual noise provides per-entity variation without per-entity storage:
@@ -287,6 +275,8 @@ This is configured per archetype, not globally. The service doesn't decide how m
 ---
 
 ## Core Mechanics: Character Delegation
+
+When the nature provider encounters a character ID, it checks whether Heritage data is available. If Heritage is loaded (the full cognitive stack is active), Heritage values take precedence -- genetics are more specific than species archetypes. If Heritage is unavailable (character created without lifecycle tracking, or Character-Lifecycle plugin not enabled), the provider falls back to species archetype + noise. This makes `${nature.*}` the universal baseline that Heritage refines for characters.
 
 ### Heritage-Aware Resolution
 
@@ -631,6 +621,8 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 
 ## Visual Aid
 
+When a dungeon spawns a creature, the creature needs behavioral defaults. lib-ethology provides those defaults via the species archetype. The dungeon core can optionally apply its own modifications (empowered monsters, mutated behaviors) as overrides registered at the dungeon-instance level, layering dungeon aesthetics on top of species baselines.
+
 ### Nature Resolution Pipeline
 
 ```
@@ -842,6 +834,8 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 ---
 
 ## Why Not Extend Species or Use Seeds?
+
+This is not a genome service (dungeon creatures are pneuma echoes without DNA; character genetics belongs to Character-Lifecycle's Heritage Engine). This is not a personality service (personality is individual experience-driven temperament -- nurture; nature is species-defined behavioral tendency -- what you ARE by birth). This is not a seed type (seeds are progressive growth that starts empty; a wolf doesn't progressively earn being territorial, it IS territorial from the moment it exists).
 
 The question arises: why not add behavioral defaults to Species, or model this as a Seed type?
 

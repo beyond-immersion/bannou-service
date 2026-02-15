@@ -831,6 +831,8 @@ Final ... |
 | `OBLIGATION_LOCK_TIMEOUT_SECONDS` | int | `30` | Timeout in seconds for distributed locks on obligation cache... |
 | `OBLIGATION_MAX_ACTIVE_CONTRACTS_QUERY` | int | `100` | Maximum number of active contracts to query per character du... |
 | `OBLIGATION_MAX_OBLIGATIONS_PER_CHARACTER` | int | `200` | Safety limit on cached obligations per character (prevents r... |
+| `OBLIGATION_NORM_RESOLUTION_MODE` | string | `PerfectKnowledge` | How norm-based obligation costs are resolved when the Hearsa... |
+| `OBLIGATION_NORM_UNCERTAINTY_VARIANCE` | double | `0.2` | Maximum variance applied to norm penalties when NormResoluti... |
 
 ### Orchestrator
 
@@ -1153,9 +1155,9 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 871
+- **Total properties**: 873
 - **Required (no default)**: 51
-- **Optional (has default)**: 820
+- **Optional (has default)**: 822
 
 ## Environment Variable Naming Convention
 

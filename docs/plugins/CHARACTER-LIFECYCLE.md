@@ -1,10 +1,11 @@
 # Character Lifecycle Plugin Deep Dive
 
-> **Plugin**: lib-character-lifecycle
-> **Schema**: schemas/character-lifecycle-api.yaml
-> **Version**: 1.0.0
-> **State Stores**: lifecycle-characters (MySQL), lifecycle-heritage (MySQL), lifecycle-bloodlines (MySQL), lifecycle-cache (Redis), lifecycle-lock (Redis)
-> **Status**: Pre-implementation (architectural specification)
+> **Plugin**: lib-character-lifecycle (not yet created)
+> **Schema**: `schemas/character-lifecycle-api.yaml` (not yet created)
+> **Version**: N/A (Pre-Implementation)
+> **State Store**: lifecycle-characters (MySQL), lifecycle-heritage (MySQL), lifecycle-bloodlines (MySQL), lifecycle-cache (Redis), lifecycle-lock (Redis) — all planned
+> **Layer**: L4 GameFeatures
+> **Status**: Aspirational — no schema, no generated code, no service implementation exists.
 
 ## Overview
 

@@ -1,10 +1,11 @@
 # Broadcast Plugin Deep Dive
 
-> **Plugin**: lib-broadcast
-> **Schema**: schemas/broadcast-api.yaml
-> **Version**: 1.0.0
-> **State Stores**: broadcast-platforms (MySQL), broadcast-sessions (Redis), broadcast-sentiment-buffer (Redis), broadcast-outputs (Redis), broadcast-cameras (Redis), broadcast-lock (Redis)
-> **Status**: Pre-implementation (architectural specification)
+> **Plugin**: lib-broadcast (not yet created)
+> **Schema**: `schemas/broadcast-api.yaml` (not yet created)
+> **Version**: N/A (Pre-Implementation)
+> **State Store**: broadcast-platforms (MySQL), broadcast-sessions (Redis), broadcast-sentiment-buffer (Redis), broadcast-outputs (Redis), broadcast-cameras (Redis), broadcast-lock (Redis) — all planned
+> **Layer**: L3 AppFeatures
+> **Status**: Aspirational — no schema, no generated code, no service implementation exists.
 > **Planning**: [STREAMING-ARCHITECTURE.md](../planning/STREAMING-ARCHITECTURE.md), [VOICE-STREAMING.md](../planning/VOICE-STREAMING.md)
 
 ## Overview

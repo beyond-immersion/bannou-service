@@ -1,35 +1,15 @@
 # Organization Plugin Deep Dive
 
-> **Plugin**: lib-organization
-> **Schema**: schemas/organization-api.yaml
-> **Version**: 1.0.0
-> **State Stores**: organization-entities (MySQL), organization-members (MySQL), organization-roles (MySQL), organization-assets (MySQL), organization-succession (MySQL), organization-cache (Redis), organization-lock (Redis)
-> **Status**: Pre-implementation (architectural specification)
-> **Related**: [Faction Sovereignty Design](FACTION.md#design-considerations-requires-planning), [Arbitration](ARBITRATION.md)
+> **Plugin**: lib-organization (not yet created)
+> **Schema**: `schemas/organization-api.yaml` (not yet created)
+> **Version**: N/A (Pre-Implementation)
+> **State Store**: organization-entities (MySQL), organization-members (MySQL), organization-roles (MySQL), organization-assets (MySQL), organization-succession (MySQL), organization-cache (Redis), organization-lock (Redis) — all planned
+> **Layer**: L4 GameFeatures
+> **Status**: Aspirational — no schema, no generated code, no service implementation exists.
 
 ## Overview
 
-Legal entity management service (L4 GameFeatures) for organizations that own assets, employ characters, enter contracts, and participate in the economy as first-class entities. A structural layer that gives economic and social entities a legal identity -- shops, guilds, households, trading companies, temples, military units, criminal enterprises, and any other group that acts as a collective within the game world.
-
-**Composability**: Organization identity and structure are owned here. Treasury is Currency (organizations own wallets). Inventory is Inventory/Item (organizations own containers and goods). Contracts are Contract (organizations are contract parties). Employment and membership are Relationship (member-to-organization bonds). Physical presence is Location (organizations control or occupy locations). Governance capabilities are Seed (organizational growth determines what the organization can do). Legal status comes from Faction (the sovereign determines whether an organization is chartered, licensed, tolerated, or outlawed). Internal roles and succession are organization-specific concerns owned by this service.
-
-**The living economy substrate**: From the [Vision](../../arcadia-kb/VISION.md): "The economy must be NPC-driven, not player-driven. Supply, demand, pricing, and trade routes emerge from NPC behavior -- what they need, what they produce, what they want." Without lib-organization, "NPC runs a shop" is a behavior pattern with no structural backing. With lib-organization, the shop is a legal entity with inventory, a currency wallet, employees, trade agreements, and a succession plan -- and when the shopkeeper dies, succession rules determine what happens to it. Organizations are the structural skeleton that NPC economic behavior hangs on.
-
-**Family-as-organization**: A household is an organization. It has shared assets (family home, savings, heirlooms), internal roles (head of household, heir, dependents, elders), succession rules (primogeniture, equal division, matrilineal, elective), and legal status within the sovereign's framework (recognized family, noble house, outlawed clan). The [Dungeon deep dive](DUNGEON.md)'s "household split" mechanic and the [Arbitration deep dive](ARBITRATION.md)'s divorce/exile case types are all organization dissolution -- breaking apart a legal entity's structure, dividing its assets, and managing the aftermath.
-
-**The Quest/Escrow/Arbitration parallel**: Organization follows the same pattern as other L4 orchestration layers -- it composes L0/L1/L2 primitives into a higher-level game concept. Quest composes Contract into objectives. Escrow composes Contract + Currency + Item into exchanges. Arbitration composes Contract + Faction into dispute resolution. Organization composes Currency + Inventory + Contract + Relationship + Location into legal entities.
-
-**Critical architectural insight**: Organizations do not replace characters as economic actors. Characters own and operate organizations. An NPC blacksmith owns a "blacksmith shop" organization. The NPC's Actor brain makes economic decisions (what to buy, what to sell, what to craft). The organization provides the structural container for those decisions -- the wallet from which purchases are made, the inventory in which goods are stored, the contracts under which trades are executed. The NPC's GOAP planner considers organizational assets when evaluating economic actions.
-
-**Legal status from sovereign**: The sovereign authority (via lib-faction's `authorityLevel`) determines an organization's legal standing. A Chartered organization has legal protections. An Outlawed organization operates illegally, and conducting business with it carries obligation costs. Legal status feeds into the organization's own seed growth: legitimate commerce grows a Chartered organization faster; underground economy grows an Outlawed one differently. The chartering mechanism is itself a Contract -- the sovereign grants a charter with behavioral clauses (tax compliance, regulatory adherence), and breach triggers status downgrade.
-
-**Seed-based organizational growth**: Each organization owns a seed that grows through member activities and economic transactions, following the same Collection-to-Seed pipeline that powers faction growth. As the organization's seed grows, capabilities unlock: hiring more employees, opening branches, entering complex contracts, participating in trade regulation. A nascent street vendor literally cannot hire employees -- it hasn't grown enough organizational capability yet.
-
-**Organization type codes are opaque strings**: `household`, `shop`, `guild`, `trading_company`, `temple`, `military_unit`, `criminal_enterprise`, `noble_house` are all just organization types. lib-organization doesn't hardcode any type-specific logic -- different types have different seed type definitions (growth phases, capability rules) and different governance treatment from sovereigns (chartering requirements, tax rates). New organization types require only a seed type registration and governance data entries.
-
-**Zero Arcadia-specific content**: lib-organization is a generic organizational entity service. Arcadia's specific organization types (clans, guilds, noble houses), their governance relationships with factions, and their economic roles are configured through seed types, contract templates, and faction governance data at deployment time, not baked into lib-organization.
-
-**Current status**: Pre-implementation. No schema, no code. This deep dive is an architectural specification based on the broader architectural patterns established by lib-faction, lib-divine, and lib-dungeon. Sovereignty prerequisites are documented in [Faction deep dive Design Consideration #6](FACTION.md#design-considerations-requires-planning). Internal-only, never internet-facing.
+Legal entity management service (L4 GameFeatures) for organizations that own assets, employ characters, enter contracts, and participate in the economy as first-class entities. A structural layer that gives economic and social entities a legal identity — shops, guilds, households, trading companies, temples, military units, criminal enterprises, and any other group that acts as a collective within the game world. Game-agnostic: organization types, role templates, governance relationships, seed growth phases, and charter requirements are all configured through seed type definitions, contract templates, and faction governance data at deployment time. Internal-only, never internet-facing.
 
 ---
 
@@ -39,10 +19,10 @@ Legal entity management service (L4 GameFeatures) for organizations that own ass
 
 | Dependency | Usage |
 |------------|-------|
-| lib-state (`IStateStoreFactory`) | Organization entities (MySQL), member records (MySQL), role definitions (MySQL), asset registrations (MySQL), succession rules (MySQL), capability cache (Redis), distributed locks (Redis) |
-| lib-state (`IDistributedLockProvider`) | Distributed locks for organization mutations, member changes, asset operations, succession execution |
+| lib-state (`IStateStoreFactory`) | Organization entities (MySQL), member records (MySQL), role definitions (MySQL), asset registrations (MySQL), succession rules (MySQL), capability cache (Redis), lock store (Redis) |
+| `IDistributedLockProvider` | Distributed locks for organization mutations, member changes, asset operations, succession execution (L0) |
 | lib-messaging (`IMessageBus`) | Publishing organization lifecycle events, member events, succession events, legal status events |
-| lib-messaging (`IEventConsumer`) | Registering handlers for character death (succession trigger), contract breach (charter downgrade), faction territory changes (legal status re-evaluation) |
+| lib-messaging (`IEventConsumer`) | Registering handlers for contract breach (charter downgrade), faction territory changes (legal status re-evaluation), seed phase/capability changes |
 | lib-currency (`ICurrencyClient`) | Organization wallet creation, treasury management, payroll execution, charter tax payments (L2) |
 | lib-inventory (`IInventoryClient`) | Organization inventory container creation, asset tracking (L2) |
 | lib-contract (`IContractClient`) | Charter contracts, employment contracts, trade agreements, succession wills, dissolution terms (L1) |
@@ -163,7 +143,6 @@ Legal entity management service (L4 GameFeatures) for organizations that own ass
 
 | Topic | Handler | Action |
 |-------|---------|--------|
-| `character.deleted` | `HandleCharacterDeletedAsync` | Remove member from all organizations. If member was leader, trigger succession. If sole member, initiate dissolution. |
 | `contract.breached` | `HandleContractBreachedAsync` | For charter contracts: evaluate breach severity. Minor breach: warning. Major breach: downgrade legal status. Severe breach: outlaw. |
 | `contract.terminated` | `HandleContractTerminatedAsync` | For charter contracts: revert legal status to Tolerated. For employment contracts: remove member. |
 | `contract.fulfilled` | `HandleContractFulfilledAsync` | For charter contracts with renewal milestones: process renewal. For employment contracts with completion: update member status. |
@@ -176,7 +155,7 @@ Legal entity management service (L4 GameFeatures) for organizations that own ass
 
 | Target Resource | Source Type | On Delete | Cleanup Endpoint |
 |----------------|-------------|-----------|-----------------|
-| character | organization | CASCADE | `/organization/cleanup-by-character` |
+| character | organization | CASCADE | `/organization/cleanup-by-character` — removes member from all organizations, triggers succession if leader, initiates dissolution if sole member |
 | realm | organization | CASCADE | `/organization/cleanup-by-realm` |
 | location | organization | CASCADE | `/organization/cleanup-by-location` |
 
@@ -219,7 +198,7 @@ Legal entity management service (L4 GameFeatures) for organizations that own ass
 | `OrganizationServiceConfiguration` | Typed configuration access |
 | `IStateStoreFactory` | State store access (creates 7 stores) |
 | `IMessageBus` | Event publishing |
-| `IEventConsumer` | Character, contract, faction, seed event subscriptions |
+| `IEventConsumer` | Contract, faction, seed event subscriptions |
 | `IDistributedLockProvider` | Distributed lock acquisition (L0) |
 | `ICurrencyClient` | Organization wallet management (L2) |
 | `IInventoryClient` | Organization inventory management (L2) |
@@ -342,6 +321,8 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 ---
 
 ## Visual Aid
+
+Organization identity and structure are owned here. Treasury is Currency (organizations own wallets). Inventory is Inventory/Item (organizations own containers and goods). Contracts are Contract (organizations are contract parties). Employment and membership are Relationship (member-to-organization bonds). Physical presence is Location (organizations control or occupy locations). Governance capabilities are Seed (organizational growth determines what the organization can do). Legal status comes from Faction (the sovereign determines whether an organization is chartered, licensed, tolerated, or outlawed). Internal roles and succession are organization-specific concerns owned by this service.
 
 ### Organization Structure
 
@@ -511,6 +492,8 @@ Factions and organizations overlap conceptually -- both have members, both have 
 
 ## The Household Pattern
 
+A household is an organization. It has shared assets (family home, savings, heirlooms), internal roles (head of household, heir, dependents, elders), succession rules (primogeniture, equal division, matrilineal, elective), and legal status within the sovereign's framework (recognized family, noble house, outlawed clan). The [Dungeon deep dive](DUNGEON.md)'s "household split" mechanic and the [Arbitration deep dive](ARBITRATION.md)'s divorce/exile case types are all organization dissolution — breaking apart a legal entity's structure, dividing its assets, and managing the aftermath.
+
 Households are the most important organization type in Arcadia because every player character exists within one. Understanding households as organizations unlocks several critical game mechanics.
 
 ### Why Households Are Organizations
@@ -643,6 +626,8 @@ This is the same mechanism used for the [Dungeon deep dive](DUNGEON.md)'s Patter
 
 ## Seed-Based Organizational Growth
 
+Each organization owns a seed that grows through member activities and economic transactions, following the same Collection-to-Seed pipeline that powers faction growth. As the organization's seed grows, capabilities unlock: hiring more employees, opening branches, entering complex contracts, participating in trade regulation. A nascent street vendor literally cannot hire employees — it hasn't grown enough organizational capability yet.
+
 Each organization owns a seed whose type code matches the organization type (e.g., `household`, `shop`, `guild`, `trading_company`). Growth reflects what the organization's members actually do.
 
 ### Growth Pipeline
@@ -717,7 +702,9 @@ ISeedEvolutionListener (lib-organization):
 
 ## Legal Status from Sovereign
 
-The sovereign authority determines an organization's legal standing. This creates a dynamic legal landscape where the same organization can be legitimate in one territory and criminal in another.
+The sovereign authority (via lib-faction's `authorityLevel`) determines an organization's legal standing. A Chartered organization has legal protections. An Outlawed organization operates illegally, and conducting business with it carries obligation costs. Legal status feeds into the organization's own seed growth: legitimate commerce grows a Chartered organization faster; underground economy grows an Outlawed one differently. The chartering mechanism is itself a Contract — the sovereign grants a charter with behavioral clauses (tax compliance, regulatory adherence), and breach triggers status downgrade.
+
+This creates a dynamic legal landscape where the same organization can be legitimate in one territory and criminal in another.
 
 ### Status Levels
 
@@ -987,6 +974,10 @@ flows:
 ---
 
 ## Economy Integration
+
+From the [Vision](../../arcadia-kb/VISION.md): "The economy must be NPC-driven, not player-driven. Supply, demand, pricing, and trade routes emerge from NPC behavior — what they need, what they produce, what they want." Without lib-organization, "NPC runs a shop" is a behavior pattern with no structural backing. With lib-organization, the shop is a legal entity with inventory, a currency wallet, employees, trade agreements, and a succession plan — and when the shopkeeper dies, succession rules determine what happens to it. Organizations are the structural skeleton that NPC economic behavior hangs on.
+
+Organizations do not replace characters as economic actors. Characters own and operate organizations. An NPC blacksmith owns a "blacksmith shop" organization. The NPC's Actor brain makes economic decisions (what to buy, what to sell, what to craft). The organization provides the structural container for those decisions — the wallet from which purchases are made, the inventory in which goods are stored, the contracts under which trades are executed. The NPC's GOAP planner considers organizational assets when evaluating economic actions.
 
 How organizations participate in the NPC-driven economy through GOAP-based economic decision-making.
 

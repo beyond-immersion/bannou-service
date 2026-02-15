@@ -1,10 +1,11 @@
 # Arbitration Plugin Deep Dive
 
-> **Plugin**: lib-arbitration
-> **Schema**: schemas/arbitration-api.yaml
-> **Version**: 1.0.0
-> **State Stores**: arbitration-cases (MySQL), arbitration-rulings (MySQL), arbitration-evidence (MySQL), arbitration-arbiters (Redis), arbitration-cache (Redis), arbitration-lock (Redis)
-> **Status**: Pre-implementation (architectural specification)
+> **Plugin**: lib-arbitration (not yet created)
+> **Schema**: `schemas/arbitration-api.yaml` (not yet created)
+> **Version**: N/A (Pre-Implementation)
+> **State Store**: arbitration-cases (MySQL), arbitration-rulings (MySQL), arbitration-evidence (MySQL), arbitration-arbiters (Redis), arbitration-cache (Redis), arbitration-lock (Redis) — all planned
+> **Layer**: L4 GameFeatures
+> **Status**: Aspirational — no schema, no generated code, no service implementation exists.
 > **Planning**: [MORALITY-SYSTEM-NEXT-STEPS.md](../planning/MORALITY-SYSTEM-NEXT-STEPS.md)
 
 ## Overview
@@ -30,6 +31,9 @@ Authoritative dispute resolution service (L4 GameFeatures) for competing claims 
 | lib-game-service (`IGameServiceClient`) | Validating game service scope (L2) |
 | lib-resource (`IResourceClient`) | Reference tracking, cleanup callback registration (L1) |
 | lib-location (`ILocationClient`) | Resolving location hierarchy for jurisdiction determination (L2) |
+| lib-currency (`ICurrencyClient`) | Executing monetary penalties (fines, reparations) (L2) |
+| lib-inventory (`IInventoryClient`) | Identifying shared assets for division (L2) |
+| lib-seed (`ISeedClient`) | Seed bond dissolution, sovereignty capability checks (L2) |
 
 **Note on Faction dependency**: Faction is L4, same layer as Arbitration. L4-to-L4 dependencies must handle graceful degradation per the service hierarchy. However, Arbitration is fundamentally meaningless without Faction (no jurisdiction = no arbitration). This is a hard dependency in practice, documented as such. If Faction is disabled, Arbitration should also be disabled. This is analogous to how Quest is meaningless without Contract -- the orchestration layer requires its substrate.
 
@@ -39,11 +43,8 @@ Authoritative dispute resolution service (L4 GameFeatures) for competing claims 
 |------------|-------|-----------------------|
 | lib-escrow (`IEscrowClient`) | Asset division when rulings involve property | Asset division unavailable; rulings limited to non-asset consequences (relationship changes, fines, exile) |
 | lib-obligation (`IObligationClient`) | Creating ongoing obligation contracts from rulings (alimony, probation) | Ongoing obligations not created; ruling is one-time consequence only |
-| lib-currency (`ICurrencyClient`) | Executing monetary penalties (fines, reparations) | Monetary penalties unavailable; ruling limited to non-monetary consequences |
-| lib-inventory (`IInventoryClient`) | Identifying shared assets for division | Asset identification limited; parties must declare assets manually |
 | lib-puppetmaster (`IPuppetmasterClient`) | Divine arbiter requests, regional watcher notification | Divine arbitration unavailable; falls back to mortal arbiter only |
 | lib-status (`IStatusClient`) | Applying status effects from rulings (imprisonment, probation restrictions) | Status effects not applied; ruling consequences limited to relationship/asset/monetary |
-| lib-seed (`ISeedClient`) | Seed bond dissolution, sovereignty capability checks | Seed-related rulings unavailable; sovereignty acquisition via conquest/treaty disabled |
 | lib-organization (`IOrganizationClient`) | Identifying shared organizational assets, organizational legal status changes | Organizational asset division unavailable; organization-level consequences disabled |
 
 ---
@@ -191,6 +192,10 @@ Authoritative dispute resolution service (L4 GameFeatures) for competing claims 
 | `ICharacterClient` | Character validation for party roles (L2) |
 | `IGameServiceClient` | Game service scope validation (L2) |
 | `IResourceClient` | Reference tracking, cleanup callbacks (L1) |
+| `ILocationClient` | Location hierarchy for jurisdiction resolution (L2) |
+| `ICurrencyClient` | Monetary penalties from rulings (L2) |
+| `IInventoryClient` | Shared asset identification for division (L2) |
+| `ISeedClient` | Seed bond dissolution, sovereignty capability checks (L2) |
 | `IServiceProvider` | Runtime resolution of soft L4 dependencies |
 
 ### Background Workers

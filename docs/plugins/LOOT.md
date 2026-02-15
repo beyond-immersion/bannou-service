@@ -11,25 +11,7 @@
 
 ## Overview
 
-Loot table management and generation service (L4 GameFeatures) for weighted drop determination, contextual modifier application, and group distribution orchestration. A thin orchestration layer (like Quest over Contract, Escrow over Currency/Item, Divine over Currency/Seed/Collection) that composes existing Bannou primitives to deliver loot acquisition mechanics.
-
-**Composability**: Loot table definitions and generation rules are owned here. Item creation is lib-item (L2) -- loot generates item instances with metadata. Item placement is lib-inventory (L2) -- loot places generated items into containers. Modifier generation on drops is lib-affix (L4, soft) -- loot requests affix sets for items that should be randomly modified. Currency drops are lib-currency (L2) -- loot credits wallets directly. NPC looting behavior is Actor (L2) via the Variable Provider Factory pattern -- NPCs perceive lootable sources and decide whether to loot based on GOAP planning. Divine intervention in loot outcomes is lib-divine (L4, soft) -- gods can manipulate drop probabilities through narrative events without lib-loot knowing.
-
-**The foundational distinction**: lib-loot manages WHAT can drop from sources (table definitions, weighted entries, probability curves) and orchestrates the HOW of generation (rolling, context application, instantiation). WHO triggers loot generation is external -- combat systems report kills, quest systems grant rewards, world events produce spoils, chest interactions trigger rolls. lib-loot is a pure generation engine: give it a table ID and a context, and it returns concrete items.
-
-**Critical architectural insight**: Loot is not a reward -- it is a *consequence*. In Arcadia's living world, loot emerges from the simulation, not from a designer's reward spreadsheet. When a pneuma echo is destroyed in a dungeon, the logos seed disperses and the physical manifestation fragments into recoverable materials -- that is loot. When a divine actor decides a character deserves recognition, the divine blessing might manifest as a rare drop from the next monster they kill -- that is loot. When a merchant NPC's caravan is raided by bandits, the scattered goods become lootable -- that is loot. lib-loot provides the probabilistic generation engine; the simulation provides the meaning.
-
-**The dual-table model**: Loot tables come in two flavors that serve different purposes. **Static tables** are designer-authored definitions seeded at deployment time -- the baseline drop rates for monster species, chest tiers, quest reward pools. **Dynamic tables** are runtime-constructed by actors and systems -- a divine actor composing a custom reward table for a blessed character, a dungeon core adjusting its treasure rooms based on intruder capabilities, an NPC merchant deciding what to stock by "looting" a supplier's catalog. Both models use the same LootTable structure; the distinction is in who creates them and when.
-
-**Three generation tiers**: Not all loot requires the same computational effort. **Tier 1 (Lightweight)** generates item template references only -- "this source can drop iron ore, leather scraps, or wolf fangs." No instances created; the caller decides when and how to instantiate. Used for previews, bestiary entries, tooltip generation, and NPC GOAP evaluation at scale. **Tier 2 (Standard)** generates concrete item instances placed into a target container -- the normal loot drop flow. **Tier 3 (Enriched)** generates item instances with full affix sets, custom metadata, and quality modifiers -- the "rare drop" flow that coordinates with lib-affix for modifier generation. The tier is per-entry in the table, not per-table -- a single table can have Tier 1 common drops and Tier 3 legendary drops.
-
-**NPC interaction with loot**: At 100K concurrent NPCs, loot generation must be efficient. NPCs interact with loot in three ways: as **sources** (NPC death triggers loot generation from their species table), as **claimants** (NPC GOAP evaluates whether to loot a nearby source based on need, greed, and personality), and as **evaluators** (NPC GOAP uses Tier 1 preview to assess whether a source is worth the effort). The Variable Provider Factory exposes `${loot.*}` variables for all three roles.
-
-**The pity system as divine mechanism**: lib-loot tracks per-entity failure counters for configurable "pity" entries -- items guaranteed to drop after N failed rolls. But the pity system is deliberately minimal at the loot layer. In Arcadia, extended bad luck is a *narrative opportunity*: a divine actor observing a character's mounting frustration can intervene by temporarily modifying the character's loot context (boosting weight modifiers through a blessing), making the next drop feel earned rather than mechanically guaranteed. lib-loot's pity counter is the fallback for games without divine actors; Arcadia's gods make it nearly redundant by turning bad luck into story.
-
-**Zero game-specific content**: lib-loot is a generic loot generation service. Arcadia's pneuma-based drop metaphysics, PoE-style deterministic crafting drops, Diablo-style legendary showers, or a simple "kill monster, get gold" system are all equally valid configurations. Table structures, entry weights, context modifiers, distribution modes, and pity thresholds are all opaque configuration defined per game at deployment time through table seeding.
-
-**Current status**: Pre-implementation. No schema, no code. This deep dive is an architectural specification based on a Path of Exile item system complexity benchmark, the [Item & Economy Plugin Landscape](../plans/ITEM-ECONOMY-PLUGINS.md), and the broader architectural patterns established by lib-divine, lib-dungeon, lib-affix, and lib-market. Internal-only, never internet-facing.
+Loot table management and generation service (L4 GameFeatures) for weighted drop determination, contextual modifier application, and group distribution orchestration. A thin orchestration layer (like Quest over Contract, Escrow over Currency/Item, Divine over Currency/Seed/Collection) that composes existing Bannou primitives to deliver loot acquisition mechanics. Game-agnostic: table structures, entry weights, context modifiers, distribution modes, and pity thresholds are all opaque configuration defined per game at deployment time through table seeding. Internal-only, never internet-facing.
 
 ---
 
@@ -88,6 +70,18 @@ In Arcadia's metaphysics, most dungeon creatures are pneuma echoes -- not truly 
 ---
 
 ## Core Concepts
+
+lib-loot manages WHAT can drop from sources and HOW drops are determined and distributed. It does not own what items ARE (lib-item), where items GO (lib-inventory), or what items COST (lib-currency). lib-loot is a pure generation engine: given a source context, it resolves weighted tables, applies contextual modifiers, generates drop lists, and orchestrates distribution — then delegates to L2 services for actual item creation and placement.
+
+Loot is not a reward — it is a *consequence*. Rewards are intentional outcomes designed by quest makers and event planners (lib-quest, lib-contract). Loot is the emergent result of interacting with the game world: killing a creature, opening a chest, harvesting a node, completing a dungeon room. This distinction matters because lib-quest already handles "give the player items for completing objectives" via prebound API execution on contract milestones. lib-loot handles "determine what this wolf was carrying when it died" — a fundamentally different operation involving weighted randomness, contextual modification, and distribution fairness.
+
+Loot tables come in two flavors: **static tables** are authored by designers and seeded at deployment (the wolf_alpha always has the same potential drops, modified by context). **Dynamic tables** are generated at runtime by higher-layer services — a dungeon's loot table might be procedurally constructed based on the dungeon's personality, level, and current state via lib-dungeon. Both flavors go through the same generation pipeline; the difference is authorship, not mechanics.
+
+Three generation tiers serve different performance needs: **Tier 1 (Lightweight)** resolves a single table with no context — pure weighted random, suitable for simple drops and bulk NPC evaluation. **Tier 2 (Standard)** resolves tables with full context evaluation, sub-table recursion, affix generation, and pity tracking — the default for player-facing loot events. **Tier 3 (Enriched)** adds distribution orchestration, multi-claimant fairness, and contract-based need/greed flows — used for group content and high-value drops.
+
+At 100K concurrent NPCs, many are interacting with the loot system simultaneously — as sources (creatures that drop loot), claimants (NPCs that loot containers), and evaluators (NPCs that assess whether loot is worth pursuing). Tier 1 generation is optimized for this scale: cached table resolution, no context evaluation, batch-friendly. Only player-facing interactions use Tier 2/3.
+
+lib-loot tracks per-entity failure counters for configurable "pity" thresholds — after N failed rolls for items above a rarity threshold, the next roll gets boosted weight. This is deliberately minimal: lib-loot provides the counter and boost mechanism, but the actual pity curves and thresholds are configuration (not code), allowing game designers to tune the feel without service changes.
 
 ### Loot Table Structure
 
@@ -656,6 +650,8 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 ---
 
 ## Visual Aid
+
+Loot table definitions and generation rules are owned here. Item creation is lib-item (L2). Container placement is lib-inventory (L2). Currency rewards are lib-currency (L2). Modifier generation is lib-affix (L4, soft). Context evaluation queries lib-character, lib-seed, and lib-environment for situational modifiers. Distribution orchestration coordinates with lib-contract (L1) for need/greed/auction flows. Divine intervention in loot outcomes is lib-divine (L4, soft) — a god might modify drop weights for followers, but lib-loot doesn't know or care that the context modifier came from a deity.
 
 ```
 +-----------------------------------------------------------------------+

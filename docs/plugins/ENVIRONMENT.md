@@ -10,38 +10,21 @@
 
 ## Overview
 
-Environmental state service (L4 GameFeatures) providing weather simulation, temperature modeling, atmospheric conditions, and ecological resource availability for game worlds. Consumes temporal data from Worldstate (L2) -- season, time of day, calendar boundaries -- and translates it into environmental conditions that affect NPC behavior, production, trade, loot generation, and player experience. The missing ecological layer between Worldstate's clock and the behavioral systems that already reference environmental data that doesn't exist.
+Environmental state service (L4 GameFeatures) providing weather simulation, temperature modeling, atmospheric conditions, and ecological resource availability for game worlds. Consumes temporal data from Worldstate (L2) -- season, time of day, calendar boundaries -- and translates it into environmental conditions that affect NPC behavior, production, trade, loot generation, and player experience. The missing ecological layer between Worldstate's clock and the behavioral systems that already reference environmental data that doesn't exist. Game-agnostic: biome types, weather distributions, temperature curves, and resource availability are configured through climate template seeding at deployment time -- a space game could model atmospheric composition, a survival game could model wind chill, the service stores float values against string-coded condition axes. Internal-only, never internet-facing.
 
-**The problem this solves**: The codebase references environmental data everywhere with no provider. ABML behaviors check `${world.weather.temperature}` -- phantom variable, no provider. Mapping has a `TtlWeatherEffects` spatial layer (600s TTL) ready to receive weather data that nobody publishes. Ethology's environmental overrides were designed to compose with ecological conditions that don't exist. Loot tables reference seasonal resource availability with no authority to consult. Trade routes reference environmental conditions for route activation. Market's economy planning documents reference seasonal trade and harvest cycles. Workshop's production modifiers reference seasonal rates. All of these point at a service that was never built.
+---
 
-**What this service IS**:
+## Core Concepts
+
+The codebase references environmental data everywhere with no provider. ABML behaviors check `${world.weather.temperature}` -- phantom variable, no provider. Mapping has a `TtlWeatherEffects` spatial layer (600s TTL) ready to receive weather data that nobody publishes. Ethology's environmental overrides were designed to compose with ecological conditions that don't exist. Loot tables reference seasonal resource availability with no authority to consult. Trade routes reference environmental conditions for route activation. Market's economy planning documents reference seasonal trade and harvest cycles. Workshop's production modifiers reference seasonal rates. All of these point at a service that was never built.
+
+This service provides six capabilities:
 1. A **weather simulation** -- per-realm, per-location weather computed from climate templates, season, time of day, and deterministic noise
 2. A **temperature model** -- base temperature from season + time-of-day curves + altitude/biome modifiers + weather modifiers
 3. An **atmospheric condition provider** -- precipitation type/intensity, wind speed/direction, humidity, visibility, cloud cover
 4. A **resource availability authority** -- seasonal ecological abundance per biome, affected by weather and divine intervention
 5. A **variable provider** -- `${environment.*}` namespace for ABML behavior expressions
 6. A **weather event system** -- time-bounded environmental phenomena (storms, droughts, blizzards, heat waves) registered by divine actors or scheduled from climate templates
-
-**What this service is NOT**:
-- **Not a clock** -- time is Worldstate's concern. Environment consumes time, it doesn't define it.
-- **Not a spatial engine** -- where things are is Location and Mapping's concern. Environment answers "what are conditions like HERE?"
-- **Not a physics simulation** -- rain doesn't pool, wind doesn't blow objects, snow doesn't accumulate. Those are client-side rendering concerns. Environment provides the DATA that clients render.
-- **Not a biome definition service** -- biome types are Environment's own domain data, stored as location-climate bindings in Environment's own state stores. Environment computes conditions WITHIN biomes, it doesn't define biome boundaries. Location doesn't know about biomes.
-- **Not Ethology** -- Ethology provides behavioral archetypes and nature values. Environment provides the conditions that Ethology's environmental overrides react to. They compose, they don't overlap.
-
-**Deterministic weather**: Weather is not random. Given a realm, a location, a game-day, and a season, the weather is deterministic -- hash the realm ID + game-day number + climate template to produce consistent weather. The same location on the same game-day always has the same weather across all server nodes, across restarts, across lazy evaluation windows. This follows the same principle as Ethology's deterministic individual noise: consistency without per-instance storage.
-
-**Why deterministic?** Random weather would produce different conditions on different nodes in a multi-instance deployment, break lazy evaluation (weather between two timestamps must be reproducible), and make NPC weather-aware decisions inconsistent. Deterministic weather means a farmer NPC deciding whether to plant today gets the same answer regardless of which server node processes the request.
-
-**Divine weather manipulation**: Gods (via Puppetmaster/Actor) can register weather overrides that replace or modify the deterministic baseline for a location or realm. A storm god summons a thunderstorm. A nature deity blesses a drought-stricken region with rain. These overrides are time-bounded and stored as explicit records, layered on top of the deterministic baseline. When the override expires, weather returns to the deterministic pattern.
-
-**Zero game-specific content**: lib-environment is a generic environmental state engine. Arcadia's specific biome types (temperate_forest, alpine, desert), weather distributions (70% chance of rain in spring forests), and temperature curves are configured through climate template seeding at deployment time. A space game could model atmospheric composition and radiation levels. A survival game could model wind chill and hypothermia risk. The service stores float values against string-coded condition axes -- it doesn't care what the conditions mean.
-
-**Current status**: Pre-implementation. No schema, no code. This deep dive is an architectural specification based on analysis of the environmental gap across the codebase -- the phantom `${world.weather.temperature}` ABML references, the `TtlWeatherEffects` Mapping layer, the seasonal availability flags in economy architecture, the environmental overrides in Ethology designed to compose with data that doesn't exist, and Worldstate's explicit exclusion of weather from its scope. Internal-only, never internet-facing.
-
----
-
-## Core Concepts
 
 ### Climate Template
 
@@ -218,6 +201,8 @@ ComputeTemperature(location, binding, gameTimeSnapshot):
 **Season transition smoothing**: The `seasonProgress * 0.5` factor means temperature begins transitioning to the next season's values halfway through the current season. At season start (progress=0.0), temperature is 100% current season. At season midpoint (progress=0.5), it starts blending with next season. At season end (progress=1.0), it's 50/50. The full transition to the next season's baseline completes at the NEW season's midpoint. This prevents jarring temperature jumps at season boundaries.
 
 ### Deterministic Weather Resolution
+
+Random weather would produce different conditions on different nodes in a multi-instance deployment, break lazy evaluation (weather between two timestamps must be reproducible), and make NPC weather-aware decisions inconsistent. Deterministic weather means a farmer NPC deciding whether to plant today gets the same answer regardless of which server node processes the request.
 
 Weather is deterministic per location per game-day, with optional divine overrides:
 
@@ -983,6 +968,8 @@ Environment's startup sequence follows the behavioral bootstrap lifecycle:
 ---
 
 ## Why Not Extend Worldstate or Use Mapping?
+
+Environment is **not a clock** (time is Worldstate's concern), **not a spatial engine** (where things are is Location and Mapping's concern), **not a physics simulation** (rain doesn't pool, wind doesn't blow objects -- those are client rendering concerns; Environment provides the DATA), **not a biome definition service** (biome types are Environment's own domain data stored as location-climate bindings, not Location's), and **not Ethology** (Ethology provides behavioral archetypes and nature values; Environment provides the conditions that Ethology's environmental overrides react to). They compose, they don't overlap.
 
 **Worldstate (L2) is deliberately scoped as a clock, not a simulation.** Its deep dive explicitly excludes weather: "weather, temperature, atmospheric conditions are L4 concerns that consume season/time-of-day data from worldstate." Adding weather to Worldstate would violate the L2/L4 boundary -- weather simulation is a game feature, not game foundation. A deployment with `GAME_FEATURES=false` shouldn't need a weather engine. Worldstate answers "what time is it?" Environment answers "what's the weather like?"
 

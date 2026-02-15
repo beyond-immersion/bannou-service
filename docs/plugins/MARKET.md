@@ -9,23 +9,7 @@
 
 ## Overview
 
-Marketplace orchestration service (L4 GameFeatures) for auctions, NPC vendor management, and price discovery. A thin orchestration layer (like Quest over Contract, Escrow over Currency/Item, Divine over Currency/Seed/Collection) that composes existing Bannou primitives to deliver game economy exchange mechanics.
-
-**Composability**: Market identity (auction houses, vendor catalogs, market locations) is owned here. Item custody during auctions is Escrow. Financial operations (fees, bids, payments) are Currency. Item definitions and instances are Item. Item placement is Inventory. Bid reservation is Currency authorization holds. Auction settlement is a background worker coordinating Escrow release. NPC vendor behavior is Actor (via the Variable Provider Factory pattern). Price analytics feed NPC GOAP decisions and divine economic intervention. lib-market orchestrates the ceremony connecting these primitives.
-
-**Critical architectural insight**: NPCs are economic actors, not UI facades. A vendor NPC's catalog, pricing, restock behavior, and buy/sell willingness emerge from the character's Actor brain running GOAP planning with `${market.*}` variables -- not from static configuration tables. lib-market provides the data infrastructure (catalogs, stock levels, price history) that the Actor runtime consumes through the Variable Provider Factory pattern. The NPC decides what to stock, how to price, and whether to haggle. lib-market records the outcomes.
-
-**The divine economic connection**: Economic deities (Hermes/Commerce, Laverna/Thieves) monitor market health through analytics events published by lib-market (listings created, auctions sold, prices changed). When velocity stagnates or overheats, divine actors spawn narrative events that affect NPC economic behavior -- a traveling merchant appears, a trade festival is announced, a robbery disrupts hoarding. lib-market sees these as normal NPC transactions; the divine intervention is invisible at the market layer. This is the same indirect influence pattern used throughout the system: gods act through the world, not on it.
-
-**Two market models, one service**: lib-market supports two fundamentally different exchange patterns. **Auction houses** are player/NPC-to-player/NPC exchanges mediated by escrow -- items listed, bids placed, settlement orchestrated. **Vendor catalogs** are NPC-managed storefronts with pricing and stock -- buy from vendor, sell to vendor, personality-driven behavior. Both models use the same underlying Currency/Item/Inventory/Escrow primitives but present different game-flavored APIs. A game can use either or both.
-
-**Three pricing modes**: Vendor pricing supports three modes that cover the spectrum from simple to autonomous. **Static**: prices defined at catalog creation, never change. **Dynamic**: prices adjust based on configurable formulas (supply/demand signals, time of day, regional modifiers). **Personality-driven**: the NPC vendor's Actor brain sets prices via GOAP economic decisions, consulting market data and personality traits. The mode is per-vendor, not per-market -- a bustling city might have formula-driven shops alongside GOAP-driven haggling merchants.
-
-**Fee structures as deliberate sinks**: Every auction listing incurs a non-refundable listing fee (deducted on creation). Successful sales incur a transaction fee (percentage of final price). Both fees are currency sinks -- removed from circulation entirely, not transferred to a fee recipient. This is a deliberate inflation control mechanism. Games can configure fee rates per market definition, including zero for fee-free markets.
-
-**Zero game-specific content**: lib-market is a generic marketplace service. Arcadia's auction house rules, vendor personality templates, and fee structures are configured through market definitions, ABML behaviors, and seed type definitions at deployment time, not baked into lib-market. A cyberpunk game's black market, a medieval fantasy's guild trading post, and a space sim's orbital station exchange all use the same lib-market primitives differently.
-
-**Current status**: Pre-implementation. No schema, no code. This deep dive is an architectural specification based on [ECONOMY-CURRENCY-ARCHITECTURE.md](../planning/ECONOMY-CURRENCY-ARCHITECTURE.md) and the patterns established by lib-divine, lib-dungeon, lib-escrow, and the broader economy vision. Internal-only, never internet-facing.
+Marketplace orchestration service (L4 GameFeatures) for auctions, NPC vendor management, and price discovery. A thin orchestration layer (like Quest over Contract, Escrow over Currency/Item, Divine over Currency/Seed/Collection) that composes existing Bannou primitives to deliver game economy exchange mechanics. Game-agnostic: auction house rules, vendor personality templates, fee structures, and pricing modes are configured through market definitions, ABML behaviors, and seed type definitions at deployment time. Internal-only, never internet-facing.
 
 ---
 
@@ -80,6 +64,8 @@ A blacksmith NPC buys iron at the market (lib-market), but a merchant NPC ships 
 ---
 
 ## The Auction House Subsystem
+
+lib-market supports two fundamentally different exchange patterns. **Auction houses** are player/NPC-to-player/NPC exchanges mediated by escrow — items listed, bids placed, settlement orchestrated. **Vendor catalogs** are NPC-managed storefronts with pricing and stock — buy from vendor, sell to vendor, personality-driven behavior. Both models use the same underlying Currency/Item/Inventory/Escrow primitives but present different game-flavored APIs. A game can use either or both.
 
 The auction house is a time-bounded, bid-driven exchange mechanism mediated by escrow for safe custody.
 
@@ -156,6 +142,8 @@ Auction settlement is background-processed via `MarketSettlementService`:
 ---
 
 ## The Vendor Subsystem
+
+NPCs are economic actors, not UI facades. A vendor NPC's catalog, pricing, restock behavior, and buy/sell willingness emerge from the character's Actor brain running GOAP planning with `${market.*}` variables — not from static configuration tables. lib-market provides the data infrastructure (catalogs, stock levels, price history) that the Actor runtime consumes through the Variable Provider Factory pattern. The NPC decides what to stock, how to price, and whether to haggle. lib-market records the outcomes.
 
 Vendor catalogs are NPC-managed storefronts. Unlike auctions (which are between parties), vendor operations are between a player/NPC and a vendor NPC's catalog.
 
@@ -250,6 +238,8 @@ The `MarketRestockService` background worker handles periodic restock for vendor
 ---
 
 ## Price Discovery
+
+Economic deities (Hermes/Commerce, Laverna/Thieves) monitor market health through analytics events published by lib-market (listings created, auctions sold, prices changed). When velocity stagnates or overheats, divine actors spawn narrative events that affect NPC economic behavior — a traveling merchant appears, a trade festival is announced, a robbery disrupts hoarding. lib-market sees these as normal NPC transactions; the divine intervention is invisible at the market layer. This is the same indirect influence pattern used throughout the system: gods act through the world, not on it.
 
 lib-market maintains aggregate price data for NPC economic intelligence and divine intervention:
 
@@ -572,6 +562,8 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 ---
 
 ## Visual Aid
+
+Market identity (auction houses, vendor catalogs, market locations) is owned here. Item custody during auctions is Escrow. Financial operations (fees, bids, payments) are Currency. Item definitions and instances are Item. Item placement is Inventory. Bid reservation is Currency authorization holds. Auction settlement is a background worker coordinating Escrow release. NPC vendor behavior is Actor (via the Variable Provider Factory pattern). Price analytics feed NPC GOAP decisions and divine economic intervention. lib-market orchestrates the ceremony connecting these primitives.
 
 ### Market Architecture
 

@@ -9,11 +9,13 @@
 
 ## Overview
 
-Social information propagation and belief formation service (L4 GameFeatures) for NPC cognition. Maintains per-character **beliefs** about norms, other characters, and locations -- what an NPC *thinks* they know vs. what is objectively true. Beliefs are acquired through information channels (direct observation, official decree, social contact, rumor, cultural osmosis), carry confidence levels, converge toward reality over time, and can be intentionally manipulated by external actors (gods, propagandists, gossip networks).
+Social information propagation and belief formation service (L4 GameFeatures) for NPC cognition. Maintains per-character **beliefs** about norms, other characters, and locations -- what an NPC *thinks* they know vs. what is objectively true. Beliefs are acquired through information channels (direct observation, official decree, social contact, rumor, cultural osmosis), carry confidence levels, converge toward reality over time, and can be intentionally manipulated by external actors (gods, propagandists, gossip networks). Game-agnostic: propagation speeds, confidence thresholds, convergence rates, and rumor injection patterns are configured through hearsay configuration and seed data at deployment time. Internal-only, never internet-facing.
 
-**The problem this solves**: The current morality pipeline (Faction norms -> Obligation costs -> GOAP modifiers) is a perfect-information system. When a new faction takes over, every NPC instantly knows and internalizes all new rules. When a character commits a crime, only direct witnesses know about it. NPCs have no mechanism for forming impressions of characters they've never met, learning about distant events, or being influenced by misinformation. Real social knowledge is delayed, fuzzy, manipulable, and self-correcting. Hearsay models this.
+---
 
-**Three belief domains**:
+## Core Mechanics
+
+The current morality pipeline (Faction norms -> Obligation costs -> GOAP modifiers) is a perfect-information system. When a new faction takes over, every NPC instantly knows and internalizes all new rules. When a character commits a crime, only direct witnesses know about it. NPCs have no mechanism for forming impressions of characters they've never met, learning about distant events, or being influenced by misinformation. Real social knowledge is delayed, fuzzy, manipulable, and self-correcting. Hearsay models this.
 
 | Domain | Subject | Example Belief | What It Modulates |
 |--------|---------|---------------|-------------------|
@@ -21,21 +23,7 @@ Social information propagation and belief formation service (L4 GameFeatures) fo
 | **Character beliefs** | Other characters | "Mira is dangerous and untrustworthy" | Social interaction decisions, approach/avoid, trade willingness |
 | **Location beliefs** | Places | "The swamp is cursed and deadly" | Travel cost, anxiety state, avoidance behavior |
 
-**Composability**: Belief identity and propagation are owned here. Actual norm data comes from Faction. Actual character data comes from Character-Encounter (sentiment), Character-Personality (traits), and Relationship (structural bonds). Actual location data comes from Location. Hearsay does not replace any of these -- it provides the NPC's *perceived* version, which may lag behind, exaggerate, or completely misrepresent reality.
-
-**The Obligation parallel**: Hearsay provides `${hearsay.*}` variables alongside `${obligations.*}`. Obligation gives the exact, personality-weighted cost of violating known norms. Hearsay gives the NPC's uncertain, belief-filtered perception of the social landscape. Behavior authors choose which to use: games that want perfect-information NPCs ignore hearsay; games that want realistic social knowledge use hearsay to modulate or replace obligation costs in ABML expressions. When lib-hearsay is disabled, NPCs fall back to perfect-information behavior -- existing systems work unchanged.
-
-**The Persona parallel**: In Persona 5, rumors literally change reality. In Bannou, rumors change NPC *perception* of reality, which changes NPC behavior, which can change actual reality (self-fulfilling prophecy). A rumor that "the market is dangerous" causes NPCs to avoid it, which reduces traffic, which makes it actually more dangerous for those who remain. A god of mischief can destabilize a district by injecting false beliefs about draconian enforcement, causing merchants to flee before any enforcement actually happens.
-
-**The Storyline bridge**: Hearsay naturally feeds the scenario generation system. Regional watchers can query hearsay to find characters operating on outdated or manipulated beliefs -- prime targets for scenarios. "This character still thinks the old king's laws apply" is a scenario hook. "This character heard a rumor about buried treasure in the mountains" is a quest seed. "This character believes their friend betrayed them based on a false rumor" is dramatic irony the storyline composer can exploit. Hearsay data enriches the `NarrativeState` extraction that drives storyline composition, adding the `belief_deltas` dimension (what the character believes vs. what is true) that formal narrative theory calls "dramatic irony."
-
-**Zero Arcadia-specific content**: lib-hearsay is a generic social information propagation service. Arcadia's specific propagation speeds, confidence thresholds, convergence rates, and rumor injection patterns are configured through hearsay configuration and seed data at deployment time, not baked into lib-hearsay.
-
-**Current status**: Pre-implementation. No schema, no code. This deep dive is an architectural specification based on the morality system analysis (lib-obligation + lib-faction pipeline), the story system architecture, and the identified gap in inter-character perception. Internal-only, never internet-facing.
-
----
-
-## Core Mechanics
+In Persona 5, rumors literally change reality. In Bannou, rumors change NPC *perception* of reality, which changes NPC behavior, which can change actual reality (self-fulfilling prophecy). A rumor that "the market is dangerous" causes NPCs to avoid it, which reduces traffic, which makes it actually more dangerous for those who remain. A god of mischief can destabilize a district by injecting false beliefs about draconian enforcement, causing merchants to flee before any enforcement actually happens.
 
 ### Belief Model
 
@@ -269,6 +257,8 @@ This creates natural character development moments: the timid NPC who forces the
 ---
 
 ## Storyline Integration: Rumors as Narrative Seeds
+
+Hearsay naturally feeds the scenario generation system. Regional watchers can query hearsay to find characters operating on outdated or manipulated beliefs -- prime targets for scenarios. "This character still thinks the old king's laws apply" is a scenario hook. "This character heard a rumor about buried treasure in the mountains" is a quest seed. "This character believes their friend betrayed them based on a false rumor" is dramatic irony the storyline composer can exploit. Hearsay data enriches the `NarrativeState` extraction that drives storyline composition, adding the `belief_deltas` dimension (what the character believes vs. what is true) that formal narrative theory calls "dramatic irony."
 
 Hearsay provides the Storyline system with three powerful new capabilities:
 
@@ -756,6 +746,8 @@ flows:
 ---
 
 ## Visual Aid
+
+Belief identity and propagation are owned here. Actual norm data comes from Faction. Actual character data comes from Character-Encounter (sentiment), Character-Personality (traits), and Relationship (structural bonds). Actual location data comes from Location. Hearsay does not replace any of these -- it provides the NPC's *perceived* version, which may lag behind, exaggerate, or completely misrepresent reality. Hearsay provides `${hearsay.*}` variables alongside `${obligations.*}`: Obligation gives the exact, personality-weighted cost of violating known norms; Hearsay gives the NPC's uncertain, belief-filtered perception of the social landscape. When lib-hearsay is disabled, NPCs fall back to perfect-information behavior -- existing systems work unchanged.
 
 ### Information Flow
 

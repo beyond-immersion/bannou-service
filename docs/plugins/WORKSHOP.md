@@ -1,43 +1,36 @@
 # Workshop Plugin Deep Dive
 
-> **Plugin**: lib-workshop
-> **Schema**: schemas/workshop-api.yaml
-> **Version**: 1.0.0
-> **State Stores**: workshop-blueprint (MySQL), workshop-task (MySQL), workshop-worker (MySQL), workshop-rate-segment (MySQL), workshop-cache (Redis), workshop-lock (Redis)
-> **Status**: Pre-implementation (architectural specification)
+> **Plugin**: lib-workshop (not yet created)
+> **Schema**: `schemas/workshop-api.yaml` (not yet created)
+> **Version**: N/A (Pre-Implementation)
+> **State Store**: workshop-blueprint (MySQL), workshop-task (MySQL), workshop-worker (MySQL), workshop-rate-segment (MySQL), workshop-cache (Redis), workshop-lock (Redis) — all planned
+> **Layer**: L4 GameFeatures
+> **Status**: Aspirational — no schema, no generated code, no service implementation exists.
 
 ---
 
 ## Overview
 
-Time-based automated production service (L4 GameFeatures) that transforms inputs from source inventories into outputs placed in destination inventories over game time. Production tasks run continuously in the background, producing items at rates determined by assigned workers. Supports variable worker counts that dynamically adjust production rate, with piecewise rate history enabling accurate lazy evaluation across rate changes. Blueprints define input/output transformations and can reference lib-craft recipes or specify custom transformations directly. A background materialization worker processes pending production per-entity with fair scheduling, preventing heavy users from affecting others' throughput. Covers crafting automation, farming, mining, resource extraction, manufacturing, training, and any time-based production loop. Internal-only, never internet-facing.
-
-**The problem this solves**: Bannou has interactive crafting (lib-craft's Contract-backed step-by-step sessions), but no mechanism for continuous automated production. An NPC blacksmith who forges swords all day shouldn't need a GOAP action for every single sword -- they should have a running production line that produces swords at their skill level, consuming iron and leather from a supply chest and filling a shop inventory. A player who sets up a mining operation shouldn't need to click each ore extraction -- they assign workers to the mine and collect output periodically. An idle game's "auto-factory" shouldn't need per-item interaction. Workshop provides the "set it, check it later" production paradigm.
-
-**The autogain pattern, generalized**: Currency's autogain worker is the direct architectural precedent. It runs on a timer, computes elapsed periods, and applies passive generation. Workshop applies the same lazy-evaluation-with-materialization pattern to item production instead of currency generation. The key differences: Workshop supports variable rates (workers join/leave), operates in game-time (via lib-worldstate instead of real-time), and handles material consumption/inventory capacity constraints.
-
-**Why not actors**: Actors have cognitive overhead: perception queues, ABML bytecode execution, GOAP planning, variable provider resolution, behavior documents. An automation task is deterministic: "produce X items at rate Y consuming materials Z." There's no perception, no decision-making, no emergent behavior. The 100ms actor tick is orders of magnitude too frequent for a task that produces one item every few game-minutes. Using actors for automation would dilute cognitive processing resources meant for NPC brains. Workshop uses a background worker with fair per-entity scheduling -- simpler, cheaper, equally isolated.
-
-**Why not extend lib-craft**: lib-craft is an interactive crafting engine with step-by-step progression, quality skill checks, Contract-backed sessions, and proficiency tracking. Workshop is a passive production engine with continuous output, lazy evaluation, and worker-based rate scaling. They compose well (Workshop can reference Craft recipes for input/output definitions) but serve fundamentally different interaction patterns. Craft answers "the player/NPC is actively crafting this item right now." Workshop answers "this production line has been running for 3 game-days, how much was produced?" Combining them would burden the interactive crafting flow with rate-segment history, worker management, and lazy evaluation complexity, while burdening the automation flow with step-by-step progression, quality formulas, and Contract overhead.
-
-**Two production paradigms**:
-
-| Paradigm | Input Source | Output Source | Example |
-|----------|-------------|---------------|---------|
-| **Recipe-referenced** | Derived from lib-craft recipe `inputs` | Derived from lib-craft recipe `outputs` | "Run the 'forge_iron_sword' recipe continuously" |
-| **Custom** | Defined directly on the blueprint | Defined directly on the blueprint | "Mine: consumes nothing (time only), produces iron_ore" |
-
-**Composability**: Blueprints are owned here. Item creation and destruction are lib-item (L2). Container operations are lib-inventory (L2). Game time is lib-worldstate (L2). Recipe definitions, when referenced, are lib-craft (L4, soft). Worker proficiency, when relevant, is lib-seed (L2) or lib-craft (L4, soft). Workshop orchestrates these into a continuous production loop.
-
-**Zero game-specific content**: lib-workshop is a generic automated production engine. Arcadia's NPC blacksmith forges, player mining operations, and faction lumber mills are configured through blueprint seeding and task creation at deployment time, not baked into lib-workshop. An idle game's auto-factory, a farming sim's crop field, and a strategy game's resource harvester are all equally valid blueprint configurations.
-
-**Current status**: Pre-implementation. No schema, no code. This deep dive is an architectural specification based on analysis of the crafting automation gap in the [Craft deep dive](CRAFT.md) (design considerations #1 "Crafting queues" and #7 "Offline NPC crafting"), the Currency autogain worker pattern, and the temporal gap now addressed by [lib-worldstate](WORLDSTATE.md). Internal-only, never internet-facing.
+Time-based automated production service (L4 GameFeatures) for continuous background item generation: assign workers to blueprints, consume materials from source inventories, place outputs in destination inventories over game time. Uses lazy evaluation with piecewise rate segments for accurate production tracking across worker count changes, and a background materialization worker with fair per-entity scheduling. Game-agnostic: blueprint structures, production categories, worker types, and proficiency domains are all opaque configuration defined per game at deployment time through blueprint seeding. Internal-only, never internet-facing.
 
 ---
 
 ## Core Concepts
 
+Bannou has interactive crafting (lib-craft's Contract-backed step-by-step sessions), but no mechanism for continuous automated production. An NPC blacksmith who forges swords all day shouldn't need a GOAP action for every single sword — they should have a running production line that produces swords at their skill level, consuming iron and leather from a supply chest and filling a shop inventory. A player who sets up a mining operation shouldn't need to click each ore extraction — they assign workers to the mine and collect output periodically. An idle game's "auto-factory" shouldn't need per-item interaction. Workshop provides the "set it, check it later" production paradigm.
+
+**Why not actors**: Actors have cognitive overhead: perception queues, ABML bytecode execution, GOAP planning, variable provider resolution, behavior documents. An automation task is deterministic: "produce X items at rate Y consuming materials Z." There's no perception, no decision-making, no emergent behavior. The 100ms actor tick is orders of magnitude too frequent for a task that produces one item every few game-minutes. Using actors for automation would dilute cognitive processing resources meant for NPC brains. Workshop uses a background worker with fair per-entity scheduling — simpler, cheaper, equally isolated.
+
+**Why not extend lib-craft**: lib-craft is an interactive crafting engine with step-by-step progression, quality skill checks, Contract-backed sessions, and proficiency tracking. Workshop is a passive production engine with continuous output, lazy evaluation, and worker-based rate scaling. They compose well (Workshop can reference Craft recipes for input/output definitions) but serve fundamentally different interaction patterns. Craft answers "the player/NPC is actively crafting this item right now." Workshop answers "this production line has been running for 3 game-days, how much was produced?"
+
 ### Production Blueprint
+
+Blueprints support two production paradigms:
+
+| Paradigm | Input Source | Output Source | Example |
+|----------|-------------|---------------|---------|
+| **Recipe-referenced** | Derived from lib-craft recipe `inputs` | Derived from lib-craft recipe `outputs` | "Run the 'forge_iron_sword' recipe continuously" |
+| **Custom** | Defined directly on the blueprint | Defined directly on the blueprint | "Mine: consumes nothing (time only), produces iron_ore" |
 
 A blueprint defines a repeatable production transformation. It specifies what goes in, what comes out, and how long each unit takes.
 
@@ -203,6 +196,8 @@ Rate segments are append-only. When a worker joins or leaves:
 
 ### Lazy Evaluation (The Core Algorithm)
 
+Currency's autogain worker is the direct architectural precedent. It runs on a timer, computes elapsed periods, and applies passive generation. Workshop applies the same lazy-evaluation-with-materialization pattern to item production instead of currency generation. The key differences: Workshop supports variable rates (workers join/leave), operates in game-time (via lib-worldstate instead of real-time), and handles material consumption/inventory capacity constraints.
+
 Production is not simulated in real-time. When a task's status is queried or the background worker runs, pending production is computed and materialized.
 
 ```
@@ -323,8 +318,10 @@ Both paths call `MaterializeProduction` and use the same distributed lock to pre
 | Dependency | Usage | Behavior When Missing |
 |------------|-------|-----------------------|
 | lib-craft (`ICraftClient`) | Resolving recipe inputs/outputs when blueprint references a `recipeCode`. Looking up recipe proficiency domain for worker proficiency. (L4) | Recipe-referenced blueprints cannot be created. Custom blueprints with explicit inputs/outputs work normally. |
-| lib-seed (`ISeedClient`) | Reading worker proficiency seed growth for proficiency multiplier calculation. (L2, but accessed via soft pattern because proficiency is optional) | Worker proficiency multiplier defaults to 1.0. All workers contribute equally regardless of skill. |
-| lib-location (`ILocationClient`) | Validating location constraint on blueprints that require `requiresLocationId`. (L2, soft because location constraint is optional) | Location constraints are not validated. Tasks run regardless of location. |
+| lib-seed (`ISeedClient`) | Reading worker proficiency seed growth for proficiency multiplier calculation. (L2) | Worker proficiency multiplier defaults to 1.0 when no proficiency domain is configured. |
+| lib-location (`ILocationClient`) | Validating location constraint on blueprints that require `requiresLocationId`. (L2) | Location constraints are skipped when `requiresLocationId` is null on the blueprint. |
+
+**Hierarchy note**: lib-seed and lib-location are L2 services. Per SERVICE-HIERARCHY.md, L4 services should use constructor injection for L2 dependencies (they are guaranteed available). The original specification listed these as soft because the features they support (proficiency, location constraints) are optional. However, service availability and feature optionality are different concerns. When implementing, use constructor injection for `ISeedClient` and `ILocationClient`, and gate optional features at the data level instead. See Design Consideration #8.
 
 ---
 
@@ -536,6 +533,8 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 
 ## Visual Aid
 
+Blueprints are owned here. Item creation and destruction are lib-item (L2). Container operations are lib-inventory (L2). Game time is lib-worldstate (L2). Recipe definitions, when referenced, are lib-craft (L4, soft). Worker proficiency, when relevant, is lib-seed (L2) or lib-craft (L4, soft). Workshop orchestrates these into a continuous production loop.
+
 ```
 ┌────────────────────────────────────────────────────────────────────────────┐
 │                        Lazy Evaluation with Rate Segments                    │
@@ -594,79 +593,6 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 │  │ production.                                            │                 │
 │  └──────────────────────────────────────────────────────┘                 │
 └────────────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## Variable Provider: `${workshop.*}` Namespace
-
-Implements `IVariableProviderFactory` (via `WorkshopProviderFactory`) providing production task state to Actor (L2) for GOAP-driven economic decisions. Reads from cached task data per character/entity.
-
-### Task Variables
-
-| Variable | Type | Description |
-|----------|------|-------------|
-| `${workshop.active_task_count}` | int | Number of active (non-terminal) production tasks owned by this entity |
-| `${workshop.total_producing}` | int | Number of tasks currently in `running` status |
-| `${workshop.total_paused}` | int | Number of tasks currently in any `paused:*` status |
-| `${workshop.task.<code>.status}` | string | Status of task running a specific blueprint code (first match) |
-| `${workshop.task.<code>.rate}` | float | Current effective rate of the task (units per game-second) |
-| `${workshop.task.<code>.total_produced}` | long | Lifetime production count for the task |
-| `${workshop.task.<code>.has_materials}` | bool | Whether source inventory has materials for at least 1 more unit |
-| `${workshop.task.<code>.has_space}` | bool | Whether destination inventory has space for at least 1 more unit |
-| `${workshop.task.<code>.worker_count}` | int | Current worker count on the task |
-| `${workshop.any_paused_no_materials}` | bool | Whether any task is paused due to lack of materials |
-| `${workshop.any_paused_no_space}` | bool | Whether any task is paused due to lack of space |
-
-### ABML Usage Examples
-
-```yaml
-flows:
-  manage_workshop:
-    # NPC blacksmith manages their forge production line
-    - cond:
-        # My forge is paused because I ran out of iron
-        - when: "${workshop.task.forge_iron_sword.status == 'paused:no_materials'}"
-          then:
-            - call: go_to_market
-            - call: buy_iron_ingots
-            - set: { shopping_reason: "restock_forge" }
-
-        # My output chest is full -- go sell some swords
-        - when: "${workshop.task.forge_iron_sword.status == 'paused:no_space'}"
-          then:
-            - call: collect_from_output_chest
-            - call: go_to_market
-            - call: sell_swords
-
-        # Everything is running smoothly
-        - when: "${workshop.task.forge_iron_sword.status == 'running'}"
-          then:
-            - cond:
-                # But I could work faster with an apprentice
-                - when: "${workshop.task.forge_iron_sword.worker_count < 2
-                          && disposition.drive.has_drive.master_craft}"
-                  then:
-                    - call: look_for_apprentice
-                - otherwise:
-                    - call: do_other_work
-
-  economic_decisions:
-    # NPC evaluates whether to start new production
-    - cond:
-        # I have capacity for more tasks
-        - when: "${workshop.active_task_count < 3
-                  && craft.proficiency.blacksmithing > 5}"
-          then:
-            # Check what sells well at market
-            - call: evaluate_market_demand
-            - call: start_production_if_profitable
-
-        # All my tasks are running and I'm not needed
-        - when: "${workshop.total_producing > 0
-                  && !workshop.any_paused_no_materials}"
-          then:
-            - call: pursue_personal_goals  # Follow drives
 ```
 
 ---
@@ -752,6 +678,79 @@ flows:
 
 ---
 
+## Variable Provider: `${workshop.*}` Namespace
+
+Implements `IVariableProviderFactory` (via `WorkshopProviderFactory`) providing production task state to Actor (L2) for GOAP-driven economic decisions. Reads from cached task data per character/entity.
+
+### Task Variables
+
+| Variable | Type | Description |
+|----------|------|-------------|
+| `${workshop.active_task_count}` | int | Number of active (non-terminal) production tasks owned by this entity |
+| `${workshop.total_producing}` | int | Number of tasks currently in `running` status |
+| `${workshop.total_paused}` | int | Number of tasks currently in any `paused:*` status |
+| `${workshop.task.<code>.status}` | string | Status of task running a specific blueprint code (first match) |
+| `${workshop.task.<code>.rate}` | float | Current effective rate of the task (units per game-second) |
+| `${workshop.task.<code>.total_produced}` | long | Lifetime production count for the task |
+| `${workshop.task.<code>.has_materials}` | bool | Whether source inventory has materials for at least 1 more unit |
+| `${workshop.task.<code>.has_space}` | bool | Whether destination inventory has space for at least 1 more unit |
+| `${workshop.task.<code>.worker_count}` | int | Current worker count on the task |
+| `${workshop.any_paused_no_materials}` | bool | Whether any task is paused due to lack of materials |
+| `${workshop.any_paused_no_space}` | bool | Whether any task is paused due to lack of space |
+
+### ABML Usage Examples
+
+```yaml
+flows:
+  manage_workshop:
+    # NPC blacksmith manages their forge production line
+    - cond:
+        # My forge is paused because I ran out of iron
+        - when: "${workshop.task.forge_iron_sword.status == 'paused:no_materials'}"
+          then:
+            - call: go_to_market
+            - call: buy_iron_ingots
+            - set: { shopping_reason: "restock_forge" }
+
+        # My output chest is full -- go sell some swords
+        - when: "${workshop.task.forge_iron_sword.status == 'paused:no_space'}"
+          then:
+            - call: collect_from_output_chest
+            - call: go_to_market
+            - call: sell_swords
+
+        # Everything is running smoothly
+        - when: "${workshop.task.forge_iron_sword.status == 'running'}"
+          then:
+            - cond:
+                # But I could work faster with an apprentice
+                - when: "${workshop.task.forge_iron_sword.worker_count < 2
+                          && disposition.drive.has_drive.master_craft}"
+                  then:
+                    - call: look_for_apprentice
+                - otherwise:
+                    - call: do_other_work
+
+  economic_decisions:
+    # NPC evaluates whether to start new production
+    - cond:
+        # I have capacity for more tasks
+        - when: "${workshop.active_task_count < 3
+                  && craft.proficiency.blacksmithing > 5}"
+          then:
+            # Check what sells well at market
+            - call: evaluate_market_demand
+            - call: start_production_if_profitable
+
+        # All my tasks are running and I'm not needed
+        - when: "${workshop.total_producing > 0
+                  && !workshop.any_paused_no_materials}"
+          then:
+            - call: pursue_personal_goals  # Follow drives
+```
+
+---
+
 ## Known Quirks & Caveats
 
 ### Bugs (Fix Immediately)
@@ -795,6 +794,8 @@ flows:
 6. **Worker proficiency refresh**: Quirk #7 notes that proficiency is snapshotted at assignment. This means a blacksmith NPC who improves over time doesn't benefit from their improved skill in automation until re-assigned. A periodic refresh (e.g., on `worldstate.season-changed`) could update all worker proficiency multipliers, but adds complexity. The trade-off between accuracy and simplicity needs a decision.
 
 7. **Rate segment compaction**: Over long-running tasks with frequent worker changes, the rate segment list grows. `RateSegmentRetentionCount` enables compaction, but the compaction algorithm (merging adjacent segments with weighted averaging) must be designed to preserve accuracy for `MaterializeProduction` calculations that span compacted ranges.
+
+8. **L2 soft dependencies should be hard per SERVICE-HIERARCHY.md**: The Dependencies section lists lib-seed (L2) and lib-location (L2) as soft dependencies with runtime resolution via `IServiceProvider`. Per the service hierarchy, L4 services MUST use constructor injection for L2 dependencies (they are guaranteed available). The rationale that "proficiency is optional" and "location constraint is optional" conflates feature optionality with service availability. The services are always running; the optional features should be handled at the data level (check if a proficiency domain is configured, check if `requiresLocationId` is set) rather than the service availability level. When implementing, use constructor injection for `ISeedClient` and `ILocationClient`, with the optional behavior gated by configuration/data checks, not null-service checks.
 
 ---
 

@@ -1,10 +1,11 @@
 # Showtime Plugin Deep Dive
 
-> **Plugin**: lib-showtime
-> **Schema**: schemas/showtime-api.yaml
-> **Version**: 1.0.0
-> **State Stores**: showtime-sessions (MySQL), showtime-audience-pool (Redis), showtime-audience-followers (MySQL), showtime-hype-trains (Redis), showtime-session-voice (Redis), showtime-lock (Redis)
-> **Status**: Pre-implementation (architectural specification)
+> **Plugin**: lib-showtime (not yet created)
+> **Schema**: `schemas/showtime-api.yaml` (not yet created)
+> **Version**: N/A (Pre-Implementation)
+> **State Store**: showtime-sessions (MySQL), showtime-audience-pool (Redis), showtime-audience-followers (MySQL), showtime-hype-trains (Redis), showtime-session-voice (Redis), showtime-lock (Redis) — all planned
+> **Layer**: L4 GameFeatures
+> **Status**: Aspirational — no schema, no generated code, no service implementation exists.
 > **Planning**: [STREAMING-ARCHITECTURE.md](../planning/STREAMING-ARCHITECTURE.md)
 
 ## Overview
@@ -151,7 +152,7 @@ When lib-broadcast (L3) publishes `stream.audience.pulse` events, lib-showtime t
 
 | Dependency | Usage | Behavior When Missing |
 |------------|-------|-----------------------|
-| lib-broadcast (`IStreamClient`) | Associate platform sessions with in-game streaming sessions | Real audience blending unavailable; 100% simulated audiences |
+| lib-broadcast (`IBroadcastClient`) | Associate platform sessions with in-game streaming sessions | Real audience blending unavailable; 100% simulated audiences |
 | lib-voice (`IVoiceClient`) | Create/delete voice rooms for game sessions that want voice | No voice rooms for streaming sessions; streamer has no voice chat |
 | lib-analytics (`IAnalyticsClient`) | Report streaming statistics for aggregation | No analytics integration; streaming metrics are local only |
 

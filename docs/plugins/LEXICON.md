@@ -10,34 +10,15 @@
 
 ## Overview
 
-Structured world knowledge ontology (L4 GameFeatures) that defines what things ARE in terms of decomposed, queryable characteristics. Lexicon is the ground truth registry for entity concepts -- species, objects, phenomena, named individuals, abstract ideas -- broken into traits, hierarchical categories, bidirectional associations, and strategy-relevant implications. It answers "what is a wolf?" not with prose, but with structured data that GOAP planners, behavior expressions, and game systems can reason over: a wolf has fur, runs on four legs, hunts in packs, tends toward muted colors, has long teeth, and the ways to escape one are to kill it (shared with all animals), scare it with loud noises (shared with fish and mammals), or climb something (shared with quadruped mammals).
-
-**The problem this solves**: NPCs currently know about themselves (personality, encounters, backstory, drives) but not about the world around them conceptually. A character can feel afraid (via Disposition) but has no structured reason to be afraid of wolves specifically versus rabbits. There is no mechanism for "wolves hunt in packs, so I should not be alone" or "I see a wolf, and the Witch of the Wolves summons wolves, so the witch may be nearby." Game entities exist as IDs in service databases, but their characteristics, category relationships, and strategic implications are nowhere in the system. An NPC encountering an unknown creature cannot reason about it based on observable traits -- it has no framework for "this thing has four legs and long teeth, therefore it is probably dangerous and I can escape by climbing."
-
-**What Lexicon is NOT**:
-
-| Service | What It Answers | How Lexicon Differs |
-|---------|----------------|-------------------|
-| **Collection** | "Have I discovered this thing?" | Lexicon stores WHAT there is to know; Collection tracks WHETHER you know it |
-| **Documentation** | "What does this developer guide say?" | Lexicon stores structured game-world data, not prose documentation |
-| **Hearsay** | "What do I believe about this thing?" | Lexicon is ground truth; Hearsay is subjective belief (which may be false) |
-| **Species** | "What species exist?" | Species stores IDs and trait modifiers; Lexicon stores what a species IS in decomposed characteristics |
-| **Character-Encounter** | "Who have I met?" | Encounters record interactions; Lexicon defines what the interacted-with thing fundamentally is |
-
-**The three-service knowledge stack**: These three services together form the complete knowledge system:
-- **Lexicon** = what things objectively ARE (ground truth, structured characteristics)
-- **Collection** = what you have personally DISCOVERED (per-character progressive unlock tracking)
-- **Hearsay** = what you BELIEVE things are (subjective, spreadable, potentially false)
-
-An NPC's effective knowledge about wolves at runtime is: Lexicon's ground truth, gated by Collection's discovery level, overlaid by Hearsay's beliefs. A character who has never seen a wolf but heard rumors might have Hearsay beliefs ("wolves breathe fire") that contradict Lexicon ground truth. A character who has studied wolves extensively has high Collection discovery and accesses deep Lexicon data. The Actor's variable provider composites all three.
-
-**Zero Arcadia-specific content**: lib-lexicon is a generic concept ontology service. Arcadia's specific entries (wolves, the Witch of the Wolves, pneuma, mana), trait vocabularies (four_legged, pack_hunter), category hierarchies (canine < quadruped_mammal < mammal < animal), and strategy implications are all configured through seed data at deployment time, not baked into lib-lexicon. The True Names metaphysical framework is Arcadia's flavor interpretation of lexicon entry codes.
-
-**Current status**: Pre-implementation. No schema, no code. This deep dive is an architectural specification based on analysis of the NPC world-knowledge gap across the Actor cognition pipeline, the Collection discovery system, and the GOAP planner's need for trait-based reasoning. Internal-only, never internet-facing.
+Structured world knowledge ontology (L4 GameFeatures) that defines what things ARE in terms of decomposed, queryable characteristics. Lexicon is the ground truth registry for entity concepts -- species, objects, phenomena, named individuals, abstract ideas -- broken into traits, hierarchical categories, bidirectional associations, and strategy-relevant implications. It answers "what is a wolf?" not with prose, but with structured data that GOAP planners, behavior expressions, and game systems can reason over. Game-agnostic: entries, trait vocabularies, category hierarchies, and strategy implications are all configured through seed data at deployment time (the True Names metaphysical framework is Arcadia's flavor interpretation of lexicon entry codes). Internal-only, never internet-facing.
 
 ---
 
 ## Core Concepts
+
+NPCs currently know about themselves (personality, encounters, backstory, drives) but not about the world around them conceptually. A character can feel afraid (via Disposition) but has no structured reason to be afraid of wolves specifically versus rabbits. There is no mechanism for "wolves hunt in packs, so I should not be alone" or "I see a wolf, and the Witch of the Wolves summons wolves, so the witch may be nearby." Game entities exist as IDs in service databases, but their characteristics, category relationships, and strategic implications are nowhere in the system.
+
+Three services together form the complete knowledge system: **Lexicon** = what things objectively ARE (ground truth, structured characteristics), **Collection** = what you have personally DISCOVERED (per-character progressive unlock tracking), **Hearsay** = what you BELIEVE things are (subjective, spreadable, potentially false). An NPC's effective knowledge about wolves at runtime is: Lexicon's ground truth, gated by Collection's discovery level, overlaid by Hearsay's beliefs. A character who has never seen a wolf but heard rumors might have Hearsay beliefs ("wolves breathe fire") that contradict Lexicon ground truth. A character who has studied wolves extensively has high Collection discovery and accesses deep Lexicon data. The Actor's variable provider composites all three.
 
 ### The Four Pillars
 
@@ -1206,6 +1187,14 @@ flows:
 ---
 
 ## Why Not Extend Existing Services?
+
+| Service | What It Answers | How Lexicon Differs |
+|---------|----------------|-------------------|
+| **Collection** | "Have I discovered this thing?" | Lexicon stores WHAT there is to know; Collection tracks WHETHER you know it |
+| **Documentation** | "What does this developer guide say?" | Lexicon stores structured game-world data, not prose documentation |
+| **Hearsay** | "What do I believe about this thing?" | Lexicon is ground truth; Hearsay is subjective belief (which may be false) |
+| **Species** | "What species exist?" | Species stores IDs and trait modifiers; Lexicon stores what a species IS in decomposed characteristics |
+| **Character-Encounter** | "Who have I met?" | Encounters record interactions; Lexicon defines what the interacted-with thing fundamentally is |
 
 The question arises: why not add characteristics to Species, traits to Item, or descriptions to Location?
 
