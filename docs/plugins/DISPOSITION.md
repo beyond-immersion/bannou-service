@@ -9,41 +9,22 @@
 
 ## Overview
 
-Emotional synthesis and aspirational drive service (L4 GameFeatures) for NPC inner life. Maintains per-character **feelings** about specific entities (other characters, locations, factions, organizations, and the guardian spirit) and **drives** (long-term aspirational goals that shape behavior priorities). Feelings are not raw data -- they are the personality-filtered, experience-weighted, hearsay-colored subjective emotional state that a character carries. Drives are not quest objectives -- they are intrinsic motivations that emerge from personality, circumstance, and accumulated experience.
+Emotional synthesis and aspirational drive service (L4 GameFeatures) for NPC inner life. Maintains per-character **feelings** about specific entities (other characters, locations, factions, organizations, and the guardian spirit) and **drives** (long-term aspirational goals that shape behavior priorities). Feelings are the personality-filtered, experience-weighted, hearsay-colored subjective emotional state that a character carries; drives are intrinsic motivations that emerge from personality, circumstance, and accumulated experience. Game-agnostic: feeling axes, drive types, guardian spirit mechanics, and synthesis weights are configured through disposition configuration and seed data at deployment time. Internal-only, never internet-facing.
 
-**The problem this solves**: The current NPC cognition pipeline has all the raw data needed to infer emotional state -- encounter sentiment, personality traits, relationship bonds, backstory elements, hearsay beliefs -- but no service that synthesizes these into a coherent directed emotional response. An NPC either has direct encounter data (cold mathematical sentiment) or has nothing. There is no mechanism for "Kael feels grateful toward Mira" as a persistent, evolving emotional state that colors future behavior, nor for "Kael aspires to become the greatest blacksmith in the realm" as an intrinsic motivation that shapes daily decisions.
+---
 
-**Two complementary subsystems**:
+## Core Mechanics: Feelings
+
+The current NPC cognition pipeline has all the raw data needed to infer emotional state -- encounter sentiment, personality traits, relationship bonds, backstory elements, hearsay beliefs -- but no service that synthesizes these into a coherent directed emotional response. An NPC either has direct encounter data (cold mathematical sentiment) or has nothing. There is no mechanism for "Kael feels grateful toward Mira" as a persistent, evolving emotional state that colors future behavior, nor for "Kael aspires to become the greatest blacksmith in the realm" as an intrinsic motivation that shapes daily decisions.
 
 | Subsystem | What It Answers | Persistence | Update Pattern |
 |-----------|----------------|-------------|----------------|
 | **Feelings** | "How do I feel about X right now?" | Persistent with decay | Event-driven + periodic synthesis |
 | **Drives** | "What do I aspire to become/achieve?" | Persistent with evolution | Experience-driven + periodic evaluation |
 
-**Feelings are directed emotional states**: Not personality traits (self-model) and not encounter records (factual data). Feelings are the subjective interpretation layer where personality meets experience. A character with high aggression interprets a neutral encounter differently than a peaceful character. A character who heard rumors of danger feels differently about a location than one who has visited it. Feelings persist beyond their causes -- resentment lingers after the betrayer is gone, gratitude endures after the helper has moved on.
+Feelings are directed emotional states: not personality traits (self-model) and not encounter records (factual data). Feelings are the subjective interpretation layer where personality meets experience. A character with high aggression interprets a neutral encounter differently than a peaceful character. A character who heard rumors of danger feels differently about a location than one who has visited it. Feelings persist beyond their causes -- resentment lingers after the betrayer is gone, gratitude endures after the helper has moved on.
 
-**Drives are intrinsic motivations**: Not quest objectives (externally assigned) and not backstory elements (historical context). Drives emerge from the intersection of personality, circumstance, and accumulated experience. A character who grew up poor may drive toward wealth. A character who was betrayed may drive toward self-reliance. A character who witnessed injustice may drive toward becoming a protector. Drives shape GOAP goal priorities, making characters pursue long-term aims without needing explicit quest chains to motivate every decision.
-
-**The base + modifier model**: Feelings use a dual-layer computation:
-- **Base**: Computed from source services (personality-filtered encounter sentiment + hearsay beliefs + relationship-type defaults). Drifts as source data changes.
-- **Modifier**: Persistent emotional residue that overlays the computed base. Betrayal trauma, lingering gratitude, spirit resentment. Decays slowly but can be reinforced by events.
-- **Effective value**: `clamp(base + modifier, -1.0, 1.0)`
-
-This means feelings are never purely computed (they have emotional memory) and never purely static (they respond to changing circumstances).
-
-**Composability**: Disposition does not replace any existing service. Encounter sentiment, personality traits, hearsay beliefs, and relationship bonds continue to provide their own raw variable namespaces. Disposition synthesizes them into a higher-level emotional state that behavior authors can use when they want characters to "feel" rather than "compute." When lib-disposition is disabled, NPCs fall back to raw data composition in ABML expressions -- existing systems work unchanged.
-
-**The guardian spirit dimension**: Characters feeling about the player/guardian spirit is the mechanical implementation of Design Principle 1 ("Characters Are Independent Entities"). A character pushed against their nature by the spirit develops resentment. A character guided well develops trust. This feeds directly into the compliance/resistance system -- the character's willingness to follow the spirit's nudges is proportional to their feelings about the spirit.
-
-**The drive dimension**: Without drives, characters are reactive -- they respond to stimuli but don't pursue long-term goals. An adventurer doesn't just want to be an adventurer; they want to be an S-Class adventurer. A blacksmith doesn't just forge; they aspire to create a masterwork. Some characters lack drives entirely (layabouts, doing the minimum to survive), which is its own depth. Drives create the "chasing your dreams" mechanic from the vision, where characters have intrinsic motivations that shape their daily decisions without requiring quest chains to orchestrate every step.
-
-**Zero Arcadia-specific content**: lib-disposition is a generic emotional synthesis and aspirational drive service. Arcadia's specific feeling axes, drive types, guardian spirit mechanics, and synthesis weights are configured through disposition configuration and seed data at deployment time, not baked into lib-disposition.
-
-**Current status**: Pre-implementation. No schema, no code. This deep dive is an architectural specification based on analysis of the character perception gap across lib-character-encounter, lib-character-personality, lib-character-history, lib-relationship, and the planned lib-hearsay service. Internal-only, never internet-facing.
-
----
-
-## Core Mechanics: Feelings
+Feelings use a dual-layer computation: a **base** value computed from source services (personality-filtered encounter sentiment + hearsay beliefs + relationship-type defaults) that drifts as source data changes, plus a persistent **modifier** (emotional residue -- betrayal trauma, lingering gratitude, spirit resentment) that decays slowly but can be reinforced by events. The effective value is `clamp(base + modifier, -1.0, 1.0)`. This means feelings are never purely computed (they have emotional memory) and never purely static (they respond to changing circumstances).
 
 ### Feeling Model
 
@@ -141,6 +122,10 @@ The guardian spirit target type (`targetType: "guardian"`, `targetId: "self"`) m
 ---
 
 ## Core Mechanics: Drives
+
+Drives are intrinsic motivations: not quest objectives (externally assigned) and not backstory elements (historical context). Drives emerge from the intersection of personality, circumstance, and accumulated experience. A character who grew up poor may drive toward wealth. A character who was betrayed may drive toward self-reliance. A character who witnessed injustice may drive toward becoming a protector. Drives shape GOAP goal priorities, making characters pursue long-term aims without needing explicit quest chains to motivate every decision.
+
+Without drives, characters are reactive -- they respond to stimuli but don't pursue long-term goals. An adventurer doesn't just want to be an adventurer; they want to be an S-Class adventurer. A blacksmith doesn't just forge; they aspire to create a masterwork. Some characters lack drives entirely (layabouts, doing the minimum to survive), which is its own depth. Drives create the "chasing your dreams" mechanic from the vision, where characters have intrinsic motivations that shape their daily decisions without requiring quest chains to orchestrate every step.
 
 ### Drive Model
 
@@ -279,6 +264,8 @@ This entire arc emerged from system interaction. No quest chain orchestrated it.
 ---
 
 ## The Guardian Spirit Relationship
+
+A character's feeling about the player/guardian spirit is the mechanical implementation of Design Principle 1 ("Characters Are Independent Entities"). A character pushed against their nature by the spirit develops resentment. A character guided well develops trust. This feeds directly into the compliance/resistance system -- the character's willingness to follow the spirit's nudges is proportional to their feelings about the spirit.
 
 The guardian spirit dimension deserves special attention because it is the mechanical implementation of the vision's "dual-agency" system.
 
@@ -851,6 +838,8 @@ flows:
 ---
 
 ## Visual Aid
+
+Disposition does not replace any existing service. Encounter sentiment, personality traits, hearsay beliefs, and relationship bonds continue to provide their own raw variable namespaces. Disposition synthesizes them into a higher-level emotional state that behavior authors can use when they want characters to "feel" rather than "compute." When lib-disposition is disabled, NPCs fall back to raw data composition in ABML expressions -- existing systems work unchanged.
 
 ### Feeling Synthesis Pipeline
 

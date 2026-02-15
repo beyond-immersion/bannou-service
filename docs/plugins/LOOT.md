@@ -1,11 +1,11 @@
 # Loot Plugin Deep Dive
 
-> **Plugin**: lib-loot
-> **Schema**: schemas/loot-api.yaml
-> **Version**: 1.0.0
-> **State Stores**: loot-tables (MySQL), loot-table-cache (Redis), loot-contexts (Redis), loot-pity-counters (Redis), loot-history (MySQL), loot-lock (Redis)
-> **Status**: Pre-implementation (architectural specification)
-> **Planning**: [ITEM-ECONOMY-PLUGINS.md](../plans/ITEM-ECONOMY-PLUGINS.md)
+> **Plugin**: lib-loot (not yet created)
+> **Schema**: `schemas/loot-api.yaml` (not yet created)
+> **Version**: N/A (Pre-Implementation)
+> **State Store**: loot-tables (MySQL), loot-table-cache (Redis), loot-contexts (Redis), loot-pity-counters (Redis), loot-history (MySQL), loot-lock (Redis) — all planned
+> **Layer**: L4 GameFeatures
+> **Status**: Aspirational — no schema, no generated code, no service implementation exists.
 
 ---
 
@@ -674,13 +674,14 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 |                      |                      |                          |
 |                      v                      v                          |
 |  +-------------------------------------------------------------+     |
-|  | Existing Primitives (L0/L1/L2)                                |     |
+|  | Hard Dependencies (L0/L1/L2 -- constructor injection)         |     |
 |  |                                                                |     |
 |  |  Item ---------- template lookups, instance creation,          |     |
 |  |                  origin tracking (originType="loot")           |     |
 |  |  Inventory ----- placing items in containers (target,          |     |
 |  |                  shared loot container for free-for-all)       |     |
 |  |  Currency ------ crediting wallets for currency drops          |     |
+|  |  Character ----- claimant validation for distribution          |     |
 |  |  Resource ------ cleanup coordination on entity deletion       |     |
 |  +-------------------------------------------------------------+     |
 |           |                                                            |
@@ -689,9 +690,7 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 |  | Optional Features (L4, graceful degradation)                  |     |
 |  |                                                                |     |
 |  |  Affix --------- Tier 3 enriched drops (modifier generation)   |     |
-|  |  Currency ------- currency entry drops (wallet credits)        |     |
 |  |  Analytics ------ generation statistics, divine observation    |     |
-|  |  Character ------ claimant validation for distribution         |     |
 |  +-------------------------------------------------------------+     |
 |                                                                        |
 |  Variable Provider Factory                                             |
@@ -929,6 +928,10 @@ Before lib-loot implementation:
 
 ## Known Quirks & Caveats
 
+### Bugs (Fix Immediately)
+
+*None. Plugin is pre-implementation — no code exists to contain bugs.*
+
 ### Intentional Quirks (Documented Behavior)
 
 1. **Loot table entries are denormalized in the table model**: Entries are stored inline within the `LootTableModel`, not as separate entities with foreign keys. This is deliberate for generation performance -- loading a table for generation requires exactly one store read (or cache hit), not a table read plus N entry reads. The trade-off is that updating a single entry requires saving the entire table.
@@ -968,6 +971,8 @@ Before lib-loot implementation:
 7. **Variable provider performance**: The `${loot.nearby_source_count}` variable requires knowing about active loot contexts within an NPC's perception range. This is inherently spatial -- it needs lib-mapping data or a proximity query. Without mapping integration, the variable provider would need the caller to provide "nearby source IDs" in the variable context. Consider: should the variable provider cache active loot contexts per-region?
 
 8. **Interaction with lib-save-load**: When saving game state, active loot contexts (unclaimed piles) should be persisted. On load, these contexts should be restored with updated TTLs. lib-save-load would need to serialize and restore the Redis-based context store. Consider: should active loot contexts be excluded from saves (loot is ephemeral) or included (preserving the world state)?
+
+9. **L2 dependencies classified as soft violate SERVICE-HIERARCHY.md**: lib-currency (L2) and lib-character (L2) are listed as soft dependencies with graceful degradation. Per SERVICE-HIERARCHY.md, L4 services MUST use constructor injection (hard dependency) for all L0/L1/L2 dependencies — graceful degradation for guaranteed-available layers is explicitly forbidden because it hides deployment configuration errors. When implemented, both should be constructor-injected hard dependencies. The "currency drops are best-effort" design (Intentional Quirk #4) must be revisited: if lib-currency is guaranteed available, currency drops should never fail due to missing dependency. Similarly, claimant validation should always use lib-character directly rather than degrading gracefully.
 
 ---
 

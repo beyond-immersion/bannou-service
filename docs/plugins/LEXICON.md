@@ -1,11 +1,12 @@
 # Lexicon Plugin Deep Dive
 
-> **Plugin**: lib-lexicon
-> **Schema**: schemas/lexicon-api.yaml
-> **Version**: 1.0.0
-> **State Stores**: lexicon-entries (MySQL), lexicon-cache (Redis), lexicon-lock (Redis)
-> **Status**: Pre-implementation (architectural specification)
-> **Planning**: [VISION.md](../../VISION.md) (Logos metaphysical framework), [COMPRESSION-GAMEPLAY-PATTERNS.md](../planning/COMPRESSION-GAMEPLAY-PATTERNS.md) (identify spell concept), [CHARACTER-COMMUNICATION.md](../guides/CHARACTER-COMMUNICATION.md) (Lexicon-shaped NPC social interaction)
+> **Plugin**: lib-lexicon (not yet created)
+> **Schema**: `schemas/lexicon-api.yaml` (not yet created)
+> **Version**: N/A (Pre-Implementation)
+> **State Store**: lexicon-entries (MySQL), lexicon-cache (Redis), lexicon-lock (Redis) — all planned
+> **Layer**: L4 GameFeatures
+> **Status**: Aspirational — no schema, no generated code, no service implementation exists.
+> **Planning**: [VISION.md](../reference/VISION.md) (Logos metaphysical framework), [COMPRESSION-GAMEPLAY-PATTERNS.md](../planning/COMPRESSION-GAMEPLAY-PATTERNS.md) (identify spell concept), [CHARACTER-COMMUNICATION.md](../guides/CHARACTER-COMMUNICATION.md) (Lexicon-shaped NPC social interaction)
 
 ## Overview
 

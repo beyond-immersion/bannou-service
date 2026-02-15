@@ -5,7 +5,7 @@
 > **Version**: 1.0.0
 > **State Stores**: dungeon-cores (MySQL), dungeon-bonds (MySQL), dungeon-inhabitants (Redis), dungeon-memories (MySQL), dungeon-cache (Redis), dungeon-lock (Redis)
 > **Status**: Pre-implementation (architectural specification)
-> **Planning**: [DUNGEON-AS-ACTOR.md](../planning/DUNGEON-AS-ACTOR.md), [HOUDINI-PROCEDURAL-GENERATION.md](../planning/HOUDINI-PROCEDURAL-GENERATION.md)
+> **Planning**: [HOUDINI-PROCEDURAL-GENERATION.md](../planning/HOUDINI-PROCEDURAL-GENERATION.md)
 
 ## Overview
 
@@ -25,7 +25,7 @@ Dungeon lifecycle orchestration service (L4 GameFeatures) for living dungeon ent
 
 **Zero Arcadia-specific content**: lib-dungeon is a generic dungeon management service. Arcadia's personality types (martial, memorial, festive, scholarly), specific creature species, and narrative manifestation styles are configured through ABML behaviors and seed type definitions at deployment time, not baked into lib-dungeon.
 
-**Current status**: Pre-implementation. No schema, no code. This deep dive is an architectural specification based on [DUNGEON-AS-ACTOR.md](../planning/DUNGEON-AS-ACTOR.md) and the broader architectural patterns established by lib-divine, lib-gardener, and lib-puppetmaster. Internal-only, never internet-facing.
+**Current status**: Pre-implementation. No schema, no code. This deep dive is an architectural specification based on the broader architectural patterns established by lib-divine, lib-gardener, and lib-puppetmaster. Internal-only, never internet-facing.
 
 ---
 
@@ -802,7 +802,7 @@ Bond formation is entirely Contract-driven. The contract template (`dungeon-mast
 
 ## Stubs & Unimplemented Features
 
-**Everything is unimplemented.** This is a pre-implementation architectural specification. No schema, no generated code, no service implementation exists. The following phases are planned per [DUNGEON-AS-ACTOR.md](../planning/DUNGEON-AS-ACTOR.md):
+**Everything is unimplemented.** This is a pre-implementation architectural specification. No schema, no generated code, no service implementation exists. The following phases are planned:
 
 ### Phase 0: Seed Foundation (Prerequisite)
 - Register `dungeon_core` seed type with growth phases, domains, and capability rules
@@ -914,8 +914,10 @@ Bond formation is entirely Contract-driven. The contract template (`dungeon-mast
 6. **Entity Session Registry for dungeon master (Pattern A only)**: The dungeon master's garden needs entity session registrations (dungeon -> session, inhabitants -> session, master character -> session) via the Entity Session Registry in Connect (L1). This depends on the Entity Session Registry being implemented first (see [Gardener Design #7](GARDENER.md)). Pattern B does not need entity session registration for the dungeon -- the character's existing entity session registrations suffice.
 
 7. **Household split mechanic (cross-cutting dependency)**: Pattern A depends on a general household split mechanic that doesn't exist yet. This mechanic is needed for the game regardless of dungeons (branch families, divorces, exile) and involves Contract (split terms), Faction (cultural norms determining amicability), Obligation (post-split moral costs), Relationship (bond type changes), and Seed (potential account seed creation). lib-dungeon consumes the result of a household split but does not implement it. The split mechanic must be designed as a cross-cutting feature involving multiple services. Pattern B has no dependency on the household split mechanic.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-15:https://github.com/beyond-immersion/bannou-service/issues/436 -->
 
 8. **Seed promotion mechanic**: Pattern A requires a mechanism to "promote" a character-owned dungeon_master seed to account-owned. The seed always starts character-owned (Pattern B is the default on bond formation). Promotion happens when the player commits an account seed slot through the household split flow. This requires lib-seed to support re-parenting a seed from one owner type to another (character -> account) while preserving all growth data. Alternatively, the promotion could create a new account-owned seed and transfer growth from the character-owned one.
+<!-- AUDIT:NEEDS_DESIGN:2026-02-15:https://github.com/beyond-immersion/bannou-service/issues/437 -->
 
 9. **Pattern B transient UX routing**: When the player switches characters within a garden, the dungeon UX modules need to appear/disappear based on whether the currently-controlled character has a dungeon_master seed. This requires the client's UX capability manifest to be dynamically updated on character switch -- likely via the same Permission/Connect capability manifest push mechanism, extended to include seed-derived UX capabilities.
 
@@ -923,4 +925,4 @@ Bond formation is entirely Contract-driven. The contract template (`dungeon-mast
 
 ## Work Tracking
 
-*No active work items. Plugin is in pre-implementation phase. See [DUNGEON-AS-ACTOR.md](../planning/DUNGEON-AS-ACTOR.md) for the full planning document.*
+*No active work items. Plugin is in pre-implementation phase.*

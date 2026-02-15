@@ -686,6 +686,8 @@ All endpoints require `developer` role.
 
 ## Visual Aid
 
+Recipe definitions and crafting session management are owned here. Item storage is lib-item (L2). Container placement is lib-inventory (L2). Session state machines are lib-contract (L1). Currency costs are lib-currency (L2). Modifier definitions and application primitives are lib-affix (L4, soft). Loot generation that creates pre-crafted items at scale is lib-loot (L4, future). NPC crafting decisions via GOAP use lib-craft's Variable Provider Factory.
+
 ```
 +-----------------------------------------------------------------------+
 |                      Craft Service Architecture                        |
