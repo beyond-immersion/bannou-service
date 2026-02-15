@@ -1096,6 +1096,40 @@ ScenarioDefinition:
       delay: "P1Y"  # Available 1 year later
 ```
 
+### Scenario Categories
+
+Scenarios can be classified along three axes. These categories are not exclusive -- a single scenario definition can span multiple categories.
+
+**By Trigger Timing** (when the scenario can fire):
+
+| Category | When | Examples |
+|----------|------|----------|
+| **Origin** | Character creation / early life | Monster encounter, caravan attack, found by mentor |
+| **Milestone** | Level/age thresholds | Coming of age, first kill, mastery achieved |
+| **Opportunity** | World state conditions | Discovered dungeon, met faction leader, found artifact |
+| **Consequence** | Result of actions | Betrayal revealed, debt called, enemy returns |
+| **Random** | Chance encounters | Traveler on road, storm shelter, mysterious stranger |
+
+**By Scope** (how many entities are affected):
+
+| Scope | Affects | Quest Generation |
+|-------|---------|------------------|
+| **Personal** | Single character | 0-1 quests, backstory mutations |
+| **Interpersonal** | 2-3 characters | Relationship quests, rivalry/alliance |
+| **Local** | Community/location | Community quests, local reputation |
+| **Regional** | Faction/realm area | Faction quests, political involvement |
+| **World** | Multiple realms | Epic quests, world-changing events |
+
+**By Narrative Function** (role in the story arc):
+
+| Function | Purpose | Examples |
+|----------|---------|----------|
+| **Setup** | Establish character hooks | Trauma, training, relationships |
+| **Complication** | Add obstacles | Enemy appears, ally betrays, resource lost |
+| **Escalation** | Raise stakes | Threat grows, deadline approaches, cost increases |
+| **Resolution** | Conclude arcs | Confrontation, reconciliation, transformation |
+| **Transition** | Bridge narratives | New chapter, location change, time skip |
+
 ### Regional Watcher Behaviors
 
 **Base Template** (games extend this):
