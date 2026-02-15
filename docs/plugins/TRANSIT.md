@@ -3,7 +3,7 @@
 > **Status**: Aspirational (Pre-Implementation)
 > **Layer**: L2 GameFoundation
 > **Schema**: `schemas/transit-api.yaml` (not yet created)
-> **Hard Dependencies**: Location (L2), Worldstate (L2), Character (L2), Species (L2), Item (L2), Inventory (L2), Seed (L2)
+> **Hard Dependencies**: Location (L2), Worldstate (L2), Character (L2), Species (L2), Item (L2), Inventory (L2)
 > **Soft Dependencies**: None at the service client level (L4 services enrich via DI provider pattern)
 > **No schema, no code.**
 
@@ -35,7 +35,7 @@ By placing Transit at L2, all these use cases are served without hierarchy viola
 
 ### Declarative Journeys
 
-Transit follows the established Bannou pattern for lifecycle tracking: the **game drives events**, the **plugin records state**. Transit does not automatically progress journeys. It does not move entities. It does not update positions. The game server (or an NPC's Actor brain) calls `/transit/journey/depart`, `/transit/journey/advance`, and `/transit/journey/arrive` as the entity actually moves through the world. Transit records the temporal commitment, computes ETAs against Worldstate, and publishes events.
+Transit follows the established Bannou pattern for lifecycle tracking: the **game drives events**, the **plugin records state**. Transit does not automatically progress journeys. It does not move entities. It does not update positions. The game server (or an NPC's Actor brain via game engine SDK) calls `/transit/journey/depart`, `/transit/journey/advance` (or `/transit/journey/advance-batch` for NPC-scale efficiency), and `/transit/journey/arrive` as the entity actually moves through the world. Transit records the temporal commitment, computes ETAs against Worldstate, and publishes events. At 10K+ concurrent journeys, the game engine advances entities in batches per tick rather than making individual API calls.
 
 This is the same pattern used by Scene (checkout/commit/discard), Workshop (lazy evaluation with materialization), and the planned Shipment lifecycle in Trade. The plugin is a state machine and calculator, not an autonomous simulation engine.
 
@@ -45,7 +45,7 @@ Transit modes are string codes, not enums. `walking`, `horseback`, `river_boat`,
 
 A transit mode defines abstract movement capability. A specific horse is an Item instance in an Inventory container. The mode's requirements specify what items, skills, or species are needed to use it. Transit checks compatibility; it doesn't manage the items themselves.
 
-Modes also support **proficiency via Seed integration**. A mode can optionally reference a `proficiencySeedTypeCode` -- when set, the entity's Seed growth level for that type modifies effective speed: `baseSpeed × (1 + proficiencyBonus)`. A character who has ridden horses their entire life (high `riding_proficiency` seed growth) is genuinely faster than a novice. This connects Transit to the content flywheel: an NPC's lifetime of travel proficiency data becomes generative input when their archive is compressed.
+Modes may benefit from **proficiency bonuses via the DI enrichment pattern**. An L4 cost modifier provider queries Status (L4) for seed-derived capabilities and translates them into speed multipliers. A character who has ridden horses their entire life (high riding proficiency from Seed growth, surfaced via Status's unified effects layer) is genuinely faster than a novice. Transit doesn't know about Seed or proficiency directly -- it receives a `SpeedMultiplier` from the cost modifier provider, keeping the boundary clean. This connects Transit to the content flywheel indirectly: an NPC's lifetime of travel proficiency data flows through Status and enrichment providers without Transit coupling to growth mechanics.
 
 ### Connection Discovery (Configurable)
 
@@ -223,7 +223,10 @@ TransitMode:
                                     # may validly exclude characters.
 
   # Requirements (all must be met to use this mode -- applies to character entities only)
-  requirements: TransitModeRequirements
+  requirements: TransitModeRequirements   # Item, species, and physical requirements only.
+                                          # Proficiency-based speed bonuses are NOT a mode requirement --
+                                          # they flow through ITransitCostModifierProvider from L4 services
+                                          # that query Status for seed-derived capabilities.
 
   # Behavioral properties
   fatigueRatePerGameHour: decimal   # Stamina cost per game-hour of travel (0 = no fatigue)
@@ -248,14 +251,6 @@ TransitMode:
 TransitModeRequirements:
   # Item requirement (e.g., horseback requires a mount item)
   requiredItemTag: string           # null = no item needed. "mount_horse" = need item with this tag
-
-  # Proficiency via Seed (core -- not optional)
-  proficiencySeedTypeCode: string   # null = no proficiency needed. "riding_proficiency" = Seed type
-                                    # Entity's Seed growth level modifies effective speed:
-                                    # effectiveSpeed = baseSpeed × (1 + proficiencyBonus)
-                                    # proficiencyBonus = seedGrowthLevel × maxProficiencyBonus
-  maxProficiencyBonus: decimal      # Maximum speed bonus at full Seed growth (e.g., 0.5 = +50%)
-                                    # Default 0.3 if proficiencySeedTypeCode is set
 
   # Species restriction
   allowedSpeciesCodes: [string]     # Empty = any species. If set, only these species can use mode
@@ -387,6 +382,15 @@ TransitJourneyLeg:
   distanceKm: decimal               # Copied from connection for journey record
   terrainType: string               # Copied from connection
   estimatedDurationGameHours: decimal
+  waypointTransferTimeGameHours: decimal  # Optional. Delay at the waypoint BEFORE starting this leg.
+                                    # Models intra-location transfer time: disembarking a river boat,
+                                    # waiting at a dock, crossing a city to reach the next departure
+                                    # point, changing mounts at a stable. Analogous to elevator wait
+                                    # time -- you arrived at the location but need time before
+                                    # continuing on the next connection.
+                                    # null or 0.0 = no transfer delay (immediate continuation).
+                                    # Factored into journey ETA and totalGameHours calculations.
+                                    # Set by the game on journey creation or dynamically via advance.
   status: enum                      # pending | in_progress | completed | skipped
   completedAtGameTime: decimal      # When this leg was completed (null if not)
 
@@ -422,7 +426,8 @@ TransitRouteOption:
 
   # Distance and time
   totalDistanceKm: decimal          # Sum of all leg distances
-  totalGameHours: decimal           # Estimated total travel time in game-hours
+  totalGameHours: decimal           # Estimated total travel time in game-hours (includes
+                                    # waypointTransferTimeGameHours for each leg when set)
   totalRealMinutes: decimal         # Converted to real-time at current time ratio (approximate --
                                     # time ratios can change during travel)
 
@@ -722,8 +727,7 @@ TransitRouteOption:
 
     When preferMultiModal is true, each leg gets the fastest compatible mode
     the entity can use on that connection. The journey's primaryModeCode is
-    set to the mode used for the most legs (plurality). Proficiency bonuses
-    are computed per-leg based on each leg's mode.
+    set to the mode used for the most legs (plurality).
 
 /transit/journey/depart:
   access: user
@@ -777,6 +781,52 @@ TransitRouteOption:
     If this completes the final leg, journey status transitions to "arrived"
     and transit.journey.arrived is emitted instead of waypoint-reached.
     The arrivedAtGameTime is recorded for historical accuracy.
+
+/transit/journey/advance-batch:
+  access: user
+  description: "Advance multiple journeys in a single call (SDK efficiency for NPC scale)"
+  request:
+    advances: [
+      {
+        journeyId: uuid
+        arrivedAtGameTime: decimal
+        incidents: [               # Optional - per-journey incidents
+          {
+            reason: string
+            durationGameHours: decimal
+            description: string
+          }
+        ]
+      }
+    ]
+  response:
+    results: [
+      {
+        journeyId: uuid
+        success: boolean
+        error: string              # null on success. Error code on failure.
+        journey: TransitJourney    # Updated journey (null on failure)
+      }
+    ]
+  emits: transit.journey.waypoint-reached   # Per journey, if more legs remain
+  emits: transit.journey.arrived             # Per journey, if final leg completed
+  errors:
+    - PARTIAL_FAILURE              # Some advances failed -- check individual results
+  notes: |
+    Batch version of /transit/journey/advance for game SDK efficiency.
+    Journey progression is game-engine-driven: the game server (or NPC Actor
+    brain via SDK) must explicitly call advance when entities reach waypoints.
+    At NPC scale (10,000+ concurrent journeys), the game engine advances
+    entities in batches per tick rather than making individual API calls.
+
+    Each advance in the batch is processed independently -- failure of one
+    does not roll back others. Results include per-journey success/failure
+    with error details. Events are emitted per-journey as with the single
+    advance endpoint.
+
+    Ordering within the batch is preserved: advances are applied sequentially
+    to handle cases where the same journeyId appears multiple times (advancing
+    through multiple waypoints in a single tick).
 
 /transit/journey/arrive:
   access: user
@@ -929,7 +979,6 @@ TransitRouteOption:
 
     When preferMultiModal is true, each leg selects the fastest compatible mode
     the entity can use. Route options include per-leg mode codes in legModes[].
-    Proficiency bonuses (from Seed integration) are applied per-leg per-mode.
 
     Cross-realm routing: When fromLocationId and toLocationId are in different
     realms, the graph search merges the connection graphs for all relevant realms.
@@ -966,12 +1015,11 @@ TransitRouteOption:
       Modes with null validEntityTypes skip this check for non-character entities.
     - Item requirements: calls lib-inventory to check if entity has required item tag (L2 hard)
     - Species requirements: calls lib-character or lib-species for species code (L2 hard)
-    - Proficiency: queries lib-seed for seed growth level (L2 hard) when mode has
-      proficiencySeedTypeCode set. Proficiency bonus applied to effectiveSpeed.
     - Terrain speed: effectiveSpeed accounts for terrainSpeedModifiers when locationId
       is provided and the entity's current connection terrain is known.
 
-    Also applies ITransitCostModifierProvider enrichment to compute preferenceCost.
+    Also applies ITransitCostModifierProvider enrichment to compute preferenceCost
+    and effectiveSpeed adjustments (e.g., proficiency-based speed bonuses from Status).
     This is the endpoint the variable provider calls internally.
 ```
 
@@ -1019,7 +1067,7 @@ TransitRouteOption:
     ]
 ```
 
-**Total endpoints: 29**
+**Total endpoints: 30**
 
 ---
 
@@ -1110,7 +1158,6 @@ transit.journey.arrived:
     - Analytics (L4): travel time statistics
     - Character History (L4): significant journey completion for backstory
     - Quest (L2): travel arrival objectives ("reach the Iron Mines")
-    - Seed (L2): travel proficiency growth (if mode has proficiencySeedTypeCode)
 
 transit.journey.interrupted:
   description: "A journey was interrupted (combat, event, breakdown)"
@@ -1274,12 +1321,6 @@ TransitServiceConfiguration:
       description: "TTL for per-entity discovery cache in Redis (seconds). Route calculation checks this cache to filter discoverable connections."
       env: TRANSIT_DISCOVERY_CACHE_TTL_SECONDS
 
-    DefaultProficiencyMaxBonus:
-      type: number
-      default: 0.3
-      description: "Default value for maxProficiencyBonus on modes when proficiencySeedTypeCode is set but maxProficiencyBonus is not explicitly configured"
-      env: TRANSIT_DEFAULT_PROFICIENCY_MAX_BONUS
-
     DefaultCargoSpeedPenaltyRate:
       type: number
       default: 0.3
@@ -1295,7 +1336,7 @@ TransitServiceConfiguration:
     AutoUpdateLocationOnTransition:
       type: boolean
       default: true
-      description: "When true, Transit automatically calls Location's entity placement API to update the entity's current location on journey departure, waypoint arrival, and final arrival. When false, the caller is responsible for updating Location separately. Both Transit and Location are L2 (always co-deployed on game nodes), so direct API calls are used -- not events."
+      description: "When true, Transit automatically calls Location's /location/report-entity-position endpoint to update the entity's current location on journey departure, waypoint arrival, and final arrival. Location's presence system uses ephemeral Redis storage with 30s TTL, so Transit must re-report on each state transition. When false, the caller is responsible for updating Location separately. Both Transit and Location are L2 (always co-deployed on game nodes), so direct API calls are used -- not events."
       env: TRANSIT_AUTO_UPDATE_LOCATION_ON_TRANSITION
 ```
 
@@ -1419,13 +1460,7 @@ ${transit.mode.<code>.speed}:
   type: decimal
   description: "Effective speed in km/game-hour for this entity on this mode"
   example: "${transit.mode.wagon.speed}"
-  notes: "Accounts for cargo weight penalty and Seed proficiency bonus if applicable"
-
-${transit.mode.<code>.proficiency}:
-  type: decimal
-  description: "Proficiency bonus from Seed growth (0.0 = novice, up to maxProficiencyBonus)"
-  example: "${transit.mode.horseback.proficiency}"
-  notes: "Only available when mode has proficiencySeedTypeCode set. Queries Seed service."
+  notes: "Accounts for cargo weight penalty and DI cost modifier speed multipliers (including proficiency bonuses from Status providers)"
 
 ${transit.mode.<code>.preference_cost}:
   type: decimal
@@ -1576,6 +1611,7 @@ public record TransitCostModifier(
 
 | Provider | Service | What It Modifies | Example |
 |----------|---------|------------------|---------|
+| `"proficiency"` | lib-proficiency or game-specific L4 | Speed bonus from seed-derived travel proficiency via Status | Experienced rider → `SpeedMultiplier: 1.3` (30% faster) |
 | `"disposition"` | lib-disposition (L4) | Preference cost from feelings toward transit modes | `dread: 0.7` toward horseback → `PreferenceCostDelta: 0.7` |
 | `"hearsay"` | lib-hearsay (L4) | Risk perception from believed dangers along connections | Believes "mountain road is cursed" → `RiskDelta: 0.4` |
 | `"weather"` | lib-environment (L4) | Speed reduction from weather conditions on connections | Storm on connection → `SpeedMultiplier: 0.5` |
@@ -1600,9 +1636,9 @@ Transit connections reference Location entities by ID. On startup, Transit valid
 
 Location knows nothing about Transit (correct hierarchy direction).
 
-**Automatic location updates**: When `AutoUpdateLocationOnTransition` is enabled (default), Transit calls Location's entity placement API to update the entity's current location on journey departure (entity leaves origin), waypoint arrival (entity is at waypoint), and final arrival (entity is at destination). Both services are L2 and always co-deployed on game nodes, so this uses direct API calls via lib-mesh -- not events. Neither service subscribes to the other's events for presence tracking.
+**Automatic location updates**: When `AutoUpdateLocationOnTransition` is enabled (default), Transit calls Location's `/location/report-entity-position` endpoint to update the entity's current location on journey departure (entity leaves origin), waypoint arrival (entity is at waypoint), and final arrival (entity is at destination). Location's entity presence system uses ephemeral Redis storage with TTL-based expiry and bidirectional lookups (`entity→location` and `location→entities`). Both services are L2 and always co-deployed on game nodes, so this uses direct API calls via lib-mesh -- not events. Neither service subscribes to the other's events for presence tracking.
 
-**Entities in transit**: While traveling between waypoints, the entity's last known location (as tracked by Location) is the most recently departed-from or arrived-at location. The entity still "exists" at that location from Location's perspective -- Location's by-entity query will return them. Transit's `${transit.journey.active}` variable and the `query-by-connection` endpoint provide the transit-specific context that Location cannot (mode, direction, progress, ETA). The entity occupies a location in the containment sense even while physically in transit between nodes in the connectivity graph.
+**Entities in transit**: While traveling between waypoints, the entity's last known location (as tracked by Location's ephemeral presence system) is the most recently departed-from or arrived-at location. The entity still "exists" at that location from Location's perspective -- `/location/get-entity-location` will return them there. Transit's `${transit.journey.active}` variable and the `query-by-connection` endpoint provide the transit-specific context that Location cannot (mode, direction, progress, ETA). The entity occupies a location in the containment sense even while physically in transit between nodes in the connectivity graph. Location's presence entries have a 30-second TTL, so Transit must periodically re-report position (or upon each state transition) to keep the entity visible.
 
 ### Worldstate (L2) -- Hard Dependency
 
@@ -1654,13 +1690,6 @@ Transit queries these services during mode compatibility checks (`check-availabi
 - **Inventory**: Checks entity has required item tag (e.g., mount item for horseback)
 - **Character/Species**: Checks species compatibility for species-restricted modes
 - These are synchronous L2 service calls via lib-mesh, valid under the hierarchy
-
-### Seed (L2) -- Hard Dependency
-
-Transit queries Seed for proficiency bonuses when a mode has `proficiencySeedTypeCode` set:
-- **Speed bonus**: `effectiveSpeed = baseSpeed × (1 + proficiencyBonus)` where bonus is derived from Seed growth level
-- **Journey arrival**: Publishes `transit.journey.arrived` which Seed consumes to record travel experience growth
-- This is a direct L2-to-L2 dependency, not a DI provider pattern
 
 ### Trade (L4) -- Consumer
 
@@ -1772,13 +1801,15 @@ Journey events (departed, waypoint, arrived) flow through the standard lib-messa
 
 ### Potential Extensions
 
-1. **Caravan formations**: Multiple entities traveling together as a group. Group speed = slowest member. Group risk = reduced (safety in numbers). Caravan as an entity type for journeys, with member tracking and formation bonuses. Faction merchant guilds could manage NPC caravans.
+1. **Caravan formations (Phase 2)**: Multiple entities traveling together as a group. Group speed = slowest member. Group risk = reduced (safety in numbers). Caravan as an entity type for journeys, with member tracking and formation bonuses. Faction merchant guilds could manage NPC caravans. **Promoted to Phase 2** -- the data model already accommodates this via `entityType: "caravan"` and `partySize`, but Phase 2 needs: a `partyMembers: [uuid]` field on `TransitJourney` for tracking individual members, batch departure/advance for all party members, and a party leader concept for GOAP decisions. The `validEntityTypes` restriction on modes already supports caravan-only modes (e.g., `wagon` with `validEntityTypes: ["caravan", "army"]`).
 
 2. **Fatigue and rest**: Long journeys accumulate fatigue. After a configurable threshold, the entity must rest (journey auto-pauses at next waypoint). Rest duration depends on mode and entity stamina. Creates natural stopping points at inns and camps.
 
 3. **Weather-reactive connections**: Environment (L4) automatically calls `/transit/connection/update-status` when weather conditions make connections impassable. Storms close mountain passes; floods close river crossings; drought closes river boat routes. This is a pure consumer relationship -- Transit exposes the API, Environment calls it.
 
 4. **Mount bonding**: Integration with Relationship (L2) for character-mount relationships. A well-bonded mount has higher effective speed and lower fatigue. Bond strength grows with travel distance. Follows the existing Relationship entity-to-entity model.
+
+5. **Transit fares**: Monetary cost for using certain transit modes or connections. Ferries, toll roads, carriage services, and teleportation portals could have a fare. Two options: (a) Transit stores fare data per-connection/mode and calls Currency (L2) during `journey/depart` to debit the fare -- feasible since both are L2. (b) Fares are purely a Trade (L4) concern that wraps Transit journeys with economic logic. Option (a) keeps fare enforcement at the primitive level (NPCs can't cheat tolls), while (b) keeps Transit purely about movement physics. **Open design question**: should Transit know about money, or should fares be an L4 overlay?
 
 ### Resolved Design Decisions
 
@@ -1788,7 +1819,7 @@ Journey events (departed, waypoint, arrived) flow through the standard lib-messa
 
 3. **Intra-location transit**: No. Intra-location movement is Mapping's domain (spatial positioning) or the game client's domain (local navigation). Transit handles inter-location movement only.
 
-4. **Multi-mode journeys**: Yes, core feature. Each leg specifies a `modeCode` that can override the journey's `primaryModeCode`. `preferMultiModal` flag on create/calculate selects best mode per leg automatically. Proficiency bonuses apply per-leg per-mode.
+4. **Multi-mode journeys**: Yes, core feature. Each leg specifies a `modeCode` that can override the journey's `primaryModeCode`. `preferMultiModal` flag on create/calculate selects best mode per leg automatically.
 
 5. **Reverse connections**: Bidirectional connections share properties. For asymmetric connections (upstream/downstream), create two one-way connections with different speeds. Keeps the data model simple.
 
@@ -1798,7 +1829,7 @@ Journey events (departed, waypoint, arrived) flow through the standard lib-messa
 
 8. **Connection discovery**: Core feature. Connections have `discoverable: boolean` flag. Per-entity discovery tracking in Redis. Route calculation filters by discovery status. Discovery via travel, explicit grant, or Hearsay integration.
 
-9. **Seed proficiency**: Core feature. Modes optionally reference `proficiencySeedTypeCode`. Entity's Seed growth level modifies effective speed. Connects Transit to the content flywheel.
+9. **Proficiency via DI enrichment**: Proficiency-based speed bonuses flow through `ITransitCostModifierProvider`, not through direct Seed integration. An L4 provider queries Status (which aggregates seed-derived capabilities) and returns a `SpeedMultiplier` to Transit. This keeps Transit decoupled from growth mechanics while still supporting the content flywheel: experienced riders are faster, but Transit doesn't know why -- it just receives a multiplier from the enrichment layer.
 
 10. **Status transition concurrency**: Optimistic concurrency pattern with `currentStatus`/`newStatus` and `forceUpdate` bypass. Prevents silent status conflicts between independent actors while supporting administrative overrides.
 
@@ -1812,11 +1843,15 @@ Journey events (departed, waypoint, arrived) flow through the standard lib-messa
 
 15. **Discovery store durability**: MySQL-backed with Redis cache. Discovery is permanent world knowledge that must survive Redis restarts. The Redis cache (`transit-discovery-cache`) provides fast route calculation lookups with lazy population from MySQL on cache miss.
 
-16. **Location presence tracking**: API-based, not event-based. `AutoUpdateLocationOnTransition` config (default true) makes Transit call Location's entity placement API on departure, waypoint arrival, and final arrival. Both services are L2 and always co-deployed, so direct API calls are correct. Entities remain at their last known location while in transit between graph nodes.
+16. **Location presence tracking**: API-based, not event-based. `AutoUpdateLocationOnTransition` config (default true) makes Transit call `/location/report-entity-position` on departure, waypoint arrival, and final arrival. Location's presence entries are ephemeral (30s TTL in Redis) with bidirectional lookups, so Transit must re-report on each state transition to keep entries alive. Both services are L2 and always co-deployed, so direct API calls are correct. Entities remain at their last known location while in transit between graph nodes.
 
 17. **Journey archive retention**: Configurable via `JourneyArchiveRetentionDays` (default 365). The archival worker deletes archives older than the threshold. 0 = retain indefinitely.
 
 18. **Variable provider cache strategy**: Lazy invalidation with configurable TTL. Mode availability is cached per-entity and expires after TTL. Acceptable tradeoff given worlds are large and transit decisions are not frame-rate-sensitive. Eager invalidation deferred until empirical evidence of staleness issues.
+
+19. **Journey progression is game-engine-driven**: The game server (or NPC Actor brain via game engine SDK) must explicitly call `advance` (or `advance-batch` at scale) when entities reach waypoints. Transit cannot auto-progress journeys because real game models running into proper obstacles (terrain collision, NPC encounters, physics) cannot be tracked in real-time by backend services. The game engine runs the simulation; Transit records the outcomes. This is architecturally consistent with the declarative lifecycle pattern (resolved decision #2) but specifically addresses the "who drives the clock" question: the game engine does, not Transit, and the batch endpoint exists to make this efficient at 10K+ concurrent journey scale.
+
+20. **Entity presence during transit is game-driven**: While an entity is traveling between waypoints, its physical position in the game world is the game engine's concern, not Transit's. Transit updates Location's ephemeral presence on each state transition (departure, waypoint, arrival) via `AutoUpdateLocationOnTransition`, but between transitions the entity's moment-to-moment position is tracked by the game engine. There is no TTL-based "entity in transit" heartbeat from Transit -- the game engine's own tick loop is responsible for keeping entities visible in the world. This is the same principle as journey progression: the game simulates, Transit records.
 
 ---
 
