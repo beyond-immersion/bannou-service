@@ -474,7 +474,7 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS). These endpoin
 │  ┌─────────────────────────────────────────────────────────────────────┐  │
 │  │  for each realm with active clock:                                   │  │
 │  │                                                                     │  │
-│  │  1. Acquire lock: worldstate:lock:clock:{realmId}                   │  │
+│  │  1. Acquire lock: worldstate:clock:{realmId}                        │  │
 │  │                                                                     │  │
 │  │  2. Compute elapsed:                                                │  │
 │  │     realElapsed = now - lastAdvancedRealTime                        │  │

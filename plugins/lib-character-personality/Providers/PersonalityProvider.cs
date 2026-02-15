@@ -5,6 +5,7 @@
 // =============================================================================
 
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
+using BeyondImmersion.BannouService.Services;
 
 namespace BeyondImmersion.BannouService.CharacterPersonality.Providers;
 
@@ -23,7 +24,7 @@ public sealed class PersonalityProvider : IVariableProvider
     private readonly int _version;
 
     /// <inheritdoc/>
-    public string Name => "personality";
+    public string Name => VariableProviderDefinitions.Personality;
 
     /// <summary>
     /// Creates a new personality provider with the given traits.

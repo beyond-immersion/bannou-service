@@ -31,7 +31,7 @@ public sealed class ObligationProviderFactory : IVariableProviderFactory
     }
 
     /// <inheritdoc/>
-    public string ProviderName => "obligations";
+    public string ProviderName => VariableProviderDefinitions.Obligations;
 
     /// <inheritdoc/>
     public async Task<IVariableProvider> CreateAsync(Guid? entityId, CancellationToken ct)

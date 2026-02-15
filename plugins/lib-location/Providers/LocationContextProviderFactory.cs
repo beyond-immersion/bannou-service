@@ -7,6 +7,7 @@
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 using BeyondImmersion.BannouService.Location.Caching;
 using BeyondImmersion.BannouService.Providers;
+using BeyondImmersion.BannouService.Services;
 
 namespace BeyondImmersion.BannouService.Location.Providers;
 
@@ -28,7 +29,7 @@ public sealed class LocationContextProviderFactory : IVariableProviderFactory
     }
 
     /// <inheritdoc/>
-    public string ProviderName => "location";
+    public string ProviderName => VariableProviderDefinitions.Location;
 
     /// <inheritdoc/>
     public async Task<IVariableProvider> CreateAsync(Guid? entityId, CancellationToken ct)

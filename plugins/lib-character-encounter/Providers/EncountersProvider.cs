@@ -5,6 +5,7 @@
 // =============================================================================
 
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
+using BeyondImmersion.BannouService.Services;
 
 namespace BeyondImmersion.BannouService.CharacterEncounter.Providers;
 
@@ -39,7 +40,7 @@ public sealed class EncountersProvider : IVariableProvider
     private readonly Dictionary<Guid, EncounterListResponse> _pairEncounters;
 
     /// <inheritdoc/>
-    public string Name => "encounters";
+    public string Name => VariableProviderDefinitions.Encounters;
 
     /// <summary>
     /// Creates a new encounters provider with the given encounter data.

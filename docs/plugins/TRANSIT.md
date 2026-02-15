@@ -111,12 +111,14 @@ Location provides the **what** (places exist). Transit provides the **how** (pla
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                    TRANSIT MODES (Registry)                       │
-│  "walking": speed 5, capacity 1, terrain [any], requires []      │
-│  "horseback": speed 25, capacity 2, terrain [road,trail,plain]   │
-│  "wagon": speed 10, capacity 500, terrain [road], requires [item]│
-│  "river_boat": speed 15, capacity 100, terrain [river]           │
-│  "ocean_vessel": speed 20, capacity 2000, terrain [ocean]        │
-│  "flying_mount": speed 40, capacity 2, terrain [any]             │
+│  "walking": speed 5, capacity 1, terrain [any]                      │
+│  "horseback": speed 25, capacity 2, terrain [road,trail,plain]      │
+│     terrain_mods: {road: 1.2, trail: 0.8, forest: 0.5, mountain: 0.3}│
+│  "wagon": speed 10, capacity 500, terrain [road], requires [item]   │
+│  "river_boat": speed 15, capacity 100, terrain [river]              │
+│  "ocean_vessel": speed 20, capacity 2000, terrain [ocean]           │
+│     valid_entities: [caravan, army], cargo_penalty: 0.1              │
+│  "flying_mount": speed 40, capacity 2, terrain [any]                │
 └─────────────────────┬───────────────────────────────────────────┘
                       │ defines capabilities
                       ▼
@@ -155,18 +157,20 @@ Route calculation is a **pure computation endpoint** -- no state mutation. Given
     Path 2: Eldoria →(river_path)→ Riverside →(forest_trail)→ Iron Mines
             30km + 80km = 110km
             walking: 110km / 5 km/gh = 22 game-hours
-            horseback: 30/25 + 80/25 = 4.4 game-hours
-            river_boat (leg 1 only): 30/15 + 80/25 = 5.2 game-hours
+            horseback: (30 / 25×0.8) + (80 / 25×0.5) = 1.5 + 6.4 = 7.9 game-hours
+              (terrain modifiers: river_path ×0.8, forest_trail ×0.5)
+            river_boat (leg 1 only): 30/15 + (80 / 25×0.5) = 2.0 + 6.4 = 8.4 game-hours
 
   Output: [
     { route: [Eldoria, Riverside, Iron Mines], mode: horseback,
-      hours: 4.4, distance: 110, legs: 2, risk: 0.15 },
+      hours: 7.9, distance: 110, legs: 2, risk: 0.15 },
     { route: [Eldoria, Riverside, Iron Mines], mode: walking,
       hours: 22.0, distance: 110, legs: 2, risk: 0.08 },
   ]
 
   Note: Mountain road direct route unavailable in winter.
-  In summer, it would appear as:
+  Horseback has terrain modifiers: {road: 1.2, trail: 0.8, forest: 0.5, mountain: 0.3}
+  In summer, the mountain road would appear as:
     { route: [Eldoria, Iron Mines], mode: wagon,
       hours: 12.0, distance: 120, legs: 1, risk: 0.2 }
 ```
@@ -190,12 +194,14 @@ TransitMode:
   # Movement properties
   baseSpeedKmPerGameHour: decimal   # Base speed in game-kilometers per game-hour (used when no
                                     # terrain-specific speed is defined for the current terrain)
-  terrainSpeedModifiers: object     # Optional per-terrain speed multipliers. Keys are terrain type
-                                    # strings, values are decimal multipliers applied to base speed.
-                                    # Example: { "road": 1.2, "trail": 0.8, "forest": 0.5, "mountain": 0.3 }
+  terrainSpeedModifiers:            # Optional per-terrain speed multipliers. Typed array of
+    [TerrainSpeedModifier]          # {terrainType: string, multiplier: decimal} pairs.
+                                    # Example: [{terrainType: "road", multiplier: 1.2},
+                                    #           {terrainType: "trail", multiplier: 0.8},
+                                    #           {terrainType: "forest", multiplier: 0.5}]
                                     # null = base speed applies uniformly across all compatible terrain.
-                                    # effectiveSpeed = baseSpeed × terrainSpeedModifiers[terrainType]
-                                    # Missing key for a compatible terrain → defaults to 1.0 (base speed).
+                                    # effectiveSpeed = baseSpeed × multiplier for matching terrainType.
+                                    # Terrain type not in the list → defaults to 1.0 (base speed).
   passengerCapacity: integer        # How many entities can ride (1 for horse, 20 for ship)
   cargoCapacityKg: decimal          # Weight capacity in game-kg (0 for walking, 500 for wagon)
   cargoSpeedPenaltyRate: decimal    # Optional per-mode cargo speed penalty rate. When set, overrides
@@ -283,13 +289,15 @@ TransitConnection:
                                     # Empty = walking only
 
   # Seasonal availability
-  seasonalAvailability: object      # Keys MUST match the realm's Worldstate season codes.
+  seasonalAvailability:             # Typed array of {season: string, available: boolean} pairs.
+    [SeasonalAvailabilityEntry]     # Season strings MUST match the realm's Worldstate season codes.
                                     # Worldstate uses opaque calendar templates -- season names are
                                     # configurable per realm (a desert realm may have "wet"/"dry",
                                     # not "winter"/"spring"). The Seasonal Connection Worker queries
                                     # Worldstate for the realm's current season name and matches
-                                    # against these keys.
-                                    # Example: { "winter": false, "spring": true, "summer": true, "autumn": true }
+                                    # against these entries.
+                                    # Example: [{season: "winter", available: false},
+                                    #           {season: "spring", available: true}]
                                     # null = always available
 
   # Risk
@@ -388,6 +396,14 @@ TransitInterruption:
   reason: string                    # "bandit_attack", "storm", "breakdown", "encounter"
   durationGameHours: decimal        # How long the interruption lasted (0 if unresolved)
   resolved: boolean                 # Whether travel resumed
+
+TerrainSpeedModifier:
+  terrainType: string               # Terrain type code (e.g., "road", "trail", "forest")
+  multiplier: decimal               # Speed multiplier applied to base speed (1.0 = no change)
+
+SeasonalAvailabilityEntry:
+  season: string                    # Season code matching the realm's Worldstate calendar template
+  available: boolean                # Whether the connection is open during this season
 ```
 
 ### Transit Route Option
@@ -438,7 +454,7 @@ TransitRouteOption:
     name: string
     description: string
     baseSpeedKmPerGameHour: decimal
-    terrainSpeedModifiers: object   # Optional - per-terrain speed multipliers
+    terrainSpeedModifiers: [TerrainSpeedModifier]  # Optional - per-terrain speed multipliers
     passengerCapacity: integer
     cargoCapacityKg: decimal
     cargoSpeedPenaltyRate: decimal  # Optional - overrides plugin config default
@@ -480,7 +496,7 @@ TransitRouteOption:
     name: string                    # Optional
     description: string             # Optional
     baseSpeedKmPerGameHour: decimal # Optional
-    terrainSpeedModifiers: object   # Optional - per-terrain speed multipliers
+    terrainSpeedModifiers: [TerrainSpeedModifier]  # Optional - per-terrain speed multipliers
     passengerCapacity: integer      # Optional
     cargoCapacityKg: decimal        # Optional
     cargoSpeedPenaltyRate: decimal  # Optional - per-mode cargo penalty override
@@ -520,9 +536,11 @@ TransitRouteOption:
     distanceKm: decimal
     terrainType: string
     compatibleModes: [string]
-    seasonalAvailability: object    # Optional
+    seasonalAvailability: [SeasonalAvailabilityEntry]  # Optional
     baseRiskLevel: decimal
     riskDescription: string         # Optional
+    discoverable: boolean           # Default false. When true, filtered from route queries
+                                    # unless the requesting entity has discovered it.
     name: string                    # Optional
     code: string                    # Optional
     tags: [string]                  # Optional
@@ -585,9 +603,10 @@ TransitRouteOption:
     distanceKm: decimal             # Optional
     terrainType: string             # Optional
     compatibleModes: [string]       # Optional
-    seasonalAvailability: object    # Optional
+    seasonalAvailability: [SeasonalAvailabilityEntry]  # Optional
     baseRiskLevel: decimal          # Optional
     riskDescription: string         # Optional
+    discoverable: boolean           # Optional
     name: string                    # Optional
     code: string                    # Optional
     tags: [string]                  # Optional
@@ -596,7 +615,7 @@ TransitRouteOption:
     - CONNECTION_NOT_FOUND
 
 /transit/connection/update-status:
-  access: authenticated
+  access: user
   description: "Transition a connection's operational status with optimistic concurrency"
   request:
     connectionId: uuid
@@ -607,7 +626,7 @@ TransitRouteOption:
     forceUpdate: boolean            # Default false. When true, currentStatus is ignored (nullable).
                                     # Use for administrative overrides.
   response: { connection: TransitConnection }
-  emits: transit.connection.status_changed
+  emits: transit.connection.status-changed
   errors:
     - CONNECTION_NOT_FOUND
     - STATUS_MISMATCH               # currentStatus doesn't match actual. Response includes actual
@@ -651,7 +670,7 @@ TransitRouteOption:
         distanceKm: decimal
         terrainType: string
         compatibleModes: [string]
-        seasonalAvailability: object
+        seasonalAvailability: [SeasonalAvailabilityEntry]
         baseRiskLevel: decimal
         name: string
         code: string
@@ -673,7 +692,7 @@ TransitRouteOption:
 
 ```yaml
 /transit/journey/create:
-  access: authenticated
+  access: user
   description: "Plan a journey (status: preparing). Does not start travel."
   request:
     entityId: uuid
@@ -707,7 +726,7 @@ TransitRouteOption:
     are computed per-leg based on each leg's mode.
 
 /transit/journey/depart:
-  access: authenticated
+  access: user
   description: "Start a prepared journey (preparing → in_transit)"
   request:
     journeyId: uuid
@@ -719,7 +738,7 @@ TransitRouteOption:
     - CONNECTION_CLOSED             # First leg's connection is now closed
 
 /transit/journey/resume:
-  access: authenticated
+  access: user
   description: "Resume an interrupted journey (interrupted → in_transit)"
   request:
     journeyId: uuid
@@ -735,7 +754,7 @@ TransitRouteOption:
     Consumers (Trade, Analytics) can distinguish "started" from "resumed" via events.
 
 /transit/journey/advance:
-  access: authenticated
+  access: user
   description: "Mark arrival at next waypoint (completes current leg, starts next or arrives)"
   request:
     journeyId: uuid
@@ -748,7 +767,7 @@ TransitRouteOption:
       }
     ]
   response: { journey: TransitJourney }
-  emits: transit.journey.waypoint_reached   # If more legs remain
+  emits: transit.journey.waypoint-reached   # If more legs remain
   emits: transit.journey.arrived             # If this was the last leg
   errors:
     - JOURNEY_NOT_FOUND
@@ -756,11 +775,11 @@ TransitRouteOption:
     - NO_CURRENT_LEG                # Already at final destination
   notes: |
     If this completes the final leg, journey status transitions to "arrived"
-    and transit.journey.arrived is emitted instead of waypoint_reached.
+    and transit.journey.arrived is emitted instead of waypoint-reached.
     The arrivedAtGameTime is recorded for historical accuracy.
 
 /transit/journey/arrive:
-  access: authenticated
+  access: user
   description: "Force-arrive a journey at destination (skips remaining legs)"
   request:
     journeyId: uuid
@@ -776,7 +795,7 @@ TransitRouteOption:
     Remaining legs are marked as "skipped" rather than "completed".
 
 /transit/journey/interrupt:
-  access: authenticated
+  access: user
   description: "Interrupt an active journey (combat, event, breakdown)"
   request:
     journeyId: uuid
@@ -793,7 +812,7 @@ TransitRouteOption:
     To give up, call /transit/journey/abandon.
 
 /transit/journey/abandon:
-  access: authenticated
+  access: user
   description: "Abandon a journey (entity stays at current location)"
   request:
     journeyId: uuid
@@ -898,7 +917,8 @@ TransitRouteOption:
     Returns objective travel data: distance, time, risk, mode.
 
     The graph search uses Dijkstra's algorithm with configurable cost function:
-    - "fastest": cost = estimated_hours (distance / mode_speed per leg)
+    - "fastest": cost = estimated_hours (distance / effective_speed per leg,
+      where effective_speed = baseSpeed × terrainSpeedModifiers[legTerrainType])
     - "safest": cost = cumulative_risk
     - "shortest": cost = distance_km
 
@@ -942,10 +962,14 @@ TransitRouteOption:
     ]
   notes: |
     Checks mode requirements against entity state:
+    - Entity type: checks entityType against mode's validEntityTypes (if set).
+      Modes with null validEntityTypes skip this check for non-character entities.
     - Item requirements: calls lib-inventory to check if entity has required item tag (L2 hard)
     - Species requirements: calls lib-character or lib-species for species code (L2 hard)
     - Proficiency: queries lib-seed for seed growth level (L2 hard) when mode has
       proficiencySeedTypeCode set. Proficiency bonus applied to effectiveSpeed.
+    - Terrain speed: effectiveSpeed accounts for terrainSpeedModifiers when locationId
+      is provided and the entity's current connection terrain is known.
 
     Also applies ITransitCostModifierProvider enrichment to compute preferenceCost.
     This is the endpoint the variable provider calls internally.
@@ -955,7 +979,7 @@ TransitRouteOption:
 
 ```yaml
 /transit/discovery/reveal:
-  access: authenticated
+  access: user
   description: "Reveal a discoverable connection to an entity (explicit grant)"
   request:
     entityId: uuid
@@ -995,7 +1019,7 @@ TransitRouteOption:
     ]
 ```
 
-**Total endpoints: 28**
+**Total endpoints: 29**
 
 ---
 
@@ -1005,7 +1029,7 @@ TransitRouteOption:
 # Published via lib-messaging (IMessageBus)
 
 # Connection events
-transit.connection.status_changed:
+transit.connection.status-changed:
   description: "A connection's operational status changed"
   payload:
     connectionId: uuid
@@ -1046,7 +1070,7 @@ transit.journey.departed:
     - Character History (L4): significant journeys become backstory elements
     - Quest (L2): travel departure objectives ("leave the village")
 
-transit.journey.waypoint_reached:
+transit.journey.waypoint-reached:
   description: "A traveling entity reached an intermediate waypoint"
   payload:
     journeyId: uuid
@@ -1158,10 +1182,11 @@ transit.discovery.revealed:
     - Analytics (L4): discovery pattern tracking
 ```
 
-### Lifecycle Events
+### Mode Status Events (Custom)
 
 ```yaml
-# Auto-generated via x-lifecycle in events schema
+# Custom events -- modes use register/deprecate semantics, not standard CRUD lifecycle.
+# These are NOT x-lifecycle generated.
 transit.mode.registered:
   description: "A new transit mode was registered"
   payload:
@@ -1173,26 +1198,24 @@ transit.mode.deprecated:
   payload:
     code: string
     reason: string
+```
 
-transit.connection.created:
+### Connection Lifecycle Events (x-lifecycle)
+
+```yaml
+# Auto-generated via x-lifecycle in events schema.
+# x-lifecycle generates Created, Updated, and Deleted events with full entity data.
+transit-connection.created:
   description: "A new connection was created between locations"
-  payload:
-    connectionId: uuid
-    fromLocationId: uuid
-    toLocationId: uuid
-    fromRealmId: uuid
-    toRealmId: uuid
-    crossRealm: boolean
+  payload: TransitConnection (full entity data)
 
-transit.connection.deleted:
+transit-connection.updated:
+  description: "A connection's properties were updated"
+  payload: TransitConnection (full entity data + changedFields)
+
+transit-connection.deleted:
   description: "A connection was removed"
-  payload:
-    connectionId: uuid
-    fromLocationId: uuid
-    toLocationId: uuid
-    fromRealmId: uuid
-    toRealmId: uuid
-    crossRealm: boolean
+  payload: TransitConnection (full entity data + deletedReason)
 ```
 
 ---
@@ -1236,14 +1259,8 @@ TransitServiceConfiguration:
     CargoSpeedPenaltyThresholdKg:
       type: number
       default: 100.0
-      description: "Cargo weight above this threshold reduces speed. Speed reduction = (cargo - threshold) / (capacity - threshold) * CargoSpeedPenaltyMaxRate"
+      description: "Cargo weight above this threshold reduces speed. Speed reduction = (cargo - threshold) / (capacity - threshold) * DefaultCargoSpeedPenaltyRate"
       env: TRANSIT_CARGO_SPEED_PENALTY_THRESHOLD_KG
-
-    CargoSpeedPenaltyMaxRate:
-      type: number
-      default: 0.3
-      description: "Maximum speed reduction rate from cargo weight (0.3 = 30% speed reduction at full capacity). Overridden per-mode when TransitMode.cargoSpeedPenaltyRate is set."
-      env: TRANSIT_CARGO_SPEED_PENALTY_MAX_RATE
 
     SeasonalConnectionCheckIntervalSeconds:
       type: integer
@@ -1688,7 +1705,7 @@ Analytics consumes all transit journey events for aggregation:
 Transit registers as an `ISeededResourceProvider` with lib-resource for cleanup coordination:
 - **Location deletion (CASCADE)**: When a location is deleted, Resource calls Transit's cleanup callback. Transit closes all connections referencing the deleted location (`status: closed`, `reason: "location_deleted"`) and interrupts active journeys passing through it.
 - **Character deletion (CASCADE)**: Transit's cleanup callback clears discovery data for the deleted entity from the `transit-discovery` store and abandons any active journeys for that entity.
-- Transit does NOT subscribe to `location.deleted` or `character.deleted` events for cleanup -- this is handled exclusively through the Resource cleanup callback pattern per T28.
+- Transit does NOT subscribe to `location.deleted` or `character.deleted` events for cleanup -- this is handled exclusively through the Resource cleanup callback pattern per FOUNDATION TENETS (Resource-Managed Cleanup).
 
 ---
 
@@ -1710,7 +1727,7 @@ SeasonalConnectionWorker:
     travelers caught by seasonal closure).
 
   publishes:
-    - transit.connection.status_changed (for each connection that changes)
+    - transit.connection.status-changed (for each connection that changes)
 ```
 
 ### Journey Archival Worker
@@ -1757,13 +1774,11 @@ Journey events (departed, waypoint, arrived) flow through the standard lib-messa
 
 1. **Caravan formations**: Multiple entities traveling together as a group. Group speed = slowest member. Group risk = reduced (safety in numbers). Caravan as an entity type for journeys, with member tracking and formation bonuses. Faction merchant guilds could manage NPC caravans.
 
-2. **Terrain speed modifiers**: Rather than a single speed per mode, modes could have per-terrain speed multipliers: `horseback.speed.road = 30, horseback.speed.trail = 20, horseback.speed.forest = 10`. This adds granularity to route calculation without changing the core architecture.
+2. **Fatigue and rest**: Long journeys accumulate fatigue. After a configurable threshold, the entity must rest (journey auto-pauses at next waypoint). Rest duration depends on mode and entity stamina. Creates natural stopping points at inns and camps.
 
-3. **Fatigue and rest**: Long journeys accumulate fatigue. After a configurable threshold, the entity must rest (journey auto-pauses at next waypoint). Rest duration depends on mode and entity stamina. Creates natural stopping points at inns and camps.
+3. **Weather-reactive connections**: Environment (L4) automatically calls `/transit/connection/update-status` when weather conditions make connections impassable. Storms close mountain passes; floods close river crossings; drought closes river boat routes. This is a pure consumer relationship -- Transit exposes the API, Environment calls it.
 
-4. **Weather-reactive connections**: Environment (L4) automatically calls `/transit/connection/update-status` when weather conditions make connections impassable. Storms close mountain passes; floods close river crossings; drought closes river boat routes. This is a pure consumer relationship -- Transit exposes the API, Environment calls it.
-
-5. **Mount bonding**: Integration with Relationship (L2) for character-mount relationships. A well-bonded mount has higher effective speed and lower fatigue. Bond strength grows with travel distance. Follows the existing Relationship entity-to-entity model.
+4. **Mount bonding**: Integration with Relationship (L2) for character-mount relationships. A well-bonded mount has higher effective speed and lower fatigue. Bond strength grows with travel distance. Follows the existing Relationship entity-to-entity model.
 
 ### Resolved Design Decisions
 
@@ -1786,6 +1801,22 @@ Journey events (departed, waypoint, arrived) flow through the standard lib-messa
 9. **Seed proficiency**: Core feature. Modes optionally reference `proficiencySeedTypeCode`. Entity's Seed growth level modifies effective speed. Connects Transit to the content flywheel.
 
 10. **Status transition concurrency**: Optimistic concurrency pattern with `currentStatus`/`newStatus` and `forceUpdate` bypass. Prevents silent status conflicts between independent actors while supporting administrative overrides.
+
+11. **Terrain speed modifiers**: Core feature. Modes define optional `terrainSpeedModifiers` (per-terrain multipliers on base speed). Route calculation uses `baseSpeed × terrainSpeedModifiers[terrainType]` per-leg, making terrain a first-class factor in path cost evaluation. Missing keys default to 1.0 (base speed).
+
+12. **Per-mode cargo speed penalty**: Core feature. Each mode can optionally set `cargoSpeedPenaltyRate` to override the plugin-level `DefaultCargoSpeedPenaltyRate`. Null falls back to the plugin config. 0.0 disables the penalty entirely (pack mules, cargo ships). This avoids unrealistic penalties on modes designed for cargo.
+
+13. **Entity type validation**: Core feature. Modes define optional `validEntityTypes` (string array). When set, only those entity types may use the mode. Null disables validation for non-character entities (caller's responsibility). Characters are not exempt -- modes for armies/caravans may validly exclude characters.
+
+14. **Seasonal key validation**: Core feature. Connection `seasonalAvailability` keys are validated against the realm's Worldstate season codes on creation. Invalid keys produce `INVALID_SEASON_KEY` error. Prevents silent misconfiguration where seasonal closures never trigger.
+
+15. **Discovery store durability**: MySQL-backed with Redis cache. Discovery is permanent world knowledge that must survive Redis restarts. The Redis cache (`transit-discovery-cache`) provides fast route calculation lookups with lazy population from MySQL on cache miss.
+
+16. **Location presence tracking**: API-based, not event-based. `AutoUpdateLocationOnTransition` config (default true) makes Transit call Location's entity placement API on departure, waypoint arrival, and final arrival. Both services are L2 and always co-deployed, so direct API calls are correct. Entities remain at their last known location while in transit between graph nodes.
+
+17. **Journey archive retention**: Configurable via `JourneyArchiveRetentionDays` (default 365). The archival worker deletes archives older than the threshold. 0 = retain indefinitely.
+
+18. **Variable provider cache strategy**: Lazy invalidation with configurable TTL. Mode availability is cached per-entity and expires after TTL. Acceptable tradeoff given worlds are large and transit decisions are not frame-rate-sensitive. Eager invalidation deferred until empirical evidence of staleness issues.
 
 ---
 

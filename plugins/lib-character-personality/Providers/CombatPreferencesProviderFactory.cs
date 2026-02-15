@@ -7,6 +7,7 @@
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 using BeyondImmersion.BannouService.CharacterPersonality.Caching;
 using BeyondImmersion.BannouService.Providers;
+using BeyondImmersion.BannouService.Services;
 
 namespace BeyondImmersion.BannouService.CharacterPersonality.Providers;
 
@@ -27,7 +28,7 @@ public sealed class CombatPreferencesProviderFactory : IVariableProviderFactory
     }
 
     /// <inheritdoc/>
-    public string ProviderName => "combat";
+    public string ProviderName => VariableProviderDefinitions.Combat;
 
     /// <inheritdoc/>
     public async Task<IVariableProvider> CreateAsync(Guid? entityId, CancellationToken ct)

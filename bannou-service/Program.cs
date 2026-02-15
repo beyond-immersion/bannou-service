@@ -344,6 +344,13 @@ public static class Program
             Logger.Log(LogLevel.Debug, null, "Resolving plugin services from DI container...");
             PluginLoader?.ResolveServices(webApp.Services);
 
+            // Validate variable provider registrations against schema definitions
+            if (PluginLoader != null && !PluginLoader.ValidateVariableProviders(webApp.Services))
+            {
+                Logger.Log(LogLevel.Error, null, "Variable provider validation failed - exiting application.");
+                return 1;
+            }
+
             // Initialize plugins
             if (PluginLoader != null)
             {

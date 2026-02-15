@@ -6,6 +6,7 @@
 
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 using BeyondImmersion.BannouService.Seed.Caching;
+using BeyondImmersion.BannouService.Services;
 
 namespace BeyondImmersion.BannouService.Seed.Providers;
 
@@ -37,7 +38,7 @@ public sealed class SeedProvider : IVariableProvider
     private readonly Dictionary<string, SeedSnapshot> _seedsByType;
 
     /// <inheritdoc/>
-    public string Name => "seed";
+    public string Name => VariableProviderDefinitions.Seed;
 
     /// <summary>
     /// Creates a new SeedProvider with the given seed data.

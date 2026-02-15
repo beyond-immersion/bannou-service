@@ -5,6 +5,7 @@
 // =============================================================================
 
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
+using BeyondImmersion.BannouService.Services;
 
 namespace BeyondImmersion.BannouService.CharacterHistory.Providers;
 
@@ -24,7 +25,7 @@ public sealed class BackstoryProvider : IVariableProvider
     private readonly List<BackstoryElement> _allElements;
 
     /// <inheritdoc/>
-    public string Name => "backstory";
+    public string Name => VariableProviderDefinitions.Backstory;
 
     /// <summary>
     /// Creates a new backstory provider.

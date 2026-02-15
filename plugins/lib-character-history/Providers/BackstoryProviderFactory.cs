@@ -7,6 +7,7 @@
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 using BeyondImmersion.BannouService.CharacterHistory.Caching;
 using BeyondImmersion.BannouService.Providers;
+using BeyondImmersion.BannouService.Services;
 
 namespace BeyondImmersion.BannouService.CharacterHistory.Providers;
 
@@ -27,7 +28,7 @@ public sealed class BackstoryProviderFactory : IVariableProviderFactory
     }
 
     /// <inheritdoc/>
-    public string ProviderName => "backstory";
+    public string ProviderName => VariableProviderDefinitions.Backstory;
 
     /// <inheritdoc/>
     public async Task<IVariableProvider> CreateAsync(Guid? entityId, CancellationToken ct)

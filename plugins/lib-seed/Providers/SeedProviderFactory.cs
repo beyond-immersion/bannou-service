@@ -7,6 +7,7 @@
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Seed.Caching;
+using BeyondImmersion.BannouService.Services;
 
 namespace BeyondImmersion.BannouService.Seed.Providers;
 
@@ -27,7 +28,7 @@ public sealed class SeedProviderFactory : IVariableProviderFactory
     }
 
     /// <inheritdoc/>
-    public string ProviderName => "seed";
+    public string ProviderName => VariableProviderDefinitions.Seed;
 
     /// <inheritdoc/>
     public async Task<IVariableProvider> CreateAsync(Guid? entityId, CancellationToken ct)

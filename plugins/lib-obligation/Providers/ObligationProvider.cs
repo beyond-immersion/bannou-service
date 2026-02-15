@@ -1,4 +1,5 @@
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
+using BeyondImmersion.BannouService.Services;
 
 namespace BeyondImmersion.BannouService.Obligation.Providers;
 
@@ -27,7 +28,7 @@ public sealed class ObligationProvider : IVariableProvider
     private readonly ObligationManifestModel? _manifest;
 
     /// <inheritdoc/>
-    public string Name => "obligations";
+    public string Name => VariableProviderDefinitions.Obligations;
 
     /// <summary>
     /// Creates a new obligation provider with the given manifest data.

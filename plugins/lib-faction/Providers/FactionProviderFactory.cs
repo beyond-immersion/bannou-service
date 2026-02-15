@@ -34,7 +34,7 @@ public sealed class FactionProviderFactory : IVariableProviderFactory
     }
 
     /// <inheritdoc/>
-    public string ProviderName => "faction";
+    public string ProviderName => VariableProviderDefinitions.Faction;
 
     /// <inheritdoc/>
     public async Task<IVariableProvider> CreateAsync(Guid? entityId, CancellationToken ct)
@@ -108,7 +108,7 @@ public sealed class FactionProvider : IVariableProvider
     private readonly List<FactionSnapshot> _factions;
 
     /// <inheritdoc/>
-    public string Name => "faction";
+    public string Name => VariableProviderDefinitions.Faction;
 
     /// <summary>
     /// Creates a new FactionProvider with the given faction data.

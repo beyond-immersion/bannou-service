@@ -5,6 +5,7 @@
 // =============================================================================
 
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
+using BeyondImmersion.BannouService.Services;
 
 namespace BeyondImmersion.BannouService.CharacterPersonality.Providers;
 
@@ -22,7 +23,7 @@ public sealed class CombatPreferencesProvider : IVariableProvider
     private readonly Dictionary<string, object?> _preferences;
 
     /// <inheritdoc/>
-    public string Name => "combat";
+    public string Name => VariableProviderDefinitions.Combat;
 
     /// <summary>
     /// Creates a new combat preferences provider.

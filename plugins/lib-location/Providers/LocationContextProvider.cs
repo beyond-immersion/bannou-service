@@ -5,6 +5,7 @@
 // =============================================================================
 
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
+using BeyondImmersion.BannouService.Services;
 
 namespace BeyondImmersion.BannouService.Location.Providers;
 
@@ -22,7 +23,7 @@ public sealed class LocationContextProvider : IVariableProvider
     private readonly LocationContextData? _data;
 
     /// <inheritdoc/>
-    public string Name => "location";
+    public string Name => VariableProviderDefinitions.Location;
 
     /// <summary>
     /// Creates a new location context provider with the given context data.

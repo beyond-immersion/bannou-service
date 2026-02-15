@@ -44,6 +44,10 @@ mkdir -p "$REPO_ROOT/docs"
 echo "  → Generating state store reference..."
 python3 "$SCRIPT_DIR/generate-state-stores.py"
 
+# Generate variable provider documentation (from schemas/variable-providers.yaml)
+echo "  → Generating variable provider reference..."
+python3 "$SCRIPT_DIR/generate-variable-providers.py"
+
 # Generate events documentation
 echo "  → Generating events reference..."
 python3 "$SCRIPT_DIR/generate-event-docs.py"

@@ -60,6 +60,16 @@ else
 fi
 echo ""
 
+# Generate variable provider definitions from schema
+echo -e "${BLUE}🔌 Generating variable provider definitions from schema...${NC}"
+if python3 "$SCRIPT_DIR/generate-variable-providers.py"; then
+    echo -e "${GREEN}✅ Variable provider definitions generated successfully${NC}"
+else
+    echo -e "${RED}❌ Failed to generate variable provider definitions${NC}"
+    exit 1
+fi
+echo ""
+
 # Generate lifecycle events from x-lifecycle definitions in schemas
 echo -e "${BLUE}🔄 Generating lifecycle events from x-lifecycle definitions...${NC}"
 if python3 "$SCRIPT_DIR/generate-lifecycle-events.py"; then

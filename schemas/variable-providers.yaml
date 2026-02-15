@@ -1,0 +1,69 @@
+# Bannou Variable Provider Definitions
+#
+# This file defines all ABML variable providers used by the Actor runtime.
+# Generated code provides typed constants and metadata.
+#
+# SCHEMA MODIFICATION GATE: STOP. Before modifying this schema, you MUST:
+# 1. Read docs/reference/SCHEMA-RULES.md
+# 2. State which section applies to your change
+# 3. Only then proceed with edits
+# Edits without stating the applicable rule are FORBIDDEN.
+#
+# Schema: x-variable-providers defines each provider with:
+#   - service: Service plugin that owns and registers this provider (PascalCase)
+#   - purpose: Human-readable description of what data this provider exposes
+#
+# The YAML key is the provider namespace name used in ABML expressions.
+# For example, key "personality" maps to ${personality.*} expressions.
+#
+# Generated artifacts:
+#   - bannou-service/Generated/VariableProviderDefinitions.cs
+#   - docs/GENERATED-VARIABLE-PROVIDERS.md
+#
+# Regenerate with: python3 scripts/generate-variable-providers.py
+
+x-variable-providers:
+
+  # ============================================================================
+  # L2 Game Foundation Providers
+  # ============================================================================
+
+  location:
+    service: Location
+    purpose: "Location context data for ABML expressions (${location.*})"
+
+  quest:
+    service: Quest
+    purpose: "Active quest data for ABML expressions (${quest.*})"
+
+  seed:
+    service: Seed
+    purpose: "Seed growth and capability data for ABML expressions (${seed.*})"
+
+  # ============================================================================
+  # L4 Game Features Providers
+  # ============================================================================
+
+  backstory:
+    service: CharacterHistory
+    purpose: "Character backstory elements for ABML expressions (${backstory.*})"
+
+  combat:
+    service: CharacterPersonality
+    purpose: "Combat preference data for ABML expressions (${combat.*})"
+
+  encounters:
+    service: CharacterEncounter
+    purpose: "Encounter history and sentiment for ABML expressions (${encounters.*})"
+
+  faction:
+    service: Faction
+    purpose: "Faction membership and status data for ABML expressions (${faction.*})"
+
+  obligations:
+    service: Obligation
+    purpose: "Contract obligation action cost modifiers for ABML expressions (${obligations.*})"
+
+  personality:
+    service: CharacterPersonality
+    purpose: "Personality trait values for ABML expressions (${personality.*})"

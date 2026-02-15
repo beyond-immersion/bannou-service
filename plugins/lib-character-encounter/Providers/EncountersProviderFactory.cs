@@ -7,6 +7,7 @@
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 using BeyondImmersion.BannouService.CharacterEncounter.Caching;
 using BeyondImmersion.BannouService.Providers;
+using BeyondImmersion.BannouService.Services;
 
 namespace BeyondImmersion.BannouService.CharacterEncounter.Providers;
 
@@ -27,7 +28,7 @@ public sealed class EncountersProviderFactory : IVariableProviderFactory
     }
 
     /// <inheritdoc/>
-    public string ProviderName => "encounters";
+    public string ProviderName => VariableProviderDefinitions.Encounters;
 
     /// <inheritdoc/>
     public async Task<IVariableProvider> CreateAsync(Guid? entityId, CancellationToken ct)

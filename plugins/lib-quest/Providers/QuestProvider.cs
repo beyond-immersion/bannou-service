@@ -5,6 +5,7 @@
 // =============================================================================
 
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
+using BeyondImmersion.BannouService.Services;
 
 namespace BeyondImmersion.BannouService.Quest.Providers;
 
@@ -33,7 +34,7 @@ public sealed class QuestProvider : IVariableProvider
     private readonly Dictionary<string, QuestInstanceResponse> _byCode;
 
     /// <inheritdoc />
-    public string Name => "quest";
+    public string Name => VariableProviderDefinitions.Quest;
 
     /// <summary>
     /// Creates a new QuestProvider with the given quest data.

@@ -1,6 +1,7 @@
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Configuration;
 using BeyondImmersion.BannouService.Controllers;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.AspNetCore.Builder;
@@ -990,6 +991,77 @@ public class PluginLoader
         return clientLayer > serviceLayer;
     }
 
+
+    /// <summary>
+    /// Validates that all registered IVariableProviderFactory implementations have ProviderNames
+    /// that are defined in VariableProviderDefinitions (generated from schemas/variable-providers.yaml).
+    /// Also checks for duplicate provider name registrations.
+    /// </summary>
+    /// <param name="serviceProvider">The built DI service provider.</param>
+    /// <returns>True if all providers are valid; false if violations are found.</returns>
+    public bool ValidateVariableProviders(IServiceProvider serviceProvider)
+    {
+        using var scope = serviceProvider.CreateScope();
+        var factories = scope.ServiceProvider.GetServices<IVariableProviderFactory>().ToList();
+
+        if (factories.Count == 0)
+        {
+            _logger.LogDebug("No variable provider factories registered, skipping validation");
+            return true;
+        }
+
+        _logger.LogDebug("Validating {Count} variable provider factory registrations", factories.Count);
+
+        var violations = new List<string>();
+        var seenNames = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        foreach (var factory in factories)
+        {
+            var providerName = factory.ProviderName;
+            var factoryType = factory.GetType().Name;
+
+            // Check that the provider name is defined in the schema-generated definitions
+            if (!VariableProviderDefinitions.Metadata.ContainsKey(providerName))
+            {
+                violations.Add(
+                    $"{factoryType}: ProviderName \"{providerName}\" is not defined in " +
+                    "schemas/variable-providers.yaml. Add it to the schema and regenerate.");
+            }
+
+            // Check for duplicate provider names
+            if (seenNames.TryGetValue(providerName, out var existingFactory))
+            {
+                violations.Add(
+                    $"{factoryType}: Duplicate ProviderName \"{providerName}\" " +
+                    $"(already registered by {existingFactory}). " +
+                    "Each provider namespace must be unique.");
+            }
+            else
+            {
+                seenNames[providerName] = factoryType;
+            }
+        }
+
+        if (violations.Count > 0)
+        {
+            _logger.LogError(
+                "VARIABLE PROVIDER VIOLATIONS DETECTED! The following provider registrations are invalid:");
+
+            foreach (var violation in violations)
+            {
+                _logger.LogError("  {Violation}", violation);
+            }
+
+            _logger.LogError(
+                "Fix provider registrations or update schemas/variable-providers.yaml before proceeding.");
+
+            return false;
+        }
+
+        _logger.LogDebug(
+            "Variable provider validation passed for {Count} factories", factories.Count);
+        return true;
+    }
 
     /// <summary>
     /// Get a centrally resolved service for a plugin.

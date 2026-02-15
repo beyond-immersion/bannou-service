@@ -7,6 +7,7 @@
 using BeyondImmersion.Bannou.BehaviorExpressions.Expressions;
 using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.Quest.Caching;
+using BeyondImmersion.BannouService.Services;
 
 namespace BeyondImmersion.BannouService.Quest.Providers;
 
@@ -27,7 +28,7 @@ public sealed class QuestProviderFactory : IVariableProviderFactory
     }
 
     /// <inheritdoc/>
-    public string ProviderName => "quest";
+    public string ProviderName => VariableProviderDefinitions.Quest;
 
     /// <inheritdoc/>
     public async Task<IVariableProvider> CreateAsync(Guid? entityId, CancellationToken ct)
