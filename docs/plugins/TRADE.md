@@ -1,18 +1,18 @@
-# Trade Service (lib-trade)
+# Trade Service Deep Dive
 
-> **Status**: Aspirational (Pre-Implementation)
-> **Layer**: L4 GameFeatures
+> **Plugin**: lib-trade
 > **Schema**: `schemas/trade-api.yaml` (not yet created)
-> **Hard Dependencies**: Transit (L2), Currency (L2), Item (L2), Inventory (L2), Worldstate (L2), Contract (L1)
-> **Soft Dependencies**: Escrow (L4), Faction (L4), Environment (L4), Analytics (L4), Market (L4)
-> **Planning Reference**: `docs/planning/ECONOMY-CURRENCY-ARCHITECTURE.md` (Parts 2, 7)
-> **No schema, no code.**
->
-> **Hierarchy note**: Transit, Worldstate, and Environment are aspirational services not yet listed in SERVICE-HIERARCHY.md. Their L2/L4 classifications follow from their design intents (Transit/Worldstate = foundational game infrastructure; Environment = optional game feature). SERVICE-HIERARCHY.md must be updated to include these services before implementation begins. Workshop, Organization, and Hearsay are also referenced in this document as aspirational concepts without existing deep dives or hierarchy assignments.
+> **Version**: N/A (aspirational)
+> **State Store**: trade-routes (MySQL), trade-shipments (Redis), trade-shipments-archive (MySQL), trade-tariff-policies (MySQL), trade-tariff-records (MySQL), trade-contraband (MySQL), trade-tax-policies (MySQL), trade-tax-assessments (MySQL), trade-npc-profiles (MySQL), trade-supply-demand (Redis), trade-velocity (Redis), trade-velocity-history (MySQL)
+> **Status**: Aspirational (Pre-Implementation) -- No schema, no code.
+> **Layer**: L4 GameFeatures
+> **Hard Dependencies**: Transit (L2), Currency (L2), Item (L2), Inventory (L2), Worldstate (L2)
+> **Soft Dependencies**: Escrow (L4), Faction (L4), Environment (L4), Analytics (L4), Market (L4), Hearsay (L4)
+> **Planning Reference**: `docs/guides/ECONOMY-SYSTEM.md`, `docs/plans/ITEM-ECONOMY-PLUGINS.md`
 
 ---
 
-## Service Overview
+## Overview
 
 The Trade service (L4 GameFeatures) is the economic logistics and supply orchestration layer for Bannou. It provides the mechanisms for moving goods across distances over game-time, enforcing border policies, calculating supply/demand dynamics, and enabling NPC economic decision-making. Trade is to the economy what Puppetmaster is to NPC behavior -- an orchestration layer that composes lower-level primitives (Transit for movement, Currency for payments, Item/Inventory for cargo, Escrow for custody) into higher-level economic flows.
 
@@ -134,7 +134,7 @@ Trade monitors the faucet/sink balance via velocity metrics and publishes alerts
 Trade doesn't define supply chains -- they **emerge** from NPC GOAP decisions interacting with trade infrastructure:
 
 ```
-WORKSHOP (L2) at Iron Mine              MARKET (L4) at Capital
+WORKSHOP (L4) at Iron Mine              MARKET (L4) at Capital
   Produces 10 iron ingots/game-day        Demand: 15 ingots/day
   Local price: 10g/ingot                  Local price: 25g/ingot
          │                                       ▲
@@ -176,6 +176,38 @@ NEXT CYCLE:
 ```
 
 This is the vision from `VISION.md`: *"The economy must be NPC-driven, not player-driven. Supply, demand, pricing, and trade routes emerge from NPC behavior."*
+
+---
+
+## Dependencies
+
+| Dependency | Type | Usage |
+|------------|------|-------|
+| lib-state (IStateStoreFactory) | L0 (hard) | Persistence for routes, shipments, tariff/tax policies, NPC profiles, supply/demand snapshots, velocity metrics |
+| lib-messaging (IMessageBus) | L0 (hard) | Publishing shipment lifecycle, tariff, tax, velocity, and supply/demand events |
+| lib-transit (ITransitClient) | L2 (hard) | Route validation (connection existence), travel time estimation, journey creation/tracking for shipments |
+| lib-currency (ICurrencyClient) | L2 (hard) | Tariff/tax collection (debit), revenue credits, wallet balance queries for velocity/tax assessment |
+| lib-item (IItemClient) | L2 (hard) | Item instance validation, template lookup for contraband checking |
+| lib-inventory (IInventoryClient) | L2 (hard) | Cargo custody transfers, local stock level queries for supply/demand snapshots |
+| lib-worldstate (IWorldstateClient) | L2 (hard) | Game-time timestamps for shipments/journeys, seasonal route availability, tax assessment periods |
+| lib-escrow (IEscrowClient) | L4 (soft) | Safe custody during transport when `custodyMode: "escrow"` |
+| lib-faction (IFactionClient) | L4 (soft) | Border sovereignty, faction-owned tariff policies, diplomatic exemptions |
+| lib-environment (IEnvironmentClient) | L4 (soft) | Seasonal resource availability, weather risk modifiers, spoilage factors |
+| lib-analytics (IAnalyticsClient) | L4 (soft) | Historical transaction data for richer velocity computation |
+| lib-market (IMarketClient) | L4 (soft) | Price data, listing counts for supply/demand snapshot enrichment |
+| lib-hearsay (IHearsayClient) | L4 (soft) | Belief-filtered price knowledge for NPC market analysis (imperfect information) |
+
+---
+
+## Dependents
+
+| Dependent | Relationship |
+|-----------|-------------|
+| lib-market (L4) | Subscribes to `trade.shipment.arrived` for supply arrival price updates |
+| lib-analytics (L4) | Subscribes to `trade.shipment.departed`, `trade.shipment.arrived`, `trade.shipment.lost`, `trade.shipment.border_crossed`, `trade.tariff.collected`, `trade.tariff.evaded` for economic tracking |
+| lib-puppetmaster (L4) | Subscribes to `trade.shipment.departed`, `trade.shipment.border_crossed`, `trade.shipment.lost`, `trade.velocity.alert`, `trade.tax.debt_defaulted` for divine economic intervention |
+| lib-obligation (L4) | Subscribes to `trade.tax.debt_defaulted` for enforcement obligation creation |
+| lib-actor (L2) | Consumes `${trade.*}` variables via IVariableProviderFactory (pull-based, hierarchy-safe) |
 
 ---
 
@@ -1248,9 +1280,7 @@ EconomicVelocityMetrics:
     - Only considers items the NPC produces/consumes or knows about
     - priceAwareness affects accuracy of price data
     - NPC may not know about all opportunities (imperfect information)
-    Integrates with Hearsay if available for belief-filtered price knowledge
-    (Hearsay is an aspirational service for NPC information propagation --
-    no deep dive or hierarchy assignment exists yet).
+    Integrates with Hearsay (L4) if available for belief-filtered price knowledge.
 ```
 
 ### Supply/Demand Queries
@@ -1353,11 +1383,13 @@ EconomicVelocityMetrics:
     inflationRisk: string           # "low", "moderate", "high", "critical"
 ```
 
-**Total endpoints: 38**
+**Total endpoints: 37**
 
 ---
 
 ## Events
+
+### Published Events
 
 ```yaml
 # Shipment lifecycle events
@@ -1445,6 +1477,13 @@ trade.route.status_changed:
   # or Trade provides a DI Listener interface for route change notifications.
 ```
 
+### Consumed Events
+
+| Topic | Handler | Action |
+|-------|---------|--------|
+| `transit.connection.status_changed` | `HandleTransitConnectionStatusChangedAsync` | Updates trade route viability when a Transit connection changes status (closed, seasonal, etc.) |
+| Market price events (soft, when available) | `HandleMarketPriceChangedAsync` | Enriches supply/demand snapshots with current Market price data |
+
 ---
 
 ## Configuration
@@ -1513,6 +1552,28 @@ TradeServiceConfiguration:
       description: "How many game-days of velocity history to retain"
       env: TRADE_VELOCITY_HISTORY_RETENTION_GAME_DAYS
 ```
+
+---
+
+## DI Services & Helpers
+
+*Aspirational -- no implementation exists. Expected dependencies based on design:*
+
+| Service | Role |
+|---------|------|
+| `ILogger<TradeService>` | Structured logging |
+| `TradeServiceConfiguration` | Typed configuration access |
+| `IStateStoreFactory` | State store access for routes, shipments, policies, profiles, metrics |
+| `IMessageBus` | Event publishing for shipment lifecycle, tariff, tax, velocity events |
+| `IEventConsumer` | Event handler registration for transit connection status changes |
+| `IDistributedLockProvider` | Distributed locking for shipment state transitions |
+| `ITransitClient` | Transit connection validation, journey creation, route calculation |
+| `ICurrencyClient` | Tariff/tax debit/credit operations, wallet balance queries |
+| `IItemClient` | Item instance validation, template lookup |
+| `IInventoryClient` | Cargo transfer, local stock queries |
+| `IWorldstateClient` | Game-time queries for timestamps and period boundaries |
+| `IServiceProvider` | Runtime resolution of soft L4 dependencies (Escrow, Faction, Environment, Analytics, Market) |
+| `IVariableProviderFactory` (implements) | Provides `${trade.*}` namespace to Actor (L2) |
 
 ---
 
@@ -1626,6 +1687,31 @@ trade-velocity-history:
     - currencyDefinitionId
     - periodStart
 ```
+
+---
+
+## Visual Aid
+
+**Shipment Lifecycle (Multi-Step Operation Flow)**
+
+```
+CREATED ──► LOADING ──► IN_TRANSIT ──► ARRIVED ──► COMPLETED
+   │           │            │             │
+   │ items     │ departure  │ journey     │ unload
+   │ reserved  │ confirmed  │ tracked     │ + settle
+   │ via       │ via        │ via Transit │ currency
+   │ Escrow    │ Worldstate │ connection  │ via
+   │           │ clock tick │ traversal   │ Currency
+   │           │            │             │
+   ▼           ▼            ▼             ▼
+CANCELLED  CANCELLED    LOST/         DISPUTED
+(refund    (refund +    DELAYED       (partial
+ escrow)    restock)    (risk event   damage →
+                         from Env)    Escrow
+                                      arbitration)
+```
+
+This diagram shows the state machine for a single shipment, which is the core multi-step operation. Each transition involves a different L2/L4 service (Escrow for custody, Worldstate for game clock, Transit for movement, Currency for settlement). The failure branches illustrate how environmental events and disputes interact with the happy path. The dependency diagram is already in the Core Architecture section above.
 
 ---
 
@@ -1962,9 +2048,25 @@ Tax assessment runs against eligible taxpayers per realm per policy. With progre
 
 ---
 
-## Work Tracking
+## Stubs & Unimplemented Features
 
-### Potential Extensions
+The entire Trade service is aspirational. No schema files, generated code, or service implementation exist.
+
+**Before implementation, the following must be created:**
+1. `schemas/trade-api.yaml` -- API schema with all endpoint definitions
+2. `schemas/trade-events.yaml` -- Event schemas with x-lifecycle and x-event-publications
+3. `schemas/trade-configuration.yaml` -- Configuration schema
+4. State store entries in `schemas/state-stores.yaml`
+5. Code generation via `cd scripts && ./generate-service.sh trade`
+6. `TradeService.cs` -- Business logic implementation
+7. `TradeServiceEvents.cs` -- Event handler implementations
+8. `TradeServiceModels.cs` -- Internal storage models
+9. `TradeVariableProviderFactory.cs` -- IVariableProviderFactory implementation for `${trade.*}`
+10. Background workers: VelocityCalculationWorker, SupplyDemandSnapshotWorker, TaxAssessmentWorker, ShipmentExpirationWorker
+
+---
+
+## Potential Extensions
 
 1. **Insurance system**: Pay a premium to offset shipment loss risk. Insurance policies are Contract instances with prebound refund clauses. Insurance companies (Organizations) set premiums based on route risk profiles and shipment value. Divine economic actors may operate insurance schemes.
 
@@ -1982,29 +2084,47 @@ Tax assessment runs against eligible taxpayers per realm per policy. With progre
 
 8. **Price history integration**: Time-series price data for items at locations, enabling trend analysis ("iron has been climbing for 3 game-weeks"), seasonal pattern detection, and more sophisticated NPC trading strategies.
 
-### Design Considerations
-
-1. **Shipment auto-custody**: Should Trade automatically escrow goods on shipment creation, or should the game explicitly manage custody? **Recommendation**: Offer `custodyMode` as a per-shipment choice. Simple games use "escrow" (automatic). Complex games use "virtual" (game manages). This follows the three-tier usage pattern.
-
-2. **NPC profile ownership**: Should NPC economic profiles live in Trade or in a shared location? Character Personality has `${personality.*}`, Disposition has `${disposition.*}` -- both are L4 providers. **Recommendation**: Trade owns economic profiles because they're inseparable from trade logistics. The profile is consumed by the Trade variable provider and GOAP integration. Other services that need economic data query Trade.
-
-3. **Velocity data source**: Should velocity come from direct Currency transaction queries or from Analytics event subscriptions? **Recommendation**: Direct Currency queries for accuracy. Analytics can provide supplementary data (player vs NPC breakdown, event correlation) when available, but velocity computation must work without Analytics (graceful degradation).
-
-4. **Tax enforcement**: Should Trade enforce tax consequences (asset seizure, imprisonment) or just report delinquency? **Recommendation**: Advisory only. Trade reports debt and suggests consequences. The game (or NPC actors via Obligation) decides enforcement. This follows the three-tier pattern -- the plugin provides data, not policy.
-
-5. **Cross-realm trade routes**: Should trade routes that cross realm boundaries use cross-realm Currency conversion automatically? **Recommendation**: No automatic conversion. The game or NPC decides when and how to convert currency. Trade records the border crossing and reports applicable exchange rates via lib-currency, but the conversion decision is game logic.
-
-6. **Relationship with lib-market**: Market handles exchange at a point (auctions, vendors). Trade handles logistics between points. They share supply/demand concepts but own different data. **Recommendation**: Trade subscribes to Market's price events for supply/demand enrichment. Market subscribes to Trade's shipment arrival events for supply updates. Neither depends on the other -- both work independently but are richer together.
-
-7. **Workshop integration**: Workshop produces goods over game-time. Trade ships goods over game-time. Together they form a production-to-market pipeline. **Recommendation**: No direct integration. Workshop deposits outputs into an inventory container. Trade reads inventory levels for supply/demand. NPC GOAP connects them: "Workshop produced iron → inventory full → GOAP goal: sell_surplus → create shipment to capital." The integration is behavioral, not mechanical.
-
 ---
 
-## Tenet Compliance Notes
+## Known Quirks & Caveats
 
-### T25: Enum Type Safety (MUST FIX at schema creation time)
+#### Bugs (Fix Immediately)
 
-The data models in this deep dive use `string` with inline value comments for many fields that should be proper schema-defined enums. When creating `trade-api.yaml`, the following fields MUST be defined as enum types in `components/schemas`:
+*No code exists. No bugs to report.*
+
+#### Intentional Quirks (Documented Behavior)
+
+1. **Variable Provider instead of event subscriptions for Actor**: Actor (L2) cannot subscribe to Trade (L4) events per IMPLEMENTATION TENETS (cross-service communication discipline). NPC economic behavior accesses supply/demand, velocity, and trade state via `${trade.*}` Variable Provider (pull-based, hierarchy-safe). Similarly, Currency does not subscribe to tariff events -- Trade calls Currency's API directly.
+
+2. **Declarative shipment lifecycle**: Trade does not automatically progress shipments, collect tariffs, or assess taxes. The game server or NPC Actor brains call the APIs to indicate what happened. Trade records state and publishes events. This is consistent with the Bannou pattern where plugins provide primitives, not policy.
+
+3. **Three custody modes**: Shipments support "escrow" (via lib-escrow), "carrier" (carrier's inventory), and "virtual" (game manages custody externally). The `custodyMode` per-shipment choice follows the three-tier usage pattern: simple games use "escrow", complex games use "virtual".
+
+#### Design Considerations (Requires Planning)
+
+1. **T25: Enum type safety (MUST FIX at schema creation time)**: The data models use `string` with inline value comments for 17 fields that must be proper schema-defined enums. See enum table below.
+
+2. **T25: Untyped object fields (MUST FIX at schema creation time)**: Five fields use `type: object` without property definitions (`riskProfile`, `seasonalAvailability`, `faucetsByType`, `sinksByType`, `riskAssessment`). Need proper typed schemas or explicit `additionalProperties: true` metadata bag documentation.
+
+3. **T28: Resource cleanup endpoints missing**: Trade stores NPC economic profiles keyed by `characterId` (L2 entity) and tariff/tax/contraband policies keyed by `realmId`. Per FOUNDATION TENETS, Trade must register references via lib-resource and implement cleanup callback endpoints (e.g., `/trade/cleanup-by-character`, `/trade/cleanup-by-realm`). No cleanup endpoints are currently defined in the API section.
+
+4. **NPC profile ownership**: Should NPC economic profiles live in Trade or in a shared location? **Recommendation**: Trade owns economic profiles because they're inseparable from trade logistics. The profile is consumed by the Trade variable provider and GOAP integration. Other services that need economic data query Trade.
+
+5. **Velocity data source**: Should velocity come from direct Currency transaction queries or from Analytics event subscriptions? **Recommendation**: Direct Currency queries for accuracy. Analytics can provide supplementary data when available, but velocity computation must work without Analytics (graceful degradation).
+
+6. **Tax enforcement scope**: Should Trade enforce tax consequences (asset seizure, imprisonment) or just report delinquency? **Recommendation**: Advisory only. Trade reports debt and suggests consequences. The game (or NPC actors via Obligation) decides enforcement.
+
+7. **Cross-realm currency conversion**: Should trade routes crossing realm boundaries use automatic Currency conversion? **Recommendation**: No automatic conversion. The game or NPC decides when and how to convert currency. Trade records the border crossing and reports applicable exchange rates.
+
+8. **Relationship with lib-market**: Market handles exchange at a point (auctions, vendors). Trade handles logistics between points. They share supply/demand concepts but own different data. **Recommendation**: Trade subscribes to Market's price events for enrichment. Market subscribes to Trade's shipment arrival events for supply updates. Neither depends on the other.
+
+9. **Workshop integration approach**: **Recommendation**: No direct integration. Workshop deposits outputs into inventory. Trade reads inventory levels for supply/demand. NPC GOAP connects them behaviorally: "Workshop produced iron → inventory full → GOAP goal: sell_surplus → create shipment."
+
+10. **Contract as potential dependency**: Contract (L1) is not required for core Trade functionality but may be needed for extensions (insurance policies, commodity futures). Contract was removed from hard dependencies as the core design uses Currency directly for tariff/tax collection and Escrow for custody.
+
+### Enum Reference (T25)
+
+Fields that must become proper enums at schema creation time:
 
 | Model | Field | Values | Suggested Enum Name |
 |-------|-------|--------|---------------------|
@@ -2026,11 +2146,9 @@ The data models in this deep dive use `string` with inline value comments for ma
 | TaxAssessment | status | pending, partial, paid, overdue, defaulted | TaxAssessmentStatus |
 | EconomicVelocityMetrics | velocityTrend | accelerating, stable, decelerating, stagnant | VelocityTrend |
 
-For polymorphic `ownerType`/`carrierType`/`taxpayerType` fields: use the shared `EntityType` enum from `common-api.yaml` where values are known, or use opaque strings only if the set of valid types must remain extensible across layers (per T25 exception #3).
+For polymorphic `ownerType`/`carrierType`/`taxpayerType` fields: use the shared `EntityType` enum from `common-api.yaml` where values are known, or use opaque strings only if the set must remain extensible across layers (per IMPLEMENTATION TENETS exception #3).
 
-### T25: Untyped Object Fields (MUST FIX at schema creation time)
-
-The following fields use `type: object` without property definitions and need proper typed schemas:
+### Untyped Object Reference (T25)
 
 | Model | Field | Fix |
 |-------|-------|-----|
@@ -2040,54 +2158,36 @@ The following fields use `type: object` without property definitions and need pr
 | EconomicVelocityMetrics | sinksByType | Define `SinkBreakdown` with known sink type keys |
 | Route estimate-cost | riskAssessment | Define `RiskAssessment` schema with `expectedLoss`, `worstCase` |
 
-If faucet/sink type keys must be extensible, use `additionalProperties: true` with a clear "client-only / analytics-only" description per SCHEMA-RULES.md metadata bag rules.
+---
 
-### T27: Cross-Service Communication (FIXED in this document)
+## Work Tracking
 
-Several events originally listed Actor (L2) and Currency (L2) as consumers. These have been corrected:
-- **Actor cannot subscribe to Trade events** (L2 subscribing to L4 violates T27). NPC economic behavior uses `${trade.*}` Variable Provider instead.
-- **Currency does not need to subscribe to tariff events** — Trade calls Currency's API directly for tariff/tax collection, so Currency already has the transaction data.
-
-### T28: Resource Cleanup (GAP)
-
-Trade stores NPC economic profiles keyed by `characterId` (L2 entity). Per T28, Trade must:
-1. Register character references via lib-resource when creating NPC profiles
-2. Implement cleanup callback endpoint (e.g., `/trade/cleanup-by-character`) for cascading deletion
-3. Similarly for realm references in tariff/tax/contraband policies and supply/demand snapshots
-
-No cleanup endpoints are currently defined in the API section. These must be added at schema creation time.
-
-### Endpoint Count
-
-The document states 38 endpoints. Manual count yields 37. Verify at schema creation time.
+*No active work items. Service is aspirational.*
 
 ---
 
-## Appendix: How Trade Relates to the Economy Architecture Document
+## Appendix: How Trade Relates to the Economy Architecture
 
-This deep dive absorbs and refines concepts from `docs/planning/ECONOMY-CURRENCY-ARCHITECTURE.md`:
+This deep dive absorbs and refines concepts from `docs/guides/ECONOMY-SYSTEM.md` and `docs/plans/ITEM-ECONOMY-PLUGINS.md`:
 
-| Economy Architecture Section | Where It Lives |
-|------------------------------|----------------|
-| Part 1: Market Service | **lib-market** (separate aspirational plugin) |
-| Part 2: Economy Orchestration (2.1-2.2) | **lib-trade** velocity metrics + faucet/sink monitoring |
-| Part 2: NPC Economic Participation (2.3-2.4) | **lib-trade** NPC economic profiles + GOAP integration |
-| Part 2: API Endpoints (2.5) | Split: price queries → lib-market, metrics/NPC → **lib-trade** |
-| Part 3: Quest Integration | **lib-quest** (already designed, uses Currency/Item directly) |
-| Part 4: Scale Considerations | **lib-trade** scale section |
-| Part 5: ABML Action Handlers | Multiple services register their own handlers |
-| Part 6: Money Velocity | **lib-trade** velocity worker + divine intervention integration |
-| Part 7: Trade Routes | **lib-trade** trade route + shipment models |
-| Part 7: Shipments | **lib-trade** shipment lifecycle |
-| Part 7: Tariffs | **lib-trade** tariff policy + collection |
-| Part 7: Exchange Rates | **lib-currency** extension (not in Trade) |
-| Part 7: Contraband | **lib-trade** contraband definitions |
-| Part 7: Taxation | **lib-trade** tax policy + assessment + collection |
+| Economy Concern | Where It Lives |
+|-----------------|----------------|
+| Market (auctions, vendor catalogs, price discovery) | **lib-market** (separate aspirational plugin) |
+| Economy Orchestration (velocity, faucet/sink monitoring) | **lib-trade** velocity metrics + faucet/sink monitoring |
+| NPC Economic Participation (profiles, GOAP) | **lib-trade** NPC economic profiles + GOAP integration |
+| Price Queries / Metrics | Split: price queries → lib-market, metrics/NPC → **lib-trade** |
+| Quest Integration | **lib-quest** (already implemented, uses Currency/Item directly) |
+| ABML Action Handlers | Multiple services register their own handlers |
+| Money Velocity | **lib-trade** velocity worker + divine intervention integration |
+| Trade Routes + Shipments | **lib-trade** trade route + shipment lifecycle |
+| Tariffs + Contraband | **lib-trade** tariff policy + collection + contraband definitions |
+| Exchange Rates | **lib-currency** extension (not in Trade) |
+| Taxation | **lib-trade** tax policy + assessment + collection |
 
-**Key refinement**: The economy architecture doc envisions "lib-economy" as a separate monitoring service. This deep dive absorbs that into Trade because velocity monitoring, supply/demand signals, and NPC economic intelligence are inseparable from logistics operations. A separate lib-economy would be a thin wrapper with no unique data ownership.
+**Key refinement**: The economy system guide envisions velocity monitoring and NPC economic participation as cross-cutting concerns. This deep dive absorbs those into Trade because velocity monitoring, supply/demand signals, and NPC economic intelligence are inseparable from logistics operations. A separate lib-economy would be a thin wrapper with no unique data ownership.
 
-**New addition**: Transit (L2) as a dependency. The economy architecture doc describes trade routes without specifying how travel time is calculated. This deep dive connects trade routes to Transit connections, providing the game-time travel calculation that makes distance-based economics work.
+**Key dependency**: Transit (L2) provides the travel infrastructure. Trade routes are economic overlays on Transit connections, providing the game-time travel calculation that makes distance-based economics work.
 
 ---
 
-*This document is an aspirational deep dive for a service that does not yet exist. No schema files or implementation code have been created. The design follows established Bannou patterns, respects the service hierarchy, and absorbs concepts from the Economy Architecture planning document. Implementation requires schemas, code generation, service implementation, and testing -- in that order.*
+*This document is an aspirational deep dive for a service that does not yet exist. No schema files or implementation code have been created. The design follows established Bannou patterns, respects the service hierarchy, and absorbs economy system concepts from the architecture guide. Implementation requires schemas, code generation, service implementation, and testing -- in that order.*

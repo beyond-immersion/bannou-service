@@ -3,8 +3,8 @@
 > **Status**: Aspirational (Pre-Implementation)
 > **Layer**: L4 GameFeatures
 > **Schema**: `schemas/utility-api.yaml` (not yet created)
-> **Hard Dependencies**: Location (L2), Worldstate (L2), Workshop (L4)
-> **Soft Dependencies**: Faction (L4), Organization (L4), Environment (L4), Trade (L4), Contract (L1), Currency (L2)
+> **Hard Dependencies**: Contract (L1), Location (L2), Worldstate (L2), Currency (L2), Workshop (L4)
+> **Soft Dependencies**: Faction (L4), Organization (L4), Environment (L4), Trade (L4)
 > **No schema, no code.**
 
 ---
@@ -379,17 +379,17 @@ UtilityMaintenanceRequest:
 |------------|------|-------|
 | lib-state (IStateStoreFactory) | L0 Hard | Persistence for network types, connections, coverage snapshots, sources, maintenance requests |
 | lib-messaging (IMessageBus) | L0 Hard | Publishing coverage events, failure alerts, maintenance events |
+| lib-contract (IContractClient) | L1 Hard | Infrastructure service agreements between providers and consumer locations (always available; agreement features unused if not applicable to a given network) |
 | lib-location (ILocationClient) | L2 Hard | Validating connection endpoints are real locations, querying location hierarchy for coverage propagation |
 | lib-worldstate (IWorldstateClient) | L2 Hard | Game clock for decay calculations, seasonal modifiers on flow rates |
+| lib-currency (ICurrencyClient) | L2 Hard | Maintenance cost estimation and payment processing (always available; L4 requires all L2 services running) |
 | lib-workshop (IWorkshopClient) | L4 Hard | Querying production task rates at source locations. Without Workshop, Utility has no production data and coverage is zero everywhere. |
-| lib-currency (ICurrencyClient) | L2 Soft | Maintenance cost estimation and payment processing (graceful: costs not computed if unavailable) |
 | lib-faction (IFactionClient) | L4 Soft | Jurisdiction queries for regulatory checks, norm enforcement on infrastructure operators (graceful: no regulation if unavailable) |
 | lib-organization (IOrganizationClient) | L4 Soft | Infrastructure operator queries, maintenance assignment routing (graceful: maintenance requests unassigned if unavailable) |
 | lib-environment (IEnvironmentClient) | L4 Soft | Weather-based condition modifiers (storms damage infrastructure), seasonal demand modifiers (graceful: no weather effects if unavailable) |
 | lib-trade (ITradeClient) | L4 Soft | Demand rate data from supply/demand snapshots for coverage ratio computation (graceful: demand unknown, coverage ratio not computed) |
-| lib-contract (IContractClient) | L1 Soft | Infrastructure service agreements between providers and consumer locations (graceful: no formal agreements) |
 
-**Workshop as Hard Dependency Note**: Workshop is L4, meaning the hard dependency appears unusual. However, Utility without Workshop is fundamentally non-functional -- there are no production sources to compute flow from. This parallels Escrow's hard dependency on Currency (also L4-to-L2, but the same principle: the orchestrator cannot function without the primitive it orchestrates). If Workshop is disabled, Utility should also be disabled.
+**Workshop as Hard Dependency Note**: Workshop is L4, meaning the hard dependency is an L4→L4 relationship that would normally use graceful degradation per the service hierarchy. However, Utility without Workshop is fundamentally non-functional -- there are no production sources to compute flow from. This follows the "orchestrator requires its primitive" pattern: just as Escrow (L4) cannot function without Currency (L2) for asset movements, Utility cannot function without Workshop for production source data. If Workshop is disabled, Utility should also be disabled. See Design Consideration #2 for a potential soft-dependency alternative.
 
 ---
 

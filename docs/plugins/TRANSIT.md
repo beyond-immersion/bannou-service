@@ -1,15 +1,15 @@
-# Transit Service (lib-transit)
+# Transit Plugin Deep Dive
 
-> **Status**: Aspirational (Pre-Implementation)
-> **Layer**: L2 GameFoundation
+> **Plugin**: lib-transit
 > **Schema**: `schemas/transit-api.yaml` (not yet created)
-> **Hard Dependencies**: Location (L2), Worldstate (L2), Character (L2), Species (L2), Item (L2), Inventory (L2)
-> **Soft Dependencies**: None at the service client level (L4 services enrich via DI provider pattern)
-> **No schema, no code.**
+> **Version**: 1.0.0 (aspirational)
+> **Layer**: L2 GameFoundation
+> **State Stores**: transit-modes (MySQL), transit-connections (MySQL), transit-journeys (Redis), transit-journeys-archive (MySQL), transit-connection-graph (Redis), transit-discovery (MySQL), transit-discovery-cache (Redis)
+> **Status**: Aspirational (Pre-Implementation) -- No schema, no code.
 
 ---
 
-## Service Overview
+## Overview
 
 The Transit service (L2 GameFoundation) is the geographic connectivity and movement primitive for Bannou. It completes the spatial model by adding **edges** (connections between locations) to Location's **nodes** (the hierarchical place tree), then provides a type registry for **how** things move (transit modes) and temporal tracking for **when** they arrive (journeys computed against Worldstate's game clock). Transit is to movement what Seed is to growth and Collection is to unlocks -- a generic, reusable primitive that higher-layer services orchestrate for domain-specific purposes. Internal-only, never internet-facing.
 
@@ -443,6 +443,37 @@ TransitRouteOption:
   rank: integer                     # 1 = best option by sort criteria
   sortCriteria: string              # What criteria was used to rank ("fastest", "safest", "shortest")
 ```
+
+---
+
+## Dependencies (What This Plugin Relies On)
+
+| Dependency | Type | Usage |
+|------------|------|-------|
+| lib-state (IStateStoreFactory) | L0 Hard | Persistence for modes, connections, journeys, discoveries, graph cache |
+| lib-messaging (IMessageBus) | L0 Hard | Publishing journey lifecycle, connection status, and discovery events |
+| lib-mesh | L0 Hard | Service-to-service calls to Location, Worldstate, Character, Species, Inventory |
+| lib-location (ILocationClient) | L2 Hard | Validates location existence for connections; reports entity position on journey transitions |
+| lib-worldstate (IWorldstateClient) | L2 Hard | Game-time calculations for journey ETAs; seasonal connection status via events |
+| lib-character (ICharacterClient) | L2 Hard | Species code lookup for mode compatibility checks |
+| lib-species (ISpeciesClient) | L2 Hard | Species property lookup for mode restrictions |
+| lib-inventory (IInventoryClient) | L2 Hard | Item tag checks for mode requirements (e.g., mount items) |
+| lib-resource (IResourceClient) | L1 Hard | Cleanup callback registration for location/character deletion |
+| ITransitCostModifierProvider (DI) | L4 Soft | Optional cost enrichment from Disposition, Environment, Faction, Hearsay, Ethology |
+
+---
+
+## Dependents (What Relies On This Plugin)
+
+| Dependent | Relationship |
+|-----------|-------------|
+| lib-trade (L4) | Calls route/calculate for shipment cost estimation; creates transit journeys for carrier entities; queries journey archives for velocity calculations |
+| lib-actor (L2) | Reads `${transit.*}` variables for NPC travel decisions via Variable Provider Factory |
+| lib-quest (L2) | Subscribes to journey departed/arrived/discovery events for travel-based quest objectives |
+| lib-collection (L2) | Subscribes to `transit.discovery.revealed` for route discovery collection unlocks |
+| lib-character-history (L4) | Subscribes to journey arrived/abandoned events for travel backstory generation |
+| lib-analytics (L4) | Subscribes to all journey events for travel pattern aggregation |
+| lib-puppetmaster (L4) | Subscribes to connection status-changed events for regional watcher awareness |
 
 ---
 
@@ -1342,7 +1373,7 @@ TransitServiceConfiguration:
 
 ---
 
-## State Stores
+## State Storage
 
 ```yaml
 # schemas/state-stores.yaml additions
@@ -1628,7 +1659,7 @@ Transit aggregates all provider results:
 
 ---
 
-## Integration Points
+## Integration Points (Detailed)
 
 ### Location (L2) -- Hard Dependency
 
@@ -1797,9 +1828,20 @@ Journey events (departed, waypoint, arrived) flow through the standard lib-messa
 
 ---
 
-## Work Tracking
+## Stubs & Unimplemented Features
 
-### Potential Extensions
+This service is entirely aspirational -- no schema, code, or tests exist. Implementation requires:
+1. Create `schemas/transit-api.yaml`, `transit-events.yaml`, `transit-configuration.yaml`
+2. Add state store definitions to `schemas/state-stores.yaml`
+3. Run `cd scripts && ./generate-service.sh transit`
+4. Implement `TransitService.cs`, `TransitServiceEvents.cs`, `TransitServiceModels.cs`
+5. Create `bannou-service/Providers/ITransitCostModifierProvider.cs`
+6. Implement background workers (Seasonal Connection Worker, Journey Archival Worker)
+7. Write unit tests in `plugins/lib-transit.tests/`
+
+---
+
+## Potential Extensions
 
 1. **Caravan formations (Phase 2)**: Multiple entities traveling together as a group. Group speed = slowest member. Group risk = reduced (safety in numbers). Caravan as an entity type for journeys, with member tracking and formation bonuses. Faction merchant guilds could manage NPC caravans. **Promoted to Phase 2** -- the data model already accommodates this via `entityType: "caravan"` and `partySize`, but Phase 2 needs: a `partyMembers: [uuid]` field on `TransitJourney` for tracking individual members, batch departure/advance for all party members, and a party leader concept for GOAP decisions. The `validEntityTypes` restriction on modes already supports caravan-only modes (e.g., `wagon` with `validEntityTypes: ["caravan", "army"]`).
 
@@ -1811,7 +1853,9 @@ Journey events (departed, waypoint, arrived) flow through the standard lib-messa
 
 5. **Transit fares**: Monetary cost for using certain transit modes or connections. Ferries, toll roads, carriage services, and teleportation portals could have a fare. Two options: (a) Transit stores fare data per-connection/mode and calls Currency (L2) during `journey/depart` to debit the fare -- feasible since both are L2. (b) Fares are purely a Trade (L4) concern that wraps Transit journeys with economic logic. Option (a) keeps fare enforcement at the primitive level (NPCs can't cheat tolls), while (b) keeps Transit purely about movement physics. **Open design question**: should Transit know about money, or should fares be an L4 overlay?
 
-### Resolved Design Decisions
+---
+
+## Resolved Design Decisions
 
 1. **Connection granularity**: Allow arbitrary connections but tag them appropriately (`tags: ["portal"]`, `tags: ["trade_route"]`). Enables teleportation portals and long-distance shipping routes alongside physically meaningful roads.
 
@@ -1852,6 +1896,18 @@ Journey events (departed, waypoint, arrived) flow through the standard lib-messa
 19. **Journey progression is game-engine-driven**: The game server (or NPC Actor brain via game engine SDK) must explicitly call `advance` (or `advance-batch` at scale) when entities reach waypoints. Transit cannot auto-progress journeys because real game models running into proper obstacles (terrain collision, NPC encounters, physics) cannot be tracked in real-time by backend services. The game engine runs the simulation; Transit records the outcomes. This is architecturally consistent with the declarative lifecycle pattern (resolved decision #2) but specifically addresses the "who drives the clock" question: the game engine does, not Transit, and the batch endpoint exists to make this efficient at 10K+ concurrent journey scale.
 
 20. **Entity presence during transit is game-driven**: While an entity is traveling between waypoints, its physical position in the game world is the game engine's concern, not Transit's. Transit updates Location's ephemeral presence on each state transition (departure, waypoint, arrival) via `AutoUpdateLocationOnTransition`, but between transitions the entity's moment-to-moment position is tracked by the game engine. There is no TTL-based "entity in transit" heartbeat from Transit -- the game engine's own tick loop is responsible for keeping entities visible in the world. This is the same principle as journey progression: the game simulates, Transit records.
+
+---
+
+## Known Quirks & Caveats
+
+N/A -- This service is aspirational (pre-implementation). Quirks will be documented as the service is implemented.
+
+---
+
+## Work Tracking
+
+No active work items. This document is an aspirational design specification. Implementation has not begun.
 
 ---
 
