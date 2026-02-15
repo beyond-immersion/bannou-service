@@ -6,7 +6,7 @@
 > **State Store**: broadcast-platforms (MySQL), broadcast-sessions (Redis), broadcast-sentiment-buffer (Redis), broadcast-outputs (Redis), broadcast-cameras (Redis), broadcast-lock (Redis) — all planned
 > **Layer**: L3 AppFeatures
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists.
-> **Planning**: [STREAMING-ARCHITECTURE.md](../planning/STREAMING-ARCHITECTURE.md), [VOICE-STREAMING.md](../planning/VOICE-STREAMING.md)
+> **Planning**: [STREAMING-ARCHITECTURE.md](../planning/STREAMING-ARCHITECTURE.md)
 
 ## Overview
 

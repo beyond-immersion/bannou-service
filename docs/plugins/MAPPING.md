@@ -432,6 +432,8 @@ Authoring Workflow
 
 8. **Hardcoded affordance scoring magic numbers**: AffordanceScorer contains ~15 hardcoded scoring weights (base score 0.5, cover weight 0.3, elevation divisor 100.0, size modifiers 0.8-1.2, etc.). Should be configuration properties for game-specific tuning.
 
+9. **Location service correlation** ([#274](https://github.com/beyond-immersion/bannou-service/issues/274)): Mapping channels have no relationship to Location service entities. The `regionId` on channels is unvalidated and purely spatial. Adding an optional `locationId` field to channels would enable semantic queries bridging the hierarchical (Location) and spatial (Mapping) worlds — e.g., "What affordances exist at CITY_FROSTHOLD?" via a new `/mapping/query/by-location` endpoint. This would support Event Brain location awareness for faction territory, crowd density, and named-place context without requiring validation overhead (locationId would be informational, not enforced). Temporary combat zones and ad-hoc regions would continue to use regionId without locationId.
+
 ---
 
 ## Work Tracking

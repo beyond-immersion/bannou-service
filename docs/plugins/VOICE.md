@@ -4,7 +4,7 @@
 > **Schema**: schemas/voice-api.yaml
 > **Version**: 2.0.0
 > **State Store**: voice-statestore (Redis)
-> **Planning**: [VOICE-STREAMING.md](../planning/VOICE-STREAMING.md), [STREAMING-ARCHITECTURE.md](../planning/STREAMING-ARCHITECTURE.md)
+> **Planning**: [STREAMING-ARCHITECTURE.md](../planning/STREAMING-ARCHITECTURE.md)
 
 ## Overview
 
@@ -429,9 +429,9 @@ SHOWTIME_SERVICE_ENABLED=true
 4. **VoiceRoomStateEvent**: Defined in `voice-client-events.yaml` but never published by the service.
 <!-- AUDIT:NEEDS_DESIGN:2026-02-11:https://github.com/beyond-immersion/bannou-service/issues/396 -->
 
-5. **L3 layer classification**: The API schema still declares voice as L4 (GameFeatures) or has no explicit `x-service-layer`. The target state is `x-service-layer: AppFeatures` per [VOICE-STREAMING.md](../planning/VOICE-STREAMING.md). This requires updating the schema and regenerating, then updating SERVICE-HIERARCHY.md.
+5. **L3 layer classification**: The API schema still declares voice as L4 (GameFeatures) or has no explicit `x-service-layer`. The target state is `x-service-layer: AppFeatures`. This requires updating the schema and regenerating, then updating SERVICE-HIERARCHY.md.
 
-6. **Game-agnostic API descriptions**: Several endpoint descriptions still reference "game session" language. The target state has all descriptions framed as generic session concepts per [VOICE-STREAMING.md](../planning/VOICE-STREAMING.md).
+6. **Game-agnostic API descriptions**: Several endpoint descriptions still reference "game session" language. The target state has all descriptions framed as generic session concepts (sessionId is a Connect/Auth concept, not game-specific).
 
 7. **lib-broadcast integration**: lib-broadcast does not exist yet. When implemented, it will subscribe to `voice.room.broadcast.approved` and `voice.room.broadcast.stopped` to manage RTMP output. The RTP audio endpoint metadata in the broadcast approved event enables this integration.
 
@@ -508,6 +508,7 @@ None identified.
 | 2026-02-11 | [#403](https://github.com/beyond-immersion/bannou-service/issues/403) | ICE trickle support -- relay vs accumulate, permission gating, P2P/SFU scope | Needs Design |
 | 2026-02-11 | [#404](https://github.com/beyond-immersion/bannou-service/issues/404) | RTPEngine UDP client: cookie mismatch correctness bug and retry strategy | Needs Design |
 | 2026-02-11 | [#405](https://github.com/beyond-immersion/bannou-service/issues/405) | SIP credential expiration enforcement -- Bannou vs Kamailio, rotation strategy | Needs Design |
+| 2026-02-15 | [#154](https://github.com/beyond-immersion/bannou-service/issues/154) | Session lifecycle event subscriptions (session.disconnected/reconnected) for participant cleanup -- eviction worker is safety net, not primary mechanism | Needs Design |
 
 ### Completed
 

@@ -285,7 +285,9 @@ None currently identified.
 
 ### Design Considerations
 
-No design considerations currently pending.
+1. **Location-bound contracts** ([#274](https://github.com/beyond-immersion/bannou-service/issues/274)): Adding `boundContractIds` to the location model would enable territory-bound agreements with inheritance semantics (child locations inherit parent's effective contracts). This would allow querying "what contracts apply at this location?" by walking the ancestor chain, enabling game-layer territory rule enforcement without Contract (L1) depending on Location (L2). Design questions: should contracts be directly bound to locations or mediated by a separate binding table? What are the inheritance semantics (simple merge vs priority/override)? Is this a Location concern (L2) or a game rules concern (L4)?
+
+2. **Ground containers** ([#164](https://github.com/beyond-immersion/bannou-service/issues/164), [#274](https://github.com/beyond-immersion/bannou-service/issues/274)): Location-owned "ground" containers for items dropped or lost in the game world. Would add a `groundContainerId` and `groundContainerCreationPolicy` (on-demand, explicit, inherit-parent, disabled) to the location model. Cross-cutting with lib-inventory — Inventory provides the container/item mechanics, Location provides the spatial anchor. Design questions: on-demand creation vs explicit seeding, TTL/capacity/cleanup policies per location type, hierarchy-aware drop behavior (walking up the tree to find nearest location with ground container).
 
 ---
 
