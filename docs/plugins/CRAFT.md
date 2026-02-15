@@ -1,37 +1,24 @@
 # Craft Plugin Deep Dive
 
-> **Plugin**: lib-craft
-> **Schema**: schemas/craft-api.yaml
-> **Version**: 1.0.0
-> **State Stores**: craft-recipe-store (MySQL), craft-recipe-cache (Redis), craft-session-store (MySQL), craft-proficiency-store (MySQL), craft-station-registry (MySQL), craft-discovery-store (MySQL), craft-lock (Redis)
-> **Status**: Pre-implementation (architectural specification)
+> **Plugin**: lib-craft (not yet created)
+> **Schema**: `schemas/craft-api.yaml` (not yet created)
+> **Version**: N/A (Pre-Implementation)
+> **State Store**: craft-recipe-store (MySQL), craft-recipe-cache (Redis), craft-session-store (MySQL), craft-proficiency-store (MySQL), craft-station-registry (MySQL), craft-discovery-store (MySQL), craft-lock (Redis) — all planned
+> **Layer**: L4 GameFeatures
+> **Status**: Aspirational — no schema, no generated code, no service implementation exists.
 > **Planning**: [ITEM-ECONOMY-PLUGINS.md](../plans/ITEM-ECONOMY-PLUGINS.md)
 
 ---
 
 ## Overview
 
-Recipe-based crafting orchestration service (L4 GameFeatures) for production workflows, item modification, and skill-gated crafting execution. A thin orchestration layer that composes existing Bannou primitives: lib-item for storage, lib-inventory for material consumption and output placement, lib-contract for multi-step session state machines, lib-currency for costs, and lib-affix for modifier operations on existing items. Any system that needs to answer "can this entity craft this recipe?" or "what happens when step 3 completes?" queries lib-craft.
-
-**Composability**: Recipe definitions and crafting session management are owned here. Item storage is lib-item (L2). Container placement is lib-inventory (L2). Session state machines are lib-contract (L1). Currency costs are lib-currency (L2). Modifier definitions and application primitives are lib-affix (L4, soft). Loot generation that creates pre-crafted items at scale is lib-loot (L4, future). NPC crafting decisions via GOAP use lib-craft's Variable Provider Factory.
-
-**The foundational distinction**: lib-craft manages HOW items are created and transformed -- recipes, steps, materials, skill requirements, station constraints, quality formulas, discovery. WHAT modifiers exist and their generation rules is lib-affix's domain. WHO triggers crafting (players, NPCs, automated systems) is the caller's concern. This means lib-craft has two primary consumer patterns: production consumers (NPC blacksmiths, player crafters, automated factories) that create new items from materials, and modification consumers (NPC enchanters, player crafters using currency items) that transform existing items using lib-affix primitives.
-
-**Two recipe paradigms**:
-
-| Paradigm | What Happens | Example | Delegates To |
-|----------|-------------|---------|-------------|
-| **Production** | Inputs consumed, outputs created | Smelt ore into ingots, forge sword from steel | lib-item (create), lib-inventory (consume/place) |
-| **Modification** | Existing item transformed in place | Reroll affixes, add enchantment, corrupt | lib-affix (apply/remove/reroll/state), lib-item (metadata write) |
-| **Extraction** | Existing item destroyed, components recovered | Salvage weapon for materials, disenchant for reagents | lib-item (destroy), lib-inventory (place outputs) |
-
-**Zero game-specific content**: lib-craft is a generic recipe execution engine. Arcadia's 37+ authentic crafting processes (smelting, tanning, weaving, alchemy, enchanting), PoE-style currency modification (chaos orbs, exalted orbs, fossils), a simple mobile game's "combine 3 items" mechanic, or an idle game's automated production chains are all equally valid recipe configurations. Recipe types, proficiency domains, station types, tool categories, and quality formulas are all opaque strings defined per game at deployment time through recipe seeding.
-
-**Current status**: Pre-implementation. No schema, no code. This deep dive is an architectural specification based on the Arcadia crafting vision (37+ authentic processes, NPC-driven economy, progressive player agency) and the [Item & Economy Plugin Landscape](../plans/ITEM-ECONOMY-PLUGINS.md). Internal-only, never internet-facing.
+Recipe-based crafting orchestration service (L4 GameFeatures) for production workflows, item modification, and skill-gated crafting execution. A thin orchestration layer that composes existing Bannou primitives: lib-item for storage, lib-inventory for material consumption and output placement, lib-contract for multi-step session state machines, lib-currency for costs, and lib-affix for modifier operations on existing items. Game-agnostic: recipe types, proficiency domains, station types, tool categories, and quality formulas are all opaque strings defined per game at deployment time through recipe seeding. Internal-only, never internet-facing.
 
 ---
 
 ## Why Not lib-affix? (Architectural Rationale)
+
+lib-craft manages HOW items are created and transformed -- recipes, steps, materials, skill requirements, station constraints, quality formulas, discovery. WHAT modifiers exist and their generation rules is lib-affix's domain. WHO triggers crafting (players, NPCs, automated systems) is the caller's concern. This means lib-craft has two primary consumer patterns: production consumers (NPC blacksmiths, player crafters, automated factories) that create new items from materials, and modification consumers (NPC enchanters, player crafters using currency items) that transform existing items using lib-affix primitives.
 
 The question arises: why not combine crafting operations with the modifier system?
 
@@ -70,6 +57,14 @@ In Arcadia, crafting is the practical application of logos manipulation. Every c
 ---
 
 ## Core Concepts
+
+**Three recipe paradigms**:
+
+| Paradigm | What Happens | Example | Delegates To |
+|----------|-------------|---------|-------------|
+| **Production** | Inputs consumed, outputs created | Smelt ore into ingots, forge sword from steel | lib-item (create), lib-inventory (consume/place) |
+| **Modification** | Existing item transformed in place | Reroll affixes, add enchantment, corrupt | lib-affix (apply/remove/reroll/state), lib-item (metadata write) |
+| **Extraction** | Existing item destroyed, components recovered | Salvage weapon for materials, disenchant for reagents | lib-item (destroy), lib-inventory (place outputs) |
 
 ### Recipe Definitions (The Template Layer)
 
@@ -441,14 +436,14 @@ NPC crafting decisions are driven by GOAP:
 | lib-contract (`IContractClient`) | Creating session contracts from recipe step structures, milestone progression (L1) |
 | lib-currency (`ICurrencyClient`) | Deducting currency costs for recipes (L2) |
 | lib-game-service (`IGameServiceClient`) | Validating game service existence for recipe scoping (L2) |
+| lib-seed (`ISeedClient`) | Reading/updating proficiency seeds for crafting skill tracking (L2) |
+| lib-location (`ILocationClient`) | Resolving station locations for proximity checks (L2) |
 
 ### Soft Dependencies (runtime resolution via `IServiceProvider` -- graceful degradation)
 
 | Dependency | Usage | Behavior When Missing |
 |------------|-------|-----------------------|
 | lib-affix (`IAffixClient`) | Executing modification recipe affix operations (apply, remove, reroll, etc.) | Modification recipes return error; production and extraction recipes work normally |
-| lib-seed (`ISeedClient`) | Reading/updating proficiency seeds for crafting skill tracking | Proficiency checks skip (all recipes available); experience not granted |
-| lib-location (`ILocationClient`) | Resolving station locations for proximity checks | Station location checks skip (station type match only) |
 | lib-analytics (`IAnalyticsClient`) | Publishing crafting statistics for economy monitoring | Statistics not collected; crafting works normally |
 
 ---
@@ -599,6 +594,8 @@ Sessions are cleaned up on completion, cancellation, or expiration.
 | `IContractClient` | Session contract creation and milestone progression (L1 hard) |
 | `ICurrencyClient` | Currency cost deduction (L2 hard) |
 | `IGameServiceClient` | Game service existence validation (L2 hard) |
+| `ISeedClient` | Proficiency seed reading/updating (L2 hard) |
+| `ILocationClient` | Station location resolution for proximity checks (L2 hard) |
 | `IServiceProvider` | Runtime resolution of soft L4 dependencies |
 
 ### Variable Provider Factories
@@ -887,6 +884,10 @@ Crafting Session Lifecycle (Production)
 
 ## Known Quirks & Caveats
 
+### Bugs (Fix Immediately)
+
+*No bugs — service code does not exist yet (aspirational plugin).*
+
 ### Intentional Quirks (Documented Behavior)
 
 1. **Recipe types are opaque strings, not enums**: "production", "modification", "extraction" are conventions. lib-craft validates that modification recipes have `affixOperation` specified and production recipes have `outputs` specified, but doesn't restrict which type strings are valid. Custom types require custom handling in the completion path.
@@ -920,6 +921,8 @@ Crafting Session Lifecycle (Production)
 6. **Material quality propagation**: How does material quality get set in the first place? Production recipe outputs carry quality from the session. But raw materials (mined ore, harvested herbs) need quality set at creation time by the gathering system (future lib-gathering or game-specific logic).
 
 7. **Offline NPC crafting**: When an NPC's actor is running and they're crafting, step advancement happens through GOAP actions. But what about when the NPC's actor is suspended? Options: (a) sessions pause when actor suspends, (b) sessions auto-complete on a timer, (c) sessions are represented as Contract timer milestones that progress independently of the actor.
+
+8. **ProficiencySource "local" fallback vs hierarchy guarantee**: The `ProficiencySource` configuration offers "seed" (lib-seed) or "local" (internal store) options. However, lib-seed is L2 GameFoundation — guaranteed available when lib-craft (L4) runs per the service hierarchy. The "local" fallback is unnecessary from a deployment perspective since lib-seed will always be running. Consider whether the local proficiency store adds legitimate design value (e.g., games that prefer a simpler proficiency model without seed growth semantics) or whether it creates dead code and orphans the `craft-proficiency-store` when `ProficiencySource` defaults to "seed".
 
 ---
 

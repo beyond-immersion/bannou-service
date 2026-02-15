@@ -9,7 +9,11 @@
 
 ## Overview
 
-The Agency service (L4 GameFeatures) manages the guardian spirit's progressive agency system -- the bridge between Seed's abstract capability data and the client's concrete UX module rendering. It answers the question: "Given this guardian spirit's accumulated experience, what can the player perceive and do?"
+The Agency service (L4 GameFeatures) manages the guardian spirit's progressive agency system -- the bridge between Seed's abstract capability data and the client's concrete UX module rendering. It answers the question: "Given this guardian spirit's accumulated experience, what can the player perceive and do?" Game-agnostic: domain codes, modules, and influence types are registered per game service, not hardcoded. Internal-only, never internet-facing.
+
+---
+
+## Architecture
 
 Three subsystems:
 
@@ -19,17 +23,10 @@ Three subsystems:
 
 3. **Influence Registry**: Definitions of spirit influence types (nudges) that the player can send to their possessed character. Each influence maps to an Actor perception type and has compliance factors that determine how likely the character is to accept it.
 
-Agency is the player-facing expression of PLAYER-VISION.md's core thesis: "The guardian spirit starts as nearly inert. Through accumulated experience, it gains understanding. Understanding manifests as increased control fidelity and richer UX surface area."
-
-### What Agency Is NOT
-
+**What Agency is NOT**:
 - **Not a permission system.** Permission (L1) gates API endpoint access based on roles and states. Agency gates UX module visibility based on spirit growth. They use similar push mechanisms but serve orthogonal purposes.
 - **Not a skill system.** Seed (L2) tracks capability depth and fidelity. Agency translates those numbers into UX decisions. Agency does not own growth, thresholds, or capability computation -- Seed does.
 - **Not a behavior system.** Actor (L2) executes character cognition. Agency provides `${spirit.*}` variables that Actor's ABML behaviors evaluate, but Agency does not execute behaviors or make character decisions.
-
----
-
-## Architecture
 
 ### Key Concepts
 
@@ -164,7 +161,7 @@ If Disposition is unavailable, compliance defaults to the configured `DefaultCom
 
 ### The Progressive UX Gradient
 
-PLAYER-VISION.md describes a gradient from "barely any influence" to "deep domain mastery." Agency implements this as a continuous expansion of the manifest:
+Agency is the player-facing expression of PLAYER-VISION.md's core thesis: "The guardian spirit starts as nearly inert. Through accumulated experience, it gains understanding. Understanding manifests as increased control fidelity and richer UX surface area." PLAYER-VISION.md describes a gradient from "barely any influence" to "deep domain mastery." Agency implements this as a continuous expansion of the manifest:
 
 | Guardian Seed Depth | Combat UX | Social UX | Crafting UX |
 |--------------------|-----------|-----------|-------------|

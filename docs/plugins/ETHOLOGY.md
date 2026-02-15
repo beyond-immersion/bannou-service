@@ -9,18 +9,19 @@
 
 ## Overview
 
-Species-level behavioral archetype registry and nature resolution service (L4 GameFeatures) for providing structured behavioral defaults to any entity that runs through the Actor behavior system. The missing middle ground between "hardcoded behavior document defaults" (every wolf is identical) and "full character cognitive stack" (8+ variable providers, per-entity persistent state). Without this service, non-character entities have zero individuality -- a wolf behaves exactly like every other wolf, a bear uses the same defaults as a boar, and the living world feels mechanical rather than alive at the ecosystem level.
+Species-level behavioral archetype registry and nature resolution service (L4 GameFeatures) for providing structured behavioral defaults to any entity that runs through the Actor behavior system. The missing middle ground between "hardcoded behavior document defaults" (every wolf is identical) and "full character cognitive stack" (9 variable providers, per-entity persistent state). Without this service, non-character entities have zero individuality -- a wolf behaves exactly like every other wolf, a bear uses the same defaults as a boar, and the living world feels mechanical rather than alive at the ecosystem level.
 
 **The gap this fills**: The Actor behavior system has a clean, rich cognitive stack for characters:
 
 | Provider | Service | What It Answers |
 |----------|---------|----------------|
 | `${personality.*}` | Character-Personality (L4) | "What kind of temperament does this character have?" |
-| `${heritage.*}` | Character-Lifecycle (L4) | "What did this character inherit genetically?" |
-| `${disposition.*}` | Disposition (L4) | "How does this character feel and what do they aspire to?" |
+| `${combat.*}` | Character-Personality (L4) | "What are this character's combat preferences?" |
 | `${encounters.*}` | Character-Encounter (L4) | "What memorable interactions has this character had?" |
 | `${backstory.*}` | Character-History (L4) | "What biographical events shaped this character?" |
 | `${obligations.*}` | Obligation (L4) | "What contractual commitments constrain this character?" |
+| `${faction.*}` | Faction (L4) | "What faction memberships and status does this character have?" |
+| `${location.*}` | Location (L2) | "What location context does this entity have?" |
 | `${quest.*}` | Quest (L2) | "What objectives is this character pursuing?" |
 | `${seed.*}` | Seed (L2) | "What capabilities has this entity grown into?" |
 
@@ -328,6 +329,98 @@ Even with the full cognitive stack, characters benefit from `${nature.*}`:
 
 ---
 
+## Variable Provider: `${nature.*}` Namespace
+
+Implements `IVariableProviderFactory` (via `NatureProviderFactory`). Loads from the cached nature manifest or computes on demand.
+
+### Behavioral Axes
+
+| Variable | Type | Description |
+|----------|------|-------------|
+| `${nature.<axisCode>}` | float | Resolved value for any behavioral axis defined in the archetype (0.0-1.0). Three-layer resolution: archetype base + environmental overrides + individual noise. For characters with Heritage, heritage-mapped axes use phenotype values instead. |
+| `${nature.aggression}` | float | Example: readiness to initiate hostility |
+| `${nature.territoriality}` | float | Example: strength of territorial defense |
+| `${nature.curiosity}` | float | Example: tendency to investigate vs. avoid |
+| `${nature.fear_threshold}` | float | Example: stimulus level to trigger flight |
+| `${nature.sociality}` | float | Example: pack/herd cohesion tendency |
+| `${nature.persistence}` | float | Example: pursuit duration before abandoning |
+| `${nature.vigilance}` | float | Example: baseline alertness |
+| `${nature.docility}` | float | Example: susceptibility to taming |
+
+### Metadata
+
+| Variable | Type | Description |
+|----------|------|-------------|
+| `${nature.species}` | string | Species code from archetype |
+| `${nature.category}` | string | Archetype category (predator, prey, apex, etc.) |
+| `${nature.activity_pattern}` | string | Diurnal, nocturnal, crepuscular, cathemeral |
+| `${nature.diet}` | string | Carnivore, herbivore, omnivore, detritivore |
+| `${nature.social_structure}` | string | Solitary, pair, pack, herd, swarm, colony |
+| `${nature.has_archetype}` | bool | Whether an archetype was found for this entity's species |
+
+### ABML Usage Examples
+
+```yaml
+flows:
+  creature_decision:
+    - cond:
+        # Territorial species -- defend territory aggressively
+        - when: "${nature.territoriality > 0.7
+                  && perception.intruder_in_territory}"
+          then:
+            - call: territorial_defense
+            - set:
+                response_intensity: "${nature.aggression * nature.persistence}"
+
+        # Prey species -- flee early
+        - when: "${nature.fear_threshold < 0.3
+                  && perception.threat_detected}"
+          then:
+            - call: flee_response
+            - set:
+                flee_urgency: "${1.0 - nature.fear_threshold}"
+
+        # Curious creature encountering novelty
+        - when: "${nature.curiosity > 0.6
+                  && perception.novel_stimulus
+                  && !perception.threat_detected}"
+          then:
+            - call: investigate_stimulus
+
+  pack_behavior:
+    - cond:
+        # Highly social -- seek group
+        - when: "${nature.sociality > 0.7
+                  && !perception.pack_nearby}"
+          then:
+            - call: seek_pack_members
+            - set:
+                loneliness: "${nature.sociality * 0.8}"
+
+        # Alpha behavior -- this individual is more aggressive than pack average
+        - when: "${nature.aggression > 0.8
+                  && nature.sociality > 0.5
+                  && perception.pack_nearby}"
+          then:
+            - call: assert_dominance
+
+  # Same variable works for characters too
+  character_combat_style:
+    - cond:
+        # Character inherits aggressive nature from heritage/species
+        - when: "${nature.aggression > 0.7
+                  && nature.fear_threshold > 0.6}"
+          then:
+            - call: aggressive_combat_opener
+        # Cautious nature -- wait and observe
+        - when: "${nature.aggression < 0.3
+                  && nature.vigilance > 0.6}"
+          then:
+            - call: defensive_stance
+```
+
+---
+
 ## Dependencies (What This Plugin Relies On)
 
 ### Hard Dependencies (constructor injection -- crash if missing)
@@ -339,14 +432,14 @@ Even with the full cognitive stack, characters benefit from `${nature.*}`:
 | lib-messaging (`IEventConsumer`) | Subscribing to species events (deprecated, deleted), location events (deprecated, deleted) |
 | lib-species (`ISpeciesClient`) | Validating species existence when creating archetypes, querying species data for trait modifier cross-reference (L2) |
 | lib-game-service (`IGameServiceClient`) | Game service scope validation for archetypes (L2) |
+| lib-location (`ILocationClient`) | Validating location existence when creating location-scoped overrides, querying location hierarchy for override stacking (L2) |
 
 ### Soft Dependencies (runtime resolution via `IServiceProvider` -- graceful degradation)
 
 | Dependency | Usage | Behavior When Missing |
 |------------|-------|-----------------------|
-| lib-character-lifecycle (`ICharacterLifecycleClient`) | Querying Heritage phenotype data for character delegation. When available, Heritage-derived values take precedence over species archetypes for characters. | All entities (including characters) resolve via species archetype + overrides + noise. Characters lose genetic individuality but still get species-level behavioral defaults. |
-| lib-location (`ILocationClient`) | Validating location existence when creating location-scoped overrides. Querying location hierarchy for override stacking. | Location-scoped overrides cannot be created. Realm-scoped overrides still function. |
-| lib-analytics (`IAnalyticsClient`) | Publishing archetype usage statistics (which archetypes are most active, population distribution per archetype). | No analytics. Silent skip. |
+| lib-character-lifecycle (`ICharacterLifecycleClient`) | Querying Heritage phenotype data for character delegation. When available, Heritage-derived values take precedence over species archetypes for characters (L4). | All entities (including characters) resolve via species archetype + overrides + noise. Characters lose genetic individuality but still get species-level behavioral defaults. |
+| lib-analytics (`IAnalyticsClient`) | Publishing archetype usage statistics (which archetypes are most active, population distribution per archetype) (L4). | No analytics. Silent skip. |
 
 ---
 
@@ -465,6 +558,7 @@ When a realm is deleted, all realm-scoped overrides for that realm are removed. 
 | `IDistributedLockProvider` | Distributed lock acquisition (L0) |
 | `ISpeciesClient` | Species validation (L2) |
 | `IGameServiceClient` | Game service scope validation (L2) |
+| `ILocationClient` | Location validation for override scoping (L2) |
 | `IServiceProvider` | Runtime resolution of soft L4 dependencies |
 
 ### Background Workers
@@ -532,98 +626,6 @@ All endpoints require `developer` role.
 Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 
 - **CleanupByRealm** (`/ethology/cleanup-by-realm`): Removes all realm-scoped overrides for the deleted realm. Location-scoped overrides within the realm are also removed (location deletion events handle this independently, but cleanup ensures no orphans).
-
----
-
-## Variable Provider: `${nature.*}` Namespace
-
-Implements `IVariableProviderFactory` (via `NatureProviderFactory`). Loads from the cached nature manifest or computes on demand.
-
-### Behavioral Axes
-
-| Variable | Type | Description |
-|----------|------|-------------|
-| `${nature.<axisCode>}` | float | Resolved value for any behavioral axis defined in the archetype (0.0-1.0). Three-layer resolution: archetype base + environmental overrides + individual noise. For characters with Heritage, heritage-mapped axes use phenotype values instead. |
-| `${nature.aggression}` | float | Example: readiness to initiate hostility |
-| `${nature.territoriality}` | float | Example: strength of territorial defense |
-| `${nature.curiosity}` | float | Example: tendency to investigate vs. avoid |
-| `${nature.fear_threshold}` | float | Example: stimulus level to trigger flight |
-| `${nature.sociality}` | float | Example: pack/herd cohesion tendency |
-| `${nature.persistence}` | float | Example: pursuit duration before abandoning |
-| `${nature.vigilance}` | float | Example: baseline alertness |
-| `${nature.docility}` | float | Example: susceptibility to taming |
-
-### Metadata
-
-| Variable | Type | Description |
-|----------|------|-------------|
-| `${nature.species}` | string | Species code from archetype |
-| `${nature.category}` | string | Archetype category (predator, prey, apex, etc.) |
-| `${nature.activity_pattern}` | string | Diurnal, nocturnal, crepuscular, cathemeral |
-| `${nature.diet}` | string | Carnivore, herbivore, omnivore, detritivore |
-| `${nature.social_structure}` | string | Solitary, pair, pack, herd, swarm, colony |
-| `${nature.has_archetype}` | bool | Whether an archetype was found for this entity's species |
-
-### ABML Usage Examples
-
-```yaml
-flows:
-  creature_decision:
-    - cond:
-        # Territorial species -- defend territory aggressively
-        - when: "${nature.territoriality > 0.7
-                  && perception.intruder_in_territory}"
-          then:
-            - call: territorial_defense
-            - set:
-                response_intensity: "${nature.aggression * nature.persistence}"
-
-        # Prey species -- flee early
-        - when: "${nature.fear_threshold < 0.3
-                  && perception.threat_detected}"
-          then:
-            - call: flee_response
-            - set:
-                flee_urgency: "${1.0 - nature.fear_threshold}"
-
-        # Curious creature encountering novelty
-        - when: "${nature.curiosity > 0.6
-                  && perception.novel_stimulus
-                  && !perception.threat_detected}"
-          then:
-            - call: investigate_stimulus
-
-  pack_behavior:
-    - cond:
-        # Highly social -- seek group
-        - when: "${nature.sociality > 0.7
-                  && !perception.pack_nearby}"
-          then:
-            - call: seek_pack_members
-            - set:
-                loneliness: "${nature.sociality * 0.8}"
-
-        # Alpha behavior -- this individual is more aggressive than pack average
-        - when: "${nature.aggression > 0.8
-                  && nature.sociality > 0.5
-                  && perception.pack_nearby}"
-          then:
-            - call: assert_dominance
-
-  # Same variable works for characters too
-  character_combat_style:
-    - cond:
-        # Character inherits aggressive nature from heritage/species
-        - when: "${nature.aggression > 0.7
-                  && nature.fear_threshold > 0.6}"
-          then:
-            - call: aggressive_combat_opener
-        # Cautious nature -- wait and observe
-        - when: "${nature.aggression < 0.3
-                  && nature.vigilance > 0.6}"
-          then:
-            - call: defensive_stance
-```
 
 ---
 
@@ -847,7 +849,7 @@ The question arises: why not add behavioral defaults to Species, or model this a
 
 **Seeds are progressive growth, not static definitions.** Seeds start empty and accumulate growth over time via `RecordGrowthAsync`. A wolf doesn't progressively earn being territorial. It IS territorial from birth by species definition. Using seeds would require pre-loading growth domains to simulate "you were born this way" -- a hack that misuses the abstraction. Seeds answer "how much has this entity developed?" Nature answers "what IS this entity?" These are fundamentally different questions. A wolf has `${nature.territoriality} = 0.8` from the moment it exists; it doesn't need to "grow into" territoriality.
 
-**Resource's ISeededResourceProvider is a file server, not a data system.** ISeededResourceProvider delivers read-only factory defaults as raw bytes (base64-encoded content with MIME types). It's designed for ABML templates and configuration files, not structured queryable data. You can't say "give me the aggression value for wolves in the Ironpeak Mountains" -- you'd get an entire YAML blob and need to parse it. No caching, no resolution hierarchy, no individual noise, no environmental overrides.
+**Resource's ISeededResourceProvider is a file server, not a data system.** ISeededResourceProvider delivers read-only factory defaults as raw bytes (`byte[] Content` with MIME content types). It's designed for ABML templates and configuration files, not structured queryable data. You can't say "give me the aggression value for wolves in the Ironpeak Mountains" -- you'd get an entire YAML blob and need to parse it. No caching, no resolution hierarchy, no individual noise, no environmental overrides.
 
 **Character-Lifecycle's Heritage Engine is character-specific by design.** Heritage handles Mendelian genetics for entities with "personality, drives, social relationships, and generational continuity." Creatures that don't breed, don't age, and don't have guardian spirits are explicitly outside Heritage's scope. Character-Lifecycle's deep dive states: "Animals, creatures, and other living entities that don't have guardian spirits, personality profiles, or generational continuity don't need this service." Ethology fills the gap Heritage intentionally leaves.
 

@@ -9,23 +9,7 @@
 
 ## Overview
 
-Authoritative dispute resolution service (L4 GameFeatures) for competing claims that need jurisdictional ruling and enforcement. A thin orchestration layer (like Quest over Contract, Escrow over Currency/Item, Divine over Currency/Seed/Collection) that composes existing Bannou primitives to deliver adjudication game mechanics.
-
-**Composability**: Case identity and lifecycle are owned here. Jurisdiction determination uses Faction (sovereignty, territory control, authority level). Procedural workflow is Contract (the arbitration case IS a contract instance created from a procedural template). Asset division is Escrow (when rulings involve property). Ongoing obligations from rulings are Obligation (alimony, probation, reparations feed into GOAP action costs). Relationship status changes from rulings (married -> divorced, member -> exiled) use Relationship. Sovereignty disputes may involve Seed (capability-gated claims). Divine arbitration uses Puppetmaster (regional watcher gods as arbiters).
-
-**The Quest/Escrow parallel**: Arbitration follows the same structural pattern as Quest and Escrow -- a game-flavored API layer over Contract's state machine. Quest translates "complete this objective" into contract milestones. Escrow translates "exchange these assets" into contract-guarded custody. Arbitration translates "resolve this dispute" into contract-tracked procedural steps (filing, evidence, hearing, ruling, enforcement). They are parallel orchestration layers composing the same underlying primitive (Contract), not the same service.
-
-**Critical architectural insight**: Arbitration does not adjudicate -- it orchestrates the adjudication process. The arbiter (an NPC, a faction leader, a divine actor) makes the actual ruling decision. Arbitration provides the procedural framework, tracks the case state, enforces deadlines, and executes the ruling's consequences via prebound API calls. This is the same "orchestration not intelligence" principle that governs Quest (quest doesn't decide when objectives are complete -- the world does) and Escrow (escrow doesn't decide if conditions are met -- the arbiter does).
-
-**Sovereignty is prerequisite**: Arbitration is meaningful only when factions distinguish between legal authority (Sovereign/Delegated) and social influence. Without sovereignty, there is no principled way to determine who has jurisdiction, whose procedures apply, or what weight a ruling carries. The `authorityLevel` field on FactionModel (described in [Faction deep dive Design Consideration #6](FACTION.md#design-considerations-requires-planning)) must exist before arbitration can function. See the [Faction Sovereignty Dependency](#faction-sovereignty-dependency) section for details.
-
-**Case types are opaque strings**: `dissolution`, `property_dispute`, `criminal_proceeding`, `trade_dispute`, `custody_inheritance`, `sovereignty_recognition`, `contract_conflict` are all just case types with different procedural templates. The arbitration service doesn't hardcode any case-type-specific logic -- it provides the framework for any authoritative resolution process. New case types require only a new procedural template in Contract and a governance data entry in the jurisdictional faction.
-
-**NPC agency in arbitration**: An NPC with the `evaluate_consequences` cognition stage can autonomously decide to initiate, contest, or cooperate with arbitration proceedings. An unhappy NPC in a bad marriage evaluates the cost of continuing vs. filing for dissolution vs. fleeing to a permissive jurisdiction. A merchant NPC evaluates whether to contest a trade dispute ruling or accept the loss. This is emergent narrative from the intersection of sovereignty + arbitration + cognition.
-
-**Zero Arcadia-specific content**: lib-arbitration is a generic dispute resolution service. Arcadia's specific procedural templates (dissolution-standard, dissolution-religious-annulment, exile-punitive, criminal-trial-standard), arbiter selection rules, and cultural attitudes toward litigation are configured through contract templates and faction governance data at deployment time, not baked into lib-arbitration.
-
-**Current status**: Pre-implementation. No schema, no code. This deep dive is an architectural specification based on the broader orchestration patterns established by lib-quest, lib-escrow, and lib-divine. Sovereignty prerequisites are documented in [Faction deep dive Design Consideration #6](FACTION.md#design-considerations-requires-planning) and [Obligation deep dive multi-channel costs](OBLIGATION.md#design-considerations-requires-planning). Internal-only, never internet-facing.
+Authoritative dispute resolution service (L4 GameFeatures) for competing claims that need jurisdictional ruling and enforcement. A thin orchestration layer (like Quest over Contract, Escrow over Currency/Item, Divine over Currency/Seed/Collection) that composes existing Bannou primitives to deliver adjudication game mechanics. Game-agnostic: procedural templates, arbiter selection rules, and cultural attitudes toward litigation are configured through contract templates and faction governance data at deployment time. Internal-only, never internet-facing.
 
 ---
 
@@ -404,6 +388,8 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 
 ### Integration Orchestration
 
+Case identity and lifecycle are owned here. Jurisdiction determination uses Faction (sovereignty, territory control, authority level). Procedural workflow is Contract (the arbitration case IS a contract instance created from a procedural template). Asset division is Escrow (when rulings involve property). Ongoing obligations from rulings are Obligation (alimony, probation, reparations feed into GOAP action costs). Relationship status changes from rulings (married -> divorced, member -> exiled) use Relationship. Sovereignty disputes may involve Seed (capability-gated claims). Divine arbitration uses Puppetmaster (regional watcher gods as arbiters).
+
 ```
 +-----------------------------------------------------------------------+
 |                    ARBITRATION ORCHESTRATION                            |
@@ -534,6 +520,10 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 
 ## Why Not lib-contract Directly?
 
+Arbitration follows the same structural pattern as Quest and Escrow -- a game-flavored API layer over Contract's state machine. Quest translates "complete this objective" into contract milestones. Escrow translates "exchange these assets" into contract-guarded custody. Arbitration translates "resolve this dispute" into contract-tracked procedural steps (filing, evidence, hearing, ruling, enforcement). They are parallel orchestration layers composing the same underlying primitive (Contract), not the same service.
+
+Arbitration does not adjudicate -- it orchestrates the adjudication process. The arbiter (an NPC, a faction leader, a divine actor) makes the actual ruling decision. Arbitration provides the procedural framework, tracks the case state, enforces deadlines, and executes the ruling's consequences via prebound API calls. This is the same "orchestration not intelligence" principle that governs Quest (quest doesn't decide when objectives are complete -- the world does) and Escrow (escrow doesn't decide if conditions are met -- the arbiter does).
+
 Contract provides the state machine, milestone progression, consent flows, and prebound API execution that arbitration cases need. The question arises: why not just create arbitration contracts directly via lib-contract's existing API?
 
 **The answer: arbitration requires jurisdiction, procedure, and enforcement -- Contract provides none of these.**
@@ -553,6 +543,8 @@ Contract is the engine. Arbitration is the legal system built on that engine.
 ---
 
 ## Faction Sovereignty Dependency
+
+Arbitration is meaningful only when factions distinguish between legal authority (Sovereign/Delegated) and social influence. Without sovereignty, there is no principled way to determine who has jurisdiction, whose procedures apply, or what weight a ruling carries. The `authorityLevel` field on FactionModel (described in [Faction deep dive Design Consideration #6](FACTION.md#design-considerations-requires-planning)) must exist before arbitration can function.
 
 Arbitration depends on a capability that does not yet exist in lib-faction: the `authorityLevel` field distinguishing Sovereign, Delegated, and Influence factions. This section documents the dependency and what it enables.
 
@@ -810,6 +802,8 @@ When the arbiter is an NPC (the common case), the ruling decision is made throug
 4. The arbiter's personality traits influence the ruling (a compassionate arbiter favors lenient sentences; a strict arbiter favors harsh penalties)
 
 This means arbiter corruption is emergent. An arbiter with low honesty and a bribe offer faces a GOAP evaluation: the cost of corruption vs. the cost of ruling honestly. The morality pipeline makes judicial corruption a natural consequence of character traits and social pressure, not a scripted event.
+
+Beyond arbiters, any NPC with the `evaluate_consequences` cognition stage can autonomously decide to initiate, contest, or cooperate with arbitration proceedings. An unhappy NPC in a bad marriage evaluates the cost of continuing vs. filing for dissolution vs. fleeing to a permissive jurisdiction. A merchant NPC evaluates whether to contest a trade dispute ruling or accept the loss. This is emergent narrative from the intersection of sovereignty + arbitration + cognition.
 
 ### Divine Arbiter Pattern
 

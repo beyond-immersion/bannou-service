@@ -8,7 +8,11 @@
 
 ## Overview
 
-Generational cycle orchestration and genetic heritage service (L4 GameFeatures) for character aging, marriage, procreation, death processing, and cross-generational trait inheritance. The temporal engine that drives the content flywheel by ensuring characters are born, live, age, reproduce, and die -- and that each death produces archives feeding future content. Without this service, characters exist in a timeless limbo where nobody ages, no children are born, no natural deaths occur, and the "more play produces more content" thesis cannot function.
+Generational cycle orchestration and genetic heritage service (L4 GameFeatures) for character aging, marriage, procreation, death processing, and cross-generational trait inheritance. The temporal engine that drives the content flywheel by ensuring characters are born, live, age, reproduce, and die -- and that each death produces archives feeding future content. Game-agnostic: lifecycle stages, genetic trait definitions, marriage customs, and death processing are configured through lifecycle configuration and seed data at deployment time. Internal-only, never internet-facing.
+
+---
+
+## Core Mechanics: Lifecycle Engine
 
 **Two complementary subsystems**:
 
@@ -17,28 +21,7 @@ Generational cycle orchestration and genetic heritage service (L4 GameFeatures) 
 | **Lifecycle** | "Where is this character in their life journey?" | Persistent with temporal advancement | Event-driven (worldstate year/season events) |
 | **Heritage** | "What did this character inherit from their parents?" | Persistent, set at creation, immutable | Write-once at procreation |
 
-**The problem this solves**: The pieces are in place -- Worldstate provides the game clock, Character provides CRUD, Relationship has PARENT/SPOUSE/CHILD types, Organization models households with succession, Resource compresses archives, Character-History tracks backstory, Disposition models drives and fulfillment, Storyline generates narratives from archives. But nobody orchestrates the lifecycle itself. Characters don't age. Marriage is a Relationship record without ceremony or household consequences. Procreation doesn't exist -- there is zero mechanism for two characters to produce a child with inherited traits. Death is a deletion event, not a transformation. The content flywheel has all its components but no ignition switch.
-
-**The content flywheel ignition**: From the [Vision](../../arcadia-kb/VISION.md): "Characters age, marry, have children, and die" and "Death transforms, not ends -- the underworld offers its own gameplay." Every north star depends on lifecycle working:
-- **Living Game Worlds**: Generational dynasties, family businesses persisting across lifetimes, NPCs pursuing long-term aspirations that span beyond their own mortality
-- **Content Flywheel**: Death produces archives. Archives feed Storyline. Storyline produces scenarios. Scenarios produce new experiences. More characters dying = more content generated. Year 1 yields ~1,000 story seeds; Year 5 yields ~500,000 -- but only if characters actually complete life cycles
-- **Design Principle 4** ("Death Creates, Not Destroys"): Fulfillment calculation determines how much logos flows to the guardian spirit. A fulfilled life enriches the player's seed. An unfulfilled life creates unfinished-business story seeds. Death is the mechanism that converts lived experience into generative material
-
-**Character identity is the opt-in**: This service is deliberately character-specific. Characters are the entity type that opts into the full cognitive stack (personality, encounters, history, disposition, hearsay, lifecycle). Animals, creatures, and other living entities that don't have guardian spirits, personality profiles, or generational continuity don't need this service. A future `lib-habitat` or `lib-ecology` service could handle population dynamics and creature breeding at a simpler level, but that is a separate concern. If an entity is complex enough to need lifecycle management -- if it has personality, drives, social relationships, and generational continuity -- it IS a character, whether it looks like a human, an elf, a sentient dragon, or a talking cat.
-
-**Heritage as embedded subsystem**: Heritage (genetic trait inheritance) lives within this service rather than as a standalone plugin. The primary write path for genetic data is procreation -- the moment this service orchestrates. The read path is thin (a variable provider and occasional queries from Quest/Divine). This follows the MusicTheory/Music parallel: complex computation, thin API surface. If heritage grows complex enough to warrant its own service boundary (species hybridization becomes massive, bloodline politics becomes a full system), it can be extracted later.
-
-**The Fulfillment Principle**: From the [Player Vision](../../arcadia-kb/PLAYER-VISION.md): "more fulfilled in life = more logos flow to the guardian spirit." Fulfillment is computed from Disposition's drive system -- a character who achieved their `master_craft` drive (satisfaction 0.9) contributed more to the guardian spirit than one who died with all drives frustrated. This creates a player incentive to guide characters toward their aspirations, not just toward power or wealth. The guardian spirit seed grows proportionally to the sum of fulfilled drives across all characters in the household's history.
-
-**Composability**: Lifecycle identity, aging, and heritage computation are owned here. Marriage ceremony is Contract (L1). Spousal bond is Relationship (L2). Household structure is Organization (L4). Emotional state is Disposition (L4). Genetic trait expression feeds into Character-Personality (L4). Backstory seeding feeds into Character-History (L4). Archive compression is Resource (L1). Narrative generation from archives is Storyline (L4). Guardian spirit evolution is Seed (L2). This service composes them all into a coherent generational lifecycle, following the same orchestration pattern as Quest (over Contract), Escrow (over Currency + Item), and Organization (over Currency + Inventory + Contract + Relationship).
-
-**Zero Arcadia-specific content**: lib-character-lifecycle is a generic generational lifecycle service. Arcadia's specific lifecycle stages (child thresholds, elder onset, species longevity), genetic trait definitions (which traits are heritable, dominance rules), marriage customs (ceremony contract templates, dowry mechanics), and death processing (underworld pathways, fulfillment thresholds) are configured through lifecycle configuration and seed data at deployment time, not baked into lib-character-lifecycle. A game with immortal characters could disable aging entirely. A game with cloning instead of procreation could use the heritage engine with a single-parent recombination mode.
-
-**Current status**: Pre-implementation. No schema, no code. This deep dive is an architectural specification based on analysis of the generational gap across the entire codebase -- the missing lifecycle orchestrator that Organization Phase 5 explicitly awaits, the content flywheel loop that cannot turn without death processing, and the genetic inheritance system named in the Vision but absent from any existing or planned service. Internal-only, never internet-facing.
-
----
-
-## Core Mechanics: Lifecycle Engine
+The pieces are in place -- Worldstate provides the game clock, Character provides CRUD, Relationship has PARENT/SPOUSE/CHILD types, Organization models households with succession, Resource compresses archives, Character-History tracks backstory, Disposition models drives and fulfillment, Storyline generates narratives from archives. But nobody orchestrates the lifecycle itself. Characters don't age. Marriage is a Relationship record without ceremony or household consequences. Procreation doesn't exist -- there is zero mechanism for two characters to produce a child with inherited traits. Death is a deletion event, not a transformation. The content flywheel has all its components but no ignition switch.
 
 ### Lifecycle Profile
 
@@ -510,6 +493,13 @@ Aptitude mappings are defined in the heritable trait template. The resulting apt
 ---
 
 ## The Generational Arc
+
+From the [Vision](../../arcadia-kb/VISION.md): "Characters age, marry, have children, and die" and "Death transforms, not ends -- the underworld offers its own gameplay." Every north star depends on lifecycle working:
+- **Living Game Worlds**: Generational dynasties, family businesses persisting across lifetimes, NPCs pursuing long-term aspirations that span beyond their own mortality
+- **Content Flywheel**: Death produces archives. Archives feed Storyline. Storyline produces scenarios. Scenarios produce new experiences. More characters dying = more content generated. Year 1 yields ~1,000 story seeds; Year 5 yields ~500,000 -- but only if characters actually complete life cycles
+- **Design Principle 4** ("Death Creates, Not Destroys"): Fulfillment calculation determines how much logos flows to the guardian spirit. A fulfilled life enriches the player's seed. An unfulfilled life creates unfinished-business story seeds. Death is the mechanism that converts lived experience into generative material
+
+From the [Player Vision](../../arcadia-kb/PLAYER-VISION.md): "more fulfilled in life = more logos flow to the guardian spirit." Fulfillment is computed from Disposition's drive system -- a character who achieved their `master_craft` drive (satisfaction 0.9) contributed more to the guardian spirit than one who died with all drives frustrated. This creates a player incentive to guide characters toward their aspirations, not just toward power or wealth. The guardian spirit seed grows proportionally to the sum of fulfilled drives across all characters in the household's history.
 
 The motivating use case, played out step by step:
 
@@ -1047,6 +1037,8 @@ flows:
 
 ## Visual Aid
 
+Lifecycle identity, aging, and heritage computation are owned here. Marriage ceremony is Contract (L1). Spousal bond is Relationship (L2). Household structure is Organization (L4). Emotional state is Disposition (L4). Genetic trait expression feeds into Character-Personality (L4). Backstory seeding feeds into Character-History (L4). Archive compression is Resource (L1). Narrative generation from archives is Storyline (L4). Guardian spirit evolution is Seed (L2). This service composes them all into a coherent generational lifecycle, following the same orchestration pattern as Quest (over Contract), Escrow (over Currency + Item), and Organization (over Currency + Inventory + Contract + Relationship).
+
 ### Lifecycle Flow
 
 ```
@@ -1308,6 +1300,10 @@ flows:
 ---
 
 ## Why Not Extend Character or Character-History?
+
+This service is deliberately character-specific. Characters are the entity type that opts into the full cognitive stack (personality, encounters, history, disposition, hearsay, lifecycle). Animals, creatures, and other living entities that don't have guardian spirits, personality profiles, or generational continuity don't need this service. A future `lib-habitat` or `lib-ecology` service could handle population dynamics and creature breeding at a simpler level, but that is a separate concern. If an entity is complex enough to need lifecycle management -- if it has personality, drives, social relationships, and generational continuity -- it IS a character, whether it looks like a human, an elf, a sentient dragon, or a talking cat.
+
+Heritage (genetic trait inheritance) lives within this service rather than as a standalone plugin. The primary write path for genetic data is procreation -- the moment this service orchestrates. The read path is thin (a variable provider and occasional queries from Quest/Divine). This follows the MusicTheory/Music parallel: complex computation, thin API surface. If heritage grows complex enough to warrant its own service boundary (species hybridization becomes massive, bloodline politics becomes a full system), it can be extracted later.
 
 The question arises: why not add aging to Character or genetics to Character-History?
 
