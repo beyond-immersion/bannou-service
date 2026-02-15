@@ -25,6 +25,21 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Actor;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Actor;
 
@@ -54,7 +69,7 @@ public partial class CreateActorTemplateRequest
     public string BehaviorRef { get; set; } = default!;
 
     /// <summary>
-    /// Default configuration passed to behavior execution
+    /// Game-specific configuration passed to ABML behavior execution scope. No Bannou plugin reads specific keys from this field by convention. Different ABML behaviors define their own expected configuration structure.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("configuration")]
     public object? Configuration { get; set; } = default!;
@@ -93,9 +108,7 @@ public partial class CreateActorTemplateRequest
     public string? CognitionTemplateId { get; set; } = default!;
 
     /// <summary>
-    /// Static template-level cognition overrides. Applied as the first layer
-    /// <br/>in the three-layer override composition (template → instance → ABML metadata).
-    /// <br/>
+    /// Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes. Applied as the first layer in the three-layer override composition (template, instance, ABML metadata). Structure defined by ICognitionOverride interface hierarchy in bannou-service/Behavior/.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("cognitionOverrides")]
     public object? CognitionOverrides { get; set; } = default!;
@@ -173,7 +186,7 @@ public partial class ActorTemplateResponse
     public string BehaviorRef { get; set; } = default!;
 
     /// <summary>
-    /// Default configuration passed to behavior execution
+    /// Game-specific configuration passed to ABML behavior execution scope. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("configuration")]
     public object? Configuration { get; set; } = default!;
@@ -211,9 +224,7 @@ public partial class ActorTemplateResponse
     public string? CognitionTemplateId { get; set; } = default!;
 
     /// <summary>
-    /// Static template-level cognition overrides. Applied as the first layer
-    /// <br/>in the three-layer override composition (template → instance → ABML metadata).
-    /// <br/>
+    /// Static template-level cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("cognitionOverrides")]
     public object? CognitionOverrides { get; set; } = default!;
@@ -323,7 +334,7 @@ public partial class UpdateActorTemplateRequest
     public string? BehaviorRef { get; set; } = default!;
 
     /// <summary>
-    /// Updated configuration settings
+    /// Updated game-specific configuration for ABML behavior execution scope. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("configuration")]
     public object? Configuration { get; set; } = default!;
@@ -355,9 +366,7 @@ public partial class UpdateActorTemplateRequest
     public string? CognitionTemplateId { get; set; } = default!;
 
     /// <summary>
-    /// Updated static template-level cognition overrides. Applied as the first layer
-    /// <br/>in the three-layer override composition.
-    /// <br/>
+    /// Updated cognition overrides (polymorphic JSON). Deserialized internally to CognitionOverrides type with discriminated subtypes.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("cognitionOverrides")]
     public object? CognitionOverrides { get; set; } = default!;
@@ -430,13 +439,13 @@ public partial class SpawnActorRequest
     public string? ActorId { get; set; } = default!;
 
     /// <summary>
-    /// Override template defaults
+    /// Game-specific configuration overrides merged with template defaults. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("configurationOverrides")]
     public object? ConfigurationOverrides { get; set; } = default!;
 
     /// <summary>
-    /// Initial state passed to behavior
+    /// Initial actor state snapshot. Deserialized internally to ActorStateSnapshot. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("initialState")]
     public object? InitialState { get; set; } = default!;
@@ -842,9 +851,7 @@ public partial class PerceptionData
     public PerceptionSourceType? SourceType { get; set; } = default!;
 
     /// <summary>
-    /// Perception-specific data. For perceptionType="spatial", this can contain
-    /// <br/>game-specific spatial context in any format the game server defines.
-    /// <br/>
+    /// Game-specific perception payload passed to ABML behavior execution scope. No Bannou plugin reads specific keys from this field by convention. Different perception types carry different data structures defined by the game.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("data")]
     public object? Data { get; set; } = default!;
@@ -868,12 +875,7 @@ public partial class PerceptionData
 }
 
 /// <summary>
-/// Spatial context derived from game server's authoritative spatial state.
-/// <br/>Included in perception events to give NPC actors awareness of their environment
-/// <br/>without requiring direct map subscriptions.
-/// <br/>
-/// <br/>Note: additionalProperties=true allows game-specific extensions.
-/// <br/>
+/// Spatial context derived from game server's authoritative spatial state. Included in perception events to give NPC actors awareness of their environment. Core properties are schema-defined; additionalProperties allows game-specific spatial extensions. No Bannou plugin reads specific extension keys by convention.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class SpatialContext
@@ -927,16 +929,16 @@ public partial class SpatialContext
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
-        get => _additionalProperties;
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
         set { _additionalProperties = value; }
     }
 
 }
 
 /// <summary>
-/// Information about a nearby object perceived by the character
+/// Information about a nearby object perceived by the character. Core properties are schema-defined; additionalProperties allows game-specific object data. No Bannou plugin reads specific extension keys by convention.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class NearbyObject
@@ -978,16 +980,16 @@ public partial class NearbyObject
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
-        get => _additionalProperties;
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
         set { _additionalProperties = value; }
     }
 
 }
 
 /// <summary>
-/// Information about a hazard in range
+/// Information about a hazard in range. Core properties are schema-defined; additionalProperties allows game-specific hazard data. No Bannou plugin reads specific extension keys by convention.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class HazardInfo
@@ -1024,9 +1026,9 @@ public partial class HazardInfo
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
-        get => _additionalProperties;
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
         set { _additionalProperties = value; }
     }
 
@@ -1243,9 +1245,7 @@ public enum OptionsFreshness
 #pragma warning restore CS1591
 
 /// <summary>
-/// A single option available to the actor. The standardized fields enable
-/// <br/>Event Brain to reason about options; additional fields allow actor-specific data.
-/// <br/>
+/// A single option available to the actor. Core properties (actionId, preference, risk, available, etc.) are schema-defined and used by Actor internally. additionalProperties allows game-specific option extensions. No Bannou plugin reads specific extension keys by convention.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ActorOption
@@ -1307,18 +1307,16 @@ public partial class ActorOption
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
-        get => _additionalProperties;
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
         set { _additionalProperties = value; }
     }
 
 }
 
 /// <summary>
-/// Context provided with a fresh query. Injected as a perception to the actor
-/// <br/>to trigger context-sensitive option recomputation.
-/// <br/>
+/// Context provided with a fresh query. Injected as a perception to the actor to trigger context-sensitive option recomputation. Core properties are schema-defined; use customContext for game-specific extensions. No Bannou plugin reads specific extension keys by convention.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class OptionsQueryContext
@@ -1356,7 +1354,7 @@ public partial class OptionsQueryContext
     public float? Urgency { get; set; } = default!;
 
     /// <summary>
-    /// Actor-specific context data
+    /// Game-specific context data passed through to ABML behavior scope. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("customContext")]
     public object? CustomContext { get; set; } = default!;
@@ -1367,9 +1365,9 @@ public partial class OptionsQueryContext
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
-        get => _additionalProperties;
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
         set { _additionalProperties = value; }
     }
 
@@ -1498,9 +1496,7 @@ public partial class ChoreographyInstruction
 }
 
 /// <summary>
-/// A single action within a choreographed sequence.
-/// <br/>ActionId should match one from the participant's options.
-/// <br/>
+/// A single action within a choreographed sequence. Core properties (actionId, targetId, position, durationMs, style, delayMs) are schema-defined. additionalProperties allows game-specific action extensions. No Bannou plugin reads specific extension keys by convention.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
 public partial class ChoreographyAction
@@ -1562,9 +1558,9 @@ public partial class ChoreographyAction
     /// Gets or sets additional properties not defined in the schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonExtensionData]
-    public System.Collections.Generic.IDictionary<string, object>? AdditionalProperties
+    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
     {
-        get => _additionalProperties;
+        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
         set { _additionalProperties = value; }
     }
 
@@ -1733,7 +1729,7 @@ public partial class StartEncounterRequest
     public System.Collections.Generic.ICollection<System.Guid> Participants { get; set; } = new System.Collections.ObjectModel.Collection<System.Guid>();
 
     /// <summary>
-    /// Optional initial data for the encounter
+    /// Game-specific encounter initialization data passed to ABML behavior scope. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("initialData")]
     public object? InitialData { get; set; } = default!;
@@ -1938,7 +1934,7 @@ public partial class EncounterState
     public System.DateTimeOffset StartedAt { get; set; } = default!;
 
     /// <summary>
-    /// Custom encounter-specific data
+    /// Game-specific encounter state data passed to ABML behavior scope. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("data")]
     public object? Data { get; set; } = default!;

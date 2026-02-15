@@ -409,7 +409,10 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Default configuration passed to behavior execution
+          description: >-
+            Game-specific configuration passed to ABML behavior execution scope.
+            No Bannou plugin reads specific keys from this field by convention.
+            Different ABML behaviors define their own expected configuration structure.
         autoSpawn:
           description: Auto-spawn configuration for instantiate-on-access
           nullable: true
@@ -437,9 +440,12 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: |
-            Static template-level cognition overrides. Applied as the first layer
-            in the three-layer override composition (template → instance → ABML metadata).
+          description: >-
+            Static template-level cognition overrides (polymorphic JSON).
+            Deserialized internally to CognitionOverrides type with discriminated subtypes.
+            Applied as the first layer in the three-layer override composition
+            (template, instance, ABML metadata). Structure defined by ICognitionOverride
+            interface hierarchy in bannou-service/Behavior/.
 
     AutoSpawnConfig:
       type: object
@@ -498,7 +504,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Default configuration passed to behavior execution
+          description: >-
+            Game-specific configuration passed to ABML behavior execution scope.
+            No Bannou plugin reads specific keys from this field by convention.
         autoSpawn:
           description: Auto-spawn configuration for instantiate-on-access
           nullable: true
@@ -522,9 +530,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: |
-            Static template-level cognition overrides. Applied as the first layer
-            in the three-layer override composition (template → instance → ABML metadata).
+          description: >-
+            Static template-level cognition overrides (polymorphic JSON).
+            Deserialized internally to CognitionOverrides type with discriminated subtypes.
         createdAt:
           type: string
           format: date-time
@@ -600,7 +608,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Updated configuration settings
+          description: >-
+            Updated game-specific configuration for ABML behavior execution scope.
+            No Bannou plugin reads specific keys from this field by convention.
         autoSpawn:
           description: Updated auto-spawn configuration
           nullable: true
@@ -623,9 +633,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: |
-            Updated static template-level cognition overrides. Applied as the first layer
-            in the three-layer override composition.
+          description: >-
+            Updated cognition overrides (polymorphic JSON).
+            Deserialized internally to CognitionOverrides type with discriminated subtypes.
 
     DeleteActorTemplateRequest:
       type: object
@@ -679,12 +689,16 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Override template defaults
+          description: >-
+            Game-specific configuration overrides merged with template defaults.
+            No Bannou plugin reads specific keys from this field by convention.
         initialState:
           type: object
           additionalProperties: true
           nullable: true
-          description: Initial state passed to behavior
+          description: >-
+            Initial actor state snapshot. Deserialized internally to ActorStateSnapshot.
+            No Bannou plugin reads specific keys from this field by convention.
         characterId:
           type: string
           format: uuid
@@ -942,9 +956,10 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: |
-            Perception-specific data. For perceptionType="spatial", this can contain
-            game-specific spatial context in any format the game server defines.
+          description: >-
+            Game-specific perception payload passed to ABML behavior execution scope.
+            No Bannou plugin reads specific keys from this field by convention.
+            Different perception types carry different data structures defined by the game.
         urgency:
           type: number
           format: float
@@ -964,12 +979,11 @@ components:
     SpatialContext:
       type: object
       additionalProperties: true
-      description: |
+      description: >-
         Spatial context derived from game server's authoritative spatial state.
-        Included in perception events to give NPC actors awareness of their environment
-        without requiring direct map subscriptions.
-
-        Note: additionalProperties=true allows game-specific extensions.
+        Included in perception events to give NPC actors awareness of their environment.
+        Core properties are schema-defined; additionalProperties allows game-specific
+        spatial extensions. No Bannou plugin reads specific extension keys by convention.
       properties:
         terrainType:
           type: string
@@ -1011,7 +1025,10 @@ components:
     NearbyObject:
       type: object
       additionalProperties: true
-      description: Information about a nearby object perceived by the character
+      description: >-
+        Information about a nearby object perceived by the character.
+        Core properties are schema-defined; additionalProperties allows game-specific
+        object data. No Bannou plugin reads specific extension keys by convention.
       properties:
         objectId:
           type: string
@@ -1036,7 +1053,10 @@ components:
     HazardInfo:
       type: object
       additionalProperties: true
-      description: Information about a hazard in range
+      description: >-
+        Information about a hazard in range.
+        Core properties are schema-defined; additionalProperties allows game-specific
+        hazard data. No Bannou plugin reads specific extension keys by convention.
       properties:
         hazardType:
           type: string
@@ -1196,9 +1216,11 @@ components:
     ActorOption:
       type: object
       additionalProperties: true
-      description: |
-        A single option available to the actor. The standardized fields enable
-        Event Brain to reason about options; additional fields allow actor-specific data.
+      description: >-
+        A single option available to the actor. Core properties (actionId, preference,
+        risk, available, etc.) are schema-defined and used by Actor internally.
+        additionalProperties allows game-specific option extensions.
+        No Bannou plugin reads specific extension keys by convention.
       required:
       - actionId
       - preference
@@ -1247,9 +1269,11 @@ components:
     OptionsQueryContext:
       type: object
       additionalProperties: true
-      description: |
+      description: >-
         Context provided with a fresh query. Injected as a perception to the actor
-        to trigger context-sensitive option recomputation.
+        to trigger context-sensitive option recomputation. Core properties are schema-defined;
+        use customContext for game-specific extensions.
+        No Bannou plugin reads specific extension keys by convention.
       properties:
         combatState:
           type: string
@@ -1284,7 +1308,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Actor-specific context data
+          description: >-
+            Game-specific context data passed through to ABML behavior scope.
+            No Bannou plugin reads specific keys from this field by convention.
 
     CharacterOptionContext:
       type: object
@@ -1375,9 +1401,11 @@ components:
     ChoreographyAction:
       type: object
       additionalProperties: true
-      description: |
-        A single action within a choreographed sequence.
-        ActionId should match one from the participant's options.
+      description: >-
+        A single action within a choreographed sequence. Core properties (actionId,
+        targetId, position, durationMs, style, delayMs) are schema-defined.
+        additionalProperties allows game-specific action extensions.
+        No Bannou plugin reads specific extension keys by convention.
       required:
       - actionId
       properties:
@@ -1523,7 +1551,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Optional initial data for the encounter
+          description: >-
+            Game-specific encounter initialization data passed to ABML behavior scope.
+            No Bannou plugin reads specific keys from this field by convention.
 
     UpdateEncounterPhaseRequest:
       type: object
@@ -1655,4 +1685,6 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Custom encounter-specific data
+          description: >-
+            Game-specific encounter state data passed to ABML behavior scope.
+            No Bannou plugin reads specific keys from this field by convention.

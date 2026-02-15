@@ -154,7 +154,7 @@ Service lifetime is **Scoped** (per-request). Background service `ContractMilest
 
 ### Instance Operations (7 endpoints)
 
-- **CreateContractInstance** (`/contract/instance/create`): Loads template, validates active. Checks party count against template min/max AND config hard cap. Checks `MaxActiveContractsPerEntity` per party via party indexes. Creates parties with Pending consent. Merges template default terms with request terms (instance overrides template, custom terms merged). Creates milestone instances from template definitions. Saves with Draft status. Updates template, status, and party indexes.
+- **CreateContractInstance** (`/contract/instance/create`): Loads template, validates active. Checks party count against template min/max AND config hard cap. Checks `MaxActiveContractsPerEntity` per party via party indexes. Creates parties with Pending consent. Merges template default terms with request terms (instance overrides template; typed constraint/clause properties and custom terms merged). Creates milestone instances from template definitions. Saves with Draft status. Updates template, status, and party indexes.
 - **ProposeContractInstance** (`/contract/instance/propose`): Acquires `contract-instance` distributed lock on `{contractId}` (60s TTL). Transitions Draft to Proposed. Uses ETag-based optimistic concurrency. Persists state first, then updates status indexes, then publishes `contract.proposed`.
 - **ConsentToContract** (`/contract/instance/consent`): Acquires `contract-instance` distributed lock on `{contractId}` (60s TTL). Guardian enforcement (Forbidden if locked). Requires Proposed status. Lazy expiration check: computes deadline from ProposedAt + DefaultConsentTimeoutDays, transitions to Expired if past. Validates party exists and has not already consented. Records consent with timestamp. On all-consented: transitions to Active (immediate) or Pending (future effectiveFrom). Activates first milestone on activation. Persists state first, then publishes consent-received, and conditionally accepted/activated.
 - **GetContractInstance** (`/contract/instance/get`): Simple key lookup, returns full instance response.
@@ -181,11 +181,11 @@ Service lifetime is **Scoped** (per-request). Background service `ContractMilest
 
 ### Constraint Operations (2 endpoints)
 
-- **CheckContractConstraint** (`/contract/check-constraint`): Loads entity's active contracts. Checks custom terms for constraint-related flags based on ConstraintType:
-  - **Exclusivity**: checks "exclusivity" custom term
-  - **Non_compete**: checks "nonCompete" custom term
+- **CheckContractConstraint** (`/contract/check-constraint`): Loads entity's active contracts. Checks typed constraint properties on ContractTerms based on ConstraintType:
+  - **Exclusivity**: checks `Terms.Exclusivity` boolean
+  - **Non_compete**: checks `Terms.NonCompete` boolean
   - **Territory**: validates location hierarchy overlap with exclusive/inclusive modes via `ILocationClient.GetLocationAncestorsAsync`. Custom terms `territoryLocationIds`, `territoryMode`, and proposedAction `locationId` drive the constraint logic.
-  - **Time_commitment**: detects conflicting exclusive time commitments across active contracts by checking date range overlaps for contracts with `timeCommitment: true` and `timeCommitmentType: exclusive`.
+  - **Time_commitment**: detects conflicting exclusive time commitments across active contracts by checking date range overlaps for contracts with `Terms.TimeCommitment == true` and `Terms.TimeCommitmentType == "exclusive"`.
   Returns allowed=true with no conflicts, or allowed=false with conflicting contract summaries and reason.
 - **QueryActiveContracts** (`/contract/query-active`): Loads entity's contracts, filters to Active status only. Optional templateCodes filter with wildcard prefix matching (TrimEnd('*') + StartsWith). Returns contract summaries with roles.
 
@@ -203,7 +203,7 @@ Service lifetime is **Scoped** (per-request). Background service `ContractMilest
 ### Execution Operations (3 endpoints)
 
 - **SetContractTemplateValues** (`/contract/instance/set-template-values`): Validates key format (alphanumeric + underscore regex). Merges with existing template values (additive). Publishes `contract.templatevalues.set`.
-- **CheckAssetRequirements** (`/contract/instance/check-asset-requirements`): Requires template values set. Parses clauses from template's CustomTerms["clauses"] JSON array. Filters for asset_requirement type. For each requirement: resolves check_location via template substitution, queries balance via registered handler (currency/balance/get for currency, inventory for items). Returns per-party satisfaction with current/required/missing amounts.
+- **CheckAssetRequirements** (`/contract/instance/check-asset-requirements`): Requires template values set. Parses clauses from template's typed `Clauses` property. Filters for asset_requirement type. For each requirement: resolves checkLocation via template substitution, queries balance via registered handler (currency/balance/get for currency, inventory for items). Returns per-party satisfaction with current/required/missing amounts.
 - **ExecuteContract** (`/contract/instance/execute`): Acquires `contract-instance` distributed lock on `{contractId}` (60s TTL). Uses ETag-based optimistic concurrency (`GetWithETagAsync` + `TrySaveAsync`). Idempotency via both instance's ExecutedAt field and explicit idempotency key cache. Requires Fulfilled status. Requires template values set. Parses clauses, separates into fees (execute first) and distributions (execute second). Each clause: loads clause type handler, builds transfer payload with template substitution, supports flat/percentage/remainder amount types. Remainder queries source wallet balance. Currency uses /currency/transfer; items use /inventory/transfer. Records distributions. Marks ExecutedAt. Publishes `contract.executed`.
 
 ---
@@ -359,7 +359,7 @@ Clause Execution Pipeline
 
   ExecuteContract(contractId)
        │
-       ├── Load template → parse CustomTerms["clauses"] JSON array
+       ├── Load template → parse typed Clauses property
        │
        ├── Separate by type:
        │    ├── fee clauses      → Execute first (order preserved)

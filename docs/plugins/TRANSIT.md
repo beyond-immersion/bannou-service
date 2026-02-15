@@ -3,8 +3,8 @@
 > **Status**: Aspirational (Pre-Implementation)
 > **Layer**: L2 GameFoundation
 > **Schema**: `schemas/transit-api.yaml` (not yet created)
-> **Hard Dependencies**: Location (L2), Worldstate (L2)
-> **Soft Dependencies**: None (L4 services enrich via DI provider pattern)
+> **Hard Dependencies**: Location (L2), Worldstate (L2), Character (L2), Species (L2), Item (L2), Inventory (L2), Seed (L2)
+> **Soft Dependencies**: None at the service client level (L4 services enrich via DI provider pattern)
 > **No schema, no code.**
 
 ---
@@ -44,6 +44,30 @@ This is the same pattern used by Scene (checkout/commit/discard), Workshop (lazy
 Transit modes are string codes, not enums. `walking`, `horseback`, `river_boat`, `flying_mount`, `teleportation`, `wagon`, `ocean_vessel` -- all registered via API, not hardcoded in schemas. This follows the pattern established by Seed (seed type codes), Collection (collection type codes), and Chat (room type codes). New modes can be added without schema changes, enabling game-specific transportation without platform modification.
 
 A transit mode defines abstract movement capability. A specific horse is an Item instance in an Inventory container. The mode's requirements specify what items, skills, or species are needed to use it. Transit checks compatibility; it doesn't manage the items themselves.
+
+Modes also support **proficiency via Seed integration**. A mode can optionally reference a `proficiencySeedTypeCode` -- when set, the entity's Seed growth level for that type modifies effective speed: `baseSpeed × (1 + proficiencyBonus)`. A character who has ridden horses their entire life (high `riding_proficiency` seed growth) is genuinely faster than a novice. This connects Transit to the content flywheel: an NPC's lifetime of travel proficiency data becomes generative input when their archive is compressed.
+
+### Connection Discovery (Configurable)
+
+Not all connections are common knowledge. A main road between two cities is known to everyone, but a smuggler's tunnel through the mountains, a hidden forest shortcut, or a recently opened pass may only be known to those who have traveled them or heard about them.
+
+Connections have a `discoverable: boolean` flag (default `false` = common knowledge). When `true`, the connection is filtered from route calculations unless the requesting entity has discovered it. Discovery happens through:
+
+1. **Travel**: Completing a journey that uses the connection reveals it permanently
+2. **Explicit grant**: The game (or an NPC guide) calls the discovery API to reveal a connection
+3. **Hearsay integration**: When available, Hearsay (L4) can reveal connections through rumor propagation
+
+This is configurable per-connection, not per-realm. Most connections (roads, rivers, trade routes) are non-discoverable. Special connections (hidden passages, smuggler routes, ancient paths) are discoverable. Route calculation accepts an optional `entityId`; when provided and connections along the path are discoverable, only discovered connections are included.
+
+### Status Transitions with Optimistic Concurrency
+
+Connection status changes support two modes via `update-status`:
+
+1. **Optimistic concurrency (default)**: The caller specifies `currentStatus` (what they believe the connection's status is) and `newStatus`. If the actual status doesn't match `currentStatus`, the request returns `Bad Request` with the actual status, forcing the caller to refresh and retry. This prevents silent status conflicts between independent actors.
+
+2. **Force update**: When `forceUpdate: true`, `currentStatus` is nullable and ignored. The status is set unconditionally. Use for administrative overrides or when the caller has already resolved conflicts.
+
+This prevents status conflicts between independent actors. Environment (L4) closing a road for a storm while Faction (L4) simultaneously blocks it for a war -- whichever writes second sees a mismatch and retries with awareness of the current state. No transition is silently lost.
 
 ### DI-Based Cost Enrichment
 
@@ -199,9 +223,13 @@ TransitModeRequirements:
   # Item requirement (e.g., horseback requires a mount item)
   requiredItemTag: string           # null = no item needed. "mount_horse" = need item with this tag
 
-  # Skill/proficiency requirement
-  requiredSkillCode: string         # null = no skill needed. "riding" = need riding proficiency
-  minimumSkillLevel: decimal        # 0.0-1.0 threshold
+  # Proficiency via Seed (core -- not optional)
+  proficiencySeedTypeCode: string   # null = no proficiency needed. "riding_proficiency" = Seed type
+                                    # Entity's Seed growth level modifies effective speed:
+                                    # effectiveSpeed = baseSpeed × (1 + proficiencyBonus)
+                                    # proficiencyBonus = seedGrowthLevel × maxProficiencyBonus
+  maxProficiencyBonus: decimal      # Maximum speed bonus at full Seed growth (e.g., 0.5 = +50%)
+                                    # Default 0.3 if proficiencySeedTypeCode is set
 
   # Species restriction
   allowedSpeciesCodes: [string]     # Empty = any species. If set, only these species can use mode
@@ -235,17 +263,29 @@ TransitConnection:
                                     # Empty = walking only
 
   # Seasonal availability
-  seasonalAvailability: object      # { "winter": false, "spring": true, "summer": true, "autumn": true }
+  seasonalAvailability: object      # Keys MUST match the realm's Worldstate season codes.
+                                    # Worldstate uses opaque calendar templates -- season names are
+                                    # configurable per realm (a desert realm may have "wet"/"dry",
+                                    # not "winter"/"spring"). The Seasonal Connection Worker queries
+                                    # Worldstate for the realm's current season name and matches
+                                    # against these keys.
+                                    # Example: { "winter": false, "spring": true, "summer": true, "autumn": true }
                                     # null = always available
 
   # Risk
   baseRiskLevel: decimal            # 0.0 (safe) to 1.0 (extremely dangerous)
   riskDescription: string           # "Bandit territory", "Avalanche prone", etc.
 
-  # Status
+  # Status (see "Status Transitions with Optimistic Concurrency" in Design Philosophy)
   status: enum                      # open | closed | dangerous | blocked | seasonal_closed
   statusReason: string              # Why the connection is in this status
   statusChangedAt: timestamp
+
+  # Discovery
+  discoverable: boolean             # false (default) = common knowledge, visible to all route queries.
+                                    # true = only visible in route queries for entities that have
+                                    # discovered this connection (via travel, explicit grant, or hearsay).
+                                    # Hidden passages, smuggler routes, ancient paths, shortcuts.
 
   # Metadata
   name: string                      # Optional human name ("The King's Road", "Serpent River")
@@ -253,6 +293,7 @@ TransitConnection:
   tags: [string]                    # Freeform ("trade_route", "military", "smuggler_path")
 
   # Realm (derived from location, stored for query efficiency)
+  # All connections are realm-scoped. Cross-realm travel is not handled at this level.
   realmId: uuid
 
   createdAt: timestamp
@@ -265,17 +306,17 @@ TransitConnection:
 TransitJourney:
   id: uuid
 
-  # Traveler
+  # Traveler (the entity that physically moves -- not a business abstraction like "shipment")
   entityId: uuid                    # Who is traveling
-  entityType: string                # "character", "npc", "caravan", "shipment", "army"
+  entityType: string                # "character", "npc", "caravan", "army", "creature"
 
   # Route
   legs: [TransitJourneyLeg]         # Ordered list of connections to traverse
   currentLegIndex: integer          # Which leg the entity is currently on (0-based)
 
-  # Mode
-  modeCode: string                  # Transit mode being used
-  effectiveSpeedKmPerGameHour: decimal  # Actual speed (may differ from base due to modifiers)
+  # Mode (primary -- individual legs can override for multi-modal journeys)
+  primaryModeCode: string           # Primary transit mode for this journey
+  effectiveSpeedKmPerGameHour: decimal  # Current effective speed (may differ from base due to modifiers)
 
   # Timing (game-time via Worldstate)
   plannedDepartureGameTime: decimal # Game-time timestamp of planned departure
@@ -307,6 +348,10 @@ TransitJourneyLeg:
   connectionId: uuid                # Which transit connection this leg follows
   fromLocationId: uuid
   toLocationId: uuid
+  modeCode: string                  # Transit mode for THIS leg. Overrides journey's primaryModeCode
+                                    # when the connection supports a different mode than the primary.
+                                    # Enables multi-modal journeys: ride horse to river, boat downstream,
+                                    # walk to the cave. Each leg uses the mode appropriate to its terrain.
   distanceKm: decimal               # Copied from connection for journey record
   terrainType: string               # Copied from connection
   estimatedDurationGameHours: decimal
@@ -331,13 +376,15 @@ TransitRouteOption:
   connections: [uuid]               # Ordered connection IDs
   legCount: integer                 # Number of legs
 
-  # Mode
-  modeCode: string                  # Transit mode for this option
+  # Mode (per-leg for multi-modal routes)
+  primaryModeCode: string           # Dominant transit mode for this option
+  legModes: [string]                # Per-leg mode codes (may differ from primary on multi-modal routes)
 
   # Distance and time
   totalDistanceKm: decimal          # Sum of all leg distances
   totalGameHours: decimal           # Estimated total travel time in game-hours
-  totalRealMinutes: decimal         # Converted to real-time at current time ratio
+  totalRealMinutes: decimal         # Converted to real-time at current time ratio (approximate --
+                                    # time ratios can change during travel)
 
   # Risk
   averageRisk: decimal              # Weighted average risk across legs
@@ -503,21 +550,33 @@ TransitRouteOption:
 
 /transit/connection/update-status:
   access: authenticated
-  description: "Update a connection's operational status (open, closed, dangerous, blocked)"
+  description: "Transition a connection's operational status with optimistic concurrency"
   request:
     connectionId: uuid
-    status: enum                    # open | closed | dangerous | blocked
+    currentStatus: enum             # What caller believes current status is. Required unless forceUpdate.
+                                    # open | closed | dangerous | blocked | seasonal_closed
+    newStatus: enum                 # Target status: open | closed | dangerous | blocked
     reason: string
+    forceUpdate: boolean            # Default false. When true, currentStatus is ignored (nullable).
+                                    # Use for administrative overrides.
   response: { connection: TransitConnection }
   emits: transit.connection.status_changed
   errors:
     - CONNECTION_NOT_FOUND
+    - STATUS_MISMATCH               # currentStatus doesn't match actual. Response includes actual
+                                    # status so caller can refresh and retry. Only when forceUpdate=false.
   notes: |
     Separated from general update because status changes are operational (game-driven)
     while property changes are administrative (developer-driven).
     Status changes publish events; property changes do not.
-    Environment service (L4) can call this to close connections during storms.
-    Faction service (L4) can call this to block connections during wars.
+
+    Optimistic concurrency prevents silent status conflicts between independent actors.
+    Environment (L4) closing a road for a storm while Faction (L4) blocks it for a war:
+    whichever writes second sees STATUS_MISMATCH and retries with awareness of the
+    current state. Use forceUpdate=true for admin overrides that don't need concurrency.
+
+    The seasonal_closed status is managed by the Seasonal Connection Worker -- it uses
+    forceUpdate=true since it is the authoritative source for seasonal state.
 
 /transit/connection/delete:
   access: developer
@@ -564,10 +623,13 @@ TransitRouteOption:
   description: "Plan a journey (status: preparing). Does not start travel."
   request:
     entityId: uuid
-    entityType: string              # "character", "npc", "caravan", "shipment", "army"
+    entityType: string              # "character", "npc", "caravan", "army", "creature"
     originLocationId: uuid
     destinationLocationId: uuid
-    modeCode: string
+    primaryModeCode: string         # Preferred transit mode. Used for all legs unless overridden.
+    preferMultiModal: boolean       # Default false. When true, route calculation selects the
+                                    # best mode per leg (e.g., horseback on roads, river_boat on
+                                    # rivers, walking on trails). Each leg's modeCode may differ.
     plannedDepartureGameTime: decimal  # Optional - defaults to current game-time
     partySize: integer              # Default 1
     cargoWeightKg: decimal          # Default 0
@@ -584,9 +646,14 @@ TransitRouteOption:
     Checks mode compatibility via check-availability.
     Does NOT start the journey -- call /transit/journey/depart for that.
 
+    When preferMultiModal is true, each leg gets the fastest compatible mode
+    the entity can use on that connection. The journey's primaryModeCode is
+    set to the mode used for the most legs (plurality). Proficiency bonuses
+    are computed per-leg based on each leg's mode.
+
 /transit/journey/depart:
   access: authenticated
-  description: "Start a prepared journey (status: preparing → in_transit)"
+  description: "Start a prepared journey (preparing → in_transit)"
   request:
     journeyId: uuid
   response: { journey: TransitJourney }
@@ -595,6 +662,22 @@ TransitRouteOption:
     - JOURNEY_NOT_FOUND
     - INVALID_STATUS                # Must be "preparing"
     - CONNECTION_CLOSED             # First leg's connection is now closed
+
+/transit/journey/resume:
+  access: authenticated
+  description: "Resume an interrupted journey (interrupted → in_transit)"
+  request:
+    journeyId: uuid
+  response: { journey: TransitJourney }
+  emits: transit.journey.resumed
+  errors:
+    - JOURNEY_NOT_FOUND
+    - INVALID_STATUS                # Must be "interrupted"
+    - CONNECTION_CLOSED             # Current leg's connection is now closed
+  notes: |
+    Distinct from depart: depart is for initial departure (preparing → in_transit),
+    resume is for continuing after interruption (interrupted → in_transit).
+    Consumers (Trade, Analytics) can distinguish "started" from "resumed" via events.
 
 /transit/journey/advance:
   access: authenticated
@@ -650,8 +733,9 @@ TransitRouteOption:
     - JOURNEY_NOT_FOUND
     - INVALID_STATUS                # Must be "in_transit"
   notes: |
-    Journey status transitions to "interrupted". To resume, call /transit/journey/depart
-    again (which transitions interrupted → in_transit). To give up, call /transit/journey/abandon.
+    Journey status transitions to "interrupted". To resume, call /transit/journey/resume
+    (which transitions interrupted → in_transit and emits transit.journey.resumed).
+    To give up, call /transit/journey/abandon.
 
 /transit/journey/abandon:
   access: authenticated
@@ -686,6 +770,27 @@ TransitRouteOption:
     page: integer
     pageSize: integer
   response: { journeys: [TransitJourney], totalCount: integer }
+
+/transit/journey/query-archive:
+  access: user
+  description: "Query archived (completed/abandoned) journeys from MySQL historical store"
+  request:
+    entityId: uuid                  # Optional
+    entityType: string              # Optional
+    realmId: uuid                   # Optional
+    originLocationId: uuid          # Optional
+    destinationLocationId: uuid     # Optional
+    modeCode: string                # Optional
+    status: string                  # Optional (typically "arrived" or "abandoned")
+    fromGameTime: decimal           # Optional - journey departed after this game-time
+    toGameTime: decimal             # Optional - journey departed before this game-time
+    page: integer
+    pageSize: integer
+  response: { journeys: [TransitJourney], totalCount: integer }
+  notes: |
+    Reads from the MySQL archive store (transit-journeys-archive).
+    Used by Trade (velocity calculations), Analytics (travel patterns),
+    and Character History (travel biography generation).
 ```
 
 ### Route Calculation
@@ -698,6 +803,11 @@ TransitRouteOption:
     fromLocationId: uuid
     toLocationId: uuid
     modeCode: string                # Optional - specific mode. Null = try all modes
+    preferMultiModal: boolean       # Default false. When true, selects best mode per leg.
+    entityId: uuid                  # Optional - for discovery filtering. When provided,
+                                    # discoverable connections are filtered to only those
+                                    # this entity has discovered. When null, discoverable
+                                    # connections are excluded entirely (conservative).
     maxLegs: integer                # Optional - maximum legs to consider (default from config)
     sortBy: string                  # "fastest" (default), "safest", "shortest"
     maxOptions: integer             # How many options to return (default from config)
@@ -713,9 +823,18 @@ TransitRouteOption:
     Returns objective travel data: distance, time, risk, mode.
 
     The graph search uses Dijkstra's algorithm with configurable cost function:
-    - "fastest": cost = estimated_hours (distance / mode_speed)
+    - "fastest": cost = estimated_hours (distance / mode_speed per leg)
     - "safest": cost = cumulative_risk
     - "shortest": cost = distance_km
+
+    Multiple connections between the same location pair (parallel edges) are
+    supported. Route calculation evaluates each connection independently,
+    choosing the best per mode. E.g., a road and a river between two towns
+    are separate connections with different mode compatibility.
+
+    When preferMultiModal is true, each leg selects the fastest compatible mode
+    the entity can use. Route options include per-leg mode codes in legModes[].
+    Proficiency bonuses (from Seed integration) are applied per-leg per-mode.
 ```
 
 ### Mode Compatibility
@@ -741,15 +860,60 @@ TransitRouteOption:
     ]
   notes: |
     Checks mode requirements against entity state:
-    - Item requirements: calls lib-inventory to check if entity has required item tag
-    - Species requirements: calls lib-character or lib-species for species code
-    - Skill requirements: (future) calls skill provider for proficiency
+    - Item requirements: calls lib-inventory to check if entity has required item tag (L2 hard)
+    - Species requirements: calls lib-character or lib-species for species code (L2 hard)
+    - Proficiency: queries lib-seed for seed growth level (L2 hard) when mode has
+      proficiencySeedTypeCode set. Proficiency bonus applied to effectiveSpeed.
 
     Also applies ITransitCostModifierProvider enrichment to compute preferenceCost.
     This is the endpoint the variable provider calls internally.
 ```
 
-**Total endpoints: 22**
+### Connection Discovery
+
+```yaml
+/transit/discovery/reveal:
+  access: authenticated
+  description: "Reveal a discoverable connection to an entity (explicit grant)"
+  request:
+    entityId: uuid
+    connectionId: uuid
+    source: string                  # How discovered: "travel", "guide", "hearsay", "map", "quest_reward"
+  response: { discovered: boolean, alreadyKnown: boolean }
+  errors:
+    - CONNECTION_NOT_FOUND
+    - NOT_DISCOVERABLE              # Connection is not marked as discoverable (already public)
+  notes: |
+    Also called internally by journey/advance when a leg uses a discoverable connection.
+    Hearsay (L4) calls this when propagating route knowledge via rumor.
+    Quest rewards can include connection reveals.
+
+/transit/discovery/list:
+  access: user
+  description: "List connections an entity has discovered"
+  request:
+    entityId: uuid
+    realmId: uuid                   # Optional - filter by realm
+  response: { connectionIds: [uuid] }
+
+/transit/discovery/check:
+  access: user
+  description: "Check if an entity has discovered specific connections"
+  request:
+    entityId: uuid
+    connectionIds: [uuid]
+  response:
+    results: [
+      {
+        connectionId: uuid
+        discovered: boolean
+        discoveredAt: timestamp     # null if not discovered
+        source: string              # How it was discovered (null if not)
+      }
+    ]
+```
+
+**Total endpoints: 28**
 
 ---
 

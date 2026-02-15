@@ -510,12 +510,16 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Merged configuration (template + overrides)
+          description: >-
+            Game-specific configuration for ABML behavior execution scope.
+            No Bannou plugin reads specific keys from this field by convention.
         initialState:
           type: object
           additionalProperties: true
           nullable: true
-          description: Initial state for the actor
+          description: >-
+            Initial actor state snapshot. No Bannou plugin reads specific keys
+            from this field by convention.
         tickIntervalMs:
           type: integer
           description: Behavior loop interval in milliseconds
@@ -565,7 +569,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Message payload data
+          description: >-
+            Game-specific message payload passed to ABML behavior scope.
+            No Bannou plugin reads specific keys from this field by convention.
         urgency:
           type: number
           format: float
@@ -625,7 +631,10 @@ components:
     HazardInfo:
       type: object
       additionalProperties: true
-      description: Information about a hazard in range
+      description: >-
+        Information about a hazard in range.
+        Core properties are schema-defined; additionalProperties allows game-specific
+        hazard data. No Bannou plugin reads specific extension keys by convention.
       properties:
         hazardType:
           type: string
@@ -648,7 +657,10 @@ components:
     NearbyObject:
       type: object
       additionalProperties: true
-      description: Information about a nearby object perceived by the character
+      description: >-
+        Information about a nearby object perceived by the character.
+        Core properties are schema-defined; additionalProperties allows game-specific
+        object data. No Bannou plugin reads specific extension keys by convention.
       properties:
         objectId:
           type: string
@@ -703,9 +715,10 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: |
-            Perception-specific data. For perceptionType="spatial", this can contain
-            game-specific spatial context in any format the game server defines.
+          description: >-
+            Game-specific perception payload passed to ABML behavior execution scope.
+            No Bannou plugin reads specific keys from this field by convention.
+            Different perception types carry different data structures defined by the game.
         urgency:
           type: number
           format: float
@@ -761,12 +774,11 @@ components:
     SpatialContext:
       type: object
       additionalProperties: true
-      description: |
+      description: >-
         Spatial context derived from game server's authoritative spatial state.
-        Included in perception events to give NPC actors awareness of their environment
-        without requiring direct map subscriptions.
-
-        Note: additionalProperties=true allows game-specific extensions.
+        Included in perception events to give NPC actors awareness of their environment.
+        Core properties are schema-defined; additionalProperties allows game-specific
+        spatial extensions. No Bannou plugin reads specific extension keys by convention.
       properties:
         terrainType:
           type: string

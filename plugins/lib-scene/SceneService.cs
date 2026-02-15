@@ -1537,28 +1537,11 @@ public partial class SceneService : ISceneService
     }
 
     /// <summary>
-    /// Extracts the referenced scene ID from a reference node.
-    /// Checks the typed ReferenceSceneId field first, falls back to annotations for backward compatibility.
+    /// Extracts the referenced scene ID from a reference node using the typed ReferenceSceneId field.
     /// </summary>
     private static Guid? GetReferenceSceneId(SceneNode node)
     {
-        // Primary: use the typed schema field
-        if (node.ReferenceSceneId.HasValue)
-        {
-            return node.ReferenceSceneId.Value;
-        }
-
-        // Fallback: annotations-based lookup for backward compatibility with legacy scene data
-        if (node.Annotations is IDictionary<string, object> annotationsDict &&
-            annotationsDict.TryGetValue("reference", out var refObj) &&
-            refObj is IDictionary<string, object> refDict &&
-            refDict.TryGetValue("sceneAssetId", out var sceneIdObj) &&
-            Guid.TryParse(sceneIdObj?.ToString(), out var parsedGuid))
-        {
-            return parsedGuid;
-        }
-
-        return null;
+        return node.ReferenceSceneId;
     }
 
     private HashSet<Guid> ExtractSceneReferences(SceneNode root)

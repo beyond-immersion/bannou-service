@@ -61,45 +61,6 @@ public partial class ContractService : IContractService
     };
 
     /// <summary>
-    /// Safely extracts a boolean value from custom terms dictionary.
-    /// Handles both native bool values and JsonElement values from JSON deserialization.
-    /// </summary>
-    /// <param name="customTerms">The custom terms dictionary.</param>
-    /// <param name="key">The key to look up.</param>
-    /// <returns>True if the key exists and has a truthy boolean value, false otherwise.</returns>
-    private static bool GetCustomTermBool(IDictionary<string, object>? customTerms, string key)
-    {
-        if (customTerms == null || !customTerms.TryGetValue(key, out var value))
-            return false;
-
-        // Handle JsonElement from JSON deserialization
-        if (value is System.Text.Json.JsonElement jsonElement)
-        {
-            return jsonElement.ValueKind == System.Text.Json.JsonValueKind.True;
-        }
-
-        // Handle native bool
-        if (value is bool boolValue)
-            return boolValue;
-
-        // Fallback for other types - catch expected conversion failures
-        try
-        {
-            return Convert.ToBoolean(value);
-        }
-        catch (FormatException)
-        {
-            // Value was a string that couldn't be parsed as boolean
-            return false;
-        }
-        catch (InvalidCastException)
-        {
-            // Value type doesn't support IConvertible
-            return false;
-        }
-    }
-
-    /// <summary>
     /// Parses an ISO 8601 duration string (e.g., "P10D", "PT2H", "P1DT12H") into a TimeSpan.
     /// </summary>
     /// <param name="duration">The ISO 8601 duration string.</param>
@@ -116,52 +77,6 @@ public partial class ContractService : IContractService
             // Invalid format - log warning handled at call site
             return null;
         }
-    }
-
-    /// <summary>
-    /// Safely extracts a list of GUIDs from custom terms dictionary.
-    /// Handles JsonElement arrays from JSON deserialization.
-    /// </summary>
-    /// <param name="customTerms">The custom terms dictionary.</param>
-    /// <param name="key">The key to look up.</param>
-    /// <returns>List of parsed GUIDs, or empty list if key not found or parsing fails.</returns>
-    private static List<Guid> GetCustomTermGuidList(IDictionary<string, object>? customTerms, string key)
-    {
-        if (customTerms == null || !customTerms.TryGetValue(key, out var value))
-            return new List<Guid>();
-
-        if (value is System.Text.Json.JsonElement element && element.ValueKind == System.Text.Json.JsonValueKind.Array)
-        {
-            var result = new List<Guid>();
-            foreach (var item in element.EnumerateArray())
-            {
-                if (item.ValueKind == System.Text.Json.JsonValueKind.String &&
-                    Guid.TryParse(item.GetString(), out var guid))
-                {
-                    result.Add(guid);
-                }
-            }
-            return result;
-        }
-        return new List<Guid>();
-    }
-
-    /// <summary>
-    /// Safely extracts a string value from custom terms dictionary.
-    /// Handles both native string values and JsonElement values from JSON deserialization.
-    /// </summary>
-    /// <param name="customTerms">The custom terms dictionary.</param>
-    /// <param name="key">The key to look up.</param>
-    /// <returns>The string value, or null if key not found or not a string.</returns>
-    private static string? GetCustomTermString(IDictionary<string, object>? customTerms, string key)
-    {
-        if (customTerms == null || !customTerms.TryGetValue(key, out var value))
-            return null;
-
-        if (value is string str) return str;
-        if (value is System.Text.Json.JsonElement element && element.ValueKind == System.Text.Json.JsonValueKind.String)
-            return element.GetString();
-        return null;
     }
 
     /// <summary>
@@ -1660,15 +1575,13 @@ public partial class ContractService : IContractService
 
             if (party == null) continue;
 
-            // Check custom terms for constraint-related terms
-            if (contract.Terms?.CustomTerms != null)
+            // Check typed constraint properties on terms
+            if (contract.Terms != null)
             {
-                var customTerms = contract.Terms.CustomTerms;
-
                 switch (body.ConstraintType)
                 {
                     case ConstraintType.Exclusivity:
-                        if (GetCustomTermBool(customTerms, "exclusivity"))
+                        if (contract.Terms.Exclusivity == true)
                         {
                             hasViolation = true;
                             reason = "Entity has an exclusivity clause in an active contract";
@@ -1676,7 +1589,7 @@ public partial class ContractService : IContractService
                         break;
 
                     case ConstraintType.NonCompete:
-                        if (GetCustomTermBool(customTerms, "nonCompete"))
+                        if (contract.Terms.NonCompete == true)
                         {
                             hasViolation = true;
                             reason = "Entity has a non-compete clause in an active contract";
@@ -1684,9 +1597,9 @@ public partial class ContractService : IContractService
                         break;
 
                     case ConstraintType.TimeCommitment:
-                        if (GetCustomTermBool(customTerms, "timeCommitment"))
+                        if (contract.Terms.TimeCommitment == true)
                         {
-                            var timeCommitmentType = GetCustomTermString(customTerms, "timeCommitmentType") ?? "partial";
+                            var timeCommitmentType = contract.Terms.TimeCommitmentType ?? "partial";
 
                             // Only exclusive commitments can conflict
                             if (timeCommitmentType == "exclusive")
@@ -1697,13 +1610,11 @@ public partial class ContractService : IContractService
                                     if (otherContract.ContractId == contract.ContractId)
                                         continue;
 
-                                    var otherCustomTerms = otherContract.Terms?.CustomTerms;
-                                    if (otherCustomTerms == null) continue;
+                                    if (otherContract.Terms?.TimeCommitment != true)
+                                        continue;
 
-                                    var otherHasTimeCommitment = GetCustomTermBool(otherCustomTerms, "timeCommitment");
-                                    var otherTimeCommitmentType = GetCustomTermString(otherCustomTerms, "timeCommitmentType") ?? "partial";
-
-                                    if (!otherHasTimeCommitment || otherTimeCommitmentType != "exclusive")
+                                    var otherTimeCommitmentType = otherContract.Terms.TimeCommitmentType ?? "partial";
+                                    if (otherTimeCommitmentType != "exclusive")
                                         continue;
 
                                     // Check date range overlap: thisFrom <= otherUntil && thisUntil >= otherFrom
@@ -1904,6 +1815,11 @@ public partial class ContractService : IContractService
             TerminationNoticePeriod = instance.TerminationNoticePeriod ?? template.TerminationNoticePeriod,
             BreachThreshold = instance.BreachThreshold ?? template.BreachThreshold,
             GracePeriodForCure = instance.GracePeriodForCure ?? template.GracePeriodForCure,
+            Exclusivity = instance.Exclusivity ?? template.Exclusivity,
+            NonCompete = instance.NonCompete ?? template.NonCompete,
+            TimeCommitment = instance.TimeCommitment ?? template.TimeCommitment,
+            TimeCommitmentType = instance.TimeCommitmentType ?? template.TimeCommitmentType,
+            Clauses = instance.Clauses ?? template.Clauses,
             CustomTerms = MergeDictionaries(template.CustomTerms, instance.CustomTerms)
         };
     }
@@ -2469,6 +2385,11 @@ public partial class ContractService : IContractService
             TerminationNoticePeriod = model.TerminationNoticePeriod,
             BreachThreshold = model.BreachThreshold,
             GracePeriodForCure = model.GracePeriodForCure,
+            Exclusivity = model.Exclusivity,
+            NonCompete = model.NonCompete,
+            TimeCommitment = model.TimeCommitment,
+            TimeCommitmentType = model.TimeCommitmentType,
+            Clauses = model.Clauses?.ToList(),
             CustomTerms = model.CustomTerms
         };
     }

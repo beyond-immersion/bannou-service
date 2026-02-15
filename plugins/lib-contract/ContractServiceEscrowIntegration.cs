@@ -686,7 +686,7 @@ public partial class ContractService
             }
 
             var partyStatus = partyStatusMap[partyRole];
-            var checkLocation = ResolveTemplateValue(clause.GetProperty("check_location"), contract.TemplateValues);
+            var checkLocation = ResolveTemplateValue(clause.GetProperty("checkLocation"), contract.TemplateValues);
             var assets = clause.GetArray("assets");
 
             foreach (var asset in assets)
@@ -1125,7 +1125,7 @@ public partial class ContractService
             if (clauseType == null && string.Equals(clause.Type, "distribution", StringComparison.OrdinalIgnoreCase))
             {
                 // Determine if currency or item based on clause properties
-                var hasSourceContainer = !string.IsNullOrEmpty(clause.GetProperty("source_container"));
+                var hasSourceContainer = !string.IsNullOrEmpty(clause.GetProperty("sourceContainer"));
                 var typeCode = hasSourceContainer ? "item_transfer" : "currency_transfer";
                 clauseType = await _stateStoreFactory.GetStore<ClauseTypeModel>(StateStoreDefinitions.Contract)
                     .GetAsync($"{CLAUSE_TYPE_PREFIX}{typeCode}", ct);
@@ -1157,8 +1157,8 @@ public partial class ContractService
             if (string.Equals(clause.Type, "fee", StringComparison.OrdinalIgnoreCase))
             {
                 assetType = "currency";
-                sourceId = ResolveTemplateValue(clause.GetProperty("source_wallet"), contract.TemplateValues);
-                destinationId = ResolveTemplateValue(clause.GetProperty("recipient_wallet"), contract.TemplateValues);
+                sourceId = ResolveTemplateValue(clause.GetProperty("sourceWallet"), contract.TemplateValues);
+                destinationId = ResolveTemplateValue(clause.GetProperty("recipientWallet"), contract.TemplateValues);
                 var (parsedAmount, parseError) = ParseClauseAmount(clause, contract);
                 if (parseError != null)
                 {
@@ -1191,7 +1191,7 @@ public partial class ContractService
                 // Remainder for fees: query source wallet balance
                 if (amount == REMAINDER_SENTINEL)
                 {
-                    var currencyForBalance = clause.GetProperty("currency_code") ?? "gold";
+                    var currencyForBalance = clause.GetProperty("currencyCode") ?? "gold";
                     var balanceResult = await QueryWalletBalanceAsync(sourceId, currencyForBalance, contract, ct);
                     if (balanceResult == null)
                     {
@@ -1210,7 +1210,7 @@ public partial class ContractService
                     amount = balanceResult.Value;
                 }
 
-                var currencyCode = clause.GetProperty("currency_code") ?? "gold";
+                var currencyCode = clause.GetProperty("currencyCode") ?? "gold";
                 payloadTemplate = BannouJson.Serialize(new Dictionary<string, object>
                 {
                     ["from_wallet_id"] = sourceId,
@@ -1219,12 +1219,12 @@ public partial class ContractService
                     ["amount"] = amount
                 });
             }
-            else if (!string.IsNullOrEmpty(clause.GetProperty("source_container")))
+            else if (!string.IsNullOrEmpty(clause.GetProperty("sourceContainer")))
             {
                 // Item transfer
                 assetType = "item";
-                sourceId = ResolveTemplateValue(clause.GetProperty("source_container"), contract.TemplateValues);
-                destinationId = ResolveTemplateValue(clause.GetProperty("destination_container"), contract.TemplateValues);
+                sourceId = ResolveTemplateValue(clause.GetProperty("sourceContainer"), contract.TemplateValues);
+                destinationId = ResolveTemplateValue(clause.GetProperty("destinationContainer"), contract.TemplateValues);
                 amount = GetClauseDoubleProperty(clause, "quantity", 1);
 
                 if (string.IsNullOrEmpty(sourceId) || string.IsNullOrEmpty(destinationId))
@@ -1241,7 +1241,7 @@ public partial class ContractService
                     };
                 }
 
-                var itemCode = clause.GetProperty("item_code") ?? "all";
+                var itemCode = clause.GetProperty("itemCode") ?? "all";
                 payloadTemplate = BannouJson.Serialize(new Dictionary<string, object>
                 {
                     ["from_container_id"] = sourceId,
@@ -1254,8 +1254,8 @@ public partial class ContractService
             {
                 // Currency transfer / distribution
                 assetType = "currency";
-                sourceId = ResolveTemplateValue(clause.GetProperty("source_wallet"), contract.TemplateValues);
-                destinationId = ResolveTemplateValue(clause.GetProperty("destination_wallet"), contract.TemplateValues);
+                sourceId = ResolveTemplateValue(clause.GetProperty("sourceWallet"), contract.TemplateValues);
+                destinationId = ResolveTemplateValue(clause.GetProperty("destinationWallet"), contract.TemplateValues);
                 var (parsedAmount, parseError) = ParseClauseAmount(clause, contract);
                 if (parseError != null)
                 {
@@ -1288,7 +1288,7 @@ public partial class ContractService
                 // Remainder for distributions: query source wallet balance (after fees deducted)
                 if (amount == REMAINDER_SENTINEL)
                 {
-                    var currencyForBalance = clause.GetProperty("currency_code") ?? "gold";
+                    var currencyForBalance = clause.GetProperty("currencyCode") ?? "gold";
                     var balanceResult = await QueryWalletBalanceAsync(sourceId, currencyForBalance, contract, ct);
                     if (balanceResult == null)
                     {
@@ -1307,7 +1307,7 @@ public partial class ContractService
                     amount = balanceResult.Value;
                 }
 
-                var currencyCode = clause.GetProperty("currency_code") ?? "gold";
+                var currencyCode = clause.GetProperty("currencyCode") ?? "gold";
                 payloadTemplate = BannouJson.Serialize(new Dictionary<string, object>
                 {
                     ["from_wallet_id"] = sourceId,
@@ -1421,13 +1421,13 @@ public partial class ContractService
     /// Returns REMAINDER_SENTINEL (-1) when the clause specifies "remainder" to signal the caller
     /// should query the source wallet balance and use the full remaining amount.
     /// </summary>
-    /// <param name="clause">The clause definition containing amount and amount_type properties.</param>
+    /// <param name="clause">The clause definition containing amount and amountType properties.</param>
     /// <param name="contract">The contract instance with template values for substitution.</param>
     /// <returns>Tuple of (amount, error). If error is non-null, amount should be ignored.</returns>
     private (double amount, string? error) ParseClauseAmount(ClauseDefinition clause, ContractInstanceModel contract)
     {
         var amountStr = clause.GetProperty("amount");
-        var amountType = clause.GetProperty("amount_type") ?? "flat";
+        var amountType = clause.GetProperty("amountType") ?? "flat";
 
         if (string.Equals(amountStr, "remainder", StringComparison.OrdinalIgnoreCase))
         {
@@ -1494,51 +1494,30 @@ public partial class ContractService
     #region Clause Parsing Helpers
 
     /// <summary>
-    /// Parses clause definitions from a template's custom terms.
-    /// Clauses are stored as a JSON array under the "clauses" key in DefaultTerms.CustomTerms.
+    /// Parses clause definitions from a template's typed Clauses property.
+    /// Each ContractClauseDefinition is converted to an internal ClauseDefinition
+    /// wrapping a JsonElement for property access by the execution engine.
     /// </summary>
     private List<ClauseDefinition> ParseClausesFromTemplate(ContractTemplateModel template)
     {
         var clauses = new List<ClauseDefinition>();
 
-        if (template.DefaultTerms?.CustomTerms == null ||
-            !template.DefaultTerms.CustomTerms.TryGetValue("clauses", out var clausesObj))
+        if (template.DefaultTerms?.Clauses == null || template.DefaultTerms.Clauses.Count == 0)
         {
             return clauses;
         }
 
-        // CustomTerms values are JsonElement when deserialized from state store
-        JsonElement clausesElement;
-        if (clausesObj is JsonElement je)
+        foreach (var clause in template.DefaultTerms.Clauses)
         {
-            clausesElement = je;
-        }
-        else
-        {
-            // Serialize the object directly to JsonElement via BannouJson
-            clausesElement = BannouJson.SerializeToElement(clausesObj);
-        }
-
-        if (clausesElement.ValueKind != JsonValueKind.Array)
-        {
-            _logger.LogWarning("Template clauses is not an array, kind: {Kind}", clausesElement.ValueKind);
-            return clauses;
-        }
-
-        foreach (var element in clausesElement.EnumerateArray())
-        {
-            if (element.ValueKind != JsonValueKind.Object) continue;
-
-            var id = GetJsonStringProperty(element, "id");
-            var type = GetJsonStringProperty(element, "type");
-
-            if (string.IsNullOrEmpty(id) || string.IsNullOrEmpty(type))
+            if (string.IsNullOrEmpty(clause.Id) || string.IsNullOrEmpty(clause.Type))
             {
                 _logger.LogWarning("Clause missing id or type, skipping");
                 continue;
             }
 
-            clauses.Add(new ClauseDefinition(id, type, element.Clone()));
+            // Convert typed clause to JsonElement for internal ClauseDefinition processing
+            var element = BannouJson.SerializeToElement(clause);
+            clauses.Add(new ClauseDefinition(clause.Id, clause.Type, element));
         }
 
         return clauses;

@@ -224,8 +224,7 @@ Scene Document Hierarchy
             ├── SceneNode (reference)
             │    ├── refId: "back_room"
             │    ├── nodeType: reference
-            │    ├── referenceSceneId: uuid (points to another Scene)
-            │    └── annotations: {reference: {sceneAssetId: "..."}}
+            │    └── referenceSceneId: uuid (points to another Scene)
             │
             └── SceneNode (mesh + attachmentPoints)
                  ├── refId: "wall_section_1"
@@ -285,7 +284,7 @@ Reference Resolution
        ├── visited = {A}
        │
        ├── Walk nodes of A:
-       │    └── Node(type=reference, annotations.reference.sceneAssetId = B)
+       │    └── Node(type=reference, referenceSceneId = B)
        │         ├── depth=1, maxDepth=3 → proceed
        │         ├── B not in visited → load scene B
        │         ├── visited = {A, B}
@@ -380,7 +379,7 @@ Optimistic Concurrency Pattern (Checkout)
 
 5. ~~**require_annotation and custom_expression validation rules silently ignored**~~: **FIXED** (2026-02-08) - `ApplyValidationRule` now returns a `Warning`-severity `ValidationError` for unimplemented rule types (`RequireAnnotation`, `CustomExpression`) and unknown types (default case). Rules are no longer silently skipped. See [#310](https://github.com/beyond-immersion/bannou-service/issues/310).
 
-6. ~~**referenceSceneId field on SceneNode**~~: **Implemented**. The `GetReferenceSceneId()` helper now uses the typed `ReferenceSceneId` field as the primary source, with `annotations.reference.sceneAssetId` as a fallback for backward compatibility with legacy scene data.
+6. ~~**referenceSceneId field on SceneNode**~~: **Implemented**. The `GetReferenceSceneId()` helper uses the typed `ReferenceSceneId` field directly. Legacy annotations-based fallback was removed per FOUNDATION TENETS (T29 No Metadata Bag Contracts).
 
 7. **node_name search match type**: The `SearchMatchType` enum includes `node_name`, but the search implementation only checks index-level fields (name, description, tags). Searching node names would require loading full scene content, which is not done for performance.
 

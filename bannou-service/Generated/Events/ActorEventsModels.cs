@@ -618,13 +618,13 @@ public partial class SpawnActorCommand
     public string BehaviorRef { get; set; } = default!;
 
     /// <summary>
-    /// Merged configuration (template + overrides)
+    /// Game-specific configuration for ABML behavior execution scope. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("configuration")]
     public object? Configuration { get; set; } = default!;
 
     /// <summary>
-    /// Initial state for the actor
+    /// Initial actor state snapshot. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("initialState")]
     public object? InitialState { get; set; } = default!;
@@ -700,7 +700,7 @@ public partial class SendMessageCommand
     public string MessageType { get; set; } = default!;
 
     /// <summary>
-    /// Message payload data
+    /// Game-specific message payload passed to ABML behavior scope. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("payload")]
     public object? Payload { get; set; } = default!;

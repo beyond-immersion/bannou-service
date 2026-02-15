@@ -135,7 +135,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Caller-provided metadata passed through to consumers
+          description: >-
+            Caller-provided metadata passed through from instantiation request.
+            No Bannou plugin reads specific keys from this field by convention.
         instantiatedBy:
           type: string
           nullable: true
@@ -172,7 +174,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Caller-provided metadata
+          description: >-
+            Caller-provided metadata passed through from destruction request.
+            No Bannou plugin reads specific keys from this field by convention.
 
     # ========== CHECKOUT WORKFLOW EVENTS ==========
 

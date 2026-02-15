@@ -701,11 +701,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: |
-            Type-specific parameters. Examples:
-            - sittable: { height: 0.5, facing: [0,0,1] }
-            - door: { openAngle: 90, locked: false }
-            - container: { capacity: 10, itemTypes: ["weapon", "consumable"] }
+          description: >-
+            Game-specific affordance parameters interpreted by game engines and AI systems.
+            No Bannou plugin reads specific keys from this field by convention.
 
     AssetSlot:
       type: object
@@ -928,9 +926,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: |
-            Consumer-specific data stored without interpretation.
-            Use namespaced keys (e.g., render.castShadows, game.interactionType).
+          description: >-
+            Client-only node annotations for game engines and editors.
+            No Bannou plugin reads specific keys from this field by convention.
         # Scene Composer extensions for procedural content and AI systems
         attachmentPoints:
           type: array
@@ -1031,9 +1029,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: |
-            Scene-level metadata. Not interpreted by Scene service.
-            Examples: author, thumbnail, editor preferences, generator config.
+          description: >-
+            Client-only scene metadata (author, thumbnail, editor preferences).
+            No Bannou plugin reads specific keys from this field by convention.
         createdAt:
           type: string
           format: date-time
@@ -1408,7 +1406,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Additional context for the error
+          description: >-
+            Client-only validation error context.
+            No Bannou plugin reads specific keys from this field by convention.
 
     # ========== INSTANTIATION MODELS ==========
 
@@ -1444,7 +1444,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Caller-provided metadata passed to event
+          description: >-
+            Caller-provided metadata passed through to instantiation events.
+            No Bannou plugin reads specific keys from this field by convention.
 
     InstantiateSceneResponse:
       type: object
@@ -1488,7 +1490,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Caller-provided metadata
+          description: >-
+            Caller-provided metadata passed through to destruction events.
+            No Bannou plugin reads specific keys from this field by convention.
 
     DestroyInstanceResponse:
       type: object

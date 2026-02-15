@@ -506,12 +506,16 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Merged configuration (template + overrides)
+          description: >-
+            Game-specific configuration for ABML behavior execution scope.
+            No Bannou plugin reads specific keys from this field by convention.
         initialState:
           type: object
           additionalProperties: true
           nullable: true
-          description: Initial state for the actor
+          description: >-
+            Initial actor state snapshot. No Bannou plugin reads specific keys
+            from this field by convention.
         tickIntervalMs:
           type: integer
           description: Behavior loop interval in milliseconds
@@ -561,7 +565,9 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: Message payload data
+          description: >-
+            Game-specific message payload passed to ABML behavior scope.
+            No Bannou plugin reads specific keys from this field by convention.
         urgency:
           type: number
           format: float
