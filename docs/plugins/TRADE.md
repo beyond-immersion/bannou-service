@@ -6,7 +6,7 @@
 > **State Store**: trade-routes (MySQL), trade-shipments (Redis), trade-shipments-archive (MySQL), trade-tariff-policies (MySQL), trade-tariff-records (MySQL), trade-contraband (MySQL), trade-tax-policies (MySQL), trade-tax-assessments (MySQL), trade-npc-profiles (MySQL), trade-supply-demand (Redis), trade-velocity (Redis), trade-velocity-history (MySQL) — all planned
 > **Layer**: L4 GameFeatures
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists.
-> **Planning**: [ECONOMY-SYSTEM.md](../guides/ECONOMY-SYSTEM.md), [ITEM-ECONOMY-PLUGINS.md](../plans/ITEM-ECONOMY-PLUGINS.md)
+> **Planning**: [Economy System Guide](../guides/ECONOMY-SYSTEM.md)
 
 ---
 
@@ -2172,7 +2172,7 @@ For polymorphic `ownerType`/`carrierType`/`taxpayerType` fields: use the shared 
 
 ## Appendix: How Trade Relates to the Economy Architecture
 
-This deep dive absorbs and refines concepts from `docs/guides/ECONOMY-SYSTEM.md` and `docs/plans/ITEM-ECONOMY-PLUGINS.md`:
+This deep dive absorbs and refines concepts from `docs/guides/ECONOMY-SYSTEM.md`:
 
 | Economy Concern | Where It Lives |
 |-----------------|----------------|

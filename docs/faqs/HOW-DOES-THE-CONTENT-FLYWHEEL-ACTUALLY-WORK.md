@@ -105,3 +105,13 @@ The loop is only as strong as its weakest link:
 - **If the NPC intelligence stack is too simple**: Characters live shallow lives and produce shallow archives. The flywheel turns but never accelerates because each generation's input is as thin as the last.
 
 Every one of these failure modes corresponds to a specific service working incorrectly. The flywheel doesn't need new features -- it needs every existing service in the pipeline to work well.
+
+---
+
+## Future: Physical Content Generation
+
+The flywheel described above generates **narrative** content -- quests, memories, NPC behaviors, world events. When the Procedural service (lib-procedural) is implemented, the flywheel will also generate **physical** content: the geometry those stories inhabit.
+
+A war that scarred a region won't just be recorded in Realm History -- the terrain will be regenerated with battle damage via Houdini HDAs. An NPC builder won't just claim to have built a house -- a unique building facade will appear. A dungeon that grows won't just conceptually expand -- new chambers with unique geometry will materialize.
+
+The same compression → generation → orchestration pipeline applies, but the output includes Asset service references alongside Quest definitions. Regional Watchers decide not just what narrative to deploy but what physical changes to request from the Houdini worker pool. See [PROCEDURAL.md](../plugins/PROCEDURAL.md) for the full deep dive on how lib-procedural integrates with the content flywheel.

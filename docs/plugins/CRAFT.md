@@ -6,7 +6,7 @@
 > **State Store**: craft-recipe-store (MySQL), craft-recipe-cache (Redis), craft-session-store (MySQL), craft-proficiency-store (MySQL), craft-station-registry (MySQL), craft-discovery-store (MySQL), craft-lock (Redis) — all planned
 > **Layer**: L4 GameFeatures
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists.
-> **Planning**: [ITEM-ECONOMY-PLUGINS.md](../plans/ITEM-ECONOMY-PLUGINS.md)
+> **Planning**: [Economy System Guide](../guides/ECONOMY-SYSTEM.md)
 
 ---
 
@@ -930,4 +930,4 @@ Crafting Session Lifecycle (Production)
 
 ## Work Tracking
 
-*No active work items. Plugin is in pre-implementation phase. See [ITEM-ECONOMY-PLUGINS.md](../plans/ITEM-ECONOMY-PLUGINS.md) for the landscape survey and prioritization.*
+*No active work items. Plugin is in pre-implementation phase. See [Economy System Guide](../guides/ECONOMY-SYSTEM.md) for the cross-cutting economy architecture.*

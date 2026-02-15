@@ -6,7 +6,7 @@
 > **State Store**: affix-definitions (MySQL), affix-implicit-mappings (MySQL), affix-pool-cache (Redis), affix-definition-cache (Redis), affix-lock (Redis) — all planned
 > **Layer**: L4 GameFeatures
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists.
-> **Planning**: [ITEM-ECONOMY-PLUGINS.md](../plans/ITEM-ECONOMY-PLUGINS.md)
+> **Planning**: [Economy System Guide](../guides/ECONOMY-SYSTEM.md)
 
 ---
 
@@ -755,7 +755,7 @@ None. Plugin is aspirational — no code exists to have bugs.
 
 ### Design Considerations (Requires Planning)
 
-1. **Cross-service stat computation authority**: lib-affix can compute per-item stats, but aggregate "character total stats" requires knowing equipment slots (lib-inventory), active buffs (lib-status), seed capabilities (lib-seed), and more. The variable provider does a simplified version for GOAP. A proper equipment stat service (lib-equipment, noted in ITEM-ECONOMY-PLUGINS.md as "maybe needed") would be the authoritative aggregation point. This is a future architectural decision.
+1. **Cross-service stat computation authority**: lib-affix can compute per-item stats, but aggregate "character total stats" requires knowing equipment slots (lib-inventory), active buffs (lib-status), seed capabilities (lib-seed), and more. The variable provider does a simplified version for GOAP. A proper equipment stat service (lib-equipment) would be the authoritative aggregation point. This is a future architectural decision.
 
 2. **Affix data migration on definition changes**: If a definition's stat grant ranges change (e.g., T3 life changed from 90-99 to 85-94), existing items with that affix retain their old rolled values. There is no automatic re-computation or migration. lib-affix treats applied affixes as snapshots at application time. A "recompute" endpoint could be added for mass migration, but this is a significant operation (touching every item with that affix).
 
@@ -775,4 +775,4 @@ None. Plugin is aspirational — no code exists to have bugs.
 
 ## Work Tracking
 
-*No active work items. Plugin is in pre-implementation phase. See [ITEM-ECONOMY-PLUGINS.md](../plans/ITEM-ECONOMY-PLUGINS.md) for the landscape survey and prioritization.*
+*No active work items. Plugin is in pre-implementation phase. See [Economy System Guide](../guides/ECONOMY-SYSTEM.md) for the cross-cutting economy architecture.*

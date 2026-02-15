@@ -5,13 +5,12 @@
 > **Version**: 1.0.0
 > **State Stores**: procedural-templates (MySQL), procedural-jobs (MySQL), procedural-cache (Redis), procedural-lock (Redis)
 > **Status**: Pre-implementation (architectural specification)
-> **Planning**: [HOUDINI-PROCEDURAL-GENERATION.md](../planning/HOUDINI-PROCEDURAL-GENERATION.md)
 
 ---
 
 ## Overview
 
-On-demand procedural 3D asset generation service (L4 GameFeatures) using headless Houdini Digital Assets (HDAs) as parametric generation templates. A thin orchestration layer that composes existing Bannou primitives (Asset service for HDA storage and output bundling, Orchestrator for Houdini worker pool management) to deliver procedural geometry generation as an API. Game-agnostic — the service knows nothing about what it generates, it executes HDAs and returns geometry. Internal-only, never internet-facing.
+On-demand procedural 3D asset generation service (L4 GameFeatures) using headless Houdini Digital Assets (HDAs) — self-contained parametric procedural tools packaged as `.hda` files with exposed parameter interfaces (sliders, menus, toggles, ramps) that generate infinite geometry variations from a single authored template — as parametric generation templates. A thin orchestration layer that composes existing Bannou primitives (Asset service for HDA storage and output bundling, Orchestrator for Houdini worker pool management) to deliver procedural geometry generation as an API. Game-agnostic — the service knows nothing about what it generates, it executes HDAs and returns geometry. Internal-only, never internet-facing.
 
 ---
 
@@ -296,6 +295,34 @@ Houdini startup + HDA loading can take 5-30 seconds. Mitigations:
 
 ---
 
+## Houdini Technology References
+
+Key external documentation for implementers. Houdini provides built-in headless HTTP serving (`hwebserver`), containerized deployment, and batch processing via PDG — all of which the worker architecture above leverages.
+
+### Official SideFX Documentation
+
+- [Introduction to Digital Assets](https://www.sidefx.com/docs/houdini/assets/intro.html) — HDA fundamentals, parameter interfaces, packaging
+- [hwebserver Module](https://www.sidefx.com/docs/houdini/hwebserver/index.html) — Built-in HTTP server for headless operation (the worker API layer)
+- [hwebserver.apiFunction](https://www.sidefx.com/docs/houdini/hwebserver/apiFunction.html) — RPC-style endpoint decorator used by worker endpoints
+- [Houdini Engine Overview](https://www.sidefx.com/products/houdini-engine/) — Headless execution capabilities (what workers use)
+- [Houdini Engine Batch](https://www.sidefx.com/products/houdini-engine/batch/) — Batch processing licensing (merged with Engine license)
+- [PDG/TOPs Introduction](https://www.sidefx.com/docs/houdini/tops/intro.html) — Procedural dependency graphs for Phase 4 massive parallel generation
+- [HDA Processor TOP](https://www.sidefx.com/docs/houdini/nodes/top/hdaprocessor.html) — Batch HDA processing via PDG
+- [glTF Export](https://www.sidefx.com/docs/houdini/io/gltf.html) — Primary output format (GLB) for game engine consumption
+- [HAPI Integration](https://www.sidefx.com/docs/hengine/_h_a_p_i__integration.html) — C API for direct integration (alternative to hwebserver; not currently planned but available)
+
+### Containerization & Deployment
+
+- [Houdini-Docker](https://github.com/aaronsmithtv/Houdini-Docker) — Optimized Docker images for headless operation (65% smaller than standard)
+- [Headless Linux Setup](https://jurajtomori.wordpress.com/2019/03/05/setting-up-houdini-on-a-headless-linux-server/) — Server deployment guide
+
+### Licensing
+
+- [Houdini Engine FAQ](https://www.sidefx.com/faq/houdini-engine-faq/) — Engine licensing details (free Indie tier for <$100K revenue)
+- [Cloud Usage FAQ](https://www.sidefx.com/faq/question/cloud/) — Cloud deployment licensing (SideFX cloud licensing for login-based auth)
+
+---
+
 ## Stubs & Unimplemented Features
 
 **Everything is unimplemented.** This is a pre-implementation architectural specification. No schema, no generated code, no service implementation exists.
@@ -421,4 +448,4 @@ The flywheel doesn't just generate stories -- it generates the **geometry those 
 
 ## Work Tracking
 
-*No active work items. Plugin is in pre-implementation phase. See [HOUDINI-PROCEDURAL-GENERATION.md](../planning/HOUDINI-PROCEDURAL-GENERATION.md) for the feasibility study.*
+*No active work items. Plugin is in pre-implementation phase.*

@@ -974,4 +974,4 @@ Before lib-loot implementation:
 
 ## Work Tracking
 
-*No active work items. Plugin is in pre-implementation phase. See [ITEM-ECONOMY-PLUGINS.md](../plans/ITEM-ECONOMY-PLUGINS.md) for the landscape survey and prioritization.*
+*No active work items. Plugin is in pre-implementation phase. See [Economy System Guide](../guides/ECONOMY-SYSTEM.md) for the cross-cutting economy architecture.*

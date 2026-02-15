@@ -218,7 +218,7 @@ Ensures a deep dive document is structurally correct, content-accurate, and comp
 
 **Workflow**:
 1. Select plugin (random or specified)
-2. Check document matches `DEEP_DIVE_TEMPLATE.md` structure
+2. Check document matches `DEEP-DIVE-TEMPLATE.md` structure
 3. Read ALL plugin source code thoroughly
 4. Compare documentation against actual code
 5. Discover and document all quirks/bugs
@@ -536,7 +536,7 @@ exit 0  # Allow command
 
 ### Project Documentation
 - [CLAUDE.md](../../CLAUDE.md) - Main project instructions for Claude
-- [DEEP_DIVE_TEMPLATE.md](../reference/DEEP_DIVE_TEMPLATE.md) - Plugin documentation template
+- [DEEP-DIVE-TEMPLATE.md](../reference/DEEP-DIVE-TEMPLATE.md) - Plugin documentation template
 - [TENETS.md](../reference/TENETS.md) - Development standards
 
 ### Official Claude Code Documentation

@@ -5,7 +5,6 @@
 > **Version**: 1.0.0
 > **State Stores**: dungeon-cores (MySQL), dungeon-bonds (MySQL), dungeon-inhabitants (Redis), dungeon-memories (MySQL), dungeon-cache (Redis), dungeon-lock (Redis)
 > **Status**: Pre-implementation (architectural specification)
-> **Planning**: [HOUDINI-PROCEDURAL-GENERATION.md](../planning/HOUDINI-PROCEDURAL-GENERATION.md)
 
 ## Overview
 

@@ -5,7 +5,7 @@
 > **Version**: 1.0.0
 > **State Stores**: market-definitions (MySQL), market-listings (MySQL), market-bids (Redis), market-vendors (MySQL), market-vendor-stock (Redis), market-price-history (MySQL), market-settlement-queue (Redis), market-idempotency (Redis), market-lock (Redis)
 > **Status**: Pre-implementation (architectural specification)
-> **Planning**: [ECONOMY-CURRENCY-ARCHITECTURE.md](../planning/ECONOMY-CURRENCY-ARCHITECTURE.md), [ITEM-ECONOMY-PLUGINS.md](../plans/ITEM-ECONOMY-PLUGINS.md)
+> **Planning**: [Economy System Guide](../guides/ECONOMY-SYSTEM.md)
 
 ## Overview
 
@@ -874,4 +874,4 @@ Before lib-market implementation:
 
 ## Work Tracking
 
-*No active work items. Plugin is in pre-implementation phase. See [ECONOMY-CURRENCY-ARCHITECTURE.md](../planning/ECONOMY-CURRENCY-ARCHITECTURE.md) for the full economy architecture planning document and [ITEM-ECONOMY-PLUGINS.md](../plans/ITEM-ECONOMY-PLUGINS.md) for the item/economy plugin landscape.*
+*No active work items. Plugin is in pre-implementation phase. See [Economy System Guide](../guides/ECONOMY-SYSTEM.md) for the cross-cutting economy architecture.*

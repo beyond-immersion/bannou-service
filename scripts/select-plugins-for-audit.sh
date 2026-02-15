@@ -31,7 +31,7 @@ if ! [[ "$COUNT" =~ ^[0-9]+$ ]]; then
 fi
 
 # Skip list
-SKIP_PLUGINS=("DEEP_DIVE_TEMPLATE.md" "WEBSITE.md")
+SKIP_PLUGINS=("DEEP-DIVE-TEMPLATE.md" "WEBSITE.md")
 
 should_skip() {
     local name="$1"

@@ -1,10 +1,11 @@
 # Economy System - Architecture & Design
 
-> **Version**: 1.0
-> **Status**: Foundation services production-ready; higher-level services planned
+> **Version**: 1.1
+> **Status**: Foundation services production-ready; economy feature services have architectural specifications (deep dives)
 > **Foundation Plugins**: `lib-currency` (L2), `lib-item` (L2), `lib-inventory` (L2), `lib-contract` (L1), `lib-escrow` (L4)
-> **Integration Plugins**: `lib-quest` (L2), `lib-actor` (L2), `lib-behavior` (L4), `lib-analytics` (L4), `lib-divine` (L4)
-> **Deep Dives**: [Currency](../plugins/CURRENCY.md), [Item](../plugins/ITEM.md), [Inventory](../plugins/INVENTORY.md), [Contract](../plugins/CONTRACT.md), [Escrow](../plugins/ESCROW.md), [Quest](../plugins/QUEST.md), [Analytics](../plugins/ANALYTICS.md), [Divine](../plugins/DIVINE.md)
+> **Economy Feature Plugins**: `lib-affix` (L4), `lib-craft` (L4), `lib-loot` (L4), `lib-market` (L4), `lib-trade` (L4), `lib-workshop` (L4)
+> **Integration Plugins**: `lib-quest` (L2), `lib-actor` (L2), `lib-seed` (L2), `lib-collection` (L2), `lib-status` (L4), `lib-behavior` (L4), `lib-analytics` (L4), `lib-divine` (L4)
+> **Deep Dives**: [Currency](../plugins/CURRENCY.md), [Item](../plugins/ITEM.md), [Inventory](../plugins/INVENTORY.md), [Contract](../plugins/CONTRACT.md), [Escrow](../plugins/ESCROW.md), [Quest](../plugins/QUEST.md), [Analytics](../plugins/ANALYTICS.md), [Divine](../plugins/DIVINE.md), [Affix](../plugins/AFFIX.md), [Craft](../plugins/CRAFT.md), [Loot](../plugins/LOOT.md), [Market](../plugins/MARKET.md), [Trade](../plugins/TRADE.md), [Workshop](../plugins/WORKSHOP.md), [Status](../plugins/STATUS.md)
 > **Related Guides**: [Behavior System](./BEHAVIOR-SYSTEM.md), [Seed System](./SEED-SYSTEM.md), [Morality System](./MORALITY-SYSTEM.md)
 
 Economy is not a single plugin but an **architectural layer** spanning multiple services. This guide documents the cross-cutting design: how foundation services compose into a living economy, how NPCs participate as economic actors, how divine entities maintain economic health through narrative intervention, and what planned services will complete the picture.
@@ -22,7 +23,7 @@ Economy is not a single plugin but an **architectural layer** spanning multiple 
 7. [ABML Economic Integration](#7-abml-economic-integration)
 8. [Exchange Rate Extensions](#8-exchange-rate-extensions)
 9. [Scale Considerations](#9-scale-considerations)
-10. [Planned Services](#10-planned-services)
+10. [Economy Feature Services](#10-economy-feature-services)
 11. [Integration Map](#11-integration-map)
 - [Appendix A: Research Sources](#appendix-a-research-sources)
 
@@ -576,76 +577,58 @@ PER-REALM (Sharded)
 
 ---
 
-## 10. Planned Services
+## 10. Economy Feature Services
+
+All economy feature services follow the same composability thesis: each is a **thin L4 orchestration layer** composing L2/L1 primitives (lib-item, lib-inventory, lib-currency, lib-contract, lib-escrow) to deliver domain-specific game mechanics. Each has a comprehensive deep dive document with full architectural specifications.
 
 ### 10.1 Market Service (lib-market)
 
-**Purpose**: Auctions, trading, vendors, and price discovery.
+Auctions, NPC vendor management, and price discovery. Three subsystems: an auction house with bid engine, authorization holds, and background settlement; an NPC vendor system with three pricing modes (static, dynamic formula, personality-driven GOAP); and price analytics with time-bucketed history and trend detection. Provides `${market.*}` and `${market.price.*}` variable providers for NPC economic GOAP.
 
-**Architecture**:
-```
-Listing API ──> Bid Engine (Redis Sorted Sets) ──> Settlement
-     │                │                              │
-     v                v                              v
-Search Index     Bid State (Redis)          Transaction Log (MySQL)
-```
+**Deep dive**: [MARKET.md](../plugins/MARKET.md) | **Issue**: [#427](https://github.com/beyond-immersion/bannou-service/issues/427)
 
-**Key features**:
-- **Auction house**: Player-to-player listings with bid/buyout, duration tiers, listing fees (sink), transaction fees (sink)
-- **Vendor system**: NPCs as economic actors with dynamic/personality-driven catalogs, restocking, requirement-gated items, and buyback pricing
-- **Price discovery**: Running averages, price history, trend detection
-- **Integration**: Item escrow via lib-escrow, payments via lib-currency, authorization holds for bid reservations
+### 10.2 Trade & Taxation (lib-trade)
 
-**Events**: `market.listing.created`, `market.bid.placed`, `market.auction.sold`, `market.auction.expired`, `market.price.changed`
+Trade routes, shipment tracking, border crossings, tariff and tax policies, contraband, supply/demand dynamics, and NPC economic intelligence. Uses Transit (L2) for geographic connectivity and Worldstate (L2) for game-time duration calculation. Declarative shipment lifecycle (game drives events, plugin records state). Six tax types with progressive brackets, three collection modes (auto/manual/advisory), and tax debt tracking for NPC tax collectors.
 
-### 10.2 Trade & Taxation
+**Deep dive**: [TRADE.md](../plugins/TRADE.md) | **Issue**: [#427](https://github.com/beyond-immersion/bannou-service/issues/427)
 
-**Purpose**: Trade routes, shipments, border crossings, tariff policies, taxation, and contraband.
+### 10.3 Affix Service (lib-affix)
 
-#### Trade Routes
+Item modifier definitions, weighted random generation, validated application primitives, and stat computation. Gives structure to lib-item's opaque `instanceMetadata`: typed definitions with tiers, mod groups for exclusivity, spawn weights, and stat grants. Consumers: lib-craft (applies/removes affixes), lib-loot (generates affixed items), lib-market (indexes for search). Provides `${affix.*}` variable provider for NPC item evaluation.
 
-Trade routes are **data constructs** describing paths between locations. The plugin doesn't pathfind -- games define routes and the plugin stores them.
+**Deep dive**: [AFFIX.md](../plugins/AFFIX.md)
 
-Routes have legs (ordered sequence of location-to-location segments) with per-leg metadata: estimated duration, terrain type, risk level, and border crossing information.
+### 10.4 Craft Service (lib-craft)
 
-#### Shipments
+Recipe-based crafting orchestration for production workflows, item modification, and skill-gated execution. Uses lib-contract for multi-step session state machines. Game-agnostic: recipe types, proficiency domains, station types, tool categories, and quality formulas are opaque strings defined per game through recipe seeding.
 
-Shipments track goods/currency moving along routes with a **declarative lifecycle**: the game server calls APIs to indicate what happened at each stage (depart, complete-leg, border-crossing, arrive, lost).
+**Deep dive**: [CRAFT.md](../plugins/CRAFT.md)
 
-States: `preparing` -> `in_transit` -> `at_checkpoint` -> `arrived` (or `lost`, `seized`).
+### 10.5 Loot Service (lib-loot)
 
-Border crossing is the richest endpoint: tracking declared vs actual goods, smuggling detection, tariff collection modes (auto, manual, evaded, exempt), and seizure records.
+Loot table management and generation for weighted drop determination, contextual modifier application, and group distribution orchestration. Supports pity thresholds, nested sub-tables, guaranteed drops, and batch generation at scale. Game-agnostic configuration through table seeding.
 
-#### Tariffs
+**Deep dive**: [LOOT.md](../plugins/LOOT.md)
 
-Tariff policies are realm-scoped with configurable scope (realm-wide, specific border, category), direction (import/export/both), and rates (default, per-category, per-item, currency-specific). Support exemptions for specific entities.
+### 10.6 Workshop Service (lib-workshop)
 
-**Collection modes**: `auto` (deducted automatically), `manual` (NPC tax collectors), `advisory` (calculation only, game handles collection).
+Time-based automated production for continuous background item generation. Workers assigned to blueprints consume materials and produce outputs over game time using lazy evaluation with piecewise rate segments. Complements lib-craft (manual crafting) with automated production.
 
-#### Taxation
+**Deep dive**: [WORKSHOP.md](../plugins/WORKSHOP.md)
 
-Six tax types: transaction, import/export, property, income, wealth, and sales. Each with:
-- Base rate and optional progressive brackets
-- Exemptions per entity
-- Collection mode (automatic/assessed/advisory)
-- Collection target (void sink, realm treasury, or faction)
-- For assessed taxes: assessment frequency, grace period, late penalty rate
+### 10.7 Economy Monitoring (Not a Standalone Service)
 
-Tax debt tracking with delinquent entity queries enables NPC tax collectors and narrative consequences for tax evasion.
+The economic intelligence layer is **distributed across existing services** rather than forming a standalone `lib-economy` plugin:
 
-#### Contraband
-
-Items and currencies can be declared contraband per realm with severity levels (restricted, prohibited, capital offense). The system explicitly supports smuggling -- tracking declared vs actual goods at border crossings. Detection is game logic; the plugin records outcomes for analytics.
-
-### 10.3 Economy Monitoring & NPC Economic AI
-
-**Purpose**: The intelligence layer that monitors economic health and provides NPC economic decision-making data. These capabilities extend existing services (primarily lib-analytics) rather than forming a standalone service.
-
-**Key features**:
-- **Faucet/sink monitoring**: Time-series metrics per realm/currency tracking all inflows and outflows by type (via lib-analytics extensions, see [#429](https://github.com/beyond-immersion/bannou-service/issues/429))
-- **NPC economic profiles**: Per-character economic role, production/consumption rates, trading personality (owned by whichever service manages NPC economic state -- potentially lib-market's vendor system or a future lib-craft)
-- **Price analytics**: Average prices, price history, trend detection per item per realm (owned by lib-market)
-- **Wealth distribution**: Gini coefficient, percentile calculations, hoarding detection (via lib-analytics extensions)
+| Concern | Owner | Reference |
+|---------|-------|-----------|
+| **Faucet/sink monitoring** | lib-analytics extensions | [#429](https://github.com/beyond-immersion/bannou-service/issues/429) |
+| **NPC economic profiles** | lib-market vendor system + lib-craft proficiency | [MARKET.md](../plugins/MARKET.md), [CRAFT.md](../plugins/CRAFT.md) |
+| **Price analytics** | lib-market price discovery | [MARKET.md](../plugins/MARKET.md) |
+| **Wealth distribution** | lib-analytics extensions | [#429](https://github.com/beyond-immersion/bannou-service/issues/429) |
+| **Velocity monitoring** | lib-analytics + divine actors | [ANALYTICS.md](../plugins/ANALYTICS.md) |
+| **Location economic profiles** | Divine actors observing analytics | [DIVINE.md](../plugins/DIVINE.md) |
 
 ---
 
