@@ -322,6 +322,7 @@ public partial class RealmService : IRealmService
             Description = body.Description,
             Category = body.Category,
             IsActive = body.IsActive,
+            IsSystemType = body.IsSystemType,
             IsDeprecated = false,
             DeprecatedAt = null,
             DeprecationReason = null,
@@ -387,6 +388,11 @@ public partial class RealmService : IRealmService
         {
             model.IsActive = body.IsActive.Value;
             changedFields.Add("isActive");
+        }
+        if (body.IsSystemType.HasValue && body.IsSystemType.Value != model.IsSystemType)
+        {
+            model.IsSystemType = body.IsSystemType.Value;
+            changedFields.Add("isSystemType");
         }
         if (body.GameServiceId.HasValue && body.GameServiceId.Value != model.GameServiceId)
         {
@@ -632,11 +638,8 @@ public partial class RealmService : IRealmService
             return (StatusCodes.BadRequest, null);
         }
 
-        // Block merge FROM VOID realm (system infrastructure)
-        if (sourceRealm.Metadata is System.Text.Json.JsonElement metadataElement
-            && metadataElement.ValueKind == System.Text.Json.JsonValueKind.Object
-            && metadataElement.TryGetProperty("isSystemType", out var isSystemType)
-            && isSystemType.ValueKind == System.Text.Json.JsonValueKind.True)
+        // Block merge FROM system realms (e.g., VOID)
+        if (sourceRealm.IsSystemType)
         {
             _logger.LogWarning("Cannot merge from system realm {SourceRealmId} ({Code})",
                 body.SourceRealmId, sourceRealm.Code);
@@ -655,10 +658,7 @@ public partial class RealmService : IRealmService
         }
 
         // Warn when merging into a system realm (e.g., VOID) — entities will be orphaned from gameplay
-        if (targetRealm.Metadata is System.Text.Json.JsonElement targetMetadata
-            && targetMetadata.ValueKind == System.Text.Json.JsonValueKind.Object
-            && targetMetadata.TryGetProperty("isSystemType", out var isTargetSystem)
-            && isTargetSystem.ValueKind == System.Text.Json.JsonValueKind.True)
+        if (targetRealm.IsSystemType)
         {
             _logger.LogWarning(
                 "Merging into system realm {TargetRealmId} ({Code}) - all migrated entities will be orphaned from gameplay",
@@ -1070,6 +1070,7 @@ public partial class RealmService : IRealmService
                             if (seedRealm.Description != null) existingModel.Description = seedRealm.Description;
                             if (seedRealm.Category != null) existingModel.Category = seedRealm.Category;
                             existingModel.IsActive = seedRealm.IsActive;
+                            existingModel.IsSystemType = seedRealm.IsSystemType;
                             if (seedRealm.Metadata != null) existingModel.Metadata = seedRealm.Metadata;
                             existingModel.UpdatedAt = DateTimeOffset.UtcNow;
 
@@ -1226,6 +1227,7 @@ public partial class RealmService : IRealmService
             Description = model.Description,
             Category = model.Category,
             IsActive = model.IsActive,
+            IsSystemType = model.IsSystemType,
             IsDeprecated = model.IsDeprecated,
             DeprecatedAt = model.DeprecatedAt,
             DeprecationReason = model.DeprecationReason,
@@ -1257,6 +1259,7 @@ public partial class RealmService : IRealmService
                 Description = model.Description,
                 Category = model.Category,
                 IsActive = model.IsActive,
+                IsSystemType = model.IsSystemType,
                 IsDeprecated = model.IsDeprecated,
                 DeprecatedAt = model.DeprecatedAt,
                 DeprecationReason = model.DeprecationReason,
@@ -1292,6 +1295,7 @@ public partial class RealmService : IRealmService
                 Description = model.Description,
                 Category = model.Category,
                 IsActive = model.IsActive,
+                IsSystemType = model.IsSystemType,
                 IsDeprecated = model.IsDeprecated,
                 DeprecatedAt = model.DeprecatedAt,
                 DeprecationReason = model.DeprecationReason,
@@ -1371,6 +1375,7 @@ public partial class RealmService : IRealmService
                 Description = model.Description,
                 Category = model.Category,
                 IsActive = model.IsActive,
+                IsSystemType = model.IsSystemType,
                 IsDeprecated = model.IsDeprecated,
                 DeprecatedAt = model.DeprecatedAt,
                 DeprecationReason = model.DeprecationReason,
@@ -1408,6 +1413,7 @@ internal class RealmModel
     public string? Description { get; set; }
     public string? Category { get; set; }
     public bool IsActive { get; set; } = true;
+    public bool IsSystemType { get; set; }
     public bool IsDeprecated { get; set; }
     public DateTimeOffset? DeprecatedAt { get; set; }
     public string? DeprecationReason { get; set; }

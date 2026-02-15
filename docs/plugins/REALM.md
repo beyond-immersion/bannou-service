@@ -120,7 +120,7 @@ Standard read operations with two lookup strategies. **GetByCode** uses a two-st
   2. **Locations**: Root-first tree moves. Collects descendants before transferring root (preserves parent index). Transfers root via `TransferLocationToRealm`, then descendants sorted by depth (shallowest first) with `SetLocationParent` to restore hierarchy.
   3. **Characters**: Paginated via `GetCharactersByRealm`. Each character transferred via `TransferCharacterToRealm`.
 
-  **Validation**: Source must be deprecated, source != target, source must not be a system realm (`metadata.isSystemType`). Target must exist.
+  **Validation**: Source must be deprecated, source != target, source must not be a system realm (`isSystemType`). Target must exist.
   **Failure policy**: Continue on individual failures. Failed entity IDs are tracked to prevent infinite retry loops. Returns per-entity-type migrated/failed counts.
   **Optional deletion**: If `deleteAfterMerge=true` and zero total failures, calls `DeleteRealmAsync` on source realm. Skipped if any failures occurred.
   **Pagination**: All paginated queries use `MergePageSize` from configuration (default 50). Always re-queries page 1 since successful migrations remove entities from source.
@@ -212,7 +212,7 @@ None identified.
 
 ### Intentional Quirks
 
-1. **VOID realm is a convention, not enforced**: The API schema documents a "VOID realm" concept as a sink for entities whose realm should be removed. This is **intentionally not enforced** in realm service code — it's a seeding convention parallel to Species (VOID species) and RelationshipType (VOID type). The VOID realm should be seeded via `/realm/seed` with metadata `isSystemType: true`. Enforcement of VOID semantics (e.g., preventing new character creation in VOID realm) belongs to consuming services (Character, Location, Species), not the realm registry itself.
+1. **VOID realm is a convention, not enforced**: The API schema documents a "VOID realm" concept as a sink for entities whose realm should be removed. This is **intentionally not enforced** in realm service code — it's a seeding convention parallel to Species (VOID species) and RelationshipType (VOID type). The VOID realm should be seeded via `/realm/seed` with `isSystemType: true`. Enforcement of VOID semantics (e.g., preventing new character creation in VOID realm) belongs to consuming services (Character, Location, Species), not the realm registry itself.
 
 2. **Exists endpoint never returns 404**: Always returns `StatusCodes.OK` with `exists: true/false` and `isActive: true/false`. Callers must check both flags to determine usability. This avoids 404 semantics for a "check" operation.
 

@@ -2,7 +2,7 @@
 
 > **Category**: Architecture & Design
 > **When to Reference**: Before starting any new service, feature, or significant code change
-> **Tenets**: T4, T5, T6, T13, T15, T18, T27, T28
+> **Tenets**: T4, T5, T6, T13, T15, T18, T27, T28, T29
 
 These tenets define the architectural foundation of Bannou. Understanding them is prerequisite to any development work.
 
@@ -581,7 +581,82 @@ When adding a new service that stores data keyed by another service's entity:
 
 ---
 
-## Quick Reference: Foundation Violations
+## Tenet 29: No Metadata Bag Contracts (INVIOLABLE)
+
+**Rule**: `additionalProperties: true` (or any untyped metadata dictionary) MUST NEVER be used as a data contract between services. If Service A stores data that Service B reads by convention, that data MUST be defined in a schema, generated into typed code, and owned by the service responsible for the domain concept.
+
+### Why This Exists
+
+This tenet exists because of a specific anti-pattern that was proposed: storing `biomeCode` in Location's (L2) `additionalProperties` metadata bag as a convention for Environment (L4) to consume. This is a **total schema-first violation** that defeats every architectural guarantee Bannou provides.
+
+### The Eight Failures of Metadata Bag Contracts
+
+1. **Total Schema-First Violation (Tenet 1)**: A convention that says "put `biomeCode` in Location's metadata JSON bag" is the exact opposite of schema-first development. It's an unschematized, ungenerated, unenforced verbal agreement. No OpenAPI spec declares it. No code is generated for it. No validator catches its absence. It exists only in documentation that an implementer may or may not read.
+
+2. **Zero Type Safety**: `additionalProperties: true` means the metadata field accepts any JSON. The key could be missing entirely (silent null), misspelled (`biomCode`, `BiomeCode`, `biome_code` — all silent misses), wrong type (`biomeCode: 42`, `biomeCode: true`), or semantically invalid (`biomeCode: "foobar"` — no matching template). None of these are caught at compile time, generation time, schema validation time, or even runtime without explicit defensive code that shouldn't be necessary.
+
+3. **Invisible Cross-Service Coupling**: The producer's schema says nothing about the consuming service's data. A developer refactoring the metadata handling, changing its storage model, or migrating its data has zero signal that another service depends on specific keys in that JSON bag. The coupling is invisible to schema analysis tools, generated code, import/dependency graphs, code review, and the ServiceHierarchyValidator.
+
+4. **Higher-Layer Domain Data Polluting Lower-Layer Storage**: If the data belongs to a higher-layer domain concept (e.g., biome codes are an ecological L4 concept), storing it in a lower-layer service (L2) means: non-game deployments (`GAME_FEATURES=false`) carry domain-specific data for no reason, storage size increases for concepts the service doesn't use, backup/restore/migration must preserve data it doesn't understand, and admin tooling shows fields it can't explain.
+
+5. **No Referential Integrity**: Nothing prevents creating an entity with a metadata value that references something that doesn't exist, deleting the referenced thing while metadata still points to it, or two entities spelling the same value differently. With owned bindings, all of this is enforceable at the API level.
+
+6. **No Lifecycle Management**: Nobody knows who updates the metadata when the referenced value is renamed, when the entity should change its metadata value due to a game event, or when world initialization needs to ensure metadata is populated. With service-owned bindings, the owning service manages its own data lifecycle.
+
+7. **Untestable in Isolation**: The producer's unit tests have no reason to verify metadata structure. The consumer's unit tests can't verify that metadata is correctly populated without standing up the producer. Integration tests must verify a cross-service convention that no schema enforces. The gap between "entity created" and "metadata contains valid data" is an untestable assumption.
+
+8. **Convention Drift is Undetectable**: If the convention changes (rename a key, add a required field, change a type from float to object), there is no schema diff, no generated code change, no compilation error, no automated migration. Just silent runtime breakage that manifests as wrong behavior with no error message pointing to the cause.
+
+### What Metadata Bags ARE For
+
+Metadata dictionaries (`additionalProperties: true`), when they exist at all, serve exactly TWO purposes:
+
+1. **Client-side display data**: Game clients store rendering hints, UI preferences, or display-only information that no Bannou service consumes. Example: a location's `mapIcon`, `ambientSoundFile`, or `tooltipColor`.
+
+2. **Game-specific implementation data**: Data that the game engine (not Bannou services) interprets at runtime. Example: Unity-specific physics parameters, Unreal material overrides, or custom game mode settings.
+
+In both cases, the metadata is **opaque to all Bannou plugins**. No plugin reads it by convention. No plugin's correctness depends on its structure.
+
+### The Correct Pattern: Service-Owned Bindings
+
+When Service B needs data associated with Service A's entities, Service B MUST own that data:
+
+```csharp
+// CORRECT: Environment (L4) owns its own location-climate bindings
+// Environment's schema defines the binding model
+// Environment stores bindings in its own state store
+// Environment validates biomeCode against its own climate template registry
+// Environment manages binding lifecycle through its own API
+
+// In environment-api.yaml:
+//   /environment/climate-binding/create  (validates location exists via ILocationClient)
+//   /environment/climate-binding/get     (by locationId)
+//   /environment/climate-binding/update  (revalidates)
+//   /environment/climate-binding/delete  (cleanup)
+
+// FORBIDDEN: Environment reads biomeCode from Location's metadata bag
+// var metadata = locationResponse.Metadata;
+// var biomeCode = metadata?["biomeCode"]?.ToString();  // NEVER!
+```
+
+### How This Applies to Each Service Layer
+
+| Scenario | Wrong | Right |
+|----------|-------|-------|
+| L4 needs data on L2 entities | Store in L2's metadata bag by convention | L4 owns binding table, references L2 entity by ID |
+| L2 needs client display hints | Store typed fields in L2's schema | Use metadata bag (clients read it, no plugin does) |
+| Two L4 services share data about L2 entities | Both read from L2's metadata bag | One L4 service owns the data, the other queries it via API |
+| L4 needs to tag L2 entities | Add tag to L2's metadata by convention | L4 maintains its own tag-to-entity mapping |
+
+### Detection & Enforcement
+
+**Schema-level**: Any schema property with `additionalProperties: true` must be documented as client-only metadata. Code review must verify no plugin reads metadata keys from another service's entities by convention.
+
+**Code-level**: If you see `JsonElement` navigation on another service's metadata field, or dictionary key lookups on response metadata, this is a violation. The consuming service should own its own data.
+
+**The test**: "If I renamed or removed this metadata key, would any Bannou plugin break?" If yes — **violation**. That data must be in a schema.
+
+---
 
 | Violation | Tenet | Fix |
 |-----------|-------|-----|
@@ -606,9 +681,14 @@ When adding a new service that stores data keyed by another service's entity:
 | Subscribing to `*.deleted` for dependent data cleanup | T28 | Register with lib-resource; implement `ISeededResourceProvider` |
 | Event-based cleanup for persistent dependent data | T28 | Use lib-resource with CASCADE/RESTRICT/DETACH policy |
 | Cleanup handler in `*ServiceEvents.cs` for another service's entity | T28 | Move to lib-resource cleanup callback; remove event subscription |
+| Using `additionalProperties: true` as cross-service data contract | T29 | Owning service defines its own schema, stores its own data |
+| Reading metadata keys from another service's response by convention | T29 | Query the service that owns the domain concept via API |
+| Storing higher-layer domain data in lower-layer metadata bags | T29 | Higher-layer service owns binding table, references lower-layer entity by ID |
+| `JsonElement` navigation on another service's metadata field | T29 | Define data in owning service's schema, use generated types |
+| Documentation specifying "put X in service Y's metadata" | T29 | X belongs in the schema of the service that owns concept X |
 
 > **Schema-related violations** (editing Generated/ files, wrong env var format, missing description, etc.) are covered in [SCHEMA-RULES.md](../SCHEMA-RULES.md).
 
 ---
 
-*This document covers tenets T4, T5, T6, T13, T15, T18, T27, T28. See [TENETS.md](../TENETS.md) for the complete index and Tenet 1 (Schema-First Development).*
+*This document covers tenets T4, T5, T6, T13, T15, T18, T27, T28, T29. See [TENETS.md](../TENETS.md) for the complete index and Tenet 1 (Schema-First Development).*

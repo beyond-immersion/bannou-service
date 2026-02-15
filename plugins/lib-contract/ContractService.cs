@@ -1878,6 +1878,11 @@ public partial class ContractService : IContractService
             TerminationNoticePeriod = terms.TerminationNoticePeriod,
             BreachThreshold = terms.BreachThreshold,
             GracePeriodForCure = terms.GracePeriodForCure,
+            Exclusivity = terms.Exclusivity,
+            NonCompete = terms.NonCompete,
+            TimeCommitment = terms.TimeCommitment,
+            TimeCommitmentType = terms.TimeCommitmentType,
+            Clauses = terms.Clauses?.ToList(),
             // CustomTerms is object? in generated model; deserialize to dictionary if present
             CustomTerms = terms.CustomTerms is System.Text.Json.JsonElement je
                 ? BannouJson.Deserialize<Dictionary<string, object>>(je.GetRawText())

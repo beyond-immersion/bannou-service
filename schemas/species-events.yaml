@@ -44,9 +44,9 @@ x-lifecycle:
       deprecationReason: { type: string, nullable: true, description: "Explanation for why the species was deprecated" }
       baseLifespan: { type: integer, description: "Average lifespan in years for this species" }
       maturityAge: { type: integer, description: "Age at which members of this species reach maturity" }
-      traitModifiers: { type: object, additionalProperties: true, description: "Modifiers applied to character traits for this species" }
+      traitModifiers: { type: object, additionalProperties: true, description: "Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention." }
       realmIds: { type: array, items: { type: string, format: uuid }, description: "IDs of realms where this species can exist" }
-      metadata: { type: object, additionalProperties: true, nullable: true, description: "Additional custom metadata for the species" }
+      metadata: { type: object, additionalProperties: true, nullable: true, description: "Client-only metadata. No Bannou plugin reads specific keys from this field by convention." }
       createdAt: { type: string, format: date-time, required: true, description: "Timestamp when the species was created" }
       updatedAt: { type: string, format: date-time, required: true, description: "Timestamp when the species was last updated" }
 

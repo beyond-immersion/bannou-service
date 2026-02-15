@@ -696,6 +696,78 @@ x-service-configuration:
 
 ---
 
+## additionalProperties: true — Metadata Bag Rules (INVIOLABLE)
+
+**`additionalProperties: true` MUST NEVER be used as a data contract between services.** This is a total schema-first violation. If Service A stores data that Service B reads by convention, that is an unschematized, ungenerated, unenforced verbal agreement. See [FOUNDATION.md Tenet 29](tenets/FOUNDATION.md#tenet-29-no-metadata-bag-contracts-inviolable) for the full rationale.
+
+### When `additionalProperties: true` IS Acceptable
+
+Metadata bags exist for exactly two purposes:
+
+1. **Client-side display data**: Game clients store rendering hints, UI preferences, or display-only information (e.g., `mapIcon`, `ambientSoundFile`, `tooltipColor`). No Bannou plugin reads these by convention.
+
+2. **Game-specific implementation data**: Data that the game engine (not Bannou services) interprets at runtime (e.g., Unity physics parameters, Unreal material overrides). Opaque to all Bannou plugins.
+
+In both cases, the metadata is **opaque to all Bannou plugins**. No plugin's correctness depends on its structure. No plugin reads specific keys by convention.
+
+### When `additionalProperties: true` IS NOT Acceptable
+
+**NEVER** use metadata bags for:
+
+- **Cross-service data contracts**: "Put `biomeCode` in Location's metadata for Environment to read" — **NO**. Environment owns its own climate bindings.
+- **Convention-based keys**: Any pattern where documentation says "service X should look for key Y in service Z's metadata" — **NO**. Define Y in X's schema.
+- **Domain data storage in the wrong service**: Ecological data in Location, personality hints in Character, behavioral tags in Species — **NO**. The service that owns the domain concept owns the data.
+
+### The Correct Pattern
+
+When Service B (L4) needs data associated with Service A's (L2) entities:
+
+```yaml
+# CORRECT: Service B defines its own binding model in its own schema
+# environment-api.yaml
+paths:
+  /environment/climate-binding/create:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateClimateBindingRequest'
+
+components:
+  schemas:
+    CreateClimateBindingRequest:
+      type: object
+      additionalProperties: false
+      required: [locationId, biomeCode]
+      properties:
+        locationId:
+          type: string
+          format: uuid
+          description: Location to bind (validated via ILocationClient)
+        biomeCode:
+          type: string
+          description: Climate template biome code (validated against template registry)
+```
+
+```yaml
+# FORBIDDEN: Relying on metadata bag in another service's schema
+# location-api.yaml
+LocationResponse:
+  properties:
+    metadata:
+      type: object
+      additionalProperties: true  # "Put biomeCode in here" — NEVER
+```
+
+### Schema Validation Rule
+
+Every schema property with `additionalProperties: true` MUST include a description that explicitly states: "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
+
+If this description would be false (because a plugin DOES read specific keys), the data must be moved to the owning service's schema.
+
+---
+
 ## API Schema Rules
 
 ### POST-Only Pattern (MANDATORY)
@@ -864,5 +936,7 @@ Before submitting schema changes, verify:
 **x-compression-callback**: `compressEndpoint` exists in paths. `priority` set appropriately (0 base, 10-30 extension, 50-100 optional). Plugin calls generated `*CompressionCallbacks.RegisterAsync()`.
 
 **x-event-template**: `name` is unique across services. Plugin calls generated `*EventTemplates.RegisterAll()`. No manual `EventTemplate` definitions remain.
+
+**Metadata Bags**: Any property with `additionalProperties: true` includes description stating "Client-only metadata. No Bannou plugin reads specific keys from this field by convention." No cross-service data contracts via metadata bags. No documentation specifying convention-based keys for other services to read.
 
 **Resource Cleanup Contract (Producer Side)**: When your service is the `target` of `x-references`, your delete flow MUST: inject `IResourceClient`, call `/resource/check` before deletion, call `/resource/cleanup/execute` if references exist, handle cleanup failure (return `Conflict`), only delete after cleanup succeeds. **FORBIDDEN**: Adding event handlers that duplicate cleanup callbacks, deleting without `ExecuteCleanupAsync`, assuming event-based cleanup is equivalent.

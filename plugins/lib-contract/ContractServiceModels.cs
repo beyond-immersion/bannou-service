@@ -79,6 +79,11 @@ internal class ContractTermsModel
     public string? TerminationNoticePeriod { get; set; }
     public int? BreachThreshold { get; set; }
     public string? GracePeriodForCure { get; set; }
+    public bool? Exclusivity { get; set; }
+    public bool? NonCompete { get; set; }
+    public bool? TimeCommitment { get; set; }
+    public string? TimeCommitmentType { get; set; }
+    public List<ContractClauseDefinition>? Clauses { get; set; }
     public Dictionary<string, object>? CustomTerms { get; set; }
 }
 

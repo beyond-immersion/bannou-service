@@ -15,7 +15,7 @@ This document is the authoritative index for Bannou development standards. All s
 When documenting tenet compliance in source code comments, **NEVER use specific tenet numbers** (e.g., "T9", "Tenet 21", "TENET T4"). Tenet numbers change over time as tenets are added, removed, or reorganized.
 
 **Instead, use category names:**
-- `FOUNDATION TENETS` - for T4, T5, T6, T13, T15, T18, T27, T28
+- `FOUNDATION TENETS` - for T4, T5, T6, T13, T15, T18, T27, T28, T29
 - `IMPLEMENTATION TENETS` - for T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25, T26
 - `QUALITY TENETS` - for T10, T11, T12, T16, T19, T22
 - `SERVICE HIERARCHY` - for Tenet 2 (service layer dependencies)
@@ -175,7 +175,7 @@ Tenets are organized into categories based on when they're needed:
 |----------|--------|-------------------|
 | [**Schema Rules**](SCHEMA-RULES.md) | Tenet 1 | Before creating or modifying any schema file |
 | [**Service Hierarchy**](SERVICE-HIERARCHY.md) | Tenet 2 | Before adding any service client dependency |
-| [**Foundation**](tenets/FOUNDATION.md) | T4, T5, T6, T13, T15, T18, T27, T28 | Before starting any new service or feature |
+| [**Foundation**](tenets/FOUNDATION.md) | T4, T5, T6, T13, T15, T18, T27, T28, T29 | Before starting any new service or feature |
 | [**Implementation**](tenets/IMPLEMENTATION.md) | T3, T7, T8, T9, T14, T17, T20, T21, T23, T24, T25, T26 | While actively writing service code |
 | [**Quality**](tenets/QUALITY.md) | T10, T11, T12, T16, T19, T22 | During code review or before PR submission |
 
@@ -197,6 +197,7 @@ Tenets are organized into categories based on when they're needed:
 | **T18** | Licensing Requirements | MIT/BSD/Apache only; GPL forbidden for linked code |
 | **T27** | Cross-Service Communication Discipline | Direct API for higher→lower; DI interfaces for lower↔higher; events for broadcast only; inverted subscriptions forbidden |
 | **T28** | Resource-Managed Cleanup | Dependent data cleanup via lib-resource only; never subscribe to lifecycle events for destruction; Account exempt for privacy |
+| **T29** | No Metadata Bag Contracts | `additionalProperties: true` is NEVER a data contract between services; metadata bags are client-only; services own their own domain data in their own schemas |
 
 ---
 
@@ -307,6 +308,10 @@ Tenets are organized into categories based on when they're needed:
 | Service is `x-references` target but doesn't call `ExecuteCleanupAsync` | T1 | Add Resource cleanup to delete flow (see SCHEMA-RULES.md) |
 | Event handlers duplicate `x-references` cleanup callbacks | T1 | Remove event handlers; use Resource pattern only |
 | Adding event cleanup when `x-references` callbacks exist | T1 | Fix producer to call `ExecuteCleanupAsync` instead |
+| Using `additionalProperties: true` as cross-service data contract | T29 | Owning service defines its own schema, stores its own data |
+| Reading metadata keys from another service's response by convention | T29 | Query the service that owns the domain concept via API |
+| Storing higher-layer domain data in lower-layer metadata bags | T29 | Higher-layer service owns binding table, references lower-layer entity by ID |
+| Documentation specifying "put X in service Y's metadata" | T29 | X belongs in the schema of the service that owns concept X |
 | Publishing event to lower-layer's topic instead of calling API | T27 | Use generated client directly (hierarchy permits the call) |
 | Lower-layer subscribing to higher-layer events | T27 | Use DI Provider/Listener interface in `bannou-service/Providers/` |
 | Publishing registration events at startup | T27 | Use DI Provider interface discovered via `IEnumerable<T>` |

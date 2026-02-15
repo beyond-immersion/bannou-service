@@ -70,6 +70,37 @@ These commands can destroy work in progress, hide changes, or cause data loss. C
 
 ---
 
+## ⛔ NO CONVENTION-BASED CROSS-SERVICE DATA SHARING ⛔
+
+**Services MUST NEVER store domain-specific data in another service's `metadata`, `additionalProperties`, `customStats`, `data`, `properties`, or any other freeform/untyped JSON field — and then read it back by convention (knowing key names and expected types without schema enforcement).**
+
+**What this means**: If Service A needs data about Service B's entities, Service A stores that data in **its own state stores** with **its own schema-defined models**, accessed through **its own API endpoints**. Service A may query Service B for entity existence or hierarchy (via typed generated clients), but Service A NEVER stuffs its domain data into Service B's untyped JSON bags.
+
+**The anti-patterns (ALL FORBIDDEN)**:
+1. Storing game-specific fields (biomeCode, altitude, speciesCode, isSystemType) in another service's `metadata` object and reading them by convention
+2. Storing structured data (affix slots, behavioral clauses, asset requirements) in another service's `additionalProperties: true` field and parsing by key name
+3. Using `customStats`, `annotations`, or any untyped field as a cross-service communication channel
+4. Documenting "convention" as the interface contract between two services — if it's not in a schema, it doesn't exist
+5. Saying "this is a convention, not a schema change" as justification — **that IS the problem**
+
+**Why this is forbidden**:
+- Zero type safety: no compile-time, generation-time, or validation-time checking
+- Invisible coupling: no schema, import graph, or dependency analysis can detect it
+- Silent failure: misspelled keys, wrong types, or missing data produce wrong behavior with no error
+- Lifecycle orphaning: the storage owner can't validate, migrate, or clean up data it doesn't know about
+- Untestable: neither service's unit tests cover the convention
+- Tenet 1 violation: if it's not in a schema, it's not schema-first
+
+**The correct pattern**: If Environment (L4) needs biome data for Location (L2) entities, Environment maintains its own `LocationClimateBinding` records in its own state stores, managed through its own API. Environment queries Location for hierarchy and existence. Environment owns its own domain data. Always.
+
+**When reviewing deep dives or implementation plans**: If you see a service reading specific named keys from another service's freeform metadata field, **STOP and flag it as a violation**. Do not proceed. Do not rationalize it as "well-documented convention." Present it to the user.
+
+**If you encounter `additionalProperties: true` in a schema**: Treat it with extreme suspicion. Ask: is any other service expected to read specific keys from this field? If yes, those keys must become typed schema properties — either on the owning service (if the data is that service's domain) or on the consuming service (in its own state store, if the data is the consumer's domain).
+
+**Known existing violations** (tracked for remediation, not precedent): GitHub Issue #308 tracks the systemic `additionalProperties: true` problem. Existing violations in affix metadata, contract CustomTerms, and others are tracked for migration to typed schemas. **These are technical debt to fix, not patterns to follow.**
+
+---
+
 ## Core Architecture Reference
 
 @docs/reference/TENETS.md
@@ -334,6 +365,7 @@ cd scripts && ./generate-config.sh <service>   # Configuration only (changed *-c
 scripts/generate-service-events.sh <service>   # † Events only (changed *-events.yaml)
 cd scripts && ./generate-models.sh <service>   # Models only (changed *-api.yaml models)
 scripts/generate-client-events.sh <service>    # † Client events only (changed *-client-events.yaml)
+cd scripts && python3 generate-lifecycle-events.py  # Lifecycle events only (changed x-lifecycle in *-events.yaml)
 
 # If you changed multiple schema types for ONE service:
 cd scripts && ./generate-service.sh <service>  # All generated code for one service
@@ -365,6 +397,7 @@ make inspect-list PKG="RabbitMQ.Client"
 - Changed `schemas/foo-events.yaml` → run `scripts/generate-service-events.sh foo`
 - Changed `schemas/foo-api.yaml` (models only) → run `cd scripts && ./generate-models.sh foo`
 - Changed `schemas/foo-client-events.yaml` → run `scripts/generate-client-events.sh foo`
+- Changed `x-lifecycle` in `schemas/foo-events.yaml` → run `cd scripts && python3 generate-lifecycle-events.py`
 - Changed multiple schema files for `foo` → run `cd scripts && ./generate-service.sh foo`
 - Changed `schemas/common-*.yaml` or multiple services → run `scripts/generate-all-services.sh`
 

@@ -25,6 +25,21 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Contract;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Contract;
 
@@ -423,7 +438,7 @@ public partial class CreateContractTemplateRequest
     public bool Transferable { get; set; } = false;
 
     /// <summary>
-    /// Template-level game-specific metadata
+    /// Client-only game metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameMetadata")]
     public object? GameMetadata { get; set; } = default!;
@@ -527,7 +542,7 @@ public partial class UpdateContractTemplateRequest
     public bool? IsActive { get; set; } = default!;
 
     /// <summary>
-    /// Updated game metadata
+    /// Client-only game metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameMetadata")]
     public object? GameMetadata { get; set; } = default!;
@@ -642,7 +657,7 @@ public partial class ContractTemplateResponse
     public bool Transferable { get; set; } = default!;
 
     /// <summary>
-    /// Game-specific metadata
+    /// Client-only game metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameMetadata")]
     public object? GameMetadata { get; set; } = default!;
@@ -747,7 +762,7 @@ public partial class CreateContractInstanceRequest
     public System.Collections.Generic.ICollection<System.Guid>? EscrowIds { get; set; } = default!;
 
     /// <summary>
-    /// Instance-level game metadata
+    /// Client-only game metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameMetadata")]
     public object? GameMetadata { get; set; } = default!;
@@ -1029,7 +1044,7 @@ public partial class ContractInstanceResponse
     public System.DateTimeOffset? TerminatedAt { get; set; } = default!;
 
     /// <summary>
-    /// Game-specific metadata
+    /// Client-only game metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("gameMetadata")]
     public object? GameMetadata { get; set; } = default!;
@@ -1340,10 +1355,168 @@ public partial class ContractTerms
     public string? GracePeriodForCure { get; set; } = default!;
 
     /// <summary>
-    /// Game-specific custom terms
+    /// Whether this contract has an exclusivity clause preventing the entity from entering similar contracts
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("exclusivity")]
+    public bool? Exclusivity { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this contract has a non-compete clause
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("nonCompete")]
+    public bool? NonCompete { get; set; } = default!;
+
+    /// <summary>
+    /// Whether this contract has a time commitment clause
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timeCommitment")]
+    public bool? TimeCommitment { get; set; } = default!;
+
+    /// <summary>
+    /// Type of time commitment (exclusive or partial)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("timeCommitmentType")]
+    public string? TimeCommitmentType { get; set; } = default!;
+
+    /// <summary>
+    /// Clause definitions for contract execution (fees, distributions, asset requirements)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("clauses")]
+    public System.Collections.Generic.ICollection<ContractClauseDefinition>? Clauses { get; set; } = default!;
+
+    /// <summary>
+    /// Client-only custom terms. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("customTerms")]
     public object? CustomTerms { get; set; } = default!;
+
+}
+
+/// <summary>
+/// A clause definition for contract execution specifying asset transfers, fees, or requirements
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ContractClauseDefinition
+{
+
+    /// <summary>
+    /// Unique identifier for this clause within the contract
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("id")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Id { get; set; } = default!;
+
+    /// <summary>
+    /// Clause type code (fee, distribution, currency_transfer, item_transfer, asset_requirement)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("type")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Type { get; set; } = default!;
+
+    /// <summary>
+    /// Party role reference for this clause
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("party")]
+    public string? Party { get; set; } = default!;
+
+    /// <summary>
+    /// Amount value (numeric string for template substitution support)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("amount")]
+    public string? Amount { get; set; } = default!;
+
+    /// <summary>
+    /// How to interpret the amount (flat, percentage, remainder)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("amountType")]
+    public string? AmountType { get; set; } = default!;
+
+    /// <summary>
+    /// Source wallet identifier or template variable reference
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceWallet")]
+    public string? SourceWallet { get; set; } = default!;
+
+    /// <summary>
+    /// Destination wallet identifier or template variable reference
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("destinationWallet")]
+    public string? DestinationWallet { get; set; } = default!;
+
+    /// <summary>
+    /// Recipient wallet for fee clauses or template variable reference
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("recipientWallet")]
+    public string? RecipientWallet { get; set; } = default!;
+
+    /// <summary>
+    /// Currency code for currency-based clauses
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("currencyCode")]
+    public string? CurrencyCode { get; set; } = default!;
+
+    /// <summary>
+    /// Source container identifier or template variable reference for item clauses
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sourceContainer")]
+    public string? SourceContainer { get; set; } = default!;
+
+    /// <summary>
+    /// Destination container identifier or template variable reference for item clauses
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("destinationContainer")]
+    public string? DestinationContainer { get; set; } = default!;
+
+    /// <summary>
+    /// Item code for item-based clauses
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("itemCode")]
+    public string? ItemCode { get; set; } = default!;
+
+    /// <summary>
+    /// Location template variable reference for asset requirement checks
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("checkLocation")]
+    public string? CheckLocation { get; set; } = default!;
+
+    /// <summary>
+    /// Asset requirements for asset_requirement clause type
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("assets")]
+    public System.Collections.Generic.ICollection<ContractClauseAsset>? Assets { get; set; } = default!;
+
+}
+
+/// <summary>
+/// An asset requirement within a clause definition
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ContractClauseAsset
+{
+
+    /// <summary>
+    /// Asset type (currency, item)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("type")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Type { get; set; } = default!;
+
+    /// <summary>
+    /// Asset code identifier
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("code")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Code { get; set; } = default!;
+
+    /// <summary>
+    /// Required amount of the asset
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("amount")]
+    public double Amount { get; set; } = default!;
 
 }
 
@@ -1546,7 +1719,7 @@ public partial class CompleteMilestoneRequest
     public string MilestoneCode { get; set; } = default!;
 
     /// <summary>
-    /// Evidence of completion
+    /// Client-only evidence data. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("evidence")]
     public object? Evidence { get; set; } = default!;
@@ -1890,7 +2063,7 @@ public partial class UpdateContractMetadataRequest
     public MetadataType MetadataType { get; set; } = default!;
 
     /// <summary>
-    /// Metadata to set or merge
+    /// Client-only metadata payload. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("data")]
     [System.ComponentModel.DataAnnotations.Required]
@@ -1932,13 +2105,13 @@ public partial class ContractMetadataResponse
     public System.Guid ContractId { get; set; } = default!;
 
     /// <summary>
-    /// Instance-level metadata
+    /// Client-only instance metadata. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("instanceData")]
     public object? InstanceData { get; set; } = default!;
 
     /// <summary>
-    /// Runtime state metadata
+    /// Client-only runtime state. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("runtimeState")]
     public object? RuntimeState { get; set; } = default!;
@@ -1979,7 +2152,7 @@ public partial class CheckConstraintRequest
     public ConstraintType ConstraintType { get; set; } = default!;
 
     /// <summary>
-    /// What the entity wants to do
+    /// Client-only proposed action data. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("proposedAction")]
     public object? ProposedAction { get; set; } = default!;
@@ -2616,13 +2789,13 @@ public partial class ClauseHandlerDefinition
     public string Endpoint { get; set; } = default!;
 
     /// <summary>
-    /// Template variable to request field mapping
+    /// Client-only request field mapping. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("requestMapping")]
     public object? RequestMapping { get; set; } = default!;
 
     /// <summary>
-    /// Response field to result mapping
+    /// Client-only response field mapping. No Bannou plugin reads specific keys from this field by convention.
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("responseMapping")]
     public object? ResponseMapping { get; set; } = default!;

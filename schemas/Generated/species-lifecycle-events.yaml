@@ -71,7 +71,7 @@ components:
         traitModifiers: &id012
           type: object
           additionalProperties: true
-          description: "Modifiers applied to character traits for this species"
+          description: "Client-only trait modifiers. No Bannou plugin reads specific keys from this field by convention."
         realmIds: &id013
           type: array
           items: {type: string, format: uuid}
@@ -80,7 +80,7 @@ components:
           type: object
           additionalProperties: true
           nullable: true
-          description: "Additional custom metadata for the species"
+          description: "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
         createdAt: &id015
           type: string
           format: date-time

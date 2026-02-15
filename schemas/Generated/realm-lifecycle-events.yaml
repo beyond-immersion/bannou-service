@@ -22,6 +22,7 @@ components:
       - name
       - gameServiceId
       - isActive
+      - isSystemType
       - isDeprecated
       - createdAt
       - updatedAt
@@ -55,28 +56,31 @@ components:
         isActive: &id007
           type: boolean
           description: "Whether the realm is currently active and accessible"
-        isDeprecated: &id008
+        isSystemType: &id008
+          type: boolean
+          description: "Whether this realm is a system infrastructure realm (e.g., VOID)"
+        isDeprecated: &id009
           type: boolean
           description: "Whether the realm has been marked as deprecated"
-        deprecatedAt: &id009
+        deprecatedAt: &id010
           type: string
           format: date-time
           nullable: true
           description: "Timestamp when the realm was deprecated"
-        deprecationReason: &id010
+        deprecationReason: &id011
           type: string
           nullable: true
           description: "Explanation for why the realm was deprecated"
-        metadata: &id011
+        metadata: &id012
           type: object
           additionalProperties: true
           nullable: true
-          description: "Additional custom key-value data associated with the realm"
-        createdAt: &id012
+          description: "Client-only metadata. No Bannou plugin reads specific keys from this field by convention."
+        createdAt: &id013
           type: string
           format: date-time
           description: "Timestamp when the realm was created"
-        updatedAt: &id013
+        updatedAt: &id014
           type: string
           format: date-time
           description: "Timestamp when the realm was last updated"
@@ -100,6 +104,7 @@ components:
       - name
       - gameServiceId
       - isActive
+      - isSystemType
       - isDeprecated
       - createdAt
       - updatedAt
@@ -116,12 +121,13 @@ components:
         description: *id005
         category: *id006
         isActive: *id007
-        isDeprecated: *id008
-        deprecatedAt: *id009
-        deprecationReason: *id010
-        metadata: *id011
-        createdAt: *id012
-        updatedAt: *id013
+        isSystemType: *id008
+        isDeprecated: *id009
+        deprecatedAt: *id010
+        deprecationReason: *id011
+        metadata: *id012
+        createdAt: *id013
+        updatedAt: *id014
         changedFields:
           type: array
           items:
@@ -147,6 +153,7 @@ components:
       - name
       - gameServiceId
       - isActive
+      - isSystemType
       - isDeprecated
       - createdAt
       - updatedAt
@@ -162,12 +169,13 @@ components:
         description: *id005
         category: *id006
         isActive: *id007
-        isDeprecated: *id008
-        deprecatedAt: *id009
-        deprecationReason: *id010
-        metadata: *id011
-        createdAt: *id012
-        updatedAt: *id013
+        isSystemType: *id008
+        isDeprecated: *id009
+        deprecatedAt: *id010
+        deprecationReason: *id011
+        metadata: *id012
+        createdAt: *id013
+        updatedAt: *id014
         deletedReason:
           type: string
           nullable: true
