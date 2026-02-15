@@ -323,15 +323,15 @@ All endpoints require `user` role.
 - **Status** (`/broadcast/session/status`): Returns current session state including viewer count, sentiment category distribution, and linked in-game session ID.
 - **List** (`/broadcast/session/list`): Returns active and recent sessions for an account, paginated.
 
-### Broadcast Management (5 endpoints)
+### Output Management (5 endpoints)
 
-All endpoints require `admin` role (server-side content broadcasting is an admin operation).
+All endpoints require `admin` role (RTMP output management is an admin operation).
 
-- **Start** (`/broadcast/broadcast/start`): Validates source availability (camera exists, game audio reachable, or voice room consent granted). Validates RTMP URL connectivity via FFprobe. Starts FFmpeg process via `IBroadcastCoordinator`. Stores `BroadcastModel` in Redis. Publishes `broadcast.output.started`. For `VoiceRoom` source type: this is called internally in response to `voice.room.broadcast.approved`, not directly by clients.
-- **Stop** (`/broadcast/broadcast/stop`): Kills FFmpeg process. Publishes `broadcast.output.stopped`.
-- **Update** (`/broadcast/broadcast/update`): Changes RTMP URL or fallback configuration. Causes ~2-3s interruption (FFmpeg restart). Validates new URL via FFprobe before committing.
-- **Status** (`/broadcast/broadcast/status`): Returns broadcast health, current video source (primary/fallback/black), duration, and source type.
-- **List** (`/broadcast/broadcast/list`): Returns all active broadcasts with optional filter for active-only.
+- **Start** (`/broadcast/output/start`): Validates source availability (camera exists, game audio reachable, or voice room consent granted). Validates RTMP URL connectivity via FFprobe. Starts FFmpeg process via `IBroadcastCoordinator`. Stores `BroadcastModel` in Redis. Publishes `broadcast.output.started`. For `VoiceRoom` source type: this is called internally in response to `voice.room.broadcast.approved`, not directly by clients.
+- **Stop** (`/broadcast/output/stop`): Kills FFmpeg process. Publishes `broadcast.output.stopped`.
+- **Update** (`/broadcast/output/update`): Changes RTMP URL or fallback configuration. Causes ~2-3s interruption (FFmpeg restart). Validates new URL via FFprobe before committing.
+- **Status** (`/broadcast/output/status`): Returns broadcast health, current video source (primary/fallback/black), duration, and source type.
+- **List** (`/broadcast/output/list`): Returns all active broadcasts with optional filter for active-only.
 
 ### Webhook Endpoints (3 endpoints)
 
@@ -453,7 +453,7 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 - Implement sentiment batch publisher (buffer drain → pulse events)
 - Implement tracked viewer management (in-memory mapping lifecycle)
 
-### Phase 4: Broadcast Management
+### Phase 4: Output Management
 - Implement BroadcastCoordinator (FFmpeg process lifecycle)
 - Implement RTMP URL validation via FFprobe
 - Implement fallback cascade

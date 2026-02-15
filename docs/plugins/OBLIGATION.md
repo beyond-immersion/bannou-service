@@ -151,8 +151,8 @@ The full morality pipeline requires five integration points to be complete: (1) 
 | `DefaultPageSize` | `OBLIGATION_DEFAULT_PAGE_SIZE` | `20` | Default page size for paginated queries (range: 1-100) |
 | `LockTimeoutSeconds` | `OBLIGATION_LOCK_TIMEOUT_SECONDS` | `30` | Timeout in seconds for distributed locks on obligation cache operations (range: 5-120) |
 | `MaxActiveContractsQuery` | `OBLIGATION_MAX_ACTIVE_CONTRACTS_QUERY` | `100` | Maximum number of active contracts to query per character during cache rebuild (range: 10-500) |
-| `NormResolutionMode` | `OBLIGATION_NORM_RESOLUTION_MODE` | `PerfectKnowledge` | How norm costs are resolved when Hearsay is unavailable: `PerfectKnowledge` (query Faction directly) or `UncertaintySimulation` (apply random variance to simulate imperfect knowledge) |
-| `NormUncertaintyVariance` | `OBLIGATION_NORM_UNCERTAINTY_VARIANCE` | `0.2` | Max variance (+/-) applied to norm penalties in UncertaintySimulation mode (range: 0.0-0.5; only used when NormResolutionMode is UncertaintySimulation) |
+| `NormResolutionMode` | `OBLIGATION_NORM_RESOLUTION_MODE` | `PerfectKnowledge` | How norm costs are resolved when Hearsay is unavailable: `PerfectKnowledge` (query Faction directly) or `UncertaintySimulation` (apply random variance to simulate imperfect knowledge). **Stub scaffolding — not yet referenced in service code** |
+| `NormUncertaintyVariance` | `OBLIGATION_NORM_UNCERTAINTY_VARIANCE` | `0.2` | Max variance (+/-) applied to norm penalties in UncertaintySimulation mode (range: 0.0-0.5; only used when NormResolutionMode is UncertaintySimulation). **Stub scaffolding — not yet referenced in service code** |
 
 ---
 
@@ -169,7 +169,9 @@ The full morality pipeline requires five integration points to be complete: (1) 
 | `IResourceClient` | Resource reference tracking, cleanup callback registration, compression callback registration (L1 hard dependency) |
 | `IEventConsumer` | Registers event handlers for contract lifecycle events (contract.activated/terminated/fulfilled/expired) |
 | `IEnumerable<IVariableProviderFactory>` | DI collection for locating the personality provider factory; used by `TryGetPersonalityTraitsAsync` for moral weighting |
-| `ObligationProviderFactory` | Implements `IVariableProviderFactory` to provide `${obligations.*}` variables to the Actor service's behavior system |
+| `IJsonQueryableStateStore<ActionMappingModel>` | JSON path queries for action mappings (paginated listing with text search) — obtained via `stateStoreFactory.GetJsonQueryableStore` |
+| `IJsonQueryableStateStore<ViolationRecordModel>` | JSON path queries for violations (paginated history, cleanup batch queries, compression data export) — obtained via `stateStoreFactory.GetJsonQueryableStore` |
+| `ObligationProviderFactory` | Implements `IVariableProviderFactory` to provide `${obligations.*}` variables to the Actor service's behavior system; registered as singleton in plugin |
 
 ---
 
@@ -190,7 +192,7 @@ Configuration endpoints for mapping GOAP action tags to violation type codes. By
 Runtime query endpoints for the actor cognition pipeline and external callers.
 
 - **QueryObligations**: Returns all active obligations for a character derived from active contracts with behavioral clauses. Includes pre-computed violation cost map keyed by violation type code. Cache-backed with event-driven invalidation; `forceRefresh` bypasses cache.
-- **EvaluateAction**: Non-mutating speculative query. Given action tags, resolves to violation types via mappings, matches against character's obligations, and returns per-action cost breakdowns. When personality enrichment is available, costs are weighted by traits (honesty, loyalty, agreeableness, conscientiousness) and combat preferences. Primarily for external callers; actor cognition reads from the variable provider cache.
+- **EvaluateAction**: Non-mutating speculative query. Given action tags, resolves to violation types via mappings, matches against character's obligations, and returns per-action cost breakdowns. When personality enrichment is available, costs are weighted by traits (honesty, loyalty, agreeableness, conscientiousness). Accepts optional `locationId` and `targetEntityId`/`targetEntityType` fields, but `locationId` is not yet used (see Stubs). Primarily for external callers; actor cognition reads from the variable provider cache.
 
 ### Violation Management (2 endpoints)
 
@@ -247,9 +249,11 @@ Recording and querying knowing obligation violations.
 │  ObligationProviderFactory ─── IVariableProviderFactory                │
 │  ┌──────────────────────────────────────────────────┐                  │
 │  │ ${obligations.active_count}                       │                  │
-│  │ ${obligations.violation_cost.<type>}               │                  │
-│  │ ${obligations.highest_penalty_type}                │ ──► Actor (L2)  │
-│  │ ${obligations.total_obligation_cost}               │     ABML/GOAP   │
+│  │ ${obligations.has_obligations}                     │                  │
+│  │ ${obligations.contract_count}                      │                  │
+│  │ ${obligations.violation_cost.<type>}               │ ──► Actor (L2)  │
+│  │ ${obligations.highest_penalty_type}                │     ABML/GOAP   │
+│  │ ${obligations.total_obligation_cost}               │                  │
 │  └──────────────────────────────────────────────────┘                  │
 │                                                                       │
 │  obligation-violations (MySQL)     obligation-idempotency (Redis)     │
@@ -272,7 +276,15 @@ Recording and querying knowing obligation violations.
 
 ## Stubs & Unimplemented Features
 
-None — all 11 endpoints are fully implemented with complete business logic, error handling, and distributed locking. Event handlers, variable provider factory, cache management, and resource cleanup are all operational.
+All 11 API endpoints are fully implemented. The following supporting integrations have scaffolding but are not yet wired:
+
+1. **Norm resolution config properties (stub scaffolding)**: `NormResolutionMode` and `NormUncertaintyVariance` are defined in the configuration schema and generated into `ObligationServiceConfiguration`, but `_configuration.NormResolutionMode` and `_configuration.NormUncertaintyVariance` are never referenced in service code. These are pre-positioned for the planned faction norm integration (Hearsay-filtered costs / Faction direct query fallback). Acceptable per T21 stub scaffolding exception.
+
+2. **Event template registration not wired**: `ObligationEventTemplates.RegisterAll(IEventTemplateRegistry)` is generated from the `x-event-template` on `ObligationViolationReportedEvent` but is never called in `OnRunningAsync`. The `obligation_violation_reported` event template is not available at runtime for ABML `emit_event` actions. Needs a call in `OnRunningAsync` once the event template registry is available.
+
+3. **Reference tracking helpers not called**: `RegisterCharacterReferenceAsync` and `UnregisterCharacterReferenceAsync` are generated from `x-references` but never invoked in service code. The cleanup callback IS registered (CASCADE policy works), but individual reference counts are not tracked. This means lib-resource cannot answer "does obligation have data for character X?" during pre-deletion checks. Only affects pre-deletion reference count queries, not actual cleanup execution.
+
+4. **`locationId` on EvaluateActionRequest unused**: The schema defines an optional `locationId` field on `EvaluateActionRequest`, but the service code never reads `body.LocationId`. Planned for location-aware norm weighting (e.g., lawless districts reduce penalties). See Potential Extensions.
 
 ## Implementation Status
 
@@ -309,7 +321,11 @@ None — all 11 endpoints are fully implemented with complete business logic, er
 
 ### Bugs (Fix Immediately)
 
-- **Hardcoded personality trait mapping**: The personality weight computation maps violation types to traits via a hardcoded static dictionary (10 entries: `theft`→honesty+conscientiousness, `deception`→honesty, `violence`→agreeableness, `honor_combat`→conscientiousness+loyalty, `betrayal`→loyalty, `exploitation`→agreeableness+honesty, `oath_breaking`→loyalty+conscientiousness, `trespass`→conscientiousness, `disrespect`→agreeableness, `contraband`→conscientiousness; everything else→conscientiousness). This is in tension with violation types being opaque strings that "grow organically" -- any new type falls through to the default, silently degrading moral reasoning quality. The mapping should be data-driven (part of action mapping store or behavioral clause definitions) or at minimum configurable.
+1. **Hardcoded personality trait mapping**: The personality weight computation maps violation types to traits via a hardcoded static dictionary (10 entries: `theft`→honesty+conscientiousness, `deception`→honesty, `violence`→agreeableness, `honor_combat`→conscientiousness+loyalty, `betrayal`→loyalty, `exploitation`→agreeableness+honesty, `oath_breaking`→loyalty+conscientiousness, `trespass`→conscientiousness, `disrespect`→agreeableness, `contraband`→conscientiousness; everything else→conscientiousness). This is in tension with violation types being opaque strings that "grow organically" -- any new type falls through to the default, silently degrading moral reasoning quality. The mapping should be data-driven (part of action mapping store or behavioral clause definitions) or at minimum configurable.
+
+2. **Event templates not registered at startup**: `ObligationEventTemplates.RegisterAll()` is generated but never called in `ObligationServicePlugin.OnRunningAsync`. The `obligation_violation_reported` event template is unavailable at runtime, meaning ABML `emit_event:obligation_violation_reported` actions would fail. Fix: add `ObligationEventTemplates.RegisterAll(registry)` call to `OnRunningAsync` (requires resolving `IEventTemplateRegistry` from DI).
+
+3. **Reference tracking helpers never invoked**: `RegisterCharacterReferenceAsync` / `UnregisterCharacterReferenceAsync` are generated from `x-references` but never called when violations are recorded or cleaned up. The cleanup callback IS registered (CASCADE works), but lib-resource has no individual reference records for obligation→character. Pre-deletion reference count checks via `/resource/check` will not include obligation as a reference holder. Fix: call `RegisterCharacterReferenceAsync` when first recording a violation for a character, and `UnregisterCharacterReferenceAsync` during `CleanupByCharacter`.
 
 ### Intentional Quirks (Documented Behavior)
 
@@ -324,6 +340,12 @@ None — all 11 endpoints are fully implemented with complete business logic, er
 - **Resource cleanup via x-references**: Character deletion triggers cleanup through lib-resource's `x-references` cascade mechanism, not via direct event subscription. This follows FOUNDATION TENETS for resource-managed cleanup.
 
 - **Compression priority 25**: Obligation data is compressed at priority 25 during character archival, placing it after core character data but before encounter/history data in the compression pipeline.
+
+- **DecodeCursor swallows all exceptions**: The cursor decoding method uses a bare `catch` that returns 0 on any failure (including malformed base64 or non-integer content). This is intentional — invalid cursors are treated as "start from beginning" rather than erroring. Matches the pattern used by other paginated Bannou services.
+
+- **Terminated/expired event handlers query contract service for parties**: Unlike `ContractActivatedEvent` and `ContractFulfilledEvent` (which include `Parties` in the event payload), `ContractTerminatedEvent` and `ContractExpiredEvent` do not. Obligation must call `GetContractInstanceAsync` to discover affected character parties, adding an extra round-trip for these events.
+
+- **Provider reads cache only (no rebuild)**: The `ObligationProviderFactory` reads from Redis cache directly. If the cache is empty for a character, it returns an empty provider (zero obligations) rather than triggering a cache rebuild. Cache population happens only through API calls (`QueryObligations`/`InvalidateCache`) or contract lifecycle events. This means a newly-started Obligation service with a cold cache will report zero obligations until the first query or contract event.
 
 ### Design Considerations (Requires Planning)
 

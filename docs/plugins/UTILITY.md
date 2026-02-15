@@ -11,17 +11,15 @@
 
 ## Overview
 
-The Utility service (L4 GameFeatures) manages infrastructure networks that continuously distribute resources across location hierarchies. It provides the topology, capacity modeling, and flow calculation that transforms Workshop point-production into location-wide service coverage -- answering "does this location have water, and where does it come from?" Where Workshop produces resources at a single point and Trade moves discrete shipments between locations, Utility models **continuous flow through persistent infrastructure** (aqueducts, sewer systems, power grids, magical conduits, messenger networks). The key gameplay consequence: when infrastructure breaks, downstream locations lose service, and the cascade of discovery, investigation, and repair creates emergent content.
-
-**What Utility IS**: Infrastructure network topology, continuous flow calculation, service coverage per location, capacity constraints, failure cascading, maintenance lifecycle.
-
-**What Utility is NOT**: A production system (that's Workshop), a goods transport system (that's Trade), a movement system (that's Transit), a regulatory authority (that's Faction), an infrastructure operator (that's Organization). Utility provides the network graph and flow mechanics that these services compose around.
-
-Internal-only, never internet-facing.
+The Utility service (L4 GameFeatures) manages infrastructure networks that continuously distribute resources across location hierarchies. It provides the topology, capacity modeling, and flow calculation that transforms Workshop point-production into location-wide service coverage -- answering "does this location have water, and where does it come from?" Where Workshop produces resources at a single point and Trade moves discrete shipments between locations, Utility models **continuous flow through persistent infrastructure** (aqueducts, sewer systems, power grids, magical conduits, messenger networks). The key gameplay consequence: when infrastructure breaks, downstream locations lose service, and the cascade of discovery, investigation, and repair creates emergent content. Internal-only, never internet-facing.
 
 ---
 
 ## Design Philosophy
+
+**What Utility IS**: Infrastructure network topology, continuous flow calculation, service coverage per location, capacity constraints, failure cascading, maintenance lifecycle.
+
+**What Utility is NOT**: A production system (that's Workshop), a goods transport system (that's Trade), a movement system (that's Transit), a regulatory authority (that's Faction), an infrastructure operator (that's Organization). Utility provides the network graph and flow mechanics that these services compose around.
 
 ### Infrastructure as Network, Not Attribute
 

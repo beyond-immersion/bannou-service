@@ -11,17 +11,7 @@
 
 ## Overview
 
-Item modifier definition and generation service (L4 GameFeatures) for affix definitions, weighted random generation, validated application primitives, and stat computation. A structured layer above lib-item's opaque `instanceMetadata` that gives meaning to item modifiers: typed definitions with tiers, mod groups for exclusivity, spawn weights for probabilistic generation, and stat grants for computed item power. Any system that needs to answer "what modifiers can this item have?" or "what is this item worth?" queries lib-affix.
-
-**Composability**: Affix definitions and generation rules are owned here. Item storage is lib-item (L2) -- affixes are written as structured JSON to `ItemInstance.instanceMetadata`. Crafting workflows that orchestrate modifier application (recipes, currency effects, multi-step enchanting) are lib-craft (L4, future) -- lib-craft calls lib-affix primitives. Loot generation that creates pre-affixed items is lib-loot (L4, future). Market search filtering by modifier properties is lib-market (L4, future). NPC item evaluation for GOAP economic decisions uses lib-affix's Variable Provider Factory.
-
-**The foundational distinction**: lib-affix manages WHAT modifiers exist (definitions, tiers, rules, valid pools) and provides validated primitives for applying/removing them. HOW those primitives are orchestrated into gameplay-meaningful operations (crafting recipes, currency effects, multi-step enchanting processes) is lib-craft's domain. WHO creates affixed items at scale (loot tables, vendor stock, quest rewards) is lib-loot's domain. This separation means lib-affix has three independent consumer categories: generators (lib-loot) call pool generation and batch set creation; orchestrators (lib-craft) call validated application/removal primitives within workflow sessions; readers (lib-market, NPC GOAP, UI) call queries and stat computation.
-
-**The affix metadata convention**: lib-affix defines a versioned JSON schema for `ItemInstance.instanceMetadata.affixes` that all consumers read without importing lib-affix. This convention enables lib-craft and lib-loot to read affix data from items directly, and lib-market to index affix properties for search -- without coupling those services to lib-affix at the code level. The convention is a documented data format, not an API dependency.
-
-**Zero game-specific content**: lib-affix is a generic item modifier service. Arcadia's logos inscription metaphysics, PoE-style prefix/suffix tiers, Diablo-style legendary affixes, or a simple "quality stars" system are all equally valid configurations. Affix slot types, mod groups, generation tags, influence types, and tier structures are all opaque strings defined per game at deployment time through definition seeding.
-
-**Current status**: Pre-implementation. No schema, no code. This deep dive is an architectural specification based on a Path of Exile item system complexity benchmark and the [Item & Economy Plugin Landscape](../plans/ITEM-ECONOMY-PLUGINS.md). Internal-only, never internet-facing.
+Item modifier definition and generation service (L4 GameFeatures) for affix definitions, weighted random generation, validated application primitives, and stat computation. A structured layer above lib-item's opaque `instanceMetadata` that gives meaning to item modifiers: typed definitions with tiers, mod groups for exclusivity, spawn weights for probabilistic generation, and stat grants for computed item power. Any system that needs to answer "what modifiers can this item have?" or "what is this item worth?" queries lib-affix. Game-agnostic (PoE-style prefix/suffix tiers, Diablo-style legendary affixes, or simple "quality stars" are all valid configurations). Internal-only, never internet-facing.
 
 ---
 
@@ -49,6 +39,10 @@ lib-item is L2 (GameFoundation) because every game needs items. lib-affix is L4 
 - lib-affix doesn't persist its own instance-level data -- it reads and writes through lib-item
 
 This is analogous to how lib-status uses lib-item/lib-inventory for storage but owns the domain semantics of status effects. The storage primitive is L2; the domain interpretation is L4.
+
+**The foundational distinction**: lib-affix manages WHAT modifiers exist (definitions, tiers, rules, valid pools) and provides validated primitives for applying/removing them. HOW those primitives are orchestrated into gameplay-meaningful operations (crafting recipes, currency effects, multi-step enchanting processes) is lib-craft's domain. WHO creates affixed items at scale (loot tables, vendor stock, quest rewards) is lib-loot's domain. This separation means lib-affix has three independent consumer categories: generators (lib-loot) call pool generation and batch set creation; orchestrators (lib-craft) call validated application/removal primitives within workflow sessions; readers (lib-market, NPC GOAP, UI) call queries and stat computation.
+
+**The affix metadata convention**: lib-affix defines a versioned JSON schema for `ItemInstance.instanceMetadata.affixes` that all consumers read without importing lib-affix. This convention enables lib-craft and lib-loot to read affix data from items directly, and lib-market to index affix properties for search -- without coupling those services to lib-affix at the code level. The convention is a documented data format, not an API dependency.
 
 ---
 

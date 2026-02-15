@@ -7,23 +7,21 @@
 > **Status**: Pre-implementation (architectural specification)
 > **Planning**: [HOUDINI-PROCEDURAL-GENERATION.md](../planning/HOUDINI-PROCEDURAL-GENERATION.md)
 
+---
+
 ## Overview
 
-On-demand procedural 3D asset generation service (L4 GameFeatures) using headless Houdini Digital Assets (HDAs) as parametric generation templates. A thin orchestration layer that composes existing Bannou primitives (Asset service for HDA storage and output bundling, Orchestrator for Houdini worker pool management) to deliver procedural geometry generation as an API.
-
-**Composability**: Template storage and output bundling are Asset (L3). Worker pool lifecycle is Orchestrator (L3). Job status tracking is internal. Generation execution is delegated to headless Houdini containers running hwebserver. lib-procedural orchestrates the pipeline: receive request, fetch HDA from Asset, acquire worker from Orchestrator, execute generation, upload result to Asset, optionally bundle, return reference.
-
-**Critical architectural insight**: lib-procedural is a **bridge between content authoring and runtime generation**. Artists author HDAs (parametric procedural tools with exposed controls) in Houdini's GUI. Those HDAs are uploaded to the Asset service as templates. At runtime, any service (dungeon cores exercising domain_expansion, regional watchers sculpting terrain, NPC builders constructing buildings, world seeding during realm creation) can request generation by providing a template ID, parameters, and a seed. The same HDA with different parameters produces dramatically different geometry -- infinite variations from a single authored template.
-
-**Deterministic generation**: Same template + same parameters + same seed = identical output. This enables Redis-cached generation results (keyed by hash of template_id + parameters + seed), reproducible dungeon layouts, and predictable world seeding. The cache key is canonical -- if the same generation has been requested before, the cached result is returned without invoking Houdini.
-
-**Zero game-specific content**: lib-procedural is a generic procedural generation service. Arcadia's dungeon chambers, terrain chunks, building facades, and vegetation are authored as HDAs by artists at content-creation time, not baked into lib-procedural. The service knows nothing about what it generates -- it executes HDAs and returns geometry.
-
-**Current status**: Pre-implementation. No schema, no code. The feasibility study ([HOUDINI-PROCEDURAL-GENERATION.md](../planning/HOUDINI-PROCEDURAL-GENERATION.md)) is complete, confirming Houdini provides built-in HTTP server (hwebserver), containerized deployment, deterministic execution, and free licensing for headless indie use.
+On-demand procedural 3D asset generation service (L4 GameFeatures) using headless Houdini Digital Assets (HDAs) as parametric generation templates. A thin orchestration layer that composes existing Bannou primitives (Asset service for HDA storage and output bundling, Orchestrator for Houdini worker pool management) to deliver procedural geometry generation as an API. Game-agnostic — the service knows nothing about what it generates, it executes HDAs and returns geometry. Internal-only, never internet-facing.
 
 ---
 
 ## Why This Service Exists
+
+**The authoring-to-runtime bridge**: lib-procedural bridges content authoring and runtime generation. Artists author HDAs (parametric procedural tools with exposed controls) in Houdini's GUI. Those HDAs are uploaded to the Asset service as templates. At runtime, any service (dungeon cores exercising domain_expansion, regional watchers sculpting terrain, NPC builders constructing buildings, world seeding during realm creation) can request generation by providing a template ID, parameters, and a seed. The same HDA with different parameters produces dramatically different geometry -- infinite variations from a single authored template.
+
+**Composability**: Template storage and output bundling are Asset (L3). Worker pool lifecycle is Orchestrator (L3). Job status tracking is internal. Generation execution is delegated to headless Houdini containers running hwebserver. lib-procedural orchestrates the pipeline: receive request, fetch HDA from Asset, acquire worker from Orchestrator, execute generation, upload result to Asset, optionally bundle, return reference.
+
+**Deterministic generation**: Same template + same parameters + same seed = identical output. This enables Redis-cached generation results (keyed by hash of template_id + parameters + seed), reproducible dungeon layouts, and predictable world seeding. The cache key is canonical -- if the same generation has been requested before, the cached result is returned without invoking Houdini.
 
 ### The Content Generation Gap
 

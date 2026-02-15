@@ -1,32 +1,30 @@
-# Trade Service Deep Dive
+# Trade Plugin Deep Dive
 
-> **Plugin**: lib-trade
+> **Plugin**: lib-trade (not yet created)
 > **Schema**: `schemas/trade-api.yaml` (not yet created)
-> **Version**: N/A (aspirational)
-> **State Store**: trade-routes (MySQL), trade-shipments (Redis), trade-shipments-archive (MySQL), trade-tariff-policies (MySQL), trade-tariff-records (MySQL), trade-contraband (MySQL), trade-tax-policies (MySQL), trade-tax-assessments (MySQL), trade-npc-profiles (MySQL), trade-supply-demand (Redis), trade-velocity (Redis), trade-velocity-history (MySQL)
-> **Status**: Aspirational (Pre-Implementation) -- No schema, no code.
+> **Version**: N/A (Pre-Implementation)
+> **State Store**: trade-routes (MySQL), trade-shipments (Redis), trade-shipments-archive (MySQL), trade-tariff-policies (MySQL), trade-tariff-records (MySQL), trade-contraband (MySQL), trade-tax-policies (MySQL), trade-tax-assessments (MySQL), trade-npc-profiles (MySQL), trade-supply-demand (Redis), trade-velocity (Redis), trade-velocity-history (MySQL) — all planned
 > **Layer**: L4 GameFeatures
-> **Hard Dependencies**: Transit (L2), Currency (L2), Item (L2), Inventory (L2), Worldstate (L2)
-> **Soft Dependencies**: Escrow (L4), Faction (L4), Environment (L4), Analytics (L4), Market (L4), Hearsay (L4)
-> **Planning Reference**: `docs/guides/ECONOMY-SYSTEM.md`, `docs/plans/ITEM-ECONOMY-PLUGINS.md`
+> **Status**: Aspirational — no schema, no generated code, no service implementation exists.
+> **Planning**: [ECONOMY-SYSTEM.md](../guides/ECONOMY-SYSTEM.md), [ITEM-ECONOMY-PLUGINS.md](../plans/ITEM-ECONOMY-PLUGINS.md)
 
 ---
 
 ## Overview
 
-The Trade service (L4 GameFeatures) is the economic logistics and supply orchestration layer for Bannou. It provides the mechanisms for moving goods across distances over game-time, enforcing border policies, calculating supply/demand dynamics, and enabling NPC economic decision-making. Trade is to the economy what Puppetmaster is to NPC behavior -- an orchestration layer that composes lower-level primitives (Transit for movement, Currency for payments, Item/Inventory for cargo, Escrow for custody) into higher-level economic flows.
+The Trade service (L4 GameFeatures) is the economic logistics and supply orchestration layer for Bannou. It provides the mechanisms for moving goods across distances over game-time, enforcing border policies, calculating supply/demand dynamics, and enabling NPC economic decision-making. Trade is to the economy what Puppetmaster is to NPC behavior -- an orchestration layer that composes lower-level primitives (Transit for movement, Currency for payments, Item/Inventory for cargo, Escrow for custody) into higher-level economic flows. Internal-only, never internet-facing.
 
-Where Market handles exchange **at** a location (auctions, vendor catalogs, price discovery), Trade handles the logistics of moving goods **between** locations. Where Transit handles the raw mechanics of movement (connections, modes, journeys), Trade layers economic meaning onto that movement (cargo value, tariff liability, profit margins, supply chains). Distance creates value: iron costs 10g at the mine and 25g in the capital because someone paid the transit cost, bore the risk, and waited the travel time.
+---
 
-Trade absorbs the "lib-economy" monitoring concept from the Economy Architecture planning document. Velocity tracking, NPC economic profiles, and supply/demand signals live here because they are inseparable from logistics -- you cannot monitor economic health without understanding how goods flow through the geography. Internal-only, never internet-facing.
+## Design Philosophy
 
 **What Trade IS**: Trade routes, shipments, tariffs, taxation, supply/demand dynamics, NPC economic intelligence, velocity monitoring.
 
 **What Trade is NOT**: An auction house (that's Market), a crafting system (that's Craft), a production automator (that's Workshop), a currency ledger (that's Currency), a movement calculator (that's Transit). Trade orchestrates across all of these.
 
----
+Where Market handles exchange **at** a location (auctions, vendor catalogs, price discovery), Trade handles the logistics of moving goods **between** locations. Where Transit handles the raw mechanics of movement (connections, modes, journeys), Trade layers economic meaning onto that movement (cargo value, tariff liability, profit margins, supply chains). Distance creates value: iron costs 10g at the mine and 25g in the capital because someone paid the transit cost, bore the risk, and waited the travel time.
 
-## Design Philosophy
+Trade absorbs the "lib-economy" monitoring concept from the Economy Architecture planning document. Velocity tracking, NPC economic profiles, and supply/demand signals live here because they are inseparable from logistics -- you cannot monitor economic health without understanding how goods flow through the geography.
 
 ### Three-Tier Usage
 
