@@ -244,6 +244,10 @@ The plugin bridges HTTP requests to SDK calls. SDK types are exposed directly in
 
 5. **Multi-realm plans**: Current design assumes single realm anchor. Could support cross-realm storylines.
 
+6. **StorylineVariableProvider** (`${storyline.*}` namespace): A Variable Provider Factory implementation exposing active storyline state to ABML behavior expressions. NPC behaviors could check `${storyline.is_participant}` to prioritize storyline goals, and Regional Watchers could query `${storyline.active_count}` or `${storyline.completion_rate}` to throttle storyline spawning when too many are stalled. Would follow the same DI registration pattern as personality, encounters, and quest providers.
+
+7. **Fidelity Scoring**: A scoring system measuring how closely a generated storyline matches its source archive material (distinct from the implemented confidence scoring, which measures plan structural quality). Proposed factors: character consistency (personality traits preserved, weight 0.3), relationship accuracy (encounter history honored, 0.25), historical grounding (backstory elements used, 0.2), thematic coherence (theme matches character arc, 0.15), plausibility (world rules respected, 0.1). Could be returned alongside confidence in `ComposeResponse` to give callers both "is this plan well-formed?" and "is this plan true to its sources?".
+
 ---
 
 ## Known Quirks & Caveats
