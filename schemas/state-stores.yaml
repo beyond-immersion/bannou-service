@@ -1079,3 +1079,23 @@ x-state-stores:
     prefix: "status:lock"
     service: Status
     purpose: Distributed locks for status mutations and template updates
+
+  # ============================================================================
+  # Worldstate Stores (L2 GameFoundation Service)
+  # ============================================================================
+
+  worldstate-realm-clock:
+    backend: redis
+    prefix: "worldstate:clock"
+    service: Worldstate
+    purpose: Current game time per realm (hot reads, updated every ClockTickIntervalSeconds)
+
+  worldstate-calendar:
+    backend: mysql
+    service: Worldstate
+    purpose: Calendar template definitions and per-realm worldstate configuration (durable, queryable)
+
+  worldstate-ratio-history:
+    backend: mysql
+    service: Worldstate
+    purpose: Time ratio change history per realm for elapsed game-time computation (append-only, compacted)

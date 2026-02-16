@@ -1,0 +1,441 @@
+openapi: 3.0.3
+info:
+  title: Worldstate Service Events
+  version: 1.0.0
+  description: |
+    Events published and consumed by the Worldstate service.
+    Includes lifecycle events for calendar templates and realm configs,
+    boundary events for game-time transitions, and administrative events.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+
+  x-event-subscriptions:
+    - topic: worldstate.calendar-template.updated
+      event: CalendarTemplateUpdatedEvent
+      handler: HandleCalendarTemplateUpdated
+
+  x-event-publications:
+    # Lifecycle events (auto-generated via x-lifecycle)
+    - topic: worldstate.calendar-template.created
+      event: CalendarTemplateCreatedEvent
+      description: Published when a calendar template is created via SeedCalendar
+    - topic: worldstate.calendar-template.updated
+      event: CalendarTemplateUpdatedEvent
+      description: Published when a calendar template is modified via UpdateCalendar
+    - topic: worldstate.calendar-template.deleted
+      event: CalendarTemplateDeletedEvent
+      description: Published when a calendar template is deleted
+    - topic: worldstate.realm-config.created
+      event: RealmConfigCreatedEvent
+      description: Published when a realm worldstate config is created during clock initialization
+    - topic: worldstate.realm-config.updated
+      event: RealmConfigUpdatedEvent
+      description: Published when a realm worldstate config is modified via UpdateRealmConfig
+    - topic: worldstate.realm-config.deleted
+      event: RealmConfigDeletedEvent
+      description: Published when a realm worldstate config is deleted during cleanup
+
+    # Boundary events (published by clock worker on game-time transitions)
+    - topic: worldstate.hour-changed
+      event: WorldstateHourChangedEvent
+      description: Published when a game-hour boundary is crossed
+    - topic: worldstate.period-changed
+      event: WorldstatePeriodChangedEvent
+      description: Published when a day-period boundary is crossed (e.g., dawn to morning)
+    - topic: worldstate.day-changed
+      event: WorldstateDayChangedEvent
+      description: Published when a game-day boundary is crossed
+    - topic: worldstate.month-changed
+      event: WorldstateMonthChangedEvent
+      description: Published when a month boundary is crossed
+    - topic: worldstate.season-changed
+      event: WorldstateSeasonChangedEvent
+      description: Published when a season boundary is crossed
+    - topic: worldstate.year-changed
+      event: WorldstateYearChangedEvent
+      description: Published when a year boundary is crossed
+
+    # Administrative events (published on explicit mutations)
+    - topic: worldstate.ratio-changed
+      event: WorldstateRatioChangedEvent
+      description: Published when a realm's time ratio is changed via SetTimeRatio
+    - topic: worldstate.realm-clock.initialized
+      event: WorldstateRealmClockInitializedEvent
+      description: Published when a realm clock is initialized for the first time
+
+servers: []
+
+paths: {}
+
+# ==========================================================================
+# Lifecycle Events (auto-generated CRUD events)
+# ==========================================================================
+
+x-lifecycle:
+  CalendarTemplate:
+    model:
+      templateCode: { type: string, primary: true, required: true }
+      gameServiceId: { type: string, format: uuid, required: true }
+      gameHoursPerDay: { type: integer, required: true }
+      dayPeriods:
+        type: array
+        items:
+          $ref: 'worldstate-api.yaml#/components/schemas/DayPeriodDefinition'
+        required: true
+      months:
+        type: array
+        items:
+          $ref: 'worldstate-api.yaml#/components/schemas/MonthDefinition'
+        required: true
+      seasons:
+        type: array
+        items:
+          $ref: 'worldstate-api.yaml#/components/schemas/SeasonDefinition'
+        required: true
+      daysPerYear: { type: integer, required: true }
+      monthsPerYear: { type: integer, required: true }
+      seasonsPerYear: { type: integer, required: true }
+      eraLabels:
+        type: array
+        nullable: true
+        items:
+          $ref: 'worldstate-api.yaml#/components/schemas/EraLabel'
+
+  RealmConfig:
+    model:
+      realmId: { type: string, format: uuid, primary: true, required: true }
+      gameServiceId: { type: string, format: uuid, required: true }
+      calendarTemplateCode: { type: string, required: true }
+      currentTimeRatio: { type: number, format: float, required: true }
+      downtimePolicy:
+        $ref: 'worldstate-api.yaml#/components/schemas/DowntimePolicy'
+        required: true
+      realmEpoch: { type: string, format: date-time, required: true }
+
+components:
+  schemas:
+    # ==========================================================================
+    # Boundary Events (published by clock worker on game-time transitions)
+    # ==========================================================================
+
+    WorldstateHourChangedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a game-hour boundary is crossed during clock advancement
+      x-resource-mapping:
+        resource_type: realm
+        resource_id_field: realmId
+        source_type: worldstate
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - realmId
+        - previousHour
+        - currentHour
+        - currentGameTime
+      properties:
+        eventName:
+          type: string
+          default: "worldstate.hour_changed"
+          description: Fixed event type identifier
+        realmId:
+          type: string
+          format: uuid
+          description: Realm whose clock crossed an hour boundary
+        previousHour:
+          type: integer
+          minimum: 0
+          description: Game hour before the transition
+        currentHour:
+          type: integer
+          minimum: 0
+          description: Game hour after the transition
+        currentGameTime:
+          $ref: 'worldstate-api.yaml#/components/schemas/GameTimeSnapshot'
+          description: Full game time snapshot at the time of the event
+
+    WorldstatePeriodChangedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a day-period boundary is crossed (e.g., dawn to morning)
+      x-resource-mapping:
+        resource_type: realm
+        resource_id_field: realmId
+        source_type: worldstate
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - realmId
+        - previousPeriod
+        - currentPeriod
+        - currentGameTime
+      properties:
+        eventName:
+          type: string
+          default: "worldstate.period_changed"
+          description: Fixed event type identifier
+        realmId:
+          type: string
+          format: uuid
+          description: Realm whose clock crossed a period boundary
+        previousPeriod:
+          type: string
+          description: Day period code before the transition (e.g., "night")
+        currentPeriod:
+          type: string
+          description: Day period code after the transition (e.g., "dawn")
+        currentGameTime:
+          $ref: 'worldstate-api.yaml#/components/schemas/GameTimeSnapshot'
+          description: Full game time snapshot at the time of the event
+
+    WorldstateDayChangedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a game-day boundary is crossed. During catch-up, daysCrossed may be greater than 1.
+      x-resource-mapping:
+        resource_type: realm
+        resource_id_field: realmId
+        source_type: worldstate
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - realmId
+        - previousDay
+        - currentDay
+        - daysCrossed
+        - isCatchUp
+        - currentGameTime
+      properties:
+        eventName:
+          type: string
+          default: "worldstate.day_changed"
+          description: Fixed event type identifier
+        realmId:
+          type: string
+          format: uuid
+          description: Realm whose clock crossed a day boundary
+        previousDay:
+          type: integer
+          minimum: 1
+          description: Day of month before the transition (1-based)
+        currentDay:
+          type: integer
+          minimum: 1
+          description: Day of month after the transition (1-based)
+        daysCrossed:
+          type: integer
+          minimum: 1
+          description: Number of days crossed (1 for normal advancement, greater than 1 for catch-up)
+        isCatchUp:
+          type: boolean
+          description: True if this event was generated during post-downtime catch-up processing
+        currentGameTime:
+          $ref: 'worldstate-api.yaml#/components/schemas/GameTimeSnapshot'
+          description: Full game time snapshot at the time of the event
+
+    WorldstateMonthChangedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a month boundary is crossed
+      x-resource-mapping:
+        resource_type: realm
+        resource_id_field: realmId
+        source_type: worldstate
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - realmId
+        - previousMonth
+        - currentMonth
+        - monthsCrossed
+        - currentGameTime
+      properties:
+        eventName:
+          type: string
+          default: "worldstate.month_changed"
+          description: Fixed event type identifier
+        realmId:
+          type: string
+          format: uuid
+          description: Realm whose clock crossed a month boundary
+        previousMonth:
+          type: string
+          description: Month code before the transition (e.g., "frostmere")
+        currentMonth:
+          type: string
+          description: Month code after the transition (e.g., "greenleaf")
+        monthsCrossed:
+          type: integer
+          minimum: 1
+          description: Number of months crossed (1 for normal, greater than 1 for catch-up)
+        currentGameTime:
+          $ref: 'worldstate-api.yaml#/components/schemas/GameTimeSnapshot'
+          description: Full game time snapshot at the time of the event
+
+    WorldstateSeasonChangedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a season boundary is crossed
+      x-resource-mapping:
+        resource_type: realm
+        resource_id_field: realmId
+        source_type: worldstate
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - realmId
+        - previousSeason
+        - currentSeason
+        - currentYear
+        - currentGameTime
+      properties:
+        eventName:
+          type: string
+          default: "worldstate.season_changed"
+          description: Fixed event type identifier
+        realmId:
+          type: string
+          format: uuid
+          description: Realm whose clock crossed a season boundary
+        previousSeason:
+          type: string
+          description: Season code before the transition (e.g., "winter")
+        currentSeason:
+          type: string
+          description: Season code after the transition (e.g., "spring")
+        currentYear:
+          type: integer
+          description: Current game year at the time of the season change
+        currentGameTime:
+          $ref: 'worldstate-api.yaml#/components/schemas/GameTimeSnapshot'
+          description: Full game time snapshot at the time of the event
+
+    WorldstateYearChangedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a year boundary is crossed
+      x-resource-mapping:
+        resource_type: realm
+        resource_id_field: realmId
+        source_type: worldstate
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - realmId
+        - previousYear
+        - currentYear
+        - yearsCrossed
+        - currentGameTime
+      properties:
+        eventName:
+          type: string
+          default: "worldstate.year_changed"
+          description: Fixed event type identifier
+        realmId:
+          type: string
+          format: uuid
+          description: Realm whose clock crossed a year boundary
+        previousYear:
+          type: integer
+          description: Game year before the transition
+        currentYear:
+          type: integer
+          description: Game year after the transition
+        yearsCrossed:
+          type: integer
+          minimum: 1
+          description: Number of years crossed (1 for normal, greater than 1 for catch-up)
+        currentGameTime:
+          $ref: 'worldstate-api.yaml#/components/schemas/GameTimeSnapshot'
+          description: Full game time snapshot at the time of the event
+
+    # ==========================================================================
+    # Administrative Events (published on explicit mutations)
+    # ==========================================================================
+
+    WorldstateRatioChangedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a realm's time ratio is changed via SetTimeRatio
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - realmId
+        - previousRatio
+        - newRatio
+        - reason
+      properties:
+        eventName:
+          type: string
+          default: "worldstate.ratio_changed"
+          description: Fixed event type identifier
+        realmId:
+          type: string
+          format: uuid
+          description: Realm whose time ratio was changed
+        previousRatio:
+          type: number
+          format: float
+          description: Previous game-seconds per real-second
+        newRatio:
+          type: number
+          format: float
+          description: New game-seconds per real-second
+        reason:
+          $ref: 'worldstate-api.yaml#/components/schemas/TimeRatioChangeReason'
+          description: Reason for the ratio change
+
+    WorldstateRealmClockInitializedEvent:
+      allOf:
+        - $ref: 'common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: Published when a realm clock is initialized for the first time via InitializeRealmClock
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - realmId
+        - calendarTemplateCode
+        - initialTimeRatio
+      properties:
+        eventName:
+          type: string
+          default: "worldstate.realm_clock.initialized"
+          description: Fixed event type identifier
+        realmId:
+          type: string
+          format: uuid
+          description: Realm whose clock was initialized
+        calendarTemplateCode:
+          type: string
+          description: Calendar template code assigned to this realm
+        initialTimeRatio:
+          type: number
+          format: float
+          description: Initial game-seconds per real-second

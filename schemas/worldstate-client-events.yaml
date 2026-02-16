@@ -1,0 +1,124 @@
+openapi: 3.0.3
+info:
+  title: Worldstate Client Events
+  version: 1.0.0
+  description: |
+    Server-to-client push events for the Worldstate service.
+    Published via IClientEventPublisher to connected WebSocket sessions
+    through the Entity Session Registry pattern.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+
+servers: []
+
+paths: {}
+
+components:
+  schemas:
+    WorldstateTimeSyncEvent:
+      allOf:
+        - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
+      type: object
+      additionalProperties: false
+      x-client-event: true
+      description: |
+        Published on period-changed boundaries, ratio changes, admin clock
+        advancement, and on-demand via TriggerTimeSync endpoint. Contains a
+        full game time snapshot so clients can render correct time-of-day,
+        season, and calendar state, and interpolate between syncs using
+        timeRatio. Routed via Entity Session Registry: query
+        IEntitySessionRegistry.GetSessionsForEntityAsync("realm", realmId),
+        publish via IClientEventPublisher.PublishToSessionsAsync.
+      required:
+        - eventName
+        - eventId
+        - timestamp
+        - realmId
+        - year
+        - monthIndex
+        - monthCode
+        - dayOfMonth
+        - dayOfYear
+        - hour
+        - minute
+        - period
+        - isDaylight
+        - season
+        - seasonIndex
+        - seasonProgress
+        - totalGameSecondsSinceEpoch
+        - timeRatio
+        - syncReason
+      properties:
+        eventName:
+          type: string
+          default: "worldstate.time_sync"
+          description: Fixed event type identifier
+        realmId:
+          type: string
+          format: uuid
+          description: Realm this sync applies to
+        year:
+          type: integer
+          description: Current game year (0-based from realm epoch)
+        monthIndex:
+          type: integer
+          description: 0-based index into calendar months
+        monthCode:
+          type: string
+          description: Month code from calendar template (e.g., "greenleaf")
+        dayOfMonth:
+          type: integer
+          minimum: 1
+          description: 1-based day within current month
+        dayOfYear:
+          type: integer
+          minimum: 1
+          description: 1-based day within current year
+        hour:
+          type: integer
+          minimum: 0
+          description: Current game hour (0 to gameHoursPerDay-1)
+        minute:
+          type: integer
+          minimum: 0
+          maximum: 59
+          description: Current game minute (0-59)
+        period:
+          type: string
+          description: Current day period code (e.g., "dawn", "morning")
+        isDaylight:
+          type: boolean
+          description: Whether current period has sunlight (from calendar template isDaylight flag)
+        season:
+          type: string
+          description: Current season code (e.g., "spring")
+        seasonIndex:
+          type: integer
+          minimum: 0
+          description: Season ordinal (0-based)
+        seasonProgress:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: 0.0-1.0 progress through current season, computed from day-of-season / days-in-season
+        totalGameSecondsSinceEpoch:
+          type: integer
+          format: int64
+          description: Absolute game-seconds since realm epoch
+        timeRatio:
+          type: number
+          format: float
+          description: Current game-seconds per real-second (used by client for local interpolation)
+        previousPeriod:
+          type: string
+          nullable: true
+          description: Period before transition (null on TriggerSync, RatioChanged, and AdminAdvance sync reasons)
+        syncReason:
+          $ref: 'worldstate-api.yaml#/components/schemas/TimeSyncReason'
+          description: Why this sync was published (PeriodChanged, RatioChanged, AdminAdvance, TriggerSync)

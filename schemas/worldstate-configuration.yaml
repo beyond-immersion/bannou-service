@@ -1,0 +1,112 @@
+openapi: 3.0.3
+info:
+  title: Worldstate Service Configuration
+  version: 1.0.0
+  description: |
+    Configuration properties for the Worldstate service.
+    All properties use the WORLDSTATE_ environment variable prefix.
+
+    **SCHEMA MODIFICATION GATE**: STOP. Before modifying this schema, you MUST:
+    1. Read docs/reference/SCHEMA-RULES.md
+    2. State which section applies to your change
+    3. Only then proceed with edits
+    Edits without stating the applicable rule are FORBIDDEN.
+
+servers: []
+
+paths: {}
+
+x-service-configuration:
+  properties:
+    ClockTickIntervalSeconds:
+      type: integer
+      env: WORLDSTATE_CLOCK_TICK_INTERVAL_SECONDS
+      minimum: 1
+      maximum: 60
+      default: 5
+      description: Real-time seconds between clock advancement ticks. At 24:1 ratio, 5 seconds = 120 game-seconds = 2 game-minutes.
+
+    ClockTickStartupDelaySeconds:
+      type: integer
+      env: WORLDSTATE_CLOCK_TICK_STARTUP_DELAY_SECONDS
+      minimum: 0
+      maximum: 120
+      default: 10
+      description: Seconds to wait after startup before first clock tick, allowing dependent services to initialize.
+
+    DefaultTimeRatio:
+      type: number
+      format: float
+      env: WORLDSTATE_DEFAULT_TIME_RATIO
+      minimum: 0.1
+      maximum: 10000
+      default: 24.0
+      description: Default game-seconds per real-second for new realm clocks. 24.0 means 1 real hour = 1 game day.
+
+    DefaultDowntimePolicy:
+      $ref: 'worldstate-api.yaml#/components/schemas/DowntimePolicy'
+      env: WORLDSTATE_DEFAULT_DOWNTIME_POLICY
+      default: Advance
+      description: Default downtime handling policy for new realm clocks. Advance catches up missed time; Pause resumes from where the clock stopped.
+
+    MaxCatchUpGameDays:
+      type: integer
+      env: WORLDSTATE_MAX_CATCH_UP_GAME_DAYS
+      minimum: 1
+      maximum: 3650
+      default: 365
+      description: Maximum game-days to advance during catch-up on startup. Prevents massive event storms after extended downtime. If exceeded, clock jumps to cap and logs a warning.
+
+    BoundaryEventBatchSize:
+      type: integer
+      env: WORLDSTATE_BOUNDARY_EVENT_BATCH_SIZE
+      minimum: 10
+      maximum: 500
+      default: 50
+      description: Maximum boundary events published per tick. Prevents event flooding during catch-up. Remaining events are published on subsequent ticks.
+
+    ClockCacheTtlSeconds:
+      type: integer
+      env: WORLDSTATE_CLOCK_CACHE_TTL_SECONDS
+      minimum: 1
+      maximum: 60
+      default: 10
+      description: TTL for in-memory clock cache used by the variable provider. Prevents Redis round-trips on every ABML variable resolution.
+
+    CalendarCacheTtlMinutes:
+      type: integer
+      env: WORLDSTATE_CALENDAR_CACHE_TTL_MINUTES
+      minimum: 1
+      maximum: 1440
+      default: 60
+      description: TTL for in-memory calendar template cache. Calendar structures change rarely; caching avoids MySQL queries on every clock tick.
+
+    MaxCalendarsPerGameService:
+      type: integer
+      env: WORLDSTATE_MAX_CALENDARS_PER_GAME_SERVICE
+      minimum: 1
+      maximum: 100
+      default: 10
+      description: Safety limit on calendar templates per game service.
+
+    RatioHistoryRetentionDays:
+      type: integer
+      env: WORLDSTATE_RATIO_HISTORY_RETENTION_DAYS
+      minimum: 7
+      maximum: 365
+      default: 90
+      description: Days of ratio history to retain. Older segments are compacted (merged into single segments using time-weighted averaging).
+
+    DefaultCalendarTemplateCode:
+      type: string
+      nullable: true
+      env: WORLDSTATE_DEFAULT_CALENDAR_TEMPLATE_CODE
+      description: Default calendar template code used as fallback when InitializeRealmClock is called without specifying a template. Null means no default and caller must specify.
+
+    DistributedLockTimeoutSeconds:
+      type: integer
+      env: WORLDSTATE_DISTRIBUTED_LOCK_TIMEOUT_SECONDS
+      minimum: 5
+      maximum: 60
+      default: 10
+      description: Timeout in seconds for distributed lock acquisition during clock advancement, ratio changes, and calendar mutations.
