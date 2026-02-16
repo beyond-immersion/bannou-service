@@ -447,6 +447,14 @@ public static class StateStoreDefinitions
     /// <summary>Voice room and peer state</summary>
     public const string Voice = "voice-statestore";
 
+    // Worldstate Service
+    /// <summary>Calendar template definitions and per-realm worldstate configuration (durable, queryable)</summary>
+    public const string WorldstateCalendar = "worldstate-calendar";
+    /// <summary>Time ratio change history per realm for elapsed game-time computation (append-only, compacted)</summary>
+    public const string WorldstateRatioHistory = "worldstate-ratio-history";
+    /// <summary>Current game time per realm (hot reads, updated every ClockTickIntervalSeconds)</summary>
+    public const string WorldstateRealmClock = "worldstate-realm-clock";
+
     #endregion
 
     #region Store Configurations
@@ -621,6 +629,9 @@ public static class StateStoreDefinitions
             [Subscription] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "subscription_statestore" },
             [TestSearch] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "test-search", EnableSearch = true },
             [Voice] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "voice" },
+            [WorldstateCalendar] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "worldstate_calendar" },
+            [WorldstateRatioHistory] = new StoreConfiguration { Backend = StateBackend.MySql, TableName = "worldstate_ratio_history" },
+            [WorldstateRealmClock] = new StoreConfiguration { Backend = StateBackend.Redis, KeyPrefix = "worldstate:clock" },
         };
 
     #endregion
@@ -796,6 +807,9 @@ public static class StateStoreDefinitions
             [Subscription] = new StoreMetadata("Subscription", "User subscriptions to game services", "mysql"),
             [TestSearch] = new StoreMetadata("State", "Test store with RedisSearch enabled", "redis"),
             [Voice] = new StoreMetadata("Voice", "Voice room and peer state", "redis"),
+            [WorldstateCalendar] = new StoreMetadata("Worldstate", "Calendar template definitions and per-realm worldstate configuration (durable, queryable)", "mysql"),
+            [WorldstateRatioHistory] = new StoreMetadata("Worldstate", "Time ratio change history per realm for elapsed game-time computation (append-only, compacted)", "mysql"),
+            [WorldstateRealmClock] = new StoreMetadata("Worldstate", "Current game time per realm (hot reads, updated every ClockTickIntervalSeconds)", "redis"),
         };
 
     #endregion

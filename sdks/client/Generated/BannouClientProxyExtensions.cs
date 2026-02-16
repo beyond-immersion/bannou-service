@@ -67,6 +67,7 @@ public partial class BannouClient
     private TelemetryProxy? _telemetry;
     private VoiceProxy? _voice;
     private WebsiteProxy? _website;
+    private WorldstateProxy? _worldstate;
 
     /// <summary>
     /// Gets the typed proxy for Bannou Account Service API operations.
@@ -385,5 +386,11 @@ public partial class BannouClient
     /// </summary>
     public WebsiteProxy Website =>
         _website ??= new WebsiteProxy(this);
+
+    /// <summary>
+    /// Gets the typed proxy for Worldstate Service API operations.
+    /// </summary>
+    public WorldstateProxy Worldstate =>
+        _worldstate ??= new WorldstateProxy(this);
 
 }

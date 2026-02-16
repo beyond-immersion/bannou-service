@@ -20,6 +20,7 @@ public sealed class BannouClientEvents
     private MatchmakingEventSubscriptions? _matchmaking;
     private SystemEventSubscriptions? _system;
     private VoiceEventSubscriptions? _voice;
+    private WorldstateEventSubscriptions? _worldstate;
 
     internal BannouClientEvents(BannouClient client)
     {
@@ -61,4 +62,10 @@ public sealed class BannouClientEvents
     /// </summary>
     public VoiceEventSubscriptions Voice =>
         _voice ??= new VoiceEventSubscriptions(_client);
+
+    /// <summary>
+    /// Event subscriptions for Worldstate service.
+    /// </summary>
+    public WorldstateEventSubscriptions Worldstate =>
+        _worldstate ??= new WorldstateEventSubscriptions(_client);
 }

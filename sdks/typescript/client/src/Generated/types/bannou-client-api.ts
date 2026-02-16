@@ -11697,6 +11697,326 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/worldstate/clock/get-realm-time': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get current game time for a realm
+     * @description Returns full GameTimeSnapshot for a realm. Reads from Redis cache (hot path).
+     */
+    post: operations['getRealmTime'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/worldstate/clock/get-realm-time-by-code': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get current game time by realm code
+     * @description Convenience endpoint accepting realm code string instead of GUID. Resolves to realm ID via IRealmClient, then delegates to GetRealmTime.
+     */
+    post: operations['getRealmTimeByCode'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/worldstate/clock/batch-get-realm-times': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get current game time for multiple realms
+     * @description Returns GameTimeSnapshot for multiple realms in a single call. Used by services operating across realms.
+     */
+    post: operations['batchGetRealmTimes'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/worldstate/clock/get-elapsed-game-time': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Compute elapsed game-time between two real timestamps
+     * @description Given a realmId, fromRealTime, and toRealTime, computes total game-seconds elapsed. Integrates over ratio history segments. Critical for lazy evaluation patterns.
+     */
+    post: operations['getElapsedGameTime'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/worldstate/clock/trigger-sync': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Trigger a time sync event for an entity's sessions
+     * @description Publishes a WorldstateTimeSyncEvent with syncReason TriggerSync to a specific entity's connected sessions. Primary caller is Agency (L4) on realm entry for immediate client time sync.
+     */
+    post: operations['triggerTimeSync'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/worldstate/clock/initialize': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Initialize a clock for a realm
+     * @description The primary path from "realm exists" to "realm has a clock." Validates realm existence, calendar template existence, and that no clock already exists. Registers reference with lib-resource.
+     */
+    post: operations['initializeRealmClock'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/worldstate/clock/set-ratio': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Change the time ratio for a realm
+     * @description Materializes current clock state, records new ratio segment in history, updates realm clock. Setting ratio to 0.0 pauses the clock.
+     */
+    post: operations['setTimeRatio'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/worldstate/clock/advance': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Manually advance a realm's clock
+     * @description Advances a realm's clock by a specified amount of game time. Used for testing and administrative fast-forward. Publishes all boundary events crossed during advancement.
+     */
+    post: operations['advanceClock'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/worldstate/calendar/seed': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Create a calendar template
+     * @description Creates a calendar template for a game service. Validates structural consistency (day period coverage, season-month mapping, day count sums). Registers reference with lib-resource for game-service target.
+     */
+    post: operations['seedCalendar'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/worldstate/calendar/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get a calendar template
+     * @description Returns a calendar template by game service ID and template code.
+     */
+    post: operations['getCalendar'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/worldstate/calendar/list': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List calendar templates for a game service
+     * @description Returns all calendar templates registered for a game service.
+     */
+    post: operations['listCalendars'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/worldstate/calendar/update': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Update a calendar template
+     * @description Partial update of a calendar template. Acquires distributed lock. Validates structural consistency. Cannot change template code or game service ID. Invalidates local cache and publishes CalendarTemplateUpdatedEvent for cross-node invalidation.
+     */
+    post: operations['updateCalendar'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/worldstate/calendar/delete': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Delete a calendar template
+     * @description Deletes a calendar template. Fails with Conflict if any active realm clocks reference this template. Acquires distributed lock. Unregisters reference with lib-resource.
+     */
+    post: operations['deleteCalendar'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/worldstate/realm-config/get': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Get realm worldstate configuration
+     * @description Returns the realm's worldstate configuration including calendar template, time ratio, downtime policy, epoch, and active status.
+     */
+    post: operations['getRealmConfig'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/worldstate/realm-config/update': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Update realm worldstate configuration
+     * @description Partial update of realm-level configuration. Acquires distributed lock. Supports changing downtimePolicy and calendarTemplateCode. Cannot change time ratio (use SetTimeRatio) or epoch (immutable).
+     */
+    post: operations['updateRealmConfig'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/worldstate/realm-config/list': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * List active realm clocks
+     * @description Lists all active realm clocks with summary info. Supports pagination and optional gameServiceId filter.
+     */
+    post: operations['listRealmClocks'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -12086,6 +12406,11 @@ export interface components {
        */
       characterId?: string | null;
       /**
+       * Format: uuid
+       * @description Realm the actor operates in (resolved at spawn time)
+       */
+      realmId?: string | null;
+      /**
        * Format: date-time
        * @description When the actor started running
        */
@@ -12300,6 +12625,39 @@ export interface components {
       totalParticipants: number;
       /** @description Total registered room types */
       totalRoomTypes: number;
+    };
+    /** @description Request to manually advance a realm's clock by a specified amount */
+    AdvanceClockRequest: {
+      /**
+       * Format: uuid
+       * @description Realm to advance the clock for
+       */
+      realmId: string;
+      /**
+       * Format: int64
+       * @description Number of game-seconds to advance
+       */
+      gameSeconds?: number | null;
+      /** @description Number of game-days to advance */
+      gameDays?: number | null;
+      /** @description Number of game-months to advance (uses current calendar structure) */
+      gameMonths?: number | null;
+      /** @description Number of game-years to advance (uses current calendar structure) */
+      gameYears?: number | null;
+    };
+    /** @description Result of manual clock advancement */
+    AdvanceClockResponse: {
+      /**
+       * Format: uuid
+       * @description Realm the clock was advanced for
+       */
+      realmId: string;
+      /** @description Game time before advancement */
+      previousTime: components['schemas']['GameTimeSnapshot'];
+      /** @description Game time after advancement */
+      newTime: components['schemas']['GameTimeSnapshot'];
+      /** @description Number of boundary events published during advancement */
+      boundaryEventsPublished: number;
     };
     /** @description Request to advance the discovery level of an unlocked entry */
     AdvanceDiscoveryRequest: {
@@ -13209,6 +13567,16 @@ export interface components {
       /** @description Instance IDs that were not found */
       notFound: string[];
     };
+    /** @description Request to get current game time for multiple realms */
+    BatchGetRealmTimesRequest: {
+      /** @description Realm IDs to get current game time for */
+      realmIds: string[];
+    };
+    /** @description Game time snapshots for multiple realms */
+    BatchGetRealmTimesResponse: {
+      /** @description Game time snapshots for each requested realm (omits realms without initialized clocks) */
+      snapshots: components['schemas']['GameTimeSnapshot'][];
+    };
     /** @description Individual message entry in a batch send operation */
     BatchMessageEntry: {
       /** @description Message content matching the room format */
@@ -14067,6 +14435,32 @@ export interface components {
       conversionPath?: components['schemas']['ConversionStep'][];
       /** @description Base currency used for conversion */
       baseCurrency: string;
+    };
+    /** @description A calendar template definition with computed summary fields */
+    CalendarTemplateResponse: {
+      /** @description Calendar template identifier */
+      templateCode: string;
+      /**
+       * Format: uuid
+       * @description Game service this calendar belongs to
+       */
+      gameServiceId: string;
+      /** @description Number of game hours in a day */
+      gameHoursPerDay: number;
+      /** @description Named time-of-day periods */
+      dayPeriods: components['schemas']['DayPeriodDefinition'][];
+      /** @description Ordered list of months in a year */
+      months: components['schemas']['MonthDefinition'][];
+      /** @description Ordered list of seasons in a year */
+      seasons: components['schemas']['SeasonDefinition'][];
+      /** @description Computed total days per year (sum of all months' daysInMonth) */
+      daysPerYear: number;
+      /** @description Computed number of months per year */
+      monthsPerYear: number;
+      /** @description Computed number of seasons per year */
+      seasonsPerYear: number;
+      /** @description Named time spans for display purposes (null if none defined) */
+      eraLabels?: components['schemas']['EraLabel'][] | null;
     };
     /**
      * @description Controls CanUse validation behavior.
@@ -18048,6 +18442,17 @@ export interface components {
       /** @description Custom scripts to inject at the end of the body */
       bodyEnd?: string | null;
     };
+    /** @description A named time-of-day period within a calendar template */
+    DayPeriodDefinition: {
+      /** @description Period identifier code (e.g., "dawn", "morning", "night") */
+      code: string;
+      /** @description Game hour this period begins (0 to gameHoursPerDay-1) */
+      startHour: number;
+      /** @description Game hour this period ends (exclusive, max = gameHoursPerDay) */
+      endHour: number;
+      /** @description True if this period has sunlight, used by ${world.time.is_day} and ${world.time.is_night} */
+      isDaylight: boolean;
+    };
     /** @description Request to deactivate an active deity */
     DeactivateDeityRequest: {
       /**
@@ -18348,6 +18753,21 @@ export interface components {
        * @description When soft-deleted bundle will be permanently removed (null for permanent deletes)
        */
       retentionUntil?: string | null;
+    };
+    /** @description Request to delete a calendar template */
+    DeleteCalendarRequest: {
+      /**
+       * Format: uuid
+       * @description Game service the calendar belongs to
+       */
+      gameServiceId: string;
+      /** @description Calendar template code to delete */
+      templateCode: string;
+    };
+    /** @description Confirmation of calendar template deletion */
+    DeleteCalendarResponse: {
+      /** @description Whether the calendar template was deleted */
+      deleted: boolean;
     };
     /** @description Request to delete a collection */
     DeleteCollectionRequest: {
@@ -18909,6 +19329,11 @@ export interface components {
       /** @description Available game client downloads */
       clients: components['schemas']['DownloadInfo'][];
     };
+    /**
+     * @description How to handle clock gaps after service downtime
+     * @enum {string}
+     */
+    DowntimePolicy: 'Advance' | 'Pause';
     /** @description Request to duplicate a scene */
     DuplicateSceneRequest: {
       /**
@@ -19470,6 +19895,15 @@ export interface components {
        * @description When this entry template was last updated
        */
       updatedAt?: string | null;
+    };
+    /** @description A named time span in the calendar for display purposes */
+    EraLabel: {
+      /** @description Era identifier code (e.g., "first_age", "era_of_strife") */
+      code: string;
+      /** @description Game year when this era begins (0-based) */
+      startYear: number;
+      /** @description Game year when this era ends (null = ongoing) */
+      endYear?: number | null;
     };
     /** @description Main escrow agreement record */
     EscrowAgreement: {
@@ -20716,6 +21150,61 @@ export interface components {
        */
       reservationExpiresAt?: string | null;
     };
+    /** @description Complete point-in-time game time state for a realm, used in responses and boundary events */
+    GameTimeSnapshot: {
+      /**
+       * Format: uuid
+       * @description Realm this snapshot belongs to
+       */
+      realmId: string;
+      /**
+       * Format: uuid
+       * @description Game service the realm belongs to
+       */
+      gameServiceId: string;
+      /** @description Current game year (0-based from realm epoch) */
+      year: number;
+      /** @description 0-based index into calendar months */
+      monthIndex: number;
+      /** @description Month code from calendar template (e.g., "greenleaf") */
+      monthCode: string;
+      /** @description 1-based day within current month */
+      dayOfMonth: number;
+      /** @description 1-based day within current year */
+      dayOfYear: number;
+      /** @description Current game hour (0 to gameHoursPerDay-1) */
+      hour: number;
+      /** @description Current game minute (0-59) */
+      minute: number;
+      /** @description Current day period code from calendar (e.g., "dawn", "morning") */
+      period: string;
+      /** @description True if current period's isDaylight flag is set in the calendar template */
+      isDaylight: boolean;
+      /** @description Current season code from calendar (e.g., "spring") */
+      season: string;
+      /** @description Current season ordinal (0-based) */
+      seasonIndex: number;
+      /**
+       * Format: float
+       * @description 0.0-1.0 progress through the current season, computed from day-of-season / days-in-season
+       */
+      seasonProgress: number;
+      /**
+       * Format: int64
+       * @description Absolute game-seconds since realm epoch
+       */
+      totalGameSecondsSinceEpoch: number;
+      /**
+       * Format: float
+       * @description Current game-seconds per real-second
+       */
+      timeRatio: number;
+      /**
+       * Format: date-time
+       * @description Real-world UTC timestamp of this snapshot
+       */
+      timestamp: string;
+    };
     /** @description Game service stub name for this session. Use the game service's stubName property (e.g., "my-game"). Use "generic" for non-game-specific sessions. */
     GameType: string;
     /** @description Current garden instance state for a player */
@@ -21099,6 +21588,16 @@ export interface components {
       /** @description Unique identifier for the cached behavior */
       behaviorId: string;
     };
+    /** @description Request to get a calendar template by game service and template code */
+    GetCalendarRequest: {
+      /**
+       * Format: uuid
+       * @description Game service the calendar belongs to
+       */
+      gameServiceId: string;
+      /** @description Calendar template code */
+      templateCode: string;
+    };
     /** @description Request to get the capability manifest. */
     GetCapabilityManifestRequest: {
       /**
@@ -21457,6 +21956,38 @@ export interface components {
       seedDerivedCount: number;
       /** @description All active effects with source attribution */
       effects: components['schemas']['StatusEffectSummary'][];
+    };
+    /** @description Request to compute elapsed game-time between two real timestamps */
+    GetElapsedGameTimeRequest: {
+      /**
+       * Format: uuid
+       * @description Realm to compute elapsed time for
+       */
+      realmId: string;
+      /**
+       * Format: date-time
+       * @description Start real-world UTC timestamp
+       */
+      fromRealTime: string;
+      /**
+       * Format: date-time
+       * @description End real-world UTC timestamp
+       */
+      toRealTime: string;
+    };
+    /** @description Elapsed game-time as raw seconds and decomposed calendar units */
+    GetElapsedGameTimeResponse: {
+      /**
+       * Format: int64
+       * @description Total game-seconds elapsed between the two real timestamps
+       */
+      totalGameSeconds: number;
+      /** @description Decomposed game days component */
+      gameDays: number;
+      /** @description Decomposed game hours component (remainder after days) */
+      gameHours: number;
+      /** @description Decomposed game minutes component (remainder after hours) */
+      gameMinutes: number;
     };
     /** @description Request to retrieve an encounter type by code */
     GetEncounterTypeRequest: {
@@ -22137,6 +22668,14 @@ export interface components {
       /** @description Unique code for the realm (e.g., "REALM_1", "REALM_2") */
       code: string;
     };
+    /** @description Request to get realm worldstate configuration */
+    GetRealmConfigRequest: {
+      /**
+       * Format: uuid
+       * @description Realm to get configuration for
+       */
+      realmId: string;
+    };
     /** @description Request payload for getting participants of an event */
     GetRealmEventParticipantsRequest: {
       /**
@@ -22202,6 +22741,19 @@ export interface components {
       /**
        * Format: uuid
        * @description Unique identifier of the realm
+       */
+      realmId: string;
+    };
+    /** @description Request to get the current game time for a realm by its code string */
+    GetRealmTimeByCodeRequest: {
+      /** @description Realm code string (resolved to realm ID via IRealmClient) */
+      realmCode: string;
+    };
+    /** @description Request to get the current game time for a realm */
+    GetRealmTimeRequest: {
+      /**
+       * Format: uuid
+       * @description Realm to get the current game time for
        */
       realmId: string;
     };
@@ -23312,6 +23864,59 @@ export interface components {
      * @enum {string}
      */
     HoldStatus: 'active' | 'captured' | 'released' | 'expired';
+    /** @description Request to initialize a clock for a realm */
+    InitializeRealmClockRequest: {
+      /**
+       * Format: uuid
+       * @description Realm to initialize a clock for
+       */
+      realmId: string;
+      /** @description Calendar template code to use (falls back to DefaultCalendarTemplateCode config if null; BadRequest if both are null) */
+      calendarTemplateCode?: string | null;
+      /**
+       * Format: date-time
+       * @description Real-world timestamp to use as the realm epoch (defaults to current time)
+       */
+      epoch?: string | null;
+      /** @description Game year to start at (defaults to 0) */
+      startingYear?: number | null;
+      /**
+       * Format: float
+       * @description Initial game-seconds per real-second (falls back to DefaultTimeRatio config)
+       */
+      timeRatio?: number | null;
+      /** @description Initial downtime handling policy (falls back to DefaultDowntimePolicy config) */
+      downtimePolicy?: components['schemas']['DowntimePolicy'] | null;
+    };
+    /** @description Confirmation of realm clock initialization with resolved values */
+    InitializeRealmClockResponse: {
+      /**
+       * Format: uuid
+       * @description Realm the clock was initialized for
+       */
+      realmId: string;
+      /**
+       * Format: uuid
+       * @description Game service the realm belongs to
+       */
+      gameServiceId: string;
+      /** @description Calendar template code in use (resolved from request or config) */
+      calendarTemplateCode: string;
+      /**
+       * Format: float
+       * @description Initial game-seconds per real-second (resolved from request or config)
+       */
+      timeRatio: number;
+      /** @description Downtime handling policy (resolved from request or config) */
+      downtimePolicy: components['schemas']['DowntimePolicy'];
+      /**
+       * Format: date-time
+       * @description Real-world timestamp of the realm epoch
+       */
+      epoch: string;
+      /** @description Game year the clock started at */
+      startingYear: number;
+    };
     /** @description Request to initiate a bond between seeds. */
     InitiateBondRequest: {
       /**
@@ -24229,6 +24834,19 @@ export interface components {
       /** @description Total number of versions */
       totalCount: number;
     };
+    /** @description Request to list all calendar templates for a game service */
+    ListCalendarsRequest: {
+      /**
+       * Format: uuid
+       * @description Game service to list calendars for
+       */
+      gameServiceId: string;
+    };
+    /** @description List of calendar templates for a game service */
+    ListCalendarsResponse: {
+      /** @description Calendar templates for the game service */
+      templates: components['schemas']['CalendarTemplateResponse'][];
+    };
     /** @description Request payload for listing characters with filtering and pagination */
     ListCharactersRequest: {
       /**
@@ -25055,6 +25673,35 @@ export interface components {
     ListQueuesResponse: {
       /** @description List of available queues */
       queues: components['schemas']['QueueSummary'][];
+    };
+    /** @description Request to list active realm clocks with optional filtering */
+    ListRealmClocksRequest: {
+      /**
+       * Format: uuid
+       * @description Filter by game service ID (null returns all)
+       */
+      gameServiceId?: string | null;
+      /**
+       * @description Page number (0-indexed)
+       * @default 0
+       */
+      page: number;
+      /**
+       * @description Items per page
+       * @default 100
+       */
+      pageSize: number;
+    };
+    /** @description Paginated list of active realm clocks */
+    ListRealmClocksResponse: {
+      /** @description Realm clock summaries for the current page */
+      items: components['schemas']['RealmClockSummary'][];
+      /** @description Total matching realm clocks */
+      totalCount: number;
+      /** @description Current page number */
+      page: number;
+      /** @description Items per page */
+      pageSize: number;
     };
     /** @description Request to list realms with optional filtering and pagination */
     ListRealmsRequest: {
@@ -26577,6 +27224,17 @@ export interface components {
       /** @description New Y position for grid-based containers */
       newSlotY?: number | null;
     };
+    /** @description A month within a calendar template year */
+    MonthDefinition: {
+      /** @description Month identifier code (e.g., "frostmere", "greenleaf") */
+      code: string;
+      /** @description Display name for the month */
+      name: string;
+      /** @description Number of game days in this month */
+      daysInMonth: number;
+      /** @description Season code this month belongs to (must reference a defined season) */
+      seasonCode: string;
+    };
     /** @description Request to move item */
     MoveItemRequest: {
       /**
@@ -27296,6 +27954,11 @@ export interface components {
        * @default 0.5
        */
       urgency: number;
+      /**
+       * Format: uuid
+       * @description Current location ID of the entity sending this perception. Used by ActorRunner to track the actor's current location for location-aware variable providers. Updated on each perception event that carries this field.
+       */
+      locationId?: string | null;
       /**
        * @description Optional typed spatial context from game server's local spatial state.
        *     Provides structured information about terrain, nearby objects, hazards, etc.
@@ -28690,6 +29353,59 @@ export interface components {
       escrow: components['schemas']['EscrowAgreement'];
       /** @description Whether all parties have reaffirmed */
       allReaffirmed: boolean;
+    };
+    /** @description Summary information for an active realm clock */
+    RealmClockSummary: {
+      /**
+       * Format: uuid
+       * @description Realm identifier
+       */
+      realmId: string;
+      /** @description Calendar template code in use */
+      calendarTemplateCode: string;
+      /**
+       * Format: float
+       * @description Current game-seconds per real-second
+       */
+      currentTimeRatio: number;
+      /** @description Current season code */
+      currentSeason: string;
+      /** @description Current game year */
+      currentYear: number;
+      /**
+       * Format: date-time
+       * @description Real-world UTC timestamp of last clock advancement
+       */
+      lastAdvancedAt: string;
+    };
+    /** @description Realm worldstate configuration */
+    RealmConfigResponse: {
+      /**
+       * Format: uuid
+       * @description Realm identifier
+       */
+      realmId: string;
+      /**
+       * Format: uuid
+       * @description Game service the realm belongs to
+       */
+      gameServiceId: string;
+      /** @description Calendar template code in use */
+      calendarTemplateCode: string;
+      /**
+       * Format: float
+       * @description Current game-seconds per real-second
+       */
+      currentTimeRatio: number;
+      /** @description How clock gaps are handled after service downtime */
+      downtimePolicy: components['schemas']['DowntimePolicy'];
+      /**
+       * Format: date-time
+       * @description Real-world timestamp when the realm's clock started
+       */
+      realmEpoch: string;
+      /** @description Whether the realm clock is initialized and active */
+      isActive: boolean;
     };
     /**
      * @description Categories of historical events that realms can participate in
@@ -30992,6 +31708,15 @@ export interface components {
       /** @description Total matches */
       total: number;
     };
+    /** @description A season within a calendar template year */
+    SeasonDefinition: {
+      /** @description Season identifier code (e.g., "winter", "spring", "summer", "autumn") */
+      code: string;
+      /** @description Display name for the season */
+      name: string;
+      /** @description Position in annual cycle (0-based) */
+      ordinal: number;
+    };
     /** @description Season information */
     SeasonResponse: {
       /** @description ID of the leaderboard */
@@ -31039,6 +31764,26 @@ export interface components {
       definitionsCreated: number;
       /** @description All created license definitions */
       definitions: components['schemas']['LicenseDefinitionResponse'][];
+    };
+    /** @description Request to create a calendar template for a game service */
+    SeedCalendarRequest: {
+      /** @description Unique identifier for this calendar template within the game service */
+      templateCode: string;
+      /**
+       * Format: uuid
+       * @description Game service this calendar belongs to
+       */
+      gameServiceId: string;
+      /** @description Number of game hours in a day (day periods must cover [0, gameHoursPerDay) without gaps or overlaps) */
+      gameHoursPerDay: number;
+      /** @description Named time-of-day periods (must cover [0, gameHoursPerDay) without gaps or overlaps) */
+      dayPeriods: components['schemas']['DayPeriodDefinition'][];
+      /** @description Ordered list of months in a year (each month's seasonCode must reference a defined season) */
+      months: components['schemas']['MonthDefinition'][];
+      /** @description Ordered list of seasons in a year */
+      seasons: components['schemas']['SeasonDefinition'][];
+      /** @description Named time spans for display purposes (optional) */
+      eraLabels?: components['schemas']['EraLabel'][] | null;
     };
     /** @description A single seed-derived passive effect entry */
     SeedEffectEntry: {
@@ -31446,6 +32191,41 @@ export interface components {
       /** @description Number of template values set */
       valueCount?: number;
     };
+    /** @description Request to change the time ratio for a realm */
+    SetTimeRatioRequest: {
+      /**
+       * Format: uuid
+       * @description Realm to change the time ratio for
+       */
+      realmId: string;
+      /**
+       * Format: float
+       * @description New game-seconds per real-second (0.0 pauses the clock)
+       */
+      newRatio: number;
+      /** @description Reason for the ratio change */
+      reason: components['schemas']['TimeRatioChangeReason'];
+    };
+    /** @description Confirmation of time ratio change */
+    SetTimeRatioResponse: {
+      /**
+       * Format: uuid
+       * @description Realm the ratio was changed for
+       */
+      realmId: string;
+      /**
+       * Format: float
+       * @description Previous game-seconds per real-second
+       */
+      previousRatio: number;
+      /**
+       * Format: float
+       * @description New game-seconds per real-second
+       */
+      newRatio: number;
+      /** @description Reason for the ratio change */
+      reason: components['schemas']['TimeRatioChangeReason'];
+    };
     /** @description Shared garden state for bonded players */
     SharedGardenStateResponse: {
       /**
@@ -31643,6 +32423,11 @@ export interface components {
        * @description Optional character ID for NPC brain actors
        */
       characterId?: string | null;
+      /**
+       * Format: uuid
+       * @description Realm the actor operates in. Optional on request -- when not provided and characterId is set, the service looks up the character's realm automatically. Required for non-character actors that operate in a specific realm.
+       */
+      realmId?: string | null;
     };
     /** @description Paginated list of species with total count for pagination */
     SpeciesListResponse: {
@@ -32555,6 +33340,11 @@ export interface components {
      * @enum {string}
      */
     TicketStatus: 'searching' | 'match_found' | 'match_accepted' | 'cancelled' | 'expired';
+    /**
+     * @description Why the time ratio was changed
+     * @enum {string}
+     */
+    TimeRatioChangeReason: 'Initial' | 'AdminAdjustment' | 'Event' | 'Pause' | 'Resume';
     /** @description A time signature change event */
     TimeSignatureEvent: {
       /** @description Tick position */
@@ -32902,6 +33692,24 @@ export interface components {
      * @enum {string}
      */
     TriggerMode: 'Proximity' | 'Interaction' | 'Prompted' | 'Forced';
+    /** @description Request to trigger a time sync event for an entity's sessions */
+    TriggerTimeSyncRequest: {
+      /**
+       * Format: uuid
+       * @description Realm to sync time for
+       */
+      realmId: string;
+      /**
+       * Format: uuid
+       * @description Entity whose sessions should receive the sync (typically a character or account)
+       */
+      entityId: string;
+    };
+    /** @description Result of a time sync trigger */
+    TriggerTimeSyncResponse: {
+      /** @description Number of sessions that received the time sync event */
+      sessionsNotified: number;
+    };
     /** @description A style-specific tune type definition */
     TuneType: {
       /** @description Tune type name (e.g., "reel", "jig") */
@@ -33253,6 +34061,26 @@ export interface components {
        * @description When the update occurred
        */
       updatedAt?: string;
+    };
+    /** @description Request to partially update a calendar template (only non-null fields are applied) */
+    UpdateCalendarRequest: {
+      /**
+       * Format: uuid
+       * @description Game service the calendar belongs to (identity, cannot be changed)
+       */
+      gameServiceId: string;
+      /** @description Calendar template code (identity, cannot be changed) */
+      templateCode: string;
+      /** @description New number of game hours in a day (triggers day period re-validation) */
+      gameHoursPerDay?: number | null;
+      /** @description New day period definitions (must cover [0, gameHoursPerDay) without gaps or overlaps) */
+      dayPeriods?: components['schemas']['DayPeriodDefinition'][] | null;
+      /** @description New month definitions (season codes must reference defined seasons) */
+      months?: components['schemas']['MonthDefinition'][] | null;
+      /** @description New season definitions */
+      seasons?: components['schemas']['SeasonDefinition'][] | null;
+      /** @description New era label definitions (null = no change, empty array = clear all) */
+      eraLabels?: components['schemas']['EraLabel'][] | null;
     };
     /** @description Request to update container properties */
     UpdateContainerRequest: {
@@ -33655,6 +34483,18 @@ export interface components {
       difficulty?: components['schemas']['QuestDifficulty'] | null;
       /** @description New tags */
       tags?: string[] | null;
+    };
+    /** @description Request to partially update realm worldstate configuration */
+    UpdateRealmConfigRequest: {
+      /**
+       * Format: uuid
+       * @description Realm to update configuration for
+       */
+      realmId: string;
+      /** @description New downtime handling policy (null = no change) */
+      downtimePolicy?: components['schemas']['DowntimePolicy'] | null;
+      /** @description New calendar template code (validated for existence, null = no change) */
+      calendarTemplateCode?: string | null;
     };
     /** @description Request to update repository binding configuration */
     UpdateRepositoryBindingRequest: {
@@ -51724,6 +52564,530 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+    };
+  };
+  getRealmTime: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetRealmTimeRequest'];
+      };
+    };
+    responses: {
+      /** @description Current game time snapshot for the realm */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GameTimeSnapshot'];
+        };
+      };
+      /** @description No clock initialized for this realm */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  getRealmTimeByCode: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetRealmTimeByCodeRequest'];
+      };
+    };
+    responses: {
+      /** @description Current game time snapshot for the realm */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GameTimeSnapshot'];
+        };
+      };
+      /** @description Realm code not found or no clock initialized */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  batchGetRealmTimes: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['BatchGetRealmTimesRequest'];
+      };
+    };
+    responses: {
+      /** @description Game time snapshots for the requested realms */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BatchGetRealmTimesResponse'];
+        };
+      };
+    };
+  };
+  getElapsedGameTime: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetElapsedGameTimeRequest'];
+      };
+    };
+    responses: {
+      /** @description Elapsed game time as raw seconds and decomposed calendar units */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GetElapsedGameTimeResponse'];
+        };
+      };
+      /** @description No clock initialized for this realm */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  triggerTimeSync: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['TriggerTimeSyncRequest'];
+      };
+    };
+    responses: {
+      /** @description Time sync triggered successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TriggerTimeSyncResponse'];
+        };
+      };
+      /** @description No clock initialized for this realm */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  initializeRealmClock: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['InitializeRealmClockRequest'];
+      };
+    };
+    responses: {
+      /** @description Realm clock initialized successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['InitializeRealmClockResponse'];
+        };
+      };
+      /** @description Both calendarTemplateCode and DefaultCalendarTemplateCode config are null */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Realm or calendar template not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Clock already initialized for this realm */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  setTimeRatio: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SetTimeRatioRequest'];
+      };
+    };
+    responses: {
+      /** @description Time ratio changed successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SetTimeRatioResponse'];
+        };
+      };
+      /** @description No clock initialized for this realm */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  advanceClock: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AdvanceClockRequest'];
+      };
+    };
+    responses: {
+      /** @description Clock advanced successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdvanceClockResponse'];
+        };
+      };
+      /** @description No advancement amount specified */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description No clock initialized for this realm */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  seedCalendar: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SeedCalendarRequest'];
+      };
+    };
+    responses: {
+      /** @description Calendar template created successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CalendarTemplateResponse'];
+        };
+      };
+      /** @description Structural validation failed (period gaps, season-month mismatch, etc.) */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Game service not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Template code already exists for this game service or max calendars exceeded */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  getCalendar: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetCalendarRequest'];
+      };
+    };
+    responses: {
+      /** @description Calendar template found */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CalendarTemplateResponse'];
+        };
+      };
+      /** @description Calendar template not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  listCalendars: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListCalendarsRequest'];
+      };
+    };
+    responses: {
+      /** @description Calendar templates listed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListCalendarsResponse'];
+        };
+      };
+    };
+  };
+  updateCalendar: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateCalendarRequest'];
+      };
+    };
+    responses: {
+      /** @description Calendar template updated successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CalendarTemplateResponse'];
+        };
+      };
+      /** @description Structural validation failed */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Calendar template not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  deleteCalendar: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DeleteCalendarRequest'];
+      };
+    };
+    responses: {
+      /** @description Calendar template deleted */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DeleteCalendarResponse'];
+        };
+      };
+      /** @description Calendar template not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Active realm clocks reference this template */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  getRealmConfig: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GetRealmConfigRequest'];
+      };
+    };
+    responses: {
+      /** @description Realm configuration found */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RealmConfigResponse'];
+        };
+      };
+      /** @description No clock initialized for this realm */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  updateRealmConfig: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateRealmConfigRequest'];
+      };
+    };
+    responses: {
+      /** @description Realm configuration updated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RealmConfigResponse'];
+        };
+      };
+      /** @description No clock initialized for this realm or calendar template not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  listRealmClocks: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ListRealmClocksRequest'];
+      };
+    };
+    responses: {
+      /** @description Realm clocks listed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListRealmClocksResponse'];
+        };
       };
     };
   };

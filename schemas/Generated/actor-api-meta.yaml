@@ -465,7 +465,11 @@ paths:
         Deserialized internally to ActorStateSnapshot. No Bannou plugin reads specific keys from this field by convention.\"\
         \n                },\n                \"characterId\": {\n                    \"type\": \"string\",\n            \
         \        \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Optional
-        character ID for NPC brain actors\"\n                }\n            }\n        }\n    }\n}"
+        character ID for NPC brain actors\"\n                },\n                \"realmId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Realm the actor operates in. Optional on request -- when not provided and characterId is
+        set, the service looks up the character's realm automatically. Required for non-character actors that operate in a
+        specific realm.\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ActorInstanceResponse\"\
         ,\n    \"$defs\": {\n        \"ActorInstanceResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Response containing actor instance details\",\n            \"required\":
@@ -483,17 +487,19 @@ paths:
         \     \"description\": \"Current actor lifecycle state\",\n                    \"$ref\": \"#/$defs/ActorStatus\"\n\
         \                },\n                \"characterId\": {\n                    \"type\": \"string\",\n             \
         \       \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Associated
-        character ID (for NPC brains)\"\n                },\n                \"startedAt\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the actor
-        started running\"\n                },\n                \"lastHeartbeat\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"Last heartbeat timestamp from the actor\"\n                },\n                \"loopIterations\"\
-        : {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"\
-        description\": \"Number of behavior loop iterations executed\"\n                }\n            }\n        },\n   \
-        \     \"ActorStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"pending\"\
-        ,\n                \"starting\",\n                \"running\",\n                \"paused\",\n                \"stopping\"\
-        ,\n                \"stopped\",\n                \"error\"\n            ],\n            \"description\": \"Current
-        actor lifecycle state\"\n        }\n    }\n}"
+        character ID (for NPC brains)\"\n                },\n                \"realmId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Realm the actor operates in (resolved at spawn time)\"\n                },\n           \
+        \     \"startedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"When the actor started running\"\n                },\n                \"lastHeartbeat\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"Last heartbeat timestamp from the actor\"\n      \
+        \          },\n                \"loopIterations\": {\n                    \"type\": \"integer\",\n               \
+        \     \"format\": \"int64\",\n                    \"description\": \"Number of behavior loop iterations executed\"\
+        \n                }\n            }\n        },\n        \"ActorStatus\": {\n            \"type\": \"string\",\n  \
+        \          \"enum\": [\n                \"pending\",\n                \"starting\",\n                \"running\",\n\
+        \                \"paused\",\n                \"stopping\",\n                \"stopped\",\n                \"error\"\
+        \n            ],\n            \"description\": \"Current actor lifecycle state\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Spawn a new actor from a template\",\n    \"description\": \"\",\n    \"\
         tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"SpawnActor\"\n}"
   /actor/get:
@@ -543,17 +549,19 @@ paths:
         \     \"description\": \"Current actor lifecycle state\",\n                    \"$ref\": \"#/$defs/ActorStatus\"\n\
         \                },\n                \"characterId\": {\n                    \"type\": \"string\",\n             \
         \       \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Associated
-        character ID (for NPC brains)\"\n                },\n                \"startedAt\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the actor
-        started running\"\n                },\n                \"lastHeartbeat\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"Last heartbeat timestamp from the actor\"\n                },\n                \"loopIterations\"\
-        : {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"\
-        description\": \"Number of behavior loop iterations executed\"\n                }\n            }\n        },\n   \
-        \     \"ActorStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"pending\"\
-        ,\n                \"starting\",\n                \"running\",\n                \"paused\",\n                \"stopping\"\
-        ,\n                \"stopped\",\n                \"error\"\n            ],\n            \"description\": \"Current
-        actor lifecycle state\"\n        }\n    }\n}"
+        character ID (for NPC brains)\"\n                },\n                \"realmId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Realm the actor operates in (resolved at spawn time)\"\n                },\n           \
+        \     \"startedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"When the actor started running\"\n                },\n                \"lastHeartbeat\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"Last heartbeat timestamp from the actor\"\n      \
+        \          },\n                \"loopIterations\": {\n                    \"type\": \"integer\",\n               \
+        \     \"format\": \"int64\",\n                    \"description\": \"Number of behavior loop iterations executed\"\
+        \n                }\n            }\n        },\n        \"ActorStatus\": {\n            \"type\": \"string\",\n  \
+        \          \"enum\": [\n                \"pending\",\n                \"starting\",\n                \"running\",\n\
+        \                \"paused\",\n                \"stopping\",\n                \"stopped\",\n                \"error\"\
+        \n            ],\n            \"description\": \"Current actor lifecycle state\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"Get actor instance (instantiate-on-access if template allows)\",\n    \"\
         description\": \"If the actor exists, returns its current state.\\nIf the actor doesn't exist but a matching template
         has auto-spawn enabled,\\ninstantiates the actor and returns it.\\n\",\n    \"tags\": [],\n    \"deprecated\": false,\n\
@@ -706,17 +714,19 @@ paths:
         \     \"description\": \"Current actor lifecycle state\",\n                    \"$ref\": \"#/$defs/ActorStatus\"\n\
         \                },\n                \"characterId\": {\n                    \"type\": \"string\",\n             \
         \       \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Associated
-        character ID (for NPC brains)\"\n                },\n                \"startedAt\": {\n                    \"type\"\
-        : \"string\",\n                    \"format\": \"date-time\",\n                    \"description\": \"When the actor
-        started running\"\n                },\n                \"lastHeartbeat\": {\n                    \"type\": \"string\"\
-        ,\n                    \"format\": \"date-time\",\n                    \"nullable\": true,\n                    \"\
-        description\": \"Last heartbeat timestamp from the actor\"\n                },\n                \"loopIterations\"\
-        : {\n                    \"type\": \"integer\",\n                    \"format\": \"int64\",\n                    \"\
-        description\": \"Number of behavior loop iterations executed\"\n                }\n            }\n        },\n   \
-        \     \"ActorStatus\": {\n            \"type\": \"string\",\n            \"enum\": [\n                \"pending\"\
-        ,\n                \"starting\",\n                \"running\",\n                \"paused\",\n                \"stopping\"\
-        ,\n                \"stopped\",\n                \"error\"\n            ],\n            \"description\": \"Current
-        actor lifecycle state\"\n        }\n    }\n}"
+        character ID (for NPC brains)\"\n                },\n                \"realmId\": {\n                    \"type\"\
+        : \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Realm the actor operates in (resolved at spawn time)\"\n                },\n           \
+        \     \"startedAt\": {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n\
+        \                    \"description\": \"When the actor started running\"\n                },\n                \"lastHeartbeat\"\
+        : {\n                    \"type\": \"string\",\n                    \"format\": \"date-time\",\n                 \
+        \   \"nullable\": true,\n                    \"description\": \"Last heartbeat timestamp from the actor\"\n      \
+        \          },\n                \"loopIterations\": {\n                    \"type\": \"integer\",\n               \
+        \     \"format\": \"int64\",\n                    \"description\": \"Number of behavior loop iterations executed\"\
+        \n                }\n            }\n        },\n        \"ActorStatus\": {\n            \"type\": \"string\",\n  \
+        \          \"enum\": [\n                \"pending\",\n                \"starting\",\n                \"running\",\n\
+        \                \"paused\",\n                \"stopping\",\n                \"stopped\",\n                \"error\"\
+        \n            ],\n            \"description\": \"Current actor lifecycle state\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List actors with optional filters\",\n    \"description\": \"\",\n    \"\
         tags\": [],\n    \"deprecated\": false,\n    \"operationId\": \"ListActors\"\n}"
   /actor/inject-perception:
@@ -770,14 +780,18 @@ paths:
         defined by the game.\"\n                },\n                \"urgency\": {\n                    \"type\": \"number\"\
         ,\n                    \"format\": \"float\",\n                    \"minimum\": 0,\n                    \"maximum\"\
         : 1,\n                    \"default\": 0.5,\n                    \"description\": \"How urgent this perception is
-        (0-1)\"\n                },\n                \"spatialContext\": {\n                    \"allOf\": [\n           \
-        \             {\n                            \"$ref\": \"#/$defs/SpatialContext\"\n                        }\n   \
-        \                 ],\n                    \"nullable\": true,\n                    \"description\": \"Optional typed
-        spatial context from game server's local spatial state.\\nProvides structured information about terrain, nearby objects,
-        hazards, etc.\\nAlternative to using perceptionType=\\\"spatial\\\" with schema-less data.\\n\"\n                }\n\
-        \            }\n        },\n        \"PerceptionSourceType\": {\n            \"type\": \"string\",\n            \"\
-        description\": \"Type of source generating a perception event\",\n            \"enum\": [\n                \"character\"\
-        ,\n                \"npc\",\n                \"object\",\n                \"environment\",\n                \"coordinator\"\
+        (0-1)\"\n                },\n                \"locationId\": {\n                    \"type\": \"string\",\n      \
+        \              \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Current location ID of the entity sending this perception. Used by ActorRunner to track the actor's current location
+        for location-aware variable providers. Updated on each perception event that carries this field.\"\n             \
+        \   },\n                \"spatialContext\": {\n                    \"allOf\": [\n                        {\n     \
+        \                       \"$ref\": \"#/$defs/SpatialContext\"\n                        }\n                    ],\n\
+        \                    \"nullable\": true,\n                    \"description\": \"Optional typed spatial context from
+        game server's local spatial state.\\nProvides structured information about terrain, nearby objects, hazards, etc.\\
+        nAlternative to using perceptionType=\\\"spatial\\\" with schema-less data.\\n\"\n                }\n            }\n\
+        \        },\n        \"PerceptionSourceType\": {\n            \"type\": \"string\",\n            \"description\":
+        \"Type of source generating a perception event\",\n            \"enum\": [\n                \"character\",\n     \
+        \           \"npc\",\n                \"object\",\n                \"environment\",\n                \"coordinator\"\
         ,\n                \"scheduled\",\n                \"message\",\n                \"service\",\n                \"\
         system\"\n            ]\n        },\n        \"SpatialContext\": {\n            \"type\": \"object\",\n          \
         \  \"additionalProperties\": true,\n            \"description\": \"Spatial context derived from game server's authoritative
@@ -1477,6 +1491,15 @@ components:
           format: uuid
           nullable: true
           description: Optional character ID for NPC brain actors
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: >-
+            Realm the actor operates in. Optional on request -- when not provided
+            and characterId is set, the service looks up the character's realm
+            automatically. Required for non-character actors that operate in a
+            specific realm.
     GetActorRequest:
       type: object
       additionalProperties: false
@@ -1525,6 +1548,11 @@ components:
           format: uuid
           nullable: true
           description: Associated character ID (for NPC brains)
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Realm the actor operates in (resolved at spawn time)
         startedAt:
           type: string
           format: date-time
@@ -1723,6 +1751,15 @@ components:
           maximum: 1
           default: 0.5
           description: How urgent this perception is (0-1)
+        locationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: >-
+            Current location ID of the entity sending this perception.
+            Used by ActorRunner to track the actor's current location for
+            location-aware variable providers. Updated on each perception
+            event that carries this field.
         spatialContext:
           allOf:
           - $ref: '#/components/schemas/SpatialContext'

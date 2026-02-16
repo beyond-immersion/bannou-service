@@ -451,14 +451,14 @@ Time-based automated production service (L4 GameFeatures) for continuous backgro
 
 ## Worldstate {#worldstate}
 
-**Deep Dive**: [docs/plugins/WORLDSTATE.md](plugins/WORLDSTATE.md)
+**Version**: 1.0.0 | **Schema**: `schemas/worldstate-api.yaml` | **Endpoints**: 18 | **Deep Dive**: [docs/plugins/WORLDSTATE.md](plugins/WORLDSTATE.md)
 
 Per-realm game time authority, calendar system, and temporal event broadcasting service (L2 GameFoundation). Maps real-world time to configurable game-time progression with per-realm time ratios, calendar templates (configurable days, months, seasons, years), and day-period cycles. Publishes boundary events at game-time transitions consumed by other services for time-aligned processing, and provides the `${world.*}` variable namespace to the Actor behavior system via the Variable Provider Factory pattern. Also provides a time-elapsed query API for lazy evaluation patterns (computing game-time duration between two real timestamps accounting for ratio changes and pauses). Game-agnostic: calendar structures, time ratios, and day-period definitions are configured per game service. Internal-only, never internet-facing.
 
 ## Summary
 
 - **Total services**: 75
-- **Total endpoints**: 833
+- **Total endpoints**: 851
 
 ---
 

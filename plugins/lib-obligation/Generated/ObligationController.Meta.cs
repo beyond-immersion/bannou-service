@@ -668,6 +668,12 @@ public partial class ObligationController
                     "maxItems": 50,
                     "description": "GOAP action tags to evaluate (e.g., [\"steal_food\", \"buy_food\", \"beg_for_food\"])"
                 },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Realm the character operates in. When provided, passed directly to variable provider factories for realm-scoped data. When omitted, the service looks up the character's realm from the Character service."
+                },
                 "locationId": {
                     "type": "string",
                     "format": "uuid",

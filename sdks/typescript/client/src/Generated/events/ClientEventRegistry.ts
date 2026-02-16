@@ -312,6 +312,14 @@ export const eventRegistry = new Map<string, EventMetadata>([
     'voice.tier_upgrade',
     { eventName: 'voice.tier_upgrade', typeName: 'VoiceTierUpgradeEvent', service: 'voice' },
   ],
+  [
+    'worldstate.time_sync',
+    {
+      eventName: 'worldstate.time_sync',
+      typeName: 'WorldstateTimeSyncEvent',
+      service: 'worldstate',
+    },
+  ],
 ]);
 
 /**

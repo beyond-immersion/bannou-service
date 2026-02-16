@@ -172,8 +172,11 @@ This document lists all state store components used in Bannou.
 | `subscription-statestore` | MySQL | Subscription | User subscriptions to game services |
 | `test-search-statestore` | Redis | State | Test store with RedisSearch enabled |
 | `voice-statestore` | Redis | Voice | Voice room and peer state |
+| `worldstate-calendar` | MySQL | Worldstate | Calendar template definitions and per-realm worldstate configuration (durable, queryable) |
+| `worldstate-ratio-history` | MySQL | Worldstate | Time ratio change history per realm for elapsed game-time computation (append-only, compacted) |
+| `worldstate-realm-clock` | Redis | Worldstate | Current game time per realm (hot reads, updated every ClockTickIntervalSeconds) |
 
-**Total**: 163 stores (98 Redis, 65 MySQL)
+**Total**: 166 stores (99 Redis, 67 MySQL)
 
 ## Naming Conventions
 

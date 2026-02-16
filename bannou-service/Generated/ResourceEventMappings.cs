@@ -38,7 +38,13 @@ public static class ResourceEventMappings
         new("realm", "realm", "realm.updated", "realmId", false),
         new("realm", "realm-history", "realm-history.lore.created", "realmId", false),
         new("realm", "realm-history", "realm-history.lore.updated", "realmId", false),
-        new("realm", "realm-history", "realm-history.participation.recorded", "realmId", false)
+        new("realm", "realm-history", "realm-history.participation.recorded", "realmId", false),
+        new("realm", "worldstate", "worldstate.day-changed", "realmId", false),
+        new("realm", "worldstate", "worldstate.hour-changed", "realmId", false),
+        new("realm", "worldstate", "worldstate.month-changed", "realmId", false),
+        new("realm", "worldstate", "worldstate.period-changed", "realmId", false),
+        new("realm", "worldstate", "worldstate.season-changed", "realmId", false),
+        new("realm", "worldstate", "worldstate.year-changed", "realmId", false)
     ];
 }
 

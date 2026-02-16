@@ -72,6 +72,7 @@ public static class ClientEventWhitelist
         "voice.room_closed",
         "voice.room_state",
         "voice.tier_upgrade",
+        "worldstate.time_sync",
     };
 
     /// <summary>

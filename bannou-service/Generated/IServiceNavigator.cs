@@ -58,6 +58,7 @@ using BeyondImmersion.BannouService.Subscription;
 using BeyondImmersion.BannouService.Telemetry;
 using BeyondImmersion.BannouService.Voice;
 using BeyondImmersion.BannouService.Website;
+using BeyondImmersion.BannouService.Worldstate;
 
 namespace BeyondImmersion.BannouService.ServiceClients;
 
@@ -330,5 +331,10 @@ public partial interface IServiceNavigator
     /// Gets the Website service client.
     /// </summary>
     IWebsiteClient Website { get; }
+
+    /// <summary>
+    /// Gets the Worldstate service client.
+    /// </summary>
+    IWorldstateClient Worldstate { get; }
 
 }

@@ -614,6 +614,25 @@ This document lists all events defined in Bannou's event schemas.
 | `VoiceRoomStateEvent` | Custom | `voice-room-state` | Sent to a client when they join a voice room. |
 | `VoiceTierUpgradeEvent` | Custom | `voice-tier-upgrade` | Sent to all room participants when the voice tier ... |
 
+### Worldstate
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `WorldstateDayChangedEvent` | Custom | `worldstate-day-changed` | Published when a game-day boundary is crossed. Dur... |
+| `WorldstateHourChangedEvent` | Custom | `worldstate-hour-changed` | Published when a game-hour boundary is crossed dur... |
+| `WorldstateMonthChangedEvent` | Custom | `worldstate-month-changed` | Published when a month boundary is crossed |
+| `WorldstatePeriodChangedEvent` | Custom | `worldstate-period-changed` | Published when a day-period boundary is crossed (e... |
+| `WorldstateRatioChangedEvent` | Custom | `worldstate-ratio-changed` | Published when a realm's time ratio is changed via... |
+| `WorldstateRealmClockInitializedEvent` | Custom | `worldstate-realm-clock-initialized` | Published when a realm clock is initialized for th... |
+| `WorldstateSeasonChangedEvent` | Custom | `worldstate-season-changed` | Published when a season boundary is crossed |
+| `WorldstateYearChangedEvent` | Custom | `worldstate-year-changed` | Published when a year boundary is crossed |
+
+### Worldstate (client)
+
+| Event | Type | Likely Topic | Description |
+|-------|------|--------------|-------------|
+| `WorldstateTimeSyncEvent` | Custom | `worldstate-time-sync` | Published on period-changed boundaries, ratio chan... |
+
 ## Event Types
 
 | Type | Description | Example |

@@ -54,6 +54,7 @@ This document lists all typed events available for subscription in the Bannou Cl
 | `VoiceRoomClosedEvent` | `voice.room_closed` | Sent to all room participants when the voice room is closed. |
 | `VoiceRoomStateEvent` | `voice.room_state` | Sent to a client when they join a voice room. |
 | `VoiceTierUpgradeEvent` | `voice.tier_upgrade` | Sent to all room participants when the voice tier upgrades. |
+| `WorldstateTimeSyncEvent` | `worldstate.time_sync` | Published on period-changed boundaries, ratio changes, admin... |
 
 ---
 
@@ -841,10 +842,44 @@ Sent to all room participants when the voice tier upgrades.
 
 ---
 
+## Worldstate Client Events
+
+Server-to-client push events for the Worldstate service. Published via IClientEventPublisher to connected WebSocket sessions through the Entity Session Registry pattern.
+
+### `WorldstateTimeSyncEvent`
+
+**Event Name**: `worldstate.time_sync`
+
+Published on period-changed boundaries, ratio changes, admin clock
+
+**Properties**:
+
+| Property | Description |
+|----------|-------------|
+| `dayOfMonth` | 1-based day within current month |
+| `dayOfYear` | 1-based day within current year |
+| `hour` | Current game hour (0 to gameHoursPerDay-1) |
+| `isDaylight` | Whether current period has sunlight (from calendar |
+| `minute` | Current game minute (0-59) |
+| `monthCode` | Month code from calendar template (e.g., "greenlea |
+| `monthIndex` | 0-based index into calendar months |
+| `period` | Current day period code (e.g., "dawn", "morning") |
+| `previousPeriod` | Period before transition (null on TriggerSync, Rat |
+| `realmId` | Realm this sync applies to |
+| `season` | Current season code (e.g., "spring") |
+| `seasonIndex` | Season ordinal (0-based) |
+| `seasonProgress` | 0.0-1.0 progress through current season, computed  |
+| `syncReason` | Why this sync was published (PeriodChanged, RatioC |
+| `timeRatio` | Current game-seconds per real-second (used by clie |
+| `totalGameSecondsSinceEpoch` | Absolute game-seconds since realm epoch |
+| `year` | Current game year (0-based from realm epoch) |
+
+---
+
 ## Summary
 
-- **Total event types**: 45
-- **Services with events**: 6
+- **Total event types**: 46
+- **Services with events**: 7
 
 ---
 

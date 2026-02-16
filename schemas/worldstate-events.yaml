@@ -78,43 +78,88 @@ paths: {}
 x-lifecycle:
   CalendarTemplate:
     model:
-      templateCode: { type: string, primary: true, required: true }
-      gameServiceId: { type: string, format: uuid, required: true }
-      gameHoursPerDay: { type: integer, required: true }
+      templateCode:
+        type: string
+        primary: true
+        required: true
+        description: Unique code identifying this calendar template
+      gameServiceId:
+        type: string
+        format: uuid
+        required: true
+        description: Game service this calendar template belongs to
+      gameHoursPerDay:
+        type: integer
+        required: true
+        description: Number of game hours in one game day
       dayPeriods:
         type: array
         items:
           $ref: 'worldstate-api.yaml#/components/schemas/DayPeriodDefinition'
         required: true
+        description: Ordered list of day period definitions (e.g., dawn, morning, noon)
       months:
         type: array
         items:
           $ref: 'worldstate-api.yaml#/components/schemas/MonthDefinition'
         required: true
+        description: Ordered list of month definitions for this calendar
       seasons:
         type: array
         items:
           $ref: 'worldstate-api.yaml#/components/schemas/SeasonDefinition'
         required: true
-      daysPerYear: { type: integer, required: true }
-      monthsPerYear: { type: integer, required: true }
-      seasonsPerYear: { type: integer, required: true }
+        description: Ordered list of season definitions for this calendar
+      daysPerYear:
+        type: integer
+        required: true
+        description: Total number of game days in one game year
+      monthsPerYear:
+        type: integer
+        required: true
+        description: Total number of months in one game year
+      seasonsPerYear:
+        type: integer
+        required: true
+        description: Total number of seasons in one game year
       eraLabels:
         type: array
         nullable: true
         items:
           $ref: 'worldstate-api.yaml#/components/schemas/EraLabel'
+        description: Optional era label definitions for year-range naming
 
   RealmConfig:
     model:
-      realmId: { type: string, format: uuid, primary: true, required: true }
-      gameServiceId: { type: string, format: uuid, required: true }
-      calendarTemplateCode: { type: string, required: true }
-      currentTimeRatio: { type: number, format: float, required: true }
+      realmId:
+        type: string
+        format: uuid
+        primary: true
+        required: true
+        description: Unique identifier of the realm this config belongs to
+      gameServiceId:
+        type: string
+        format: uuid
+        required: true
+        description: Game service this realm config is associated with
+      calendarTemplateCode:
+        type: string
+        required: true
+        description: Code of the calendar template assigned to this realm
+      currentTimeRatio:
+        type: number
+        format: float
+        required: true
+        description: Current game-seconds per real-second ratio
       downtimePolicy:
         $ref: 'worldstate-api.yaml#/components/schemas/DowntimePolicy'
         required: true
-      realmEpoch: { type: string, format: date-time, required: true }
+        description: Policy for handling game time during server downtime
+      realmEpoch:
+        type: string
+        format: date-time
+        required: true
+        description: Real-world timestamp marking the start of this realm's game time
 
 components:
   schemas:

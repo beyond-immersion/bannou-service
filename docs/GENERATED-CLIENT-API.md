@@ -62,6 +62,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 | [Bannou Telemetry Service API](#telemetry) | `client.Telemetry` | 2 | Unified observability plugin providing distributed tracing, ... |
 | [Bannou Voice Service API](#voice) | `client.Voice` | 11 | Voice room coordination service. Internal service accessed b... |
 | [Bannou Website Service API](#website) | `client.Website` | 12 | Public-facing website service for registration, information,... |
+| [Worldstate Service API](#worldstate) | `client.Worldstate` | 18 | Per-realm game time authority, calendar system, and temporal... |
 
 ---
 
@@ -2409,10 +2410,41 @@ Public-facing website service for registration, information, and account managem
 
 ---
 
+## Worldstate Service API {#worldstate}
+
+**Proxy**: `client.Worldstate` | **Version**: 1.0.0
+
+Per-realm game time authority, calendar system, and temporal event broadcasting. Maps real-world time to configurable game-time progression with pe...
+
+### Worldstate
+
+| Method | Request | Response | Summary |
+|--------|---------|----------|---------|
+| `GetRealmtimeAsync` | `GetRealmTimeRequest` | `GameTimeSnapshot` | Get current game time for a realm |
+| `GetRealmtimebycodeAsync` | `GetRealmTimeByCodeRequest` | `GameTimeSnapshot` | Get current game time by realm code |
+| `BatchgetrealmtimesAsync` | `BatchGetRealmTimesRequest` | `BatchGetRealmTimesResponse` | Get current game time for multiple realms |
+| `GetElapsedgametimeAsync` | `GetElapsedGameTimeRequest` | `GetElapsedGameTimeResponse` | Compute elapsed game-time between two real timestamps |
+| `TriggertimesyncAsync` | `TriggerTimeSyncRequest` | `TriggerTimeSyncResponse` | Trigger a time sync event for an entity's sessions |
+| `InitializerealmclockAsync` | `InitializeRealmClockRequest` | `InitializeRealmClockResponse` | Initialize a clock for a realm |
+| `SettimeratioAsync` | `SetTimeRatioRequest` | `SetTimeRatioResponse` | Change the time ratio for a realm |
+| `AdvanceclockAsync` | `AdvanceClockRequest` | `AdvanceClockResponse` | Manually advance a realm's clock |
+| `SeedcalendarAsync` | `SeedCalendarRequest` | `CalendarTemplateResponse` | Create a calendar template |
+| `GetCalendarAsync` | `GetCalendarRequest` | `CalendarTemplateResponse` | Get a calendar template |
+| `ListCalendarsAsync` | `ListCalendarsRequest` | `ListCalendarsResponse` | List calendar templates for a game service |
+| `UpdateCalendarAsync` | `UpdateCalendarRequest` | `CalendarTemplateResponse` | Update a calendar template |
+| `DeleteCalendarAsync` | `DeleteCalendarRequest` | `DeleteCalendarResponse` | Delete a calendar template |
+| `GetRealmconfigAsync` | `GetRealmConfigRequest` | `RealmConfigResponse` | Get realm worldstate configuration |
+| `UpdateRealmconfigAsync` | `UpdateRealmConfigRequest` | `RealmConfigResponse` | Update realm worldstate configuration |
+| `ListRealmclocksAsync` | `ListRealmClocksRequest` | `ListRealmClocksResponse` | List active realm clocks |
+| `CleanupbyrealmAsync` | `CleanupByRealmRequest` | `CleanupByRealmResponse` | Clean up worldstate data for a deleted realm |
+| `CleanupbygameserviceAsync` | `CleanupByGameServiceRequest` | `CleanupByGameServiceResponse` | Clean up worldstate data for a deleted game service |
+
+---
+
 ## Summary
 
-- **Total services**: 53
-- **Total methods**: 827
+- **Total services**: 54
+- **Total methods**: 845
 
 ---
 

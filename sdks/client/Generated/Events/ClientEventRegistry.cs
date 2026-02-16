@@ -11,6 +11,7 @@ using BeyondImmersion.Bannou.Chat.ClientEvents;
 using BeyondImmersion.Bannou.GameSession.ClientEvents;
 using BeyondImmersion.Bannou.Matchmaking.ClientEvents;
 using BeyondImmersion.Bannou.Voice.ClientEvents;
+using BeyondImmersion.Bannou.Worldstate.ClientEvents;
 using BeyondImmersion.BannouService.ClientEvents;
 
 namespace BeyondImmersion.Bannou.Client.Events;
@@ -68,6 +69,7 @@ public static class ClientEventRegistry
         { typeof(VoiceRoomClosedEvent), "voice.room_closed" },
         { typeof(VoiceRoomStateEvent), "voice.room_state" },
         { typeof(VoiceTierUpgradeEvent), "voice.tier_upgrade" },
+        { typeof(WorldstateTimeSyncEvent), "worldstate.time_sync" },
     };
 
     private static readonly Dictionary<string, Type> EventNameToType = new()
@@ -117,6 +119,7 @@ public static class ClientEventRegistry
         { "voice.room_closed", typeof(VoiceRoomClosedEvent) },
         { "voice.room_state", typeof(VoiceRoomStateEvent) },
         { "voice.tier_upgrade", typeof(VoiceTierUpgradeEvent) },
+        { "worldstate.time_sync", typeof(WorldstateTimeSyncEvent) },
     };
 
     /// <summary>

@@ -1,11 +1,10 @@
 # Worldstate Plugin Deep Dive
 
 > **Plugin**: lib-worldstate (not yet created)
-> **Schema**: `schemas/worldstate-api.yaml` (not yet created)
-> **Version**: N/A (Pre-Implementation)
-> **State Store**: worldstate-realm-clock (Redis), worldstate-calendar (MySQL), worldstate-ratio-history (MySQL) — all planned
+> **Schema**: `schemas/worldstate-api.yaml`
+> **Version**: 1.0.0
 > **Layer**: GameFoundation
-> **Status**: Aspirational — no schema, no generated code, no service implementation exists.
+> **State Stores**: worldstate-realm-clock (Redis), worldstate-calendar (MySQL), worldstate-ratio-history (MySQL)
 
 ---
 
@@ -21,35 +20,7 @@ The codebase is haunted by a clock that doesn't exist. ABML behaviors reference 
 
 ### Realm Clock
 
-Each realm has an independent clock that advances continuously based on a configurable time ratio. The clock is the single source of truth for "what time is it?" within a realm.
-
-```
-RealmClock:
-  realmId: Guid
-  gameServiceId: Guid
-  calendarTemplateCode: string         # References the calendar structure for this realm
-
-  # Current game time (computed, cached in Redis)
-  currentGameYear: int                 # Game year (0-based from realm creation)
-  currentMonthIndex: int               # 0-based index into calendar months
-  currentDayOfMonth: int               # 1-based day within month
-  currentGameHour: int                 # 0 to gameHoursPerDay-1
-  currentGameMinute: int               # 0-59 game minutes
-  currentPeriod: string                # Current day period ("dawn", "morning", etc.)
-  currentSeason: string                # Current season name from calendar
-
-  # Synchronization
-  lastAdvancedRealTime: DateTimeOffset # Real-world UTC timestamp of last clock advancement
-  lastAdvancedGameTime: long           # Total game-seconds since realm epoch at last advancement
-
-  # Configuration
-  currentTimeRatio: float              # Game-seconds per real-second (default: 24.0)
-  downtimePolicy: DowntimePolicy       # Advance (catch up) or Pause (resume from where we left off)
-
-  # Metadata
-  realmEpoch: DateTimeOffset           # Real-world timestamp when this realm's clock started
-  totalGameSecondsSinceEpoch: long     # Running total for absolute time queries
-```
+Each realm has an independent clock that advances continuously based on a configurable time ratio. The clock is the single source of truth for "what time is it?" within a realm. Clock state (current game time, synchronization timestamps, time ratio, downtime policy, epoch) is cached in Redis for hot reads and updated every `ClockTickIntervalSeconds`.
 
 **Clock advancement**: A background worker advances realm clocks every `ClockTickIntervalSeconds` (default: 5 real seconds = 120 game seconds at 24:1). On each tick:
 1. Compute elapsed real seconds since `lastAdvancedRealTime`
@@ -64,45 +35,7 @@ RealmClock:
 
 ### Calendar Template
 
-Calendars are configurable structures that define how game-seconds translate into named time units. All names are opaque strings (not enums), following the same extensibility pattern as seed type codes, collection type codes, and violation type codes.
-
-```
-CalendarTemplate:
-  templateCode: string                 # Unique identifier (e.g., "arcadia_standard", "fantasia_primal")
-  gameServiceId: Guid
-
-  # Day structure
-  gameHoursPerDay: int                 # Game hours in a day (default: 24)
-  dayPeriods:                          # Named time-of-day periods
-    - code: string                     # "dawn", "morning", "afternoon", "evening", "night"
-      startHour: int                   # Game hour this period begins (0 to gameHoursPerDay-1)
-      endHour: int                     # Game hour this period ends (exclusive, max = gameHoursPerDay)
-      isDaylight: boolean              # True if this period has sunlight. Used by ${world.time.is_day}/${world.time.is_night}.
-
-  # Month structure
-  months:                              # Ordered list of months in a year
-    - code: string                     # "frostmere", "greenleaf", "sunpeak", etc.
-      name: string                     # Display name
-      daysInMonth: int                 # Game days in this month
-      seasonCode: string               # Which season this month belongs to
-
-  # Season structure
-  seasons:                             # Ordered list of seasons in a year
-    - code: string                     # "winter", "spring", "summer", "autumn"
-      name: string                     # Display name
-      ordinal: int                     # Position in annual cycle (0-based)
-
-  # Year structure
-  daysPerYear: int                     # Computed: sum of all months' daysInMonth
-  monthsPerYear: int                   # Computed: count of months
-  seasonsPerYear: int                  # Computed: count of seasons
-
-  # Optional: era/epoch naming
-  eraLabels:                           # Named time spans (for display)
-    - code: string                     # "first_age", "era_of_strife", etc.
-      startYear: int
-      endYear: int?                    # null = ongoing
-```
+Calendars are configurable structures that define how game-seconds translate into named time units. All names are opaque strings (not enums), following the same extensibility pattern as seed type codes, collection type codes, and violation type codes. See `worldstate-api.yaml` `components/schemas` for the full schema definitions (`CalendarTemplateResponse`, `DayPeriodDefinition`, `MonthDefinition`, `SeasonDefinition`, `EraLabel`).
 
 **Key design decisions**:
 
@@ -116,15 +49,7 @@ CalendarTemplate:
 
 ### Time Ratio and History
 
-The time ratio (`currentTimeRatio`) defines how many game-seconds pass per real-second. Changes to the ratio are recorded in a history for accurate elapsed-time computation:
-
-```
-TimeRatioSegment:
-  realmId: Guid
-  segmentStartRealTime: DateTimeOffset # When this ratio became effective (real time)
-  timeRatio: float                     # Game-seconds per real-second
-  reason: TimeRatioChangeReason        # Initial, AdminAdjustment, Event, Pause, Resume
-```
+The time ratio (`currentTimeRatio`) defines how many game-seconds pass per real-second. Changes to the ratio are recorded in a history (`TimeRatioSegment` entries with `segmentStartRealTime`, `timeRatio`, and `reason`) for accurate elapsed-time computation via piecewise integration.
 
 **Enums** (defined in `worldstate-api.yaml`, referenced via `$ref` from events and configuration):
 
@@ -132,8 +57,9 @@ TimeRatioSegment:
 |------|--------|---------|
 | `DowntimePolicy` | `Advance`, `Pause` | How to handle clock gaps after service downtime |
 | `TimeRatioChangeReason` | `Initial`, `AdminAdjustment`, `Event`, `Pause`, `Resume` | Why the time ratio was changed |
+| `TimeSyncReason` | `PeriodChanged`, `RatioChanged`, `AdminAdvance`, `TriggerSync` | Why a time sync was published to a client |
 
-**Computing elapsed game-time between two real timestamps**:
+**Elapsed game-time computation**: `GetElapsedGameTime` integrates over ratio history segments between two real timestamps:
 
 ```
 GetElapsedGameTime(realmId, fromRealTime, toRealTime):
@@ -147,7 +73,7 @@ GetElapsedGameTime(realmId, fromRealTime, toRealTime):
 
 This handles ratio changes, pauses (ratio = 0.0 during maintenance), and acceleration events cleanly. Services performing lazy evaluation (Currency autogain, Seed decay, Workshop production) call this API instead of computing real-time elapsed directly.
 
-**Pause as ratio 0**: Setting `timeRatio = 0.0` freezes a realm's clock. This is recorded as a segment in the history with reason `Pause`. When resumed, a new segment with the original ratio starts (reason `Resume`). `GetElapsedGameTime` correctly returns 0 game-seconds for the paused period.
+**Pause as ratio 0**: Setting `timeRatio = 0.0` freezes a realm's clock. This is recorded as a segment with reason `Pause`. When resumed, a new segment with the original ratio starts (reason `Resume`). `GetElapsedGameTime` correctly returns 0 game-seconds for the paused period.
 
 **The default Arcadia time scale** (configurable per realm, per game):
 
@@ -178,47 +104,9 @@ When the clock crosses a named boundary (new hour, new period, new day, new seas
 | `worldstate.season-changed` | ~3 real days | Trade route activation, agricultural cycles, loot table rotation |
 | `worldstate.year-changed` | ~12 real days | Annual festivals, aging, generational checks |
 
-### GameTimeSnapshot (Reusable Schema Component)
+All boundary events include a full `GameTimeSnapshot` (see `worldstate-api.yaml`). Day/month/year events include a `*Crossed` count field for catch-up batch processing. Day events include an `isCatchUp` flag.
 
-Defined once in `worldstate-api.yaml` under `components/schemas` and referenced via `$ref` from all event schemas and response models that carry game time data.
-
-```
-GameTimeSnapshot:
-  realmId: Guid
-  gameServiceId: Guid
-  year: int                            # Current game year (0-based from realm epoch)
-  monthIndex: int                      # 0-based index into calendar months
-  monthCode: string                    # Month code from calendar template (e.g., "greenleaf")
-  dayOfMonth: int                      # 1-based day within current month
-  dayOfYear: int                       # 1-based day within current year
-  hour: int                            # Current game hour (0 to gameHoursPerDay-1)
-  minute: int                          # Current game minute (0-59)
-  period: string                       # Current day period code from calendar (e.g., "dawn")
-  isDaylight: bool                     # True if current period's isDaylight flag is set in the calendar template
-  season: string                       # Current season code from calendar (e.g., "spring")
-  seasonIndex: int                     # Current season ordinal (0-based)
-  seasonProgress: float                # 0.0-1.0 progress through the current season. Computed from day-of-season / days-in-season using the calendar template's season-to-month mappings. Useful for smooth interpolation (temperature curves, resource availability) rather than discrete season boundaries. Already exposed as ${world.season_progress} in the variable provider; including it in the snapshot avoids consumers recomputing it.
-  totalGameSecondsSinceEpoch: long     # Absolute game-seconds since realm epoch
-  timeRatio: float                     # Current game-seconds per real-second
-  timestamp: DateTimeOffset            # Real-world UTC timestamp of this snapshot
-```
-
-**Catch-up event batching**: When the service starts after downtime with `Advance` policy, potentially many boundaries were crossed. Rather than publishing hundreds of individual events, the service publishes **summary events** with the number of boundaries crossed:
-
-```
-WorldstateDayChangedEvent:
-  realmId: Guid
-  gameServiceId: Guid
-  previousDay: int
-  currentDay: int
-  daysCrossed: int                     # 1 for normal, >1 for catch-up
-  currentGameTime: GameTimeSnapshot    # Full snapshot for convenience
-  isCatchUp: bool                      # True if this was a post-downtime catch-up
-```
-
-Services receiving catch-up events with `daysCrossed > 1` can process the time gap in bulk rather than iterating per-day.
-
-**Catch-up event granularity**: During catch-up, `hour-changed` events are **skipped entirely**. If 24 game-days were missed, that's 576 hour boundaries -- publishing those is pure noise that consumers don't need and can't meaningfully process retroactively. Only coarser boundaries are published during catch-up: `period-changed` (summary only, no per-period enumeration), `day-changed`, `month-changed`, `season-changed`, `year-changed`. The `isCatchUp: true` flag signals consumers that fine-grained boundaries were elided. Services needing exact elapsed time should use `GetElapsedGameTime` instead of counting boundary events.
+**Catch-up event batching**: During catch-up after downtime with `Advance` policy, `hour-changed` events are **skipped entirely** (too noisy to process retroactively). Only coarser boundaries are published. The `isCatchUp: true` flag signals consumers that fine-grained boundaries were elided. Services needing exact elapsed time should use `GetElapsedGameTime` instead of counting boundary events.
 
 ---
 
@@ -268,19 +156,19 @@ None. Worldstate is a pure temporal authority with no optional dependencies. All
 | Dependent | Relationship |
 |-----------|-------------|
 | lib-realm (L2) | Realm optionally calls `IWorldstateClient.InitializeRealmClockAsync()` after creating a new realm, controlled by `AutoInitializeWorldstateClock` configuration (default: false). When enabled, Realm passes the new realmId and its configured `DefaultCalendarTemplateCode` to worldstate. If the call fails, Realm logs a warning but does not fail realm creation (the clock can be initialized manually later). This is the correct pattern per IMPLEMENTATION TENETS: same-layer direct API call instead of inverted event subscription. Requires adding `IWorldstateClient` as a hard dependency and two new config properties (`AutoInitializeWorldstateClock`, `DefaultCalendarTemplateCode`) to `realm-configuration.yaml`. |
-| lib-actor (L2) | Actor discovers `WorldProviderFactory` via `IEnumerable<IVariableProviderFactory>` DI injection; creates `WorldProvider` instances per entity for ABML behavior execution (`${world.*}` variables). The Actor runtime always provides `realmId` directly in the `CreateAsync` call (every actor belongs to a realm), so the factory simply reads the realm clock from `IRealmClockCache` — no service calls required. |
+| lib-actor (L2) | Actor discovers `WorldProviderFactory` via `IEnumerable<IVariableProviderFactory>` DI injection; creates `WorldProvider` instances per entity for ABML behavior execution (`${world.*}` variables). The Actor runtime always provides `realmId` directly in the `CreateAsync` call (every actor belongs to a realm), so the factory simply reads the realm clock from `IRealmClockCache` -- no service calls required. |
 | lib-currency (L2, **required migration**) | Currency autogain worker MUST use `GetElapsedGameTime` for game-time-based passive income. Real-time autogain under-credits by the time ratio factor (24x at default). Requires `AutogainTimeSource` config property (default: `GameTime`). Both `Lazy` and `Task` autogain modes need this transition. The NPC-driven economy requires game-time parity. |
 | lib-seed (L2, **required migration**) | Seed decay worker MUST use `GetElapsedGameTime` for game-time-based growth decay. Real-time decay is 24x slower than intended per game-day. Requires `DecayTimeSource` config property (default: `GameTime`). Seeds representing guardian spirits, dungeon cores, and faction growth all evolve in simulated world time. |
-| lib-character-lifecycle (L4) | Subscribes to `worldstate.year-changed` for aging checks, generational milestone evaluation (turning boundaries, saeculum transitions), and death processing triggers. At 24:1 ratio, `year-changed` fires every ~12 real days -- appropriate cadence for lifecycle events that operate on year boundaries. Marriage eligibility, fertility windows, and natural death probability are all year-gated. |
-| lib-character-encounter (L4, **migration candidate**) | `MemoryDecaySchedulerService` currently uses `DateTimeOffset.UtcNow.ToUnixTimeSeconds()` for memory decay timing. Since memory decay is a narrative concept (how quickly NPCs forget encounters), it arguably should use game-time, not real-time. At 24:1, real-time decay is 24x slower than intended per game-day. Parallels the Currency autogain and Seed decay migrations. Requires `DecayTimeSource` config property (default: `GameTime`). |
+| lib-transit (L2) | Hard dependency on `IWorldstateClient` for journey ETA computation via `GetElapsedGameTime`, travel time calculation from distance/speed into game-hours. `SeasonalConnectionWorker` subscribes to `worldstate.season-changed` for automatic seasonal connection open/close. Validates `seasonalAvailability` keys against the realm's Worldstate calendar season codes on connection creation. |
+| lib-character-lifecycle (L4) | Subscribes to `worldstate.year-changed` for aging checks, generational milestone evaluation (turning boundaries, saeculum transitions), and death processing triggers. At 24:1 ratio, `year-changed` fires every ~12 real days -- appropriate cadence for lifecycle events that operate on year boundaries. |
+| lib-character-encounter (L4, **migration candidate**) | `MemoryDecaySchedulerService` currently uses real-time for memory decay. Since memory decay is a narrative concept, it should use game-time. Requires `DecayTimeSource` config property (default: `GameTime`). |
 | lib-workshop (L4, planned) | Uses `GetElapsedGameTime` for computing production output over game-time intervals. Subscribes to boundary events for materialization triggers. |
 | lib-craft (L4, planned) | Uses game-time for recipe step `durationSeconds` timing instead of real-time. |
 | lib-storyline (L4) | Evaluates `TimeOfDay` trigger conditions against worldstate to determine scenario availability. |
 | lib-puppetmaster (L4) | Regional watchers query worldstate for seasonal context when selecting behavior documents. |
-| lib-market (L4, future) | Can use game-time for price history bucketing instead of "server time, not game time" (current quirk). |
-| lib-transit (L2) | Hard dependency on `IWorldstateClient` for journey ETA computation via `GetElapsedGameTime`, travel time calculation from distance/speed into game-hours. `SeasonalConnectionWorker` subscribes to `worldstate.season-changed` for automatic seasonal connection open/close. Validates `seasonalAvailability` keys against the realm's Worldstate calendar season codes on connection creation. |
-| lib-environment (L4) | Hard dependency on `IWorldstateClient` for all environmental condition computation — temperature curves, weather resolution, and resource availability all require current game time, season, and season progress. Subscribes to `worldstate.period-changed` (condition refresh), `worldstate.day-changed` (cache invalidation), and `worldstate.season-changed` (resource availability recalculation, weather distribution invalidation). Climate templates reference Worldstate calendar season codes for temperature curves and weather distributions. |
-| lib-agency (L4) | Calls `TriggerTimeSync` endpoint when a player enters a realm, providing the player's entityId and realmId. This gives the client an immediate `WorldstateTimeSyncEvent` snapshot so it can render the correct time-of-day, season, and calendar state without waiting for the next period boundary (~12 real minutes away at 24:1). |
+| lib-environment (L4) | Hard dependency on `IWorldstateClient` for environmental condition computation -- temperature curves, weather resolution, and resource availability all require current game time, season, and season progress. Subscribes to `worldstate.period-changed`, `worldstate.day-changed`, and `worldstate.season-changed` for condition refresh and cache invalidation. |
+| lib-agency (L4) | Calls `TriggerTimeSync` endpoint when a player enters a realm for immediate client time sync without waiting for the next period boundary (~12 real minutes away at 24:1). |
+| lib-market (L4, future) | Can use game-time for price history bucketing instead of server time. |
 | lib-loot (L4, future) | Seasonal loot modifiers query current season from worldstate. |
 | Any service with `inGameTime` fields | Encounter, Relationship, and future services can populate `inGameTime` from worldstate instead of caller-provided values. |
 
@@ -311,8 +199,6 @@ None. Worldstate is a pure temporal authority with no optional dependencies. All
 | `ratio:{realmId}` | `TimeRatioHistoryModel` | Ordered list of `TimeRatioSegment` entries for a realm. Used by `GetElapsedGameTime` to compute game-time across ratio changes and pauses. Append-only; old segments are never modified. |
 
 ### Distributed Locks (via `IDistributedLockProvider`)
-
-Distributed locks use `IDistributedLockProvider` (L0 infrastructure), not a separate state store. Lock keys are documented here for reference:
 
 | Lock Resource ID | Purpose |
 |-----------------|---------|
@@ -351,13 +237,11 @@ Distributed locks use `IDistributedLockProvider` (L0 infrastructure), not a sepa
 | `worldstate.calendar-template.created` | `CalendarTemplateCreatedEvent` | Calendar template seeded. Full template data. |
 | `worldstate.calendar-template.updated` | `CalendarTemplateUpdatedEvent` | Calendar template modified. Full template data + `changedFields`. Enables cross-node `CalendarTemplateCache` invalidation. |
 | `worldstate.calendar-template.deleted` | `CalendarTemplateDeletedEvent` | Calendar template deleted. Template identity + `deletedReason`. |
-| `worldstate.realm-config.created` | `RealmWorldstateConfigCreatedEvent` | Realm worldstate config created (during clock initialization). Full config data. |
-| `worldstate.realm-config.updated` | `RealmWorldstateConfigUpdatedEvent` | Realm worldstate config modified. Full config data + `changedFields`. |
-| `worldstate.realm-config.deleted` | `RealmWorldstateConfigDeletedEvent` | Realm worldstate config deleted (during cleanup). Config identity + `deletedReason`. |
+| `worldstate.realm-config.created` | `RealmConfigCreatedEvent` | Realm worldstate config created (during clock initialization). Full config data. |
+| `worldstate.realm-config.updated` | `RealmConfigUpdatedEvent` | Realm worldstate config modified. Full config data + `changedFields`. |
+| `worldstate.realm-config.deleted` | `RealmConfigDeletedEvent` | Realm worldstate config deleted (during cleanup). Config identity + `deletedReason`. |
 
-**`x-resource-mapping`**: Boundary events should include `x-resource-mapping` with `resource_type: realm` and `resource_id_field: realmId` so Puppetmaster's watch system can observe per-realm temporal transitions for regional watcher behavior selection.
-
-**`x-event-publications`**: ALL published events (boundary, administrative, and lifecycle) must be listed in `x-event-publications` in `worldstate-events.yaml` per SCHEMA-RULES, serving as the authoritative registry of what worldstate emits.
+All boundary events include `x-resource-mapping` with `resource_type: realm` and `resource_id_field: realmId` so Puppetmaster's watch system can observe per-realm temporal transitions for regional watcher behavior selection.
 
 ### Consumed Events
 
@@ -372,7 +256,7 @@ Worldstate does not subscribe to events from **other** services:
 
 ### Resource Cleanup (FOUNDATION TENETS)
 
-Worldstate registers as a cleanup callback provider via `x-references` in the API schema. When lib-resource coordinates deletion of a referenced resource, it calls the cleanup endpoints below. These are declared in `worldstate-api.yaml` via the `x-references` extension attribute.
+Worldstate registers as a cleanup callback provider via `x-references` in the API schema. When lib-resource coordinates deletion of a referenced resource, it calls the cleanup endpoints below.
 
 | Target Resource | Source Type | On Delete | Cleanup Endpoint |
 |----------------|-------------|-----------|-----------------|
@@ -387,48 +271,7 @@ Client events pushed to connected WebSocket sessions via the Entity Session Regi
 |------------|-----------|---------|
 | `worldstate.time_sync` | `WorldstateTimeSyncEvent` | Published on period-changed boundaries (~5 per game day, ~12 real minutes at 24:1), on ratio changes, on admin clock advancement, and on-demand via `TriggerTimeSync` endpoint. |
 
-**`WorldstateTimeSyncEvent` schema** (defined in `worldstate-client-events.yaml`):
-
-```
-WorldstateTimeSyncEvent (extends BaseClientEvent):
-  eventName: "worldstate.time_sync"
-
-  # Realm identity
-  realmId: Guid                          # Realm this sync applies to
-
-  # Full GameTimeSnapshot (client needs all fields for display + interpolation)
-  year: int                              # Current game year (0-based from realm epoch)
-  monthIndex: int                        # 0-based index into calendar months
-  monthCode: string                      # Month code from calendar template (e.g., "greenleaf")
-  dayOfMonth: int                        # 1-based day within current month
-  dayOfYear: int                         # 1-based day within current year
-  hour: int                              # Current game hour (0 to gameHoursPerDay-1)
-  minute: int                            # Current game minute (0-59)
-  period: string                         # Current day period code (e.g., "dawn", "morning")
-  isDaylight: bool                       # Whether current period has sunlight (from calendar template)
-  season: string                         # Current season code (e.g., "spring")
-  seasonIndex: int                       # Season ordinal (0-based)
-  seasonProgress: float                  # 0.0-1.0 progress through current season
-  totalGameSecondsSinceEpoch: long       # Absolute game-seconds since realm epoch
-  timeRatio: float                       # Current game-seconds per real-second
-
-  # Transition context
-  previousPeriod: string?                # Period before transition (null on InitialSync/RatioChanged/AdminAdvance)
-  syncReason: TimeSyncReason             # Why this sync was published
-```
-
-**`TimeSyncReason` enum** (defined in `worldstate-api.yaml`, referenced via `$ref`):
-
-| Value | When Published | Client Behavior |
-|-------|---------------|-----------------|
-| `PeriodChanged` | Clock worker crosses a day-period boundary | Smooth transition (e.g., dawn→morning = sunrise complete) |
-| `RatioChanged` | `SetTimeRatio` changes the time ratio | Update interpolation rate immediately |
-| `AdminAdvance` | `AdvanceClock` manually advances the clock | Snap to new time (no transition) |
-| `TriggerSync` | `TriggerTimeSync` endpoint called (by Agency on realm entry) | Snap to current time (initial sync for this client) |
-
-**Client-side interpolation**: Between syncs, the client advances its local clock: `localGameSeconds += realDelta * timeRatio`. The `timestamp` field (inherited from `BaseClientEvent`) provides the real-world UTC reference point for drift correction. The sync fires often enough (~12 real minutes) that accumulated drift is negligible.
-
-**Why full snapshot, not a subset**: The event fires ~5 times per game day. Even at 100 bytes per event, that's ~500 bytes/day. Including all fields avoids the client needing a separate `GetCalendar` call to derive `monthCode`, `season`, or `isDaylight` from indices — the snapshot is self-contained.
+The `WorldstateTimeSyncEvent` (defined in `worldstate-client-events.yaml`) includes a full game time snapshot (all `GameTimeSnapshot` fields inlined), `previousPeriod` (nullable), and `syncReason` (`TimeSyncReason` enum). Between syncs, the client advances its local clock: `localGameSeconds += realDelta * timeRatio`. The `timestamp` field (inherited from `BaseClientEvent`) provides the reference for drift correction.
 
 ---
 
@@ -446,7 +289,7 @@ WorldstateTimeSyncEvent (extends BaseClientEvent):
 | `CalendarCacheTtlMinutes` | `WORLDSTATE_CALENDAR_CACHE_TTL_MINUTES` | `60` | TTL for in-memory calendar template cache (range: 1-1440). Calendar structures change rarely. |
 | `MaxCalendarsPerGameService` | `WORLDSTATE_MAX_CALENDARS_PER_GAME_SERVICE` | `10` | Safety limit on calendar templates per game service (range: 1-100). |
 | `RatioHistoryRetentionDays` | `WORLDSTATE_RATIO_HISTORY_RETENTION_DAYS` | `90` | Days of ratio history to retain. Older segments are compacted (merged into single segments). Range: 7-365. |
-| `DefaultCalendarTemplateCode` | `WORLDSTATE_DEFAULT_CALENDAR_TEMPLATE_CODE` | *(nullable)* | Default calendar template code used as fallback when `InitializeRealmClock` is called without specifying a template. Null = no default (caller must specify). When set, `InitializeRealmClock` with null `calendarTemplateCode` falls back to this value. Declared `nullable: true` with no default per IMPLEMENTATION TENETS (no sentinel values). |
+| `DefaultCalendarTemplateCode` | `WORLDSTATE_DEFAULT_CALENDAR_TEMPLATE_CODE` | *(nullable)* | Default calendar template code used as fallback when `InitializeRealmClock` is called without specifying a template. Null = no default (caller must specify). |
 | `DistributedLockTimeoutSeconds` | `WORLDSTATE_DISTRIBUTED_LOCK_TIMEOUT_SECONDS` | `10` | Timeout for distributed lock acquisition (range: 5-60). |
 
 ---
@@ -484,54 +327,55 @@ WorldstateTimeSyncEvent (extends BaseClientEvent):
 
 **Total: 18 endpoints** (4 clock queries + 1 client sync + 3 clock admin + 5 calendar management + 3 realm configuration + 2 cleanup)
 
-### Clock Queries (4 endpoints) — `x-permissions: [{ role: user }]`
+### Clock Queries (4 endpoints) -- `x-permissions: [{ role: user }]`
 
-- **GetRealmTime** (`/worldstate/clock/get-realm-time`): Returns full `GameTimeSnapshot` for a realm: year, month, day, hour, minute, period, season, total game-seconds since epoch, current time ratio. Reads from Redis cache (hot path). If cache is empty (first call after initialization), computes from epoch + elapsed time.
+**GetRealmTime** (`/worldstate/clock/get-realm-time`): Returns full `GameTimeSnapshot` for a realm from Redis cache (hot path).
 
-- **GetRealmTimeByCode** (`/worldstate/clock/get-realm-time-by-code`): Convenience endpoint accepting realm code string instead of GUID. Resolves to realm ID via `IRealmClient`, then delegates to `GetRealmTime`.
+**GetRealmTimeByCode** (`/worldstate/clock/get-realm-time-by-code`): Convenience endpoint accepting realm code string. Resolves to realm ID via `IRealmClient`, then delegates to `GetRealmTime`.
 
-- **BatchGetRealmTimes** (`/worldstate/clock/batch-get-realm-times`): Returns `GameTimeSnapshot` for multiple realms in a single call. Used by services that operate across realms (Orchestrator, Analytics).
+**BatchGetRealmTimes** (`/worldstate/clock/batch-get-realm-times`): Returns `GameTimeSnapshot` for multiple realms in a single call (max 100).
 
-- **GetElapsedGameTime** (`/worldstate/clock/get-elapsed-game-time`): Given a realmId, `fromRealTime`, and `toRealTime`, computes the total game-seconds elapsed between those real timestamps. Integrates over the ratio history segments. Returns result as both raw game-seconds and decomposed calendar units (days, hours, minutes). Critical for lazy evaluation patterns: "how much game time passed since I last checked?"
+**GetElapsedGameTime** (`/worldstate/clock/get-elapsed-game-time`): Given a realmId, `fromRealTime`, and `toRealTime`, computes total game-seconds elapsed via piecewise integration over ratio history segments. Returns result as both raw game-seconds and decomposed calendar units (days, hours, minutes). Critical for lazy evaluation patterns.
 
-### Client Sync (1 endpoint) — `x-permissions: [{ role: user }]`
+### Client Sync (1 endpoint) -- `x-permissions: [{ role: user }]`
 
-- **TriggerTimeSync** (`/worldstate/clock/trigger-sync`): Publishes a `WorldstateTimeSyncEvent` with `syncReason: TriggerSync` to a specific entity's connected sessions. Request includes `realmId` (required) and `entityId` (required, the entity whose sessions should receive the sync — typically a character or account). Reads current realm clock from Redis cache, resolves sessions via `IEntitySessionRegistry.GetSessionsForEntityAsync("realm", realmId)` filtered to the target entity's sessions, and publishes via `IClientEventPublisher.PublishToSessionsAsync`. Returns `NotFound` if the realm has no initialized clock. Returns `Ok` with the number of sessions notified. Primary caller is Agency (L4), which triggers this when a player enters a realm so the client receives an immediate time snapshot without waiting for the next period boundary (up to ~12 real minutes away). Also useful for reconnection flows where the client needs to re-sync after a dropped connection.
+**TriggerTimeSync** (`/worldstate/clock/trigger-sync`): Publishes a `WorldstateTimeSyncEvent` with `syncReason: TriggerSync` to a specific entity's connected sessions. Takes `realmId` + `entityId`, resolves sessions via `IEntitySessionRegistry`, publishes via `IClientEventPublisher.PublishToSessionsAsync`. Returns `NotFound` if no initialized clock, `Ok` with sessions notified count. Primary caller is Agency (L4) on realm entry for immediate client time sync.
 
-### Clock Administration (3 endpoints) — `x-permissions: [{ role: developer }]`
+### Clock Administration (3 endpoints) -- `x-permissions: [{ role: developer }]`
 
-- **InitializeRealmClock** (`/worldstate/clock/initialize`): Initializes a clock for a realm. The primary path from "realm exists" to "realm has a clock." Can be called directly by admin tooling, or automatically by lib-realm when `AutoInitializeWorldstateClock` is enabled. Request includes `realmId` (required), `calendarTemplateCode` (nullable -- falls back to `DefaultCalendarTemplateCode` config if null; returns `BadRequest` if both are null), optional `epoch` (defaults to current real time), optional `startingYear` (defaults to 0), optional `timeRatio` (falls back to `DefaultTimeRatio` config), optional `downtimePolicy` (falls back to `DefaultDowntimePolicy` config). Validates: realm exists, calendar template exists for the realm's game service, realm doesn't already have a clock (Conflict). Creates realm config, initial ratio history segment, and Redis clock cache entry. **Registers reference with lib-resource** (realm target, worldstate source). Publishes `realm-clock.initialized` + `RealmWorldstateConfigCreatedEvent`.
+**InitializeRealmClock** (`/worldstate/clock/initialize`): The primary path from "realm exists" to "realm has a clock." Request includes `realmId` (required), `calendarTemplateCode` (nullable, falls back to `DefaultCalendarTemplateCode` config), optional `epoch`/`startingYear`/`timeRatio`/`downtimePolicy` with config fallbacks. Validates realm exists, calendar template exists, no existing clock (Conflict). Registers reference with lib-resource (realm target). Publishes `WorldstateRealmClockInitializedEvent` + `RealmConfigCreatedEvent`.
 
-- **SetTimeRatio** (`/worldstate/clock/set-ratio`): Changes the time ratio for a realm. Materializes current clock state (flush to latest game time), records new ratio segment in history (with `TimeRatioChangeReason` enum), updates the realm clock. Publishes `worldstate.ratio-changed`. Setting ratio to 0.0 pauses the clock.
+**SetTimeRatio** (`/worldstate/clock/set-ratio`): Materializes current clock state, records new ratio segment in history with `TimeRatioChangeReason`, updates realm clock. Publishes `worldstate.ratio-changed` + `WorldstateTimeSyncEvent`. Setting ratio to 0.0 pauses the clock.
 
-- **AdvanceClock** (`/worldstate/clock/advance`): Manually advances a realm's clock by a specified number of game-seconds (or game-days/months/years for convenience). Used for testing and administrative fast-forward. Publishes all boundary events crossed during advancement. Respects `BoundaryEventBatchSize`.
+**AdvanceClock** (`/worldstate/clock/advance`): Manually advances a realm's clock by specified game-seconds, game-days, game-months, or game-years. Publishes all boundary events crossed. Respects `BoundaryEventBatchSize`.
 
-### Calendar Management (5 endpoints) — `x-permissions: [{ role: developer }]`
+### Calendar Management (5 endpoints) -- `x-permissions: [{ role: developer }]`
 
-- **SeedCalendar** (`/worldstate/calendar/seed`): Creates a calendar template. Validates: game service exists, template code is unique within game service, day periods cover `[0, gameHoursPerDay)` without gaps or overlaps (NOT hardcoded 24 -- a game with 20-hour days must have periods summing to 20), month season codes reference defined seasons, days-per-year sum matches month day counts. Enforces `MaxCalendarsPerGameService`. **Registers reference with lib-resource** (game-service target, worldstate source). Publishes `CalendarTemplateCreatedEvent`.
+**SeedCalendar** (`/worldstate/calendar/seed`): Creates a calendar template. Validates game service exists, template code unique within game service, day periods cover `[0, gameHoursPerDay)` without gaps or overlaps, month season codes reference defined seasons, days-per-year sum matches month day counts. Enforces `MaxCalendarsPerGameService`. Registers reference with lib-resource (game-service target). Publishes `CalendarTemplateCreatedEvent`.
 
-- **GetCalendar** (`/worldstate/calendar/get`): Returns a calendar template by game service ID + template code.
+**GetCalendar** (`/worldstate/calendar/get`): Returns a calendar template by game service ID + template code.
 
-- **ListCalendars** (`/worldstate/calendar/list`): Lists all calendar templates for a game service.
+**ListCalendars** (`/worldstate/calendar/list`): Lists all calendar templates for a game service.
 
-- **UpdateCalendar** (`/worldstate/calendar/update`): Acquires distributed lock. Partial update (only non-null fields applied). Validates structural consistency (same rules as seed, including `gameHoursPerDay`-relative period validation). Invalidates local calendar cache; other nodes receive invalidation via `CalendarTemplateUpdatedEvent` subscription. **Cannot change**: template code, game service ID (identity-level). Active realm clocks referencing this template will use the updated structure starting next tick. Publishes `CalendarTemplateUpdatedEvent`.
+**UpdateCalendar** (`/worldstate/calendar/update`): Acquires distributed lock. Partial update (only non-null fields applied). Validates structural consistency. Cannot change template code or game service ID. Invalidates local cache; other nodes invalidated via `CalendarTemplateUpdatedEvent` subscription. Publishes `CalendarTemplateUpdatedEvent`.
 
-- **DeleteCalendar** (`/worldstate/calendar/delete`): Deletes a calendar template. Fails with `Conflict` if any active realm clocks reference this template. Acquires distributed lock. **Unregisters reference with lib-resource** (game-service target). Publishes `CalendarTemplateDeletedEvent`.
+**DeleteCalendar** (`/worldstate/calendar/delete`): Fails with `Conflict` if active realm clocks reference this template. Acquires distributed lock. Unregisters reference with lib-resource. Publishes `CalendarTemplateDeletedEvent`.
 
-### Realm Configuration (3 endpoints) — `x-permissions: [{ role: developer }]`
+### Realm Configuration (3 endpoints) -- `x-permissions: [{ role: developer }]`
 
-- **GetRealmConfig** (`/worldstate/realm-config/get`): Returns the realm's worldstate configuration: calendar template code, current time ratio, downtime policy (`DowntimePolicy` enum), epoch, whether the clock is initialized and active. If no clock is initialized for the realm, returns `NotFound`. Used by admin dashboards and diagnostic tools.
+**GetRealmConfig** (`/worldstate/realm-config/get`): Returns realm worldstate configuration. Returns `NotFound` if no clock initialized.
 
-- **UpdateRealmConfig** (`/worldstate/realm-config/update`): Updates realm-level configuration. Acquires distributed lock. Partial update (only non-null fields applied). Supports changing: `downtimePolicy` (`DowntimePolicy` enum, safe to change at any time), `calendarTemplateCode` (validates template exists; takes effect on next clock tick -- see Quirk #4). **Cannot change via this endpoint**: time ratio (use `SetTimeRatio` which records history), epoch (immutable after initialization). Publishes `RealmWorldstateConfigUpdatedEvent`.
+**UpdateRealmConfig** (`/worldstate/realm-config/update`): Acquires distributed lock. Partial update. Supports changing `downtimePolicy` and `calendarTemplateCode` (validates template exists). Cannot change time ratio (use `SetTimeRatio`) or epoch (immutable). Publishes `RealmConfigUpdatedEvent`.
 
-- **ListRealmClocks** (`/worldstate/realm-config/list`): Lists all active realm clocks with summary info: realmId, calendarTemplateCode, currentTimeRatio, current season, current year, last advanced timestamp. Supports pagination and optional `gameServiceId` filter. Used by admin dashboards and monitoring.
+**ListRealmClocks** (`/worldstate/realm-config/list`): Lists all active realm clocks with summary info. Supports pagination and optional `gameServiceId` filter.
 
-### Cleanup (2 endpoints) — `x-permissions: []` (service-to-service only, not exposed to WebSocket clients)
+### Cleanup (2 endpoints) -- `x-permissions: []` (service-to-service only)
 
-Resource-managed cleanup via lib-resource (per FOUNDATION TENETS). These endpoints are called exclusively by lib-resource when coordinating deletion of referenced resources, declared via `x-references` in the API schema. **Worldstate does NOT subscribe to `realm.deleted` or `game-service.deleted` events for cleanup** -- lib-resource callbacks are the sole cleanup mechanism.
+Resource-managed cleanup via lib-resource (per FOUNDATION TENETS). Called exclusively by lib-resource during coordinated deletion. **Worldstate does NOT subscribe to `realm.deleted` or `game-service.deleted` events for cleanup.**
 
-- **CleanupByRealm** (`/worldstate/cleanup-by-realm`): Removes realm clock, ratio history, and realm configuration for a realm. **Unregisters reference with lib-resource** (realm target). Publishes `RealmWorldstateConfigDeletedEvent`.
-- **CleanupByGameService** (`/worldstate/cleanup-by-game-service`): Removes all calendar templates and realm configurations for a game service. **Unregisters references with lib-resource** (game-service target). Publishes `CalendarTemplateDeletedEvent` for each removed template.
+**CleanupByRealm** (`/worldstate/cleanup-by-realm`): Removes realm clock, ratio history, and realm configuration. Unregisters reference with lib-resource. Publishes `RealmConfigDeletedEvent`.
+
+**CleanupByGameService** (`/worldstate/cleanup-by-game-service`): Removes all calendar templates for a game service. Unregisters references with lib-resource. Publishes `CalendarTemplateDeletedEvent` for each removed template.
 
 ---
 
@@ -605,71 +449,61 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS). These endpoin
 
 ## Stubs & Unimplemented Features
 
-**Everything is unimplemented.** This is a pre-implementation architectural specification. No schema, no generated code, no service implementation exists. The following phases are planned:
+**Schemas are complete** (`worldstate-api.yaml`, `worldstate-events.yaml`, `worldstate-configuration.yaml`, `worldstate-client-events.yaml`). No generated code or service implementation exists yet. The following phases are planned:
 
-### Phase 1: Calendar Infrastructure
-- Create `worldstate-api.yaml` schema with all endpoints
-- Create `worldstate-events.yaml` schema
-- Create `worldstate-configuration.yaml` schema
-- Generate service code
+### Phase 1: Schema Generation & Calendar Infrastructure
+- Generate service code from existing schemas
 - Implement calendar template CRUD (seed, get, list, update, delete)
 - Implement calendar validation (period coverage, season-month mapping, structural consistency)
 
 ### Phase 2: Realm Clock Core
-- Implement realm clock initialization (explicit via `InitializeRealmClock` endpoint with nullable calendarTemplateCode + config fallback)
-- Implement lib-resource reference registration in `InitializeRealmClock` (realm target)
+- Implement realm clock initialization with nullable calendarTemplateCode + config fallback
+- Implement lib-resource reference registration in `InitializeRealmClock`
 - Implement clock advancement background worker
 - Implement Redis cache for hot clock reads
 - Implement boundary detection and event publishing
-- Implement downtime catch-up with configurable `DowntimePolicy` enum (skip `hour-changed` during catch-up, only publish coarser boundaries)
-- Implement catch-up event batching
-- Create `worldstate-client-events.yaml` with `WorldstateTimeSyncEvent` (`worldstate.time_sync`). Full `GameTimeSnapshot` + `previousPeriod` + `TimeSyncReason` enum. Published on period-changed boundaries (~5/game day), ratio changes, admin advances, and on-demand via `TriggerTimeSync`. Routed via Entity Session Registry ([GH Issue #426](https://github.com/beyond-immersion/bannou-service/issues/426)): query `IEntitySessionRegistry.GetSessionsForEntityAsync("realm", realmId)`, publish via `IClientEventPublisher.PublishToSessionsAsync`.
-- Implement `TriggerTimeSync` endpoint (`/worldstate/clock/trigger-sync`) — takes `realmId` + `entityId`, publishes `WorldstateTimeSyncEvent` with `syncReason: TriggerSync` to the entity's connected sessions. Called by Agency (L4) on realm entry for immediate client time sync.
+- Implement downtime catch-up (skip `hour-changed` during catch-up, batch coarser boundaries)
+- Implement `WorldstateTimeSyncEvent` publishing on period-changed boundaries, ratio changes, admin advances
+- Implement `TriggerTimeSync` endpoint for on-demand client sync
 
 ### Phase 3: Time Ratio & Elapsed Time
 - Implement ratio history storage and management
-- Implement `SetTimeRatio` with history recording (`TimeRatioChangeReason` enum)
-- Implement `GetElapsedGameTime` with piecewise integration over ratio segments
+- Implement `SetTimeRatio` with history recording
+- Implement `GetElapsedGameTime` with piecewise integration
 - Implement ratio history retention/compaction
 - Implement pause/resume via ratio 0.0
 
 ### Phase 4: Variable Provider
-- Implement `WorldProviderFactory` and `WorldProvider` (receives `realmId` directly from Actor runtime per `IVariableProviderFactory.CreateAsync` contract — no character-to-realm resolution needed)
+- Implement `WorldProviderFactory` and `WorldProvider`
 - Implement realm clock in-memory cache (`IRealmClockCache`) with TTL
 - Integration testing with Actor runtime (verify `${world.time.period}` resolves)
 
 ### Phase 5: Administrative, Configuration & Cleanup
-- Implement `AdvanceClock` for testing/admin
-- Implement `BatchGetRealmTimes`
-- Implement `GetRealmConfig`, `UpdateRealmConfig`, `ListRealmClocks` (realm configuration management)
-- Implement resource cleanup endpoints (declared via `x-references` in API schema)
+- Implement `AdvanceClock`, `BatchGetRealmTimes`
+- Implement `GetRealmConfig`, `UpdateRealmConfig`, `ListRealmClocks`
+- Implement resource cleanup endpoints
 - Integration testing with other L2 services
 
 ### Phase 6: Cross-Service Integration
 - Add `IWorldstateClient` hard dependency and `AutoInitializeWorldstateClock` + `DefaultCalendarTemplateCode` config to lib-realm
-- Add `worldstate` to SERVICE-HIERARCHY.md L2 Quick Reference table and GENERATED-SERVICE-DETAILS.md
-- Update ABML example behavior files to fix incorrect `${world.weather.*}` and `${world.patrol_routes[...]}` namespace references (in `examples/behaviors/shared/humanoid-base.abml.yml` and `examples/behaviors/guard-patrol.abml.yml`)
-- Verify correct `${world.time.hour}` references in dialogue files (`examples/dialogue/guard/challenge.yml`, `examples/dialogue/guard/question_suspicious.yml`, `examples/dialogue/merchant/state_price.yml`, `examples/dialogue/merchant/greet_customer.yml`) and `docs/guides/CHARACTER-COMMUNICATION.md` resolve properly with the implemented provider
+- Update ABML example behavior files to fix incorrect `${world.weather.*}` and `${world.patrol_routes[...]}` namespace references
+- Verify correct `${world.time.hour}` references in dialogue files resolve properly with the implemented provider
 
 ---
 
 ## Potential Extensions
 
-1. **Location-specific time zones**: Locations within a realm could have time offsets (eastern regions experience dawn before western regions). The calendar template could define optional time zone offsets per location or location subtree. Complex but adds geographic realism.
+1. **Location-specific time zones**: Locations within a realm could have time offsets (eastern regions experience dawn before western regions). The calendar template could define optional time zone offsets per location or location subtree.
 
-2. **Magical time dilation zones**: Locations where time flows differently (a fairy realm where 1 game hour = 10 game hours, or a cursed zone where time is frozen). This would require per-location time ratio overrides that the variable provider checks when creating a `WorldProvider` for a character at that location. Connects to the `ITemporalManager` interface already defined in `bannou-service/Behavior/` for cinematic time dilation.
+2. **Magical time dilation zones**: Locations where time flows differently (a fairy realm where 1 game hour = 10 game hours, or a cursed zone where time is frozen). Connects to the `ITemporalManager` interface already defined in `bannou-service/Behavior/` for cinematic time dilation.
 
-3. **Calendar events/holidays**: Named dates in the calendar that repeat annually (harvest festival on Greenleaf 15, winter solstice on Frostmere 1). Publishable as events when the date is reached. Games could schedule content around these dates.
+3. **Calendar events/holidays**: Named dates in the calendar that repeat annually (harvest festival on Greenleaf 15, winter solstice on Frostmere 1). Publishable as events when the date is reached.
 
-4. **Lunar cycles / celestial events**: Additional cyclical phenomena beyond seasons (moon phases, eclipses, celestial alignments). Configurable as additional cycles in the calendar template with their own variable namespace (`${world.moon.phase}`). Affects magic systems, werewolves, tides.
+4. **Lunar cycles / celestial events**: Additional cyclical phenomena beyond seasons (moon phases, eclipses, celestial alignments). Configurable as additional cycles with their own variable namespace (`${world.moon.phase}`).
 
-5. **Time-dependent resource availability**: While ecology is an L4 concern, worldstate could publish a standardized `${world.resource_season}` variable that represents the general abundance level per season (lean, moderate, abundant, harvest). L4 services use this as a baseline modifier.
+5. **Historical time queries**: "What season was it on game-year 47, month 3?" Useful for Storyline's retrospective narrative generation. Pure calendar math, no state required.
 
-6. **Historical time queries**: "What season was it on game-year 47, month 3?" Useful for Storyline's retrospective narrative generation and Character-History's temporal context. Pure calendar math, no state required.
-
-7. ~~**Client events for time display**~~: Moved to Phase 2. `WorldstateTimeSyncEvent` with full `GameTimeSnapshot`, `TimeSyncReason` enum (`PeriodChanged`, `RatioChanged`, `AdminAdvance`, `TriggerSync`), and `TriggerTimeSync` endpoint for on-demand sync (called by Agency on realm entry). Routed via Entity Session Registry ([GH Issue #426](https://github.com/beyond-immersion/bannou-service/issues/426)).
-
-8. **Variable-rate time**: Time ratio that changes based on player population. When no players are in a realm, time accelerates (e.g., 100:1) to advance the simulation faster. When players are present, it returns to normal (24:1). This enables "the world continued while you were away" to be more dramatic for realms with intermittent activity.
+6. **Variable-rate time**: Time ratio that changes based on player population. When no players are in a realm, time accelerates to advance the simulation faster.
 
 ---
 
@@ -678,11 +512,11 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS). These endpoin
 Implements `IVariableProviderFactory` (via `WorldProviderFactory`) providing the following variables to Actor (L2) via the Variable Provider Factory pattern. Loads from the in-memory realm clock cache (`IRealmClockCache`).
 
 **Provider initialization**: When `CreateAsync(characterId, realmId, locationId, ct)` is called, the factory:
-1. Uses the `realmId` parameter directly (always provided by the Actor runtime — every actor belongs to a realm)
+1. Uses the `realmId` parameter directly (always provided by the Actor runtime -- every actor belongs to a realm)
 2. Reads the realm clock from `IRealmClockCache` (TTL-based, avoids Redis per-resolution)
 3. Returns a `WorldProvider` populated with the current game time snapshot
 
-Note: `characterId` and `locationId` are ignored — worldstate is realm-scoped, not entity-scoped.
+Note: `characterId` and `locationId` are ignored -- worldstate is realm-scoped, not entity-scoped.
 
 ### Time Variables
 
@@ -692,7 +526,7 @@ Note: `characterId` and `locationId` are ignored — worldstate is realm-scoped,
 | `${world.time.minute}` | int | Current game minute (0-59) |
 | `${world.time.period}` | string | Current day period code (e.g., "dawn", "morning", "afternoon", "evening", "night") |
 | `${world.time.is_day}` | bool | True when the current day period's `isDaylight` flag is true in the calendar template |
-| `${world.time.is_night}` | bool | Inverse of `is_day` — true when the current day period's `isDaylight` flag is false |
+| `${world.time.is_night}` | bool | Inverse of `is_day` -- true when the current day period's `isDaylight` flag is false |
 
 ### Calendar Variables
 
@@ -801,32 +635,28 @@ flows:
 
 4. **Variable provider returns snapshot, not live values**: The `WorldProvider` created for an actor captures a snapshot of the realm clock at creation time. If the actor's tick runs for more than `ClockCacheTtlSeconds`, the time data could be slightly stale. This is acceptable -- NPC decisions don't require sub-second time accuracy.
 
-5. **Calendar changes affect running clocks immediately**: Updating a calendar template (e.g., adding a month, changing season assignments) takes effect on the next clock tick. Running realm clocks don't "notice" the change until they're advanced. This could cause a month boundary to be missed or a season to change early if the calendar is restructured while the clock is running. Calendar changes on active realms should be done during maintenance windows.
+5. **Calendar changes affect running clocks immediately**: Updating a calendar template takes effect on the next clock tick. Running realm clocks don't "notice" the change until they're advanced. Calendar changes on active realms should be done during maintenance windows.
 
-6. **Catch-up boundary events are batched, not individual**: After downtime with `Advance` policy, if 48 game-hours passed, the service does NOT publish 48 individual `hour-changed` events. It publishes up to `BoundaryEventBatchSize` events per tick, with catch-up metadata. Consumers must handle `daysCrossed > 1` (and similar) in catch-up events.
+6. **Catch-up boundary events are batched, not individual**: After downtime with `Advance` policy, the service publishes up to `BoundaryEventBatchSize` events per tick with catch-up metadata. Consumers must handle `daysCrossed > 1` (and similar) in catch-up events.
 
-7. **Ratio of 0.0 is a valid pause**: Setting a realm's time ratio to 0.0 freezes its clock. `GetElapsedGameTime` returns 0 game-seconds for any real-time range that falls within a 0.0-ratio segment. This is the canonical way to pause a realm's temporal progression.
+7. **Ratio of 0.0 is a valid pause**: Setting a realm's time ratio to 0.0 freezes its clock. `GetElapsedGameTime` returns 0 game-seconds for any real-time range that falls within a 0.0-ratio segment.
 
 ### Design Considerations (Requires Planning)
 
-1. **Multi-node clock advancement**: In a multi-node deployment, the background worker runs on every node but only one should advance a given realm's clock (distributed lock ensures this). If the lock-holding node dies mid-tick, the lock TTL must expire before another node can advance. The gap between ticks is bounded by `ClockTickIntervalSeconds` + lock TTL. Need to ensure this gap doesn't cause noticeable time stutter.
+1. **Multi-node clock advancement**: The background worker runs on every node but only one should advance a given realm's clock (distributed lock ensures this). If the lock-holding node dies mid-tick, the lock TTL must expire before another node can advance. Need to ensure the gap doesn't cause noticeable time stutter.
 
-2. **Game-time in existing schemas**: Encounter's `inGameTime` and Relationship's `inGameTimestamp` fields are currently caller-provided. Should these services auto-populate from worldstate, or should callers continue to provide them? Auto-population requires those L2 services to depend on worldstate (also L2, same layer -- allowed). The migration path needs consideration.
+2. **Game-time in existing schemas**: Encounter's `inGameTime` and Relationship's `inGameTimestamp` fields are currently caller-provided. Should these services auto-populate from worldstate? Auto-population requires those L2 services to depend on worldstate (same layer -- allowed). The migration path needs consideration.
 
-3. **Currency/Seed migration to game-time**: The Currency autogain worker and Seed decay worker currently use real-time exclusively. Adding optional game-time support requires a configuration flag per service and careful handling of the transition (existing data uses real-time timestamps; switching mid-stream requires conversion). Both workers need a "time source" abstraction that can be backed by either `DateTimeOffset.UtcNow` differences or `GetElapsedGameTime`.
+3. **Currency/Seed migration to game-time**: Adding optional game-time support requires a configuration flag per service and careful handling of the transition (existing data uses real-time timestamps; switching mid-stream requires conversion).
 
-4. **Ratio history compaction**: Over months of operation, the ratio history can accumulate many segments (especially if admin frequently adjusts ratios for events). The `RatioHistoryRetentionDays` config enables compaction, but the compaction algorithm needs careful design to maintain accuracy for `GetElapsedGameTime` queries that span compacted ranges. Adjacent same-ratio segments can be trivially merged. For different-ratio segments, use **time-weighted averaging**: the compacted segment's ratio must be `totalGameSeconds / totalRealSeconds` across the merged range (not a simple average of ratios), preserving exact `GetElapsedGameTime` results for any query spanning the compacted period.
+4. **Ratio history compaction**: The `RatioHistoryRetentionDays` config enables compaction. For different-ratio segments, use **time-weighted averaging**: the compacted segment's ratio must be `totalGameSeconds / totalRealSeconds` across the merged range (not a simple average of ratios), preserving exact `GetElapsedGameTime` results.
 
-5. **Calendar complexity vs. performance**: Rich calendars with many months, variable-length months, and multiple seasons require non-trivial math on every clock tick. The `IWorldstateTimeCalculator` should precompute lookup tables from the calendar template (cumulative days per month, season boundaries) and cache them, rather than iterating the calendar structure on every advancement.
+5. **Calendar complexity vs. performance**: The `IWorldstateTimeCalculator` should precompute lookup tables from the calendar template (cumulative days per month, season boundaries) and cache them, rather than iterating the calendar structure on every advancement.
 
-6. **Background worker scalability**: The clock worker iterates over all active realm clocks every `ClockTickIntervalSeconds`. Each realm requires a distributed lock acquisition, Redis read/write, and potential event publishing. With many realms (100+), a single worker iteration may not complete within the tick interval. Options: (a) parallel realm advancement with configurable concurrency limits, (b) partitioning realms across nodes via a `SupportedRealms` configuration (similar to GameSession's `SupportedGameServices` pattern), (c) staggered advancement where realms are distributed across tick windows to smooth load. The partitioning approach (b) also reduces lock contention in multi-node deployments.
-
-7. **Multi-node calendar cache invalidation**: `CalendarTemplateCache` uses a 60-minute TTL (`CalendarCacheTtlMinutes`). After a calendar update on Node A, Node B serves stale data until its cache TTL expires. The `CalendarTemplateUpdatedEvent` lifecycle event (added above) enables event-based cache invalidation across nodes -- worldstate can subscribe to its own lifecycle events via `IEventConsumer` to invalidate the local `ConcurrentDictionary` on all nodes immediately. This should be implemented alongside the lifecycle events in Phase 1.
-
-8. **SERVICE-HIERARCHY.md integration**: When worldstate is implemented, it must be added to the L2 Quick Reference table in SERVICE-HIERARCHY.md (alongside realm, character, species, etc.) and to GENERATED-SERVICE-DETAILS.md. The `x-service-layer: GameFoundation` declaration in `worldstate-api.yaml` handles the generated `[BannouService]` attribute and plugin load ordering.
+6. **Background worker scalability**: With many realms (100+), a single worker iteration may not complete within the tick interval. Options: (a) parallel realm advancement with configurable concurrency, (b) partitioning realms across nodes via `SupportedRealms` configuration (similar to GameSession's `SupportedGameServices` pattern), (c) staggered advancement.
 
 ---
 
 ## Work Tracking
 
-*No active work items. Plugin is in pre-implementation phase. Calendar infrastructure (Phase 1) is self-contained. Realm clock core (Phase 2) depends on Phase 1. Variable provider (Phase 4) depends on Phase 2 and can be integration-tested with Actor runtime. Phase 6 (cross-service integration) requires coordination with lib-realm for `IWorldstateClient` dependency and with SERVICE-HIERARCHY.md for L2 registration.*
+*No active work items. Schemas are complete. Implementation starts with Phase 1 (schema generation and calendar infrastructure). Phase 6 (cross-service integration) requires coordination with lib-realm for `IWorldstateClient` dependency.*

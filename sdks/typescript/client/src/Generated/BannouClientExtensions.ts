@@ -63,6 +63,7 @@ import { SubscriptionProxy } from './proxies/SubscriptionProxy.js';
 import { ValidateProxy } from './proxies/ValidateProxy.js';
 import { VoiceProxy } from './proxies/VoiceProxy.js';
 import { WebsiteProxy } from './proxies/WebsiteProxy.js';
+import { WorldstateProxy } from './proxies/WorldstateProxy.js';
 
 // Symbol for private proxy cache storage
 const PROXY_CACHE = Symbol('proxyCache');
@@ -120,6 +121,7 @@ interface ProxyCache {
   validate?: ValidateProxy;
   voice?: VoiceProxy;
   website?: WebsiteProxy;
+  worldstate?: WorldstateProxy;
 }
 
 // Type for BannouClient with cache
@@ -737,6 +739,18 @@ Object.defineProperty(BannouClient.prototype, 'website', {
   enumerable: true,
 });
 
+/**
+ * Add lazy-initialized worldstate proxy property to BannouClient.
+ */
+Object.defineProperty(BannouClient.prototype, 'worldstate', {
+  get(this: BannouClientWithCache): WorldstateProxy {
+    const cache = (this[PROXY_CACHE] ??= {});
+    return (cache.worldstate ??= new WorldstateProxy(this));
+  },
+  configurable: true,
+  enumerable: true,
+});
+
 // Declaration merging to add proxy property types to BannouClient
 declare module '../BannouClient.js' {
   interface BannouClient {
@@ -944,6 +958,10 @@ declare module '../BannouClient.js' {
      * Typed proxy for Website API endpoints.
      */
     readonly website: WebsiteProxy;
+    /**
+     * Typed proxy for Worldstate API endpoints.
+     */
+    readonly worldstate: WorldstateProxy;
   }
 }
 

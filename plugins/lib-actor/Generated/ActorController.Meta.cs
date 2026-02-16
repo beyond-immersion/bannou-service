@@ -1085,6 +1085,12 @@ public partial class ActorController
                     "format": "uuid",
                     "nullable": true,
                     "description": "Optional character ID for NPC brain actors"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Realm the actor operates in. Optional on request -- when not provided and characterId is set, the service looks up the character's realm automatically. Required for non-character actors that operate in a specific realm."
                 }
             }
         }
@@ -1142,6 +1148,12 @@ public partial class ActorController
                     "format": "uuid",
                     "nullable": true,
                     "description": "Associated character ID (for NPC brains)"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Realm the actor operates in (resolved at spawn time)"
                 },
                 "startedAt": {
                     "type": "string",
@@ -1305,6 +1317,12 @@ public partial class ActorController
                     "format": "uuid",
                     "nullable": true,
                     "description": "Associated character ID (for NPC brains)"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Realm the actor operates in (resolved at spawn time)"
                 },
                 "startedAt": {
                     "type": "string",
@@ -1763,6 +1781,12 @@ public partial class ActorController
                     "nullable": true,
                     "description": "Associated character ID (for NPC brains)"
                 },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Realm the actor operates in (resolved at spawn time)"
+                },
                 "startedAt": {
                     "type": "string",
                     "format": "date-time",
@@ -1916,6 +1940,12 @@ public partial class ActorController
                     "default": 0.5,
                     "description": "How urgent this perception is (0-1)"
                 },
+                "locationId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Current location ID of the entity sending this perception. Used by ActorRunner to track the actor's current location for location-aware variable providers. Updated on each perception event that carries this field."
+                },
                 "spatialContext": {
                     "allOf": [
                         {
@@ -1923,7 +1953,7 @@ public partial class ActorController
                         }
                     ],
                     "nullable": true,
-                    "description": "Optional typed spatial context from game server's local spatial state.\nProvides structured information about terrain, nearby objects, hazards, etc.\nAlternative to using perceptionType=\"spatial\" with schema-less data.\n"
+                    "description": "Optional typed spatial context from game server's local spatial state.\nProvides structured information about terrain, nearby objects, hazards, etc.\ nAlternative to using perceptionType=\"spatial\" with schema-less data.\n"
                 }
             }
         },

@@ -1153,11 +1153,28 @@ Applied when... |
 | `VOICE_TIER_UPGRADE_ENABLED` | bool | `false` | Enable automatic tier upgrade from P2P to scaled |
 | `VOICE_TIER_UPGRADE_MIGRATION_DEADLINE_MS` | int | `30000` | Migration deadline in milliseconds when upgrading tiers |
 
+### Worldstate
+
+| Environment Variable | Type | Default | Description |
+|---------------------|------|---------|-------------|
+| `WORLDSTATE_BOUNDARY_EVENT_BATCH_SIZE` | int | `50` | Maximum boundary events published per tick. Prevents event f... |
+| `WORLDSTATE_CALENDAR_CACHE_TTL_MINUTES` | int | `60` | TTL for in-memory calendar template cache. Calendar structur... |
+| `WORLDSTATE_CLOCK_CACHE_TTL_SECONDS` | int | `10` | TTL for in-memory clock cache used by the variable provider.... |
+| `WORLDSTATE_CLOCK_TICK_INTERVAL_SECONDS` | int | `5` | Real-time seconds between clock advancement ticks. At 24:1 r... |
+| `WORLDSTATE_CLOCK_TICK_STARTUP_DELAY_SECONDS` | int | `10` | Seconds to wait after startup before first clock tick, allow... |
+| `WORLDSTATE_DEFAULT_CALENDAR_TEMPLATE_CODE` | string | **REQUIRED** | Default calendar template code used as fallback when Initial... |
+| `WORLDSTATE_DEFAULT_DOWNTIME_POLICY` | string | `Advance` | Default downtime handling policy for new realm clocks. Advan... |
+| `WORLDSTATE_DEFAULT_TIME_RATIO` | double | `24.0` | Default game-seconds per real-second for new realm clocks. 2... |
+| `WORLDSTATE_DISTRIBUTED_LOCK_TIMEOUT_SECONDS` | int | `10` | Timeout in seconds for distributed lock acquisition during c... |
+| `WORLDSTATE_MAX_CALENDARS_PER_GAME_SERVICE` | int | `10` | Safety limit on calendar templates per game service. |
+| `WORLDSTATE_MAX_CATCH_UP_GAME_DAYS` | int | `365` | Maximum game-days to advance during catch-up on startup. Pre... |
+| `WORLDSTATE_RATIO_HISTORY_RETENTION_DAYS` | int | `90` | Days of ratio history to retain. Older segments are compacte... |
+
 ## Configuration Summary
 
-- **Total properties**: 873
-- **Required (no default)**: 51
-- **Optional (has default)**: 822
+- **Total properties**: 885
+- **Required (no default)**: 52
+- **Optional (has default)**: 833
 
 ## Environment Variable Naming Convention
 

@@ -1,10 +1,10 @@
 using BeyondImmersion.BannouService.Actor;
 using BeyondImmersion.BannouService.Actor.Pool;
 using BeyondImmersion.BannouService.Actor.Runtime;
+using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
 using BeyondImmersion.BannouService.Providers;
-using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.Resource;
 using BeyondImmersion.BannouService.Services;
 using BeyondImmersion.BannouService.State;

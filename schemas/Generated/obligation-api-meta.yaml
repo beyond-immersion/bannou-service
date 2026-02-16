@@ -395,15 +395,18 @@ paths:
         ,\n                    \"items\": {\n                        \"type\": \"string\",\n                        \"minLength\"\
         : 1,\n                        \"maxLength\": 128\n                    },\n                    \"minItems\": 1,\n \
         \                   \"maxItems\": 50,\n                    \"description\": \"GOAP action tags to evaluate (e.g.,
-        [\\\"steal_food\\\", \\\"buy_food\\\", \\\"beg_for_food\\\"])\"\n                },\n                \"locationId\"\
-        : {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"\
-        nullable\": true,\n                    \"description\": \"Current location ID for context-dependent moral weighting
-        (personality enrichment only)\"\n                },\n                \"targetEntityId\": {\n                    \"\
-        type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n        \
-        \            \"description\": \"Target entity of the action for relationship-weighted costs (personality enrichment
-        only)\"\n                },\n                \"targetEntityType\": {\n                    \"type\": \"object\",\n\
-        \                    \"nullable\": true,\n                    \"description\": \"Entity type of the target\"\n   \
-        \             }\n            }\n        }\n    }\n}"
+        [\\\"steal_food\\\", \\\"buy_food\\\", \\\"beg_for_food\\\"])\"\n                },\n                \"realmId\":
+        {\n                    \"type\": \"string\",\n                    \"format\": \"uuid\",\n                    \"nullable\"\
+        : true,\n                    \"description\": \"Realm the character operates in. When provided, passed directly to
+        variable provider factories for realm-scoped data. When omitted, the service looks up the character's realm from the
+        Character service.\"\n                },\n                \"locationId\": {\n                    \"type\": \"string\"\
+        ,\n                    \"format\": \"uuid\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Current location ID for context-dependent moral weighting (personality enrichment only)\"\n                },\n\
+        \                \"targetEntityId\": {\n                    \"type\": \"string\",\n                    \"format\"\
+        : \"uuid\",\n                    \"nullable\": true,\n                    \"description\": \"Target entity of the
+        action for relationship-weighted costs (personality enrichment only)\"\n                },\n                \"targetEntityType\"\
+        : {\n                    \"type\": \"object\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Entity type of the target\"\n                }\n            }\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/EvaluateActionResponse\"\
         ,\n    \"$defs\": {\n        \"EvaluateActionResponse\": {\n            \"type\": \"object\",\n            \"description\"\
         : \"Obligation cost evaluation results for proposed actions\",\n            \"additionalProperties\": false,\n   \
@@ -1207,6 +1210,14 @@ components:
           minItems: 1
           maxItems: 50
           description: GOAP action tags to evaluate (e.g., ["steal_food", "buy_food", "beg_for_food"])
+        realmId:
+          type: string
+          format: uuid
+          nullable: true
+          description: >-
+            Realm the character operates in. When provided, passed directly to
+            variable provider factories for realm-scoped data. When omitted, the
+            service looks up the character's realm from the Character service.
         locationId:
           type: string
           format: uuid

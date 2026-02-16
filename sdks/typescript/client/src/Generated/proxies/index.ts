@@ -54,3 +54,4 @@ export { SubscriptionProxy } from './SubscriptionProxy.js';
 export { ValidateProxy } from './ValidateProxy.js';
 export { VoiceProxy } from './VoiceProxy.js';
 export { WebsiteProxy } from './WebsiteProxy.js';
+export { WorldstateProxy } from './WorldstateProxy.js';

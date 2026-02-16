@@ -62,6 +62,7 @@ using BeyondImmersion.BannouService.Subscription;
 using BeyondImmersion.BannouService.Telemetry;
 using BeyondImmersion.BannouService.Voice;
 using BeyondImmersion.BannouService.Website;
+using BeyondImmersion.BannouService.Worldstate;
 
 namespace BeyondImmersion.BannouService.ServiceClients;
 
@@ -140,6 +141,7 @@ public partial class ServiceNavigator : IServiceNavigator
     private readonly ITelemetryClient _telemetry;
     private readonly IVoiceClient _voice;
     private readonly IWebsiteClient _website;
+    private readonly IWorldstateClient _worldstate;
 
     /// <summary>
     /// Creates a new ServiceNavigator with all service client dependencies.
@@ -202,7 +204,8 @@ public partial class ServiceNavigator : IServiceNavigator
         ISubscriptionClient subscription,
         ITelemetryClient telemetry,
         IVoiceClient voice,
-        IWebsiteClient website)
+        IWebsiteClient website,
+        IWorldstateClient worldstate)
     {
         _clientEventPublisher = clientEventPublisher;
         _httpClientFactory = httpClientFactory;
@@ -262,6 +265,7 @@ public partial class ServiceNavigator : IServiceNavigator
         _telemetry = telemetry;
         _voice = voice;
         _website = website;
+        _worldstate = worldstate;
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -466,5 +470,8 @@ public partial class ServiceNavigator : IServiceNavigator
 
     /// <inheritdoc />
     public IWebsiteClient Website => _website;
+
+    /// <inheritdoc />
+    public IWorldstateClient Worldstate => _worldstate;
 
 }
