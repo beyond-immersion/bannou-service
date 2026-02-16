@@ -55,6 +55,7 @@ public class ActorRunnerTests
         string? actorId = null,
         ActorTemplateData? template = null,
         Guid? characterId = null,
+        Guid? realmId = null,
         ActorServiceConfiguration? config = null,
         object? initialState = null)
     {
@@ -123,6 +124,7 @@ public class ActorRunnerTests
             actorId ?? $"actor-{Guid.NewGuid()}",
             template ?? CreateTestTemplate(),
             characterId,
+            realmId ?? Guid.NewGuid(),
             config ?? CreateTestConfig(),
             messageBusMock.Object,
             messageSubscriberMock.Object,

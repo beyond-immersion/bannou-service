@@ -114,6 +114,7 @@ public class ActorRunnerCognitionTests
             $"actor-{Guid.NewGuid()}",
             template ?? CreateTestTemplate(),
             Guid.NewGuid(),
+            Guid.NewGuid(),
             CreateTestConfig(),
             messageBusMock.Object,
             messageSubscriberMock.Object,

@@ -23,11 +23,11 @@ public class LocationContextProviderFactoryTests
         var mockCache = new Mock<ILocationDataCache>();
         var factory = new LocationContextProviderFactory(mockCache.Object);
 
-        var provider = await factory.CreateAsync(null, CancellationToken.None);
+        var provider = await factory.CreateAsync(null, Guid.NewGuid(), null, CancellationToken.None);
 
         Assert.Same(LocationContextProvider.Empty, provider);
         mockCache.Verify(
-            c => c.GetOrLoadLocationContextAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
+            c => c.GetOrLoadLocationContextAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -45,19 +45,21 @@ public class LocationContextProviderFactoryTests
             NearbyPois: new List<string> { "TEMPLE_DISTRICT" },
             EntityCount: 15);
 
+        var realmId = Guid.NewGuid();
+        var locationId = Guid.NewGuid();
         var mockCache = new Mock<ILocationDataCache>();
-        mockCache.Setup(c => c.GetOrLoadLocationContextAsync(characterId, It.IsAny<CancellationToken>()))
+        mockCache.Setup(c => c.GetOrLoadLocationContextAsync(characterId, realmId, locationId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(contextData);
 
         var factory = new LocationContextProviderFactory(mockCache.Object);
 
-        var provider = await factory.CreateAsync(characterId, CancellationToken.None);
+        var provider = await factory.CreateAsync(characterId, realmId, locationId, CancellationToken.None);
 
         Assert.NotNull(provider);
         Assert.Equal("location", provider.Name);
         Assert.Equal("MARKET_DISTRICT", provider.GetValue(new[] { "zone" }.AsSpan()));
         mockCache.Verify(
-            c => c.GetOrLoadLocationContextAsync(characterId, It.IsAny<CancellationToken>()),
+            c => c.GetOrLoadLocationContextAsync(characterId, realmId, locationId, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -65,13 +67,14 @@ public class LocationContextProviderFactoryTests
     public async Task CreateAsync_WithEntityId_NullData_ReturnsProviderWithNullValues()
     {
         var characterId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
         var mockCache = new Mock<ILocationDataCache>();
-        mockCache.Setup(c => c.GetOrLoadLocationContextAsync(characterId, It.IsAny<CancellationToken>()))
+        mockCache.Setup(c => c.GetOrLoadLocationContextAsync(characterId, realmId, It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((LocationContextData?)null);
 
         var factory = new LocationContextProviderFactory(mockCache.Object);
 
-        var provider = await factory.CreateAsync(characterId, CancellationToken.None);
+        var provider = await factory.CreateAsync(characterId, realmId, null, CancellationToken.None);
 
         Assert.NotNull(provider);
         Assert.Equal("location", provider.Name);

@@ -104,6 +104,7 @@ public class ActorPoolNodeWorkerTests : IAsyncLifetime
                 "actor-1",
                 It.IsAny<ActorTemplateData>(),
                 It.IsAny<Guid?>(),
+                It.IsAny<Guid>(),
                 It.IsAny<object?>(),
                 It.IsAny<object?>()))
             .Returns(mockRunner.Object);
@@ -117,7 +118,8 @@ public class ActorPoolNodeWorkerTests : IAsyncLifetime
             ActorId = "actor-1",
             TemplateId = Guid.NewGuid(),
             BehaviorRef = "behavior.yaml",
-            TickIntervalMs = 100
+            TickIntervalMs = 100,
+            RealmId = Guid.NewGuid()
         };
 
         // Act
@@ -141,6 +143,7 @@ public class ActorPoolNodeWorkerTests : IAsyncLifetime
                 "actor-1",
                 It.IsAny<ActorTemplateData>(),
                 It.IsAny<Guid?>(),
+                It.IsAny<Guid>(),
                 It.IsAny<object?>(),
                 It.IsAny<object?>()))
             .Returns(mockRunner.Object);
@@ -153,7 +156,8 @@ public class ActorPoolNodeWorkerTests : IAsyncLifetime
         {
             ActorId = "actor-1",
             TemplateId = Guid.NewGuid(),
-            BehaviorRef = "behavior.yaml"
+            BehaviorRef = "behavior.yaml",
+            RealmId = Guid.NewGuid()
         };
 
         // Act
@@ -176,6 +180,7 @@ public class ActorPoolNodeWorkerTests : IAsyncLifetime
                 "actor-1",
                 It.IsAny<ActorTemplateData>(),
                 It.IsAny<Guid?>(),
+                It.IsAny<Guid>(),
                 It.IsAny<object?>(),
                 It.IsAny<object?>()))
             .Returns(mockRunner.Object);
@@ -188,7 +193,8 @@ public class ActorPoolNodeWorkerTests : IAsyncLifetime
         {
             ActorId = "actor-1",
             TemplateId = Guid.NewGuid(),
-            BehaviorRef = "behavior.yaml"
+            BehaviorRef = "behavior.yaml",
+            RealmId = Guid.NewGuid()
         };
 
         // Act
@@ -221,6 +227,7 @@ public class ActorPoolNodeWorkerTests : IAsyncLifetime
                 "actor-1",
                 It.IsAny<ActorTemplateData>(),
                 It.IsAny<Guid?>(),
+                It.IsAny<Guid>(),
                 It.IsAny<object?>(),
                 It.IsAny<object?>()))
             .Returns(mockRunner.Object);
@@ -233,7 +240,8 @@ public class ActorPoolNodeWorkerTests : IAsyncLifetime
         {
             ActorId = "actor-1",
             TemplateId = Guid.NewGuid(),
-            BehaviorRef = "behavior.yaml"
+            BehaviorRef = "behavior.yaml",
+            RealmId = Guid.NewGuid()
         };
 
         // Act
