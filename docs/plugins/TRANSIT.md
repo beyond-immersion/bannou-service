@@ -1363,6 +1363,74 @@ TransitServiceConfiguration:
 
 ---
 
+## Visual Aid
+
+### Journey State Machine
+
+```
+                    ┌─────────────┐
+                    │  preparing  │
+                    └──────┬──────┘
+                           │ /journey/depart
+                           ▼
+    ┌──────────┐    ┌─────────────┐    ┌─────────────┐
+    │abandoned │◄───│ in_transit  │───►│at_waypoint  │
+    └──────────┘    └──────┬──────┘    └──────┬──────┘
+         ▲          /abandon│  │ /interrupt     │ /advance
+         │                  │  ▼                │ (next leg)
+         │          ┌──────────────┐            │
+         ├──────────│ interrupted  │            │
+         │          └──────┬───────┘            │
+         │                 │ /resume            │
+         │                 └──►in_transit       │
+         │                                      │
+         │    /arrive (force)                   │ /advance
+         │    ┌─────────────┐                   │ (final leg)
+         └────│  arrived    │◄──────────────────┘
+              └─────────────┘
+
+Status transitions:
+  preparing    → in_transit (depart) | abandoned (abandon)
+  in_transit   → at_waypoint (advance) | arrived (advance final/arrive)
+               | interrupted (interrupt) | abandoned (abandon)
+  at_waypoint  → in_transit (advance next leg) | arrived (arrive)
+               | abandoned (abandon)
+  interrupted  → in_transit (resume) | abandoned (abandon)
+```
+
+Note: All transitions publish corresponding journey events. The `arrive` endpoint
+force-completes a journey (marking remaining legs as "skipped"), used for
+teleportation, fast-travel, or narrative skip.
+
+---
+
+## Stubs & Unimplemented Features
+
+This service is entirely aspirational -- no schema, code, or tests exist. Implementation requires:
+1. Create `schemas/transit-api.yaml`, `transit-events.yaml`, `transit-configuration.yaml`
+2. Add state store definitions to `schemas/state-stores.yaml`
+3. Run `cd scripts && ./generate-service.sh transit`
+4. Implement `TransitService.cs`, `TransitServiceEvents.cs`, `TransitServiceModels.cs`
+5. Create `bannou-service/Providers/ITransitCostModifierProvider.cs`
+6. Implement background workers (Seasonal Connection Worker, Journey Archival Worker)
+7. Write unit tests in `plugins/lib-transit.tests/`
+
+---
+
+## Potential Extensions
+
+1. **Caravan formations (Phase 2)**: Multiple entities traveling together as a group. Group speed = slowest member. Group risk = reduced (safety in numbers). Caravan as an entity type for journeys, with member tracking and formation bonuses. Faction merchant guilds could manage NPC caravans. **Promoted to Phase 2** -- the data model already accommodates this via `entityType: "caravan"` and `partySize`, but Phase 2 needs: a `partyMembers: [uuid]` field on `TransitJourney` for tracking individual members, batch departure/advance for all party members, and a party leader concept for GOAP decisions. The `validEntityTypes` restriction on modes already supports caravan-only modes (e.g., `wagon` with `validEntityTypes: ["caravan", "army"]`).
+
+2. **Fatigue and rest**: Long journeys accumulate fatigue. After a configurable threshold, the entity must rest (journey auto-pauses at next waypoint). Rest duration depends on mode and entity stamina. Creates natural stopping points at inns and camps.
+
+3. **Weather-reactive connections**: Environment (L4) automatically calls `/transit/connection/update-status` when weather conditions make connections impassable. Storms close mountain passes; floods close river crossings; drought closes river boat routes. This is a pure consumer relationship -- Transit exposes the API, Environment calls it.
+
+4. **Mount bonding**: Integration with Relationship (L2) for character-mount relationships. A well-bonded mount has higher effective speed and lower fatigue. Bond strength grows with travel distance. Follows the existing Relationship entity-to-entity model.
+
+5. **Transit fares**: Monetary cost for using certain transit modes or connections. Ferries, toll roads, carriage services, and teleportation portals could have a fare. Two options: (a) Transit stores fare data per-connection/mode and calls Currency (L2) during `journey/depart` to debit the fare -- feasible since both are L2. (b) Fares are purely a Trade (L4) concern that wraps Transit journeys with economic logic. Option (a) keeps fare enforcement at the primitive level (NPCs can't cheat tolls), while (b) keeps Transit purely about movement physics. **Open design question**: should Transit know about money, or should fares be an L4 overlay?
+
+---
+
 ## Variable Provider (`${transit.*}`)
 
 Transit implements `IVariableProviderFactory` providing the `${transit}` namespace to Actor (L2) via the Variable Provider Factory pattern.
@@ -1725,33 +1793,6 @@ Journey events (departed, waypoint, arrived) flow through the standard lib-messa
 
 ---
 
-## Stubs & Unimplemented Features
-
-This service is entirely aspirational -- no schema, code, or tests exist. Implementation requires:
-1. Create `schemas/transit-api.yaml`, `transit-events.yaml`, `transit-configuration.yaml`
-2. Add state store definitions to `schemas/state-stores.yaml`
-3. Run `cd scripts && ./generate-service.sh transit`
-4. Implement `TransitService.cs`, `TransitServiceEvents.cs`, `TransitServiceModels.cs`
-5. Create `bannou-service/Providers/ITransitCostModifierProvider.cs`
-6. Implement background workers (Seasonal Connection Worker, Journey Archival Worker)
-7. Write unit tests in `plugins/lib-transit.tests/`
-
----
-
-## Potential Extensions
-
-1. **Caravan formations (Phase 2)**: Multiple entities traveling together as a group. Group speed = slowest member. Group risk = reduced (safety in numbers). Caravan as an entity type for journeys, with member tracking and formation bonuses. Faction merchant guilds could manage NPC caravans. **Promoted to Phase 2** -- the data model already accommodates this via `entityType: "caravan"` and `partySize`, but Phase 2 needs: a `partyMembers: [uuid]` field on `TransitJourney` for tracking individual members, batch departure/advance for all party members, and a party leader concept for GOAP decisions. The `validEntityTypes` restriction on modes already supports caravan-only modes (e.g., `wagon` with `validEntityTypes: ["caravan", "army"]`).
-
-2. **Fatigue and rest**: Long journeys accumulate fatigue. After a configurable threshold, the entity must rest (journey auto-pauses at next waypoint). Rest duration depends on mode and entity stamina. Creates natural stopping points at inns and camps.
-
-3. **Weather-reactive connections**: Environment (L4) automatically calls `/transit/connection/update-status` when weather conditions make connections impassable. Storms close mountain passes; floods close river crossings; drought closes river boat routes. This is a pure consumer relationship -- Transit exposes the API, Environment calls it.
-
-4. **Mount bonding**: Integration with Relationship (L2) for character-mount relationships. A well-bonded mount has higher effective speed and lower fatigue. Bond strength grows with travel distance. Follows the existing Relationship entity-to-entity model.
-
-5. **Transit fares**: Monetary cost for using certain transit modes or connections. Ferries, toll roads, carriage services, and teleportation portals could have a fare. Two options: (a) Transit stores fare data per-connection/mode and calls Currency (L2) during `journey/depart` to debit the fare -- feasible since both are L2. (b) Fares are purely a Trade (L4) concern that wraps Transit journeys with economic logic. Option (a) keeps fare enforcement at the primitive level (NPCs can't cheat tolls), while (b) keeps Transit purely about movement physics. **Open design question**: should Transit know about money, or should fares be an L4 overlay?
-
----
-
 ## Resolved Design Decisions
 
 1. **Connection granularity**: Allow arbitrary connections but tag them appropriately (`tags: ["portal"]`, `tags: ["trade_route"]`). Enables teleportation portals and long-distance shipping routes alongside physically meaningful roads.
@@ -1798,7 +1839,17 @@ This service is entirely aspirational -- no schema, code, or tests exist. Implem
 
 ## Known Quirks & Caveats
 
-N/A -- This service is aspirational (pre-implementation). Quirks will be documented as the service is implemented.
+#### Bugs (Fix Immediately)
+
+No bugs identified -- this service is aspirational (pre-implementation).
+
+#### Intentional Quirks (Documented Behavior)
+
+No intentional quirks documented yet -- quirks will be identified during implementation.
+
+#### Design Considerations (Requires Planning)
+
+No design considerations identified yet -- these will emerge during implementation.
 
 ---
 
