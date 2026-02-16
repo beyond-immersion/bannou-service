@@ -66,6 +66,8 @@ The flow mirrors the void experience exactly:
 
 The gardener behavior actor is a **divine actor** -- the same entity type that Puppetmaster launches as regional watchers to orchestrate NPC experiences in physical realms. From a god's perspective, tending a player's conceptual garden and tending a physical realm region are the same operation with different tools. The Gardener service provides the tools (garden instances, POIs, scenarios, entity associations); the divine actor's ABML behavior document determines when and how to use them.
 
+**Dynamic character binding** enriches gardener behavior actors. A divine actor tending a garden can start as an event brain (basic orchestration: spawn POIs, manage transitions using fixed rules) and later bind to its divine character via `/actor/bind-character`. After binding, the god's `${personality.*}` traits influence garden-tending decisions: a merciful god spawns gentler scenarios for struggling players, a mischievous god spawns surprising content at unexpected moments, a wrathful god escalates challenge intensity. The ABML behavior document supports both modes -- before binding, it uses default orchestration paths; after binding, it uses personality-driven paths. This means gardens can start being tended immediately (event brain mode) while divine character profiles are still being provisioned.
+
 ```
 lib-divine (L4) ── deity identity, economy, blessings
     │
@@ -78,6 +80,8 @@ lib-divine (L4) ── deity identity, economy, blessings
     │           └──── Both run on Actor Runtime (L2) ───┘
     │                 Same ABML bytecode interpreter
     │                 Same divine actor identity
+    │                 Dynamic character binding:
+    │                   start event brain → bind divine character → personality-driven
     │
     └── Any conceptual space can become physical and vice versa
         (the god shifts focus between garden types)
@@ -499,7 +503,7 @@ Player connects → Gardener triggers divine actor for garden-tending
 
 ### Architectural Gaps (Garden Concept)
 
-11. **Divine actor as gardener pattern**: Garden-tending does not yet run as an actor. The current implementation uses background workers (`GardenerGardenOrchestratorWorker`, `GardenerScenarioLifecycleWorker`) with fixed-interval ticks instead of a per-player divine actor executing an ABML gardener behavior document. The target architecture uses divine actors (the same actor type that Puppetmaster launches as regional watchers) to tend conceptual garden spaces, unifying the puppetmaster and gardener roles under a single divine actor identity. See [DIVINE.md](DIVINE.md) for the full architectural rationale.
+11. **Divine actor as gardener pattern**: Garden-tending does not yet run as an actor. The current implementation uses background workers (`GardenerGardenOrchestratorWorker`, `GardenerScenarioLifecycleWorker`) with fixed-interval ticks instead of a per-player divine actor executing an ABML gardener behavior document. The target architecture uses divine actors (the same actor type that Puppetmaster launches as regional watchers) to tend conceptual garden spaces, unifying the puppetmaster and gardener roles under a single divine actor identity. Dynamic character binding simplifies this transition: divine gardener actors can start immediately as event brains (tending with default rules while divine character profiles are provisioned), then bind to their divine characters at runtime for personality-driven orchestration. The ABML gardener behavior document supports both modes from the start. See [DIVINE.md](DIVINE.md) for the full architectural rationale and dynamic binding lifecycle.
 
 12. **Garden-to-garden transitions**: The current implementation destroys the garden instance on scenario entry (`EnterScenarioAsync` deletes garden + POIs). The target architecture replaces this with garden-to-garden transitions where the gardener behavior continuously manages the player's context across garden types (discovery → lobby → in-game → post-game → discovery). The player is always in some garden; Gardener is always active.
 
@@ -646,7 +650,7 @@ Player connects → Gardener triggers divine actor for garden-tending
 - [ ] **Extension #4**: Design content flywheel connection (scenario outcomes feeding Storyline/Puppetmaster)
 - [ ] **Extension #5**: Add dialog choice trigger mode for multi-option branching POIs
 - [ ] **Stub #4**: Wire up `PersistentEntryEnabled` and `GardenMinigamesEnabled` phase config flags to service logic
-- [ ] **Stub #11**: Divine actor as gardener pattern -- launch per-player divine actor (via Puppetmaster) with gardener behavior document instead of background workers
+- [ ] **Stub #11**: Divine actor as gardener pattern -- launch per-player divine actor (via Puppetmaster) with gardener behavior document instead of background workers. Dynamic character binding enables progressive rollout: start event brain actors immediately, bind divine characters later for personality-driven orchestration.
 - [ ] **Stub #12**: Garden-to-garden transitions replacing destroy-on-scenario-entry
 - [ ] **Stub #13**: Multiple garden types (lobby, in-game, housing, post-game, cooperative). Housing garden is the first validation target -- see [Housing Garden Pattern](#housing-garden-pattern-no-plugin-required) and [VOXEL-BUILDER-SDK.md](../planning/VOXEL-BUILDER-SDK.md)
 - [ ] **Stub #14**: Per-garden entity associations (characters, collections, inventories, wallets)

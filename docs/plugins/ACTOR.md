@@ -10,7 +10,7 @@
 
 ## Overview
 
-Distributed actor management and execution (L2 GameFoundation) for NPC brains, event coordinators, and long-running behavior loops. Actors output behavioral state (feelings, goals, memories) to characters -- not directly visible to players. Supports multiple deployment modes (local, pool-per-type, shared-pool, auto-scale), ABML behavior document execution with hot-reload, GOAP planning integration, and bounded perception queues with urgency filtering. Receives data from L4 services (personality, encounters, history) via the Variable Provider Factory pattern without depending on them.
+Distributed actor management and execution (L2 GameFoundation) for NPC brains, event coordinators, and long-running behavior loops. Actors output behavioral state (feelings, goals, memories) to characters -- not directly visible to players. Supports multiple deployment modes (local, pool-per-type, shared-pool, auto-scale), ABML behavior document execution with hot-reload, GOAP planning integration, bounded perception queues with urgency filtering, and dynamic character binding (actors can start without a character and bind to one at runtime, transitioning from event brain to character brain mode without relaunch). Receives data from L4 services (personality, encounters, history) via the Variable Provider Factory pattern without depending on them.
 
 ---
 
@@ -25,6 +25,8 @@ The world must be alive whether or not players are watching. NPCs pursue their o
 ### Actor Is a Universal Autonomous Agent Runtime
 
 The same ActorRunner + ABML bytecode interpreter executes fundamentally different kinds of autonomous entities. NPC character brains, dungeon core intelligences, divine actors serving as both regional watcher gods (Moira/Fate, Thanatos/Death, Ares/War, Hermes/Commerce) and player garden orchestrators, and event brains for cinematic combat encounters all run on Actor. A divine actor tending a physical realm region and the same divine actor tending a player's conceptual garden space are the same operation from Actor's perspective -- different ABML behavior documents, same runtime. The category system (`npc-brain`, `event-combat`, `event-regional`, `world-admin`, `scheduled-task`) reflects this generality. If the Actor system can run all of these, it proves that the platform supports "any autonomous entity" -- and that improvements to the runtime benefit every system simultaneously.
+
+**Dynamic character binding** further unifies these actor types. An actor can start as an event brain (no character, orchestrating multiple entities) and later bind to a character at runtime via `BindCharacterAsync`, transitioning to character brain mode with full variable provider activation -- without relaunching. The ABML behavior document can reference `${personality.*}`, `${encounters.*}`, `${backstory.*}` etc. from the start; those providers simply have no data until a characterId is bound. This enables progressive entity awakening: a divine actor creates its character profile in a system realm then binds to it, a dungeon core grows until it develops enough personality to warrant a character record, or any entity that starts simple and develops character-level cognition over time.
 
 ### Actors Are Both Producers and Consumers in the Content Flywheel
 
@@ -102,6 +104,17 @@ The Variable Provider Factory pattern above applies to **Character Brain actors*
 This separation exists because:
 1. Character Brains have a stable binding to one character ID (providers can be created once)
 2. Event Brains shift focus constantly (load data on-demand for whichever entity they're currently evaluating)
+
+**Dynamic Binding: Event Brain → Character Brain Transition**
+
+Actors can transition from event brain to character brain mode at runtime via the `BindCharacterAsync` API without relaunching. When an actor starts without a `characterId`, it operates as an event brain -- ABML expressions referencing `${personality.*}`, `${encounters.*}`, etc. resolve to null/empty (the providers are not loaded because there is no character to load from). When `BindCharacterAsync` is called:
+
+1. The `CharacterId` is set on the running ActorRunner
+2. A per-character RabbitMQ perception subscription is established (`character.{characterId}.perceptions`)
+3. On the next behavior tick, variable provider factories detect the new `characterId` and activate -- the actor gains access to personality traits, encounter history, backstory, quest data, and all other character-based providers
+4. An `ActorCharacterBoundEvent` is published on topic `actor.instance.character-bound`
+
+This enables **progressive entity awakening**: entities that start simple (event brain, no character) and develop character-level cognition as they grow. Divine actors create their character profile in a system realm then bind to it. Dungeon cores grow until their seed reaches a phase that warrants a character record. The ABML behavior document supports both modes from the start -- the same document, richer data as providers activate.
 
 See [PUPPETMASTER.md](PUPPETMASTER.md) for Event Brain architecture details and [BEHAVIOR.md](BEHAVIOR.md) Domain Actions Reference for the `load_snapshot:` and `prefetch_snapshots:` actions.
 
@@ -202,6 +215,7 @@ ActorRunner executes a two-phase tick model: template-driven cognition first, th
 | `actor.pool-node.registered` | `PoolNodeRegisteredEvent` | Pool node came online |
 | `actor.pool-node.heartbeat` | `PoolNodeHeartbeatEvent` | Pool node health update |
 | `actor.pool-node.draining` | `PoolNodeDrainingEvent` | Pool node shutting down |
+| `actor.instance.character-bound` | `ActorCharacterBoundEvent` | Actor bound to a character (via BindActorCharacter API or on startup when spawned with a characterId) |
 | `actor.instance.status-changed` | `ActorStatusChangedEvent` | Actor status transition |
 | `actor.instance.completed` | `ActorCompletedEvent` | Actor finished execution |
 
@@ -350,11 +364,12 @@ Service lifetime is **Scoped** for ActorService. Multiple BackgroundServices for
 - **UpdateActorTemplate** (`/actor/template/update`): Partial update with `changedFields` tracking. Publishes `actor-template.updated`.
 - **DeleteActorTemplate** (`/actor/template/delete`): Removes from index. Publishes `actor-template.deleted`.
 
-### Actor Lifecycle (5 endpoints)
+### Actor Lifecycle (6 endpoints)
 
 - **SpawnActor** (`/actor/spawn`): In bannou mode: creates ActorRunner locally, registers in ActorRegistry, starts behavior loop. In pool mode: acquires least-loaded node via ActorPoolManager, publishes SpawnActorCommand to node's command topic. Publishes `actor-instance.created`.
 - **StopActor** (`/actor/stop`): In bannou mode: stops local runner, removes from registry. In pool mode: publishes StopActorCommand to assigned node. Publishes `actor-instance.deleted`.
 - **GetActor** (`/actor/get`): Returns actor state snapshot. If actor not running but matches an auto-spawn template (regex pattern), automatically spawns it (instantiate-on-access pattern).
+- **BindActorCharacter** (`/actor/bind-character`): Binds a running actor to a character, enabling character brain variable providers without relaunching. In bannou mode: calls `BindCharacterAsync` on the local ActorRunner directly. In pool mode: updates the actor assignment record with the new characterId, then publishes `BindActorCharacterCommand` to the assigned node's command topic. The ActorRunner sets the `CharacterId`, establishes a per-character RabbitMQ perception subscription, and publishes `ActorCharacterBoundEvent`. Returns `Conflict` if the actor is already bound to a character. Returns `NotFound` if the actor is not running. Also emits the bound event on `StartAsync` when spawned with an initial characterId.
 - **CleanupByCharacter** (`/actor/cleanup-by-character`): Called by lib-resource cleanup coordination when a character is deleted. Stops and removes all actors referencing the specified characterId. Returns count of actors cleaned up. Part of x-references cascade pattern.
 - **InjectPerception** (`/actor/inject-perception`): Enqueues perception data into actor's bounded channel. Returns current queue depth. Developer-only for testing.
 
@@ -428,6 +443,16 @@ ActorRunner Behavior Loop (Two-Phase Execution)
        │              └── null template ID → no pipeline (ABML-only)
        │              └── null result with ID → Error (misconfigured)
        │
+       ├── If CharacterId set at spawn:
+       │    ├── SetupPerceptionSubscriptionAsync()
+       │    └── Publish ActorCharacterBoundEvent
+       │
+       ├── [Later, at runtime] BindCharacterAsync(characterId):
+       │    ├── Guard: already bound → InvalidOperationException
+       │    ├── Set CharacterId = characterId
+       │    ├── SetupPerceptionSubscriptionAsync()
+       │    └── Publish ActorCharacterBoundEvent
+       │
        └── RunBehaviorLoopAsync() [while !cancelled]
                 │
                 ├── Phase 1: COGNITION (if pipeline exists)
@@ -462,6 +487,51 @@ ActorRunner Behavior Loop (Two-Phase Execution)
                 │    └── Remove memories past ExpiresAt
                 │
                 └── 6. Sleep(TickInterval - elapsed)
+
+
+Dynamic Character Binding
+===========================
+
+  BindActorCharacter(actorId, characterId)
+       │
+       ├── BANNOU MODE:
+       │    ├── Find runner in ActorRegistry
+       │    ├── Call runner.BindCharacterAsync(characterId)
+       │    │    ├── Guard: already bound? → Conflict
+       │    │    ├── Set CharacterId = characterId
+       │    │    ├── SetupPerceptionSubscriptionAsync()
+       │    │    │    └── SubscribeDynamicAsync("character.{charId}.perceptions")
+       │    │    └── Publish ActorCharacterBoundEvent
+       │    └── Next tick: variable providers detect characterId
+       │         ├── ${personality.*} → activates
+       │         ├── ${encounters.*} → activates
+       │         ├── ${backstory.*}  → activates
+       │         └── ${quest.*}      → activates
+       │
+       └── POOL MODE:
+            ├── Update actor assignment (characterId) in Redis
+            ├── Publish BindActorCharacterCommand to node topic
+            │    └── actor.node.{appId}.bind-character
+            └── Pool node worker receives command
+                 └── Forwards to local runner.BindCharacterAsync()
+
+
+  Progressive Entity Awakening (Example: Divine Actor)
+  =====================================================
+
+  1. Deity created → Actor spawned (event brain, no character)
+     │  Actor runs ABML behavior with ${personality.*} = null
+     │  Uses load_snapshot: for ad-hoc entity data
+     │
+  2. Deity creates Character in divine system realm
+     │  (via /divine/deity/create or runtime behavior)
+     │
+  3. BindActorCharacter(actorId, divineCharacterId)
+     │  Actor now has ${personality.*}, ${encounters.*}, etc.
+     │  Same behavior document, richer data
+     │  Still uses load_snapshot: for mortal data
+     │
+     └── The actor is now a character brain + event brain hybrid
 
 
 Auto-Spawn Pattern
@@ -599,7 +669,7 @@ No bugs identified.
 
 9. **State persistence is a periodic snapshot, not the real-time path**: Actor state is persisted to Redis every `AutoSaveIntervalSeconds` (60s default) to balance write load against recovery granularity. During normal operation, all state changes publish `character.state_update` events immediately (every tick, ~100ms), so game servers see real-time updates. On graceful shutdown, state is persisted immediately. In crash scenarios, up to 60 seconds of unpersisted snapshot data may be lost, but gameplay-visible state was already broadcast via events. Feelings/goals re-stabilize quickly after actor respawn, and critical game state (inventory, quests, combat outcomes) is managed by other services.
 
-10. **Per-actor RabbitMQ subscription for perceptions**: Each actor with a `CharacterId` creates a dynamic RabbitMQ subscription via `SubscribeDynamicAsync` on topic `character.{characterId}.perceptions`. Game servers and other actors publish perceptions to these character-specific topics via the ABML `emit_perception:` action. At scale (100,000+ actors), this means 100,000+ RabbitMQ subscriptions. This is intentional: targeted per-character topics enable efficient perception routing without the actor needing to filter irrelevant perceptions from a shared topic. Pool mode distributes subscriptions across nodes (e.g., 10 nodes × 10,000 subscriptions each). The `InjectPerception` API provides a direct injection alternative for testing. Subscriptions are disposed on actor stop.
+10. **Per-actor RabbitMQ subscription for perceptions**: Each actor with a `CharacterId` creates a dynamic RabbitMQ subscription via `SubscribeDynamicAsync` on topic `character.{characterId}.perceptions`. This subscription is established either at `StartAsync` (when spawned with a characterId) or at `BindCharacterAsync` (when binding at runtime). Game servers and other actors publish perceptions to these character-specific topics via the ABML `emit_perception:` action. At scale (100,000+ actors), this means 100,000+ RabbitMQ subscriptions. This is intentional: targeted per-character topics enable efficient perception routing without the actor needing to filter irrelevant perceptions from a shared topic. Pool mode distributes subscriptions across nodes (e.g., 10 nodes × 10,000 subscriptions each). The `InjectPerception` API provides a direct injection alternative for testing. Subscriptions are disposed on actor stop.
 
 11. **Per-tick memory cleanup via linear scan**: `ActorState.CleanupExpiredMemories()` runs every behavior loop tick (~100ms) and performs `List.RemoveAll()` on the `_memories` list under a lock, removing entries where `ExpiresAt <= now`. Permanent memories (`ExpiresAt = null`) are never removed. This is a simple O(n) scan per tick, acceptable for typical actor populations (hundreds of memories per actor). At extreme scale (10,000+ memories per actor), this could become a bottleneck and would benefit from a sorted expiration index. Working memory (`SetWorkingMemory`) persists across ticks — new perceptions overwrite by key but no explicit clearing occurs between ticks.
 
@@ -647,6 +717,8 @@ No bugs identified.
 - (2026-02-11) Fixed missing behavior cache invalidation on template update (issue #391 side finding). Added `actor-template.updated` event subscription. Handler checks `ChangedFields` for `behaviorRef`, invalidates `BehaviorDocumentLoader` provider caches, and signals running actors on this node via `IActorRunner.InvalidateCachedBehavior()` to reload on next tick. This fixes hot-reload across all nodes (each node receives the event via RabbitMQ and invalidates locally).
 
 - **2026-02-13**: Wired CognitionBuilder into ActorRunner ([#422](https://github.com/beyond-immersion/bannou-service/issues/422)). Two-phase tick execution (cognition pipeline then ABML behavior). Template resolution: actor config → ABML metadata → category defaults. Three-layer override composition (template + instance). Added `CognitionTemplateId` and `CognitionOverrides` to `ActorTemplateData` and `ActorStateSnapshot`. Added `CognitionTemplate` and `Conscience` metadata fields to `DocumentMetadata`. Added `evaluate_consequences` stage slot to humanoid template (forward-compatible for #410). Standardized on `on_tick` flow name, removed `process_tick`. TOCTOU-safe pipeline capture. Perception loss prevention on pipeline failure.
+
+- **2026-02-16**: Dynamic character binding. Added `POST /actor/bind-character` endpoint with `BindActorCharacterRequest`/`BindActorCharacterResponse`. Added `ActorCharacterBoundEvent` on topic `actor.instance.character-bound`. Added `BindActorCharacterCommand` pool command on topic `actor.node.{appId}.bind-character`. ActorRunner `CharacterId` is now `{ get; private set; }` -- `BindCharacterAsync` sets it, establishes per-character perception subscription, and publishes bound event. Bound event also emits on `StartAsync` when spawned with an initial characterId (does not emit when spawned without one). Pool mode: `ActorPoolNodeWorker` subscribes to bind-character topic and forwards to local runner; `IActorPoolManager.UpdateActorCharacterAsync` updates assignment without side effects. Bannou mode: calls runner directly. Enables progressive entity awakening -- divine actors and dungeon cores can start as event brains and transition to character brains at runtime.
 
 ### Implementation Gaps
 

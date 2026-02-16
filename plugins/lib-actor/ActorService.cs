@@ -1047,6 +1047,11 @@ public partial class ActorService : IActorService
                 return (StatusCodes.BadRequest, null);
             }
 
+            // Update assignment first (source of truth) before sending command.
+            // If the command is lost, the assignment still reflects the intended state
+            // and can be reconciled. The reverse order risks stale assignment on command failure.
+            await _poolManager.UpdateActorCharacterAsync(body.ActorId, body.CharacterId, cancellationToken);
+
             // Send bind command to pool node
             var bindCommand = new BindActorCharacterCommand
             {
@@ -1057,9 +1062,6 @@ public partial class ActorService : IActorService
                 $"actor.node.{assignment.NodeAppId}.bind-character",
                 bindCommand,
                 cancellationToken: cancellationToken);
-
-            // Update assignment with new characterId
-            await _poolManager.UpdateActorCharacterAsync(body.ActorId, body.CharacterId, cancellationToken);
 
             // Register character resource reference
             await RegisterCharacterReferenceAsync(body.ActorId, body.CharacterId, cancellationToken);

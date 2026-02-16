@@ -375,10 +375,20 @@ public sealed class ActorPoolManager : IActorPoolManager
         ArgumentException.ThrowIfNullOrWhiteSpace(actorId);
 
         var store = _stateStoreFactory.GetStore<ActorAssignment>(ACTOR_ASSIGNMENTS_STORE);
-        var assignment = await store.GetAsync(actorId, ct);
 
-        if (assignment != null)
+        // Use optimistic concurrency to prevent lost updates from concurrent assignment
+        // modifications (e.g., UpdateActorCharacterAsync racing with a status transition
+        // on the same assignment record — the loser would overwrite the winner's field).
+        const int maxRetries = 3;
+        for (int attempt = 1; attempt <= maxRetries; attempt++)
         {
+            var (assignment, etag) = await store.GetWithETagAsync(actorId, ct);
+
+            if (assignment == null)
+            {
+                return;
+            }
+
             assignment.Status = newStatus;
 
             // Set StartedAt when status transitions to running
@@ -387,7 +397,26 @@ public sealed class ActorPoolManager : IActorPoolManager
                 assignment.StartedAt = DateTimeOffset.UtcNow;
             }
 
-            await store.SaveAsync(actorId, assignment, cancellationToken: ct);
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
+            var result = await store.TrySaveAsync(actorId, assignment, etag ?? string.Empty, ct);
+            if (result != null)
+            {
+                return; // Successfully saved
+            }
+
+            if (attempt < maxRetries)
+            {
+                _logger.LogDebug(
+                    "Actor assignment conflict for {ActorId} during status update to {Status}, retrying (attempt {Attempt}/{Max})",
+                    actorId, newStatus, attempt, maxRetries);
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "Actor assignment update failed after {MaxRetries} attempts for {ActorId} status update to {Status}",
+                    maxRetries, actorId, newStatus);
+            }
         }
     }
 
@@ -397,12 +426,42 @@ public sealed class ActorPoolManager : IActorPoolManager
         ArgumentException.ThrowIfNullOrWhiteSpace(actorId);
 
         var store = _stateStoreFactory.GetStore<ActorAssignment>(ACTOR_ASSIGNMENTS_STORE);
-        var assignment = await store.GetAsync(actorId, ct);
 
-        if (assignment != null)
+        // Use optimistic concurrency to prevent lost updates from concurrent assignment
+        // modifications (e.g., UpdateActorStatusAsync racing with UpdateActorCharacterAsync).
+        const int maxRetries = 3;
+        for (int attempt = 1; attempt <= maxRetries; attempt++)
         {
+            var (assignment, etag) = await store.GetWithETagAsync(actorId, ct);
+
+            if (assignment == null)
+            {
+                _logger.LogWarning("Actor assignment {ActorId} not found for character binding", actorId);
+                return;
+            }
+
             assignment.CharacterId = characterId;
-            await store.SaveAsync(actorId, assignment, cancellationToken: ct);
+
+            // GetWithETagAsync returns non-null etag for existing records;
+            // coalesce satisfies compiler's nullable analysis (will never execute)
+            var result = await store.TrySaveAsync(actorId, assignment, etag ?? string.Empty, ct);
+            if (result != null)
+            {
+                return; // Successfully saved
+            }
+
+            if (attempt < maxRetries)
+            {
+                _logger.LogDebug(
+                    "Actor assignment conflict for {ActorId} during character bind, retrying (attempt {Attempt}/{Max})",
+                    actorId, attempt, maxRetries);
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "Actor assignment update failed after {MaxRetries} attempts for {ActorId} character bind",
+                    maxRetries, actorId);
+            }
         }
     }
 

@@ -54,6 +54,7 @@ public sealed class ActorRunner : IActorRunner
     private DateTimeOffset _lastStateSave;
     private bool _disposed;
     private readonly object _statusLock = new();
+    private readonly object _bindLock = new();
 
     // NPC Brain integration: subscription to character perception events and source tracking
     private IAsyncDisposable? _perceptionSubscription;
@@ -333,11 +334,17 @@ public sealed class ActorRunner : IActorRunner
         if (Status != ActorStatus.Running)
             throw new InvalidOperationException($"Cannot bind character to actor {ActorId}: actor is {Status}, expected Running");
 
-        if (CharacterId.HasValue)
-            throw new InvalidOperationException($"Cannot bind character to actor {ActorId}: already bound to character {CharacterId.Value}");
+        // Lock around check-then-set to prevent concurrent bind calls from both passing the guard.
+        // Lock scope is kept minimal (no awaits inside) per IMPLEMENTATION TENETS.
+        Guid? previousCharacterId;
+        lock (_bindLock)
+        {
+            if (CharacterId.HasValue)
+                throw new InvalidOperationException($"Cannot bind character to actor {ActorId}: already bound to character {CharacterId.Value}");
 
-        var previousCharacterId = CharacterId;
-        CharacterId = characterId;
+            previousCharacterId = CharacterId;
+            CharacterId = characterId;
+        }
 
         _logger.LogInformation("Actor {ActorId} binding to character {CharacterId} in realm {RealmId}",
             ActorId, characterId, RealmId);
@@ -1501,6 +1508,22 @@ public sealed class ActorRunner : IActorRunner
     {
         if (!CharacterId.HasValue)
             return;
+
+        // Defensively dispose existing subscription before creating a new one.
+        // Prevents leaked subscriptions if this method is called multiple times
+        // (e.g., concurrent bind calls that bypassed the guard before Fix #5's lock).
+        if (_perceptionSubscription != null)
+        {
+            try
+            {
+                await _perceptionSubscription.DisposeAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Actor {ActorId} error disposing existing perception subscription before rebind", ActorId);
+            }
+            _perceptionSubscription = null;
+        }
 
         var topic = $"character.{CharacterId.Value}.perceptions";
         _logger.LogInformation("Actor {ActorId} subscribing to {Topic}", ActorId, topic);

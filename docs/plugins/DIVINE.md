@@ -16,6 +16,8 @@ Pantheon management service (L4 GameFeatures) for deity entities, divinity econo
 
 **Divine actors are both puppetmasters and gardeners**: A god tending a physical realm region (spawning encounters, adjusting NPC moods, orchestrating narrative opportunities) and a god tending a player's conceptual garden space (spawning POIs, managing scenario selection, guiding discovery) are the same operation from different perspectives -- two sides of the same coin. The divine actor launched via Puppetmaster as a regional watcher also serves as the gardener behavior actor for player experience orchestration via Gardener's APIs. Whether the "space" being tended is a physical location in the game world or an abstract conceptual space (a void garden, a lobby, player housing) is a behavioral distinction encoded in the god's ABML behavior document, not a structural difference in the actor type. This means: (1) the same god (e.g., Moira/Fate) that creates emergent content in the physical world also curates which experiences reach players through their gardens, directly connecting the content flywheel to the player experience; (2) any conceptual space can potentially become a physical space and vice versa, because the transition is just the god shifting focus between garden types; (3) lib-gardener provides the tools (garden instances, POIs, scenarios, entity associations), lib-puppetmaster provides the actor lifecycle, and lib-divine provides the identity and economy of the entity doing the tending.
 
+**Dynamic character binding enables progressive divine identity**: A deity's actor can start immediately on creation as an event brain (monitoring realm events, making basic decisions), and later bind to its divine system realm character via `/actor/bind-character` once the character profile is provisioned. The ABML behavior document supports both states -- before binding, `${personality.*}` expressions resolve to null and the god uses default decision paths; after binding, the god reasons with its full personality, history, and encounter memory. This means deity creation doesn't need to block on character provisioning, and the god can begin its duties immediately.
+
 **Zero Arcadia-specific content**: lib-divine is a generic pantheon management service. Arcadia's 18 Old Gods are configured through behaviors and templates at deployment time, not baked into lib-divine.
 
 **Domain codes are opaque strings**: Different games define different domains (War, Knowledge, Nature, etc.). Domain codes follow the same extensibility pattern as seed type codes, collection type codes, and relationship type codes.
@@ -42,20 +44,41 @@ Realm's `isSystemType` flag creates conceptual namespaces for entities that exis
 | **Collection** (L2) | Already used for permanent blessings -- gods could also collect divine artifacts |
 | **Actor** (L2) | God-actors bind to their character, becoming **character brain** actors with all variable providers |
 
-### God-Actors as Character Brains
+### God-Actors as Character Brains (via Dynamic Binding)
 
-The [Behavioral Bootstrap](../guides/BEHAVIORAL-BOOTSTRAP.md) pattern currently conceptualizes god-actors as event brain actors that use `load_snapshot:` for ad-hoc data about arbitrary entities. With a divine character record, god-actors become **character brain actors** with automatic variable provider binding:
+The [Behavioral Bootstrap](../guides/BEHAVIORAL-BOOTSTRAP.md) pattern originally conceptualized god-actors as event brain actors that use `load_snapshot:` for ad-hoc data about arbitrary entities. With a divine character record, god-actors become **character brain actors** with automatic variable provider binding. **Dynamic character binding** (Actor's `BindCharacterAsync` API) makes this transition seamless: a god-actor can start as an event brain, create its divine character profile, and then bind to it at runtime without relaunching.
 
 ```
-God-actor (character brain, bound to divine system realm character)
-├── ${personality.*}     ← CharacterPersonality (the god's own quantified personality)
-├── ${encounters.*}      ← CharacterEncounter (memories of mortal interactions)
-├── ${backstory.*}       ← CharacterHistory (the god's mythology and divine history)
-├── ${quest.*}           ← Quest (divine quests the god is tracking)
-├── ${world.*}           ← Worldstate (current game time, season)
-├── ${obligations.*}     ← Obligation (divine contracts the god is bound by)
-└── ...can still use load_snapshot: for ad-hoc mortal data (event brain capability)
+God-actor lifecycle (dynamic binding):
+
+1. Actor spawned (event brain, no character)
+   ├── ABML behavior document references ${personality.*} etc.
+   │   (resolves to null/empty -- no character to load from)
+   ├── Uses load_snapshot: for ad-hoc mortal data
+   └── Operates as regional watcher / garden tender
+
+2. Divine character created in system realm
+   ├── Character record, species: "divine", realm: PANTHEON
+   ├── Personality traits seeded from deity configuration
+   └── Backstory/history from deity mythology
+
+3. POST /actor/bind-character (actorId, divineCharacterId)
+   ├── CharacterId set on running ActorRunner
+   ├── Per-character perception subscription established
+   ├── ActorCharacterBoundEvent published
+   └── Next tick: variable providers activate
+
+4. God-actor (character brain, bound to divine system realm character)
+   ├── ${personality.*}     ← CharacterPersonality (the god's own quantified personality)
+   ├── ${encounters.*}      ← CharacterEncounter (memories of mortal interactions)
+   ├── ${backstory.*}       ← CharacterHistory (the god's mythology and divine history)
+   ├── ${quest.*}           ← Quest (divine quests the god is tracking)
+   ├── ${world.*}           ← Worldstate (current game time, season)
+   ├── ${obligations.*}     ← Obligation (divine contracts the god is bound by)
+   └── ...can still use load_snapshot: for ad-hoc mortal data (event brain capability)
 ```
+
+The ABML behavior document supports both modes from the start. Before binding, expressions like `${personality.mercy}` evaluate to null and the behavior falls through to default paths. After binding, the same expressions return real data and the god makes richer, personality-driven decisions. No behavior document swap is needed -- the same document, progressively richer data.
 
 No new variable providers are needed. The standard character brain infrastructure provides everything. A god's ABML behavior can naturally reference `${personality.mercy}` to decide intervention thresholds, `${encounters.last_hostile_days}` to check grudges against specific mortals, and `${backstory.origin}` to reason about its own mythology.
 
@@ -84,7 +107,7 @@ ARCADIA (physical realm)
         └── Moira perceives avatar death via watch system, reacts
 ```
 
-The god-actor's character brain binding to its divine character is **permanent and never changes**. The avatar is a separate character with its own separate actor. When the avatar dies, the avatar's actor stops, but the god-actor continues uninterrupted with full access to its own `${personality.*}`, `${encounters.*}`, etc.
+The god-actor's character brain binding to its divine character is **permanent once established and never changes**. The binding can be established either at spawn time (if the divine character already exists) or at runtime via `BindCharacterAsync` (if the character is created after the actor starts). The avatar is a separate character with its own separate actor. When the avatar dies, the avatar's actor stops, but the god-actor continues uninterrupted with full access to its own `${personality.*}`, `${encounters.*}`, etc.
 
 **Avatar creation is a Divine API operation, not raw service composition.** The god-actor calls `/divine/avatar/manifest`, which orchestrates the multi-service creation and enforces divine economy rules:
 
@@ -149,7 +172,9 @@ Almost nothing in the codebase. The changes are:
 1. **Seed the divine system realm** via `/realm/seed` with `isSystemType: true` -- configuration, not code
 2. **Register a divine species** in that realm -- seed data, not code
 3. **Divine implementation**: When creating a deity, also create a Character in the divine realm; store `characterId` on `DeityModel` -- part of planned implementation (currently stubbed)
-4. **God-actor spawning**: Spawn as character brain actors bound to their divine character -- behavioral bootstrap change
+4. **God-actor character binding**: Two options, both enabled by dynamic character binding:
+   - **Option A (character-first)**: Create divine Character before spawning actor; spawn with `characterId` already set. Simpler but requires character to exist at spawn time.
+   - **Option B (bind-later)**: Spawn actor as event brain first, create divine Character during deity setup, then call `/actor/bind-character` to bind at runtime. More flexible -- the actor can start doing basic work (monitoring event streams) before its divine character exists. The ABML behavior document handles both states naturally (null-safe `${personality.*}` expressions fall through to defaults until binding activates providers).
 5. **Avatar behaviors**: Author ABML behavior documents for manifestation lifecycle -- pure content authoring
 6. **Seed data**: A `divine_manifestation` relationship type, a `divine` species, divine personality trait profiles -- all registered on startup
 

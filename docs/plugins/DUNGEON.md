@@ -33,12 +33,120 @@ lib-divine's APIs (blessings, follower management, attention slots, divinity gen
 
 **What they share is infrastructure, not API surface**:
 - Both launch actors via Puppetmaster (event brain type)
+- Both use dynamic character binding to transition from event brain to character brain as they develop (gods bind to divine system realm characters, dungeons bind to dungeon system realm characters)
 - Both use Seed for progressive growth
 - Both use Currency for their economy
 - Both use Gardener for tending conceptual spaces
 - Both influence characters indirectly through the character's Actor
 
-This shared infrastructure is already factored into L0/L1/L2 services. lib-divine and lib-dungeon are both L4 orchestration layers that compose these primitives differently.
+This shared infrastructure is already factored into L0/L1/L2 services. lib-divine and lib-dungeon are both L4 orchestration layers that compose these primitives differently. The dynamic character binding pattern (start as event brain, create character profile, bind at runtime) is the same in both services -- the dungeon cognitive progression mirrors the divine actor lifecycle.
+
+---
+
+## Dungeon Cognitive Progression (via Dynamic Character Binding)
+
+The dynamic character binding feature (Actor's `BindCharacterAsync` API) enables dungeons to progress through three distinct cognitive stages as their `dungeon_core` seed grows. Each stage represents a qualitative leap in the dungeon's decision-making capability, not just a quantitative increase in available actions.
+
+### Stage 1: Dormant Seed (No Actor)
+
+**Seed Phase**: Dormant (MinTotalGrowth: 0.0)
+
+The dungeon exists only as a `dungeon_core` seed and a MySQL record. No actor is running. The dungeon is purely reactive -- intrusions trigger pre-scripted responses defined by the seed's growth phase, but there is no autonomous decision-making. Growth accumulates passively (ambient mana from leyline proximity, deaths within the dungeon's domain reported by other systems).
+
+This is the cheapest state for the system: no actor runtime resources consumed, no perception subscriptions, no behavior loop ticks. A world can have thousands of dormant dungeon seeds scattered across its geography, waiting to awaken.
+
+### Stage 2: Event Brain Actor (No Character)
+
+**Seed Phase**: Stirring (MinTotalGrowth: 10.0) or triggered by first significant event
+
+When the dungeon_core seed reaches the Stirring phase (or a significant event triggers activation), the dungeon service starts an actor via Puppetmaster. The actor runs as an **event brain** -- no character binding, operating with the `creature_base` cognition template. The dungeon can:
+
+- Perceive domain events (intrusions, deaths, combat)
+- Make autonomous decisions via ABML behavior documents
+- Spawn monsters, activate traps, manipulate layout (gated by seed capabilities)
+- Communicate with bonded masters (if any)
+- Capture memories from significant events
+
+The ABML behavior document can already reference `${personality.*}`, `${encounters.*}`, etc. -- these expressions simply resolve to null because there is no character to provide them. The behavior falls through to instinct-driven default paths. The dungeon has preferences (from its personality type stored in seed metadata) but not a rich inner life.
+
+### Stage 3: Character Brain Actor (Full Cognitive Stack)
+
+**Seed Phase**: Awakened (MinTotalGrowth: 50.0)
+
+When the dungeon_core seed reaches the Awakened phase, the dungeon has accumulated enough complexity to warrant a full character identity. The dungeon service:
+
+1. Creates a **Character record** in a dungeon system realm (`isSystemType: true`, analogous to the divine system realm for gods -- see [DIVINE.md: God Characters in System Realms](DIVINE.md#god-characters-in-system-realms))
+2. Creates a dungeon species in that realm (e.g., "dungeon core", "aberrant nexus", "living labyrinth")
+3. Calls `/actor/bind-character` to bind the running actor to the new character -- **no actor relaunch needed**
+4. The character's personality traits are seeded from the dungeon's personality type
+5. Variable providers activate on the next behavior tick
+
+After binding, the dungeon has the full L2/L4 character entity stack:
+
+```
+Dungeon-actor (character brain, bound to dungeon system realm character)
+├── ${personality.*}     ← CharacterPersonality (the dungeon's quantified personality)
+│   e.g., ${personality.cruelty} for trap placement style
+│   e.g., ${personality.patience} for ambush timing
+├── ${encounters.*}      ← CharacterEncounter (memories of adventurer interactions)
+│   e.g., ${encounters.last_hostile_days} for grudge tracking
+│   e.g., ${encounters.sentiment.player_xyz} for per-adventurer feelings
+├── ${backstory.*}       ← CharacterHistory (the dungeon's origin and significant events)
+│   e.g., ${backstory.origin} for creation mythology
+├── ${quest.*}           ← Quest (dungeon-originated quests, if applicable)
+├── ${world.*}           ← Worldstate (game time, season -- affects mana generation)
+├── ${obligations.*}     ← Obligation (any contracts the dungeon is bound by)
+├── ${dungeon.*}         ← DungeonActorVariableProviderFactory (dungeon-specific volatile state)
+├── ${seed.*}            ← DungeonCoreSeedVariableProviderFactory (growth domains, capabilities)
+├── ${master.seed.*}     ← DungeonMasterSeedVariableProviderFactory (master capabilities)
+├── ${master.*}          ← DungeonMasterCharacterVariableProviderFactory (master character data)
+└── ...can still use load_snapshot: for ad-hoc adventurer data
+```
+
+The ABML behavior document is the same one used in Stage 2 -- no swap needed. The difference is that expressions like `${personality.cruelty}` now return real values instead of null, enabling qualitatively different decision-making. A martial dungeon with high cruelty places traps at chokepoints; a scholarly dungeon with high patience creates elaborate puzzles. The behavior document encodes both instinct paths (Stage 2, null-safe defaults) and personality-driven paths (Stage 3, rich data).
+
+### Stage Transition Flow
+
+```
+Dungeon core created
+    │
+    ├── dungeon_core seed: Dormant (growth: 0.0)
+    │   No actor running. Passive growth only.
+    │
+    │   [Seed reaches Stirring phase (growth ≥ 10.0)]
+    │
+    ├── dungeon.phase.changed event triggers actor spawn
+    │   Actor runs as EVENT BRAIN (no character)
+    │   creature_base cognition template
+    │   ${personality.*} = null, instinct-driven behavior
+    │
+    │   [Seed reaches Awakened phase (growth ≥ 50.0)]
+    │
+    ├── dungeon.phase.changed handler:
+    │   1. Create Character in dungeon system realm
+    │   2. Seed personality traits from dungeon personality type
+    │   3. POST /actor/bind-character (actorId, dungeonCharacterId)
+    │   4. Actor transitions to CHARACTER BRAIN
+    │   5. ${personality.*}, ${encounters.*} etc. activate
+    │   6. Store characterId on DungeonCoreModel
+    │
+    │   [Seed reaches Ancient phase (growth ≥ 200.0)]
+    │
+    └── Full cognitive depth: memories, grudges, personality evolution
+        Memory manifestation, event coordination, master synergy
+        The dungeon is now a living entity with a rich inner life
+```
+
+### System Realm for Dungeon Characters
+
+Dungeon characters live in a **dungeon system realm** (e.g., `DUNGEON_CORES` with `isSystemType: true`), following the same pattern established for divine characters in the divine system realm. This keeps dungeon character records separate from player/NPC characters in physical realms while giving them full access to the character entity stack.
+
+| System Realm | Purpose | Character Species |
+|---|---|---|
+| **PANTHEON** | Divine characters (gods) | "Fate Weaver", "War God", etc. |
+| **DUNGEON_CORES** | Dungeon characters | Personality-type-based: "Martial Core", "Memorial Core", etc. |
+
+The system realm is seeded on startup via `/realm/seed` -- configuration, not code. A dungeon species is registered in that realm. Services that list characters in physical realms naturally exclude system realm characters without code changes.
 
 ---
 
@@ -171,7 +279,7 @@ No dungeon garden instance is created in Pattern B. The dungeon influence is rou
 
 ### When No Master Is Bonded
 
-The dungeon core actor still runs autonomously -- it just has no garden to tend and no partner receiving its experience. It continues to perceive, decide, and act within its domain purely based on its own `dungeon_core` seed capabilities.
+The dungeon core actor still runs autonomously -- it just has no garden to tend and no partner receiving its experience. It continues to perceive, decide, and act within its domain based on its cognitive stage: in Stage 2 (event brain), purely instinct-driven with seed capabilities; in Stage 3 (character brain), personality-driven with the full variable provider stack. A masterless Ancient dungeon in Stage 3 is a formidable autonomous entity -- it has personality, grudges against past adventurers, memories of significant events, and the full cognitive depth of the character brain pipeline.
 
 **Multi-game variability**: The dungeon garden behavior document varies per game. In Arcadia, the Pattern A dungeon master experience uses perception-gated awareness, command-gated actions, and channeling-gated power flows. A different game might use different mechanics for the master-dungeon relationship, might only support Pattern B (no full dungeon master game), or might omit dungeon bonding entirely (autonomous dungeons with no master partnership). lib-dungeon provides primitives, not policy.
 
@@ -252,12 +360,12 @@ The dungeon system introduces two seed types that grow in parallel: `dungeon_cor
 
 **Growth Phases** (ordered by MinTotalGrowth):
 
-| Phase | MinTotalGrowth | Behavior |
-|-------|---------------|----------|
-| Dormant | 0.0 | Reactive only -- responds to intrusions with basic instinct. Personality barely visible. |
-| Stirring | 10.0 | Proactive spawning and basic trap usage. Personality preferences begin to emerge. |
-| Awakened | 50.0 | Layout manipulation, complex tactics, memory capture. Strong personality expression. |
-| Ancient | 200.0 | Memory manifestation, event coordination, full master synergy. Unique living entity. |
+| Phase | MinTotalGrowth | Cognitive Stage | Behavior |
+|-------|---------------|-----------------|----------|
+| Dormant | 0.0 | Stage 1: No actor | Reactive only -- responds to intrusions with pre-scripted responses. No autonomous decision-making. Passive growth only. |
+| Stirring | 10.0 | Stage 2: Event brain actor | Actor spawned via Puppetmaster. Proactive spawning, basic trap usage. ABML behavior with instinct-driven defaults (`${personality.*}` = null). Personality preferences emerge through seed metadata. |
+| Awakened | 50.0 | Stage 3: Character brain actor | Character created in dungeon system realm, bound to running actor via `/actor/bind-character`. Full variable provider activation. Layout manipulation, complex tactics, memory capture. Strong personality-driven decisions via `${personality.*}`, grudge tracking via `${encounters.*}`. |
+| Ancient | 200.0 | Stage 3 (mature) | Full cognitive depth. Memory manifestation, event coordination, full master synergy. Personality evolution via CharacterPersonality's experience-driven trait shifts. A unique living entity with rich inner life. |
 
 **Growth Domains**:
 
@@ -356,7 +464,7 @@ The dungeon system introduces two seed types that grow in parallel: `dungeon_cor
 | lib-currency (`ICurrencyClient`) | Mana wallet creation, credit/debit for spawn costs and trap charges (L2) |
 | lib-contract (`IContractClient`) | Dungeon-master bond management -- creation, milestone tracking, termination (L1) |
 | lib-actor (`IActorClient`) | Injecting perceptions into the bonded master's character Actor for indirect influence (L2) |
-| lib-character (`ICharacterClient`) | Validating character existence for willing bond formation (L2) |
+| lib-character (`ICharacterClient`) | Validating character existence for willing bond formation; creating dungeon character in system realm at Awakened phase for dynamic binding (L2) |
 | lib-game-service (`IGameServiceClient`) | Validating game service existence for dungeon scoping (L2) |
 | lib-resource (`IResourceClient`) | Reference tracking, cleanup callback registration (L1) |
 
@@ -390,7 +498,7 @@ The dungeon system introduces two seed types that grow in parallel: `dungeon_cor
 
 | Key Pattern | Data Type | Purpose |
 |-------------|-----------|---------|
-| `core:{dungeonId}` | `DungeonCoreModel` | Primary lookup by dungeon ID. Stores identity, personality type, status, seed references, economy references, core location, domain radius. |
+| `core:{dungeonId}` | `DungeonCoreModel` | Primary lookup by dungeon ID. Stores identity, personality type, status, seed references, economy references, core location, domain radius, characterId (null until Awakened phase triggers character creation and dynamic binding). |
 | `core-code:{gameServiceId}:{code}` | `DungeonCoreModel` | Code-uniqueness lookup within game service scope |
 
 ### Bond Store
@@ -461,7 +569,7 @@ The dungeon system introduces two seed types that grow in parallel: `dungeon_cor
 
 | Topic | Handler | Action |
 |-------|---------|--------|
-| `seed.phase.changed` | `HandleSeedPhaseChangedAsync` | For `dungeon_core` seeds: update cached phase, publish `dungeon.phase.changed`, re-evaluate available actions. For `dungeon_master` seeds: advance bond contract milestones. |
+| `seed.phase.changed` | `HandleSeedPhaseChangedAsync` | For `dungeon_core` seeds: update cached phase, publish `dungeon.phase.changed`, re-evaluate available actions. **At Stirring phase**: start dungeon core actor via Puppetmaster (event brain, no character). **At Awakened phase**: create Character in dungeon system realm, call `/actor/bind-character` to transition running actor to character brain mode with full variable providers, store characterId on DungeonCoreModel. For `dungeon_master` seeds: advance bond contract milestones. |
 | `seed.capability.updated` | `HandleSeedCapabilityUpdatedAsync` | Invalidate cached capability manifests for affected dungeon or master |
 | `contract.terminated` | `HandleContractTerminatedAsync` | Clean up bond record when dungeon-master contract ends; archive master seed if configured |
 
@@ -601,7 +709,7 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS):
 
 ## Dungeon Cognition Pipeline
 
-The dungeon core actor uses a simplified cognition pipeline (`creature_base` template) with fewer stages than the humanoid pipeline:
+The dungeon core actor uses a simplified cognition pipeline (`creature_base` template) with fewer stages than the humanoid pipeline. The pipeline operates identically in Stage 2 (event brain) and Stage 3 (character brain) -- the difference is in the **data available**, not the pipeline structure. In Stage 2, memory queries and capability checks work against dungeon-specific stores only. In Stage 3, the same pipeline also has access to `${personality.*}`, `${encounters.*}`, and `${backstory.*}` from the bound character, enabling richer attention filtering (grudges affect priority), more nuanced intention formation (personality modulates aggression), and memory queries that include character encounter history.
 
 ```
 +-----------------------------------------------------------------------+
@@ -691,7 +799,7 @@ Bond formation is entirely Contract-driven. The contract template (`dungeon-mast
 
 ## Visual Aid
 
-Dungeon core identity is owned here. Dungeon behavior is Actor (event brain) via Puppetmaster. Dungeon growth is Seed (`dungeon_core` seed type). Dungeon master bond is Contract. Mana economy is Currency. Physical layout is Save-Load + Mapping. Visual composition is Scene. Memory items are Item. Monster spawning and trap activation are dungeon-specific APIs orchestrated by lib-dungeon. Player-facing dungeon master experience is Gardener (dungeon garden type). Procedural chamber generation is a future integration with lib-procedural (Houdini backend).
+Dungeon core identity is owned here. Dungeon behavior starts as Actor event brain (Stage 2) via Puppetmaster, then transitions to character brain (Stage 3) via dynamic binding when the Awakened phase is reached. Dungeon growth is Seed (`dungeon_core` seed type). Dungeon character identity lives in a dungeon system realm (Stage 3 only). Dungeon master bond is Contract. Mana economy is Currency. Physical layout is Save-Load + Mapping. Visual composition is Scene. Memory items are Item. Monster spawning and trap activation are dungeon-specific APIs orchestrated by lib-dungeon. Player-facing dungeon master experience is Gardener (dungeon garden type). Procedural chamber generation is a future integration with lib-procedural (Houdini backend).
 
 ### Pattern A: Full Split (Account-Level)
 
@@ -804,9 +912,17 @@ Dungeon core identity is owned here. Dungeon behavior is Actor (event brain) via
 - Create dungeon-events.yaml schema
 - Create dungeon-configuration.yaml schema
 - Generate service code
-- Implement dungeon core CRUD (create provisions seed + wallet + optionally actor)
+- Implement dungeon core CRUD (create provisions seed + wallet; actor NOT started at creation -- starts at Stirring phase)
 - Implement variable provider factories for ABML expression access
 - Implement ABML action handlers for dungeon capabilities
+- Seed the dungeon system realm (`DUNGEON_CORES` with `isSystemType: true`) and dungeon species
+
+### Phase 1.5: Cognitive Progression (Dynamic Character Binding)
+- Implement `HandleSeedPhaseChangedAsync` handler for cognitive stage transitions:
+  - **Stirring phase**: Start dungeon core actor via Puppetmaster (event brain, no character)
+  - **Awakened phase**: Create Character in dungeon system realm, seed personality traits from dungeon personality type, call `/actor/bind-character` to transition actor to character brain, store characterId on DungeonCoreModel
+- Handle failure cases: retry binding if character exists but binding failed (idempotency via characterId on model)
+- Optionally seed backstory elements from dungeon creation history via ICharacterHistoryClient (soft)
 
 ### Phase 2: Dungeon Master Bond (Contract + Master Seed)
 - Implement bond formation flow (Contract creation triggers master seed creation)
@@ -865,6 +981,10 @@ Dungeon core identity is owned here. Dungeon behavior is Actor (event brain) via
 
 9. **Procedural generation via Houdini**: When lib-procedural is implemented, dungeon growth (domain_expansion capabilities) triggers HDA execution to generate chamber geometry. Deterministic seeds enable cached, reproducible layouts. HDA templates define visual style; dungeon personality + parameters customize output.
 
+10. **Dungeon personality evolution**: Once a dungeon has a character record (Stage 3), CharacterPersonality's experience-driven trait evolution applies. Defeating adventurers might shift the dungeon toward cruelty; a dungeon that repeatedly loses might shift toward cunning or patience. This creates emergent dungeon personalities that change based on what happens to them -- the same system that makes NPC personalities evolve over time.
+
+11. **Dungeon encounter memory integration**: Stage 3 dungeons with CharacterEncounter records can develop grudges against specific adventurers, remember which tactics worked against which party compositions, and adjust their behavior accordingly. A dungeon that was defeated by a fire-heavy party might invest more heavily in fire-resistant monsters next time.
+
 ---
 
 ## Known Quirks & Caveats
@@ -918,6 +1038,10 @@ Dungeon core identity is owned here. Dungeon behavior is Actor (event brain) via
 <!-- AUDIT:NEEDS_DESIGN:2026-02-15:https://github.com/beyond-immersion/bannou-service/issues/437 -->
 
 9. **Pattern B transient UX routing**: When the player switches characters within a garden, the dungeon UX modules need to appear/disappear based on whether the currently-controlled character has a dungeon_master seed. This requires the client's UX capability manifest to be dynamically updated on character switch -- likely via the same Permission/Connect capability manifest push mechanism, extended to include seed-derived UX capabilities.
+
+10. **Dungeon system realm provisioning**: The dungeon system realm (e.g., `DUNGEON_CORES` with `isSystemType: true`) must be seeded on startup, analogous to the divine system realm for gods. Design decisions: Is there one global dungeon system realm or one per game service? What dungeon species are registered (one per personality type, or a generic "dungeon core" species)? How does species assignment map to personality type? The system realm is seeded via `/realm/seed` -- configuration, not code. See [DIVINE.md: Broader System Realm Implications](DIVINE.md#broader-system-realm-implications) for the established pattern.
+
+11. **Character creation timing at Awakened phase**: When `HandleSeedPhaseChangedAsync` detects the transition to Awakened, it must orchestrate: character creation (ICharacterClient), personality trait seeding (ICharacterPersonalityClient, soft), backstory initialization (ICharacterHistoryClient, soft), and actor binding (IActorClient). This is a multi-service orchestration that needs failure handling -- if character creation succeeds but binding fails, the dungeon should retry binding on the next event rather than creating duplicate characters. The characterId stored on DungeonCoreModel serves as the idempotency check.
 
 ---
 
