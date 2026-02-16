@@ -24,7 +24,8 @@ public interface IActorRunner : IAsyncDisposable
     string Category { get; }
 
     /// <summary>
-    /// Gets the optional character ID for NPC brain actors.
+    /// Gets the character ID for NPC brain actors.
+    /// Null for unbound event-mode actors; set at spawn time or via <see cref="BindCharacterAsync"/>.
     /// </summary>
     Guid? CharacterId { get; }
 
@@ -78,6 +79,16 @@ public interface IActorRunner : IAsyncDisposable
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A task that completes when the actor stops.</returns>
     Task StopAsync(bool graceful = true, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Binds an unbound event-mode actor to a character, transitioning it to character-mode.
+    /// After binding, the actor subscribes to the character's perception stream and variable
+    /// providers begin loading character-specific data on subsequent ticks.
+    /// </summary>
+    /// <param name="characterId">The character to bind to.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <exception cref="InvalidOperationException">Thrown if the actor is already bound to a character or is not running.</exception>
+    Task BindCharacterAsync(Guid characterId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Injects a perception into the actor's perception queue.

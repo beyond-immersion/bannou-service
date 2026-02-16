@@ -150,6 +150,15 @@ public interface IActorPoolManager
     /// <param name="ct">Cancellation token.</param>
     Task UpdateActorStatusAsync(string actorId, ActorStatus newStatus, CancellationToken ct = default);
 
+    /// <summary>
+    /// Updates the character binding of an actor assignment.
+    /// Called when an unbound actor binds to a character via BindActorCharacter.
+    /// </summary>
+    /// <param name="actorId">Actor ID.</param>
+    /// <param name="characterId">Character ID to bind.</param>
+    /// <param name="ct">Cancellation token.</param>
+    Task UpdateActorCharacterAsync(string actorId, Guid characterId, CancellationToken ct = default);
+
     #endregion
 
     #region Capacity & Monitoring

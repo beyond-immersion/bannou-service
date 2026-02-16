@@ -167,6 +167,21 @@ public static class ActorPermissionRegistration
 
         endpoints.Add(new ServiceEndpoint
         {
+            Path = "/actor/bind-character",
+            Method = ServiceEndpointMethod.POST,
+            Description = "BindActorCharacter",
+            Permissions = new List<PermissionRequirement>
+            {
+                new PermissionRequirement
+                {
+                    Role = "developer",
+                    RequiredStates = new Dictionary<string, string> {  }
+                },
+            }
+        });
+
+        endpoints.Add(new ServiceEndpoint
+        {
             Path = "/actor/cleanup-by-character",
             Method = ServiceEndpointMethod.POST,
             Description = "CleanupByCharacter",

@@ -177,9 +177,19 @@ public sealed class ActorPoolNodeWorker : BackgroundService
             cancellationToken: ct);
         _subscriptions.Add(messageSub);
 
+        // Subscribe to bind-character commands
+        var bindSub = await _messageSubscriber.SubscribeDynamicAsync<BindActorCharacterCommand>(
+            $"actor.node.{appId}.bind-character",
+            async (command, cancellationToken) =>
+            {
+                await HandleBindCharacterCommandAsync(command, cancellationToken);
+            },
+            cancellationToken: ct);
+        _subscriptions.Add(bindSub);
+
         _logger.LogDebug(
-            "Subscribed to command topics: actor.node.{AppId}.spawn, actor.node.{AppId}.stop, actor.node.{AppId}.message",
-            appId, appId, appId);
+            "Subscribed to command topics: actor.node.{AppId}.spawn, actor.node.{AppId}.stop, actor.node.{AppId}.message, actor.node.{AppId}.bind-character",
+            appId, appId, appId, appId);
     }
 
     /// <summary>
@@ -379,6 +389,54 @@ public sealed class ActorPoolNodeWorker : BackgroundService
                 ex.GetType().Name,
                 ex.Message,
                 details: new { command.ActorId, command.MessageType },
+                stack: ex.StackTrace,
+                cancellationToken: ct);
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Handles a bind-character command from the control plane.
+    /// Called via subscription to actor.node.{appId}.bind-character topic.
+    /// </summary>
+    /// <param name="command">The bind command.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>True if bind succeeded, false otherwise.</returns>
+    public async Task<bool> HandleBindCharacterCommandAsync(BindActorCharacterCommand command, CancellationToken ct)
+    {
+        _logger.LogInformation(
+            "Received bind-character command for actor {ActorId} (characterId: {CharacterId})",
+            command.ActorId, command.CharacterId);
+
+        try
+        {
+            if (!_actorRegistry.TryGet(command.ActorId, out var runner) || runner == null)
+            {
+                _logger.LogWarning("Actor {ActorId} not found for bind-character command", command.ActorId);
+                return false;
+            }
+
+            await runner.BindCharacterAsync(command.CharacterId, ct);
+
+            _logger.LogInformation("Actor {ActorId} bound to character {CharacterId}",
+                command.ActorId, command.CharacterId);
+            return true;
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Cannot bind actor {ActorId} to character {CharacterId}",
+                command.ActorId, command.CharacterId);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling bind-character command for actor {ActorId}", command.ActorId);
+            await _messageBus.TryPublishErrorAsync(
+                "actor",
+                "HandleBindCharacterCommand",
+                ex.GetType().Name,
+                ex.Message,
+                details: new { command.ActorId, command.CharacterId },
                 stack: ex.StackTrace,
                 cancellationToken: ct);
             return false;

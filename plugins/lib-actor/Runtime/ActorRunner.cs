@@ -71,6 +71,7 @@ public sealed class ActorRunner : IActorRunner
     private const string ENCOUNTER_STARTED_TOPIC = "actor.encounter.started";
     private const string ENCOUNTER_ENDED_TOPIC = "actor.encounter.ended";
     private const string ENCOUNTER_PHASE_CHANGED_TOPIC = "actor.encounter.phase-changed";
+    private const string CHARACTER_BOUND_TOPIC = "actor.instance.character-bound";
 
     /// <inheritdoc/>
     public string ActorId { get; }
@@ -82,7 +83,7 @@ public sealed class ActorRunner : IActorRunner
     public string Category => _template.Category;
 
     /// <inheritdoc/>
-    public Guid? CharacterId { get; }
+    public Guid? CharacterId { get; private set; }
 
     /// <inheritdoc/>
     public Guid RealmId { get; }
@@ -249,6 +250,21 @@ public sealed class ActorRunner : IActorRunner
             CharacterId = CharacterId,
             Category = Category
         }, cancellationToken: cancellationToken);
+
+        // If spawned with a characterId already set, emit bound event so consumers
+        // always see a character-bound event regardless of spawn-bound vs hot-swap
+        if (CharacterId.HasValue)
+        {
+            await _messageBus.TryPublishAsync(CHARACTER_BOUND_TOPIC, new ActorCharacterBoundEvent
+            {
+                EventId = Guid.NewGuid(),
+                Timestamp = DateTimeOffset.UtcNow,
+                ActorId = ActorId,
+                CharacterId = CharacterId.Value,
+                RealmId = RealmId,
+                PreviousCharacterId = null
+            }, cancellationToken: cancellationToken);
+        }
     }
 
     /// <inheritdoc/>
@@ -306,6 +322,41 @@ public sealed class ActorRunner : IActorRunner
 
         Status = ActorStatus.Stopped;
         _logger.LogInformation("Actor {ActorId} stopped (iterations: {Iterations})", ActorId, LoopIterations);
+    }
+
+    /// <inheritdoc/>
+    public async Task BindCharacterAsync(Guid characterId, CancellationToken cancellationToken = default)
+    {
+        if (_disposed)
+            throw new ObjectDisposedException(nameof(ActorRunner));
+
+        if (Status != ActorStatus.Running)
+            throw new InvalidOperationException($"Cannot bind character to actor {ActorId}: actor is {Status}, expected Running");
+
+        if (CharacterId.HasValue)
+            throw new InvalidOperationException($"Cannot bind character to actor {ActorId}: already bound to character {CharacterId.Value}");
+
+        var previousCharacterId = CharacterId;
+        CharacterId = characterId;
+
+        _logger.LogInformation("Actor {ActorId} binding to character {CharacterId} in realm {RealmId}",
+            ActorId, characterId, RealmId);
+
+        // Setup perception subscription for the newly bound character
+        await SetupPerceptionSubscriptionAsync(cancellationToken);
+
+        // Publish character bound event
+        await _messageBus.TryPublishAsync(CHARACTER_BOUND_TOPIC, new ActorCharacterBoundEvent
+        {
+            EventId = Guid.NewGuid(),
+            Timestamp = DateTimeOffset.UtcNow,
+            ActorId = ActorId,
+            CharacterId = characterId,
+            RealmId = RealmId,
+            PreviousCharacterId = previousCharacterId
+        }, cancellationToken: cancellationToken);
+
+        _logger.LogInformation("Actor {ActorId} bound to character {CharacterId}", ActorId, characterId);
     }
 
     /// <inheritdoc/>

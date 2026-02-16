@@ -392,6 +392,21 @@ public sealed class ActorPoolManager : IActorPoolManager
     }
 
     /// <inheritdoc/>
+    public async Task UpdateActorCharacterAsync(string actorId, Guid characterId, CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(actorId);
+
+        var store = _stateStoreFactory.GetStore<ActorAssignment>(ACTOR_ASSIGNMENTS_STORE);
+        var assignment = await store.GetAsync(actorId, ct);
+
+        if (assignment != null)
+        {
+            assignment.CharacterId = characterId;
+            await store.SaveAsync(actorId, assignment, cancellationToken: ct);
+        }
+    }
+
+    /// <inheritdoc/>
     public async Task<IReadOnlyList<ActorAssignment>> GetAssignmentsByTemplateAsync(string templateId, CancellationToken ct = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(templateId);

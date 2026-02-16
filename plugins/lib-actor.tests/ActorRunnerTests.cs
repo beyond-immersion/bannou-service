@@ -840,4 +840,143 @@ public class ActorRunnerTests
     }
 
     #endregion
+
+    #region BindCharacterAsync Tests
+
+    [Fact]
+    public async Task BindCharacterAsync_UnboundRunningActor_SetsCharacterId()
+    {
+        // Arrange — create without characterId (event-mode actor)
+        var (runner, messageBusMock) = CreateRunner(characterId: null);
+        await runner.StartAsync(CancellationToken.None);
+        await WaitForIterationsAsync(runner, 1, TimeSpan.FromSeconds(5));
+
+        Assert.Null(runner.CharacterId);
+
+        var characterId = Guid.NewGuid();
+
+        // Act
+        await runner.BindCharacterAsync(characterId, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(characterId, runner.CharacterId);
+
+        // Cleanup
+        await runner.StopAsync(cancellationToken: CancellationToken.None);
+        await runner.DisposeAsync();
+    }
+
+    [Fact]
+    public async Task BindCharacterAsync_PublishesCharacterBoundEvent()
+    {
+        // Arrange
+        var realmId = Guid.NewGuid();
+        var (runner, messageBusMock) = CreateRunner(characterId: null, realmId: realmId);
+        await runner.StartAsync(CancellationToken.None);
+        await WaitForIterationsAsync(runner, 1, TimeSpan.FromSeconds(5));
+
+        var characterId = Guid.NewGuid();
+
+        // Act
+        await runner.BindCharacterAsync(characterId, CancellationToken.None);
+
+        // Assert
+        messageBusMock.Verify(
+            m => m.TryPublishAsync(
+                "actor.instance.character-bound",
+                It.Is<ActorCharacterBoundEvent>(e =>
+                    e.CharacterId == characterId &&
+                    e.RealmId == realmId &&
+                    e.PreviousCharacterId == null),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        // Cleanup
+        await runner.StopAsync(cancellationToken: CancellationToken.None);
+        await runner.DisposeAsync();
+    }
+
+    [Fact]
+    public async Task BindCharacterAsync_AlreadyBound_Throws()
+    {
+        // Arrange — create with characterId already set
+        var (runner, _) = CreateRunner(characterId: Guid.NewGuid());
+        await runner.StartAsync(CancellationToken.None);
+        await WaitForIterationsAsync(runner, 1, TimeSpan.FromSeconds(5));
+
+        // Act & Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => runner.BindCharacterAsync(Guid.NewGuid(), CancellationToken.None));
+
+        // Cleanup
+        await runner.StopAsync(cancellationToken: CancellationToken.None);
+        await runner.DisposeAsync();
+    }
+
+    [Fact]
+    public async Task BindCharacterAsync_NotRunning_Throws()
+    {
+        // Arrange — create but don't start
+        var (runner, _) = CreateRunner(characterId: null);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => runner.BindCharacterAsync(Guid.NewGuid(), CancellationToken.None));
+
+        // Cleanup
+        await runner.DisposeAsync();
+    }
+
+    [Fact]
+    public async Task StartAsync_WithCharacterId_PublishesCharacterBoundEvent()
+    {
+        // Arrange
+        var characterId = Guid.NewGuid();
+        var realmId = Guid.NewGuid();
+        var (runner, messageBusMock) = CreateRunner(characterId: characterId, realmId: realmId);
+
+        // Act
+        await runner.StartAsync(CancellationToken.None);
+        await WaitForIterationsAsync(runner, 1, TimeSpan.FromSeconds(5));
+
+        // Assert
+        messageBusMock.Verify(
+            m => m.TryPublishAsync(
+                "actor.instance.character-bound",
+                It.Is<ActorCharacterBoundEvent>(e =>
+                    e.CharacterId == characterId &&
+                    e.RealmId == realmId &&
+                    e.PreviousCharacterId == null),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        // Cleanup
+        await runner.StopAsync(cancellationToken: CancellationToken.None);
+        await runner.DisposeAsync();
+    }
+
+    [Fact]
+    public async Task StartAsync_WithoutCharacterId_DoesNotPublishCharacterBoundEvent()
+    {
+        // Arrange
+        var (runner, messageBusMock) = CreateRunner(characterId: null);
+
+        // Act
+        await runner.StartAsync(CancellationToken.None);
+        await WaitForIterationsAsync(runner, 1, TimeSpan.FromSeconds(5));
+
+        // Assert
+        messageBusMock.Verify(
+            m => m.TryPublishAsync(
+                "actor.instance.character-bound",
+                It.IsAny<ActorCharacterBoundEvent>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        // Cleanup
+        await runner.StopAsync(cancellationToken: CancellationToken.None);
+        await runner.DisposeAsync();
+    }
+
+    #endregion
 }

@@ -984,6 +984,106 @@ public partial class ActorService : IActorService
     }
 
     /// <summary>
+    /// Binds an unbound event-mode actor to a character, transitioning it to character-mode.
+    /// After binding, the actor subscribes to the character's perception stream and variable
+    /// providers begin loading character-specific data on subsequent ticks.
+    /// </summary>
+    public async Task<(StatusCodes, ActorInstanceResponse?)> BindActorCharacterAsync(
+        BindActorCharacterRequest body,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Binding actor {ActorId} to character {CharacterId}", body.ActorId, body.CharacterId);
+
+        if (_configuration.DeploymentMode == DeploymentMode.Bannou)
+        {
+            // Bannou mode: bind locally
+            if (!_actorRegistry.TryGet(body.ActorId, out var runner) || runner == null)
+            {
+                return (StatusCodes.NotFound, null);
+            }
+
+            try
+            {
+                await runner.BindCharacterAsync(body.CharacterId, cancellationToken);
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogWarning(ex, "Cannot bind actor {ActorId} to character {CharacterId}",
+                    body.ActorId, body.CharacterId);
+                return (StatusCodes.BadRequest, null);
+            }
+
+            // Register character resource reference
+            await RegisterCharacterReferenceAsync(body.ActorId, body.CharacterId, cancellationToken);
+
+            return (StatusCodes.OK, new ActorInstanceResponse
+            {
+                ActorId = body.ActorId,
+                TemplateId = runner.TemplateId,
+                Category = runner.Category,
+                CharacterId = runner.CharacterId,
+                RealmId = runner.RealmId,
+                NodeId = _configuration.LocalModeNodeId,
+                NodeAppId = _configuration.PoolNodeAppId ?? "bannou",
+                Status = runner.Status,
+                StartedAt = runner.StartedAt,
+                LoopIterations = runner.LoopIterations
+            });
+        }
+        else
+        {
+            // Pool mode: send bind command to pool node
+            var assignment = await _poolManager.GetActorAssignmentAsync(body.ActorId, cancellationToken);
+            if (assignment == null)
+            {
+                _logger.LogWarning("Actor {ActorId} not found in pool assignments", body.ActorId);
+                return (StatusCodes.NotFound, null);
+            }
+
+            if (assignment.CharacterId.HasValue)
+            {
+                _logger.LogWarning("Actor {ActorId} is already bound to character {CharacterId}",
+                    body.ActorId, assignment.CharacterId);
+                return (StatusCodes.BadRequest, null);
+            }
+
+            // Send bind command to pool node
+            var bindCommand = new BindActorCharacterCommand
+            {
+                ActorId = body.ActorId,
+                CharacterId = body.CharacterId
+            };
+            await _messageBus.TryPublishAsync(
+                $"actor.node.{assignment.NodeAppId}.bind-character",
+                bindCommand,
+                cancellationToken: cancellationToken);
+
+            // Update assignment with new characterId
+            await _poolManager.UpdateActorCharacterAsync(body.ActorId, body.CharacterId, cancellationToken);
+
+            // Register character resource reference
+            await RegisterCharacterReferenceAsync(body.ActorId, body.CharacterId, cancellationToken);
+
+            _logger.LogInformation("Sent bind-character command for actor {ActorId} to node {NodeId}",
+                body.ActorId, assignment.NodeId);
+
+            return (StatusCodes.OK, new ActorInstanceResponse
+            {
+                ActorId = body.ActorId,
+                TemplateId = assignment.TemplateId,
+                Category = assignment.Category ?? "unknown",
+                CharacterId = body.CharacterId,
+                RealmId = assignment.RealmId,
+                NodeId = assignment.NodeId,
+                NodeAppId = assignment.NodeAppId,
+                Status = assignment.Status,
+                StartedAt = assignment.StartedAt ?? assignment.AssignedAt,
+                LoopIterations = 0
+            });
+        }
+    }
+
+    /// <summary>
     /// Cleans up all actors referencing a deleted character.
     /// Called by lib-resource cleanup coordination during cascading resource cleanup.
     /// </summary>

@@ -585,6 +585,54 @@ public partial class ActorEncounterPhaseChangedEvent : BaseServiceEvent
 }
 
 /// <summary>
+/// Published when an actor binds to a character, either via hot-swap
+/// <br/>(BindActorCharacter API) or on startup when spawned with a characterId.
+/// <br/>Published to topic: actor.instance.character-bound
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ActorCharacterBoundEvent : BaseServiceEvent
+{
+
+    /// <summary>
+    /// Event type identifier for character binding
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("eventName")]
+    public override string EventName { get; set; } = "actor.instance.character-bound";
+
+    /// <summary>
+    /// Unique identifier of the actor that bound
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("actorId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ActorId { get; set; } = default!;
+
+    /// <summary>
+    /// Character the actor is now bound to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
+
+    /// <summary>
+    /// Realm the actor operates in
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("realmId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid RealmId { get; set; } = default!;
+
+    /// <summary>
+    /// Previous character ID if this is a re-bind (null for first bind, including actors spawned with a characterId)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("previousCharacterId")]
+    public System.Guid? PreviousCharacterId { get; set; } = default!;
+
+}
+
+/// <summary>
 /// Command sent from control plane to pool node to spawn an actor.
 /// <br/>Published to topic: actor.node.{poolAppId}.spawn
 /// <br/>
@@ -746,6 +794,33 @@ public partial class ReloadBehaviorCommand
     [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
     [System.Text.Json.Serialization.JsonRequired]
     public string NewBehaviorRef { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Command sent from control plane to pool node to bind an actor to a character.
+/// <br/>Published to topic: actor.node.{poolAppId}.bind-character
+/// <br/>
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class BindActorCharacterCommand
+{
+
+    /// <summary>
+    /// Unique identifier of the actor to bind
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("actorId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ActorId { get; set; } = default!;
+
+    /// <summary>
+    /// Character ID to bind the actor to
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("characterId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Guid CharacterId { get; set; } = default!;
 
 }
 

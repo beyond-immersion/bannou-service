@@ -484,6 +484,43 @@ components:
           type: string
           description: Phase after the change
 
+    ActorCharacterBoundEvent:
+      allOf:
+      - $ref: '../common-events.yaml#/components/schemas/BaseServiceEvent'
+      type: object
+      additionalProperties: false
+      description: |
+        Published when an actor binds to a character, either via hot-swap
+        (BindActorCharacter API) or on startup when spawned with a characterId.
+        Published to topic: actor.instance.character-bound
+      required:
+      - actorId
+      - characterId
+      - realmId
+      properties:
+        eventName:
+          type: string
+          default: "actor.instance.character-bound"
+          description: Event type identifier for character binding
+        actorId:
+          type: string
+          description: Unique identifier of the actor that bound
+        characterId:
+          type: string
+          format: uuid
+          description: Character the actor is now bound to
+        realmId:
+          type: string
+          format: uuid
+          description: Realm the actor operates in
+        previousCharacterId:
+          type: string
+          format: uuid
+          nullable: true
+          description: >-
+            Previous character ID if this is a re-bind (null for first bind,
+            including actors spawned with a characterId)
+
     # === Internal Commands (control plane to pool nodes) ===
     SpawnActorCommand:
       type: object
@@ -603,6 +640,24 @@ components:
         newBehaviorRef:
           type: string
           description: New asset reference to fetch
+
+    BindActorCharacterCommand:
+      type: object
+      additionalProperties: false
+      description: |
+        Command sent from control plane to pool node to bind an actor to a character.
+        Published to topic: actor.node.{poolAppId}.bind-character
+      required:
+      - actorId
+      - characterId
+      properties:
+        actorId:
+          type: string
+          description: Unique identifier of the actor to bind
+        characterId:
+          type: string
+          format: uuid
+          description: Character ID to bind the actor to
 
     # === Character Perception Events (game servers to actors) ===
     CharacterPerceptionEvent:
