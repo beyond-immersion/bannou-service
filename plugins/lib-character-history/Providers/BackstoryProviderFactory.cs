@@ -31,14 +31,14 @@ public sealed class BackstoryProviderFactory : IVariableProviderFactory
     public string ProviderName => VariableProviderDefinitions.Backstory;
 
     /// <inheritdoc/>
-    public async Task<IVariableProvider> CreateAsync(Guid? entityId, CancellationToken ct)
+    public async Task<IVariableProvider> CreateAsync(Guid? characterId, Guid realmId, Guid? locationId, CancellationToken ct)
     {
-        if (!entityId.HasValue)
+        if (!characterId.HasValue)
         {
             return BackstoryProvider.Empty;
         }
 
-        var backstory = await _cache.GetOrLoadAsync(entityId.Value, ct);
+        var backstory = await _cache.GetOrLoadAsync(characterId.Value, ct);
         return new BackstoryProvider(backstory);
     }
 }

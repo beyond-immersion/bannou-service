@@ -58,6 +58,12 @@ public class ActorAssignment
     /// Associated character ID for NPC brain actors.
     /// </summary>
     public Guid? CharacterId { get; set; }
+
+    /// <summary>
+    /// Realm this actor operates in.
+    /// Resolved at spawn time from request or character lookup.
+    /// </summary>
+    public Guid? RealmId { get; set; }
 }
 
 /// <summary>

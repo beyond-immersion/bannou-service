@@ -31,14 +31,14 @@ public sealed class CombatPreferencesProviderFactory : IVariableProviderFactory
     public string ProviderName => VariableProviderDefinitions.Combat;
 
     /// <inheritdoc/>
-    public async Task<IVariableProvider> CreateAsync(Guid? entityId, CancellationToken ct)
+    public async Task<IVariableProvider> CreateAsync(Guid? characterId, Guid realmId, Guid? locationId, CancellationToken ct)
     {
-        if (!entityId.HasValue)
+        if (!characterId.HasValue)
         {
             return CombatPreferencesProvider.Empty;
         }
 
-        var combatPrefs = await _cache.GetOrLoadCombatPreferencesAsync(entityId.Value, ct);
+        var combatPrefs = await _cache.GetOrLoadCombatPreferencesAsync(characterId.Value, ct);
         return new CombatPreferencesProvider(combatPrefs);
     }
 }

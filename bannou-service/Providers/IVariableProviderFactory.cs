@@ -36,10 +36,10 @@ namespace BeyondImmersion.BannouService.Providers;
 /// {
 ///     public string ProviderName => "personality";
 ///
-///     public async Task&lt;IVariableProvider&gt; CreateAsync(Guid? entityId, CancellationToken ct)
+///     public async Task&lt;IVariableProvider&gt; CreateAsync(Guid? characterId, Guid realmId, Guid? locationId, CancellationToken ct)
 ///     {
-///         if (!entityId.HasValue) return PersonalityProvider.Empty;
-///         var data = await _cache.GetOrLoadAsync(entityId.Value, ct);
+///         if (!characterId.HasValue) return PersonalityProvider.Empty;
+///         var data = await _cache.GetOrLoadAsync(characterId.Value, ct);
 ///         return new PersonalityProvider(data);
 ///     }
 /// }
@@ -59,15 +59,25 @@ public interface IVariableProviderFactory
     /// <summary>
     /// Creates a variable provider for the given entity.
     /// </summary>
-    /// <param name="entityId">
-    /// The entity ID to create a provider for, or null for non-entity actors.
-    /// For character actors, this is the character ID.
-    /// For event actors, this may be null or a region/encounter ID.
+    /// <param name="characterId">
+    /// The character ID to create a provider for, or null for non-character actors.
+    /// Null for scheduled-task or world-admin actors that aren't bound to characters.
+    /// When non-null, this is always a character ID (including divine characters in system realms).
+    /// </param>
+    /// <param name="realmId">
+    /// The realm the actor operates in. Always provided — every actor belongs to a realm.
+    /// Used by realm-scoped providers (e.g., Worldstate for game clock, Faction for realm filtering).
+    /// </param>
+    /// <param name="locationId">
+    /// The actor's current location, or null if not yet known.
+    /// Tracked by ActorRunner from incoming perception events. May be null on first
+    /// execution scope creation before any perception events arrive.
+    /// Used by location-aware providers (e.g., Location to skip entity-location lookup).
     /// </param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>
     /// A provider instance. Implementations should return an empty/default provider
     /// rather than null when the entity has no data for this provider type.
     /// </returns>
-    Task<IVariableProvider> CreateAsync(Guid? entityId, CancellationToken ct);
+    Task<IVariableProvider> CreateAsync(Guid? characterId, Guid realmId, Guid? locationId, CancellationToken ct);
 }

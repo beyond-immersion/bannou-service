@@ -85,6 +85,14 @@ public sealed class ActorRunner : IActorRunner
     public Guid? CharacterId { get; }
 
     /// <inheritdoc/>
+    public Guid RealmId { get; }
+
+    /// <inheritdoc/>
+    public Guid? LocationId => _currentLocationId;
+
+    private volatile Guid? _currentLocationId;
+
+    /// <inheritdoc/>
     public ActorStatus Status
     {
         get
@@ -131,6 +139,7 @@ public sealed class ActorRunner : IActorRunner
     /// <param name="actorId">The unique identifier for this actor.</param>
     /// <param name="template">The template this actor was spawned from.</param>
     /// <param name="characterId">Optional character ID for NPC brain actors.</param>
+    /// <param name="realmId">The realm this actor operates in.</param>
     /// <param name="config">Service configuration.</param>
     /// <param name="messageBus">Message bus for publishing events.</param>
     /// <param name="messageSubscriber">Message subscriber for dynamic subscriptions.</param>
@@ -147,6 +156,7 @@ public sealed class ActorRunner : IActorRunner
         string actorId,
         ActorTemplateData template,
         Guid? characterId,
+        Guid realmId,
         ActorServiceConfiguration config,
         IMessageBus messageBus,
         IMessageSubscriber messageSubscriber,
@@ -163,6 +173,7 @@ public sealed class ActorRunner : IActorRunner
         ActorId = actorId;
         _template = template;
         CharacterId = characterId;
+        RealmId = realmId;
         _config = config;
         _messageBus = messageBus;
         _messageSubscriber = messageSubscriber;
@@ -320,6 +331,8 @@ public sealed class ActorRunner : IActorRunner
             TemplateId = TemplateId,
             Category = Category,
             CharacterId = CharacterId,
+            RealmId = RealmId,
+            LocationId = LocationId,
             Status = Status,
             StartedAt = StartedAt,
             LastHeartbeat = LastHeartbeat,
@@ -595,6 +608,9 @@ public sealed class ActorRunner : IActorRunner
         var perceptions = new List<object>();
         while (_perceptionQueue.Reader.TryRead(out var perception))
         {
+            // Track location from perception events
+            TrackLocationFromPerception(perception);
+
             // Apply attention filter (based on urgency)
             if (perception.Urgency < (float)_config.PerceptionFilterThreshold)
                 continue;
@@ -701,6 +717,9 @@ public sealed class ActorRunner : IActorRunner
 
         while (_perceptionQueue.Reader.TryRead(out var perception))
         {
+            // Track location from perception events
+            TrackLocationFromPerception(perception);
+
             // Apply attention filter (based on urgency)
             if (perception.Urgency < (float)_config.PerceptionFilterThreshold)
             {
@@ -733,6 +752,18 @@ public sealed class ActorRunner : IActorRunner
 
         // Yield to honor async contract per IMPLEMENTATION TENETS
         await Task.Yield();
+    }
+
+    /// <summary>
+    /// Tracks the actor's current location from perception events that carry locationId.
+    /// Called for every dequeued perception (even filtered ones) to keep location up-to-date.
+    /// </summary>
+    private void TrackLocationFromPerception(PerceptionData perception)
+    {
+        if (perception.LocationId.HasValue)
+        {
+            _currentLocationId = perception.LocationId.Value;
+        }
     }
 
     /// <summary>
@@ -960,7 +991,7 @@ public sealed class ActorRunner : IActorRunner
         {
             try
             {
-                var provider = await factory.CreateAsync(CharacterId, ct);
+                var provider = await factory.CreateAsync(CharacterId, RealmId, _currentLocationId, ct);
                 scope.RegisterProvider(provider);
                 _logger.LogDebug("Actor {ActorId} registered provider {ProviderName}", ActorId, factory.ProviderName);
             }

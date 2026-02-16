@@ -31,14 +31,14 @@ public sealed class PersonalityProviderFactory : IVariableProviderFactory
     public string ProviderName => VariableProviderDefinitions.Personality;
 
     /// <inheritdoc/>
-    public async Task<IVariableProvider> CreateAsync(Guid? entityId, CancellationToken ct)
+    public async Task<IVariableProvider> CreateAsync(Guid? characterId, Guid realmId, Guid? locationId, CancellationToken ct)
     {
-        if (!entityId.HasValue)
+        if (!characterId.HasValue)
         {
             return PersonalityProvider.Empty;
         }
 
-        var personality = await _cache.GetOrLoadPersonalityAsync(entityId.Value, ct);
+        var personality = await _cache.GetOrLoadPersonalityAsync(characterId.Value, ct);
         return new PersonalityProvider(personality);
     }
 }

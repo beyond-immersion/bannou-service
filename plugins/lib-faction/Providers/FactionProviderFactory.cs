@@ -37,9 +37,9 @@ public sealed class FactionProviderFactory : IVariableProviderFactory
     public string ProviderName => VariableProviderDefinitions.Faction;
 
     /// <inheritdoc/>
-    public async Task<IVariableProvider> CreateAsync(Guid? entityId, CancellationToken ct)
+    public async Task<IVariableProvider> CreateAsync(Guid? characterId, Guid realmId, Guid? locationId, CancellationToken ct)
     {
-        if (!entityId.HasValue)
+        if (!characterId.HasValue)
         {
             return FactionProvider.Empty;
         }
@@ -48,7 +48,7 @@ public sealed class FactionProviderFactory : IVariableProviderFactory
         var memberListStore = _stateStoreFactory.GetStore<MembershipListModel>(
             StateStoreDefinitions.FactionMembership);
         var membershipList = await memberListStore.GetAsync(
-            $"mem:char:{entityId.Value}", ct);
+            $"mem:char:{characterId.Value}", ct);
 
         if (membershipList == null || membershipList.Memberships.Count == 0)
         {
@@ -70,6 +70,9 @@ public sealed class FactionProviderFactory : IVariableProviderFactory
         {
             var faction = await factionStore.GetAsync($"fac:{membership.FactionId}", ct);
             if (faction == null) continue;
+
+            // Filter to realm-relevant factions — skip factions in other realms
+            if (faction.RealmId != realmId) continue;
 
             factions.Add(new FactionProvider.FactionSnapshot(
                 faction.FactionId,

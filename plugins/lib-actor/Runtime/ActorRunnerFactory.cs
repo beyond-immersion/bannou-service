@@ -70,7 +70,8 @@ public class ActorRunnerFactory : IActorRunnerFactory
     public IActorRunner Create(
         string actorId,
         ActorTemplateData template,
-        Guid? characterId = null,
+        Guid? characterId,
+        Guid realmId,
         object? configurationOverrides = null,
         object? initialState = null)
     {
@@ -94,6 +95,7 @@ public class ActorRunnerFactory : IActorRunnerFactory
             actorId,
             effectiveTemplate,
             characterId,
+            realmId,
             _config,
             _messageBus,
             _messageSubscriber,

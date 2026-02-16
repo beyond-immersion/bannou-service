@@ -52,6 +52,7 @@ public partial class ActorService : IActorService
     private readonly IActorPoolManager _poolManager;
     private readonly IMeshInvocationClient _meshClient;
     private readonly IResourceClient _resourceClient;
+    private readonly ICharacterClient _characterClient;
 
     // State store names use StateStoreDefinitions constants per IMPLEMENTATION TENETS
     private const string ALL_TEMPLATES_KEY = "_all_template_ids";
@@ -79,6 +80,7 @@ public partial class ActorService : IActorService
     /// <param name="poolManager">Pool manager for distributed actor routing.</param>
     /// <param name="meshClient">Mesh client for invoking methods on remote nodes.</param>
     /// <param name="resourceClient">Resource client for reference tracking (L1 hard dependency).</param>
+    /// <param name="characterClient">Character client for realm lookup on spawn (L2 same-layer dependency).</param>
     public ActorService(
         IMessageBus messageBus,
         IStateStoreFactory stateStoreFactory,
@@ -90,7 +92,8 @@ public partial class ActorService : IActorService
         IBehaviorDocumentLoader behaviorLoader,
         IActorPoolManager poolManager,
         IMeshInvocationClient meshClient,
-        IResourceClient resourceClient)
+        IResourceClient resourceClient,
+        ICharacterClient characterClient)
     {
         _messageBus = messageBus;
         _stateStoreFactory = stateStoreFactory;
@@ -103,6 +106,7 @@ public partial class ActorService : IActorService
         _poolManager = poolManager;
         _meshClient = meshClient;
         _resourceClient = resourceClient;
+        _characterClient = characterClient;
 
         // Register event handlers via partial class (ActorServiceEvents.cs)
         RegisterEventConsumers(_eventConsumer);
@@ -516,6 +520,15 @@ public partial class ActorService : IActorService
             ? body.ActorId
             : $"{template.Category}-{Guid.NewGuid():N}";
 
+        // Resolve realmId: use provided value, or look up from character
+        var realmId = await ResolveRealmIdAsync(body.RealmId, body.CharacterId, cancellationToken);
+        if (!realmId.HasValue)
+        {
+            _logger.LogWarning("Cannot spawn actor {ActorId}: no realmId provided and unable to resolve from characterId {CharacterId}",
+                actorId, body.CharacterId);
+            return (StatusCodes.BadRequest, null);
+        }
+
         // Check for duplicate (local registry - only in bannou mode)
         if (_configuration.DeploymentMode == DeploymentMode.Bannou && _actorRegistry.TryGet(actorId, out _))
         {
@@ -545,6 +558,7 @@ public partial class ActorService : IActorService
                 actorId,
                 template,
                 body.CharacterId,
+                realmId.Value,
                 body.ConfigurationOverrides,
                 body.InitialState);
 
@@ -582,7 +596,8 @@ public partial class ActorService : IActorService
                 TemplateId = body.TemplateId,
                 Category = template.Category,
                 Status = ActorStatus.Pending,
-                CharacterId = body.CharacterId
+                CharacterId = body.CharacterId,
+                RealmId = realmId.Value
             };
             await _poolManager.RecordActorAssignmentAsync(assignment, cancellationToken);
 
@@ -596,7 +611,8 @@ public partial class ActorService : IActorService
                 InitialState = body.InitialState,
                 TickIntervalMs = template.TickIntervalMs > 0 ? template.TickIntervalMs : _configuration.DefaultTickIntervalMs,
                 AutoSaveIntervalSeconds = template.AutoSaveIntervalSeconds > 0 ? template.AutoSaveIntervalSeconds : _configuration.DefaultAutoSaveIntervalSeconds,
-                CharacterId = body.CharacterId
+                CharacterId = body.CharacterId,
+                RealmId = realmId.Value
             };
             await _messageBus.TryPublishAsync($"actor.node.{poolNode.AppId}.spawn", spawnCommand, cancellationToken: cancellationToken);
 
@@ -627,8 +643,8 @@ public partial class ActorService : IActorService
             await RegisterCharacterReferenceAsync(actorId, body.CharacterId.Value, cancellationToken);
         }
 
-        _logger.LogInformation("Spawned actor {ActorId} from template {TemplateId}",
-            actorId, body.TemplateId);
+        _logger.LogInformation("Spawned actor {ActorId} from template {TemplateId} in realm {RealmId}",
+            actorId, body.TemplateId, realmId.Value);
 
         return (StatusCodes.OK, new ActorInstanceResponse
         {
@@ -636,12 +652,53 @@ public partial class ActorService : IActorService
             TemplateId = body.TemplateId,
             Category = template.Category,
             CharacterId = body.CharacterId,
+            RealmId = realmId.Value,
             NodeId = nodeId,
             NodeAppId = nodeAppId,
             Status = _configuration.DeploymentMode == DeploymentMode.Bannou ? ActorStatus.Running : ActorStatus.Pending,
             StartedAt = startedAt,
             LoopIterations = 0
         });
+    }
+
+    /// <summary>
+    /// Resolves the realm ID for an actor spawn request.
+    /// Uses the provided realmId if available, otherwise looks up from character.
+    /// </summary>
+    private async Task<Guid?> ResolveRealmIdAsync(Guid? providedRealmId, Guid? characterId, CancellationToken ct)
+    {
+        if (providedRealmId.HasValue)
+        {
+            return providedRealmId.Value;
+        }
+
+        if (!characterId.HasValue)
+        {
+            _logger.LogWarning("No realmId provided and no characterId to look up realm from");
+            return null;
+        }
+
+        try
+        {
+            var (status, response) = await _characterClient.GetCharacterAsync(
+                new Character.GetCharacterRequest { CharacterId = characterId.Value }, ct);
+
+            if (status != StatusCodes.OK || response == null)
+            {
+                _logger.LogWarning("Failed to look up character {CharacterId} for realm resolution (status: {Status})",
+                    characterId.Value, status);
+                return null;
+            }
+
+            _logger.LogDebug("Resolved realmId {RealmId} from character {CharacterId}",
+                response.RealmId, characterId.Value);
+            return response.RealmId;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error looking up character {CharacterId} for realm resolution", characterId.Value);
+            return null;
+        }
     }
 
     /// <summary>
@@ -679,6 +736,7 @@ public partial class ActorService : IActorService
                     TemplateId = assignment.TemplateId,
                     Category = assignment.Category ?? "unknown",
                     CharacterId = assignment.CharacterId,
+                    RealmId = assignment.RealmId,
                     NodeId = assignment.NodeId,
                     NodeAppId = assignment.NodeAppId,
                     Status = assignment.Status,
@@ -1114,6 +1172,7 @@ public partial class ActorService : IActorService
                 TemplateId = a.TemplateId,
                 Category = a.Category ?? "unknown",
                 CharacterId = a.CharacterId,
+                RealmId = a.RealmId,
                 NodeId = a.NodeId,
                 NodeAppId = a.NodeAppId,
                 Status = a.Status,

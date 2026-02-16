@@ -32,14 +32,14 @@ public sealed class LocationContextProviderFactory : IVariableProviderFactory
     public string ProviderName => VariableProviderDefinitions.Location;
 
     /// <inheritdoc/>
-    public async Task<IVariableProvider> CreateAsync(Guid? entityId, CancellationToken ct)
+    public async Task<IVariableProvider> CreateAsync(Guid? characterId, Guid realmId, Guid? locationId, CancellationToken ct)
     {
-        if (!entityId.HasValue)
+        if (!characterId.HasValue)
         {
             return LocationContextProvider.Empty;
         }
 
-        var context = await _cache.GetOrLoadLocationContextAsync(entityId.Value, ct);
+        var context = await _cache.GetOrLoadLocationContextAsync(characterId.Value, realmId, locationId, ct);
         return new LocationContextProvider(context);
     }
 }

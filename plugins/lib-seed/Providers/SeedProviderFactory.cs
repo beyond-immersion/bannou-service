@@ -31,14 +31,14 @@ public sealed class SeedProviderFactory : IVariableProviderFactory
     public string ProviderName => VariableProviderDefinitions.Seed;
 
     /// <inheritdoc/>
-    public async Task<IVariableProvider> CreateAsync(Guid? entityId, CancellationToken ct)
+    public async Task<IVariableProvider> CreateAsync(Guid? characterId, Guid realmId, Guid? locationId, CancellationToken ct)
     {
-        if (!entityId.HasValue)
+        if (!characterId.HasValue)
         {
             return SeedProvider.Empty;
         }
 
-        var data = await _cache.GetSeedDataOrLoadAsync(entityId.Value, ct);
+        var data = await _cache.GetSeedDataOrLoadAsync(characterId.Value, ct);
         return new SeedProvider(data);
     }
 }

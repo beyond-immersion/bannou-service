@@ -29,6 +29,17 @@ public class ActorStateSnapshot
     public Guid? CharacterId { get; init; }
 
     /// <summary>
+    /// Gets the realm this actor operates in.
+    /// </summary>
+    public Guid RealmId { get; init; }
+
+    /// <summary>
+    /// Gets the actor's current location, tracked from perception events.
+    /// Null if no perception events with location data have been received yet.
+    /// </summary>
+    public Guid? LocationId { get; init; }
+
+    /// <summary>
     /// Gets the current status.
     /// </summary>
     public ActorStatus Status { get; init; }
@@ -97,6 +108,7 @@ public class ActorStateSnapshot
             TemplateId = TemplateId,
             Category = Category,
             CharacterId = CharacterId,
+            RealmId = RealmId,
             Status = Status,
             StartedAt = StartedAt,
             LastHeartbeat = LastHeartbeat,

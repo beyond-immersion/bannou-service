@@ -31,9 +31,9 @@ public sealed class EncountersProviderFactory : IVariableProviderFactory
     public string ProviderName => VariableProviderDefinitions.Encounters;
 
     /// <inheritdoc/>
-    public async Task<IVariableProvider> CreateAsync(Guid? entityId, CancellationToken ct)
+    public async Task<IVariableProvider> CreateAsync(Guid? characterId, Guid realmId, Guid? locationId, CancellationToken ct)
     {
-        if (!entityId.HasValue)
+        if (!characterId.HasValue)
         {
             return EncountersProvider.Empty;
         }
@@ -41,7 +41,7 @@ public sealed class EncountersProviderFactory : IVariableProviderFactory
         // Load basic encounter list
         // Note: sentiment, hasMet, and pairEncounters are loaded on-demand via the cache
         // For now, we just load the basic encounter list for the provider
-        var encounters = await _cache.GetEncountersOrLoadAsync(entityId.Value, ct);
+        var encounters = await _cache.GetEncountersOrLoadAsync(characterId.Value, ct);
         return new EncountersProvider(encounters);
     }
 }

@@ -208,11 +208,19 @@ public sealed class ActorPoolNodeWorker : BackgroundService
                 TickIntervalMs = command.TickIntervalMs > 0 ? command.TickIntervalMs : _configuration.DefaultTickIntervalMs
             };
 
+            // Validate realmId — control plane resolves this before publishing the command
+            if (!command.RealmId.HasValue)
+            {
+                _logger.LogError("Spawn command for actor {ActorId} is missing realmId — control plane should have resolved this", command.ActorId);
+                return false;
+            }
+
             // Create and start the actor runner
             var runner = _actorRunnerFactory.Create(
                 command.ActorId,
                 template,
                 command.CharacterId,
+                command.RealmId.Value,
                 command.Configuration);
 
             if (!_actorRegistry.TryRegister(command.ActorId, runner))

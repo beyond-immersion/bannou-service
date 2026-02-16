@@ -34,14 +34,14 @@ public sealed class ObligationProviderFactory : IVariableProviderFactory
     public string ProviderName => VariableProviderDefinitions.Obligations;
 
     /// <inheritdoc/>
-    public async Task<IVariableProvider> CreateAsync(Guid? entityId, CancellationToken ct)
+    public async Task<IVariableProvider> CreateAsync(Guid? characterId, Guid realmId, Guid? locationId, CancellationToken ct)
     {
-        if (!entityId.HasValue)
+        if (!characterId.HasValue)
         {
             return ObligationProvider.Empty;
         }
 
-        var manifest = await _cacheStore.GetAsync(entityId.Value.ToString(), ct);
+        var manifest = await _cacheStore.GetAsync(characterId.Value.ToString(), ct);
         return new ObligationProvider(manifest);
     }
 }

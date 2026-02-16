@@ -31,14 +31,14 @@ public sealed class QuestProviderFactory : IVariableProviderFactory
     public string ProviderName => VariableProviderDefinitions.Quest;
 
     /// <inheritdoc/>
-    public async Task<IVariableProvider> CreateAsync(Guid? entityId, CancellationToken ct)
+    public async Task<IVariableProvider> CreateAsync(Guid? characterId, Guid realmId, Guid? locationId, CancellationToken ct)
     {
-        if (!entityId.HasValue)
+        if (!characterId.HasValue)
         {
             return QuestProvider.Empty;
         }
 
-        var quests = await _cache.GetActiveQuestsOrLoadAsync(entityId.Value, ct);
+        var quests = await _cache.GetActiveQuestsOrLoadAsync(characterId.Value, ct);
         return new QuestProvider(quests);
     }
 }

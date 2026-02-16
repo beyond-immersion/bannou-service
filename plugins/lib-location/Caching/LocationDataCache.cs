@@ -39,9 +39,13 @@ public sealed class LocationDataCache : ILocationDataCache
     }
 
     /// <inheritdoc/>
-    public async Task<LocationContextData?> GetOrLoadLocationContextAsync(Guid characterId, CancellationToken ct = default)
+    public async Task<LocationContextData?> GetOrLoadLocationContextAsync(
+        Guid characterId,
+        Guid realmId,
+        Guid? locationId,
+        CancellationToken ct = default)
     {
-        // Check cache first
+        // Check cache first (keyed by characterId for consistency)
         if (_cache.TryGetValue(characterId, out var cached) && !cached.IsExpired)
         {
             _logger.LogDebug("Location context cache hit for character {CharacterId}", characterId);
@@ -57,39 +61,49 @@ public sealed class LocationDataCache : ILocationDataCache
             var locationClient = scope.ServiceProvider.GetRequiredService<ILocationClient>();
             var realmClient = scope.ServiceProvider.GetRequiredService<Realm.IRealmClient>();
 
-            // Step 1: Get entity location (where is this character right now?)
-            var entityLocationResponse = await locationClient.GetEntityLocationAsync(
-                new GetEntityLocationRequest
-                {
-                    EntityType = "character",
-                    EntityId = characterId
-                }, ct);
+            Guid resolvedLocationId;
 
-            if (entityLocationResponse is null || !entityLocationResponse.Found || !entityLocationResponse.LocationId.HasValue)
+            if (locationId.HasValue)
             {
-                _logger.LogDebug("Character {CharacterId} has no current location", characterId);
-                return null;
+                // Optimization: locationId known from perception events, skip entity-location lookup
+                resolvedLocationId = locationId.Value;
+                _logger.LogDebug(
+                    "Using known locationId {LocationId} for character {CharacterId} (skipped entity-location lookup)",
+                    resolvedLocationId, characterId);
             }
+            else
+            {
+                // Fallback: look up where this character is via entity-location API
+                var entityLocationResponse = await locationClient.GetEntityLocationAsync(
+                    new GetEntityLocationRequest
+                    {
+                        EntityType = "character",
+                        EntityId = characterId
+                    }, ct);
 
-            var locationId = entityLocationResponse.LocationId.Value;
-            var realmId = entityLocationResponse.RealmId
-                ?? throw new InvalidOperationException(
-                    $"Entity location for character {characterId} has locationId but no realmId");
+                if (entityLocationResponse is null || !entityLocationResponse.Found || !entityLocationResponse.LocationId.HasValue)
+                {
+                    _logger.LogDebug("Character {CharacterId} has no current location", characterId);
+                    return null;
+                }
+
+                resolvedLocationId = entityLocationResponse.LocationId.Value;
+            }
 
             // Step 2: Get location details
             var locationResponse = await locationClient.GetLocationAsync(
-                new GetLocationRequest { LocationId = locationId }, ct);
+                new GetLocationRequest { LocationId = resolvedLocationId }, ct);
 
             if (locationResponse is null)
             {
-                _logger.LogWarning("Location {LocationId} not found for character {CharacterId}", locationId, characterId);
+                _logger.LogWarning("Location {LocationId} not found for character {CharacterId}", resolvedLocationId, characterId);
                 return null;
             }
 
             // Step 3: Find nearest REGION-typed ancestor
             string? regionCode = null;
             var ancestorsResponse = await locationClient.GetLocationAncestorsAsync(
-                new GetLocationAncestorsRequest { LocationId = locationId }, ct);
+                new GetLocationAncestorsRequest { LocationId = resolvedLocationId }, ct);
 
             if (ancestorsResponse?.Locations is not null)
             {
@@ -112,7 +126,7 @@ public sealed class LocationDataCache : ILocationDataCache
                 if (siblingsResponse?.Locations is not null)
                 {
                     nearbyPois = siblingsResponse.Locations
-                        .Where(l => l.LocationId != locationId && !l.IsDeprecated)
+                        .Where(l => l.LocationId != resolvedLocationId && !l.IsDeprecated)
                         .Select(l => l.Code)
                         .ToList();
                 }
@@ -122,7 +136,7 @@ public sealed class LocationDataCache : ILocationDataCache
             var entitiesResponse = await locationClient.ListEntitiesAtLocationAsync(
                 new ListEntitiesAtLocationRequest
                 {
-                    LocationId = locationId,
+                    LocationId = resolvedLocationId,
                     PageSize = 1 // We only need the totalCount
                 }, ct);
 
@@ -134,7 +148,7 @@ public sealed class LocationDataCache : ILocationDataCache
 
             var realmCode = realmResponse?.Code
                 ?? throw new InvalidOperationException(
-                    $"Realm {realmId} not found for location {locationId}");
+                    $"Realm {realmId} not found for location {resolvedLocationId}");
 
             // Build and cache the context data
             var data = new LocationContextData(

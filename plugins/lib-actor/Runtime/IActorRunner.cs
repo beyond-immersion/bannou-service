@@ -29,6 +29,17 @@ public interface IActorRunner : IAsyncDisposable
     Guid? CharacterId { get; }
 
     /// <summary>
+    /// Gets the realm this actor operates in.
+    /// </summary>
+    Guid RealmId { get; }
+
+    /// <summary>
+    /// Gets the actor's current location, tracked from perception events.
+    /// Null if no perception events with location data have been received yet.
+    /// </summary>
+    Guid? LocationId { get; }
+
+    /// <summary>
     /// Gets the current status of this actor.
     /// </summary>
     ActorStatus Status { get; }
