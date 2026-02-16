@@ -103,13 +103,23 @@ These commands can destroy work in progress, hide changes, or cause data loss. C
 
 ## Core Architecture Reference
 
-@docs/reference/TENETS.md
+@docs/BANNOU-DESIGN.md
+
+**Key Points**: All generated files are in `plugins/lib-{service}/Generated/`. Manual files are: `{Service}Service.cs` (business logic), `{Service}ServiceModels.cs` (internal data models), and `{Service}ServiceEvents.cs` (event handlers). Request/response models are generated into `bannou-service/Generated/Models/` — use `make print-models PLUGIN="service"` to inspect them instead of reading generated files directly.
 
 @docs/reference/SERVICE-HIERARCHY.md
 
-@docs/BANNOU-DESIGN.md
+@docs/GENERATED-INFRASTRUCTURE-SERVICE-DETAILS.md
 
-@docs/GENERATED-SERVICE-DETAILS.md
+@docs/GENERATED-APP-FOUNDATION-SERVICE-DETAILS.md
+
+@docs/GENERATED-APP-FEATURES-SERVICE-DETAILS.md
+
+@docs/GENERATED-GAME-FOUNDATION-SERVICE-DETAILS.md
+
+@docs/GENERATED-GAME-FEATURES-SERVICE-DETAILS.md
+
+@docs/reference/TENETS.md
 
 ---
 
@@ -139,11 +149,11 @@ These commands can destroy work in progress, hide changes, or cause data loss. C
 
 - **Plugin Development**: `docs/guides/PLUGIN-DEVELOPMENT.md` - How to add and extend services
 - **WebSocket Protocol**: `docs/WEBSOCKET-PROTOCOL.md` - Protocol details
-- **Deployment**: `docs/guides/DEPLOYMENT.md` - Deployment patterns
+- **Deployment**: `docs/operations/DEPLOYMENT.md` - Deployment patterns
 
 **"Big Brain Mode"**: When the user says **"Big Brain Mode"**, you MUST read both vision documents in full before proceeding:
-- `/home/lysander/repos/arcadia-kb/VISION.md` - The "what and why" of Bannou and Arcadia at the highest level: the five north stars, the content flywheel thesis, system interdependencies, and non-negotiable design principles.
-- `/home/lysander/repos/arcadia-kb/PLAYER-VISION.md` - How players actually experience Arcadia: progressive agency (guardian spirit model), generational play, genre gradients, and the alpha-to-release deployment strategy.
+- `docs/reference/VISION.md` - The "what and why" of Bannou and Arcadia at the highest level: the five north stars, the content flywheel thesis, system interdependencies, and non-negotiable design principles.
+- `docs/reference/PLAYER-VISION.md` - How players actually experience Arcadia: progressive agency (guardian spirit model), generational play, genre gradients, and the alpha-to-release deployment strategy.
 
 These documents provide the high-level architectural north-star context for the entire project. Read them when planning cross-cutting features, evaluating whether work aligns with project goals, designing player-facing features, or needing context on how services serve the bigger picture.
 
@@ -330,23 +340,6 @@ Reference the Makefile in the repository root for all available commands and est
 - Will this modify non-C# files? → Verify file types explicitly  
 - Am I bypassing schema-first workflow? → Use proper generation pipeline
 - **On violations**: STOP and ask for direction
-
-### Service Architecture
-```
-plugins/lib-{service}/                   # Single consolidated service plugin
-├── Generated/                           # NSwag auto-generated files
-│   ├── {Service}Controller.cs           # Abstract controller base
-│   ├── I{Service}Service.cs             # Service interface (generated from controller)
-│   ├── {Service}Client.cs               # Service client for inter-service calls
-│   └── {Service}ServiceConfiguration.cs # Generated configuration class
-├── {Service}Service.cs                  # Business logic implementation
-├── {Service}ServiceModels.cs            # Internal data models (storage, cache, DTOs)
-├── {Service}ServiceEvents.cs            # Event handlers (partial class)
-├── {Service}ServicePlugin.cs            # Plugin lifecycle wrapper
-└── lib-{service}.csproj                 # Generated project file
-```
-
-**Key Points**: All generated files are in `plugins/lib-{service}/Generated/`. Manual files are: `{Service}Service.cs` (business logic), `{Service}ServiceModels.cs` (internal data models), and `{Service}ServiceEvents.cs` (event handlers). Request/response models are generated into `bannou-service/Generated/Models/` — use `make print-models PLUGIN="service"` to inspect them instead of reading generated files directly.
 
 ## Development Workflow
 
