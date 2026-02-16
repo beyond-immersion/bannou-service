@@ -3,6 +3,7 @@
 > **Plugin**: lib-realm-history
 > **Schema**: schemas/realm-history-api.yaml
 > **Version**: 1.0.0
+> **Layer**: GameFeatures
 > **State Store**: realm-history-statestore (MySQL)
 
 ---

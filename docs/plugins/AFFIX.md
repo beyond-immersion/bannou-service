@@ -4,7 +4,7 @@
 > **Schema**: `schemas/affix-api.yaml` (not yet created)
 > **Version**: N/A (Pre-Implementation)
 > **State Store**: affix-definitions (MySQL), affix-implicit-mappings (MySQL), affix-instances (MySQL), affix-definition-cache (Redis), affix-instance-cache (Redis), affix-pool-cache (Redis), affix-lock (Redis) — all planned
-> **Layer**: L4 GameFeatures
+> **Layer**: GameFeatures
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists.
 > **Planning**: [Economy System Guide](../guides/ECONOMY-SYSTEM.md)
 

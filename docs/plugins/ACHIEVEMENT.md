@@ -3,6 +3,7 @@
 > **Plugin**: lib-achievement
 > **Schema**: schemas/achievement-api.yaml
 > **Version**: 1.0.0
+> **Layer**: GameFeatures
 > **State Stores**: achievement-definition (Redis), achievement-progress (Redis)
 
 ## Overview

@@ -3,6 +3,7 @@
 > **Plugin**: lib-agency
 > **Schema**: `schemas/agency-api.yaml` (pre-implementation)
 > **Version**: Pre-implementation. No schema, no code.
+> **Layer**: GameFeatures
 > **State Store**: agency-domains (MySQL), agency-modules (MySQL), agency-influences (MySQL), agency-manifests (Redis), agency-manifest-history (MySQL), agency-seed-config (Redis)
 
 ---

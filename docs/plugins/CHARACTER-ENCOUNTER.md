@@ -3,6 +3,7 @@
 > **Plugin**: lib-character-encounter
 > **Schema**: schemas/character-encounter-api.yaml
 > **Version**: 1.0.0
+> **Layer**: GameFeatures
 > **State Stores**: character-encounter-statestore (MySQL)
 
 ---

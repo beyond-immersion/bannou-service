@@ -3,6 +3,7 @@
 > **Plugin**: lib-permission
 > **Schema**: schemas/permission-api.yaml
 > **Version**: 3.0.0
+> **Layer**: AppFoundation
 > **State Store**: permission-statestore (Redis)
 
 ---

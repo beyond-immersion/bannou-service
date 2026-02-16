@@ -3,6 +3,7 @@
 > **Plugin**: lib-asset
 > **Schema**: schemas/asset-api.yaml
 > **Version**: 1.0.0
+> **Layer**: AppFeatures
 > **State Stores**: asset-statestore (Redis), asset-processor-pool (Redis)
 
 ---

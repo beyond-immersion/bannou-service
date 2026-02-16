@@ -3,6 +3,7 @@
 > **Plugin**: lib-status
 > **Schema**: schemas/status-api.yaml
 > **Version**: 1.0.0
+> **Layer**: GameFeatures
 > **State Stores**: status-templates (MySQL), status-instances (MySQL), status-containers (MySQL), status-active-cache (Redis), status-seed-effects-cache (Redis), status-lock (Redis)
 
 ---

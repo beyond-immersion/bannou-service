@@ -3,6 +3,7 @@
 > **Plugin**: lib-seed
 > **Schema**: schemas/seed-api.yaml
 > **Version**: 1.0.0
+> **Layer**: GameFoundation
 > **State Stores**: seed-statestore (MySQL), seed-growth-statestore (MySQL), seed-type-definitions-statestore (MySQL), seed-bonds-statestore (MySQL), seed-capabilities-cache (Redis), seed-lock (Redis)
 
 ---

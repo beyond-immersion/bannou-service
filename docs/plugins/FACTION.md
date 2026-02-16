@@ -3,6 +3,7 @@
 > **Plugin**: lib-faction
 > **Schema**: schemas/faction-api.yaml
 > **Version**: 1.0.0
+> **Layer**: GameFeatures
 > **State Store**: faction-statestore (MySQL), faction-membership-statestore (MySQL), faction-territory-statestore (MySQL), faction-norm-statestore (MySQL), faction-cache (Redis), faction-lock (Redis)
 > **Guide**: [Morality System](../guides/MORALITY-SYSTEM.md) (cross-service integration with lib-obligation and lib-faction)
 

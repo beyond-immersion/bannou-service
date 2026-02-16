@@ -3,6 +3,7 @@
 > **Plugin**: lib-location
 > **Schema**: schemas/location-api.yaml
 > **Version**: 1.0.0
+> **Layer**: GameFoundation
 > **State Store**: location-statestore (MySQL)
 
 ---

@@ -3,6 +3,7 @@
 > **Plugin**: lib-state
 > **Schema**: schemas/state-api.yaml
 > **Version**: 1.0.0
+> **Layer**: Infrastructure
 > **State Store**: Self (manages all state stores for the platform)
 
 ---

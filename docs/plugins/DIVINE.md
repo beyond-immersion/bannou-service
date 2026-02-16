@@ -3,6 +3,7 @@
 > **Plugin**: lib-divine
 > **Schema**: schemas/divine-api.yaml
 > **Version**: 1.0.0
+> **Layer**: GameFeatures
 > **State Stores**: divine-deities (MySQL), divine-blessings (MySQL), divine-attention (Redis), divine-divinity-events (Redis), divine-lock (Redis)
 
 ## Overview

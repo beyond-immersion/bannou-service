@@ -3,6 +3,7 @@
 > **Plugin**: lib-website
 > **Schema**: schemas/website-api.yaml
 > **Version**: 1.0.0
+> **Layer**: AppFeatures
 > **State Store**: None (no state stores defined)
 
 ---

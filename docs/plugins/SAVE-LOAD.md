@@ -3,6 +3,7 @@
 > **Plugin**: lib-save-load
 > **Schema**: schemas/save-load-api.yaml
 > **Version**: 1.0.0
+> **Layer**: GameFeatures
 > **State Stores**: save-load-slots (MySQL), save-load-versions (MySQL), save-load-schemas (MySQL), save-load-cache (Redis), save-load-pending (Redis)
 
 ---

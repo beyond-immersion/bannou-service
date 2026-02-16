@@ -3,6 +3,7 @@
 > **Plugin**: lib-inventory
 > **Schema**: schemas/inventory-api.yaml
 > **Version**: 1.0.0
+> **Layer**: GameFoundation
 > **State Stores**: inventory-container-store (MySQL), inventory-container-cache (Redis), inventory-lock (Redis)
 
 ---

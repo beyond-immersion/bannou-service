@@ -3,6 +3,7 @@
 > **Plugin**: lib-behavior
 > **Schema**: schemas/behavior-api.yaml
 > **Version**: 3.0.0
+> **Layer**: GameFeatures
 > **State Stores**: behavior-statestore (Redis)
 
 ---

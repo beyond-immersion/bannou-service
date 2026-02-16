@@ -3,6 +3,7 @@
 > **Plugin**: lib-character
 > **Schema**: schemas/character-api.yaml
 > **Version**: 1.0.0
+> **Layer**: GameFoundation
 > **State Store**: character-statestore (MySQL)
 
 ---

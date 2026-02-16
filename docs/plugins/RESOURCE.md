@@ -1,9 +1,9 @@
 # Resource Plugin Deep Dive
 
 > **Plugin**: lib-resource
-> **Layer**: L1 (App Foundation)
 > **Schema**: schemas/resource-api.yaml
 > **Version**: 1.0.0
+> **Layer**: AppFoundation
 > **State Stores**: resource-refcounts (Redis), resource-cleanup (Redis), resource-grace (Redis), resource-compress (Redis), resource-archives (MySQL), resource-snapshots (Redis)
 
 ---

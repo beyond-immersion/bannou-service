@@ -3,6 +3,7 @@
 > **Plugin**: lib-messaging
 > **Schema**: schemas/messaging-api.yaml
 > **Version**: 1.0.0
+> **Layer**: Infrastructure
 > **State Store**: messaging-external-subs (Redis, app-id keyed with TTL)
 
 ---

@@ -3,6 +3,7 @@
 > **Plugin**: lib-chat
 > **Schema**: schemas/chat-api.yaml
 > **Version**: 1.0.0
+> **Layer**: AppFoundation
 > **State Store**: chat-rooms (MySQL), chat-rooms-cache (Redis), chat-messages (MySQL), chat-messages-ephemeral (Redis), chat-participants (Redis), chat-room-types (MySQL), chat-bans (MySQL)
 
 ---

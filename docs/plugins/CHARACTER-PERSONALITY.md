@@ -3,6 +3,7 @@
 > **Plugin**: lib-character-personality
 > **Schema**: schemas/character-personality-api.yaml
 > **Version**: 1.0.0
+> **Layer**: GameFeatures
 > **State Store**: character-personality-statestore (MySQL)
 
 ---

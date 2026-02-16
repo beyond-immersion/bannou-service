@@ -4,7 +4,7 @@
 > **Schema**: `schemas/showtime-api.yaml` (not yet created)
 > **Version**: N/A (Pre-Implementation)
 > **State Store**: showtime-sessions (MySQL), showtime-audience-pool (Redis), showtime-audience-followers (MySQL), showtime-hype-trains (Redis), showtime-session-voice (Redis), showtime-lock (Redis) — all planned
-> **Layer**: L4 GameFeatures
+> **Layer**: GameFeatures
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists.
 > **Planning**: N/A
 

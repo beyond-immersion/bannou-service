@@ -3,6 +3,7 @@
 > **Plugin**: lib-music
 > **Schema**: schemas/music-api.yaml
 > **Version**: 1.0.0
+> **Layer**: GameFeatures
 > **State Stores**: music-styles (MySQL, unused), music-compositions (Redis)
 
 ---

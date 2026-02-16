@@ -120,10 +120,6 @@ These services provide the core application infrastructure that ANY Bannou deplo
 
 **Use Case**: "I need a real-time authenticated cloud service with authorization and automated resource management."
 
-**Why Resource is L1**: Resource provides the machinery for reference tracking and cleanup coordination. Higher-layer services (L3/L4) publish reference events when they create/delete references to foundational resources (L2). This service maintains reference counts and coordinates cleanup callbacks, enabling safe deletion of foundational resources without hierarchy violations.
-
-**Why Contract is L1**: Contract has zero dependencies on other plugins (only infrastructure libs) and provides reusable FSM + consent flow machinery that any layer can leverage. For example, Escrow (L4) uses Contract under-the-hood for its state machine and multi-party consent logic. This makes Contract application-level infrastructure rather than game-specific.
-
 ---
 
 ## Layer 2: Game Foundation (Required for Game Deployments)
@@ -159,9 +155,6 @@ These services provide the core game infrastructure - worlds, characters, specie
 
 **Use Case**: "I need a game backend with characters, worlds, economies, and items."
 
-**The Character Service Rule**:
-> Character is a foundational entity. It knows about realms and species (what a character IS), but knows nothing about encounters, history, personality, or actors (what references a character). Those are L4 concerns.
-
 **The Quest Service Rule**:
 > Quest is a foundational entity. It knows about objectives, rewards, and milestones (what a quest IS), but is agnostic to prerequisite sources. L4 services (skills, magic, achievements) implement `IPrerequisiteProviderFactory` to provide prerequisite validation without Quest depending on them.
 
@@ -176,7 +169,7 @@ These services provide optional capabilities that enhance ANY Bannou deployment 
 | **asset** | Binary asset storage (MinIO/S3), pre-signed URLs |
 | **orchestrator** | Environment management, deployment orchestration |
 | **documentation** | Knowledge base for users, developers, and AI agents |
-| **website** | Public web interface (registration, news, status) |
+| **website** | Public web interface (registration, news, status)- L3 to avoid game data leaks |
 | **voice** | Voice room coordination (P2P and scaled tier) |
 | **broadcast** | Streaming platform integration |
 
@@ -188,10 +181,6 @@ These services provide optional capabilities that enhance ANY Bannou deployment 
 - No service in L1 or L2 may require L3 for correct operation
 
 **Use Case**: "I want observability, asset storage, and deployment management for my cloud service."
-
-**Critical Rule**: If an App Feature starts depending on Game Foundation (L2), it **becomes** a Game Feature (L4). Reclassify it. This prevents game data from leaking into application-level services.
-
-**Website Note**: Website is intentionally L3 to prevent it from accessing game data (characters, realms, etc.). Any game-specific portal functionality should be a separate L4 service.
 
 ---
 
@@ -362,71 +351,6 @@ BANNOU_ENABLE_GAME_FEATURES=true    # L4
 - `GAME_FEATURES=true` requires `APP_FOUNDATION=true` AND `GAME_FOUNDATION=true`
 - `APP_FEATURES=true` requires `APP_FOUNDATION=true` (L2 optional)
 - Individual plugin ENVs (`{SERVICE}_ENABLED`) still work for fine-grained control
-
----
-
-## Reference Counting & Cleanup
-
-A common need is determining if a foundational entity (like Character) can be safely deleted by checking if higher-layer services still reference it. This creates a tension with the hierarchy rules.
-
-### Wrong Ways
-
-**Direct dependency** (L2 injecting L4 clients) and **subscribing to higher-layer events** (Character subscribing to `actor.created`) are both forbidden — even event subscriptions create a dependency on the higher-layer's event schema.
-
-### The Right Way (Foundational Service Defines Its Own Contract)
-
-The foundational service defines an event it **consumes** without knowing who publishes to it. Higher-layer services publish to that topic.
-
-**Step 1: Foundational service defines the event it accepts**
-
-```yaml
-# character-events.yaml (L2 defines its own event schema)
-x-event-subscriptions:
-  - topic: character.reference.registered    # Character's own topic
-    event: CharacterReferenceRegisteredEvent
-  - topic: character.reference.unregistered
-    event: CharacterReferenceUnregisteredEvent
-# CharacterReferenceRegisteredEvent has: characterId, sourceType, sourceId
-```
-
-**Step 2: Higher-layer services publish to the foundational service's topic**
-
-```csharp
-// Actor service (L4) - publishes TO Character's event topic
-public class ActorService
-{
-    public async Task CreateActorAsync(CreateActorRequest request, ...)
-    {
-        // Create actor...
-
-        // Actor knows about Character (correct direction!)
-        await _messageBus.PublishAsync("character.reference.registered",
-            new CharacterReferenceRegisteredEvent
-            {
-                CharacterId = request.CharacterId,
-                SourceType = "actor",
-                SourceId = actor.ActorId
-            });
-    }
-}
-```
-
-**Step 3: Foundational service consumes its own event**
-
-```csharp
-// Character service (L2) - consumes its OWN event definition
-public class CharacterServiceEvents
-{
-    [EventSubscription("character.reference.registered")]
-    public async Task HandleReferenceRegistered(CharacterReferenceRegisteredEvent evt, ...)
-    {
-        // Character doesn't know WHO sent this - just that a reference was registered
-        await IncrementRefCount(evt.CharacterId, evt.SourceType, evt.SourceId);
-    }
-}
-```
-
-**Key Insight**: Character defines `character.reference.registered` in its own schema. It has no knowledge of Actor, Encounter, or any other service. Those services have the dependency - they must know about Character's event contract to publish to it.
 
 ---
 
@@ -804,28 +728,6 @@ There are no exceptions. If you think you need one, you're likely:
 4. **Conflating domains**: Maybe you need a game-specific version of an app feature
 
 Discuss with the team before violating the hierarchy. Document any approved exceptions here (there should be very few, if any).
-
----
-
-## Quick Reference: All Services by Layer
-
-| Layer | Services |
-|-------|----------|
-| **L0** | state, messaging, mesh (required); telemetry (optional)† |
-| **L1** | account, auth, chat, connect, permission, contract, resource |
-| **L2** | game-service, realm, character, species, location, relationship, subscription, currency, item, inventory, game-session, actor, quest, seed, collection, transit, worldstate |
-| **L3** | asset, orchestrator, documentation, website, voice, broadcast |
-| **L4** | analytics*, behavior, puppetmaster, mapping, scene, matchmaking, leaderboard, achievement, save-load, music, escrow, character-personality, character-history, character-encounter, character-lifecycle, realm-history, license, storyline, divine, faction, gardener, obligation, status, affix, agency, arbitration, craft, disposition, dungeon, environment, ethology, hearsay, lexicon, loot, market, organization, procedural, showtime, trade, utility, workshop |
-| **L5** | (reserved for third-party plugins and internal meta-services) |
-
-† Telemetry is the only optional L0 component. When enabled, it loads FIRST so infrastructure plugins can use `ITelemetryProvider` for instrumentation. When disabled, they receive `NullTelemetryProvider`.
-
-\* Analytics is L4 for event consumption reasons only - it observes but doesn't invoke game services. See L4 section for details.
-
-**Not in hierarchy** (shared libraries, not runtime services):
-- **common**: Shared type definitions only (lib-common)
-- **testing**: Test infrastructure (lib-testing)
-- **\*.tests**: Test projects, not runtime services
 
 ---
 

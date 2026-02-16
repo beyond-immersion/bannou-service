@@ -3,6 +3,7 @@
 > **Plugin**: lib-item
 > **Schema**: schemas/item-api.yaml
 > **Version**: 1.0.0
+> **Layer**: GameFoundation
 > **State Stores**: item-template-store (MySQL), item-template-cache (Redis), item-instance-store (MySQL), item-instance-cache (Redis), item-lock (Redis)
 
 ---

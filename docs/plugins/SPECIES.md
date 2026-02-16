@@ -3,6 +3,7 @@
 > **Plugin**: lib-species
 > **Schema**: schemas/species-api.yaml
 > **Version**: 2.0.0
+> **Layer**: GameFoundation
 > **State Store**: species (MySQL)
 
 ---

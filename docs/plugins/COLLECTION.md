@@ -3,6 +3,7 @@
 > **Plugin**: lib-collection
 > **Schema**: schemas/collection-api.yaml
 > **Version**: 1.0.0
+> **Layer**: GameFoundation
 > **State Store**: collection-entry-templates (MySQL), collection-instances (MySQL), collection-area-content-configs (MySQL), collection-cache (Redis), collection-lock (Redis)
 
 ## Overview

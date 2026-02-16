@@ -3,6 +3,7 @@
 > **Plugin**: lib-puppetmaster
 > **Schema**: schemas/puppetmaster-api.yaml
 > **Version**: 1.0.0
+> **Layer**: GameFeatures
 > **State Store**: None (in-memory only)
 
 ---

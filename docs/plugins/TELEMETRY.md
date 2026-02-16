@@ -3,6 +3,7 @@
 > **Plugin**: lib-telemetry
 > **Schema**: schemas/telemetry-api.yaml
 > **Version**: 1.0.0
+> **Layer**: Infrastructure
 > **State Store**: None (stateless service)
 
 ---

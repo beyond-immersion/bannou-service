@@ -4,7 +4,7 @@
 > **Schema**: `schemas/workshop-api.yaml` (not yet created)
 > **Version**: N/A (Pre-Implementation)
 > **State Store**: workshop-blueprint (MySQL), workshop-task (MySQL), workshop-worker (MySQL), workshop-rate-segment (MySQL), workshop-cache (Redis), workshop-lock (Redis) — all planned
-> **Layer**: L4 GameFeatures
+> **Layer**: GameFeatures
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists.
 
 ---

@@ -3,6 +3,7 @@
 > **Plugin**: lib-gardener
 > **Schema**: schemas/gardener-api.yaml
 > **Version**: 1.0.0
+> **Layer**: GameFeatures
 > **State Stores**: gardener-garden-instances (Redis), gardener-pois (Redis), gardener-scenario-templates (MySQL), gardener-scenario-instances (Redis), gardener-scenario-history (MySQL), gardener-phase-config (MySQL), gardener-lock (Redis)
 
 ## Overview

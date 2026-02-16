@@ -3,6 +3,7 @@
 > **Plugin**: lib-procedural
 > **Schema**: schemas/procedural-api.yaml
 > **Version**: 1.0.0
+> **Layer**: GameFeatures
 > **State Stores**: procedural-templates (MySQL), procedural-jobs (MySQL), procedural-cache (Redis), procedural-lock (Redis)
 > **Status**: Pre-implementation (architectural specification)
 

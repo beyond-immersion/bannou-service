@@ -3,6 +3,7 @@
 > **Plugin**: lib-account
 > **Schema**: schemas/account-api.yaml
 > **Version**: 2.0.0
+> **Layer**: AppFoundation
 > **State Store**: account-statestore (MySQL), account-lock (Redis)
 
 ## Overview

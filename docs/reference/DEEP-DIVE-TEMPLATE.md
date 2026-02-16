@@ -49,6 +49,7 @@ For plugins that have a schema and generated code (whether fully implemented, pa
 > **Plugin**: lib-{service}
 > **Schema**: schemas/{service}-api.yaml
 > **Version**: {version from schema}
+> **Layer**: {Infrastructure / AppFoundation / GameFoundation / AppFeatures / GameFeatures}
 > **State Store**: {store name} ({backend})
 ```
 
@@ -68,11 +69,11 @@ For plugins with NO schema and NO code (pure design specifications):
 > **Schema**: `schemas/{service}-api.yaml` (not yet created)
 > **Version**: N/A (Pre-Implementation)
 > **State Store**: {planned stores} — all planned
-> **Layer**: {L2 GameFoundation / L4 GameFeatures / etc.}
+> **Layer**: {Infrastructure / AppFoundation / GameFoundation / AppFeatures / GameFeatures}
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists.
 ```
 
-The `Layer` field is included only in aspirational headers because implemented plugins declare their layer in the schema via `x-service-layer` (discoverable from generated code). Aspirational plugins have no schema, so the layer must be stated explicitly.
+The `Layer` field is mandatory in both header formats. It provides at-a-glance layer identification and is used by the doc generation pipeline to split services into per-layer reference documents.
 
 **Common header mistakes to avoid:**
 - `# {Name} Service (lib-{name})` — use `# {Name} Plugin Deep Dive`

@@ -1,10 +1,11 @@
 # Worldstate Plugin Deep Dive
 
-> **Plugin**: lib-worldstate
-> **Schema**: schemas/worldstate-api.yaml
-> **Version**: 1.0.0
-> **State Stores**: worldstate-realm-clock (Redis), worldstate-calendar (MySQL), worldstate-ratio-history (MySQL)
-> **Status**: Pre-implementation (architectural specification)
+> **Plugin**: lib-worldstate (not yet created)
+> **Schema**: `schemas/worldstate-api.yaml` (not yet created)
+> **Version**: N/A (Pre-Implementation)
+> **State Store**: worldstate-realm-clock (Redis), worldstate-calendar (MySQL), worldstate-ratio-history (MySQL) — all planned
+> **Layer**: GameFoundation
+> **Status**: Aspirational — no schema, no generated code, no service implementation exists.
 
 ---
 
@@ -350,7 +351,11 @@ Distributed locks use `IDistributedLockProvider` (L0 infrastructure), not a sepa
 
 ### Consumed Events
 
-None. Worldstate does not subscribe to events from other services.
+| Topic | Handler | Action |
+|-------|---------|--------|
+| `worldstate.calendar-template.updated` | `HandleCalendarTemplateUpdatedAsync` (via `IEventConsumer`) | Invalidates local `CalendarTemplateCache` entry for the updated template. Enables cross-node cache invalidation: when Node A updates a calendar, Node B receives the event and clears its stale cached copy. Self-subscription to own lifecycle event. |
+
+Worldstate does not subscribe to events from **other** services:
 
 - **Realm creation**: Handled by lib-realm directly calling `IWorldstateClient.InitializeRealmClockAsync()` when configured (see Dependents). This follows IMPLEMENTATION TENETS: same-layer direct API call instead of inverted event subscription.
 - **Realm deletion cleanup**: Handled exclusively by lib-resource calling `/worldstate/cleanup-by-realm` (see Resource Cleanup below). Per FOUNDATION TENETS, event-based cleanup for persistent dependent data is forbidden.
@@ -505,30 +510,76 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS). These endpoin
 │  │                                                                     │  │
 │  │  7. Release lock                                                    │  │
 │  └─────────────────────────────────────────────────────────────────────┘  │
-│                                                                           │
-│  CONSUMERS:                                                               │
-│  ┌─────────────────────────┐  ┌─────────────────────────────────────┐    │
-│  │ Variable Provider       │  │ Service-Level Subscribers            │    │
-│  │ (Actor L2, per-tick)    │  │ (Workshop, Craft, Seed, Currency)    │    │
-│  │                         │  │                                     │    │
-│  │ ${world.time.period}    │  │ worldstate.day-changed →            │    │
-│  │ ${world.season}         │  │   Workshop: materialize production  │    │
-│  │ ${world.time.hour}      │  │   Currency: process autogain batch  │    │
-│  │ etc.                    │  │   Seed: apply growth decay          │    │
-│  │                         │  │                                     │    │
-│  │ Reads from Redis cache  │  │ worldstate.season-changed →         │    │
-│  │ (IRealmClockCache)      │  │   Loot: rotate seasonal tables     │    │
-│  │ No event subscription   │  │   Market: activate seasonal routes  │    │
-│  │ Natural load spreading  │  │   Storyline: unlock seasonal arcs   │    │
-│  └─────────────────────────┘  └─────────────────────────────────────┘    │
-│                                                                           │
-│  Actors do NOT subscribe to boundary events.                              │
-│  They query ${world.*} on their own 100-500ms tick.                       │
-│  This naturally distributes 100,000+ NPC time-checks                      │
-│  across the tick interval instead of thundering-herding                    │
-│  on a single boundary event.                                              │
 └───────────────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## Stubs & Unimplemented Features
+
+**Everything is unimplemented.** This is a pre-implementation architectural specification. No schema, no generated code, no service implementation exists. The following phases are planned:
+
+### Phase 1: Calendar Infrastructure
+- Create `worldstate-api.yaml` schema with all endpoints
+- Create `worldstate-events.yaml` schema
+- Create `worldstate-configuration.yaml` schema
+- Generate service code
+- Implement calendar template CRUD (seed, get, list, update, delete)
+- Implement calendar validation (period coverage, season-month mapping, structural consistency)
+
+### Phase 2: Realm Clock Core
+- Implement realm clock initialization (explicit via `InitializeRealmClock` endpoint with nullable calendarTemplateCode + config fallback)
+- Implement lib-resource reference registration in `InitializeRealmClock` (realm target)
+- Implement clock advancement background worker
+- Implement Redis cache for hot clock reads
+- Implement boundary detection and event publishing
+- Implement downtime catch-up with configurable `DowntimePolicy` enum
+- Implement catch-up event batching
+
+### Phase 3: Time Ratio & Elapsed Time
+- Implement ratio history storage and management
+- Implement `SetTimeRatio` with history recording (`TimeRatioChangeReason` enum)
+- Implement `GetElapsedGameTime` with piecewise integration over ratio segments
+- Implement ratio history retention/compaction
+- Implement pause/resume via ratio 0.0
+
+### Phase 4: Variable Provider
+- Implement `WorldProviderFactory` and `WorldProvider`
+- Implement realm clock in-memory cache (`IRealmClockCache`) with TTL
+- Implement character-to-realm resolution caching
+- Integration testing with Actor runtime (verify `${world.time.period}` resolves)
+
+### Phase 5: Administrative, Configuration & Cleanup
+- Implement `AdvanceClock` for testing/admin
+- Implement `BatchGetRealmTimes`
+- Implement `GetRealmConfig`, `UpdateRealmConfig`, `ListRealmClocks` (realm configuration management)
+- Implement resource cleanup endpoints (declared via `x-references` in API schema)
+- Integration testing with other L2 services
+
+### Phase 6: Cross-Service Integration
+- Add `IWorldstateClient` hard dependency and `AutoInitializeWorldstateClock` + `DefaultCalendarTemplateCode` config to lib-realm
+- Add `worldstate` to SERVICE-HIERARCHY.md L2 Quick Reference table and GENERATED-SERVICE-DETAILS.md
+- Update ABML example behavior files to fix incorrect `${world.weather.*}` and `${world.patrol_routes[...]}` namespace references
+
+---
+
+## Potential Extensions
+
+1. **Location-specific time zones**: Locations within a realm could have time offsets (eastern regions experience dawn before western regions). The calendar template could define optional time zone offsets per location or location subtree. Complex but adds geographic realism.
+
+2. **Magical time dilation zones**: Locations where time flows differently (a fairy realm where 1 game hour = 10 game hours, or a cursed zone where time is frozen). This would require per-location time ratio overrides that the variable provider checks when creating a `WorldProvider` for a character at that location. Connects to the `ITemporalManager` interface already defined in `bannou-service/Behavior/` for cinematic time dilation.
+
+3. **Calendar events/holidays**: Named dates in the calendar that repeat annually (harvest festival on Greenleaf 15, winter solstice on Frostmere 1). Publishable as events when the date is reached. Games could schedule content around these dates.
+
+4. **Lunar cycles / celestial events**: Additional cyclical phenomena beyond seasons (moon phases, eclipses, celestial alignments). Configurable as additional cycles in the calendar template with their own variable namespace (`${world.moon.phase}`). Affects magic systems, werewolves, tides.
+
+5. **Time-dependent resource availability**: While ecology is an L4 concern, worldstate could publish a standardized `${world.resource_season}` variable that represents the general abundance level per season (lean, moderate, abundant, harvest). L4 services use this as a baseline modifier.
+
+6. **Historical time queries**: "What season was it on game-year 47, month 3?" Useful for Storyline's retrospective narrative generation and Character-History's temporal context. Pure calendar math, no state required.
+
+7. **Client events for time display**: `worldstate-client-events.yaml` for pushing periodic time snapshots to connected WebSocket clients, enabling client-side time display without polling. Published on period-changed boundaries (5 per game day) for low-bandwidth time sync.
+
+8. **Variable-rate time**: Time ratio that changes based on player population. When no players are in a realm, time accelerates (e.g., 100:1) to advance the simulation faster. When players are present, it returns to normal (24:1). This enables "the world continued while you were away" to be more dramatic for realms with intermittent activity.
 
 ---
 
@@ -643,74 +694,6 @@ flows:
 
 ---
 
-## Stubs & Unimplemented Features
-
-**Everything is unimplemented.** This is a pre-implementation architectural specification. No schema, no generated code, no service implementation exists. The following phases are planned:
-
-### Phase 1: Calendar Infrastructure
-- Create `worldstate-api.yaml` schema with all endpoints
-- Create `worldstate-events.yaml` schema
-- Create `worldstate-configuration.yaml` schema
-- Generate service code
-- Implement calendar template CRUD (seed, get, list, update, delete)
-- Implement calendar validation (period coverage, season-month mapping, structural consistency)
-
-### Phase 2: Realm Clock Core
-- Implement realm clock initialization (explicit via `InitializeRealmClock` endpoint with nullable calendarTemplateCode + config fallback)
-- Implement lib-resource reference registration in `InitializeRealmClock` (realm target)
-- Implement clock advancement background worker
-- Implement Redis cache for hot clock reads
-- Implement boundary detection and event publishing
-- Implement downtime catch-up with configurable `DowntimePolicy` enum
-- Implement catch-up event batching
-
-### Phase 3: Time Ratio & Elapsed Time
-- Implement ratio history storage and management
-- Implement `SetTimeRatio` with history recording (`TimeRatioChangeReason` enum)
-- Implement `GetElapsedGameTime` with piecewise integration over ratio segments
-- Implement ratio history retention/compaction
-- Implement pause/resume via ratio 0.0
-
-### Phase 4: Variable Provider
-- Implement `WorldProviderFactory` and `WorldProvider`
-- Implement realm clock in-memory cache (`IRealmClockCache`) with TTL
-- Implement character-to-realm resolution caching
-- Integration testing with Actor runtime (verify `${world.time.period}` resolves)
-
-### Phase 5: Administrative, Configuration & Cleanup
-- Implement `AdvanceClock` for testing/admin
-- Implement `BatchGetRealmTimes`
-- Implement `GetRealmConfig`, `UpdateRealmConfig`, `ListRealmClocks` (realm configuration management)
-- Implement resource cleanup endpoints (declared via `x-references` in API schema)
-- Integration testing with other L2 services
-
-### Phase 6: Cross-Service Integration
-- Add `IWorldstateClient` hard dependency and `AutoInitializeWorldstateClock` + `DefaultCalendarTemplateCode` config to lib-realm
-- Add `worldstate` to SERVICE-HIERARCHY.md L2 Quick Reference table and GENERATED-SERVICE-DETAILS.md
-- Update ABML example behavior files to fix incorrect `${world.weather.*}` and `${world.patrol_routes[...]}` namespace references
-
----
-
-## Potential Extensions
-
-1. **Location-specific time zones**: Locations within a realm could have time offsets (eastern regions experience dawn before western regions). The calendar template could define optional time zone offsets per location or location subtree. Complex but adds geographic realism.
-
-2. **Magical time dilation zones**: Locations where time flows differently (a fairy realm where 1 game hour = 10 game hours, or a cursed zone where time is frozen). This would require per-location time ratio overrides that the variable provider checks when creating a `WorldProvider` for a character at that location. Connects to the `ITemporalManager` interface already defined in `bannou-service/Behavior/` for cinematic time dilation.
-
-3. **Calendar events/holidays**: Named dates in the calendar that repeat annually (harvest festival on Greenleaf 15, winter solstice on Frostmere 1). Publishable as events when the date is reached. Games could schedule content around these dates.
-
-4. **Lunar cycles / celestial events**: Additional cyclical phenomena beyond seasons (moon phases, eclipses, celestial alignments). Configurable as additional cycles in the calendar template with their own variable namespace (`${world.moon.phase}`). Affects magic systems, werewolves, tides.
-
-5. **Time-dependent resource availability**: While ecology is an L4 concern, worldstate could publish a standardized `${world.resource_season}` variable that represents the general abundance level per season (lean, moderate, abundant, harvest). L4 services use this as a baseline modifier.
-
-6. **Historical time queries**: "What season was it on game-year 47, month 3?" Useful for Storyline's retrospective narrative generation and Character-History's temporal context. Pure calendar math, no state required.
-
-7. **Client events for time display**: `worldstate-client-events.yaml` for pushing periodic time snapshots to connected WebSocket clients, enabling client-side time display without polling. Published on period-changed boundaries (5 per game day) for low-bandwidth time sync.
-
-8. **Variable-rate time**: Time ratio that changes based on player population. When no players are in a realm, time accelerates (e.g., 100:1) to advance the simulation faster. When players are present, it returns to normal (24:1). This enables "the world continued while you were away" to be more dramatic for realms with intermittent activity.
-
----
-
 ## Known Quirks & Caveats
 
 ### Bugs (Fix Immediately)
@@ -719,21 +702,21 @@ flows:
 
 ### Intentional Quirks (Documented Behavior)
 
-0. **ABML behavior namespace cleanup needed**: Several example behavior files reference variables under the `${world.*}` namespace that do NOT belong to worldstate: `${world.weather.temperature}` and `${world.weather.raining}` (these are `${environment.*}` variables from lib-environment L4), and `${world.patrol_routes[...]}` (operational data, not temporal). These example files predate the final namespace design and need updating. The `${world.*}` namespace owned by worldstate is strictly temporal: time, calendar, and season data.
+1. **ABML behavior namespace cleanup needed**: Several example behavior files reference variables under the `${world.*}` namespace that do NOT belong to worldstate: `${world.weather.temperature}` and `${world.weather.raining}` (these are `${environment.*}` variables from lib-environment L4), and `${world.patrol_routes[...]}` (operational data, not temporal). These example files predate the final namespace design and need updating. The `${world.*}` namespace owned by worldstate is strictly temporal: time, calendar, and season data.
 
-1. **Realm clocks are independent**: Two realms running on the same server can be in different seasons, years, or even different calendar systems entirely. There is no global game time. This is intentional -- Arcadia, Fantasia, and Omega are peer worlds that may have different temporal scales.
+2. **Realm clocks are independent**: Two realms running on the same server can be in different seasons, years, or even different calendar systems entirely. There is no global game time. This is intentional -- Arcadia, Fantasia, and Omega are peer worlds that may have different temporal scales.
 
-2. **Hour-changed events are frequent**: At 24:1 ratio, `worldstate.hour-changed` fires every ~2.5 real minutes. Services should subscribe only to the granularity they need. Most services want `day-changed` (hourly real-time) or `season-changed` (~every 3 real days).
+3. **Hour-changed events are frequent**: At 24:1 ratio, `worldstate.hour-changed` fires every ~2.5 real minutes. Services should subscribe only to the granularity they need. Most services want `day-changed` (hourly real-time) or `season-changed` (~every 3 real days).
 
-3. **Variable provider returns snapshot, not live values**: The `WorldProvider` created for an actor captures a snapshot of the realm clock at creation time. If the actor's tick runs for more than `ClockCacheTtlSeconds`, the time data could be slightly stale. This is acceptable -- NPC decisions don't require sub-second time accuracy.
+4. **Variable provider returns snapshot, not live values**: The `WorldProvider` created for an actor captures a snapshot of the realm clock at creation time. If the actor's tick runs for more than `ClockCacheTtlSeconds`, the time data could be slightly stale. This is acceptable -- NPC decisions don't require sub-second time accuracy.
 
-4. **Calendar changes affect running clocks immediately**: Updating a calendar template (e.g., adding a month, changing season assignments) takes effect on the next clock tick. Running realm clocks don't "notice" the change until they're advanced. This could cause a month boundary to be missed or a season to change early if the calendar is restructured while the clock is running. Calendar changes on active realms should be done during maintenance windows.
+5. **Calendar changes affect running clocks immediately**: Updating a calendar template (e.g., adding a month, changing season assignments) takes effect on the next clock tick. Running realm clocks don't "notice" the change until they're advanced. This could cause a month boundary to be missed or a season to change early if the calendar is restructured while the clock is running. Calendar changes on active realms should be done during maintenance windows.
 
-5. **Catch-up boundary events are batched, not individual**: After downtime with `Advance` policy, if 48 game-hours passed, the service does NOT publish 48 individual `hour-changed` events. It publishes up to `BoundaryEventBatchSize` events per tick, with catch-up metadata. Consumers must handle `daysCrossed > 1` (and similar) in catch-up events.
+6. **Catch-up boundary events are batched, not individual**: After downtime with `Advance` policy, if 48 game-hours passed, the service does NOT publish 48 individual `hour-changed` events. It publishes up to `BoundaryEventBatchSize` events per tick, with catch-up metadata. Consumers must handle `daysCrossed > 1` (and similar) in catch-up events.
 
-6. **Ratio of 0.0 is a valid pause**: Setting a realm's time ratio to 0.0 freezes its clock. `GetElapsedGameTime` returns 0 game-seconds for any real-time range that falls within a 0.0-ratio segment. This is the canonical way to pause a realm's temporal progression.
+7. **Ratio of 0.0 is a valid pause**: Setting a realm's time ratio to 0.0 freezes its clock. `GetElapsedGameTime` returns 0 game-seconds for any real-time range that falls within a 0.0-ratio segment. This is the canonical way to pause a realm's temporal progression.
 
-7. **Character-to-realm resolution is cached (when used)**: The variable provider factory supports two paths for realm resolution: (a) the Actor runtime provides `realmId` directly in context metadata (preferred -- zero service calls), or (b) the factory resolves characterId → realmId via `ICharacterClient` (cached per-character with `ClockCacheTtlSeconds` TTL, default 10s). When using path (b), if a character changes realms, the cache serves stale data until TTL expires. The TTL is short enough that this resolves quickly, but there is a brief window where a character who just teleported between realms sees the old realm's time. Path (a) avoids this entirely.
+8. **Character-to-realm resolution is cached (when used)**: The variable provider factory supports two paths for realm resolution: (a) the Actor runtime provides `realmId` directly in context metadata (preferred -- zero service calls), or (b) the factory resolves characterId → realmId via `ICharacterClient` (cached per-character with `ClockCacheTtlSeconds` TTL, default 10s). When using path (b), if a character changes realms, the cache serves stale data until TTL expires. The TTL is short enough that this resolves quickly, but there is a brief window where a character who just teleported between realms sees the old realm's time. Path (a) avoids this entirely.
 
 ### Design Considerations (Requires Planning)
 

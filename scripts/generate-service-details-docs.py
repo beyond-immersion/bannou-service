@@ -42,10 +42,42 @@ except ImportError:
     sys.exit(1)
 
 
+"""Layer value to output filename mapping."""
+LAYER_FILES = {
+    'Infrastructure': 'GENERATED-INFRASTRUCTURE-SERVICE-DETAILS.md',
+    'AppFoundation': 'GENERATED-APP-FOUNDATION-SERVICE-DETAILS.md',
+    'GameFoundation': 'GENERATED-GAME-FOUNDATION-SERVICE-DETAILS.md',
+    'AppFeatures': 'GENERATED-APP-FEATURES-SERVICE-DETAILS.md',
+    'GameFeatures': 'GENERATED-GAME-FEATURES-SERVICE-DETAILS.md',
+}
+
+"""Layer display names for per-layer document titles."""
+LAYER_DISPLAY = {
+    'Infrastructure': 'Infrastructure (L0)',
+    'AppFoundation': 'App Foundation (L1)',
+    'GameFoundation': 'Game Foundation (L2)',
+    'AppFeatures': 'App Features (L3)',
+    'GameFeatures': 'Game Features (L4)',
+}
+
+
 def to_title_case(name: str) -> str:
     """Convert kebab-case service name to Title Case."""
     parts = name.split('-')
     return ' '.join(p.capitalize() for p in parts)
+
+
+def extract_layer(deep_dive_file: Path) -> str:
+    """Extract the > **Layer**: value from a deep dive document header."""
+    try:
+        content = deep_dive_file.read_text()
+    except Exception:
+        return ''
+
+    for line in content.split('\n')[:15]:  # Layer is always in the header
+        if line.startswith('> **Layer**:'):
+            return line.split(':', 1)[1].strip()
+    return ''
 
 
 def extract_deep_dive_overview(deep_dive_file: Path) -> str:
@@ -93,9 +125,14 @@ def scan_deep_dives(plugins_dir: Path) -> dict:
             print(f"Warning: No ## Overview section in {md_file.name}, skipping")
             continue
 
+        layer = extract_layer(md_file)
+        if not layer:
+            print(f"Warning: No > **Layer**: line in {md_file.name}")
+
         services[service_key] = {
             'display_name': to_title_case(service_key),
             'overview': overview,
+            'layer': layer,
         }
 
     return services
@@ -199,6 +236,64 @@ def generate_markdown(services: dict, schemas: dict) -> str:
     return '\n'.join(lines)
 
 
+def generate_layer_markdown(layer: str, services: dict, schemas: dict) -> str:
+    """Generate markdown for a single layer's services."""
+    display = LAYER_DISPLAY.get(layer, layer)
+    lines = [
+        f"# Generated {display} Service Details",
+        "",
+        "> **Source**: `docs/plugins/*.md`",
+        "> **Do not edit manually** - regenerate with `make generate-docs`",
+        "",
+        f"Services in the **{display}** layer.",
+        "",
+    ]
+
+    total_endpoints = 0
+    service_count = 0
+    for service_key in sorted(services.keys()):
+        svc = services[service_key]
+        if svc.get('layer') != layer:
+            continue
+        service_count += 1
+        deep_dive_file = service_key.upper() + '.md'
+
+        lines.append(f"## {svc['display_name']} {{#{service_key}}}")
+        lines.append("")
+
+        schema = schemas.get(service_key)
+        if schema:
+            total_endpoints += schema['endpoint_count']
+            lines.append(
+                f"**Version**: {schema['version']} | "
+                f"**Schema**: `schemas/{schema['source_file']}` | "
+                f"**Endpoints**: {schema['endpoint_count']} | "
+                f"**Deep Dive**: [docs/plugins/{deep_dive_file}](plugins/{deep_dive_file})"
+            )
+        else:
+            lines.append(
+                f"**Deep Dive**: [docs/plugins/{deep_dive_file}](plugins/{deep_dive_file})"
+            )
+
+        lines.append("")
+        lines.append(svc['overview'])
+        lines.append("")
+
+    lines.extend([
+        "## Summary",
+        "",
+        f"- **Services in layer**: {service_count}",
+        f"- **Endpoints in layer**: {total_endpoints}",
+        "",
+        "---",
+        "",
+        "*This file is auto-generated. See [TENETS.md](reference/TENETS.md) for architectural context.*",
+        "",
+    ])
+
+    return '\n'.join(lines)
+
+
 def main():
     script_dir = Path(__file__).parent
     repo_root = script_dir.parent
@@ -214,17 +309,35 @@ def main():
     # Schemas provide version and endpoint counts
     schemas = scan_api_schemas(schemas_dir)
 
-    # Generate markdown
+    # Generate combined markdown (backward compatibility)
     markdown = generate_markdown(services, schemas)
 
     total_endpoints = sum(s['endpoint_count'] for s in schemas.values() if s.get('endpoint_count'))
 
-    # Write output
+    # Write combined output
     output_file = repo_root / 'docs' / 'GENERATED-SERVICE-DETAILS.md'
     with open(output_file, 'w') as f:
         f.write(markdown)
 
     print(f"Generated {output_file} with {len(services)} services and {total_endpoints} endpoints")
+
+    # Generate per-layer files
+    for layer, filename in LAYER_FILES.items():
+        layer_services = {k: v for k, v in services.items() if v.get('layer') == layer}
+        if not layer_services:
+            continue
+
+        layer_markdown = generate_layer_markdown(layer, services, schemas)
+        layer_file = repo_root / 'docs' / filename
+        with open(layer_file, 'w') as f:
+            f.write(layer_markdown)
+
+        layer_endpoints = sum(
+            schemas[k]['endpoint_count']
+            for k in layer_services
+            if k in schemas and schemas[k].get('endpoint_count')
+        )
+        print(f"Generated {layer_file} with {len(layer_services)} services and {layer_endpoints} endpoints")
 
 
 if __name__ == '__main__':

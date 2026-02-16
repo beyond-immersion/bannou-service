@@ -4,7 +4,7 @@
 > **Schema**: `schemas/character-lifecycle-api.yaml` (not yet created)
 > **Version**: N/A (Pre-Implementation)
 > **State Store**: lifecycle-characters (MySQL), lifecycle-heritage (MySQL), lifecycle-bloodlines (MySQL), lifecycle-cache (Redis), lifecycle-lock (Redis) — all planned
-> **Layer**: L4 GameFeatures
+> **Layer**: GameFeatures
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists.
 
 ## Overview

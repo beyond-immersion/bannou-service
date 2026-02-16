@@ -3,6 +3,7 @@
 > **Plugin**: lib-game-session
 > **Schema**: schemas/game-session-api.yaml
 > **Version**: 2.0.0
+> **Layer**: GameFoundation
 > **State Store**: game-session-statestore (MySQL)
 
 ---

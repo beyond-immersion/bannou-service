@@ -4,7 +4,7 @@
 > **Schema**: `schemas/broadcast-api.yaml` (not yet created)
 > **Version**: N/A (Pre-Implementation)
 > **State Store**: broadcast-platforms (MySQL), broadcast-sessions (Redis), broadcast-sentiment-buffer (Redis), broadcast-outputs (Redis), broadcast-cameras (Redis), broadcast-lock (Redis) — all planned
-> **Layer**: L3 AppFeatures
+> **Layer**: AppFeatures
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists.
 > **Planning**: N/A
 

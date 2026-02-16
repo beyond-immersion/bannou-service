@@ -3,6 +3,7 @@
 > **Plugin**: lib-scene
 > **Schema**: schemas/scene-api.yaml
 > **Version**: 1.0.0
+> **Layer**: GameFeatures
 > **State Stores**: scene-statestore (MySQL)
 
 ---

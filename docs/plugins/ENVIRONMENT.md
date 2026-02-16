@@ -3,6 +3,7 @@
 > **Plugin**: lib-environment
 > **Schema**: schemas/environment-api.yaml
 > **Version**: 1.0.0
+> **Layer**: GameFeatures
 > **State Stores**: environment-climate (MySQL), environment-weather (Redis), environment-conditions (Redis), environment-overrides (MySQL)
 > **Status**: Pre-implementation (architectural specification)
 

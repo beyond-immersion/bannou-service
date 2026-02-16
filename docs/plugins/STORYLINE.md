@@ -3,6 +3,7 @@
 > **Plugin**: lib-storyline
 > **Schema**: schemas/storyline-api.yaml
 > **Version**: 1.0.0
+> **Layer**: GameFeatures
 > **State Store**: storyline-plans (Redis), storyline-plan-index (Redis)
 
 ---

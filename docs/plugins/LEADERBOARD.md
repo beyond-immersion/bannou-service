@@ -3,6 +3,7 @@
 > **Plugin**: lib-leaderboard
 > **Schema**: schemas/leaderboard-api.yaml
 > **Version**: 1.0.0
+> **Layer**: GameFeatures
 > **State Stores**: leaderboard-definition (Redis), leaderboard-ranking (Redis, Sorted Sets)
 
 ---

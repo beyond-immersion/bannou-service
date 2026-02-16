@@ -3,6 +3,7 @@
 > **Plugin**: lib-analytics
 > **Schema**: schemas/analytics-api.yaml
 > **Version**: 1.0.0
+> **Layer**: GameFeatures
 > **State Stores**: analytics-summary (Redis), analytics-summary-data (MySQL), analytics-rating (Redis), analytics-history-data (MySQL)
 
 ## Overview

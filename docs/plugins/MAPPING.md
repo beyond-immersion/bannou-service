@@ -3,6 +3,7 @@
 > **Plugin**: lib-mapping
 > **Schema**: schemas/mapping-api.yaml
 > **Version**: 1.0.0
+> **Layer**: GameFeatures
 > **State Stores**: mapping-statestore (Redis)
 
 ---

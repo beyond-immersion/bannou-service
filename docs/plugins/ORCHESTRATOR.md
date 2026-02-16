@@ -3,6 +3,7 @@
 > **Plugin**: lib-orchestrator
 > **Schema**: schemas/orchestrator-api.yaml
 > **Version**: 3.0.0
+> **Layer**: AppFeatures
 > **State Stores**: orchestrator-heartbeats (Redis), orchestrator-routings (Redis), orchestrator-config (Redis)
 
 ---

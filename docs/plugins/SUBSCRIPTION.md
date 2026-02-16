@@ -3,6 +3,7 @@
 > **Plugin**: lib-subscription
 > **Schema**: schemas/subscription-api.yaml
 > **Version**: 1.0.0
+> **Layer**: GameFoundation
 > **State Store**: subscription-statestore (MySQL)
 
 ---

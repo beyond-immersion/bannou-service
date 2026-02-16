@@ -1,11 +1,11 @@
 # Transit Plugin Deep Dive
 
-> **Plugin**: lib-transit
+> **Plugin**: lib-transit (not yet created)
 > **Schema**: `schemas/transit-api.yaml` (not yet created)
-> **Version**: 1.0.0 (aspirational)
-> **Layer**: L2 GameFoundation
-> **State Stores**: transit-modes (MySQL), transit-connections (MySQL), transit-journeys (Redis), transit-journeys-archive (MySQL), transit-connection-graph (Redis), transit-discovery (MySQL), transit-discovery-cache (Redis)
-> **Status**: Aspirational (Pre-Implementation) -- No schema, no code.
+> **Version**: N/A (Pre-Implementation)
+> **State Store**: transit-modes (MySQL), transit-connections (MySQL), transit-journeys (Redis), transit-journeys-archive (MySQL), transit-connection-graph (Redis), transit-discovery (MySQL), transit-discovery-cache (Redis) — all planned
+> **Layer**: GameFoundation
+> **Status**: Aspirational — no schema, no generated code, no service implementation exists.
 
 ---
 
@@ -474,6 +474,267 @@ TransitRouteOption:
 | lib-character-history (L4) | Subscribes to journey arrived/abandoned events for travel backstory generation |
 | lib-analytics (L4) | Subscribes to all journey events for travel pattern aggregation |
 | lib-puppetmaster (L4) | Subscribes to connection status-changed events for regional watcher awareness |
+
+---
+
+## State Storage
+
+```yaml
+# schemas/state-stores.yaml additions
+
+transit-modes:
+  backend: mysql
+  description: "Transit mode definitions (durable registry)"
+  key_format: "transit:mode:{code}"
+
+transit-connections:
+  backend: mysql
+  description: "Transit connections between locations (durable graph edges)"
+  key_format: "transit:conn:{connectionId}"
+  indexes:
+    - fromLocationId
+    - toLocationId
+    - fromRealmId
+    - toRealmId
+    - crossRealm
+    - status
+
+transit-journeys:
+  backend: redis
+  description: "Active transit journeys (hot state with TTL)"
+  key_format: "transit:journey:{journeyId}"
+  ttl_source: config.JourneyArchiveAfterGameHours
+  notes: |
+    Active and recently-completed journeys live in Redis for fast access.
+    Background worker archives completed/abandoned journeys to MySQL after TTL.
+
+transit-journeys-archive:
+  backend: mysql
+  description: "Archived transit journeys (historical record)"
+  key_format: "transit:journey:archive:{journeyId}"
+  indexes:
+    - entityId
+    - entityType
+    - originRealmId
+    - destinationRealmId
+    - status
+    - originLocationId
+    - destinationLocationId
+
+transit-connection-graph:
+  backend: redis
+  description: "Cached connection graph for route calculation (per-realm)"
+  key_format: "transit:graph:{realmId}"
+  ttl_source: config.ConnectionGraphCacheSeconds
+  notes: |
+    Serialized adjacency list for Dijkstra's algorithm. One graph per realm.
+    Each realm's graph includes ALL connections touching that realm -- both
+    intra-realm connections and cross-realm connections where fromRealmId or
+    toRealmId matches this realm. Cross-realm connections therefore appear in
+    both realms' cached graphs.
+
+    Rebuilt from MySQL on cache miss.
+    Invalidated when connections are created/deleted/status-changed.
+
+    Cross-realm route calculation merges the graphs for the origin and
+    destination realms. Since cross-realm connections appear in both graphs,
+    the merge naturally discovers realm-spanning paths without a separate
+    cross-realm index.
+
+transit-discovery:
+  backend: mysql
+  description: "Per-entity connection discovery tracking (durable)"
+  key_format: "transit:discovery:{entityId}:{connectionId}"
+  indexes:
+    - entityId
+    - connectionId
+  notes: |
+    MySQL-backed durable store of which entities have discovered which
+    connections. Each record is an (entityId, connectionId, source, discoveredAt)
+    tuple. Durability is critical: discovery represents permanent world knowledge
+    that must survive Redis restarts and redeployments.
+    Cleaned up via Resource CASCADE when the entity is deleted.
+
+transit-discovery-cache:
+  backend: redis
+  description: "Per-entity discovery cache for fast route calculation lookups"
+  key_format: "transit:discovery:cache:{entityId}"
+  ttl_source: config.DiscoveryCacheTtlSeconds
+  notes: |
+    Redis set per entity containing connection IDs they have discovered.
+    Populated on cache miss from MySQL (transit-discovery store).
+    Checked during route calculation when entityId is provided to filter
+    discoverable connections. Invalidated on new discovery reveal.
+    This is a read-through cache -- MySQL is the source of truth.
+```
+
+---
+
+## Events
+
+### Published Events
+
+**Connection events** (published on status changes):
+
+| Topic | Event Type | Trigger |
+|-------|-----------|---------|
+| `transit.connection.status-changed` | `TransitConnectionStatusChangedEvent` | A connection's operational status changed. Includes connectionId, fromLocationId, toLocationId, previousStatus (`ConnectionStatus` enum), newStatus (`ConnectionStatus` enum), reason, forceUpdated flag, realm IDs, crossRealm flag. |
+
+**Journey lifecycle events** (published on journey state transitions):
+
+| Topic | Event Type | Trigger |
+|-------|-----------|---------|
+| `transit.journey.departed` | `TransitJourneyDepartedEvent` | An entity has begun traveling. Includes journeyId, entityId, entityType, origin/destination locationIds, primaryModeCode, estimatedArrivalGameTime, partySize, realm IDs, crossRealm flag. |
+| `transit.journey.waypoint-reached` | `TransitJourneyWaypointReachedEvent` | A traveling entity reached an intermediate waypoint. Includes journeyId, entityId, entityType, waypointLocationId, nextLocationId, legIndex, remainingLegs, connectionId, realmId, crossedRealmBoundary flag. |
+| `transit.journey.arrived` | `TransitJourneyArrivedEvent` | A traveling entity reached its destination. Includes journeyId, entityId, entityType, origin/destination locationIds, primaryModeCode, totalGameHours, totalDistanceKm, interruptionCount, legsCompleted, realm IDs, crossRealm flag. |
+| `transit.journey.interrupted` | `TransitJourneyInterruptedEvent` | A journey was interrupted (combat, event, breakdown). Includes journeyId, entityId, entityType, currentLocationId, currentLegIndex, reason, realmId. |
+| `transit.journey.resumed` | `TransitJourneyResumedEvent` | An interrupted journey was resumed. Includes journeyId, entityId, entityType, currentLocationId, destinationLocationId, currentLegIndex, remainingLegs, modeCode, realmId. |
+| `transit.journey.abandoned` | `TransitJourneyAbandonedEvent` | A journey was abandoned before reaching destination. Includes journeyId, entityId, entityType, origin/destination locationIds, abandonedAtLocationId, reason, completedLegs, totalLegs, realm IDs, crossRealm flag. |
+
+**Discovery events**:
+
+| Topic | Event Type | Trigger |
+|-------|-----------|---------|
+| `transit.discovery.revealed` | `TransitDiscoveryRevealedEvent` | A discoverable connection was revealed to an entity. Includes entityId, connectionId, fromLocationId, toLocationId, source (how discovered), realm IDs, crossRealm flag. |
+
+**Mode status events** (custom -- modes use register/deprecate semantics, not standard CRUD lifecycle):
+
+| Topic | Event Type | Trigger |
+|-------|-----------|---------|
+| `transit.mode.registered` | `TransitModeRegisteredEvent` | A new transit mode was registered. Includes code, name. |
+| `transit.mode.deprecated` | `TransitModeDeprecatedEvent` | A transit mode was deprecated. Includes code, reason. |
+
+**Connection lifecycle events** (auto-generated via `x-lifecycle` in events schema):
+
+| Topic | Event Type | Trigger |
+|-------|-----------|---------|
+| `transit.connection.created` | `TransitConnectionCreatedEvent` | A new connection was created between locations. Full entity data. |
+| `transit.connection.updated` | `TransitConnectionUpdatedEvent` | A connection's properties were updated. Full entity data + changedFields. |
+| `transit.connection.deleted` | `TransitConnectionDeletedEvent` | A connection was removed. Full entity data + deletedReason. |
+
+All events include standard `eventId` (uuid) and `timestamp` (date-time) fields per FOUNDATION TENETS event schema pattern. `x-event-publications` in `transit-events.yaml` must list all published events as the authoritative registry.
+
+### Consumed Events
+
+| Topic | Handler | Action |
+|-------|---------|--------|
+| `worldstate.season-changed` | `HandleSeasonChangedAsync` (via `IEventConsumer`) | Triggers the Seasonal Connection Worker to scan connections with `seasonalAvailability` restrictions and update their status for the new season. Connections closing for the new season transition to `seasonal_closed`; connections opening transition to `open`. |
+
+Transit does not subscribe to `location.deleted` or `character.deleted` events for cleanup — this is handled exclusively through lib-resource cleanup callbacks per FOUNDATION TENETS.
+
+### Resource Cleanup (FOUNDATION TENETS)
+
+Transit registers as an `ISeededResourceProvider` with lib-resource for cleanup coordination. These are declared via `x-references` in the API schema.
+
+| Target Resource | Source Type | On Delete | Cleanup Action |
+|----------------|-------------|-----------|----------------|
+| location | transit | CASCADE | Close all connections referencing the deleted location, interrupt active journeys passing through it |
+| character | transit | CASCADE | Clear discovery data for the deleted entity, abandon any active journeys |
+
+---
+
+## Configuration
+
+```yaml
+# schemas/transit-configuration.yaml
+TransitServiceConfiguration:
+  properties:
+    DefaultWalkingSpeedKmPerGameHour:
+      type: number
+      default: 5.0
+      description: "Default walking speed used when no mode is specified"
+      env: TRANSIT_DEFAULT_WALKING_SPEED_KM_PER_GAME_HOUR
+
+    MaxRouteCalculationLegs:
+      type: integer
+      default: 8
+      description: "Maximum number of legs to consider in route calculation (prevents combinatorial explosion)"
+      env: TRANSIT_MAX_ROUTE_CALCULATION_LEGS
+
+    MaxRouteOptions:
+      type: integer
+      default: 5
+      description: "Maximum number of route options to return from calculate endpoint"
+      env: TRANSIT_MAX_ROUTE_OPTIONS
+
+    ConnectionGraphCacheSeconds:
+      type: integer
+      default: 300
+      description: "TTL for cached connection graph in Redis (seconds). Graph is rebuilt on cache miss."
+      env: TRANSIT_CONNECTION_GRAPH_CACHE_SECONDS
+
+    JourneyArchiveAfterGameHours:
+      type: number
+      default: 168.0
+      description: "Game-hours after arrival/abandonment before journey is archived from Redis to MySQL"
+      env: TRANSIT_JOURNEY_ARCHIVE_AFTER_GAME_HOURS
+
+    CargoSpeedPenaltyThresholdKg:
+      type: number
+      default: 100.0
+      description: "Cargo weight above this threshold reduces speed. Speed reduction = (cargo - threshold) / (capacity - threshold) * DefaultCargoSpeedPenaltyRate"
+      env: TRANSIT_CARGO_SPEED_PENALTY_THRESHOLD_KG
+
+    SeasonalConnectionCheckIntervalSeconds:
+      type: integer
+      default: 60
+      description: "How often the background worker checks Worldstate for seasonal connection status changes"
+      env: TRANSIT_SEASONAL_CONNECTION_CHECK_INTERVAL_SECONDS
+
+    DiscoveryCacheTtlSeconds:
+      type: integer
+      default: 600
+      description: "TTL for per-entity discovery cache in Redis (seconds). Route calculation checks this cache to filter discoverable connections."
+      env: TRANSIT_DISCOVERY_CACHE_TTL_SECONDS
+
+    DefaultCargoSpeedPenaltyRate:
+      type: number
+      default: 0.3
+      description: "Default cargo speed penalty rate applied when a mode's cargoSpeedPenaltyRate is null. Speed reduction = (cargo - threshold) / (capacity - threshold) * rate. 0.3 = 30% max speed reduction at full capacity."
+      env: TRANSIT_DEFAULT_CARGO_SPEED_PENALTY_RATE
+
+    JourneyArchiveRetentionDays:
+      type: integer
+      default: 365
+      description: "Number of real-time days to retain archived journeys in MySQL before cleanup. 0 = retain indefinitely. The archival worker deletes records older than this threshold during each sweep."
+      env: TRANSIT_JOURNEY_ARCHIVE_RETENTION_DAYS
+
+    JourneyArchivalWorkerIntervalSeconds:
+      type: integer
+      default: 300
+      description: "Real-time interval in seconds between journey archival worker sweeps. The worker scans Redis for completed/abandoned journeys older than JourneyArchiveAfterGameHours and moves them to MySQL."
+      env: TRANSIT_JOURNEY_ARCHIVAL_WORKER_INTERVAL_SECONDS
+
+    AutoUpdateLocationOnTransition:
+      type: boolean
+      default: true
+      description: "When true, Transit automatically calls Location's /location/report-entity-position endpoint to update the entity's current location on journey departure, waypoint arrival, and final arrival. Location's presence system uses ephemeral Redis storage with 30s TTL, so Transit must re-report on each state transition. When false, the caller is responsible for updating Location separately. Both Transit and Location are L2 (always co-deployed on game nodes), so direct API calls are used -- not events."
+      env: TRANSIT_AUTO_UPDATE_LOCATION_ON_TRANSITION
+```
+
+---
+
+## DI Services & Helpers
+
+| Service | Role |
+|---------|------|
+| `ILogger<TransitService>` | Structured logging |
+| `TransitServiceConfiguration` | Typed configuration access |
+| `IStateStoreFactory` | State store access (creates 7 stores: transit-modes, transit-connections, transit-journeys, transit-journeys-archive, transit-connection-graph, transit-discovery, transit-discovery-cache) |
+| `IMessageBus` | Event publishing (journey lifecycle, connection status, discovery, mode status, connection lifecycle) |
+| `IEventConsumer` | Subscribes to `worldstate.season-changed` for seasonal connection status updates |
+| `ILocationClient` | Location existence validation, entity position reporting via `AutoUpdateLocationOnTransition` (L2 hard dependency) |
+| `IWorldstateClient` | Game-time calculations for journey ETAs, seasonal context for connection status (L2 hard dependency) |
+| `ICharacterClient` | Species code lookup for mode compatibility checks (L2 hard dependency) |
+| `ISpeciesClient` | Species property lookup for mode restrictions (L2 hard dependency) |
+| `IInventoryClient` | Item tag checks for mode requirements (L2 hard dependency) |
+| `IResourceClient` | Cleanup callback registration for location/character deletion (L1 hard dependency) |
+| `IEnumerable<ITransitCostModifierProvider>` | DI collection of L4 cost enrichment providers (graceful degradation if none registered) |
+| `TransitVariableProviderFactory` | Implements `IVariableProviderFactory` to provide `${transit.*}` variables to Actor (L2) |
+| `ITransitRouteCalculator` / `TransitRouteCalculator` | Internal helper for Dijkstra-based route calculation over cached connection graphs |
+| `ITransitConnectionGraphCache` / `TransitConnectionGraphCache` | Manages per-realm connection graph cache in Redis. Rebuilds from MySQL on cache miss. Invalidated on connection create/delete/status-change. |
+| `SeasonalConnectionWorker` | Background `HostedService` that responds to `worldstate.season-changed` events. Scans connections with `seasonalAvailability` restrictions and updates status. Runs periodic checks every `SeasonalConnectionCheckIntervalSeconds`. |
+| `JourneyArchivalWorker` | Background `HostedService` that archives completed/abandoned journeys from Redis to MySQL every `JourneyArchivalWorkerIntervalSeconds`. Also enforces `JourneyArchiveRetentionDays` retention policy. |
 
 ---
 

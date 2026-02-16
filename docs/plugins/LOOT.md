@@ -4,7 +4,7 @@
 > **Schema**: `schemas/loot-api.yaml` (not yet created)
 > **Version**: N/A (Pre-Implementation)
 > **State Store**: loot-tables (MySQL), loot-table-cache (Redis), loot-contexts (Redis), loot-pity-counters (Redis), loot-history (MySQL), loot-lock (Redis) — all planned
-> **Layer**: L4 GameFeatures
+> **Layer**: GameFeatures
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists.
 
 ---

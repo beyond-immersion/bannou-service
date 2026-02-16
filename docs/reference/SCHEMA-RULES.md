@@ -39,6 +39,7 @@ Each service can have up to 4 schema files in `/schemas/`:
 - `common-events.yaml` - Base event schemas (BaseServiceEvent)
 - `common-client-events.yaml` - Base client event schemas (BaseClientEvent)
 - `state-stores.yaml` - State store definitions → `StateStoreDefinitions.cs`
+- `variable-providers.yaml` - Variable provider definitions → `VariableProviderDefinitions.cs`
 
 ---
 
@@ -49,15 +50,16 @@ Run `make generate` or `scripts/generate-all-services.sh` to execute the full pi
 | Step | Source | Generated Output |
 |------|--------|------------------|
 | 1. State Stores | `state-stores.yaml` | `lib-state/Generated/StateStoreDefinitions.cs` |
-| 2. Lifecycle Events | `x-lifecycle` in events.yaml | `schemas/Generated/{service}-lifecycle-events.yaml` |
-| 3. Common Events | `common-events.yaml` | `bannou-service/Generated/Events/CommonEventsModels.cs` |
-| 4. Service Events | `{service}-events.yaml` | `bannou-service/Generated/Events/{Service}EventsModels.cs` |
-| 5. Client Events | `{service}-client-events.yaml` | `lib-{service}/Generated/{Service}ClientEventsModels.cs` |
-| 6. Meta Schemas | `{service}-api.yaml` | `schemas/Generated/{service}-api-meta.yaml` |
-| 7. Service API | `{service}-api.yaml` | Controllers, models, clients, interfaces |
-| 8. Configuration | `{service}-configuration.yaml` | `{Service}ServiceConfiguration.cs` |
-| 9. Permissions | `x-permissions` in api.yaml | `{Service}PermissionRegistration.cs` |
-| 10. Event Subscriptions | `x-event-subscriptions` | `{Service}EventsController.cs` |
+| 2. Variable Providers | `variable-providers.yaml` | `bannou-service/Generated/VariableProviderDefinitions.cs` |
+| 3. Lifecycle Events | `x-lifecycle` in events.yaml | `schemas/Generated/{service}-lifecycle-events.yaml` |
+| 4. Common Events | `common-events.yaml` | `bannou-service/Generated/Events/CommonEventsModels.cs` |
+| 5. Service Events | `{service}-events.yaml` | `bannou-service/Generated/Events/{Service}EventsModels.cs` |
+| 6. Client Events | `{service}-client-events.yaml` | `lib-{service}/Generated/{Service}ClientEventsModels.cs` |
+| 7. Meta Schemas | `{service}-api.yaml` | `schemas/Generated/{service}-api-meta.yaml` |
+| 8. Service API | `{service}-api.yaml` | Controllers, models, clients, interfaces |
+| 9. Configuration | `{service}-configuration.yaml` | `{Service}ServiceConfiguration.cs` |
+| 10. Permissions | `x-permissions` in api.yaml | `{Service}PermissionRegistration.cs` |
+| 11. Event Subscriptions | `x-event-subscriptions` | `{Service}EventsController.cs` |
 
 **Order matters**: State stores and events must be generated before service APIs.
 

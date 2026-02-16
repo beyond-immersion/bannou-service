@@ -3,6 +3,7 @@
 > **Plugin**: lib-actor
 > **Schema**: schemas/actor-api.yaml
 > **Version**: 1.0.0
+> **Layer**: GameFoundation
 > **State Stores**: actor-templates (Redis/MySQL), actor-state (Redis), actor-pool-nodes (Redis), actor-assignments (Redis)
 
 ---

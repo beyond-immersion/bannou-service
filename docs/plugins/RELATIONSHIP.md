@@ -3,6 +3,7 @@
 > **Plugin**: lib-relationship
 > **Schema**: schemas/relationship-api.yaml
 > **Version**: 2.0.0
+> **Layer**: GameFoundation
 > **State Stores**: relationship-statestore (MySQL), relationship-type-statestore (MySQL), relationship-lock (Redis)
 
 ---

@@ -3,6 +3,7 @@
 > **Plugin**: lib-documentation
 > **Schema**: schemas/documentation-api.yaml
 > **Version**: 1.0.0
+> **Layer**: AppFeatures
 > **State Stores**: documentation-statestore (Redis)
 
 ---

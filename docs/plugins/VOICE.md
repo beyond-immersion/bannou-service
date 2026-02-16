@@ -3,6 +3,7 @@
 > **Plugin**: lib-voice
 > **Schema**: schemas/voice-api.yaml
 > **Version**: 2.0.0
+> **Layer**: AppFeatures
 > **State Store**: voice-statestore (Redis)
 > **Planning**: N/A
 

@@ -3,6 +3,7 @@
 > **Plugin**: lib-quest
 > **Schema**: schemas/quest-api.yaml
 > **Version**: 1.0.0
+> **Layer**: GameFoundation
 > **State Stores**: quest-definition-statestore (MySQL), quest-instance-statestore (MySQL), quest-objective-progress (Redis), quest-definition-cache (Redis), quest-character-index (Redis), quest-cooldown (Redis), quest-idempotency (Redis)
 
 ---

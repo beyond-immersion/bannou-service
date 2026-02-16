@@ -3,6 +3,7 @@
 > **Plugin**: lib-mesh
 > **Schema**: schemas/mesh-api.yaml
 > **Version**: 1.0.0
+> **Layer**: Infrastructure
 > **State Stores**: mesh-endpoints, mesh-appid-index, mesh-global-index (all Redis), + raw Redis for circuit breaker (`mesh:cb:{appId}`)
 
 ---

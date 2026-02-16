@@ -4,7 +4,7 @@
 > **Schema**: `schemas/lexicon-api.yaml` (not yet created)
 > **Version**: N/A (Pre-Implementation)
 > **State Store**: lexicon-entries (MySQL), lexicon-cache (Redis), lexicon-lock (Redis) — all planned
-> **Layer**: L4 GameFeatures
+> **Layer**: GameFeatures
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists.
 > **Planning**: [VISION.md](../reference/VISION.md) (Logos metaphysical framework), [COMPRESSION-GAMEPLAY-PATTERNS.md](../planning/COMPRESSION-GAMEPLAY-PATTERNS.md) (identify spell concept), [CHARACTER-COMMUNICATION.md](../guides/CHARACTER-COMMUNICATION.md) (Lexicon-shaped NPC social interaction)
 

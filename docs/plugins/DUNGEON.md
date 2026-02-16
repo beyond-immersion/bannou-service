@@ -3,6 +3,7 @@
 > **Plugin**: lib-dungeon
 > **Schema**: schemas/dungeon-api.yaml
 > **Version**: 1.0.0
+> **Layer**: GameFeatures
 > **State Stores**: dungeon-cores (MySQL), dungeon-bonds (MySQL), dungeon-inhabitants (Redis), dungeon-memories (MySQL), dungeon-cache (Redis), dungeon-lock (Redis)
 > **Status**: Pre-implementation (architectural specification)
 

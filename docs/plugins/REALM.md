@@ -3,6 +3,7 @@
 > **Plugin**: lib-realm
 > **Schema**: schemas/realm-api.yaml
 > **Version**: 1.0.0
+> **Layer**: GameFoundation
 > **State Store**: realm-statestore (MySQL)
 
 ---

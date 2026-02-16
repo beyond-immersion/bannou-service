@@ -3,6 +3,7 @@
 > **Plugin**: lib-game-service
 > **Schema**: schemas/game-service-api.yaml
 > **Version**: 1.0.0
+> **Layer**: GameFoundation
 > **State Store**: game-service-statestore (MySQL)
 
 ---

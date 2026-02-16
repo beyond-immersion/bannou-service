@@ -4,7 +4,7 @@
 > **Schema**: `schemas/utility-api.yaml` (not yet created)
 > **Version**: N/A (Pre-Implementation)
 > **State Store**: utility-networks (MySQL), utility-coverage (Redis), utility-sources (MySQL), utility-maintenance (MySQL), utility-locks (Redis) — all planned
-> **Layer**: L4 GameFeatures
+> **Layer**: GameFeatures
 > **Status**: Aspirational — no schema, no generated code, no service implementation exists.
 
 ---

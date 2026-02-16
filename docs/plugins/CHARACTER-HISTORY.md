@@ -3,6 +3,7 @@
 > **Plugin**: lib-character-history
 > **Schema**: schemas/character-history-api.yaml
 > **Version**: 1.0.0
+> **Layer**: GameFeatures
 > **State Store**: character-history-statestore (MySQL)
 
 ---
