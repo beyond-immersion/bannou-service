@@ -40,6 +40,10 @@ x-variable-providers:
     service: Seed
     purpose: "Seed growth and capability data for ABML expressions (${seed.*})"
 
+  world:
+    service: Worldstate
+    purpose: "Game time, calendar, and season data for ABML expressions (${world.*})"
+
   # ============================================================================
   # L4 Game Features Providers
   # ============================================================================
