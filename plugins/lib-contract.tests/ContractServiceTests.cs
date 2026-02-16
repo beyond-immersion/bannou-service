@@ -2871,16 +2871,16 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var template = CreateTestTemplateModel(templateId);
         template.DefaultTerms = new ContractTermsModel
         {
-            CustomTerms = new Dictionary<string, object>
+            Clauses = new List<ContractClauseDefinition>
             {
-                ["clauses"] = new List<object>
+                new()
                 {
-                    new Dictionary<string, object>
+                    Id = "clause-1",
+                    Type = "asset_requirement",
+                    Party = "employer",
+                    Assets = new List<ContractClauseAsset>
                     {
-                        ["id"] = "clause-1",
-                        ["type"] = "asset_requirement",
-                        ["role"] = "employer",
-                        ["description"] = "Test asset requirement"
+                        new() { Type = "currency", Code = "gold", Amount = 100 }
                     }
                 }
             }
@@ -3443,19 +3443,16 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var template = CreateTestTemplateModel(templateId);
         template.DefaultTerms = new ContractTermsModel
         {
-            CustomTerms = new Dictionary<string, object>
+            Clauses = new List<ContractClauseDefinition>
             {
-                ["clauses"] = new List<object>
+                new()
                 {
-                    new Dictionary<string, object>
-                    {
-                        ["id"] = "clause-1",
-                        ["type"] = "currency_transfer",
-                        ["source_wallet"] = "{{source_wallet}}",
-                        ["destination_wallet"] = "{{destination_wallet}}",
-                        ["currency_code"] = "gold",
-                        ["amount"] = "100"
-                    }
+                    Id = "clause-1",
+                    Type = "currency_transfer",
+                    SourceWallet = "{{source_wallet}}",
+                    DestinationWallet = "{{destination_wallet}}",
+                    CurrencyCode = "gold",
+                    Amount = "100"
                 }
             }
         };
@@ -3543,19 +3540,16 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var template = CreateTestTemplateModel(templateId);
         template.DefaultTerms = new ContractTermsModel
         {
-            CustomTerms = new Dictionary<string, object>
+            Clauses = new List<ContractClauseDefinition>
             {
-                ["clauses"] = new List<object>
+                new()
                 {
-                    new Dictionary<string, object>
-                    {
-                        ["id"] = "clause-1",
-                        ["type"] = "item_transfer",
-                        ["source_container"] = "{{source_container}}",
-                        ["destination_container"] = "{{destination_container}}",
-                        ["item_code"] = "sword",
-                        ["quantity"] = "1"
-                    }
+                    Id = "clause-1",
+                    Type = "item_transfer",
+                    SourceContainer = "{{source_container}}",
+                    DestinationContainer = "{{destination_container}}",
+                    ItemCode = "sword",
+                    Amount = "1"
                 }
             }
         };
@@ -3643,19 +3637,16 @@ public class ContractServiceTests : ServiceTestBase<ContractServiceConfiguration
         var template = CreateTestTemplateModel(templateId);
         template.DefaultTerms = new ContractTermsModel
         {
-            CustomTerms = new Dictionary<string, object>
+            Clauses = new List<ContractClauseDefinition>
             {
-                ["clauses"] = new List<object>
+                new()
                 {
-                    new Dictionary<string, object>
-                    {
-                        ["id"] = "clause-fee",
-                        ["type"] = "fee",
-                        ["source_wallet"] = "{{fee_source_wallet}}",
-                        ["recipient_wallet"] = "{{fee_recipient_wallet}}",
-                        ["currency_code"] = "gold",
-                        ["amount"] = "10"
-                    }
+                    Id = "clause-fee",
+                    Type = "fee",
+                    SourceWallet = "{{fee_source_wallet}}",
+                    RecipientWallet = "{{fee_recipient_wallet}}",
+                    CurrencyCode = "gold",
+                    Amount = "10"
                 }
             }
         };

@@ -285,6 +285,29 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/actor/bind-character': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Bind an unbound actor to a character
+     * @description Transitions an unbound (event-mode) actor to a bound (character-mode) actor.
+     *     After binding, the actor receives character perception events and variable
+     *     providers begin loading character-specific data on subsequent ticks.
+     *     Fails if the actor is already bound to a character.
+     */
+    post: operations['BindActorCharacter'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/actor/cleanup-by-character': {
     parameters: {
       query?: never;
@@ -13599,6 +13622,16 @@ export interface components {
       bytecodeSize?: number;
       /** @description URL to download the compiled behavior asset */
       downloadUrl?: string | null;
+    };
+    /** @description Request to bind an unbound actor to a character. After binding, the actor subscribes to the character's perception stream and variable providers begin loading character-specific data. The actor's behavior document continues executing — it should already handle both unbound and bound modes gracefully. */
+    BindActorCharacterRequest: {
+      /** @description ID of the actor to bind */
+      actorId: string;
+      /**
+       * Format: uuid
+       * @description ID of the character to bind to
+       */
+      characterId: string;
     };
     /** @description Request to bind an item to a character */
     BindItemInstanceRequest: {
@@ -35976,6 +36009,30 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['StopActorResponse'];
+        };
+      };
+    };
+  };
+  BindActorCharacter: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['BindActorCharacterRequest'];
+      };
+    };
+    responses: {
+      /** @description Actor bound to character successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ActorInstanceResponse'];
         };
       };
     };

@@ -7,9 +7,9 @@ Services in the **Game Foundation (L2)** layer.
 
 ## Actor {#actor}
 
-**Version**: 1.0.0 | **Schema**: `schemas/actor-api.yaml` | **Endpoints**: 16 | **Deep Dive**: [docs/plugins/ACTOR.md](plugins/ACTOR.md)
+**Version**: 1.0.0 | **Schema**: `schemas/actor-api.yaml` | **Endpoints**: 17 | **Deep Dive**: [docs/plugins/ACTOR.md](plugins/ACTOR.md)
 
-Distributed actor management and execution (L2 GameFoundation) for NPC brains, event coordinators, and long-running behavior loops. Actors output behavioral state (feelings, goals, memories) to characters -- not directly visible to players. Supports multiple deployment modes (local, pool-per-type, shared-pool, auto-scale), ABML behavior document execution with hot-reload, GOAP planning integration, and bounded perception queues with urgency filtering. Receives data from L4 services (personality, encounters, history) via the Variable Provider Factory pattern without depending on them.
+Distributed actor management and execution (L2 GameFoundation) for NPC brains, event coordinators, and long-running behavior loops. Actors output behavioral state (feelings, goals, memories) to characters -- not directly visible to players. Supports multiple deployment modes (local, pool-per-type, shared-pool, auto-scale), ABML behavior document execution with hot-reload, GOAP planning integration, bounded perception queues with urgency filtering, and dynamic character binding (actors can start without a character and bind to one at runtime, transitioning from event brain to character brain mode without relaunch). Receives data from L4 services (personality, encounters, history) via the Variable Provider Factory pattern without depending on them.
 
 ## Character {#character}
 
@@ -110,7 +110,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting 
 ## Summary
 
 - **Services in layer**: 17
-- **Endpoints in layer**: 264
+- **Endpoints in layer**: 265
 
 ---
 

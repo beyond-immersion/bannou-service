@@ -654,6 +654,40 @@
         }
       }
     },
+    "/actor/bind-character": {
+      "post": {
+        "operationId": "BindActorCharacter",
+        "summary": "Bind an unbound actor to a character",
+        "description": "Transitions an unbound (event-mode) actor to a bound (character-mode) actor.\nAfter binding, the actor receives character perception events and variable\nproviders begin loading character-specific data on subsequent ticks.\nFails if the actor is already bound to a character.\n",
+        "x-permissions": [
+          {
+            "role": "developer"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BindActorCharacterRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Actor bound to character successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActorInstanceResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/actor/cleanup-by-character": {
       "post": {
         "operationId": "CleanupByCharacter",
@@ -26217,6 +26251,26 @@
             "type": "string",
             "nullable": true,
             "description": "URL to download the compiled behavior asset"
+          }
+        }
+      },
+      "BindActorCharacterRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Request to bind an unbound actor to a character. After binding, the actor subscribes to the character's perception stream and variable providers begin loading character-specific data. The actor's behavior document continues executing \u2014 it should already handle both unbound and bound modes gracefully.",
+        "required": [
+          "actorId",
+          "characterId"
+        ],
+        "properties": {
+          "actorId": {
+            "type": "string",
+            "description": "ID of the actor to bind"
+          },
+          "characterId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the character to bind to"
           }
         }
       },

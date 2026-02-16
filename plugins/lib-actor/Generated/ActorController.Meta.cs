@@ -1534,6 +1534,181 @@ public partial class ActorController
 
     #endregion
 
+    #region Meta Endpoints for BindActorCharacter
+
+    private static readonly string _BindActorCharacter_RequestSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/BindActorCharacterRequest",
+    "$defs": {
+        "BindActorCharacterRequest": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Request to bind an unbound actor to a character. After binding, the actor subscribes to the character's perception stream and variable providers begin loading character-specific data. The actor's behavior document continues executing \u2014 it should already handle both unbound and bound modes gracefully.",
+            "required": [
+                "actorId",
+                "characterId"
+            ],
+            "properties": {
+                "actorId": {
+                    "type": "string",
+                    "description": "ID of the actor to bind"
+                },
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "ID of the character to bind to"
+                }
+            }
+        }
+    }
+}
+""";
+
+    private static readonly string _BindActorCharacter_ResponseSchema = """
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/$defs/ActorInstanceResponse",
+    "$defs": {
+        "ActorInstanceResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Response containing actor instance details",
+            "required": [
+                "actorId",
+                "templateId",
+                "category",
+                "status",
+                "startedAt",
+                "loopIterations"
+            ],
+            "properties": {
+                "actorId": {
+                    "type": "string",
+                    "description": "Unique actor identifier"
+                },
+                "templateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Template this actor was instantiated from"
+                },
+                "category": {
+                    "type": "string",
+                    "description": "Actor category from template"
+                },
+                "nodeId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Pool node running this actor (null in bannou mode)"
+                },
+                "nodeAppId": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Pool node's app-id for direct messaging"
+                },
+                "status": {
+                    "description": "Current actor lifecycle state",
+                    "$ref": "#/$defs/ActorStatus"
+                },
+                "characterId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Associated character ID (for NPC brains)"
+                },
+                "realmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true,
+                    "description": "Realm the actor operates in (resolved at spawn time)"
+                },
+                "startedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the actor started running"
+                },
+                "lastHeartbeat": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true,
+                    "description": "Last heartbeat timestamp from the actor"
+                },
+                "loopIterations": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "Number of behavior loop iterations executed"
+                }
+            }
+        },
+        "ActorStatus": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "starting",
+                "running",
+                "paused",
+                "stopping",
+                "stopped",
+                "error"
+            ],
+            "description": "Current actor lifecycle state"
+        }
+    }
+}
+""";
+
+    private static readonly string _BindActorCharacter_Info = """
+{
+    "summary": "Bind an unbound actor to a character",
+    "description": "Transitions an unbound (event-mode) actor to a bound (character-mode) actor.\nAfter binding, the actor receives character perception events and variable\nproviders begin loading character-specific data on subsequent ticks.\nFails if the actor is already bound to a character.\n",
+    "tags": [],
+    "deprecated": false,
+    "operationId": "BindActorCharacter"
+}
+""";
+
+    /// <summary>Returns endpoint information for BindActorCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/actor/bind-character/meta/info")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BindActorCharacter_MetaInfo()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildInfoResponse(
+            "Actor",
+            "POST",
+            "/actor/bind-character",
+            _BindActorCharacter_Info));
+
+    /// <summary>Returns request schema for BindActorCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/actor/bind-character/meta/request-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BindActorCharacter_MetaRequestSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Actor",
+            "POST",
+            "/actor/bind-character",
+            "request-schema",
+            _BindActorCharacter_RequestSchema));
+
+    /// <summary>Returns response schema for BindActorCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/actor/bind-character/meta/response-schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BindActorCharacter_MetaResponseSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildSchemaResponse(
+            "Actor",
+            "POST",
+            "/actor/bind-character",
+            "response-schema",
+            _BindActorCharacter_ResponseSchema));
+
+    /// <summary>Returns full schema for BindActorCharacter</summary>
+    [Microsoft.AspNetCore.Mvc.HttpGet, Microsoft.AspNetCore.Mvc.Route("/actor/bind-character/meta/schema")]
+    public Microsoft.AspNetCore.Mvc.ActionResult<BeyondImmersion.BannouService.Meta.MetaResponse> BindActorCharacter_MetaFullSchema()
+        => Ok(BeyondImmersion.BannouService.Meta.MetaResponseBuilder.BuildFullSchemaResponse(
+            "Actor",
+            "POST",
+            "/actor/bind-character",
+            _BindActorCharacter_Info,
+            _BindActorCharacter_RequestSchema,
+            _BindActorCharacter_ResponseSchema));
+
+    #endregion
+
     #region Meta Endpoints for CleanupByCharacter
 
     private static readonly string _CleanupByCharacter_RequestSchema = """

@@ -11,7 +11,7 @@ This document lists all typed proxy methods available in the Bannou Client SDK.
 |---------|---------------|---------|-------------|
 | [Bannou Account Service API](#account) | `client.Account` | 18 | Internal account management service (CRUD operations only, n... |
 | [Bannou Achievement Service API](#achievement) | `client.Achievement` | 11 | Achievement and trophy system with progress tracking and pla... |
-| [Actor Service API](#actor) | `client.Actor` | 16 | Distributed actor management and execution for NPC brains, e... |
+| [Actor Service API](#actor) | `client.Actor` | 17 | Distributed actor management and execution for NPC brains, e... |
 | [Bannou Analytics Service API](#analytics) | `client.Analytics` | 9 | Event ingestion, entity statistics, skill ratings (Glicko-2)... |
 | [Asset Service API](#asset) | `client.Asset` | 20 | Asset management service for storage, versioning, and distri... |
 | [Bannou Auth Service API](#auth) | `client.Auth` | 18 | Authentication and session management service (Internet-faci... |
@@ -187,6 +187,7 @@ Distributed actor management and execution for NPC brains, event coordinators, a
 | `SpawnactorAsync` | `SpawnActorRequest` | `ActorInstanceResponse` | Spawn a new actor from a template |
 | `GetActorAsync` | `GetActorRequest` | `ActorInstanceResponse` | Get actor instance (instantiate-on-access if template allows) |
 | `StopactorAsync` | `StopActorRequest` | `StopActorResponse` | Stop a running actor |
+| `BindactorcharacterAsync` | `BindActorCharacterRequest` | `ActorInstanceResponse` | Bind an unbound actor to a character |
 | `CleanupbycharacterAsync` | `CleanupByCharacterRequest` | `CleanupByCharacterResponse` | Cleanup actors referencing a deleted character |
 | `ListActorsAsync` | `ListActorsRequest` | `ListActorsResponse` | List actors with optional filters |
 | `InjectperceptionAsync` | `InjectPerceptionRequest` | `InjectPerceptionResponse` | Inject a perception event into an actor's queue (testing) |
@@ -2444,7 +2445,7 @@ Per-realm game time authority, calendar system, and temporal event broadcasting.
 ## Summary
 
 - **Total services**: 54
-- **Total methods**: 845
+- **Total methods**: 846
 
 ---
 

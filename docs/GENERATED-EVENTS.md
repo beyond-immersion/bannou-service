@@ -35,6 +35,7 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
+| `ActorCharacterBoundEvent` | Custom | `actor-character-bound` | Published when an actor binds to a character, eith... |
 | `ActorCompletedEvent` | Custom | `actor-completed` | Published when an actor completes execution (self-... |
 | `ActorEncounterEndedEvent` | Custom | `actor-encounter-ended` | Published when an Event Brain actor ends an encoun... |
 | `ActorEncounterPhaseChangedEvent` | Custom | `actor-encounter-phase-changed` | Published when an encounter transitions to a new p... |
