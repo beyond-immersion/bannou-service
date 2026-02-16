@@ -90,7 +90,7 @@ public sealed class ActorRunner : IActorRunner
     /// <inheritdoc/>
     public Guid? LocationId => _currentLocationId;
 
-    private volatile Guid? _currentLocationId;
+    private Guid? _currentLocationId;
 
     /// <inheritdoc/>
     public ActorStatus Status

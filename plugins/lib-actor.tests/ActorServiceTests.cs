@@ -650,7 +650,7 @@ public class ActorServiceTests
         _mockCharacterClient.Setup(c => c.GetCharacterAsync(
                 It.Is<Character.GetCharacterRequest>(r => r.CharacterId == characterId),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((StatusCodes.OK, new Character.GetCharacterResponse { RealmId = realmId }));
+            .ReturnsAsync(new Character.CharacterResponse { CharacterId = characterId, RealmId = realmId, Name = "Test", SpeciesId = Guid.NewGuid(), BirthDate = DateTimeOffset.UtcNow, Status = Character.CharacterStatus.Alive, CreatedAt = DateTimeOffset.UtcNow });
 
         // Setup spawn registration
         _mockActorRegistry.Setup(r => r.TryRegister(actorId, It.IsAny<IActorRunner>())).Returns(true);

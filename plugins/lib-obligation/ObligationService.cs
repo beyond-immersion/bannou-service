@@ -1,5 +1,6 @@
 using BeyondImmersion.Bannou.Core;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Character;
 using BeyondImmersion.BannouService.Contract;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Messaging;
@@ -34,6 +35,7 @@ public partial class ObligationService : IObligationService
     private readonly IMessageBus _messageBus;
     private readonly IDistributedLockProvider _lockProvider;
     private readonly IContractClient _contractClient;
+    private readonly ICharacterClient _characterClient;
     private readonly IResourceClient _resourceClient;
     private readonly ILogger<ObligationService> _logger;
     private readonly ObligationServiceConfiguration _configuration;
@@ -54,6 +56,7 @@ public partial class ObligationService : IObligationService
         IMessageBus messageBus,
         IDistributedLockProvider lockProvider,
         IContractClient contractClient,
+        ICharacterClient characterClient,
         IResourceClient resourceClient,
         ILogger<ObligationService> logger,
         ObligationServiceConfiguration configuration,
@@ -64,6 +67,7 @@ public partial class ObligationService : IObligationService
         ArgumentNullException.ThrowIfNull(messageBus, nameof(messageBus));
         ArgumentNullException.ThrowIfNull(lockProvider, nameof(lockProvider));
         ArgumentNullException.ThrowIfNull(contractClient, nameof(contractClient));
+        ArgumentNullException.ThrowIfNull(characterClient, nameof(characterClient));
         ArgumentNullException.ThrowIfNull(resourceClient, nameof(resourceClient));
         ArgumentNullException.ThrowIfNull(logger, nameof(logger));
         ArgumentNullException.ThrowIfNull(configuration, nameof(configuration));
@@ -72,6 +76,7 @@ public partial class ObligationService : IObligationService
         _messageBus = messageBus;
         _lockProvider = lockProvider;
         _contractClient = contractClient;
+        _characterClient = characterClient;
         _resourceClient = resourceClient;
         _logger = logger;
         _configuration = configuration;
@@ -242,12 +247,25 @@ public partial class ObligationService : IObligationService
         _logger.LogDebug("Evaluating {Count} actions for character {CharacterId}",
             body.ActionTags.Count, body.CharacterId);
 
+        // Resolve realmId: use request value or look up from Character service
+        Guid realmId;
+        if (body.RealmId.HasValue)
+        {
+            realmId = body.RealmId.Value;
+        }
+        else
+        {
+            var character = await _characterClient.GetCharacterAsync(
+                new GetCharacterRequest { CharacterId = body.CharacterId }, cancellationToken);
+            realmId = character.RealmId;
+        }
+
         // Get obligations (cache-first)
         var manifest = await _cacheStore.GetAsync(body.CharacterId.ToString(), cancellationToken)
             ?? await RebuildObligationCacheAsync(body.CharacterId, "evaluate", cancellationToken);
 
         // Try to get personality data for moral weighting (soft L4 dependency)
-        var personalityTraits = await TryGetPersonalityTraitsAsync(body.CharacterId, cancellationToken);
+        var personalityTraits = await TryGetPersonalityTraitsAsync(body.CharacterId, realmId, body.LocationId, cancellationToken);
         var moralWeightingApplied = personalityTraits != null;
 
         var evaluations = new List<ActionEvaluation>();
@@ -878,7 +896,7 @@ public partial class ObligationService : IObligationService
     /// Returns null if personality data is unavailable (graceful degradation).
     /// </summary>
     private async Task<Dictionary<string, float>?> TryGetPersonalityTraitsAsync(
-        Guid characterId, CancellationToken ct)
+        Guid characterId, Guid realmId, Guid? locationId, CancellationToken ct)
     {
         try
         {
@@ -887,7 +905,7 @@ public partial class ObligationService : IObligationService
 
             if (personalityFactory == null) return null;
 
-            var provider = await personalityFactory.CreateAsync(characterId, ct);
+            var provider = await personalityFactory.CreateAsync(characterId, realmId, locationId, ct);
 
             var traits = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
             foreach (var traitName in PersonalityTraitNames)

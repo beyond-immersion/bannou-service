@@ -681,15 +681,8 @@ public partial class ActorService : IActorService
 
         try
         {
-            var (status, response) = await _characterClient.GetCharacterAsync(
+            var response = await _characterClient.GetCharacterAsync(
                 new Character.GetCharacterRequest { CharacterId = characterId.Value }, ct);
-
-            if (status != StatusCodes.OK || response == null)
-            {
-                _logger.LogWarning("Failed to look up character {CharacterId} for realm resolution (status: {Status})",
-                    characterId.Value, status);
-                return null;
-            }
 
             _logger.LogDebug("Resolved realmId {RealmId} from character {CharacterId}",
                 response.RealmId, characterId.Value);

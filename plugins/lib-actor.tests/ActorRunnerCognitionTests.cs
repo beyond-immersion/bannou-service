@@ -338,6 +338,7 @@ public class ActorRunnerCognitionTests
             "test-actor",
             template,
             Guid.NewGuid(),
+            Guid.NewGuid(),
             CreateTestConfig(),
             messageBusMock.Object,
             new Mock<IMessageSubscriber>().Object,

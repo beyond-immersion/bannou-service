@@ -77,6 +77,7 @@ CalendarTemplate:
     - code: string                     # "dawn", "morning", "afternoon", "evening", "night"
       startHour: int                   # Game hour this period begins (0 to gameHoursPerDay-1)
       endHour: int                     # Game hour this period ends (exclusive, max = gameHoursPerDay)
+      isDaylight: boolean              # True if this period has sunlight. Used by ${world.time.is_day}/${world.time.is_night}.
 
   # Month structure
   months:                              # Ordered list of months in a year
@@ -193,6 +194,7 @@ GameTimeSnapshot:
   hour: int                            # Current game hour (0 to gameHoursPerDay-1)
   minute: int                          # Current game minute (0-59)
   period: string                       # Current day period code from calendar (e.g., "dawn")
+  isDaylight: bool                     # True if current period's isDaylight flag is set in the calendar template
   season: string                       # Current season code from calendar (e.g., "spring")
   seasonIndex: int                     # Current season ordinal (0-based)
   seasonProgress: float                # 0.0-1.0 progress through the current season. Computed from day-of-season / days-in-season using the calendar template's season-to-month mappings. Useful for smooth interpolation (temperature curves, resource availability) rather than discrete season boundaries. Already exposed as ${world.season_progress} in the variable provider; including it in the snapshot avoids consumers recomputing it.
@@ -250,9 +252,10 @@ Arcadia's specific calendar (month names, season names, day-period boundaries), 
 | lib-messaging (`IMessageBus`) | Publishing boundary events (day-changed, season-changed, etc.), lifecycle events, error event publication |
 | lib-messaging (`IEventConsumer`) | Subscribing to own `CalendarTemplateUpdatedEvent` for cross-node cache invalidation |
 | lib-resource (`IResourceClient`) | Reference registration/unregistration for realm and game-service targets (L1). Called during clock initialization, calendar creation, and cleanup operations. |
+| lib-connect (`IEntitySessionRegistry`) | Resolves realm→session mappings for client event routing ([GH Issue #426](https://github.com/beyond-immersion/bannou-service/issues/426)). Used by clock worker and `TriggerTimeSync` endpoint. (L1) |
+| lib-connect (`IClientEventPublisher`) | Publishes `WorldstateTimeSyncEvent` to connected WebSocket sessions via `PublishToSessionsAsync`. (L1) |
 | lib-realm (`IRealmClient`) | Validating realm existence during clock initialization (L2) |
 | lib-game-service (`IGameServiceClient`) | Validating game service existence during calendar template creation (L2) |
-| lib-character (`ICharacterClient`) | Resolving characterId → realmId in the `WorldProviderFactory` variable provider. Actors pass entityId (characterId) to the factory; the factory needs to know which realm the character is in to query the correct realm clock. Cached per-character with short TTL. (L2) |
 
 ### Soft Dependencies (runtime resolution via `IServiceProvider` -- graceful degradation)
 
@@ -265,7 +268,7 @@ None. Worldstate is a pure temporal authority with no optional dependencies. All
 | Dependent | Relationship |
 |-----------|-------------|
 | lib-realm (L2) | Realm optionally calls `IWorldstateClient.InitializeRealmClockAsync()` after creating a new realm, controlled by `AutoInitializeWorldstateClock` configuration (default: false). When enabled, Realm passes the new realmId and its configured `DefaultCalendarTemplateCode` to worldstate. If the call fails, Realm logs a warning but does not fail realm creation (the clock can be initialized manually later). This is the correct pattern per IMPLEMENTATION TENETS: same-layer direct API call instead of inverted event subscription. Requires adding `IWorldstateClient` as a hard dependency and two new config properties (`AutoInitializeWorldstateClock`, `DefaultCalendarTemplateCode`) to `realm-configuration.yaml`. |
-| lib-actor (L2) | Actor discovers `WorldProviderFactory` via `IEnumerable<IVariableProviderFactory>` DI injection; creates `WorldProvider` instances per entity for ABML behavior execution (`${world.*}` variables). The Actor runtime can optionally provide `realmId` in the actor's context metadata (avoiding a service call); when not provided, the factory resolves the character's realm via `ICharacterClient` (cached with short TTL), then queries worldstate for that realm's current time. |
+| lib-actor (L2) | Actor discovers `WorldProviderFactory` via `IEnumerable<IVariableProviderFactory>` DI injection; creates `WorldProvider` instances per entity for ABML behavior execution (`${world.*}` variables). The Actor runtime always provides `realmId` directly in the `CreateAsync` call (every actor belongs to a realm), so the factory simply reads the realm clock from `IRealmClockCache` — no service calls required. |
 | lib-currency (L2, **required migration**) | Currency autogain worker MUST use `GetElapsedGameTime` for game-time-based passive income. Real-time autogain under-credits by the time ratio factor (24x at default). Requires `AutogainTimeSource` config property (default: `GameTime`). Both `Lazy` and `Task` autogain modes need this transition. The NPC-driven economy requires game-time parity. |
 | lib-seed (L2, **required migration**) | Seed decay worker MUST use `GetElapsedGameTime` for game-time-based growth decay. Real-time decay is 24x slower than intended per game-day. Requires `DecayTimeSource` config property (default: `GameTime`). Seeds representing guardian spirits, dungeon cores, and faction growth all evolve in simulated world time. |
 | lib-character-lifecycle (L4) | Subscribes to `worldstate.year-changed` for aging checks, generational milestone evaluation (turning boundaries, saeculum transitions), and death processing triggers. At 24:1 ratio, `year-changed` fires every ~12 real days -- appropriate cadence for lifecycle events that operate on year boundaries. Marriage eligibility, fertility windows, and natural death probability are all year-gated. |
@@ -275,6 +278,9 @@ None. Worldstate is a pure temporal authority with no optional dependencies. All
 | lib-storyline (L4) | Evaluates `TimeOfDay` trigger conditions against worldstate to determine scenario availability. |
 | lib-puppetmaster (L4) | Regional watchers query worldstate for seasonal context when selecting behavior documents. |
 | lib-market (L4, future) | Can use game-time for price history bucketing instead of "server time, not game time" (current quirk). |
+| lib-transit (L2) | Hard dependency on `IWorldstateClient` for journey ETA computation via `GetElapsedGameTime`, travel time calculation from distance/speed into game-hours. `SeasonalConnectionWorker` subscribes to `worldstate.season-changed` for automatic seasonal connection open/close. Validates `seasonalAvailability` keys against the realm's Worldstate calendar season codes on connection creation. |
+| lib-environment (L4) | Hard dependency on `IWorldstateClient` for all environmental condition computation — temperature curves, weather resolution, and resource availability all require current game time, season, and season progress. Subscribes to `worldstate.period-changed` (condition refresh), `worldstate.day-changed` (cache invalidation), and `worldstate.season-changed` (resource availability recalculation, weather distribution invalidation). Climate templates reference Worldstate calendar season codes for temperature curves and weather distributions. |
+| lib-agency (L4) | Calls `TriggerTimeSync` endpoint when a player enters a realm, providing the player's entityId and realmId. This gives the client an immediate `WorldstateTimeSyncEvent` snapshot so it can render the correct time-of-day, season, and calendar state without waiting for the next period boundary (~12 real minutes away at 24:1). |
 | lib-loot (L4, future) | Seasonal loot modifiers query current season from worldstate. |
 | Any service with `inGameTime` fields | Encounter, Relationship, and future services can populate `inGameTime` from worldstate instead of caller-provided values. |
 
@@ -373,6 +379,57 @@ Worldstate registers as a cleanup callback provider via `x-references` in the AP
 | realm | worldstate | CASCADE | `/worldstate/cleanup-by-realm` |
 | game-service | worldstate | CASCADE | `/worldstate/cleanup-by-game-service` |
 
+### Published Client Events (via IClientEventPublisher)
+
+Client events pushed to connected WebSocket sessions via the Entity Session Registry pattern ([GH Issue #426](https://github.com/beyond-immersion/bannou-service/issues/426)). Worldstate queries `IEntitySessionRegistry.GetSessionsForEntityAsync("realm", realmId)` to resolve which sessions are in a given realm, then publishes to those sessions via `IClientEventPublisher.PublishToSessionsAsync`. Agency (L4) registers `("realm", realmId) → sessionId` bindings when a player enters a realm.
+
+| Event Name | Event Type | Trigger |
+|------------|-----------|---------|
+| `worldstate.time_sync` | `WorldstateTimeSyncEvent` | Published on period-changed boundaries (~5 per game day, ~12 real minutes at 24:1), on ratio changes, on admin clock advancement, and on-demand via `TriggerTimeSync` endpoint. |
+
+**`WorldstateTimeSyncEvent` schema** (defined in `worldstate-client-events.yaml`):
+
+```
+WorldstateTimeSyncEvent (extends BaseClientEvent):
+  eventName: "worldstate.time_sync"
+
+  # Realm identity
+  realmId: Guid                          # Realm this sync applies to
+
+  # Full GameTimeSnapshot (client needs all fields for display + interpolation)
+  year: int                              # Current game year (0-based from realm epoch)
+  monthIndex: int                        # 0-based index into calendar months
+  monthCode: string                      # Month code from calendar template (e.g., "greenleaf")
+  dayOfMonth: int                        # 1-based day within current month
+  dayOfYear: int                         # 1-based day within current year
+  hour: int                              # Current game hour (0 to gameHoursPerDay-1)
+  minute: int                            # Current game minute (0-59)
+  period: string                         # Current day period code (e.g., "dawn", "morning")
+  isDaylight: bool                       # Whether current period has sunlight (from calendar template)
+  season: string                         # Current season code (e.g., "spring")
+  seasonIndex: int                       # Season ordinal (0-based)
+  seasonProgress: float                  # 0.0-1.0 progress through current season
+  totalGameSecondsSinceEpoch: long       # Absolute game-seconds since realm epoch
+  timeRatio: float                       # Current game-seconds per real-second
+
+  # Transition context
+  previousPeriod: string?                # Period before transition (null on InitialSync/RatioChanged/AdminAdvance)
+  syncReason: TimeSyncReason             # Why this sync was published
+```
+
+**`TimeSyncReason` enum** (defined in `worldstate-api.yaml`, referenced via `$ref`):
+
+| Value | When Published | Client Behavior |
+|-------|---------------|-----------------|
+| `PeriodChanged` | Clock worker crosses a day-period boundary | Smooth transition (e.g., dawn→morning = sunrise complete) |
+| `RatioChanged` | `SetTimeRatio` changes the time ratio | Update interpolation rate immediately |
+| `AdminAdvance` | `AdvanceClock` manually advances the clock | Snap to new time (no transition) |
+| `TriggerSync` | `TriggerTimeSync` endpoint called (by Agency on realm entry) | Snap to current time (initial sync for this client) |
+
+**Client-side interpolation**: Between syncs, the client advances its local clock: `localGameSeconds += realDelta * timeRatio`. The `timestamp` field (inherited from `BaseClientEvent`) provides the real-world UTC reference point for drift correction. The sync fires often enough (~12 real minutes) that accumulated drift is negligible.
+
+**Why full snapshot, not a subset**: The event fires ~5 times per game day. Even at 100 bytes per event, that's ~500 bytes/day. Including all fields avoids the client needing a separate `GetCalendar` call to derive `monthCode`, `season`, or `isDaylight` from indices — the snapshot is self-contained.
+
 ---
 
 ## Configuration
@@ -407,9 +464,10 @@ Worldstate registers as a cleanup callback provider via `x-references` in the AP
 | `IRealmClient` | Realm existence validation (L2 hard dependency) |
 | `IGameServiceClient` | Game service existence validation (L2 hard dependency) |
 | `IResourceClient` | Reference registration/unregistration with lib-resource (L1 hard dependency). Called during clock initialization, calendar creation, and cleanup. |
-| `ICharacterClient` | Character-to-realm resolution for variable provider (L2 hard dependency). Used by `WorldProviderFactory` to resolve entityId → realmId when the Actor runtime does not provide realmId in context. |
-| `WorldstateClockWorkerService` | Background `HostedService` that advances realm clocks on `ClockTickIntervalSeconds` interval. Acquires per-realm distributed locks to prevent concurrent advancement in multi-node deployments. |
-| `WorldProviderFactory` | Implements `IVariableProviderFactory` to provide `${world.*}` variables to Actor's behavior system. Creates `WorldProvider` instances from cached realm clock data. Accepts optional `realmId` from actor context; falls back to `ICharacterClient` lookup when not provided. |
+| `IEntitySessionRegistry` | Resolves `("realm", realmId) → Set<sessionId>` for client event routing ([GH Issue #426](https://github.com/beyond-immersion/bannou-service/issues/426)). L1 hard dependency (hosted by Connect). |
+| `IClientEventPublisher` | Publishes `WorldstateTimeSyncEvent` to connected sessions via `PublishToSessionsAsync`. Used by the clock worker (on period-changed, ratio-changed) and `TriggerTimeSync` endpoint. |
+| `WorldstateClockWorkerService` | Background `HostedService` that advances realm clocks on `ClockTickIntervalSeconds` interval. Acquires per-realm distributed locks to prevent concurrent advancement in multi-node deployments. Publishes `WorldstateTimeSyncEvent` to connected realm sessions on period-changed boundaries and ratio changes. |
+| `WorldProviderFactory` | Implements `IVariableProviderFactory` to provide `${world.*}` variables to Actor's behavior system. Creates `WorldProvider` instances from cached realm clock data. Receives `realmId` directly from the Actor runtime (always provided per the `IVariableProviderFactory.CreateAsync` contract). |
 | `IWorldstateTimeCalculator` / `WorldstateTimeCalculator` | Internal helper for calendar math: converting total game-seconds to year/month/day/hour, resolving day periods and seasons, computing elapsed game-time across ratio segments. |
 | `IRealmClockCache` / `RealmClockCache` | In-memory TTL cache for realm clock data used by the variable provider. Prevents Redis round-trips on every ABML variable resolution. Backed by `ConcurrentDictionary` with `ClockCacheTtlSeconds` expiry. |
 | `ICalendarTemplateCache` / `CalendarTemplateCache` | In-memory TTL cache for calendar templates. Calendars change rarely; caching avoids MySQL queries on every clock tick. |
@@ -418,13 +476,13 @@ Worldstate registers as a cleanup callback provider via `x-references` in the AP
 
 | Factory | Namespace | Data Source | Registration |
 |---------|-----------|-------------|--------------|
-| `WorldProviderFactory` | `${world.*}` | Reads realm clock from Redis (via `IRealmClockCache`). Accepts optional `realmId` from actor context metadata; when not provided, resolves character's realmId via `ICharacterClient` (cached). Provides computed time variables. | `IVariableProviderFactory` (DI singleton) |
+| `WorldProviderFactory` | `${world.*}` | Reads realm clock from Redis (via `IRealmClockCache`) using the `realmId` provided directly by the Actor runtime in `CreateAsync`. Provides computed time variables. | `IVariableProviderFactory` (DI singleton) |
 
 ---
 
 ## API Endpoints (Implementation Notes)
 
-**Total: 17 endpoints** (4 clock queries + 3 clock admin + 5 calendar management + 3 realm configuration + 2 cleanup)
+**Total: 18 endpoints** (4 clock queries + 1 client sync + 3 clock admin + 5 calendar management + 3 realm configuration + 2 cleanup)
 
 ### Clock Queries (4 endpoints) — `x-permissions: [{ role: user }]`
 
@@ -435,6 +493,10 @@ Worldstate registers as a cleanup callback provider via `x-references` in the AP
 - **BatchGetRealmTimes** (`/worldstate/clock/batch-get-realm-times`): Returns `GameTimeSnapshot` for multiple realms in a single call. Used by services that operate across realms (Orchestrator, Analytics).
 
 - **GetElapsedGameTime** (`/worldstate/clock/get-elapsed-game-time`): Given a realmId, `fromRealTime`, and `toRealTime`, computes the total game-seconds elapsed between those real timestamps. Integrates over the ratio history segments. Returns result as both raw game-seconds and decomposed calendar units (days, hours, minutes). Critical for lazy evaluation patterns: "how much game time passed since I last checked?"
+
+### Client Sync (1 endpoint) — `x-permissions: [{ role: user }]`
+
+- **TriggerTimeSync** (`/worldstate/clock/trigger-sync`): Publishes a `WorldstateTimeSyncEvent` with `syncReason: TriggerSync` to a specific entity's connected sessions. Request includes `realmId` (required) and `entityId` (required, the entity whose sessions should receive the sync — typically a character or account). Reads current realm clock from Redis cache, resolves sessions via `IEntitySessionRegistry.GetSessionsForEntityAsync("realm", realmId)` filtered to the target entity's sessions, and publishes via `IClientEventPublisher.PublishToSessionsAsync`. Returns `NotFound` if the realm has no initialized clock. Returns `Ok` with the number of sessions notified. Primary caller is Agency (L4), which triggers this when a player enters a realm so the client receives an immediate time snapshot without waiting for the next period boundary (up to ~12 real minutes away). Also useful for reconnection flows where the client needs to re-sync after a dropped connection.
 
 ### Clock Administration (3 endpoints) — `x-permissions: [{ role: developer }]`
 
@@ -561,7 +623,8 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS). These endpoin
 - Implement boundary detection and event publishing
 - Implement downtime catch-up with configurable `DowntimePolicy` enum (skip `hour-changed` during catch-up, only publish coarser boundaries)
 - Implement catch-up event batching
-- Create `worldstate-client-events.yaml` with `worldstate.time-sync` client event. Published on `period-changed` boundaries (~5 per game day, ~12 real minutes apart at 24:1). Low-bandwidth time sync that avoids client polling via `GetRealmTime`. Aligns with how `CapabilityManifestEvent` pushes capability updates to connected clients.
+- Create `worldstate-client-events.yaml` with `WorldstateTimeSyncEvent` (`worldstate.time_sync`). Full `GameTimeSnapshot` + `previousPeriod` + `TimeSyncReason` enum. Published on period-changed boundaries (~5/game day), ratio changes, admin advances, and on-demand via `TriggerTimeSync`. Routed via Entity Session Registry ([GH Issue #426](https://github.com/beyond-immersion/bannou-service/issues/426)): query `IEntitySessionRegistry.GetSessionsForEntityAsync("realm", realmId)`, publish via `IClientEventPublisher.PublishToSessionsAsync`.
+- Implement `TriggerTimeSync` endpoint (`/worldstate/clock/trigger-sync`) — takes `realmId` + `entityId`, publishes `WorldstateTimeSyncEvent` with `syncReason: TriggerSync` to the entity's connected sessions. Called by Agency (L4) on realm entry for immediate client time sync.
 
 ### Phase 3: Time Ratio & Elapsed Time
 - Implement ratio history storage and management
@@ -571,9 +634,8 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS). These endpoin
 - Implement pause/resume via ratio 0.0
 
 ### Phase 4: Variable Provider
-- Implement `WorldProviderFactory` and `WorldProvider`
+- Implement `WorldProviderFactory` and `WorldProvider` (receives `realmId` directly from Actor runtime per `IVariableProviderFactory.CreateAsync` contract — no character-to-realm resolution needed)
 - Implement realm clock in-memory cache (`IRealmClockCache`) with TTL
-- Implement character-to-realm resolution caching
 - Integration testing with Actor runtime (verify `${world.time.period}` resolves)
 
 ### Phase 5: Administrative, Configuration & Cleanup
@@ -586,7 +648,8 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS). These endpoin
 ### Phase 6: Cross-Service Integration
 - Add `IWorldstateClient` hard dependency and `AutoInitializeWorldstateClock` + `DefaultCalendarTemplateCode` config to lib-realm
 - Add `worldstate` to SERVICE-HIERARCHY.md L2 Quick Reference table and GENERATED-SERVICE-DETAILS.md
-- Update ABML example behavior files to fix incorrect `${world.weather.*}` and `${world.patrol_routes[...]}` namespace references
+- Update ABML example behavior files to fix incorrect `${world.weather.*}` and `${world.patrol_routes[...]}` namespace references (in `examples/behaviors/shared/humanoid-base.abml.yml` and `examples/behaviors/guard-patrol.abml.yml`)
+- Verify correct `${world.time.hour}` references in dialogue files (`examples/dialogue/guard/challenge.yml`, `examples/dialogue/guard/question_suspicious.yml`, `examples/dialogue/merchant/state_price.yml`, `examples/dialogue/merchant/greet_customer.yml`) and `docs/guides/CHARACTER-COMMUNICATION.md` resolve properly with the implemented provider
 
 ---
 
@@ -604,7 +667,7 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS). These endpoin
 
 6. **Historical time queries**: "What season was it on game-year 47, month 3?" Useful for Storyline's retrospective narrative generation and Character-History's temporal context. Pure calendar math, no state required.
 
-7. ~~**Client events for time display**~~: Moved to Phase 2. Basic `worldstate.time-sync` client event on period-changed boundaries is included in the clock worker phase.
+7. ~~**Client events for time display**~~: Moved to Phase 2. `WorldstateTimeSyncEvent` with full `GameTimeSnapshot`, `TimeSyncReason` enum (`PeriodChanged`, `RatioChanged`, `AdminAdvance`, `TriggerSync`), and `TriggerTimeSync` endpoint for on-demand sync (called by Agency on realm entry). Routed via Entity Session Registry ([GH Issue #426](https://github.com/beyond-immersion/bannou-service/issues/426)).
 
 8. **Variable-rate time**: Time ratio that changes based on player population. When no players are in a realm, time accelerates (e.g., 100:1) to advance the simulation faster. When players are present, it returns to normal (24:1). This enables "the world continued while you were away" to be more dramatic for realms with intermittent activity.
 
@@ -614,11 +677,12 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS). These endpoin
 
 Implements `IVariableProviderFactory` (via `WorldProviderFactory`) providing the following variables to Actor (L2) via the Variable Provider Factory pattern. Loads from the in-memory realm clock cache (`IRealmClockCache`).
 
-**Provider initialization**: When `CreateAsync(entityId, ct)` is called, the factory:
-1. Checks if `realmId` is available in the actor's context metadata (Actor runtime can provide this directly, avoiding a service call)
-2. If not available, resolves the character's `realmId` via `ICharacterClient` (cached per-character with short TTL)
-3. Reads the realm clock from `IRealmClockCache` (TTL-based, avoids Redis per-resolution)
-4. Returns a `WorldProvider` populated with the current game time snapshot
+**Provider initialization**: When `CreateAsync(characterId, realmId, locationId, ct)` is called, the factory:
+1. Uses the `realmId` parameter directly (always provided by the Actor runtime — every actor belongs to a realm)
+2. Reads the realm clock from `IRealmClockCache` (TTL-based, avoids Redis per-resolution)
+3. Returns a `WorldProvider` populated with the current game time snapshot
+
+Note: `characterId` and `locationId` are ignored — worldstate is realm-scoped, not entity-scoped.
 
 ### Time Variables
 
@@ -627,8 +691,8 @@ Implements `IVariableProviderFactory` (via `WorldProviderFactory`) providing the
 | `${world.time.hour}` | int | Current game hour (0 to gameHoursPerDay-1) |
 | `${world.time.minute}` | int | Current game minute (0-59) |
 | `${world.time.period}` | string | Current day period code (e.g., "dawn", "morning", "afternoon", "evening", "night") |
-| `${world.time.is_day}` | bool | True during non-night periods (configurable per calendar) |
-| `${world.time.is_night}` | bool | True during night period |
+| `${world.time.is_day}` | bool | True when the current day period's `isDaylight` flag is true in the calendar template |
+| `${world.time.is_night}` | bool | Inverse of `is_day` — true when the current day period's `isDaylight` flag is false |
 
 ### Calendar Variables
 
@@ -743,8 +807,6 @@ flows:
 
 7. **Ratio of 0.0 is a valid pause**: Setting a realm's time ratio to 0.0 freezes its clock. `GetElapsedGameTime` returns 0 game-seconds for any real-time range that falls within a 0.0-ratio segment. This is the canonical way to pause a realm's temporal progression.
 
-8. **Character-to-realm resolution is cached (when used)**: The variable provider factory supports two paths for realm resolution: (a) the Actor runtime provides `realmId` directly in context metadata (preferred -- zero service calls), or (b) the factory resolves characterId → realmId via `ICharacterClient` (cached per-character with `ClockCacheTtlSeconds` TTL, default 10s). When using path (b), if a character changes realms, the cache serves stale data until TTL expires. The TTL is short enough that this resolves quickly, but there is a brief window where a character who just teleported between realms sees the old realm's time. Path (a) avoids this entirely.
-
 ### Design Considerations (Requires Planning)
 
 1. **Multi-node clock advancement**: In a multi-node deployment, the background worker runs on every node but only one should advance a given realm's clock (distributed lock ensures this). If the lock-holding node dies mid-tick, the lock TTL must expire before another node can advance. The gap between ticks is bounded by `ClockTickIntervalSeconds` + lock TTL. Need to ensure this gap doesn't cause noticeable time stutter.
@@ -753,7 +815,7 @@ flows:
 
 3. **Currency/Seed migration to game-time**: The Currency autogain worker and Seed decay worker currently use real-time exclusively. Adding optional game-time support requires a configuration flag per service and careful handling of the transition (existing data uses real-time timestamps; switching mid-stream requires conversion). Both workers need a "time source" abstraction that can be backed by either `DateTimeOffset.UtcNow` differences or `GetElapsedGameTime`.
 
-4. **Ratio history compaction**: Over months of operation, the ratio history can accumulate many segments (especially if admin frequently adjusts ratios for events). The `RatioHistoryRetentionDays` config enables compaction, but the compaction algorithm (merging adjacent same-ratio segments, time-weighted averaging of different-ratio segments) needs careful design to maintain accuracy for `GetElapsedGameTime` queries that span compacted ranges.
+4. **Ratio history compaction**: Over months of operation, the ratio history can accumulate many segments (especially if admin frequently adjusts ratios for events). The `RatioHistoryRetentionDays` config enables compaction, but the compaction algorithm needs careful design to maintain accuracy for `GetElapsedGameTime` queries that span compacted ranges. Adjacent same-ratio segments can be trivially merged. For different-ratio segments, use **time-weighted averaging**: the compacted segment's ratio must be `totalGameSeconds / totalRealSeconds` across the merged range (not a simple average of ratios), preserving exact `GetElapsedGameTime` results for any query spanning the compacted period.
 
 5. **Calendar complexity vs. performance**: Rich calendars with many months, variable-length months, and multiple seasons require non-trivial math on every clock tick. The `IWorldstateTimeCalculator` should precompute lookup tables from the calendar template (cumulative days per month, season boundaries) and cache them, rather than iterating the calendar structure on every advancement.
 
