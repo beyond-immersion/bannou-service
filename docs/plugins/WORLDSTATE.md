@@ -510,6 +510,28 @@ Resource-managed cleanup via lib-resource (per FOUNDATION TENETS). These endpoin
 │  │                                                                     │  │
 │  │  7. Release lock                                                    │  │
 │  └─────────────────────────────────────────────────────────────────────┘  │
+│                                                                           │
+│  CONSUMERS:                                                               │
+│  ┌─────────────────────────────┐  ┌─────────────────────────────────┐    │
+│  │ Variable Provider           │  │ Service-Level Subscribers        │    │
+│  │ (Actor L2, per-tick)        │  │ (Workshop, Craft, Seed, Currency)│    │
+│  │                             │  │                                 │    │
+│  │ ${world.time.period}        │  │ worldstate.day-changed →        │    │
+│  │ ${world.season}             │  │   Workshop: materialize prod.   │    │
+│  │ ${world.time.hour}          │  │   Currency: process autogain    │    │
+│  │ etc.                        │  │   Seed: apply growth decay      │    │
+│  │                             │  │                                 │    │
+│  │ Reads from Redis cache      │  │ worldstate.season-changed →     │    │
+│  │ (IRealmClockCache)          │  │   Loot: rotate seasonal tables  │    │
+│  │ No event subscription       │  │   Market: activate seasonal     │    │
+│  │ Natural load spreading      │  │   Storyline: unlock seasonal    │    │
+│  └─────────────────────────────┘  └─────────────────────────────────┘    │
+│                                                                           │
+│  Actors do NOT subscribe to boundary events.                              │
+│  They query ${world.*} on their own 100-500ms tick.                       │
+│  This naturally distributes 100,000+ NPC time-checks                      │
+│  across the tick interval instead of thundering-herding                    │
+│  on a single boundary event.                                              │
 └───────────────────────────────────────────────────────────────────────────┘
 ```
 

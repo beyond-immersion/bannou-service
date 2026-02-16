@@ -572,45 +572,197 @@ transit-discovery-cache:
 
 ## Events
 
-### Published Events
+```yaml
+# Published via lib-messaging (IMessageBus)
 
-**Connection events** (published on status changes):
+# Connection events
+transit.connection.status-changed:
+  description: "A connection's operational status changed"
+  payload:
+    connectionId: uuid
+    fromLocationId: uuid
+    toLocationId: uuid
+    previousStatus: string
+    newStatus: string
+    reason: string
+    forceUpdated: boolean         # Whether this was a forceUpdate override
+    fromRealmId: uuid
+    toRealmId: uuid
+    crossRealm: boolean
+  consumers:
+    - Trade (L4): recalculates trade route viability
+    - Actor (L2): NPCs may need to replan travel
+    - Puppetmaster (L4): regional watchers notice road closures
+    - Quest (L2): connection-state objectives ("clear the blocked road")
 
-| Topic | Event Type | Trigger |
-|-------|-----------|---------|
-| `transit.connection.status-changed` | `TransitConnectionStatusChangedEvent` | A connection's operational status changed. Includes connectionId, fromLocationId, toLocationId, previousStatus (`ConnectionStatus` enum), newStatus (`ConnectionStatus` enum), reason, forceUpdated flag, realm IDs, crossRealm flag. |
+# Journey lifecycle events
+transit.journey.departed:
+  description: "An entity has begun traveling"
+  payload:
+    journeyId: uuid
+    entityId: uuid
+    entityType: string
+    originLocationId: uuid
+    destinationLocationId: uuid
+    primaryModeCode: string
+    estimatedArrivalGameTime: decimal
+    partySize: integer
+    originRealmId: uuid
+    destinationRealmId: uuid
+    crossRealm: boolean
+  consumers:
+    - Trade (L4): tracks shipment progress
+    - Analytics (L4): travel pattern aggregation
+    - Puppetmaster (L4): regional watchers notice travelers
+    - Character History (L4): significant journeys become backstory elements
+    - Quest (L2): travel departure objectives ("leave the village")
 
-**Journey lifecycle events** (published on journey state transitions):
+transit.journey.waypoint-reached:
+  description: "A traveling entity reached an intermediate waypoint"
+  payload:
+    journeyId: uuid
+    entityId: uuid
+    entityType: string
+    waypointLocationId: uuid
+    nextLocationId: uuid
+    legIndex: integer
+    remainingLegs: integer
+    connectionId: uuid           # Connection of the leg just completed
+    realmId: uuid                # Realm of waypointLocationId
+    crossedRealmBoundary: boolean # Whether the completed leg crossed a realm boundary
+  consumers:
+    - Trade (L4): triggers border crossing checks at checkpoints
+    - Location (L2): presence tracking updates
+    - Quest (L2): waypoint-based objectives ("pass through Riverside")
 
-| Topic | Event Type | Trigger |
-|-------|-----------|---------|
-| `transit.journey.departed` | `TransitJourneyDepartedEvent` | An entity has begun traveling. Includes journeyId, entityId, entityType, origin/destination locationIds, primaryModeCode, estimatedArrivalGameTime, partySize, realm IDs, crossRealm flag. |
-| `transit.journey.waypoint-reached` | `TransitJourneyWaypointReachedEvent` | A traveling entity reached an intermediate waypoint. Includes journeyId, entityId, entityType, waypointLocationId, nextLocationId, legIndex, remainingLegs, connectionId, realmId, crossedRealmBoundary flag. |
-| `transit.journey.arrived` | `TransitJourneyArrivedEvent` | A traveling entity reached its destination. Includes journeyId, entityId, entityType, origin/destination locationIds, primaryModeCode, totalGameHours, totalDistanceKm, interruptionCount, legsCompleted, realm IDs, crossRealm flag. |
-| `transit.journey.interrupted` | `TransitJourneyInterruptedEvent` | A journey was interrupted (combat, event, breakdown). Includes journeyId, entityId, entityType, currentLocationId, currentLegIndex, reason, realmId. |
-| `transit.journey.resumed` | `TransitJourneyResumedEvent` | An interrupted journey was resumed. Includes journeyId, entityId, entityType, currentLocationId, destinationLocationId, currentLegIndex, remainingLegs, modeCode, realmId. |
-| `transit.journey.abandoned` | `TransitJourneyAbandonedEvent` | A journey was abandoned before reaching destination. Includes journeyId, entityId, entityType, origin/destination locationIds, abandonedAtLocationId, reason, completedLegs, totalLegs, realm IDs, crossRealm flag. |
+transit.journey.arrived:
+  description: "A traveling entity reached its destination"
+  payload:
+    journeyId: uuid
+    entityId: uuid
+    entityType: string
+    originLocationId: uuid
+    destinationLocationId: uuid
+    primaryModeCode: string
+    totalGameHours: decimal
+    totalDistanceKm: decimal
+    interruptionCount: integer
+    legsCompleted: integer
+    originRealmId: uuid
+    destinationRealmId: uuid
+    crossRealm: boolean
+  consumers:
+    - Trade (L4): completes shipment delivery
+    - Location (L2): presence tracking updates
+    - Analytics (L4): travel time statistics
+    - Character History (L4): significant journey completion for backstory
+    - Quest (L2): travel arrival objectives ("reach the Iron Mines")
 
-**Discovery events**:
+transit.journey.interrupted:
+  description: "A journey was interrupted (combat, event, breakdown)"
+  payload:
+    journeyId: uuid
+    entityId: uuid
+    entityType: string
+    currentLocationId: uuid
+    currentLegIndex: integer
+    reason: string
+    realmId: uuid                # Realm of currentLocationId
+  consumers:
+    - Trade (L4): shipment delay notification
+    - Puppetmaster (L4): may orchestrate rescue/encounter
+    - Analytics (L4): interruption hotspot tracking
 
-| Topic | Event Type | Trigger |
-|-------|-----------|---------|
-| `transit.discovery.revealed` | `TransitDiscoveryRevealedEvent` | A discoverable connection was revealed to an entity. Includes entityId, connectionId, fromLocationId, toLocationId, source (how discovered), realm IDs, crossRealm flag. |
+transit.journey.resumed:
+  description: "An interrupted journey was resumed"
+  payload:
+    journeyId: uuid
+    entityId: uuid
+    entityType: string
+    currentLocationId: uuid
+    destinationLocationId: uuid
+    currentLegIndex: integer
+    remainingLegs: integer
+    modeCode: string
+    realmId: uuid                # Realm of currentLocationId
+  consumers:
+    - Trade (L4): shipment back in transit
+    - Analytics (L4): interruption duration statistics
 
-**Mode status events** (custom -- modes use register/deprecate semantics, not standard CRUD lifecycle):
+transit.journey.abandoned:
+  description: "A journey was abandoned before reaching destination"
+  payload:
+    journeyId: uuid
+    entityId: uuid
+    entityType: string
+    originLocationId: uuid
+    destinationLocationId: uuid
+    abandonedAtLocationId: uuid
+    reason: string
+    completedLegs: integer
+    totalLegs: integer
+    originRealmId: uuid
+    destinationRealmId: uuid
+    abandonedAtRealmId: uuid     # Realm of abandonedAtLocationId
+    crossRealm: boolean
+  consumers:
+    - Trade (L4): handles stranded shipments
+    - Character History (L4): significant travel failure for backstory
+    - Analytics (L4): abandonment pattern aggregation
 
-| Topic | Event Type | Trigger |
-|-------|-----------|---------|
-| `transit.mode.registered` | `TransitModeRegisteredEvent` | A new transit mode was registered. Includes code, name. |
-| `transit.mode.deprecated` | `TransitModeDeprecatedEvent` | A transit mode was deprecated. Includes code, reason. |
+# Discovery events
+transit.discovery.revealed:
+  description: "A discoverable connection was revealed to an entity"
+  payload:
+    entityId: uuid
+    connectionId: uuid
+    fromLocationId: uuid
+    toLocationId: uuid
+    source: string              # "travel", "guide", "hearsay", "map", "quest_reward"
+    fromRealmId: uuid
+    toRealmId: uuid
+    crossRealm: boolean
+  consumers:
+    - Collection (L2): route discovery → collection unlocks (e.g., "Explorer's Atlas")
+    - Quest (L2): travel-based objectives ("discover the hidden pass")
+    - Analytics (L4): discovery pattern tracking
+```
 
-**Connection lifecycle events** (auto-generated via `x-lifecycle` in events schema):
+### Mode Status Events (Custom)
 
-| Topic | Event Type | Trigger |
-|-------|-----------|---------|
-| `transit.connection.created` | `TransitConnectionCreatedEvent` | A new connection was created between locations. Full entity data. |
-| `transit.connection.updated` | `TransitConnectionUpdatedEvent` | A connection's properties were updated. Full entity data + changedFields. |
-| `transit.connection.deleted` | `TransitConnectionDeletedEvent` | A connection was removed. Full entity data + deletedReason. |
+```yaml
+# Custom events -- modes use register/deprecate semantics, not standard CRUD lifecycle.
+# These are NOT x-lifecycle generated.
+transit.mode.registered:
+  description: "A new transit mode was registered"
+  payload:
+    code: string
+    name: string
+
+transit.mode.deprecated:
+  description: "A transit mode was deprecated"
+  payload:
+    code: string
+    reason: string
+```
+
+### Connection Lifecycle Events (x-lifecycle)
+
+```yaml
+# Auto-generated via x-lifecycle in events schema.
+# x-lifecycle generates Created, Updated, and Deleted events with full entity data.
+transit-connection.created:
+  description: "A new connection was created between locations"
+  payload: TransitConnection (full entity data)
+
+transit-connection.updated:
+  description: "A connection's properties were updated"
+  payload: TransitConnection (full entity data + changedFields)
+
+transit-connection.deleted:
+  description: "A connection was removed"
+  payload: TransitConnection (full entity data + deletedReason)
+```
 
 All events include standard `eventId` (uuid) and `timestamp` (date-time) fields per FOUNDATION TENETS event schema pattern. `x-event-publications` in `transit-events.yaml` must list all published events as the authoritative registry.
 
