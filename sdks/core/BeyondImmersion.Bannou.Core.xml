@@ -232,6 +232,80 @@
             When the event was created (ISO 8601 format, UTC).
             </summary>
         </member>
+        <member name="T:BeyondImmersion.Bannou.Core.DiscriminatedRecordConverter`1">
+             <summary>
+             Base JSON converter for discriminated record hierarchies. Reads a string discriminator
+             property from the JSON object, maps it to a concrete sealed record type, and deserializes
+             accordingly. Write serializes the concrete runtime type directly (the discriminator
+             property is included naturally as a record positional parameter).
+             </summary>
+             <typeparam name="TBase">The abstract record base type.</typeparam>
+             <remarks>
+             <para>
+             Subclass this converter and pass the discriminator property name and type map
+             to the base constructor. Apply <c>[JsonConverter(typeof(YourConverter))]</c>
+             on the abstract record base type.
+             </para>
+             <para>
+             Example usage:
+             <code>
+             [JsonConverter(typeof(ShapeConverter))]
+             public abstract record Shape(string Type);
+             public sealed record Circle(float Radius) : Shape("circle");
+             public sealed record Square(float Side) : Shape("square");
+            
+             public class ShapeConverter() : DiscriminatedRecordConverter&lt;Shape&gt;("type",
+                 new Dictionary&lt;string, Type&gt;
+                 {
+                     ["circle"] = typeof(Circle),
+                     ["square"] = typeof(Square),
+                 });
+             </code>
+             </para>
+             <para>
+             The discriminator property is matched case-insensitively during deserialization,
+             consistent with <see cref="F:BeyondImmersion.Bannou.Core.BannouJson.Options"/>. Discriminator values are matched
+             exactly (case-sensitive) since they are machine identifiers.
+             </para>
+             </remarks>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.DiscriminatedRecordConverter`1.#ctor(System.String,System.Collections.Generic.IReadOnlyDictionary{System.String,System.Type})">
+            <summary>
+            Initializes the converter with a discriminator property name and a mapping
+            from discriminator string values to concrete types.
+            </summary>
+            <param name="discriminatorProperty">
+            The JSON property name used as the type discriminator (e.g., "type").
+            Matched case-insensitively during deserialization.
+            </param>
+            <param name="typeMap">
+            Maps discriminator values to their corresponding concrete types.
+            All mapped types must be assignable to <typeparamref name="TBase"/>.
+            </param>
+            <exception cref="T:System.ArgumentNullException">
+            Thrown when <paramref name="discriminatorProperty"/> or <paramref name="typeMap"/> is null.
+            </exception>
+            <exception cref="T:System.ArgumentException">
+            Thrown when any mapped type is not assignable to <typeparamref name="TBase"/>.
+            </exception>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.DiscriminatedRecordConverter`1.Read(System.Text.Json.Utf8JsonReader@,System.Type,System.Text.Json.JsonSerializerOptions)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.DiscriminatedRecordConverter`1.Write(System.Text.Json.Utf8JsonWriter,`0,System.Text.Json.JsonSerializerOptions)">
+            <inheritdoc />
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.DiscriminatedRecordConverter`1.FindDiscriminator(System.Text.Json.JsonElement)">
+            <summary>
+            Scans the JSON object for the discriminator property (case-insensitive).
+            </summary>
+        </member>
+        <member name="M:BeyondImmersion.Bannou.Core.DiscriminatedRecordConverter`1.GetOptionsWithoutSelf(System.Text.Json.JsonSerializerOptions)">
+            <summary>
+            Returns a copy of the given options with this converter removed to prevent
+            infinite recursion. Cached per options instance (typically one: BannouJson.Options).
+            </summary>
+        </member>
         <member name="T:BeyondImmersion.Bannou.Core.IBannouEvent">
             <summary>
             Base interface for all Bannou events (both service-to-service and client events).

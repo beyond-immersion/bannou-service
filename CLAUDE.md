@@ -121,6 +121,8 @@ These commands can destroy work in progress, hide changes, or cause data loss. C
 
 @docs/reference/TENETS.md
 
+@docs/reference/ORCHESTRATION-PATTERNS.md
+
 ---
 
 ## 🚨 CRITICAL DEVELOPMENT CONSTRAINTS

@@ -62,7 +62,7 @@ examples/
 
 | Directory | PackageId | Description |
 |-----------|-----------|-------------|
-| `core/` | `BeyondImmersion.Bannou.Core` | Shared types (BannouJson, ApiException, base events) |
+| `core/` | `BeyondImmersion.Bannou.Core` | Shared types (BannouJson, DiscriminatedRecordConverter, ApiException, base events) |
 | `behavior-compiler/` | `BeyondImmersion.Bannou.BehaviorCompiler` | ABML parser and behavior document compilation |
 | `behavior-expressions/` | `BeyondImmersion.Bannou.BehaviorExpressions` | Register-based expression VM with variable scopes, functions, and templates |
 | `client/` | `BeyondImmersion.Bannou.Client` | WebSocket client for game clients |
