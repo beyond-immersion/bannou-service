@@ -8,6 +8,7 @@ using BeyondImmersion.BannouService.Connect.Helpers;
 using BeyondImmersion.BannouService.Connect.Protocol;
 using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.Meta;
+using BeyondImmersion.BannouService.Providers;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Services;
 using Microsoft.AspNetCore.Builder;
@@ -42,6 +43,7 @@ public partial class ConnectService : IConnectService, IDisposable
     private readonly ISessionManager _sessionManager;
     private readonly ConnectServiceConfiguration _configuration;
     private readonly ICapabilityManifestBuilder _manifestBuilder;
+    private readonly IEntitySessionRegistry _entitySessionRegistry;
 
     // Client event subscriptions via lib-messaging (per-session raw byte subscriptions)
     private readonly IMessageSubscriber _messageSubscriber;
@@ -87,7 +89,8 @@ public partial class ConnectService : IConnectService, IDisposable
         ILoggerFactory loggerFactory,
         IEventConsumer eventConsumer,
         ISessionManager sessionManager,
-        ICapabilityManifestBuilder manifestBuilder)
+        ICapabilityManifestBuilder manifestBuilder,
+        IEntitySessionRegistry entitySessionRegistry)
     {
         _authClient = authClient;
         _meshClient = meshClient;
@@ -100,6 +103,7 @@ public partial class ConnectService : IConnectService, IDisposable
         _loggerFactory = loggerFactory;
         _sessionManager = sessionManager;
         _manifestBuilder = manifestBuilder;
+        _entitySessionRegistry = entitySessionRegistry;
 
         _connectionManager = new WebSocketConnectionManager(
             configuration.ConnectionShutdownTimeoutSeconds,
@@ -1008,6 +1012,9 @@ public partial class ConnectService : IConnectService, IDisposable
                     {
                         await _sessionManager.RemoveSessionFromAccountAsync(accountId.Value, sessionId);
                     }
+
+                    // Clean up all entity session bindings for this session
+                    await _entitySessionRegistry.UnregisterSessionAsync(sessionId);
                 }
                 catch (Exception ex)
                 {

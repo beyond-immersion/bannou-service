@@ -29,6 +29,7 @@ WebSocket-first edge gateway (L1 AppFoundation) providing zero-copy binary messa
 | ~~`IHttpClientFactory`~~ | REMOVED - was dead code; `CreateClient` never called in service code |
 | `IServiceScopeFactory` | Creates scoped DI containers for per-request ServiceNavigator resolution |
 | `ICapabilityManifestBuilder` | Builds capability manifest JSON from service mappings for client delivery |
+| `IEntitySessionRegistry` | Entity-to-session mapping for client event push routing; cleaned up on disconnect |
 
 ---
 
@@ -55,6 +56,8 @@ WebSocket-first edge gateway (L1 AppFoundation) providing zero-copy binary messa
 | `heartbeat:{sessionId}` | `SessionHeartbeat` | Connection liveness tracking (instance ID, last seen, connection count) |
 | `reconnect:{token}` | `string` (sessionId) | Reconnection token to session ID mapping (TTL = reconnection window) |
 | `account-sessions:{accountId:N}` | Redis Set of `string` | All active session IDs for an account (atomic SADD/SREM via `ICacheableStateStore<string>`) |
+| `entity-sessions:{entityType}:{entityId:N}` | Redis Set of `string` | Forward index: all session IDs interested in an entity (atomic SADD/SREM via `ICacheableStateStore<string>`) |
+| `session-entities:{sessionId}` | Redis Set of `string` | Reverse index: all entity bindings for a session, values are `"{entityType}:{entityId:N}"` (enables O(n) cleanup on disconnect) |
 
 ---
 
@@ -128,6 +131,7 @@ WebSocket-first edge gateway (L1 AppFoundation) providing zero-copy binary messa
 | `IEventConsumer` | Singleton | Event consumer registration for pub/sub handlers |
 | `ISessionManager` (`BannouSessionManager`) | Singleton | Distributed session state management (Redis-backed) |
 | `ICapabilityManifestBuilder` (`CapabilityManifestBuilder`) | Singleton | Builds API lists and shortcut lists for capability manifests |
+| `IEntitySessionRegistry` (`EntitySessionRegistry`) | Singleton | Redis-backed dual-index entity-to-session mapping for client event push routing |
 | `WebSocketConnectionManager` | Owned (internal) | In-memory WebSocket connection tracking, send operations, peer GUID registry |
 
 Service lifetime is **Singleton** (unique among Bannou services). This is required because the service maintains in-memory WebSocket connection state (`ConcurrentDictionary` of active connections, session mappings, pending RPCs) that must persist across HTTP requests.
@@ -302,6 +306,7 @@ Reconnection Window Flow
        │
        ├── Publish session.disconnected (Reconnectable=true)
        ├── Remove session from account index
+       ├── Clean up entity session bindings (IEntitySessionRegistry)
        ├── Remove connection from manager (subsume-safe check)
        ├── Cancel RabbitMQ consumer (queue persists, buffers messages)
        ├── Generate reconnection token (GUID)
@@ -472,4 +477,4 @@ This section tracks active development work on items from the quirks/bugs lists 
 
 ### Completed
 
-(No pending completed items)
+- **2026-02-17**: Issue [#426](https://github.com/beyond-immersion/bannou-service/issues/426) - Entity Session Registry: Redis-backed dual-index (entity→sessions, session→entities) mapping for client event push routing, with heartbeat-based stale session filtering and disconnect cleanup

@@ -7,6 +7,8 @@
 This document is the authoritative index for Bannou development standards. All service implementations, tests, and infrastructure MUST adhere to these tenets. Tenets must not be changed or added without EXPLICIT approval, without exception.
 
 > **AI ASSISTANTS**: All tenets apply with heightened scrutiny to AI-generated code and suggestions. AI assistants MUST NOT bypass, weaken, or work around any tenet without explicit human approval. This includes modifying tests to pass with buggy implementations, adding fallback mechanisms, or any other "creative solutions" that violate the spirit of these tenets.
+>
+> **Equally forbidden**: (1) **False tenet citation** — attributing a requirement to a specific tenet when that tenet does not actually require it. If you claim code is "per T7" or "per IMPLEMENTATION TENETS," you MUST be able to point to the specific rule in that tenet that mandates it. Fabricating tenet requirements poisons the codebase with phantom obligations that mislead future developers. (2) **Existing violations as precedent** — "the existing code also violates this" is NEVER a justification for a new violation. Existing violations are tech debt to be tracked and fixed, not patterns to replicate. Each new line of code must comply with the tenets as written, regardless of what surrounds it.
 
 ---
 

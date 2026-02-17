@@ -21,7 +21,7 @@ public class BannouSessionManager : ISessionManager
     // Key prefixes - MUST be unique across all services to avoid key collisions
     // (mesh prefixes keys with app-id, not component name, so all components share key namespace)
     private const string SESSION_KEY_PREFIX = "ws-session:";
-    private const string SESSION_HEARTBEAT_KEY_PREFIX = "heartbeat:";
+    internal const string SESSION_HEARTBEAT_KEY_PREFIX = "heartbeat:";
     private const string RECONNECTION_TOKEN_KEY_PREFIX = "reconnect:";
     private const string ACCOUNT_SESSIONS_KEY_PREFIX = "account-sessions:";
 
