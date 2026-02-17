@@ -1267,7 +1267,7 @@ public partial class GameSessionService : IGameSessionService
         var senderPlayer = model.Players.FirstOrDefault(p => p.AccountId == senderId);
 
         // Build typed client event (SessionId = lobby ID for game context)
-        var chatEvent = new ChatMessageReceivedEvent
+        var chatEvent = new SessionChatReceivedEvent
         {
             EventId = Guid.NewGuid(),
             Timestamp = DateTimeOffset.UtcNow,
@@ -1302,7 +1302,7 @@ public partial class GameSessionService : IGameSessionService
             // Send to target with IsWhisperToMe = true
             if (targetPlayer != null)
             {
-                var targetEvent = new ChatMessageReceivedEvent
+                var targetEvent = new SessionChatReceivedEvent
                 {
                     EventId = chatEvent.EventId,
                     Timestamp = chatEvent.Timestamp,

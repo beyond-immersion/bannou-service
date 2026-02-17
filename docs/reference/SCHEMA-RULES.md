@@ -469,7 +469,15 @@ components:
       description: Musical pitch class from MusicTheory SDK
 ```
 
-**Currently used by**: `music-api.yaml` (MusicTheory SDK types) and `storyline-api.yaml` (StorylineTheory/StorylineStoryteller SDK types).
+**Restriction: Core SDK types only.** `x-sdk-type` may ONLY reference types from the Core SDK (`BeyondImmersion.Bannou.Core`). Domain-specific SDKs (MusicTheory, StorylineTheory, BehaviorCompiler, etc.) must NOT be referenced via `x-sdk-type`, because doing so forces `bannou-service.csproj` to take a `ProjectReference` on the domain SDK, which leaks domain-specific concepts into the shared project that all plugins depend on. Instead, wrapping plugins should:
+
+1. **Define their own types** in the service API schema (duplicating/mirroring the SDK types)
+2. **Generate standard models** via the normal NSwag pipeline
+3. **Map between generated and SDK types** at the plugin boundary using a static `SdkTypeMapper` class in `{Service}ServiceModels.cs`
+
+This two-step approach keeps bannou-service clean (it only knows about its own generated types) and makes SDK version changes a plugin-internal concern rather than a cross-cutting dependency.
+
+**Currently used by**: `music-api.yaml` (MusicTheory SDK types -- legacy usage pending migration to the plugin-local type mapping pattern described above).
 
 **Generated behavior**: `extract-sdk-types.py` scans for `x-sdk-type` markers and outputs exclusion lists. `generate-models.sh` and `generate-config.sh` consume these to exclude SDK types from NSwag generation and add the SDK namespace `using` statements.
 

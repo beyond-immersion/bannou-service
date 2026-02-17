@@ -3,8 +3,8 @@
 // Caches interpreter instances per character/type/variant combination.
 // =============================================================================
 
-using BeyondImmersion.Bannou.BehaviorCompiler.Intent;
-using BeyondImmersion.Bannou.BehaviorCompiler.Runtime;
+using BeyondImmersion.Bannou.Client.Behavior.Intent;
+using BeyondImmersion.Bannou.Client.Behavior.Runtime;
 using System.Collections.Concurrent;
 
 namespace BeyondImmersion.Bannou.Client.Behavior;

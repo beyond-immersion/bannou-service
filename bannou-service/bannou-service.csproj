@@ -71,11 +71,11 @@
   </ItemGroup>
 
   <!-- Shared core types (events, JSON, exceptions) -->
+  <!-- Only Core + SDKs whose types appear in generated models via x-sdk-type -->
+  <!-- Domain-specific SDKs (storyline, etc.) are referenced by their wrapping plugins only -->
   <ItemGroup>
     <ProjectReference Include="../sdks/core/BeyondImmersion.Bannou.Core.csproj" />
     <ProjectReference Include="../sdks/music-theory/BeyondImmersion.Bannou.MusicTheory.csproj" />
-    <ProjectReference Include="../sdks/storyline-theory/BeyondImmersion.Bannou.StorylineTheory.csproj" />
-    <ProjectReference Include="../sdks/storyline-storyteller/BeyondImmersion.Bannou.StorylineStoryteller.csproj" />
     <ProjectReference Include="../sdks/behavior-compiler/BeyondImmersion.Bannou.BehaviorCompiler.csproj" />
     <ProjectReference Include="../sdks/behavior-expressions/BeyondImmersion.Bannou.BehaviorExpressions.csproj" />
   </ItemGroup>

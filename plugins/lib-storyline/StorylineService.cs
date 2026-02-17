@@ -1,12 +1,8 @@
 using BeyondImmersion.Bannou.Core;
-using BeyondImmersion.Bannou.StorylineStoryteller.Actions;
 using BeyondImmersion.Bannou.StorylineStoryteller.Composition;
-using BeyondImmersion.Bannou.StorylineStoryteller.Planning;
 using BeyondImmersion.Bannou.StorylineStoryteller.Templates;
 using BeyondImmersion.Bannou.StorylineTheory.Actants;
 using BeyondImmersion.Bannou.StorylineTheory.Archives;
-using BeyondImmersion.Bannou.StorylineTheory.Arcs;
-using BeyondImmersion.Bannou.StorylineTheory.Spectrums;
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
 using BeyondImmersion.BannouService.Events;
@@ -19,6 +15,10 @@ using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.IO.Compression;
 using System.Runtime.CompilerServices;
+using StorylinePlan = BeyondImmersion.Bannou.StorylineStoryteller.Planning.StorylinePlan;
+using SdkArcType = BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcType;
+using SdkSpectrumType = BeyondImmersion.Bannou.StorylineTheory.Spectrums.SpectrumType;
+using SdkPlanningUrgency = BeyondImmersion.Bannou.StorylineStoryteller.Planning.PlanningUrgency;
 
 [assembly: InternalsVisibleTo("lib-storyline.tests")]
 
@@ -181,7 +181,7 @@ public partial class StorylineService : IStorylineService
 
             // Determine arc type and template
             var arcType = ResolveArcType(body.ArcType, body.Goal);
-            var template = TemplateRegistry.Get(arcType);
+            var template = TemplateRegistry.Get(SdkTypeMapper.ToSdk(arcType));
 
             // Determine genre
             var genre = body.Genre ?? _configuration.DefaultGenre;
@@ -201,7 +201,7 @@ public partial class StorylineService : IStorylineService
                 Template = template,
                 Genre = genre,
                 Subgenre = null,
-                PrimarySpectrum = primarySpectrum,
+                PrimarySpectrum = SdkTypeMapper.ToSdk(primarySpectrum),
                 CharacterIds = characterIds.ToArray(),
                 RealmId = realmId ?? body.Constraints?.RealmId ?? Guid.Empty,
                 ActantAssignments = actantAssignments
@@ -211,7 +211,7 @@ public partial class StorylineService : IStorylineService
             var urgency = ResolveUrgency(body.Urgency);
 
             // Call SDK to compose storyline
-            var sdkPlan = _composer.Compose(context, archiveBundle, urgency);
+            var sdkPlan = _composer.Compose(context, archiveBundle, SdkTypeMapper.ToSdk(urgency));
 
             stopwatch.Stop();
             var generationTimeMs = (int)stopwatch.ElapsedMilliseconds;
@@ -1536,10 +1536,10 @@ public partial class StorylineService : IStorylineService
             Confidence = CalculateConfidence(sdkPlan),
             Goal = goal,
             Genre = sdkPlan.Genre,
-            ArcType = sdkPlan.ArcType,
-            PrimarySpectrum = sdkPlan.PrimarySpectrum,
+            ArcType = SdkTypeMapper.FromSdk(sdkPlan.ArcType),
+            PrimarySpectrum = SdkTypeMapper.FromSdk(sdkPlan.PrimarySpectrum),
             Themes = InferThemes(goal, sdkPlan).ToList(),
-            Phases = sdkPlan.Phases.ToList(), // SDK types used directly via x-sdk-type
+            Phases = SdkTypeMapper.FromSdk(sdkPlan.Phases),
             EntitiesToSpawn = null, // MVP: callers provide archive IDs, no entity spawning
             Links = null,           // MVP: no link extraction
             Risks = IdentifyRisks(sdkPlan).ToList(),
@@ -1614,8 +1614,8 @@ public partial class StorylineService : IStorylineService
         // Base theme from goal
         yield return goal.ToString().ToLowerInvariant();
 
-        // Additional themes based on arc type
-        switch (plan.ArcType)
+        // Additional themes based on arc type (convert SDK enum to generated for switching)
+        switch (SdkTypeMapper.FromSdk(plan.ArcType))
         {
             case ArcType.Tragedy:
                 yield return "loss";

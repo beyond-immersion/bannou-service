@@ -3,7 +3,7 @@
 // Game integration interface for behavior model evaluation.
 // =============================================================================
 
-using BeyondImmersion.Bannou.BehaviorCompiler.Intent;
+using BeyondImmersion.Bannou.Client.Behavior.Intent;
 
 namespace BeyondImmersion.Bannou.Client.Behavior;
 

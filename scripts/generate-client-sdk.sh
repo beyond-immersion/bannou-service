@@ -40,11 +40,12 @@ copy_behavior_files() {
     echo "  Copying behavior files to $target_dir with namespace $target_namespace..."
 
     # Create directory structure (clean first to remove stale files)
-    rm -rf "$target_dir/Runtime" "$target_dir/Intent" "$target_dir/Archetypes" "$target_dir/Goap"
+    rm -rf "$target_dir/Runtime" "$target_dir/Intent" "$target_dir/Archetypes" "$target_dir/Goap" "$target_dir/Documents"
     mkdir -p "$target_dir/Runtime"
     mkdir -p "$target_dir/Intent"
     mkdir -p "$target_dir/Archetypes"
     mkdir -p "$target_dir/Goap"
+    mkdir -p "$target_dir/Documents/Actions"
 
     # Source namespace pattern from the behavior-compiler SDK
     local src_ns="BeyondImmersion.Bannou.BehaviorCompiler"
@@ -90,12 +91,32 @@ copy_behavior_files() {
         fi
     done
 
+    # Copy and transform Documents files (AbmlDocument, GoapGoalDefinition, etc.)
+    for file in "$BEHAVIOR_SDK_DIR/Documents/"*.cs; do
+        if [ -f "$file" ]; then
+            local basename=$(basename "$file")
+            sed "s/$src_ns/$target_namespace/g" "$file" > "$target_dir/Documents/$basename"
+        fi
+    done
+
+    # Copy and transform Documents/Actions files
+    for file in "$BEHAVIOR_SDK_DIR/Documents/Actions/"*.cs; do
+        if [ -f "$file" ]; then
+            local basename=$(basename "$file")
+            sed "s/$src_ns/$target_namespace/g" "$file" > "$target_dir/Documents/Actions/$basename"
+        fi
+    done
+
     # Copy and transform service-level behavior files from lib-behavior
-    # These are the evaluator interfaces that depend on the runtime types
+    # These are the evaluator interfaces that depend on the runtime types.
+    # Two-pass sed: first transform the file's own namespace declaration,
+    # then transform BehaviorCompiler references to match the copied runtime types.
     local lib_behavior_ns="BeyondImmersion.BannouService.Behavior"
     for file in IBehaviorEvaluator.cs BehaviorEvaluatorBase.cs BehaviorModelCache.cs; do
         if [ -f "./plugins/lib-behavior/$file" ]; then
-            sed "s/$lib_behavior_ns/$target_namespace/g" "./plugins/lib-behavior/$file" > "$target_dir/$file"
+            sed -e "s/$lib_behavior_ns/$target_namespace/g" \
+                -e "s/$src_ns/$target_namespace/g" \
+                "./plugins/lib-behavior/$file" > "$target_dir/$file"
         fi
     done
 

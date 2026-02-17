@@ -195,7 +195,7 @@ components:
     # Chat Events
     # ============================================
 
-    ChatMessageReceivedEvent:
+    SessionChatReceivedEvent:
       allOf:
         - $ref: 'common-client-events.yaml#/components/schemas/BaseClientEvent'
       type: object

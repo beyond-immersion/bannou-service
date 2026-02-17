@@ -24,12 +24,22 @@
 
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Storyline;
-using BeyondImmersion.Bannou.StorylineStoryteller.Actions;
-using BeyondImmersion.Bannou.StorylineStoryteller.Planning;
-using BeyondImmersion.Bannou.StorylineStoryteller.Templates;
-using BeyondImmersion.Bannou.StorylineTheory.Arcs;
-using BeyondImmersion.Bannou.StorylineTheory.Spectrums;
 
+#pragma warning disable 108 // Disable "CS0108 '{derivedDto}.ToJson()' hides inherited member '{dtoBase}.ToJson()'. Use the new keyword if hiding was intended."
+#pragma warning disable 114 // Disable "CS0114 '{derivedDto}.RaisePropertyChanged(String)' hides inherited member 'dtoBase.RaisePropertyChanged(String)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword."
+#pragma warning disable 472 // Disable "CS0472 The result of the expression is always 'false' since a value of type 'Int32' is never equal to 'null' of type 'Int32?'
+#pragma warning disable 612 // Disable "CS0612 '...' is obsolete"
+#pragma warning disable 649 // Disable "CS0649 Field is never assigned to, and will always have its default value null"
+#pragma warning disable 1573 // Disable "CS1573 Parameter '...' has no matching param tag in the XML comment for ...
+#pragma warning disable 1591 // Disable "CS1591 Missing XML comment for publicly visible type or member ..."
+#pragma warning disable 8073 // Disable "CS8073 The result of the expression is always 'false' since a value of type 'T' is never equal to 'null' of type 'T?'"
+#pragma warning disable 3016 // Disable "CS3016 Arrays as attribute arguments is not CLS-compliant"
+#pragma warning disable 8600 // Disable "CS8600 Converting null literal or possible null value to non-nullable type"
+#pragma warning disable 8602 // Disable "CS8602 Dereference of a possibly null reference"
+#pragma warning disable 8603 // Disable "CS8603 Possible null reference return"
+#pragma warning disable 8604 // Disable "CS8604 Possible null reference argument for parameter"
+#pragma warning disable 8625 // Disable "CS8625 Cannot convert null literal to non-nullable reference type"
+#pragma warning disable 8765 // Disable "CS8765 Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes)."
 
 namespace BeyondImmersion.BannouService.Storyline;
 
@@ -63,6 +73,109 @@ public enum StorylineGoal
 
     [System.Runtime.Serialization.EnumMember(Value = @"peace")]
     Peace = 4,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Emotional arc shapes from Reagan et al. research.
+/// <br/>RagsToRiches: Rise (1)
+/// <br/>Tragedy: Fall (2)
+/// <br/>ManInHole: Fall then rise (3)
+/// <br/>Icarus: Rise then fall (4)
+/// <br/>Cinderella: Rise, fall, rise (5)
+/// <br/>Oedipus: Fall, rise, fall (6)
+/// <br/>
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum ArcType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"RagsToRiches")]
+    RagsToRiches = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Tragedy")]
+    Tragedy = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"ManInHole")]
+    ManInHole = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Icarus")]
+    Icarus = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Cinderella")]
+    Cinderella = 4,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Oedipus")]
+    Oedipus = 5,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// The 10 Story Grid Life Value spectrums.
+/// <br/>These are bipolar axes for emotional progression.
+/// <br/>
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum SpectrumType
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"LifeDeath")]
+    LifeDeath = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"HonorDishonor")]
+    HonorDishonor = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"JusticeInjustice")]
+    JusticeInjustice = 2,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"FreedomSubjugation")]
+    FreedomSubjugation = 3,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"LoveHate")]
+    LoveHate = 4,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"RespectShame")]
+    RespectShame = 5,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"PowerImpotence")]
+    PowerImpotence = 6,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"SuccessFailure")]
+    SuccessFailure = 7,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"AltruismSelfishness")]
+    AltruismSelfishness = 8,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"WisdomIgnorance")]
+    WisdomIgnorance = 9,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// GOAP planning urgency level affecting search parameters.
+/// <br/>Low: More iterations, wider beam (1000/20)
+/// <br/>Medium: Balanced (500/15)
+/// <br/>High: Fewer iterations, narrower beam (200/10)
+/// <br/>
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum PlanningUrgency
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Low")]
+    Low = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Medium")]
+    Medium = 1,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"High")]
+    High = 2,
 
 }
 #pragma warning restore CS1591
@@ -495,6 +608,244 @@ public partial class ListPlansResponse
     /// </summary>
     [System.Text.Json.Serialization.JsonPropertyName("totalCount")]
     public int TotalCount { get; set; } = default!;
+
+}
+
+/// <summary>
+/// A phase in the storyline plan
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class StorylinePlanPhase
+{
+
+    /// <summary>
+    /// 1-based phase number
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("phaseNumber")]
+    [System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)]
+    public int PhaseNumber { get; set; } = default!;
+
+    /// <summary>
+    /// Phase name
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("name")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Name { get; set; } = default!;
+
+    /// <summary>
+    /// Actions in this phase
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("actions")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<StorylinePlanAction> Actions { get; set; } = new System.Collections.ObjectModel.Collection<StorylinePlanAction>();
+
+    /// <summary>
+    /// Target state for phase completion
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("targetState")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public PhaseTargetState TargetState { get; set; } = new PhaseTargetState();
+
+    /// <summary>
+    /// Position bounds for this phase
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("positionBounds")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public PhasePosition PositionBounds { get; set; } = new PhasePosition();
+
+}
+
+/// <summary>
+/// A planned action in the storyline
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class StorylinePlanAction
+{
+
+    /// <summary>
+    /// Action identifier from action registry
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("actionId")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string ActionId { get; set; } = default!;
+
+    /// <summary>
+    /// Sequence index within the plan
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("sequenceIndex")]
+    public int SequenceIndex { get; set; } = default!;
+
+    /// <summary>
+    /// World state effects of this action
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("effects")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public System.Collections.Generic.ICollection<ActionEffect> Effects { get; set; } = new System.Collections.ObjectModel.Collection<ActionEffect>();
+
+    /// <summary>
+    /// Narrative effect on the emotional arc
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("narrativeEffect")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public NarrativeEffect NarrativeEffect { get; set; } = new NarrativeEffect();
+
+    /// <summary>
+    /// Whether this is an obligatory scene
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("isCoreEvent")]
+    public bool IsCoreEvent { get; set; } = default!;
+
+    /// <summary>
+    /// If chained, the ID of the action it was chained from
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("chainedFrom")]
+    public string? ChainedFrom { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Effect of an action on world state
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class ActionEffect
+{
+
+    /// <summary>
+    /// State key to modify
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("key")]
+    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+    [System.Text.Json.Serialization.JsonRequired]
+    public string Key { get; set; } = default!;
+
+    /// <summary>
+    /// New value to set (any type)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("value")]
+    [System.ComponentModel.DataAnnotations.Required]
+    [System.Text.Json.Serialization.JsonRequired]
+    public object Value { get; set; } = default!;
+
+    /// <summary>
+    /// How the effect is applied
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("cardinality")]
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public EffectCardinality Cardinality { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Cardinality for effect application.
+/// <br/>Exclusive: Replaces existing value at key
+/// <br/>Additive: Adds to collection at key
+/// <br/>
+/// </summary>
+#pragma warning disable CS1591 // Enum members cannot have XML documentation
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public enum EffectCardinality
+{
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Exclusive")]
+    Exclusive = 0,
+
+    [System.Runtime.Serialization.EnumMember(Value = @"Additive")]
+    Additive = 1,
+
+}
+#pragma warning restore CS1591
+
+/// <summary>
+/// Narrative effect on the emotional arc
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class NarrativeEffect
+{
+
+    /// <summary>
+    /// Delta to apply to the primary spectrum
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("primarySpectrumDelta")]
+    public double? PrimarySpectrumDelta { get; set; } = default!;
+
+    /// <summary>
+    /// Delta to apply to the secondary spectrum
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("secondarySpectrumDelta")]
+    public double? SecondarySpectrumDelta { get; set; } = default!;
+
+    /// <summary>
+    /// Position advance type (micro, standard, macro)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("positionAdvance")]
+    public string? PositionAdvance { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Target state for phase completion
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class PhaseTargetState
+{
+
+    /// <summary>
+    /// Minimum primary spectrum value for this phase
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("minPrimarySpectrum")]
+    public double MinPrimarySpectrum { get; set; } = default!;
+
+    /// <summary>
+    /// Maximum primary spectrum value for this phase
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("maxPrimarySpectrum")]
+    public double MaxPrimarySpectrum { get; set; } = default!;
+
+    /// <summary>
+    /// Human-readable description of this state range
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("rangeDescription")]
+    public string? RangeDescription { get; set; } = default!;
+
+}
+
+/// <summary>
+/// Phase position constraints from Save the Cat beat timing
+/// </summary>
+[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.5.0.0 (NJsonSchema v11.4.0.0 (Newtonsoft.Json v13.0.0.0))")]
+public partial class PhasePosition
+{
+
+    /// <summary>
+    /// Target position from STC beat timing
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("stcCenter")]
+    public double StcCenter { get; set; } = default!;
+
+    /// <summary>
+    /// Earliest advancement position (prevents speed-running)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("floor")]
+    public double Floor { get; set; } = default!;
+
+    /// <summary>
+    /// Forced advancement position (prevents deadlock)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("ceiling")]
+    public double Ceiling { get; set; } = default!;
+
+    /// <summary>
+    /// Validation tolerance (±)
+    /// </summary>
+    [System.Text.Json.Serialization.JsonPropertyName("validationBand")]
+    public double ValidationBand { get; set; } = default!;
 
 }
 
