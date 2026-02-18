@@ -233,6 +233,25 @@ public sealed class ScenarioMetadata
     /// <summary>Scope to a specific game service (null = global).</summary>
     public Guid? GameServiceId { get; init; }
 
+    /// <summary>
+    /// How likely this scenario is to produce a character death if fully played out.
+    /// 0.0 = impossible (social, mystery, crafting scenarios).
+    /// 0.5 = possible under specific conditions (combat with escape routes).
+    /// 1.0 = guaranteed death if the lethal branch resolves (sacrifice, execution, boss kill).
+    /// God-actors read this alongside ${status.plot_armor} to filter scenario selection.
+    /// Characters with plot armor > 0 cannot die -- gods will not select high-lethality
+    /// scenarios for protected characters, or will intervene before lethal resolution.
+    /// See docs/planning/DEATH-AND-PLOT-ARMOR.md for the full mechanic design.
+    /// </summary>
+    public float Lethality { get; init; }
+
+    /// <summary>
+    /// Which phase codes contain potential lethal outcomes. Empty if lethality is 0.
+    /// God-actors use this to know which phase transitions to monitor for death risk.
+    /// Phase codes reference <see cref="ScenarioPhase.PhaseCode"/> values.
+    /// </summary>
+    public IReadOnlyList<string> LethalPhases { get; init; } = [];
+
     /// <summary>Default metadata instance.</summary>
     public static ScenarioMetadata Default { get; } = new();
 }
@@ -842,7 +861,9 @@ A complete scenario definition serialized by the SDK:
     "exclusivityTags": ["betrayal_arc"],
     "tags": ["social", "drama", "betrayal"],
     "realmId": null,
-    "gameServiceId": null
+    "gameServiceId": null,
+    "lethality": 0.5,
+    "lethalPhases": ["confrontation"]
   }
 }
 ```
