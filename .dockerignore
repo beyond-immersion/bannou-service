@@ -33,6 +33,8 @@ README.md
 #   - sdks/music-storyteller/ needed by lib-music for narrative-driven composition
 #   - sdks/storyline-theory/ needed by lib-storyline for story generation
 #   - sdks/storyline-storyteller/ needed by lib-storyline for context-driven realtime story-generation
+#   - sdks/behavior-compiler/ needed by bannou-service for ABML document parsing and cognition
+#   - sdks/behavior-expressions/ needed by bannou-service for ABML expression evaluation
 sdks/
 !sdks/core/
 !sdks/bundle-format/
@@ -40,4 +42,6 @@ sdks/
 !sdks/music-storyteller/
 !sdks/storyline-theory/
 !sdks/storyline-storyteller/
+!sdks/behavior-compiler/
+!sdks/behavior-expressions/
 examples/

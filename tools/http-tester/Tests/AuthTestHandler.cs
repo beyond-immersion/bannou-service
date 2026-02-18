@@ -206,10 +206,10 @@ public class AuthTestHandler : BaseHttpTestHandler
                 if (!validationResponse.Valid)
                     return TestResult.Failed("OAuth token validation returned Valid=false - session may not have been created");
 
-                if (validationResponse.SessionId == Guid.Empty)
+                if (validationResponse.SessionKey == Guid.Empty)
                     return TestResult.Failed("OAuth token validation succeeded but no SessionId returned");
 
-                return TestResult.Successful($"OAuth flow completed successfully for Discord: AccountId={oauthResponse.AccountId}, SessionId={validationResponse.SessionId}, RemainingTime={validationResponse.RemainingTime}s");
+                return TestResult.Successful($"OAuth flow completed successfully for Discord: AccountId={oauthResponse.AccountId}, SessionId={validationResponse.SessionKey}, RemainingTime={validationResponse.RemainingTime}s");
             }
             catch (ApiException ex) when (ex.StatusCode == 400)
             {
@@ -251,10 +251,10 @@ public class AuthTestHandler : BaseHttpTestHandler
                 if (!validationResponse.Valid)
                     return TestResult.Failed("Steam token validation returned Valid=false - session may not have been created");
 
-                if (validationResponse.SessionId == Guid.Empty)
+                if (validationResponse.SessionKey == Guid.Empty)
                     return TestResult.Failed("Steam token validation succeeded but no SessionId returned");
 
-                return TestResult.Successful($"Steam auth flow completed successfully: AccountId={steamResponse.AccountId}, SessionId={validationResponse.SessionId}, RemainingTime={validationResponse.RemainingTime}s");
+                return TestResult.Successful($"Steam auth flow completed successfully: AccountId={steamResponse.AccountId}, SessionId={validationResponse.SessionKey}, RemainingTime={validationResponse.RemainingTime}s");
             }
             catch (ApiException ex) when (ex.StatusCode == 401)
             {
@@ -321,7 +321,7 @@ public class AuthTestHandler : BaseHttpTestHandler
                 return TestResult.Failed("Token validation returned Valid=false for legitimate token");
 
             // Step 4: Verify session ID was returned
-            if (validationResponse.SessionId == Guid.Empty)
+            if (validationResponse.SessionKey == Guid.Empty)
                 return TestResult.Failed("Token validation succeeded but no SessionId returned");
 
             return TestResult.Successful($"Complete auth flow tested successfully for user {testUsername}");
@@ -595,12 +595,12 @@ public class AuthTestHandler : BaseHttpTestHandler
             var validation = await ((IServiceClient<AuthClient>)authClient).WithAuthorization(token).ValidateTokenAsync();
 
             if (!validation.Valid)
-                return TestResult.Failed($"Immediate validation failed! SessionId: {validation.SessionId}, RemainingTime: {validation.RemainingTime}");
+                return TestResult.Failed($"Immediate validation failed! SessionId: {validation.SessionKey}, RemainingTime: {validation.RemainingTime}");
 
             if (validation.RemainingTime <= 0)
                 return TestResult.Failed($"RemainingTime is invalid: {validation.RemainingTime}");
 
-            return TestResult.Successful($"Immediate round-trip validation succeeded. SessionId: {validation.SessionId}, RemainingTime: {validation.RemainingTime}s");
+            return TestResult.Successful($"Immediate round-trip validation succeeded. SessionId: {validation.SessionKey}, RemainingTime: {validation.RemainingTime}s");
         }, "Session validation round-trip");
 
     private static async Task<TestResult> TestSessionValidationWithDelay(ITestClient client, string[] args) =>

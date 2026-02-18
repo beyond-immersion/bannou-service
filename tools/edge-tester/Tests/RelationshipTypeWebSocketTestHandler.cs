@@ -1,5 +1,5 @@
 using BeyondImmersion.Bannou.Client;
-using BeyondImmersion.BannouService.RelationshipType;
+using BeyondImmersion.BannouService.Relationship;
 
 namespace BeyondImmersion.EdgeTester.Tests;
 
@@ -32,7 +32,7 @@ public class RelationshipTypeWebSocketTestHandler : BaseWebSocketTestHandler
 
         RunWebSocketTest("RelationshipType list test", async adminClient =>
         {
-            var response = await adminClient.RelationshipType.ListRelationshipTypesAsync(new ListRelationshipTypesRequest());
+            var response = await adminClient.Relationship.ListRelationshipTypesAsync(new ListRelationshipTypesRequest());
 
             if (!response.IsSuccess || response.Result == null)
             {
@@ -59,7 +59,7 @@ public class RelationshipTypeWebSocketTestHandler : BaseWebSocketTestHandler
 
             // Create relationship type using typed proxy
             Console.WriteLine("   Creating relationship type via typed proxy...");
-            var createResponse = await adminClient.RelationshipType.CreateRelationshipTypeAsync(new CreateRelationshipTypeRequest
+            var createResponse = await adminClient.Relationship.CreateRelationshipTypeAsync(new CreateRelationshipTypeRequest
             {
                 Code = uniqueCode,
                 Name = $"Test Type {uniqueCode}",
@@ -79,7 +79,7 @@ public class RelationshipTypeWebSocketTestHandler : BaseWebSocketTestHandler
 
             // Retrieve it using typed proxy
             Console.WriteLine("   Retrieving relationship type via typed proxy...");
-            var getResponse = await adminClient.RelationshipType.GetRelationshipTypeAsync(new GetRelationshipTypeRequest
+            var getResponse = await adminClient.Relationship.GetRelationshipTypeAsync(new GetRelationshipTypeRequest
             {
                 RelationshipTypeId = relType.RelationshipTypeId
             });
@@ -108,7 +108,7 @@ public class RelationshipTypeWebSocketTestHandler : BaseWebSocketTestHandler
             Console.WriteLine("   Step 1: Creating parent type...");
             var parentCode = $"PARENT{GenerateUniqueCode()}";
 
-            var parentResponse = await adminClient.RelationshipType.CreateRelationshipTypeAsync(new CreateRelationshipTypeRequest
+            var parentResponse = await adminClient.Relationship.CreateRelationshipTypeAsync(new CreateRelationshipTypeRequest
             {
                 Code = parentCode,
                 Name = $"Parent Type {parentCode}",
@@ -129,7 +129,7 @@ public class RelationshipTypeWebSocketTestHandler : BaseWebSocketTestHandler
             Console.WriteLine("   Step 2: Creating child type...");
             var childCode = $"CHILD{GenerateUniqueCode()}";
 
-            var childResponse = await adminClient.RelationshipType.CreateRelationshipTypeAsync(new CreateRelationshipTypeRequest
+            var childResponse = await adminClient.Relationship.CreateRelationshipTypeAsync(new CreateRelationshipTypeRequest
             {
                 Code = childCode,
                 Name = $"Child Type {childCode}",
@@ -149,7 +149,7 @@ public class RelationshipTypeWebSocketTestHandler : BaseWebSocketTestHandler
 
             // Step 3: Test GetChildRelationshipTypes
             Console.WriteLine("   Step 3: Getting child types...");
-            var childrenResponse = await adminClient.RelationshipType.GetChildRelationshipTypesAsync(new GetChildRelationshipTypesRequest
+            var childrenResponse = await adminClient.Relationship.GetChildRelationshipTypesAsync(new GetChildRelationshipTypesRequest
             {
                 ParentTypeId = parent.RelationshipTypeId
             });
@@ -170,7 +170,7 @@ public class RelationshipTypeWebSocketTestHandler : BaseWebSocketTestHandler
 
             // Step 4: Test MatchesHierarchy
             Console.WriteLine("   Step 4: Testing hierarchy match...");
-            var matchResponse = await adminClient.RelationshipType.MatchesHierarchyAsync(new MatchesHierarchyRequest
+            var matchResponse = await adminClient.Relationship.MatchesHierarchyAsync(new MatchesHierarchyRequest
             {
                 TypeId = child.RelationshipTypeId,
                 AncestorTypeId = parent.RelationshipTypeId
@@ -191,7 +191,7 @@ public class RelationshipTypeWebSocketTestHandler : BaseWebSocketTestHandler
 
             // Step 5: Test GetAncestors
             Console.WriteLine("   Step 5: Getting ancestors...");
-            var ancestorsResponse = await adminClient.RelationshipType.GetAncestorsAsync(new GetAncestorsRequest
+            var ancestorsResponse = await adminClient.Relationship.GetAncestorsAsync(new GetAncestorsRequest
             {
                 TypeId = child.RelationshipTypeId
             });
@@ -225,7 +225,7 @@ public class RelationshipTypeWebSocketTestHandler : BaseWebSocketTestHandler
             Console.WriteLine("   Step 1: Creating relationship type...");
             var uniqueCode = $"LIFE{GenerateUniqueCode()}";
 
-            var createResponse = await adminClient.RelationshipType.CreateRelationshipTypeAsync(new CreateRelationshipTypeRequest
+            var createResponse = await adminClient.Relationship.CreateRelationshipTypeAsync(new CreateRelationshipTypeRequest
             {
                 Code = uniqueCode,
                 Name = $"Lifecycle Test {uniqueCode}",
@@ -245,7 +245,7 @@ public class RelationshipTypeWebSocketTestHandler : BaseWebSocketTestHandler
 
             // Step 2: Update type
             Console.WriteLine("   Step 2: Updating relationship type...");
-            var updateResponse = await adminClient.RelationshipType.UpdateRelationshipTypeAsync(new UpdateRelationshipTypeRequest
+            var updateResponse = await adminClient.Relationship.UpdateRelationshipTypeAsync(new UpdateRelationshipTypeRequest
             {
                 RelationshipTypeId = relType.RelationshipTypeId,
                 Name = $"Updated Lifecycle Test {uniqueCode}",
@@ -268,7 +268,7 @@ public class RelationshipTypeWebSocketTestHandler : BaseWebSocketTestHandler
 
             // Step 3: Deprecate type
             Console.WriteLine("   Step 3: Deprecating relationship type...");
-            var deprecateResponse = await adminClient.RelationshipType.DeprecateRelationshipTypeAsync(new DeprecateRelationshipTypeRequest
+            var deprecateResponse = await adminClient.Relationship.DeprecateRelationshipTypeAsync(new DeprecateRelationshipTypeRequest
             {
                 RelationshipTypeId = relType.RelationshipTypeId,
                 Reason = "WebSocket lifecycle test"
@@ -289,7 +289,7 @@ public class RelationshipTypeWebSocketTestHandler : BaseWebSocketTestHandler
 
             // Step 4: Undeprecate type
             Console.WriteLine("   Step 4: Undeprecating relationship type...");
-            var undeprecateResponse = await adminClient.RelationshipType.UndeprecateRelationshipTypeAsync(new UndeprecateRelationshipTypeRequest
+            var undeprecateResponse = await adminClient.Relationship.UndeprecateRelationshipTypeAsync(new UndeprecateRelationshipTypeRequest
             {
                 RelationshipTypeId = relType.RelationshipTypeId
             });

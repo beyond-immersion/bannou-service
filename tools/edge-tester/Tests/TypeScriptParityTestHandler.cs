@@ -3,7 +3,6 @@ using BeyondImmersion.BannouService.GameSession;
 using BeyondImmersion.BannouService.Location;
 using BeyondImmersion.BannouService.Realm;
 using BeyondImmersion.BannouService.Relationship;
-using BeyondImmersion.BannouService.RelationshipType;
 using BeyondImmersion.BannouService.Species;
 
 namespace BeyondImmersion.EdgeTester.Tests;
@@ -617,7 +616,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
         RunWebSocketTest("RelationshipType List Parity", async adminClient =>
         {
             // C# SDK call using typed proxy
-            var csharpResponse = await adminClient.RelationshipType.ListRelationshipTypesAsync(
+            var csharpResponse = await adminClient.Relationship.ListRelationshipTypesAsync(
                 new ListRelationshipTypesRequest(), timeout: TimeSpan.FromSeconds(10));
 
             if (!csharpResponse.IsSuccess || csharpResponse.Result is null)
@@ -729,7 +728,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
 
             // Create a relationship type first using typed proxy
             Console.WriteLine("   Creating relationship type...");
-            var typeResponse = await adminClient.RelationshipType.CreateRelationshipTypeAsync(
+            var typeResponse = await adminClient.Relationship.CreateRelationshipTypeAsync(
                 new CreateRelationshipTypeRequest
                 {
                     Code = $"PARITY_REL_{uniqueCode}",
@@ -858,7 +857,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
 
             // Create via C# SDK using typed proxy
             Console.WriteLine($"   [C# SDK] Creating relationship type {typeCode}...");
-            var createResponse = await adminClient.RelationshipType.CreateRelationshipTypeAsync(
+            var createResponse = await adminClient.Relationship.CreateRelationshipTypeAsync(
                 new CreateRelationshipTypeRequest
                 {
                     Code = typeCode,
@@ -878,7 +877,7 @@ public class TypeScriptParityTestHandler : BaseWebSocketTestHandler
             Console.WriteLine($"   [C# SDK] Created relationship type: {relationshipTypeId}");
 
             // Read via C# SDK using typed proxy
-            var csharpReadResponse = await adminClient.RelationshipType.GetRelationshipTypeAsync(
+            var csharpReadResponse = await adminClient.Relationship.GetRelationshipTypeAsync(
                 new GetRelationshipTypeRequest { RelationshipTypeId = relationshipTypeId },
                 timeout: TimeSpan.FromSeconds(10));
 

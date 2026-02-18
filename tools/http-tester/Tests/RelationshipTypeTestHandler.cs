@@ -1,4 +1,4 @@
-using BeyondImmersion.BannouService.RelationshipType;
+using BeyondImmersion.BannouService.Relationship;
 using BeyondImmersion.BannouService.ServiceClients;
 using BeyondImmersion.BannouService.Testing;
 
@@ -44,7 +44,7 @@ public class RelationshipTypeTestHandler : BaseHttpTestHandler
     private static async Task<TestResult> TestCreateRelationshipType(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
         {
-            var typeClient = GetServiceClient<IRelationshipTypeClient>();
+            var typeClient = GetServiceClient<IRelationshipClient>();
 
             var createRequest = new CreateRelationshipTypeRequest
             {
@@ -69,7 +69,7 @@ public class RelationshipTypeTestHandler : BaseHttpTestHandler
     private static async Task<TestResult> TestGetRelationshipType(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
         {
-            var typeClient = GetServiceClient<IRelationshipTypeClient>();
+            var typeClient = GetServiceClient<IRelationshipClient>();
 
             // Create a type first
             var createRequest = new CreateRelationshipTypeRequest
@@ -95,7 +95,7 @@ public class RelationshipTypeTestHandler : BaseHttpTestHandler
     private static async Task<TestResult> TestGetRelationshipTypeByCode(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
         {
-            var typeClient = GetServiceClient<IRelationshipTypeClient>();
+            var typeClient = GetServiceClient<IRelationshipClient>();
 
             // Create a type first
             var code = $"CODE_TEST_{DateTime.Now.Ticks}";
@@ -119,7 +119,7 @@ public class RelationshipTypeTestHandler : BaseHttpTestHandler
     private static async Task<TestResult> TestUpdateRelationshipType(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
         {
-            var typeClient = GetServiceClient<IRelationshipTypeClient>();
+            var typeClient = GetServiceClient<IRelationshipClient>();
 
             // Create a type
             var createRequest = new CreateRelationshipTypeRequest
@@ -151,7 +151,7 @@ public class RelationshipTypeTestHandler : BaseHttpTestHandler
     private static async Task<TestResult> TestDeleteRelationshipType(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
         {
-            var typeClient = GetServiceClient<IRelationshipTypeClient>();
+            var typeClient = GetServiceClient<IRelationshipClient>();
 
             // Create a type
             var createRequest = new CreateRelationshipTypeRequest
@@ -187,7 +187,7 @@ public class RelationshipTypeTestHandler : BaseHttpTestHandler
     private static async Task<TestResult> TestListRelationshipTypes(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
         {
-            var typeClient = GetServiceClient<IRelationshipTypeClient>();
+            var typeClient = GetServiceClient<IRelationshipClient>();
 
             // Create some types
             var category = $"LIST_CAT_{DateTime.Now.Ticks}";
@@ -216,7 +216,7 @@ public class RelationshipTypeTestHandler : BaseHttpTestHandler
     private static async Task<TestResult> TestCreateChildType(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
         {
-            var typeClient = GetServiceClient<IRelationshipTypeClient>();
+            var typeClient = GetServiceClient<IRelationshipClient>();
 
             // Create parent type
             var parentRequest = new CreateRelationshipTypeRequest
@@ -249,7 +249,7 @@ public class RelationshipTypeTestHandler : BaseHttpTestHandler
     private static async Task<TestResult> TestGetChildTypes(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
         {
-            var typeClient = GetServiceClient<IRelationshipTypeClient>();
+            var typeClient = GetServiceClient<IRelationshipClient>();
 
             // Create parent
             var parent = await typeClient.CreateRelationshipTypeAsync(new CreateRelationshipTypeRequest
@@ -284,7 +284,7 @@ public class RelationshipTypeTestHandler : BaseHttpTestHandler
     private static async Task<TestResult> TestMatchesHierarchy(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
         {
-            var typeClient = GetServiceClient<IRelationshipTypeClient>();
+            var typeClient = GetServiceClient<IRelationshipClient>();
 
             // Create hierarchy: grandparent -> parent -> child
             var grandparent = await typeClient.CreateRelationshipTypeAsync(new CreateRelationshipTypeRequest
@@ -336,7 +336,7 @@ public class RelationshipTypeTestHandler : BaseHttpTestHandler
     private static async Task<TestResult> TestGetAncestors(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
         {
-            var typeClient = GetServiceClient<IRelationshipTypeClient>();
+            var typeClient = GetServiceClient<IRelationshipClient>();
 
             // Create hierarchy
             var root = await typeClient.CreateRelationshipTypeAsync(new CreateRelationshipTypeRequest
@@ -376,7 +376,7 @@ public class RelationshipTypeTestHandler : BaseHttpTestHandler
         ExecuteExpectingStatusAsync(
             async () =>
             {
-                var typeClient = GetServiceClient<IRelationshipTypeClient>();
+                var typeClient = GetServiceClient<IRelationshipClient>();
                 await typeClient.GetRelationshipTypeAsync(new GetRelationshipTypeRequest
                 {
                     RelationshipTypeId = Guid.NewGuid()
@@ -388,7 +388,7 @@ public class RelationshipTypeTestHandler : BaseHttpTestHandler
     private static async Task<TestResult> TestDuplicateCodeConflict(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
         {
-            var typeClient = GetServiceClient<IRelationshipTypeClient>();
+            var typeClient = GetServiceClient<IRelationshipClient>();
 
             var code = $"DUPLICATE_{DateTime.Now.Ticks}";
 
@@ -418,7 +418,7 @@ public class RelationshipTypeTestHandler : BaseHttpTestHandler
     private static async Task<TestResult> TestDeleteTypeWithChildren(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
         {
-            var typeClient = GetServiceClient<IRelationshipTypeClient>();
+            var typeClient = GetServiceClient<IRelationshipClient>();
 
             // Create parent with child
             var parent = await typeClient.CreateRelationshipTypeAsync(new CreateRelationshipTypeRequest
@@ -452,7 +452,7 @@ public class RelationshipTypeTestHandler : BaseHttpTestHandler
     private static async Task<TestResult> TestSeedRelationshipTypes(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
         {
-            var typeClient = GetServiceClient<IRelationshipTypeClient>();
+            var typeClient = GetServiceClient<IRelationshipClient>();
 
             // Capture ticks once so parent reference matches actual parent code
             var testId = DateTime.Now.Ticks;
@@ -491,7 +491,7 @@ public class RelationshipTypeTestHandler : BaseHttpTestHandler
     private static async Task<TestResult> TestCompleteTypeLifecycle(ITestClient client, string[] args) =>
         await ExecuteTestAsync(async () =>
         {
-            var typeClient = GetServiceClient<IRelationshipTypeClient>();
+            var typeClient = GetServiceClient<IRelationshipClient>();
             var testId = DateTime.Now.Ticks;
 
             // Step 1: Create root type

@@ -194,7 +194,7 @@ public class MappingTestHandler : BaseHttpTestHandler
                 Payload = new MapPayload
                 {
                     ObjectType = "tree",
-                    Position = new Position3D { X = 100.5, Y = 0, Z = 200.3 },
+                    Position = new Mapping.Position3D { X = 100.5, Y = 0, Z = 200.3 },
                     Data = new Dictionary<string, object>
                     {
                         { "health", 100 },
@@ -241,7 +241,7 @@ public class MappingTestHandler : BaseHttpTestHandler
                         ObjectId = Guid.NewGuid(),
                         Action = ObjectAction.Created,
                         ObjectType = "landmark",
-                        Position = new Position3D { X = 50, Y = 0, Z = 50 },
+                        Position = new Mapping.Position3D { X = 50, Y = 0, Z = 50 },
                         Data = new Dictionary<string, object> { { "name", "Ancient Tree" } }
                     },
                     new ObjectChange
@@ -249,7 +249,7 @@ public class MappingTestHandler : BaseHttpTestHandler
                         ObjectId = Guid.NewGuid(),
                         Action = ObjectAction.Created,
                         ObjectType = "quest_marker",
-                        Position = new Position3D { X = 75, Y = 0, Z = 75 }
+                        Position = new Mapping.Position3D { X = 75, Y = 0, Z = 75 }
                     }
                 }
             };
@@ -305,7 +305,7 @@ public class MappingTestHandler : BaseHttpTestHandler
                     Payload = new MapPayload
                     {
                         ObjectType = "spawn_point",
-                        Position = new Position3D { X = i * 10, Y = 0, Z = i * 10 }
+                        Position = new Mapping.Position3D { X = i * 10, Y = 0, Z = i * 10 }
                     },
                     DeltaType = DeltaType.Delta
                 });
@@ -344,7 +344,7 @@ public class MappingTestHandler : BaseHttpTestHandler
             };
             var createResponse = await mappingClient.CreateChannelAsync(createRequest);
 
-            var testPosition = new Position3D { X = 100, Y = 0, Z = 100 };
+            var testPosition = new Mapping.Position3D { X = 100, Y = 0, Z = 100 };
             await mappingClient.PublishMapUpdateAsync(new PublishMapUpdateRequest
             {
                 ChannelId = createResponse.ChannelId,
@@ -385,8 +385,8 @@ public class MappingTestHandler : BaseHttpTestHandler
                 RegionId = regionId,
                 Bounds = new Bounds
                 {
-                    Min = new Position3D { X = 0, Y = 0, Z = 0 },
-                    Max = new Position3D { X = 1000, Y = 100, Z = 1000 }
+                    Min = new Mapping.Position3D { X = 0, Y = 0, Z = 0 },
+                    Max = new Mapping.Position3D { X = 1000, Y = 100, Z = 1000 }
                 },
                 MaxObjects = 100
             };
@@ -426,7 +426,7 @@ public class MappingTestHandler : BaseHttpTestHandler
                     Payload = new MapPayload
                     {
                         ObjectType = "gold_vein",
-                        Position = new Position3D { X = i * 20, Y = -10, Z = i * 20 }
+                        Position = new Mapping.Position3D { X = i * 20, Y = -10, Z = i * 20 }
                     },
                     DeltaType = DeltaType.Delta
                 });
@@ -463,8 +463,8 @@ public class MappingTestHandler : BaseHttpTestHandler
                 AffordanceType = AffordanceType.Shelter,
                 Bounds = new Bounds
                 {
-                    Min = new Position3D { X = 0, Y = 0, Z = 0 },
-                    Max = new Position3D { X = 500, Y = 100, Z = 500 }
+                    Min = new Mapping.Position3D { X = 0, Y = 0, Z = 0 },
+                    Max = new Mapping.Position3D { X = 500, Y = 100, Z = 500 }
                 },
                 MaxResults = 10,
                 MinScore = 0.1,
@@ -493,8 +493,8 @@ public class MappingTestHandler : BaseHttpTestHandler
                 AffordanceType = AffordanceType.Ambush,
                 Bounds = new Bounds
                 {
-                    Min = new Position3D { X = 0, Y = 0, Z = 0 },
-                    Max = new Position3D { X = 500, Y = 100, Z = 500 }
+                    Min = new Mapping.Position3D { X = 0, Y = 0, Z = 0 },
+                    Max = new Mapping.Position3D { X = 500, Y = 100, Z = 500 }
                 },
                 MaxResults = 5,
                 MinScore = 0.2,

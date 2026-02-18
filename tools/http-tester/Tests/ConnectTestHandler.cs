@@ -496,16 +496,16 @@ public class ConnectTestHandler : BaseHttpTestHandler
             var validation = await ((IServiceClient<AuthClient>)authClient).WithAuthorization(token).ValidateTokenAsync();
 
             if (!validation.Valid)
-                return TestResult.Failed($"Token validation failed for WebSocket upgrade simulation. Valid={validation.Valid}, SessionId={validation.SessionId}, RemainingTime={validation.RemainingTime}");
+                return TestResult.Failed($"Token validation failed for WebSocket upgrade simulation. Valid={validation.Valid}, SessionId={validation.SessionKey}, RemainingTime={validation.RemainingTime}");
 
             // Verify we have the data Connect needs
-            if (validation.SessionId == Guid.Empty)
+            if (validation.SessionKey == Guid.Empty)
                 return TestResult.Failed("SessionId is empty - Connect needs this for session tracking");
 
             if (validation.RemainingTime <= 0)
                 return TestResult.Failed($"RemainingTime is {validation.RemainingTime} - session appears expired (ExpiresAtUnix deserialization issue?)");
 
-            return TestResult.Successful($"Token validation for WebSocket ready. SessionId: {validation.SessionId}, RemainingTime: {validation.RemainingTime}s, Roles: {validation.Roles?.Count ?? 0}");
+            return TestResult.Successful($"Token validation for WebSocket ready. SessionId: {validation.SessionKey}, RemainingTime: {validation.RemainingTime}s, Roles: {validation.Roles?.Count ?? 0}");
         }, "Token validation for WebSocket");
 
     /// <summary>
@@ -541,7 +541,7 @@ public class ConnectTestHandler : BaseHttpTestHandler
             if (validation.AccountId == Guid.Empty)
                 issues.Add("AccountId is empty GUID");
 
-            if (validation.SessionId == Guid.Empty)
+            if (validation.SessionKey == Guid.Empty)
                 issues.Add("SessionId is empty");
 
             if (validation.RemainingTime <= 0)
@@ -555,7 +555,7 @@ public class ConnectTestHandler : BaseHttpTestHandler
                 return TestResult.Failed($"Session data incomplete: {string.Join(", ", issues)}");
             }
 
-            return TestResult.Successful($"Session data complete - AccountId: {validation.AccountId}, SessionId: {validation.SessionId}, RemainingTime: {validation.RemainingTime}s, Roles: [{string.Join(", ", validation.Roles ?? Array.Empty<string>())}]");
+            return TestResult.Successful($"Session data complete - AccountId: {validation.AccountId}, SessionId: {validation.SessionKey}, RemainingTime: {validation.RemainingTime}s, Roles: [{string.Join(", ", validation.Roles ?? Array.Empty<string>())}]");
         }, "Token validation returns session data");
 
     /// <summary>

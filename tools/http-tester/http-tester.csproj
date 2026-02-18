@@ -30,7 +30,7 @@
     <ProjectReference Include="..\..\plugins\lib-connect\lib-connect.csproj" />
     <ProjectReference Include="..\..\plugins\lib-game-session\lib-game-session.csproj" />
     <ProjectReference Include="..\..\plugins\lib-character\lib-character.csproj" />
-    <ProjectReference Include="..\..\plugins\lib-relationship-type\lib-relationship-type.csproj" />
+    <ProjectReference Include="..\..\plugins\lib-relationship\lib-relationship.csproj" />
     <ProjectReference Include="..\..\plugins\lib-species\lib-species.csproj" />
     <ProjectReference Include="..\..\plugins\lib-permission\lib-permission.csproj" />
     <ProjectReference Include="..\..\plugins\lib-game-service\lib-game-service.csproj" />
