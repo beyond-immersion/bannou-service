@@ -321,12 +321,12 @@ This document lists all events defined in Bannou's event schemas.
 
 | Event | Type | Likely Topic | Description |
 |-------|------|--------------|-------------|
-| `ChatMessageReceivedEvent` | Custom | `chat-message-received` | Sent to recipients when a chat message is posted i... |
 | `GameActionResultEvent` | Custom | `game-action-result` | Sent to relevant players when a game action produc... |
 | `GameStateUpdatedEvent` | Lifecycle (Updated) | `game-state.updated` | Sent when game state changes that all players shou... |
 | `PlayerJoinedEvent` | Custom | `player-joined` | Sent to all session participants when a new player... |
 | `PlayerKickedEvent` | Custom | `player-kicked` | Sent to all session participants when a player is ... |
 | `PlayerLeftEvent` | Custom | `player-left` | Sent to all session participants when a player lea... |
+| `SessionChatReceivedEvent` | Custom | `session-chat-received` | Sent to recipients when a chat message is posted i... |
 | `SessionStateChangedEvent` | Custom | `session-state-changed` | Sent to all session participants when the session ... |
 
 ### Gardener

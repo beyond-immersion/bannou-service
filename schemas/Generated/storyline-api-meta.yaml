@@ -114,17 +114,15 @@ paths:
         require (default from config)\"\n                },\n                \"maxPhases\": {\n                    \"type\"\
         : \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 10,\n                    \"\
         nullable\": true,\n                    \"description\": \"Maximum phases in the plan (default unlimited)\"\n     \
-        \           }\n            }\n        },\n        \"ArcType\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcType\"\
-        ,\n            \"type\": \"string\",\n            \"enum\": [\n                \"RagsToRiches\",\n               \
-        \ \"Tragedy\",\n                \"ManInHole\",\n                \"Icarus\",\n                \"Cinderella\",\n   \
-        \             \"Oedipus\"\n            ],\n            \"description\": \"Emotional arc shapes from Reagan et al.
-        research.\\nRagsToRiches: Rise (1)\\nTragedy: Fall (2)\\nManInHole: Fall then rise (3)\\nIcarus: Rise then fall (4)\\
-        nCinderella: Rise, fall, rise (5)\\nOedipus: Fall, rise, fall (6)\\n\"\n        },\n        \"PlanningUrgency\": {\n\
-        \            \"x-sdk-type\": \"BeyondImmersion.Bannou.StorylineStoryteller.Planning.PlanningUrgency\",\n         \
-        \   \"type\": \"string\",\n            \"enum\": [\n                \"Low\",\n                \"Medium\",\n      \
-        \          \"High\"\n            ],\n            \"description\": \"GOAP planning urgency level affecting search parameters.\\
-        nLow: More iterations, wider beam (1000/20)\\nMedium: Balanced (500/15)\\nHigh: Fewer iterations, narrower beam (200/10)\\\
-        n\"\n        }\n    }\n}"
+        \           }\n            }\n        },\n        \"ArcType\": {\n            \"type\": \"string\",\n            \"\
+        enum\": [\n                \"RagsToRiches\",\n                \"Tragedy\",\n                \"ManInHole\",\n     \
+        \           \"Icarus\",\n                \"Cinderella\",\n                \"Oedipus\"\n            ],\n          \
+        \  \"description\": \"Emotional arc shapes from Reagan et al. research.\\nRagsToRiches: Rise (1)\\nTragedy: Fall (2)\\
+        nManInHole: Fall then rise (3)\\nIcarus: Rise then fall (4)\\nCinderella: Rise, fall, rise (5)\\nOedipus: Fall, rise,
+        fall (6)\\n\"\n        },\n        \"PlanningUrgency\": {\n            \"type\": \"string\",\n            \"enum\"\
+        : [\n                \"Low\",\n                \"Medium\",\n                \"High\"\n            ],\n           \
+        \ \"description\": \"GOAP planning urgency level affecting search parameters.\\nLow: More iterations, wider beam (1000/20)\\
+        nMedium: Balanced (500/15)\\nHigh: Fewer iterations, narrower beam (200/10)\\n\"\n        }\n    }\n}"
       x-response-schema-json: "{\n    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n    \"$ref\": \"#/$defs/ComposeResponse\"\
         ,\n    \"$defs\": {\n        \"ComposeResponse\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
         : false,\n            \"description\": \"Composed storyline plan\",\n            \"required\": [\n               \
@@ -164,82 +162,74 @@ paths:
         \                \"mystery\",\n                \"peace\"\n            ],\n            \"description\": \"High-level
         story goal that drives arc selection.\\nrevenge: Character seeks vengeance for past wrongs\\nresurrection: Restoring
         something/someone lost\\nlegacy: Creating or continuing a lasting impact\\nmystery: Uncovering hidden truths\\npeace:
-        Resolving conflicts and finding harmony\\n\"\n        },\n        \"ArcType\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcType\"\
-        ,\n            \"type\": \"string\",\n            \"enum\": [\n                \"RagsToRiches\",\n               \
-        \ \"Tragedy\",\n                \"ManInHole\",\n                \"Icarus\",\n                \"Cinderella\",\n   \
-        \             \"Oedipus\"\n            ],\n            \"description\": \"Emotional arc shapes from Reagan et al.
-        research.\\nRagsToRiches: Rise (1)\\nTragedy: Fall (2)\\nManInHole: Fall then rise (3)\\nIcarus: Rise then fall (4)\\
-        nCinderella: Rise, fall, rise (5)\\nOedipus: Fall, rise, fall (6)\\n\"\n        },\n        \"SpectrumType\": {\n\
-        \            \"x-sdk-type\": \"BeyondImmersion.Bannou.StorylineTheory.Spectrums.SpectrumType\",\n            \"type\"\
-        : \"string\",\n            \"enum\": [\n                \"LifeDeath\",\n                \"HonorDishonor\",\n     \
-        \           \"JusticeInjustice\",\n                \"FreedomSubjugation\",\n                \"LoveHate\",\n      \
-        \          \"RespectShame\",\n                \"PowerImpotence\",\n                \"SuccessFailure\",\n         \
-        \       \"AltruismSelfishness\",\n                \"WisdomIgnorance\"\n            ],\n            \"description\"\
-        : \"The 10 Story Grid Life Value spectrums.\\nThese are bipolar axes for emotional progression.\\n\"\n        },\n\
-        \        \"StorylinePlanPhase\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.StorylineStoryteller.Planning.StorylinePlanPhase\"\
-        ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"\
-        A phase in the storyline plan (SDK type)\",\n            \"required\": [\n                \"phaseNumber\",\n     \
-        \           \"name\",\n                \"actions\",\n                \"targetState\",\n                \"positionBounds\"\
-        \n            ],\n            \"properties\": {\n                \"phaseNumber\": {\n                    \"type\"\
-        : \"integer\",\n                    \"minimum\": 1,\n                    \"description\": \"1-based phase number\"\
-        \n                },\n                \"name\": {\n                    \"type\": \"string\",\n                   \
-        \ \"description\": \"Phase name\"\n                },\n                \"actions\": {\n                    \"type\"\
-        : \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/StorylinePlanAction\"\n\
-        \                    },\n                    \"description\": \"Actions in this phase\"\n                },\n    \
-        \            \"targetState\": {\n                    \"$ref\": \"#/$defs/PhaseTargetState\",\n                   \
-        \ \"description\": \"Target state for phase completion\"\n                },\n                \"positionBounds\":
-        {\n                    \"$ref\": \"#/$defs/PhasePosition\",\n                    \"description\": \"Position bounds
-        for this phase\"\n                }\n            }\n        },\n        \"StorylinePlanAction\": {\n            \"\
-        x-sdk-type\": \"BeyondImmersion.Bannou.StorylineStoryteller.Planning.StorylinePlanAction\",\n            \"type\"\
-        : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"A planned action in the
-        storyline (SDK type)\",\n            \"required\": [\n                \"actionId\",\n                \"sequenceIndex\"\
-        ,\n                \"effects\",\n                \"narrativeEffect\",\n                \"isCoreEvent\"\n         \
-        \   ],\n            \"properties\": {\n                \"actionId\": {\n                    \"type\": \"string\",\n\
-        \                    \"description\": \"Action identifier from action registry\"\n                },\n           \
-        \     \"sequenceIndex\": {\n                    \"type\": \"integer\",\n                    \"description\": \"Sequence
-        index within the plan\"\n                },\n                \"effects\": {\n                    \"type\": \"array\"\
-        ,\n                    \"items\": {\n                        \"$ref\": \"#/$defs/ActionEffect\"\n                \
-        \    },\n                    \"description\": \"World state effects of this action\"\n                },\n       \
-        \         \"narrativeEffect\": {\n                    \"$ref\": \"#/$defs/NarrativeEffect\",\n                   \
-        \ \"description\": \"Narrative effect on the emotional arc\"\n                },\n                \"isCoreEvent\"\
-        : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether this is an obligatory
-        scene\"\n                },\n                \"chainedFrom\": {\n                    \"type\": \"string\",\n     \
-        \               \"nullable\": true,\n                    \"description\": \"If chained, the ID of the action it was
-        chained from\"\n                }\n            }\n        },\n        \"ActionEffect\": {\n            \"x-sdk-type\"\
-        : \"BeyondImmersion.Bannou.StorylineStoryteller.Actions.ActionEffect\",\n            \"type\": \"object\",\n     \
-        \       \"additionalProperties\": false,\n            \"description\": \"Effect of an action on world state (SDK type)\"\
-        ,\n            \"required\": [\n                \"key\",\n                \"value\"\n            ],\n            \"\
-        properties\": {\n                \"key\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"State key to modify\"\n                },\n                \"value\": {\n                    \"description\":
-        \"New value to set (any type)\"\n                },\n                \"cardinality\": {\n                    \"$ref\"\
-        : \"#/$defs/EffectCardinality\",\n                    \"description\": \"How the effect is applied\"\n           \
-        \     }\n            }\n        },\n        \"EffectCardinality\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.StorylineStoryteller.Actions.EffectCardinality\"\
-        ,\n            \"type\": \"string\",\n            \"enum\": [\n                \"Exclusive\",\n                \"\
-        Additive\"\n            ],\n            \"description\": \"Cardinality for effect application.\\nExclusive: Replaces
-        existing value at key\\nAdditive: Adds to collection at key\\n\"\n        },\n        \"NarrativeEffect\": {\n   \
-        \         \"x-sdk-type\": \"BeyondImmersion.Bannou.StorylineStoryteller.Actions.NarrativeEffect\",\n            \"\
-        type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Narrative effect
-        on the emotional arc (SDK type)\",\n            \"properties\": {\n                \"primarySpectrumDelta\": {\n \
-        \                   \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Delta to apply to the primary spectrum\"\n                },\n   \
-        \             \"secondarySpectrumDelta\": {\n                    \"type\": \"number\",\n                    \"format\"\
+        Resolving conflicts and finding harmony\\n\"\n        },\n        \"ArcType\": {\n            \"type\": \"string\"\
+        ,\n            \"enum\": [\n                \"RagsToRiches\",\n                \"Tragedy\",\n                \"ManInHole\"\
+        ,\n                \"Icarus\",\n                \"Cinderella\",\n                \"Oedipus\"\n            ],\n   \
+        \         \"description\": \"Emotional arc shapes from Reagan et al. research.\\nRagsToRiches: Rise (1)\\nTragedy:
+        Fall (2)\\nManInHole: Fall then rise (3)\\nIcarus: Rise then fall (4)\\nCinderella: Rise, fall, rise (5)\\nOedipus:
+        Fall, rise, fall (6)\\n\"\n        },\n        \"SpectrumType\": {\n            \"type\": \"string\",\n          \
+        \  \"enum\": [\n                \"LifeDeath\",\n                \"HonorDishonor\",\n                \"JusticeInjustice\"\
+        ,\n                \"FreedomSubjugation\",\n                \"LoveHate\",\n                \"RespectShame\",\n   \
+        \             \"PowerImpotence\",\n                \"SuccessFailure\",\n                \"AltruismSelfishness\",\n\
+        \                \"WisdomIgnorance\"\n            ],\n            \"description\": \"The 10 Story Grid Life Value
+        spectrums.\\nThese are bipolar axes for emotional progression.\\n\"\n        },\n        \"StorylinePlanPhase\": {\n\
+        \            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"\
+        A phase in the storyline plan\",\n            \"required\": [\n                \"phaseNumber\",\n                \"\
+        name\",\n                \"actions\",\n                \"targetState\",\n                \"positionBounds\"\n    \
+        \        ],\n            \"properties\": {\n                \"phaseNumber\": {\n                    \"type\": \"integer\"\
+        ,\n                    \"minimum\": 1,\n                    \"description\": \"1-based phase number\"\n          \
+        \      },\n                \"name\": {\n                    \"type\": \"string\",\n                    \"description\"\
+        : \"Phase name\"\n                },\n                \"actions\": {\n                    \"type\": \"array\",\n \
+        \                   \"items\": {\n                        \"$ref\": \"#/$defs/StorylinePlanAction\"\n            \
+        \        },\n                    \"description\": \"Actions in this phase\"\n                },\n                \"\
+        targetState\": {\n                    \"$ref\": \"#/$defs/PhaseTargetState\",\n                    \"description\"\
+        : \"Target state for phase completion\"\n                },\n                \"positionBounds\": {\n             \
+        \       \"$ref\": \"#/$defs/PhasePosition\",\n                    \"description\": \"Position bounds for this phase\"\
+        \n                }\n            }\n        },\n        \"StorylinePlanAction\": {\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"description\": \"A planned action in the storyline\"\
+        ,\n            \"required\": [\n                \"actionId\",\n                \"sequenceIndex\",\n              \
+        \  \"effects\",\n                \"narrativeEffect\",\n                \"isCoreEvent\"\n            ],\n         \
+        \   \"properties\": {\n                \"actionId\": {\n                    \"type\": \"string\",\n              \
+        \      \"description\": \"Action identifier from action registry\"\n                },\n                \"sequenceIndex\"\
+        : {\n                    \"type\": \"integer\",\n                    \"description\": \"Sequence index within the
+        plan\"\n                },\n                \"effects\": {\n                    \"type\": \"array\",\n           \
+        \         \"items\": {\n                        \"$ref\": \"#/$defs/ActionEffect\"\n                    },\n     \
+        \               \"description\": \"World state effects of this action\"\n                },\n                \"narrativeEffect\"\
+        : {\n                    \"$ref\": \"#/$defs/NarrativeEffect\",\n                    \"description\": \"Narrative
+        effect on the emotional arc\"\n                },\n                \"isCoreEvent\": {\n                    \"type\"\
+        : \"boolean\",\n                    \"description\": \"Whether this is an obligatory scene\"\n                },\n\
+        \                \"chainedFrom\": {\n                    \"type\": \"string\",\n                    \"nullable\":
+        true,\n                    \"description\": \"If chained, the ID of the action it was chained from\"\n           \
+        \     }\n            }\n        },\n        \"ActionEffect\": {\n            \"type\": \"object\",\n            \"\
+        additionalProperties\": false,\n            \"description\": \"Effect of an action on world state\",\n           \
+        \ \"required\": [\n                \"key\",\n                \"value\"\n            ],\n            \"properties\"\
+        : {\n                \"key\": {\n                    \"type\": \"string\",\n                    \"description\": \"\
+        State key to modify\"\n                },\n                \"value\": {\n                    \"description\": \"New
+        value to set (any type)\"\n                },\n                \"cardinality\": {\n                    \"$ref\": \"\
+        #/$defs/EffectCardinality\",\n                    \"description\": \"How the effect is applied\"\n               \
+        \ }\n            }\n        },\n        \"EffectCardinality\": {\n            \"type\": \"string\",\n            \"\
+        enum\": [\n                \"Exclusive\",\n                \"Additive\"\n            ],\n            \"description\"\
+        : \"Cardinality for effect application.\\nExclusive: Replaces existing value at key\\nAdditive: Adds to collection
+        at key\\n\"\n        },\n        \"NarrativeEffect\": {\n            \"type\": \"object\",\n            \"additionalProperties\"\
+        : false,\n            \"description\": \"Narrative effect on the emotional arc\",\n            \"properties\": {\n\
+        \                \"primarySpectrumDelta\": {\n                    \"type\": \"number\",\n                    \"format\"\
         : \"double\",\n                    \"nullable\": true,\n                    \"description\": \"Delta to apply to the
-        secondary spectrum\"\n                },\n                \"positionAdvance\": {\n                    \"type\": \"\
-        string\",\n                    \"nullable\": true,\n                    \"description\": \"Position advance type (micro,
-        standard, macro)\"\n                }\n            }\n        },\n        \"PhaseTargetState\": {\n            \"\
-        x-sdk-type\": \"BeyondImmersion.Bannou.StorylineStoryteller.Templates.PhaseTargetState\",\n            \"type\": \"\
-        object\",\n            \"additionalProperties\": false,\n            \"description\": \"Target state for phase completion
-        (SDK type)\",\n            \"required\": [\n                \"minPrimarySpectrum\",\n                \"maxPrimarySpectrum\"\
-        \n            ],\n            \"properties\": {\n                \"minPrimarySpectrum\": {\n                    \"\
-        type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"Minimum primary
-        spectrum value for this phase\"\n                },\n                \"maxPrimarySpectrum\": {\n                 \
-        \   \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"Maximum
-        primary spectrum value for this phase\"\n                },\n                \"rangeDescription\": {\n           \
-        \         \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"\
-        Human-readable description of this state range\"\n                }\n            }\n        },\n        \"PhasePosition\"\
-        : {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.StorylineStoryteller.Templates.PhasePosition\",\n      \
-        \      \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Phase position
-        constraints from Save the Cat beat timing (SDK type)\",\n            \"required\": [\n                \"stcCenter\"\
+        primary spectrum\"\n                },\n                \"secondarySpectrumDelta\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n            \
+        \        \"description\": \"Delta to apply to the secondary spectrum\"\n                },\n                \"positionAdvance\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Position advance type (micro, standard, macro)\"\n                }\n            }\n        },\n        \"PhaseTargetState\"\
+        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
+        : \"Target state for phase completion\",\n            \"required\": [\n                \"minPrimarySpectrum\",\n \
+        \               \"maxPrimarySpectrum\"\n            ],\n            \"properties\": {\n                \"minPrimarySpectrum\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        description\": \"Minimum primary spectrum value for this phase\"\n                },\n                \"maxPrimarySpectrum\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        description\": \"Maximum primary spectrum value for this phase\"\n                },\n                \"rangeDescription\"\
+        : {\n                    \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\"\
+        : \"Human-readable description of this state range\"\n                }\n            }\n        },\n        \"PhasePosition\"\
+        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
+        : \"Phase position constraints from Save the Cat beat timing\",\n            \"required\": [\n                \"stcCenter\"\
         ,\n                \"floor\",\n                \"ceiling\",\n                \"validationBand\"\n            ],\n\
         \            \"properties\": {\n                \"stcCenter\": {\n                    \"type\": \"number\",\n    \
         \                \"format\": \"double\",\n                    \"description\": \"Target position from STC beat timing\"\
@@ -367,34 +357,31 @@ paths:
         \    \"description\": \"High-level story goal that drives arc selection.\\nrevenge: Character seeks vengeance for
         past wrongs\\nresurrection: Restoring something/someone lost\\nlegacy: Creating or continuing a lasting impact\\nmystery:
         Uncovering hidden truths\\npeace: Resolving conflicts and finding harmony\\n\"\n        },\n        \"ArcType\": {\n\
-        \            \"x-sdk-type\": \"BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcType\",\n            \"type\": \"string\"\
-        ,\n            \"enum\": [\n                \"RagsToRiches\",\n                \"Tragedy\",\n                \"ManInHole\"\
-        ,\n                \"Icarus\",\n                \"Cinderella\",\n                \"Oedipus\"\n            ],\n   \
-        \         \"description\": \"Emotional arc shapes from Reagan et al. research.\\nRagsToRiches: Rise (1)\\nTragedy:
-        Fall (2)\\nManInHole: Fall then rise (3)\\nIcarus: Rise then fall (4)\\nCinderella: Rise, fall, rise (5)\\nOedipus:
-        Fall, rise, fall (6)\\n\"\n        },\n        \"SpectrumType\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.StorylineTheory.Spectrums.SpectrumType\"\
-        ,\n            \"type\": \"string\",\n            \"enum\": [\n                \"LifeDeath\",\n                \"\
-        HonorDishonor\",\n                \"JusticeInjustice\",\n                \"FreedomSubjugation\",\n               \
-        \ \"LoveHate\",\n                \"RespectShame\",\n                \"PowerImpotence\",\n                \"SuccessFailure\"\
-        ,\n                \"AltruismSelfishness\",\n                \"WisdomIgnorance\"\n            ],\n            \"description\"\
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"RagsToRiches\",\n                \"\
+        Tragedy\",\n                \"ManInHole\",\n                \"Icarus\",\n                \"Cinderella\",\n       \
+        \         \"Oedipus\"\n            ],\n            \"description\": \"Emotional arc shapes from Reagan et al. research.\\
+        nRagsToRiches: Rise (1)\\nTragedy: Fall (2)\\nManInHole: Fall then rise (3)\\nIcarus: Rise then fall (4)\\nCinderella:
+        Rise, fall, rise (5)\\nOedipus: Fall, rise, fall (6)\\n\"\n        },\n        \"SpectrumType\": {\n            \"\
+        type\": \"string\",\n            \"enum\": [\n                \"LifeDeath\",\n                \"HonorDishonor\",\n\
+        \                \"JusticeInjustice\",\n                \"FreedomSubjugation\",\n                \"LoveHate\",\n \
+        \               \"RespectShame\",\n                \"PowerImpotence\",\n                \"SuccessFailure\",\n    \
+        \            \"AltruismSelfishness\",\n                \"WisdomIgnorance\"\n            ],\n            \"description\"\
         : \"The 10 Story Grid Life Value spectrums.\\nThese are bipolar axes for emotional progression.\\n\"\n        },\n\
-        \        \"StorylinePlanPhase\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.StorylineStoryteller.Planning.StorylinePlanPhase\"\
-        ,\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"\
-        A phase in the storyline plan (SDK type)\",\n            \"required\": [\n                \"phaseNumber\",\n     \
-        \           \"name\",\n                \"actions\",\n                \"targetState\",\n                \"positionBounds\"\
-        \n            ],\n            \"properties\": {\n                \"phaseNumber\": {\n                    \"type\"\
-        : \"integer\",\n                    \"minimum\": 1,\n                    \"description\": \"1-based phase number\"\
-        \n                },\n                \"name\": {\n                    \"type\": \"string\",\n                   \
-        \ \"description\": \"Phase name\"\n                },\n                \"actions\": {\n                    \"type\"\
-        : \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/StorylinePlanAction\"\n\
-        \                    },\n                    \"description\": \"Actions in this phase\"\n                },\n    \
-        \            \"targetState\": {\n                    \"$ref\": \"#/$defs/PhaseTargetState\",\n                   \
-        \ \"description\": \"Target state for phase completion\"\n                },\n                \"positionBounds\":
-        {\n                    \"$ref\": \"#/$defs/PhasePosition\",\n                    \"description\": \"Position bounds
+        \        \"StorylinePlanPhase\": {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n\
+        \            \"description\": \"A phase in the storyline plan\",\n            \"required\": [\n                \"\
+        phaseNumber\",\n                \"name\",\n                \"actions\",\n                \"targetState\",\n      \
+        \          \"positionBounds\"\n            ],\n            \"properties\": {\n                \"phaseNumber\": {\n\
+        \                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"description\"\
+        : \"1-based phase number\"\n                },\n                \"name\": {\n                    \"type\": \"string\"\
+        ,\n                    \"description\": \"Phase name\"\n                },\n                \"actions\": {\n     \
+        \               \"type\": \"array\",\n                    \"items\": {\n                        \"$ref\": \"#/$defs/StorylinePlanAction\"\
+        \n                    },\n                    \"description\": \"Actions in this phase\"\n                },\n   \
+        \             \"targetState\": {\n                    \"$ref\": \"#/$defs/PhaseTargetState\",\n                  \
+        \  \"description\": \"Target state for phase completion\"\n                },\n                \"positionBounds\"\
+        : {\n                    \"$ref\": \"#/$defs/PhasePosition\",\n                    \"description\": \"Position bounds
         for this phase\"\n                }\n            }\n        },\n        \"StorylinePlanAction\": {\n            \"\
-        x-sdk-type\": \"BeyondImmersion.Bannou.StorylineStoryteller.Planning.StorylinePlanAction\",\n            \"type\"\
-        : \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"A planned action in the
-        storyline (SDK type)\",\n            \"required\": [\n                \"actionId\",\n                \"sequenceIndex\"\
+        type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"A planned action
+        in the storyline\",\n            \"required\": [\n                \"actionId\",\n                \"sequenceIndex\"\
         ,\n                \"effects\",\n                \"narrativeEffect\",\n                \"isCoreEvent\"\n         \
         \   ],\n            \"properties\": {\n                \"actionId\": {\n                    \"type\": \"string\",\n\
         \                    \"description\": \"Action identifier from action registry\"\n                },\n           \
@@ -407,41 +394,37 @@ paths:
         : {\n                    \"type\": \"boolean\",\n                    \"description\": \"Whether this is an obligatory
         scene\"\n                },\n                \"chainedFrom\": {\n                    \"type\": \"string\",\n     \
         \               \"nullable\": true,\n                    \"description\": \"If chained, the ID of the action it was
-        chained from\"\n                }\n            }\n        },\n        \"ActionEffect\": {\n            \"x-sdk-type\"\
-        : \"BeyondImmersion.Bannou.StorylineStoryteller.Actions.ActionEffect\",\n            \"type\": \"object\",\n     \
-        \       \"additionalProperties\": false,\n            \"description\": \"Effect of an action on world state (SDK type)\"\
-        ,\n            \"required\": [\n                \"key\",\n                \"value\"\n            ],\n            \"\
-        properties\": {\n                \"key\": {\n                    \"type\": \"string\",\n                    \"description\"\
-        : \"State key to modify\"\n                },\n                \"value\": {\n                    \"description\":
-        \"New value to set (any type)\"\n                },\n                \"cardinality\": {\n                    \"$ref\"\
-        : \"#/$defs/EffectCardinality\",\n                    \"description\": \"How the effect is applied\"\n           \
-        \     }\n            }\n        },\n        \"EffectCardinality\": {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.StorylineStoryteller.Actions.EffectCardinality\"\
-        ,\n            \"type\": \"string\",\n            \"enum\": [\n                \"Exclusive\",\n                \"\
-        Additive\"\n            ],\n            \"description\": \"Cardinality for effect application.\\nExclusive: Replaces
-        existing value at key\\nAdditive: Adds to collection at key\\n\"\n        },\n        \"NarrativeEffect\": {\n   \
-        \         \"x-sdk-type\": \"BeyondImmersion.Bannou.StorylineStoryteller.Actions.NarrativeEffect\",\n            \"\
-        type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Narrative effect
-        on the emotional arc (SDK type)\",\n            \"properties\": {\n                \"primarySpectrumDelta\": {\n \
-        \                   \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"nullable\"\
-        : true,\n                    \"description\": \"Delta to apply to the primary spectrum\"\n                },\n   \
-        \             \"secondarySpectrumDelta\": {\n                    \"type\": \"number\",\n                    \"format\"\
-        : \"double\",\n                    \"nullable\": true,\n                    \"description\": \"Delta to apply to the
-        secondary spectrum\"\n                },\n                \"positionAdvance\": {\n                    \"type\": \"\
-        string\",\n                    \"nullable\": true,\n                    \"description\": \"Position advance type (micro,
-        standard, macro)\"\n                }\n            }\n        },\n        \"PhaseTargetState\": {\n            \"\
-        x-sdk-type\": \"BeyondImmersion.Bannou.StorylineStoryteller.Templates.PhaseTargetState\",\n            \"type\": \"\
-        object\",\n            \"additionalProperties\": false,\n            \"description\": \"Target state for phase completion
-        (SDK type)\",\n            \"required\": [\n                \"minPrimarySpectrum\",\n                \"maxPrimarySpectrum\"\
-        \n            ],\n            \"properties\": {\n                \"minPrimarySpectrum\": {\n                    \"\
-        type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"Minimum primary
+        chained from\"\n                }\n            }\n        },\n        \"ActionEffect\": {\n            \"type\": \"\
+        object\",\n            \"additionalProperties\": false,\n            \"description\": \"Effect of an action on world
+        state\",\n            \"required\": [\n                \"key\",\n                \"value\"\n            ],\n     \
+        \       \"properties\": {\n                \"key\": {\n                    \"type\": \"string\",\n               \
+        \     \"description\": \"State key to modify\"\n                },\n                \"value\": {\n               \
+        \     \"description\": \"New value to set (any type)\"\n                },\n                \"cardinality\": {\n \
+        \                   \"$ref\": \"#/$defs/EffectCardinality\",\n                    \"description\": \"How the effect
+        is applied\"\n                }\n            }\n        },\n        \"EffectCardinality\": {\n            \"type\"\
+        : \"string\",\n            \"enum\": [\n                \"Exclusive\",\n                \"Additive\"\n           \
+        \ ],\n            \"description\": \"Cardinality for effect application.\\nExclusive: Replaces existing value at key\\
+        nAdditive: Adds to collection at key\\n\"\n        },\n        \"NarrativeEffect\": {\n            \"type\": \"object\"\
+        ,\n            \"additionalProperties\": false,\n            \"description\": \"Narrative effect on the emotional
+        arc\",\n            \"properties\": {\n                \"primarySpectrumDelta\": {\n                    \"type\":
+        \"number\",\n                    \"format\": \"double\",\n                    \"nullable\": true,\n              \
+        \      \"description\": \"Delta to apply to the primary spectrum\"\n                },\n                \"secondarySpectrumDelta\"\
+        : {\n                    \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Delta to apply to the secondary spectrum\"\n           \
+        \     },\n                \"positionAdvance\": {\n                    \"type\": \"string\",\n                    \"\
+        nullable\": true,\n                    \"description\": \"Position advance type (micro, standard, macro)\"\n     \
+        \           }\n            }\n        },\n        \"PhaseTargetState\": {\n            \"type\": \"object\",\n   \
+        \         \"additionalProperties\": false,\n            \"description\": \"Target state for phase completion\",\n\
+        \            \"required\": [\n                \"minPrimarySpectrum\",\n                \"maxPrimarySpectrum\"\n  \
+        \          ],\n            \"properties\": {\n                \"minPrimarySpectrum\": {\n                    \"type\"\
+        : \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"Minimum primary
         spectrum value for this phase\"\n                },\n                \"maxPrimarySpectrum\": {\n                 \
         \   \"type\": \"number\",\n                    \"format\": \"double\",\n                    \"description\": \"Maximum
         primary spectrum value for this phase\"\n                },\n                \"rangeDescription\": {\n           \
         \         \"type\": \"string\",\n                    \"nullable\": true,\n                    \"description\": \"\
         Human-readable description of this state range\"\n                }\n            }\n        },\n        \"PhasePosition\"\
-        : {\n            \"x-sdk-type\": \"BeyondImmersion.Bannou.StorylineStoryteller.Templates.PhasePosition\",\n      \
-        \      \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\": \"Phase position
-        constraints from Save the Cat beat timing (SDK type)\",\n            \"required\": [\n                \"stcCenter\"\
+        : {\n            \"type\": \"object\",\n            \"additionalProperties\": false,\n            \"description\"\
+        : \"Phase position constraints from Save the Cat beat timing\",\n            \"required\": [\n                \"stcCenter\"\
         ,\n                \"floor\",\n                \"ceiling\",\n                \"validationBand\"\n            ],\n\
         \            \"properties\": {\n                \"stcCenter\": {\n                    \"type\": \"number\",\n    \
         \                \"format\": \"double\",\n                    \"description\": \"Target position from STC beat timing\"\
@@ -551,12 +534,11 @@ paths:
         \    \"description\": \"High-level story goal that drives arc selection.\\nrevenge: Character seeks vengeance for
         past wrongs\\nresurrection: Restoring something/someone lost\\nlegacy: Creating or continuing a lasting impact\\nmystery:
         Uncovering hidden truths\\npeace: Resolving conflicts and finding harmony\\n\"\n        },\n        \"ArcType\": {\n\
-        \            \"x-sdk-type\": \"BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcType\",\n            \"type\": \"string\"\
-        ,\n            \"enum\": [\n                \"RagsToRiches\",\n                \"Tragedy\",\n                \"ManInHole\"\
-        ,\n                \"Icarus\",\n                \"Cinderella\",\n                \"Oedipus\"\n            ],\n   \
-        \         \"description\": \"Emotional arc shapes from Reagan et al. research.\\nRagsToRiches: Rise (1)\\nTragedy:
-        Fall (2)\\nManInHole: Fall then rise (3)\\nIcarus: Rise then fall (4)\\nCinderella: Rise, fall, rise (5)\\nOedipus:
-        Fall, rise, fall (6)\\n\"\n        }\n    }\n}"
+        \            \"type\": \"string\",\n            \"enum\": [\n                \"RagsToRiches\",\n                \"\
+        Tragedy\",\n                \"ManInHole\",\n                \"Icarus\",\n                \"Cinderella\",\n       \
+        \         \"Oedipus\"\n            ],\n            \"description\": \"Emotional arc shapes from Reagan et al. research.\\
+        nRagsToRiches: Rise (1)\\nTragedy: Fall (2)\\nManInHole: Fall then rise (3)\\nIcarus: Rise then fall (4)\\nCinderella:
+        Rise, fall, rise (5)\\nOedipus: Fall, rise, fall (6)\\n\"\n        }\n    }\n}"
       x-endpoint-info-json: "{\n    \"summary\": \"List cached storyline plans\",\n    \"description\": \"Lists storyline
         plans in the cache, optionally filtered by realm.\\nPlans are ordered by creation time (newest first).\\n\",\n   \
         \ \"tags\": [\n        \"Plans\"\n    ],\n    \"deprecated\": false,\n    \"operationId\": \"ListPlans\"\n}"
@@ -2182,7 +2164,6 @@ components:
         mystery: Uncovering hidden truths
         peace: Resolving conflicts and finding harmony
     ArcType:
-      x-sdk-type: BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcType
       type: string
       enum:
       - RagsToRiches
@@ -2200,7 +2181,6 @@ components:
         Cinderella: Rise, fall, rise (5)
         Oedipus: Fall, rise, fall (6)
     SpectrumType:
-      x-sdk-type: BeyondImmersion.Bannou.StorylineTheory.Spectrums.SpectrumType
       type: string
       enum:
       - LifeDeath
@@ -2217,7 +2197,6 @@ components:
         The 10 Story Grid Life Value spectrums.
         These are bipolar axes for emotional progression.
     PlanningUrgency:
-      x-sdk-type: BeyondImmersion.Bannou.StorylineStoryteller.Planning.PlanningUrgency
       type: string
       enum:
       - Low
@@ -2508,10 +2487,9 @@ components:
           type: integer
           description: Total matching plans
     StorylinePlanPhase:
-      x-sdk-type: BeyondImmersion.Bannou.StorylineStoryteller.Planning.StorylinePlanPhase
       type: object
       additionalProperties: false
-      description: A phase in the storyline plan (SDK type)
+      description: A phase in the storyline plan
       required:
       - phaseNumber
       - name
@@ -2538,10 +2516,9 @@ components:
           $ref: '#/components/schemas/PhasePosition'
           description: Position bounds for this phase
     StorylinePlanAction:
-      x-sdk-type: BeyondImmersion.Bannou.StorylineStoryteller.Planning.StorylinePlanAction
       type: object
       additionalProperties: false
-      description: A planned action in the storyline (SDK type)
+      description: A planned action in the storyline
       required:
       - actionId
       - sequenceIndex
@@ -2571,10 +2548,9 @@ components:
           nullable: true
           description: If chained, the ID of the action it was chained from
     ActionEffect:
-      x-sdk-type: BeyondImmersion.Bannou.StorylineStoryteller.Actions.ActionEffect
       type: object
       additionalProperties: false
-      description: Effect of an action on world state (SDK type)
+      description: Effect of an action on world state
       required:
       - key
       - value
@@ -2588,7 +2564,6 @@ components:
           $ref: '#/components/schemas/EffectCardinality'
           description: How the effect is applied
     EffectCardinality:
-      x-sdk-type: BeyondImmersion.Bannou.StorylineStoryteller.Actions.EffectCardinality
       type: string
       enum:
       - Exclusive
@@ -2598,10 +2573,9 @@ components:
         Exclusive: Replaces existing value at key
         Additive: Adds to collection at key
     NarrativeEffect:
-      x-sdk-type: BeyondImmersion.Bannou.StorylineStoryteller.Actions.NarrativeEffect
       type: object
       additionalProperties: false
-      description: Narrative effect on the emotional arc (SDK type)
+      description: Narrative effect on the emotional arc
       properties:
         primarySpectrumDelta:
           type: number
@@ -2618,10 +2592,9 @@ components:
           nullable: true
           description: Position advance type (micro, standard, macro)
     PhaseTargetState:
-      x-sdk-type: BeyondImmersion.Bannou.StorylineStoryteller.Templates.PhaseTargetState
       type: object
       additionalProperties: false
-      description: Target state for phase completion (SDK type)
+      description: Target state for phase completion
       required:
       - minPrimarySpectrum
       - maxPrimarySpectrum
@@ -2639,10 +2612,9 @@ components:
           nullable: true
           description: Human-readable description of this state range
     PhasePosition:
-      x-sdk-type: BeyondImmersion.Bannou.StorylineStoryteller.Templates.PhasePosition
       type: object
       additionalProperties: false
-      description: Phase position constraints from Save the Cat beat timing (SDK type)
+      description: Phase position constraints from Save the Cat beat timing
       required:
       - stcCenter
       - floor

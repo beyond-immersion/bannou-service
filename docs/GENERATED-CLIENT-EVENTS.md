@@ -31,7 +31,7 @@ This document lists all typed events available for subscription in the Bannou Cl
 | `CapabilityManifestEvent` | `connect.capability_manifest` | Sent to client when their available API capabilities change. |
 | `DisconnectNotificationEvent` | `connect.disconnect_notification` | Sent to client before WebSocket connection is closed. |
 | `GameActionResultEvent` | `game_session.action_result` | Sent to relevant players when a game action produces results... |
-| `ChatMessageReceivedEvent` | `game_session.chat_received` | Sent to recipients when a chat message is posted in the sess... |
+| `SessionChatReceivedEvent` | `game_session.chat_received` | Sent to recipients when a chat message is posted in the sess... |
 | `PlayerJoinedEvent` | `game_session.player_joined` | Sent to all session participants when a new player joins. |
 | `PlayerKickedEvent` | `game_session.player_kicked` | Sent to all session participants when a player is kicked. |
 | `PlayerLeftEvent` | `game_session.player_left` | Sent to all session participants when a player leaves volunt... |
@@ -494,7 +494,7 @@ Sent to relevant players when a game action produces results.
 | `success` | Whether the action succeeded |
 | `visibleEffects` | Visual/audio effects other players should see |
 
-### `ChatMessageReceivedEvent`
+### `SessionChatReceivedEvent`
 
 **Event Name**: `game_session.chat_received`
 

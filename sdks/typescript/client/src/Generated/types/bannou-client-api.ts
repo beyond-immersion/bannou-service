@@ -12308,7 +12308,7 @@ export interface components {
      * @enum {string}
      */
     AchievementType: 'standard' | 'progressive' | 'hidden' | 'secret';
-    /** @description Effect of an action on world state (SDK type) */
+    /** @description Effect of an action on world state */
     ActionEffect: {
       /** @description State key to modify */
       key: string;
@@ -27356,7 +27356,7 @@ export interface components {
       /** @description Mute duration in minutes (null for permanent) */
       durationMinutes?: number | null;
     };
-    /** @description Narrative effect on the emotional arc (SDK type) */
+    /** @description Narrative effect on the emotional arc */
     NarrativeEffect: {
       /**
        * Format: double
@@ -28085,7 +28085,7 @@ export interface components {
        */
       scenarioCapacityUtilization: number;
     };
-    /** @description Phase position constraints from Save the Cat beat timing (SDK type) */
+    /** @description Phase position constraints from Save the Cat beat timing */
     PhasePosition: {
       /**
        * Format: double
@@ -28108,7 +28108,7 @@ export interface components {
        */
       validationBand: number;
     };
-    /** @description Target state for phase completion (SDK type) */
+    /** @description Target state for phase completion */
     PhaseTargetState: {
       /**
        * Format: double
@@ -32965,7 +32965,7 @@ export interface components {
       /** @description Key choices made during the scenario (for narrative hooks) */
       choices?: string[] | null;
     };
-    /** @description A planned action in the storyline (SDK type) */
+    /** @description A planned action in the storyline */
     StorylinePlanAction: {
       /** @description Action identifier from action registry */
       actionId: string;
@@ -32980,7 +32980,7 @@ export interface components {
       /** @description If chained, the ID of the action it was chained from */
       chainedFrom?: string | null;
     };
-    /** @description A phase in the storyline plan (SDK type) */
+    /** @description A phase in the storyline plan */
     StorylinePlanPhase: {
       /** @description 1-based phase number */
       phaseNumber: number;

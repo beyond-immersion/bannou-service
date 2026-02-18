@@ -15,10 +15,10 @@ using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.IO.Compression;
 using System.Runtime.CompilerServices;
-using StorylinePlan = BeyondImmersion.Bannou.StorylineStoryteller.Planning.StorylinePlan;
 using SdkArcType = BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcType;
-using SdkSpectrumType = BeyondImmersion.Bannou.StorylineTheory.Spectrums.SpectrumType;
 using SdkPlanningUrgency = BeyondImmersion.Bannou.StorylineStoryteller.Planning.PlanningUrgency;
+using SdkSpectrumType = BeyondImmersion.Bannou.StorylineTheory.Spectrums.SpectrumType;
+using StorylinePlan = BeyondImmersion.Bannou.StorylineStoryteller.Planning.StorylinePlan;
 
 [assembly: InternalsVisibleTo("lib-storyline.tests")]
 

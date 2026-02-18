@@ -140,7 +140,6 @@ public partial class StorylineController
             }
         },
         "ArcType": {
-            "x-sdk-type": "BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcType",
             "type": "string",
             "enum": [
                 "RagsToRiches",
@@ -150,17 +149,16 @@ public partial class StorylineController
                 "Cinderella",
                 "Oedipus"
             ],
-            "description": "Emotional arc shapes from Reagan et al. research.\nRagsToRiches: Rise (1)\nTragedy: Fall (2)\nManInHole: Fall then rise (3)\nIcarus: Rise then fall (4)\ nCinderella: Rise, fall, rise (5)\nOedipus: Fall, rise, fall (6)\n"
+            "description": "Emotional arc shapes from Reagan et al. research.\nRagsToRiches: Rise (1)\nTragedy: Fall (2)\ nManInHole: Fall then rise (3)\nIcarus: Rise then fall (4)\nCinderella: Rise, fall, rise (5)\nOedipus: Fall, rise, fall (6)\n"
         },
         "PlanningUrgency": {
-            "x-sdk-type": "BeyondImmersion.Bannou.StorylineStoryteller.Planning.PlanningUrgency",
             "type": "string",
             "enum": [
                 "Low",
                 "Medium",
                 "High"
             ],
-            "description": "GOAP planning urgency level affecting search parameters.\ nLow: More iterations, wider beam (1000/20)\nMedium: Balanced (500/15)\nHigh: Fewer iterations, narrower beam (200/10)\n"
+            "description": "GOAP planning urgency level affecting search parameters.\nLow: More iterations, wider beam (1000/20)\ nMedium: Balanced (500/15)\nHigh: Fewer iterations, narrower beam (200/10)\n"
         }
     }
 }
@@ -276,7 +274,6 @@ public partial class StorylineController
             "description": "High-level story goal that drives arc selection.\nrevenge: Character seeks vengeance for past wrongs\nresurrection: Restoring something/someone lost\nlegacy: Creating or continuing a lasting impact\nmystery: Uncovering hidden truths\npeace: Resolving conflicts and finding harmony\n"
         },
         "ArcType": {
-            "x-sdk-type": "BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcType",
             "type": "string",
             "enum": [
                 "RagsToRiches",
@@ -286,10 +283,9 @@ public partial class StorylineController
                 "Cinderella",
                 "Oedipus"
             ],
-            "description": "Emotional arc shapes from Reagan et al. research.\nRagsToRiches: Rise (1)\nTragedy: Fall (2)\nManInHole: Fall then rise (3)\nIcarus: Rise then fall (4)\ nCinderella: Rise, fall, rise (5)\nOedipus: Fall, rise, fall (6)\n"
+            "description": "Emotional arc shapes from Reagan et al. research.\nRagsToRiches: Rise (1)\nTragedy: Fall (2)\nManInHole: Fall then rise (3)\nIcarus: Rise then fall (4)\nCinderella: Rise, fall, rise (5)\nOedipus: Fall, rise, fall (6)\n"
         },
         "SpectrumType": {
-            "x-sdk-type": "BeyondImmersion.Bannou.StorylineTheory.Spectrums.SpectrumType",
             "type": "string",
             "enum": [
                 "LifeDeath",
@@ -306,10 +302,9 @@ public partial class StorylineController
             "description": "The 10 Story Grid Life Value spectrums.\nThese are bipolar axes for emotional progression.\n"
         },
         "StorylinePlanPhase": {
-            "x-sdk-type": "BeyondImmersion.Bannou.StorylineStoryteller.Planning.StorylinePlanPhase",
             "type": "object",
             "additionalProperties": false,
-            "description": "A phase in the storyline plan (SDK type)",
+            "description": "A phase in the storyline plan",
             "required": [
                 "phaseNumber",
                 "name",
@@ -345,10 +340,9 @@ public partial class StorylineController
             }
         },
         "StorylinePlanAction": {
-            "x-sdk-type": "BeyondImmersion.Bannou.StorylineStoryteller.Planning.StorylinePlanAction",
             "type": "object",
             "additionalProperties": false,
-            "description": "A planned action in the storyline (SDK type)",
+            "description": "A planned action in the storyline",
             "required": [
                 "actionId",
                 "sequenceIndex",
@@ -388,10 +382,9 @@ public partial class StorylineController
             }
         },
         "ActionEffect": {
-            "x-sdk-type": "BeyondImmersion.Bannou.StorylineStoryteller.Actions.ActionEffect",
             "type": "object",
             "additionalProperties": false,
-            "description": "Effect of an action on world state (SDK type)",
+            "description": "Effect of an action on world state",
             "required": [
                 "key",
                 "value"
@@ -411,7 +404,6 @@ public partial class StorylineController
             }
         },
         "EffectCardinality": {
-            "x-sdk-type": "BeyondImmersion.Bannou.StorylineStoryteller.Actions.EffectCardinality",
             "type": "string",
             "enum": [
                 "Exclusive",
@@ -420,10 +412,9 @@ public partial class StorylineController
             "description": "Cardinality for effect application.\nExclusive: Replaces existing value at key\nAdditive: Adds to collection at key\n"
         },
         "NarrativeEffect": {
-            "x-sdk-type": "BeyondImmersion.Bannou.StorylineStoryteller.Actions.NarrativeEffect",
             "type": "object",
             "additionalProperties": false,
-            "description": "Narrative effect on the emotional arc (SDK type)",
+            "description": "Narrative effect on the emotional arc",
             "properties": {
                 "primarySpectrumDelta": {
                     "type": "number",
@@ -445,10 +436,9 @@ public partial class StorylineController
             }
         },
         "PhaseTargetState": {
-            "x-sdk-type": "BeyondImmersion.Bannou.StorylineStoryteller.Templates.PhaseTargetState",
             "type": "object",
             "additionalProperties": false,
-            "description": "Target state for phase completion (SDK type)",
+            "description": "Target state for phase completion",
             "required": [
                 "minPrimarySpectrum",
                 "maxPrimarySpectrum"
@@ -472,10 +462,9 @@ public partial class StorylineController
             }
         },
         "PhasePosition": {
-            "x-sdk-type": "BeyondImmersion.Bannou.StorylineStoryteller.Templates.PhasePosition",
             "type": "object",
             "additionalProperties": false,
-            "description": "Phase position constraints from Save the Cat beat timing (SDK type)",
+            "description": "Phase position constraints from Save the Cat beat timing",
             "required": [
                 "stcCenter",
                 "floor",
@@ -814,7 +803,6 @@ public partial class StorylineController
             "description": "High-level story goal that drives arc selection.\nrevenge: Character seeks vengeance for past wrongs\nresurrection: Restoring something/someone lost\nlegacy: Creating or continuing a lasting impact\nmystery: Uncovering hidden truths\npeace: Resolving conflicts and finding harmony\n"
         },
         "ArcType": {
-            "x-sdk-type": "BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcType",
             "type": "string",
             "enum": [
                 "RagsToRiches",
@@ -824,10 +812,9 @@ public partial class StorylineController
                 "Cinderella",
                 "Oedipus"
             ],
-            "description": "Emotional arc shapes from Reagan et al. research.\nRagsToRiches: Rise (1)\nTragedy: Fall (2)\nManInHole: Fall then rise (3)\nIcarus: Rise then fall (4)\nCinderella: Rise, fall, rise (5)\nOedipus: Fall, rise, fall (6)\n"
+            "description": "Emotional arc shapes from Reagan et al. research.\ nRagsToRiches: Rise (1)\nTragedy: Fall (2)\nManInHole: Fall then rise (3)\nIcarus: Rise then fall (4)\nCinderella: Rise, fall, rise (5)\nOedipus: Fall, rise, fall (6)\n"
         },
         "SpectrumType": {
-            "x-sdk-type": "BeyondImmersion.Bannou.StorylineTheory.Spectrums.SpectrumType",
             "type": "string",
             "enum": [
                 "LifeDeath",
@@ -844,10 +831,9 @@ public partial class StorylineController
             "description": "The 10 Story Grid Life Value spectrums.\nThese are bipolar axes for emotional progression.\n"
         },
         "StorylinePlanPhase": {
-            "x-sdk-type": "BeyondImmersion.Bannou.StorylineStoryteller.Planning.StorylinePlanPhase",
             "type": "object",
             "additionalProperties": false,
-            "description": "A phase in the storyline plan (SDK type)",
+            "description": "A phase in the storyline plan",
             "required": [
                 "phaseNumber",
                 "name",
@@ -883,10 +869,9 @@ public partial class StorylineController
             }
         },
         "StorylinePlanAction": {
-            "x-sdk-type": "BeyondImmersion.Bannou.StorylineStoryteller.Planning.StorylinePlanAction",
             "type": "object",
             "additionalProperties": false,
-            "description": "A planned action in the storyline (SDK type)",
+            "description": "A planned action in the storyline",
             "required": [
                 "actionId",
                 "sequenceIndex",
@@ -926,10 +911,9 @@ public partial class StorylineController
             }
         },
         "ActionEffect": {
-            "x-sdk-type": "BeyondImmersion.Bannou.StorylineStoryteller.Actions.ActionEffect",
             "type": "object",
             "additionalProperties": false,
-            "description": "Effect of an action on world state (SDK type)",
+            "description": "Effect of an action on world state",
             "required": [
                 "key",
                 "value"
@@ -949,19 +933,17 @@ public partial class StorylineController
             }
         },
         "EffectCardinality": {
-            "x-sdk-type": "BeyondImmersion.Bannou.StorylineStoryteller.Actions.EffectCardinality",
             "type": "string",
             "enum": [
                 "Exclusive",
                 "Additive"
             ],
-            "description": "Cardinality for effect application.\nExclusive: Replaces existing value at key\nAdditive: Adds to collection at key\n"
+            "description": "Cardinality for effect application.\nExclusive: Replaces existing value at key\ nAdditive: Adds to collection at key\n"
         },
         "NarrativeEffect": {
-            "x-sdk-type": "BeyondImmersion.Bannou.StorylineStoryteller.Actions.NarrativeEffect",
             "type": "object",
             "additionalProperties": false,
-            "description": "Narrative effect on the emotional arc (SDK type)",
+            "description": "Narrative effect on the emotional arc",
             "properties": {
                 "primarySpectrumDelta": {
                     "type": "number",
@@ -983,10 +965,9 @@ public partial class StorylineController
             }
         },
         "PhaseTargetState": {
-            "x-sdk-type": "BeyondImmersion.Bannou.StorylineStoryteller.Templates.PhaseTargetState",
             "type": "object",
             "additionalProperties": false,
-            "description": "Target state for phase completion (SDK type)",
+            "description": "Target state for phase completion",
             "required": [
                 "minPrimarySpectrum",
                 "maxPrimarySpectrum"
@@ -1010,10 +991,9 @@ public partial class StorylineController
             }
         },
         "PhasePosition": {
-            "x-sdk-type": "BeyondImmersion.Bannou.StorylineStoryteller.Templates.PhasePosition",
             "type": "object",
             "additionalProperties": false,
-            "description": "Phase position constraints from Save the Cat beat timing (SDK type)",
+            "description": "Phase position constraints from Save the Cat beat timing",
             "required": [
                 "stcCenter",
                 "floor",
@@ -1322,7 +1302,6 @@ public partial class StorylineController
             "description": "High-level story goal that drives arc selection.\nrevenge: Character seeks vengeance for past wrongs\nresurrection: Restoring something/someone lost\nlegacy: Creating or continuing a lasting impact\nmystery: Uncovering hidden truths\npeace: Resolving conflicts and finding harmony\n"
         },
         "ArcType": {
-            "x-sdk-type": "BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcType",
             "type": "string",
             "enum": [
                 "RagsToRiches",
@@ -1332,7 +1311,7 @@ public partial class StorylineController
                 "Cinderella",
                 "Oedipus"
             ],
-            "description": "Emotional arc shapes from Reagan et al. research.\nRagsToRiches: Rise (1)\nTragedy: Fall (2)\nManInHole: Fall then rise (3)\nIcarus: Rise then fall (4)\nCinderella: Rise, fall, rise (5)\nOedipus: Fall, rise, fall (6)\n"
+            "description": "Emotional arc shapes from Reagan et al. research.\ nRagsToRiches: Rise (1)\nTragedy: Fall (2)\nManInHole: Fall then rise (3)\nIcarus: Rise then fall (4)\nCinderella: Rise, fall, rise (5)\nOedipus: Fall, rise, fall (6)\n"
         }
     }
 }

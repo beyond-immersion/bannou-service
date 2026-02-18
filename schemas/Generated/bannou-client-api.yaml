@@ -15738,11 +15738,9 @@ components:
       - hidden
       - secret
     ActionEffect:
-      x-sdk-type: 
-        BeyondImmersion.Bannou.StorylineStoryteller.Actions.ActionEffect
       type: object
       additionalProperties: false
-      description: Effect of an action on world state (SDK type)
+      description: Effect of an action on world state
       required:
       - key
       - value
@@ -16572,7 +16570,6 @@ components:
             type: string
           description: ICE candidates for NAT traversal (can be trickled later)
     ArcType:
-      x-sdk-type: BeyondImmersion.Bannou.StorylineTheory.Arcs.ArcType
       type: string
       enum:
       - RagsToRiches
@@ -26730,8 +26727,6 @@ components:
           format: date-time
           description: When weekly counter resets
     EffectCardinality:
-      x-sdk-type: 
-        BeyondImmersion.Bannou.StorylineStoryteller.Actions.EffectCardinality
       type: string
       enum:
       - Exclusive
@@ -38621,11 +38616,9 @@ components:
           nullable: true
           description: Mute duration in minutes (null for permanent)
     NarrativeEffect:
-      x-sdk-type: 
-        BeyondImmersion.Bannou.StorylineStoryteller.Actions.NarrativeEffect
       type: object
       additionalProperties: false
-      description: Narrative effect on the emotional arc (SDK type)
+      description: Narrative effect on the emotional arc
       properties:
         primarySpectrumDelta:
           type: number
@@ -39743,12 +39736,9 @@ components:
           format: float
           description: Ratio of active scenarios to global capacity (0.0-1.0)
     PhasePosition:
-      x-sdk-type: 
-        BeyondImmersion.Bannou.StorylineStoryteller.Templates.PhasePosition
       type: object
       additionalProperties: false
-      description: Phase position constraints from Save the Cat beat timing (SDK
-        type)
+      description: Phase position constraints from Save the Cat beat timing
       required:
       - stcCenter
       - floor
@@ -39772,11 +39762,9 @@ components:
           format: double
           description: Validation tolerance (±)
     PhaseTargetState:
-      x-sdk-type: 
-        BeyondImmersion.Bannou.StorylineStoryteller.Templates.PhaseTargetState
       type: object
       additionalProperties: false
-      description: Target state for phase completion (SDK type)
+      description: Target state for phase completion
       required:
       - minPrimarySpectrum
       - maxPrimarySpectrum
@@ -39950,8 +39938,6 @@ components:
           format: float
           description: Cost of this action
     PlanningUrgency:
-      x-sdk-type: 
-        BeyondImmersion.Bannou.StorylineStoryteller.Planning.PlanningUrgency
       type: string
       enum:
       - Low
@@ -46681,7 +46667,6 @@ components:
           format: date-time
           description: Timestamp when the species was last updated
     SpectrumType:
-      x-sdk-type: BeyondImmersion.Bannou.StorylineTheory.Spectrums.SpectrumType
       type: string
       enum:
       - LifeDeath
@@ -47349,11 +47334,9 @@ components:
           description: Key choices made during the scenario (for narrative 
             hooks)
     StorylinePlanAction:
-      x-sdk-type: 
-        BeyondImmersion.Bannou.StorylineStoryteller.Planning.StorylinePlanAction
       type: object
       additionalProperties: false
-      description: A planned action in the storyline (SDK type)
+      description: A planned action in the storyline
       required:
       - actionId
       - sequenceIndex
@@ -47383,11 +47366,9 @@ components:
           nullable: true
           description: If chained, the ID of the action it was chained from
     StorylinePlanPhase:
-      x-sdk-type: 
-        BeyondImmersion.Bannou.StorylineStoryteller.Planning.StorylinePlanPhase
       type: object
       additionalProperties: false
-      description: A phase in the storyline plan (SDK type)
+      description: A phase in the storyline plan
       required:
       - phaseNumber
       - name
