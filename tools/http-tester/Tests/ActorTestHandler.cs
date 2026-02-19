@@ -23,7 +23,7 @@ public class ActorTestHandler : BaseHttpTestHandler
         if (_cachedRealmId.HasValue)
             return _cachedRealmId.Value;
 
-        var realm = await CreateTestRealmAsync("ACTOR", "Actor", "spawn");
+        var realm = await CreateTestRealmAsync("ACTOR", "Actor", "SPAWN");
         _cachedRealmId = realm.RealmId;
         return _cachedRealmId.Value;
     }
