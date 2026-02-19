@@ -1,5 +1,6 @@
 using BeyondImmersion.BannouService;
 using BeyondImmersion.BannouService.Attributes;
+using BeyondImmersion.BannouService.Events;
 using BeyondImmersion.BannouService.HttpTester.Tests;
 using BeyondImmersion.BannouService.Mesh;
 using BeyondImmersion.BannouService.Mesh.Services;
@@ -346,6 +347,9 @@ public class Program
             Console.WriteLine("✅ Service provider setup completed successfully");
             Console.WriteLine("✅ RabbitMQ connectivity verified");
 
+            // Subscribe to service.error events for visibility into service-side failures
+            await SubscribeToServiceErrorEventsAsync();
+
             // Wait for services to register their permissions (signals service readiness)
             // This is more reliable than fixed delays since services only register after startup complete
             var permissionClient = ServiceProvider.GetRequiredService<BeyondImmersion.BannouService.Permission.IPermissionClient>();
@@ -502,6 +506,60 @@ public class Program
 
         Console.WriteLine($"❌ Messaging readiness check timed out after {timeout.TotalSeconds}s.");
         return false;
+    }
+
+    /// <summary>
+    /// Subscribes to service.error events from all services via RabbitMQ.
+    /// Logs received error events to provide visibility into service-side failures
+    /// without needing to inspect the service container logs directly.
+    /// </summary>
+    private static async Task SubscribeToServiceErrorEventsAsync()
+    {
+        if (ServiceProvider == null) return;
+
+        try
+        {
+            var messageSubscriber = ServiceProvider.GetRequiredService<IMessageSubscriber>();
+            await messageSubscriber.SubscribeAsync<ServiceErrorEvent>(
+                "service.error",
+                async (errorEvent, ct) =>
+                {
+                    var severityPrefix = errorEvent.Severity switch
+                    {
+                        ServiceErrorEventSeverity.Critical => "CRITICAL",
+                        ServiceErrorEventSeverity.Error => "ERROR",
+                        ServiceErrorEventSeverity.Warning => "WARN",
+                        _ => "INFO"
+                    };
+
+                    Console.WriteLine($"[SERVICE {severityPrefix}] [{errorEvent.ServiceName}] {errorEvent.Operation}: {errorEvent.ErrorType} - {errorEvent.Message}");
+
+                    if (errorEvent.Dependency != null)
+                        Console.WriteLine($"  Dependency: {errorEvent.Dependency}");
+
+                    if (errorEvent.Endpoint != null)
+                        Console.WriteLine($"  Endpoint: {errorEvent.Endpoint}");
+
+                    if (errorEvent.Stack != null)
+                    {
+                        // Print first 3 lines of stack trace to avoid flooding output
+                        var stackLines = errorEvent.Stack.Split('\n');
+                        var preview = string.Join("\n", stackLines.Take(3));
+                        Console.WriteLine($"  Stack: {preview}");
+                        if (stackLines.Length > 3)
+                            Console.WriteLine($"  ... ({stackLines.Length - 3} more lines)");
+                    }
+
+                    await Task.CompletedTask;
+                });
+
+            Console.WriteLine("✅ Subscribed to service.error events for error visibility");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"⚠️ Failed to subscribe to service.error events: {ex.Message}");
+            // Non-fatal - tests can still run without error event visibility
+        }
     }
 
     /// <summary>

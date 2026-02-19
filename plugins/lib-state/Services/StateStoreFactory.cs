@@ -534,7 +534,9 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
             }
 
             // Wrap with telemetry instrumentation if available
-            // Order matters: check most specific interface first (searchable > cacheable > base)
+            // Order matters: check most specific interface first
+            // Redis chain: searchable > cacheable > base
+            // MySQL chain: json-queryable > queryable > base
             if (_telemetryProvider != null)
             {
                 if (store is ISearchableStateStore<TValue> searchableStore)
@@ -547,9 +549,19 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
                     // Cacheable stores (Redis, InMemory) get the cacheable wrapper
                     store = _telemetryProvider.WrapCacheableStateStore(cacheableStore, storeName, backend);
                 }
+                else if (store is IJsonQueryableStateStore<TValue> jsonQueryableStore)
+                {
+                    // JSON queryable stores (MySQL, SQLite) get the JSON queryable wrapper
+                    store = _telemetryProvider.WrapJsonQueryableStateStore(jsonQueryableStore, storeName, backend);
+                }
+                else if (store is IQueryableStateStore<TValue> queryableStore)
+                {
+                    // Queryable stores get the queryable wrapper
+                    store = _telemetryProvider.WrapQueryableStateStore(queryableStore, storeName, backend);
+                }
                 else
                 {
-                    // MySQL and other base stores get the base wrapper
+                    // Base stores get the base wrapper
                     store = _telemetryProvider.WrapStateStore(store, storeName, backend);
                 }
             }

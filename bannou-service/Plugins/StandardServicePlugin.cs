@@ -68,7 +68,7 @@ public abstract class StandardServicePlugin<TService> : BaseBannouPlugin
         catch (Exception ex)
         {
             Logger?.LogError(ex, "Failed to start service");
-            return false;
+            throw;
         }
     }
 
