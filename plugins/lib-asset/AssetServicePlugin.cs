@@ -1,3 +1,4 @@
+using Amazon.Runtime;
 using Amazon.S3;
 using BeyondImmersion.Bannou.Bundle.Format;
 using BeyondImmersion.BannouService.Asset.Bundles;
@@ -95,20 +96,24 @@ public class AssetServicePlugin : StandardServicePlugin<IAssetService>
             var logger = sp.GetService<ILogger<MinioStorageProvider>>();
 
             var assetConfig = sp.GetRequiredService<AssetServiceConfiguration>();
+            var credentials = new BasicAWSCredentials(options.AccessKey, options.SecretKey);
             var config = new AmazonS3Config
             {
                 ServiceURL = $"{(options.UseSSL ? "https" : "http")}://{options.Endpoint}",
                 ForcePathStyle = assetConfig.StorageForcePathStyle,
-                UseHttp = !options.UseSSL
+                UseHttp = !options.UseSSL,
+                // AWSSDK.S3 v4 uses identity resolvers for credential resolution.
+                // Setting DefaultAWSCredentials on the config ensures the v4 identity
+                // resolver uses these credentials instead of the default chain
+                // (env vars, profiles, EC2 metadata).
+                DefaultAWSCredentials = credentials
             };
 
             logger?.LogInformation(
                 "Configuring AWS S3 client for MinIO presigned URLs: ServiceURL={ServiceURL}",
                 config.ServiceURL);
 
-            // Use string-based constructor for AWSSDK.S3 v4 compatibility
-            // (BasicAWSCredentials falls through to DefaultAWSCredentialsIdentityResolver in v4)
-            return new AmazonS3Client(options.AccessKey, options.SecretKey, config);
+            return new AmazonS3Client(credentials, config);
         });
 
         // Register storage provider
