@@ -750,11 +750,13 @@ public partial class ActorService : IActorService
 
             // Spawn the actor using the matched template
             // CharacterId is extracted from actor ID pattern via characterIdCaptureGroup if configured
+            // DefaultRealmId from template provides realm when no character is available to resolve from
             var spawnRequest = new SpawnActorRequest
             {
                 TemplateId = matchingTemplate.TemplateId,
                 ActorId = body.ActorId,
-                CharacterId = extractedCharacterId
+                CharacterId = extractedCharacterId,
+                RealmId = matchingTemplate.AutoSpawn?.DefaultRealmId
             };
 
             var (spawnStatus, spawnResponse) = await SpawnActorAsync(spawnRequest, cancellationToken);

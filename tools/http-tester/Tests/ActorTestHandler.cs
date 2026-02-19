@@ -609,11 +609,13 @@ public class ActorTestHandler : BaseHttpTestHandler
         await ExecuteTestAsync(async () =>
         {
             var actorClient = GetServiceClient<IActorClient>();
+            var realmId = await GetOrCreateTestRealmAsync();
             var category = GenerateTestSlug("autospawn-test");
             var actorIdPattern = $"autospawn-{category}-.*";
             var actorId = $"autospawn-{category}-actor-1";
 
-            // Create template with auto-spawn enabled
+            // Create template with auto-spawn enabled and defaultRealmId
+            // so auto-spawn can resolve a realm without characterIdCaptureGroup
             var template = await actorClient.CreateActorTemplateAsync(new CreateActorTemplateRequest
             {
                 Category = category,
@@ -623,7 +625,8 @@ public class ActorTestHandler : BaseHttpTestHandler
                 {
                     Enabled = true,
                     IdPattern = actorIdPattern,
-                    MaxInstances = 10
+                    MaxInstances = 10,
+                    DefaultRealmId = realmId
                 }
             });
 

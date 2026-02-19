@@ -148,6 +148,11 @@ public class AutoSpawnConfigData
     public int? CharacterIdCaptureGroup { get; set; }
 
     /// <summary>
+    /// Gets or sets the default realm ID for auto-spawned actors when no CharacterId is available.
+    /// </summary>
+    public Guid? DefaultRealmId { get; set; }
+
+    /// <summary>
     /// Converts to API model.
     /// </summary>
     public AutoSpawnConfig ToConfig()
@@ -157,7 +162,8 @@ public class AutoSpawnConfigData
             Enabled = Enabled,
             IdPattern = IdPattern,
             MaxInstances = MaxInstances,
-            CharacterIdCaptureGroup = CharacterIdCaptureGroup
+            CharacterIdCaptureGroup = CharacterIdCaptureGroup,
+            DefaultRealmId = DefaultRealmId
         };
     }
 
@@ -174,7 +180,8 @@ public class AutoSpawnConfigData
             Enabled = config.Enabled,
             IdPattern = config.IdPattern,
             MaxInstances = config.MaxInstances,
-            CharacterIdCaptureGroup = config.CharacterIdCaptureGroup
+            CharacterIdCaptureGroup = config.CharacterIdCaptureGroup,
+            DefaultRealmId = config.DefaultRealmId
         };
     }
 }
