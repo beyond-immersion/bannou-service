@@ -22,9 +22,20 @@ x-service-configuration:
   properties:
     UseInMemory:
       type: boolean
-      description: "Use in-memory storage instead of Redis/MySQL. Data is NOT persisted. ONLY for testing/minimal infrastructure."
+      description: "Use in-memory storage instead of Redis/MySQL. Data is NOT persisted. ONLY for testing/minimal infrastructure. Mutually exclusive with UseSqlite."
       env: STATE_USE_INMEMORY
       default: false
+    UseSqlite:
+      type: boolean
+      description: "Use SQLite file storage instead of MySQL for SQL-backed stores. Redis-configured stores use in-memory. Data IS persisted to SQLite files at SqliteDataPath. Mutually exclusive with UseInMemory. In Docker: mount a volume at SqliteDataPath for external access/backups."
+      env: STATE_USE_SQLITE
+      default: false
+    SqliteDataPath:
+      type: string
+      nullable: true  # NRT: Optional when UseSqlite=false; only used when UseSqlite=true
+      description: "Directory path for SQLite database files. Each MySQL-configured store gets its own .db file in this directory. Default: ./data/state. In Docker containers the app runs from /app, so the effective default path is /app/data/state — mount a volume there for persistence and backup access."
+      env: STATE_SQLITE_DATA_PATH
+      default: "./data/state"
     RedisConnectionString:
       type: string
       nullable: true  # NRT: Optional when UseInMemory=true; service validates at startup

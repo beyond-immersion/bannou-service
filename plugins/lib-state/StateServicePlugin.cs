@@ -91,6 +91,8 @@ public class StateServicePlugin : StandardServicePlugin<IStateService>
         var config = new StateStoreFactoryConfiguration
         {
             UseInMemory = stateConfig.UseInMemory,
+            UseSqlite = stateConfig.UseSqlite,
+            SqliteDataPath = stateConfig.SqliteDataPath,
             RedisConnectionString = !string.IsNullOrEmpty(stateConfig.RedisConnectionString)
                 ? stateConfig.RedisConnectionString
                 : "localhost:6379",

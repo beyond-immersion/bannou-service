@@ -174,17 +174,39 @@ public class Program
             };
             serviceCollection.AddSingleton(messagingConfig);
 
-            // Register shared connection manager
+            // Register shared connection manager as both concrete type and interface
             serviceCollection.AddSingleton<RabbitMQConnectionManager>();
+            serviceCollection.AddSingleton<IChannelManager>(sp => sp.GetRequiredService<RabbitMQConnectionManager>());
 
             // Register retry buffer for handling transient publish failures
             serviceCollection.AddSingleton<MessageRetryBuffer>();
+            serviceCollection.AddSingleton<IRetryBuffer>(sp => sp.GetRequiredService<MessageRetryBuffer>());
 
-            // Register IMessageBus for event publishing
-            serviceCollection.AddSingleton<IMessageBus, RabbitMQMessageBus>();
+            // Register IMessageBus using factory pattern to break circular dependency:
+            // RabbitMQMessageBus → IRetryBuffer → MessageRetryBuffer → IMessageBus? (optional)
+            // Factory registration makes the dependency chain opaque to DI cycle detection,
+            // allowing MessageRetryBuffer to receive null for IMessageBus? during construction.
+            serviceCollection.AddSingleton<IMessageBus>(sp =>
+            {
+                var channelManager = sp.GetRequiredService<IChannelManager>();
+                var retryBuffer = sp.GetRequiredService<IRetryBuffer>();
+                var appConfig = sp.GetRequiredService<BeyondImmersion.BannouService.Configuration.AppConfiguration>();
+                var msgConfig = sp.GetRequiredService<MessagingServiceConfiguration>();
+                var logger = sp.GetRequiredService<ILogger<RabbitMQMessageBus>>();
+                var telemetryProvider = sp.GetRequiredService<ITelemetryProvider>();
+                return new RabbitMQMessageBus(channelManager, retryBuffer, appConfig, msgConfig, logger, telemetryProvider);
+            });
 
-            // Register IMessageSubscriber for event subscriptions
-            serviceCollection.AddSingleton<IMessageSubscriber, RabbitMQMessageSubscriber>();
+            // Register IMessageSubscriber using factory pattern (same as MessagingServicePlugin)
+            serviceCollection.AddSingleton<IMessageSubscriber>(sp =>
+            {
+                var channelManager = sp.GetRequiredService<IChannelManager>();
+                var logger = sp.GetRequiredService<ILogger<RabbitMQMessageSubscriber>>();
+                var msgConfig = sp.GetRequiredService<MessagingServiceConfiguration>();
+                var telemetryProvider = sp.GetRequiredService<ITelemetryProvider>();
+                var messageBus = sp.GetRequiredService<IMessageBus>();
+                return new RabbitMQMessageSubscriber(channelManager, logger, msgConfig, telemetryProvider, messageBus);
+            });
 
             // Register IMessageTap for event forwarding/tapping
             serviceCollection.AddSingleton<IMessageTap, RabbitMQMessageTap>();
@@ -223,8 +245,17 @@ public class Program
             }
             serviceCollection.AddSingleton(factoryConfig);
 
-            // Register IStateStoreFactory
-            serviceCollection.AddSingleton<IStateStoreFactory, StateStoreFactory>();
+            // Register IStateStoreFactory using factory pattern (same as StateServicePlugin)
+            // Uses sp.GetService (not GetRequiredService) for IMessageBus to handle
+            // scenarios where messaging may not be fully initialized yet
+            serviceCollection.AddSingleton<IStateStoreFactory>(sp =>
+            {
+                var config = sp.GetRequiredService<StateStoreFactoryConfiguration>();
+                var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
+                var telemetryProvider = sp.GetRequiredService<ITelemetryProvider>();
+                var messageBus = sp.GetService<IMessageBus>();
+                return new StateStoreFactory(config, loggerFactory, telemetryProvider, messageBus);
+            });
 
             // =====================================================================
             // MESH INFRASTRUCTURE - Service discovery via lib-state
@@ -257,19 +288,25 @@ public class Program
             });
 
             // Add Bannou service client infrastructure (IServiceAppMappingResolver, IEventConsumer)
+            Console.WriteLine("🔗 Registering Bannou service client infrastructure...");
             serviceCollection.AddBannouServiceClients();
 
             // Auto-register all clients from bannou-service assembly
             // All generated clients are in bannou-service/Generated/Clients/
             // Note: TestingTestHandler uses direct HTTP calls, not a generated client
+            Console.WriteLine("🔗 Auto-registering all service clients...");
             var bannouServiceAssembly = typeof(BeyondImmersion.BannouService.Auth.AuthClient).Assembly;
             serviceCollection.AddAllBannouServiceClients(new[] { bannouServiceAssembly });
 
             // Build the service provider
+            Console.WriteLine("🔗 Building service provider...");
             ServiceProvider = serviceCollection.BuildServiceProvider();
+            Console.WriteLine("🔗 Service provider built successfully.");
 
             // Initialize state store factory first (required by mesh)
+            Console.WriteLine("🔗 Resolving IStateStoreFactory...");
             var stateStoreFactory = ServiceProvider.GetRequiredService<IStateStoreFactory>();
+            Console.WriteLine("🔗 IStateStoreFactory resolved.");
             if (!await WaitForStateReadiness(stateStoreFactory))
             {
                 Console.WriteLine("❌ State store factory initialization failed.");

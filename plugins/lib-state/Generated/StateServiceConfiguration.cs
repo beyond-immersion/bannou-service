@@ -54,10 +54,22 @@ public class StateServiceConfiguration : IServiceConfiguration
     public Guid? ForceServiceId { get; set; }
 
     /// <summary>
-    /// Use in-memory storage instead of Redis/MySQL. Data is NOT persisted. ONLY for testing/minimal infrastructure.
+    /// Use in-memory storage instead of Redis/MySQL. Data is NOT persisted. ONLY for testing/minimal infrastructure. Mutually exclusive with UseSqlite.
     /// Environment variable: STATE_USE_INMEMORY
     /// </summary>
     public bool UseInMemory { get; set; } = false;
+
+    /// <summary>
+    /// Use SQLite file storage instead of MySQL for SQL-backed stores. Redis-configured stores use in-memory. Data IS persisted to SQLite files at SqliteDataPath. Mutually exclusive with UseInMemory. In Docker: mount a volume at SqliteDataPath for external access/backups.
+    /// Environment variable: STATE_USE_SQLITE
+    /// </summary>
+    public bool UseSqlite { get; set; } = false;
+
+    /// <summary>
+    /// Directory path for SQLite database files. Each MySQL-configured store gets its own .db file in this directory. Default: ./data/state. In Docker containers the app runs from /app, so the effective default path is /app/data/state — mount a volume there for persistence and backup access.
+    /// Environment variable: STATE_SQLITE_DATA_PATH
+    /// </summary>
+    public string? SqliteDataPath { get; set; } = "./data/state";
 
     /// <summary>
     /// Redis connection string (host:port format) for Redis-backed state stores

@@ -24,7 +24,14 @@ public enum StateBackend
     /// In-memory backend for testing/minimal infrastructure.
     /// Data is NOT persisted across restarts.
     /// </summary>
-    Memory
+    Memory,
+
+    /// <summary>
+    /// SQLite backend for local/self-hosted deployments.
+    /// Provides SQL query support (IQueryableStateStore, IJsonQueryableStateStore)
+    /// without requiring external MySQL infrastructure. Data IS persisted to file.
+    /// </summary>
+    Sqlite
 }
 
 /// <summary>

@@ -23,8 +23,25 @@ public class StateStoreFactoryConfiguration
     /// <summary>
     /// Use in-memory storage for all stores. Data is NOT persisted.
     /// ONLY use for testing or minimal infrastructure scenarios.
+    /// Mutually exclusive with UseSqlite.
     /// </summary>
     public bool UseInMemory { get; set; }
+
+    /// <summary>
+    /// Use SQLite file storage instead of MySQL for SQL-backed stores.
+    /// Redis-configured stores use in-memory when this is enabled.
+    /// Data IS persisted to SQLite files at SqliteDataPath.
+    /// Mutually exclusive with UseInMemory.
+    /// </summary>
+    public bool UseSqlite { get; set; }
+
+    /// <summary>
+    /// Directory path for SQLite database files.
+    /// Each MySQL-configured store gets its own .db file in this directory.
+    /// In Docker containers the app runs from /app, so the effective default
+    /// path is /app/data/state — mount a volume there for persistence and backup access.
+    /// </summary>
+    public string? SqliteDataPath { get; set; } = "./data/state";
 
     /// <summary>
     /// Redis connection string.
@@ -105,6 +122,7 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
 
     private ConnectionMultiplexer? _redis;
     private DbContextOptions<StateDbContext>? _mysqlOptions;
+    private DbContextOptions<StateDbContext>? _sqliteOptions;
     private readonly SemaphoreSlim _initLock = new(1, 1);
     // IMPLEMENTATION TENETS: volatile required for double-checked locking pattern visibility across CPU cores
     private volatile bool _initialized;
@@ -224,6 +242,35 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
             {
                 _logger.LogWarning(
                     "State store factory using IN-MEMORY mode. Data will NOT be persisted across restarts!");
+                _initialized = true;
+                return;
+            }
+
+            // SQLite mode: MySQL stores use SQLite, Redis stores use InMemory
+            if (_configuration.UseSqlite)
+            {
+                var dataPath = _configuration.SqliteDataPath ?? "./data/state";
+                Directory.CreateDirectory(dataPath);
+
+                var dbPath = Path.Combine(dataPath, "state.db");
+                var connectionString = $"Data Source={dbPath};Mode=ReadWriteCreate;Cache=Shared;";
+
+                _logger.LogInformation(
+                    "State store factory using SQLITE mode. Data will be persisted to {Path}",
+                    dbPath);
+
+                var optionsBuilder = new DbContextOptionsBuilder<StateDbContext>();
+                optionsBuilder.UseSqlite(connectionString);
+                _sqliteOptions = optionsBuilder.Options;
+
+                // Create schema if needed
+                await using var testContext = new StateDbContext(_sqliteOptions);
+                await testContext.Database.EnsureCreatedAsync();
+
+                // Enable WAL journal mode for better concurrent read performance
+                await testContext.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;");
+
+                _logger.LogInformation("SQLite database initialized successfully at {Path}", dbPath);
                 _initialized = true;
                 return;
             }
@@ -388,6 +435,37 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
                 var errorPublisher = CreateErrorPublisher(storeName, backend);
                 var memoryLogger = _loggerFactory.CreateLogger<InMemoryStateStore<TValue>>();
                 store = new InMemoryStateStore<TValue>(storeName, memoryLogger, errorPublisher);
+            }
+            else if (_configuration.UseSqlite)
+            {
+                // SQLite mode: MySQL-configured stores use SQLite, Redis-configured stores use InMemory
+                var storeConfig = _configuration.Stores[storeName];
+
+                if (storeConfig.Backend == StateBackend.MySql)
+                {
+                    if (_sqliteOptions == null)
+                    {
+                        throw new InvalidOperationException("SQLite connection not available");
+                    }
+
+                    backend = "sqlite";
+                    var errorPublisher = CreateErrorPublisher(storeName, backend);
+                    var sqliteLogger = _loggerFactory.CreateLogger<SqliteStateStore<TValue>>();
+                    store = new SqliteStateStore<TValue>(
+                        _sqliteOptions,
+                        storeConfig.TableName ?? storeName,
+                        _configuration.InMemoryFallbackLimit,
+                        sqliteLogger,
+                        errorPublisher);
+                }
+                else
+                {
+                    // Redis and Memory stores use InMemory when in SQLite mode
+                    backend = "memory";
+                    var errorPublisher = CreateErrorPublisher(storeName, backend);
+                    var memoryLogger = _loggerFactory.CreateLogger<InMemoryStateStore<TValue>>();
+                    store = new InMemoryStateStore<TValue>(storeName, memoryLogger, errorPublisher);
+                }
             }
             else
             {
@@ -565,10 +643,10 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
         // Get the effective backend (respecting UseInMemory override)
         var backend = GetBackendType(storeName);
 
-        if (backend == StateBackend.MySql)
+        if (backend == StateBackend.MySql || backend == StateBackend.Sqlite)
         {
             throw new InvalidOperationException(
-                $"Store '{storeName}' uses MySQL backend which does not support Set/Sorted Set operations. " +
+                $"Store '{storeName}' uses {backend} backend which does not support Set/Sorted Set operations. " +
                 "Use Redis or InMemory backend for cacheable stores.");
         }
 
@@ -591,13 +669,13 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
             await EnsureInitializedAsync();
         }
 
-        // Get the effective backend (respecting UseInMemory override)
+        // Get the effective backend (respecting UseInMemory/UseSqlite override)
         var backend = GetBackendType(storeName);
 
-        if (backend == StateBackend.MySql)
+        if (backend == StateBackend.MySql || backend == StateBackend.Sqlite)
         {
             throw new InvalidOperationException(
-                $"Store '{storeName}' uses MySQL backend which does not support Set/Sorted Set operations. " +
+                $"Store '{storeName}' uses {backend} backend which does not support Set/Sorted Set operations. " +
                 "Use Redis or InMemory backend for cacheable stores.");
         }
 
@@ -638,6 +716,12 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
             throw new InvalidOperationException($"Store '{storeName}' is not configured");
         }
 
+        // SQLite mode: MySQL-configured stores report as Sqlite, Redis stores report as Memory
+        if (_configuration.UseSqlite)
+        {
+            return config.Backend == StateBackend.MySql ? StateBackend.Sqlite : StateBackend.Memory;
+        }
+
         return config.Backend;
     }
 
@@ -658,10 +742,11 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
     /// <inheritdoc/>
     public IRedisOperations? GetRedisOperations()
     {
-        // Return null when using in-memory mode
-        if (_configuration.UseInMemory)
+        // Return null when using in-memory or SQLite mode (no Redis available)
+        if (_configuration.UseInMemory || _configuration.UseSqlite)
         {
-            _logger.LogDebug("GetRedisOperations returning null - running in InMemory mode");
+            _logger.LogDebug("GetRedisOperations returning null - running in {Mode} mode",
+                _configuration.UseInMemory ? "InMemory" : "SQLite");
             return null;
         }
 
@@ -720,6 +805,27 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
                         .Where(e => e.StoreName == storeName)
                         .LongCountAsync(cancellationToken);
                     return count;
+                }
+
+            case StateBackend.Sqlite:
+                // SQLite: Efficient COUNT(*) with indexed StoreName column (same as MySQL)
+                if (!_initialized)
+                {
+                    await EnsureInitializedAsync();
+                }
+
+                if (_sqliteOptions == null)
+                {
+                    _logger.LogWarning("SQLite not configured, cannot get key count for store '{StoreName}'", storeName);
+                    return null;
+                }
+
+                await using (var sqliteContext = new StateDbContext(_sqliteOptions))
+                {
+                    var sqliteCount = await sqliteContext.StateEntries
+                        .Where(e => e.StoreName == storeName)
+                        .LongCountAsync(cancellationToken);
+                    return sqliteCount;
                 }
 
             case StateBackend.Redis:
@@ -802,9 +908,10 @@ public sealed class StateStoreFactory : IStateStoreFactory, IAsyncDisposable
             _redis = null;
         }
 
-        // Note: _mysqlOptions doesn't need disposal - it's just configuration.
-        // Each MySqlStateStore creates and disposes its own DbContext per operation.
+        // Note: _mysqlOptions/_sqliteOptions don't need disposal - they're just configuration.
+        // Each MySqlStateStore/SqliteStateStore creates and disposes its own DbContext per operation.
         _mysqlOptions = null;
+        _sqliteOptions = null;
 
         _storeCache.Clear();
         _initLock.Dispose();
