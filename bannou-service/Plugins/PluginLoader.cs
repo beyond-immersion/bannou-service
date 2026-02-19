@@ -887,13 +887,16 @@ public class PluginLoader
                 continue;
 
             // Get the client's service layer from our registry or attribute
-            var clientLayer = GetClientServiceLayer(clientServiceName);
+            // (only validate known service clients — skip non-service interfaces like IMeshInvocationClient)
+            var clientLayer = GetClientServiceLayerIfKnown(clientServiceName);
+            if (clientLayer == null)
+                continue;
 
             // Check for violation based on hierarchy rules
-            if (IsHierarchyViolation(serviceLayer, clientLayer))
+            if (IsHierarchyViolation(serviceLayer, clientLayer.Value))
             {
                 violations.Add((serviceName,
-                    $"Depends on {clientServiceName} ({clientLayer}, L{(int)clientLayer / 100}) " +
+                    $"Depends on {clientServiceName} ({clientLayer.Value}, L{(int)clientLayer.Value / 100}) " +
                     $"which is higher than {serviceLayer} (L{(int)serviceLayer / 100})"));
             }
         }
@@ -916,57 +919,57 @@ public class PluginLoader
     }
 
     /// <summary>
-    /// Gets the service layer for a client's service name.
-    /// First checks loaded assemblies for [BannouService] attribute, then falls back to static registry.
+    /// Lazily-built cache mapping service names to their layers, discovered via reflection
+    /// from [BannouService] attributes on all loaded plugin assemblies. Returns null for
+    /// unknown service names so that non-service interfaces (e.g., IMeshInvocationClient)
+    /// are skipped during hierarchy validation.
     /// </summary>
-    private ServiceLayer GetClientServiceLayer(string serviceName)
+    private Dictionary<string, ServiceLayer>? _serviceLayerCache;
+
+    /// <summary>
+    /// Gets the service layer for a client's service name, returning null if the service
+    /// is not registered. Discovers layers via reflection from [BannouService] attributes —
+    /// no hardcoded registry.
+    /// </summary>
+    private ServiceLayer? GetClientServiceLayerIfKnown(string serviceName)
     {
-        // Try to find the service in loaded assemblies
-        foreach (var (pluginName, assembly) in _loadedAssemblies)
-        {
-            if (!pluginName.Equals(serviceName, StringComparison.OrdinalIgnoreCase))
-                continue;
+        _serviceLayerCache ??= BuildServiceLayerCache();
 
-            var serviceType = assembly.GetTypes()
-                .FirstOrDefault(t => t.GetCustomAttribute<BannouServiceAttribute>()?.Name
-                    .Equals(serviceName, StringComparison.OrdinalIgnoreCase) == true);
+        if (_serviceLayerCache.TryGetValue(serviceName, out var layer))
+            return layer;
 
-            if (serviceType != null)
-            {
-                var attr = serviceType.GetCustomAttribute<BannouServiceAttribute>();
-                if (attr != null)
-                    return attr.Layer;
-            }
-        }
-
-        // Fall back to static registry for known services
-        return GetServiceLayerFromRegistry(serviceName);
+        return null;
     }
 
     /// <summary>
-    /// Static registry mapping service names to layers (authoritative per SERVICE-HIERARCHY.md).
+    /// Scans all loaded plugin assemblies for types with [BannouService] attributes
+    /// and builds a service name → layer mapping.
     /// </summary>
-    private static ServiceLayer GetServiceLayerFromRegistry(string serviceName)
+    private Dictionary<string, ServiceLayer> BuildServiceLayerCache()
     {
-        return serviceName.ToLowerInvariant() switch
+        var cache = new Dictionary<string, ServiceLayer>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var (_, assembly) in _loadedAssemblies)
         {
-            // L0: Infrastructure
-            "telemetry" or "state" or "messaging" or "mesh" => ServiceLayer.Infrastructure,
+            try
+            {
+                foreach (var type in assembly.GetTypes())
+                {
+                    var attr = type.GetCustomAttribute<BannouServiceAttribute>();
+                    if (attr == null)
+                        continue;
 
-            // L1: App Foundation
-            "account" or "auth" or "connect" or "permission" or "contract" or "resource" => ServiceLayer.AppFoundation,
+                    // First registration wins (same behavior as test-utilities validator)
+                    cache.TryAdd(attr.Name, attr.Layer);
+                }
+            }
+            catch (ReflectionTypeLoadException)
+            {
+                // Assembly has types that can't be loaded — skip it
+            }
+        }
 
-            // L2: Game Foundation
-            "game-service" or "realm" or "character" or "species" or "location" or
-            "relationship-type" or "relationship" or "subscription" or "currency" or
-            "item" or "inventory" or "game-session" => ServiceLayer.GameFoundation,
-
-            // L3: App Features
-            "asset" or "orchestrator" or "documentation" or "website" => ServiceLayer.AppFeatures,
-
-            // L4: Game Features (default for unknown)
-            _ => ServiceLayer.GameFeatures
-        };
+        return cache;
     }
 
     /// <summary>

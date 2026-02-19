@@ -135,12 +135,14 @@ public static partial class ServiceHierarchyValidator
             if (clientServiceName == null)
                 continue;
 
-            // Get the client's service layer
-            var clientLayer = GetServiceLayer(clientServiceName);
+            // Get the client's service layer (only validate known service clients)
+            var clientLayer = GetServiceLayerIfKnown(clientServiceName);
+            if (clientLayer == null)
+                continue; // Not a registered service client (e.g., IMeshInvocationClient) — skip
 
             // Check for violation: client layer higher than service layer
             // Note: L3 (AppFeatures) cannot depend on L2 (GameFoundation) - they're separate branches
-            if (IsHierarchyViolation(serviceLayer, clientLayer))
+            if (IsHierarchyViolation(serviceLayer, clientLayer.Value))
             {
                 violations.Add(new HierarchyViolation
                 {
@@ -150,7 +152,7 @@ public static partial class ServiceHierarchyValidator
                     ParameterName = param.Name ?? "unknown",
                     ClientType = paramType,
                     ClientServiceName = clientServiceName,
-                    ClientLayer = clientLayer
+                    ClientLayer = clientLayer.Value
                 });
             }
         }
@@ -244,6 +246,23 @@ public static partial class ServiceHierarchyValidator
 
         // Unknown services default to GameFeatures (most permissive for new services)
         return ServiceLayer.GameFeatures;
+    }
+
+    /// <summary>
+    /// Gets the service layer for a known service name, returning null if the service
+    /// is not registered. Used by hierarchy validation to skip non-service-client interfaces
+    /// that happen to match the I*Client naming pattern (e.g., IMeshInvocationClient).
+    /// </summary>
+    /// <param name="serviceName">The service name (e.g., "account", "game-session").</param>
+    /// <returns>The service layer, or null if the service is not registered.</returns>
+    private static ServiceLayer? GetServiceLayerIfKnown(string serviceName)
+    {
+        EnsureDiscoveryPerformed();
+
+        if (ServiceLayerCache.TryGetValue(serviceName, out var layer))
+            return layer;
+
+        return null;
     }
 
     /// <summary>
