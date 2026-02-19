@@ -178,14 +178,21 @@ public class Program
             serviceCollection.AddSingleton<RabbitMQConnectionManager>();
             serviceCollection.AddSingleton<IChannelManager>(sp => sp.GetRequiredService<RabbitMQConnectionManager>());
 
-            // Register retry buffer for handling transient publish failures
-            serviceCollection.AddSingleton<MessageRetryBuffer>();
+            // Register retry buffer using factory to break circular dependency:
+            // IMessageBus → RabbitMQMessageBus → IRetryBuffer → MessageRetryBuffer → IMessageBus?
+            // Explicitly pass null for IMessageBus to prevent DI from trying to resolve the
+            // singleton that's currently mid-construction, which causes a same-thread deadlock.
+            serviceCollection.AddSingleton<MessageRetryBuffer>(sp =>
+            {
+                var channelManager = sp.GetRequiredService<IChannelManager>();
+                var msgConfig = sp.GetRequiredService<MessagingServiceConfiguration>();
+                var logger = sp.GetRequiredService<ILogger<MessageRetryBuffer>>();
+                // IMessageBus explicitly null - breaks circular dependency
+                return new MessageRetryBuffer(channelManager, msgConfig, logger);
+            });
             serviceCollection.AddSingleton<IRetryBuffer>(sp => sp.GetRequiredService<MessageRetryBuffer>());
 
-            // Register IMessageBus using factory pattern to break circular dependency:
-            // RabbitMQMessageBus → IRetryBuffer → MessageRetryBuffer → IMessageBus? (optional)
-            // Factory registration makes the dependency chain opaque to DI cycle detection,
-            // allowing MessageRetryBuffer to receive null for IMessageBus? during construction.
+            // Register IMessageBus using factory pattern (same as MessagingServicePlugin)
             serviceCollection.AddSingleton<IMessageBus>(sp =>
             {
                 var channelManager = sp.GetRequiredService<IChannelManager>();

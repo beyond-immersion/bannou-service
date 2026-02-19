@@ -1039,7 +1039,9 @@ CHECK_ALL (defaul... |
 | `STATE_MIN_RETRY_DELAY_MS` | int | `1000` | Minimum delay in milliseconds between MySQL connection retry... |
 | `STATE_MYSQL_CONNECTION_STRING` | string | `server=bannou-mysql;database=bannou;user=guest;password=guest` (insecure) | MySQL connection string for MySQL-backed state stores |
 | `STATE_REDIS_CONNECTION_STRING` | string | `bannou-redis:6379` | Redis connection string (host:port format) for Redis-backed ... |
+| `STATE_SQLITE_DATA_PATH` | string | `./data/state` | Directory path for SQLite database files. Each MySQL-configu... |
 | `STATE_USE_INMEMORY` | bool | `false` | Use in-memory storage instead of Redis/MySQL. Data is NOT pe... |
+| `STATE_USE_SQLITE` | bool | `false` | Use SQLite file storage instead of MySQL for SQL-backed stor... |
 
 ### Status
 
@@ -1172,9 +1174,9 @@ Applied when... |
 
 ## Configuration Summary
 
-- **Total properties**: 885
+- **Total properties**: 887
 - **Required (no default)**: 52
-- **Optional (has default)**: 833
+- **Optional (has default)**: 835
 
 ## Environment Variable Naming Convention
 

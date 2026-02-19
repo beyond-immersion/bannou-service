@@ -58,7 +58,8 @@ public class ActorRunnerCognitionTests
             ActorTemplateData? template = null,
             AbmlDocument? document = null,
             ICognitionPipeline? pipelineToReturn = null,
-            bool builderReturnsNull = false)
+            bool builderReturnsNull = false,
+            ActorServiceConfiguration? config = null)
     {
         var messageBusMock = new Mock<IMessageBus>();
         messageBusMock.Setup(m => m.TryPublishAsync(
@@ -115,7 +116,7 @@ public class ActorRunnerCognitionTests
             template ?? CreateTestTemplate(),
             Guid.NewGuid(),
             Guid.NewGuid(),
-            CreateTestConfig(),
+            config ?? CreateTestConfig(),
             messageBusMock.Object,
             messageSubscriberMock.Object,
             meshClientMock.Object,
@@ -468,15 +469,22 @@ public class ActorRunnerCognitionTests
     {
         // Arrange: template specifies a cognition template ID, but builder returns null (not found)
         var template = CreateTestTemplate(cognitionTemplateId: "nonexistent-template");
+
+        // Use a long ErrorRetryDelayMs so the Error state is held long enough to observe
+        // deterministically (the runner oscillates Error -> delay -> Running -> retry)
+        var config = CreateTestConfig();
+        config.ErrorRetryDelayMs = 30_000;
+
         var (runner, builderMock, _) = CreateRunnerWithCognition(
             template: template,
-            builderReturnsNull: true);
+            builderReturnsNull: true,
+            config: config);
 
         // Act: start runner — the first tick should fail during initialization
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         await runner.StartAsync(cts.Token);
 
-        // Wait for the runner to transition to Error state (before StopAsync overwrites it)
+        // Wait for the runner to transition to Error state
         var started = DateTime.UtcNow;
         while (runner.Status != ActorStatus.Error && DateTime.UtcNow - started < TimeSpan.FromSeconds(5))
         {

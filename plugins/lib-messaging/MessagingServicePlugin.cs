@@ -65,9 +65,18 @@ public class MessagingServicePlugin : StandardServicePlugin<IMessagingService>
         services.AddSingleton<RabbitMQConnectionManager>();
         services.AddSingleton<IChannelManager>(sp => sp.GetRequiredService<RabbitMQConnectionManager>());
 
-        // Register retry buffer for handling transient publish failures
-        // The interface (IRetryBuffer) allows mocking in tests
-        services.AddSingleton<MessageRetryBuffer>();
+        // Register retry buffer using factory to break circular dependency:
+        // IMessageBus → RabbitMQMessageBus → IRetryBuffer → MessageRetryBuffer → IMessageBus?
+        // StateStoreFactory also takes IMessageBus? and is resolved before IMessageBus is fully
+        // constructed, so DI would deadlock trying to resolve MessageRetryBuffer's optional
+        // IMessageBus? parameter. Explicitly pass null to break the cycle.
+        services.AddSingleton<MessageRetryBuffer>(sp =>
+        {
+            var channelManager = sp.GetRequiredService<IChannelManager>();
+            var msgConfig = sp.GetRequiredService<MessagingServiceConfiguration>();
+            var logger = sp.GetRequiredService<ILogger<MessageRetryBuffer>>();
+            return new MessageRetryBuffer(channelManager, msgConfig, logger);
+        });
         services.AddSingleton<IRetryBuffer>(sp => sp.GetRequiredService<MessageRetryBuffer>());
 
         // Register messaging interfaces with direct RabbitMQ implementations
