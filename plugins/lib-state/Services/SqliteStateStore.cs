@@ -1080,19 +1080,19 @@ public sealed class SqliteStateStore<TValue> : IJsonQueryableStateStore<TValue>
                 return $"{jsonExtract} != @p{paramIndex++}";
 
             case QueryOperator.GreaterThan:
-                parameters.Add(condition.Value);
+                parameters.Add(SerializeValue(condition.Value));
                 return $"CAST({jsonExtract} AS REAL) > @p{paramIndex++}";
 
             case QueryOperator.GreaterThanOrEqual:
-                parameters.Add(condition.Value);
+                parameters.Add(SerializeValue(condition.Value));
                 return $"CAST({jsonExtract} AS REAL) >= @p{paramIndex++}";
 
             case QueryOperator.LessThan:
-                parameters.Add(condition.Value);
+                parameters.Add(SerializeValue(condition.Value));
                 return $"CAST({jsonExtract} AS REAL) < @p{paramIndex++}";
 
             case QueryOperator.LessThanOrEqual:
-                parameters.Add(condition.Value);
+                parameters.Add(SerializeValue(condition.Value));
                 return $"CAST({jsonExtract} AS REAL) <= @p{paramIndex++}";
 
             case QueryOperator.Contains:

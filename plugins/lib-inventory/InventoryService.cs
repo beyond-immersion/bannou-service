@@ -814,6 +814,21 @@ public partial class InventoryService : IInventoryService
         // Save with cache write-through
         await SaveContainerWithCacheAsync(container, cancellationToken);
 
+        // Clear the item's container reference in item service (removes from container index)
+        try
+        {
+            await _itemClient.ModifyItemInstanceAsync(
+                new ModifyItemInstanceRequest
+                {
+                    InstanceId = body.InstanceId,
+                    NewContainerId = Guid.Empty
+                }, cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            _logger.LogWarning(ex, "Failed to clear item container reference for {InstanceId}", body.InstanceId);
+        }
+
         await _messageBus.TryPublishAsync("inventory-item.removed", new InventoryItemRemovedEvent
         {
             EventId = Guid.NewGuid(),

@@ -67,23 +67,23 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
 
         try
         {
-            var value = await _jsonCommands.GetAsync(fullKey);
-            if (value.IsNull)
+            // Use generic overload with explicit JSONPath "$" for consistent behavior across
+            // Redis versions. JSON.GET without a path uses legacy root path "." which may
+            // return results differently for array types in Redis 8.x. The generic overload
+            // handles JSONPath array unwrapping internally and uses BannouJson.Options for
+            // case-insensitive property matching and enum conversion.
+            var value = await _jsonCommands.GetAsync<TValue>(fullKey, "$", BannouJson.Options);
+            if (value == null)
             {
                 _logger.LogDebug("Key '{Key}' not found in store '{Store}'", key, _keyPrefix);
-                return null;
             }
-
-            try
-            {
-                return BannouJson.Deserialize<TValue>(value.ToString());
-            }
-            catch (System.Text.Json.JsonException ex)
-            {
-                // IMPLEMENTATION TENETS: Log data corruption as error for monitoring
-                _logger.LogError(ex, "JSON deserialization failed for key '{Key}' in store '{Store}' - data may be corrupted", key, _keyPrefix);
-                return null;
-            }
+            return value;
+        }
+        catch (System.Text.Json.JsonException ex)
+        {
+            // IMPLEMENTATION TENETS: Log data corruption as error for monitoring
+            _logger.LogError(ex, "JSON deserialization failed for key '{Key}' in store '{Store}' - data may be corrupted", key, _keyPrefix);
+            return null;
         }
         catch (RedisException ex) when (ex.Message.Contains("WRONGTYPE"))
         {
@@ -117,7 +117,9 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
 
         try
         {
-            var valueTask = _jsonCommands.GetAsync(fullKey);
+            // Use generic overload with explicit JSONPath "$" for consistent behavior
+            // across Redis versions (see GetAsync for rationale).
+            var valueTask = _jsonCommands.GetAsync<TValue>(fullKey, "$", BannouJson.Options);
             var versionTask = _database.HashGetAsync(metaKey, "version");
 
             await Task.WhenAll(valueTask, versionTask);
@@ -125,22 +127,19 @@ public sealed class RedisSearchStateStore<TValue> : ISearchableStateStore<TValue
             var value = await valueTask;
             var version = await versionTask;
 
-            if (value.IsNull)
+            if (value == null)
             {
                 return (null, null);
             }
 
             var etag = version.HasValue ? version.ToString() : "0";
-            try
-            {
-                return (BannouJson.Deserialize<TValue>(value.ToString()), etag);
-            }
-            catch (System.Text.Json.JsonException ex)
-            {
-                // IMPLEMENTATION TENETS: Log data corruption as error for monitoring
-                _logger.LogError(ex, "JSON deserialization failed for key '{Key}' in store '{Store}' - data may be corrupted", key, _keyPrefix);
-                return (null, null);
-            }
+            return (value, etag);
+        }
+        catch (System.Text.Json.JsonException ex)
+        {
+            // IMPLEMENTATION TENETS: Log data corruption as error for monitoring
+            _logger.LogError(ex, "JSON deserialization failed for key '{Key}' in store '{Store}' - data may be corrupted", key, _keyPrefix);
+            return (null, null);
         }
         catch (RedisException ex) when (ex.Message.Contains("WRONGTYPE"))
         {

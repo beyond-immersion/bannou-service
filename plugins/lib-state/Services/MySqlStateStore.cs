@@ -1109,19 +1109,19 @@ public sealed class MySqlStateStore<TValue> : IJsonQueryableStateStore<TValue>
                 return $"{jsonUnquote} != @p{paramIndex++}";
 
             case QueryOperator.GreaterThan:
-                parameters.Add(condition.Value);
+                parameters.Add(SerializeValue(condition.Value));
                 return $"CAST({jsonExtract} AS DECIMAL(20,6)) > @p{paramIndex++}";
 
             case QueryOperator.GreaterThanOrEqual:
-                parameters.Add(condition.Value);
+                parameters.Add(SerializeValue(condition.Value));
                 return $"CAST({jsonExtract} AS DECIMAL(20,6)) >= @p{paramIndex++}";
 
             case QueryOperator.LessThan:
-                parameters.Add(condition.Value);
+                parameters.Add(SerializeValue(condition.Value));
                 return $"CAST({jsonExtract} AS DECIMAL(20,6)) < @p{paramIndex++}";
 
             case QueryOperator.LessThanOrEqual:
-                parameters.Add(condition.Value);
+                parameters.Add(SerializeValue(condition.Value));
                 return $"CAST({jsonExtract} AS DECIMAL(20,6)) <= @p{paramIndex++}";
 
             case QueryOperator.Contains:

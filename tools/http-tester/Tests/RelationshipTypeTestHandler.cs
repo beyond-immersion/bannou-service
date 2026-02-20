@@ -161,6 +161,13 @@ public class RelationshipTypeTestHandler : BaseHttpTestHandler
             };
             var created = await typeClient.CreateRelationshipTypeAsync(createRequest);
 
+            // Deprecate first (required before deletion)
+            await typeClient.DeprecateRelationshipTypeAsync(new DeprecateRelationshipTypeRequest
+            {
+                RelationshipTypeId = created.RelationshipTypeId,
+                Reason = "Test deletion"
+            });
+
             // Delete it
             await typeClient.DeleteRelationshipTypeAsync(new DeleteRelationshipTypeRequest
             {
@@ -539,22 +546,38 @@ public class RelationshipTypeTestHandler : BaseHttpTestHandler
             if (ancestors.Types?.Count != 1)
                 return TestResult.Failed($"Expected 1 ancestor, got {ancestors.Types?.Count}");
 
-            // Step 6: Delete child first (required order)
-            Console.WriteLine("  Step 6: Deleting child type...");
+            // Step 6: Deprecate child (required before deletion)
+            Console.WriteLine("  Step 6: Deprecating child type...");
+            await typeClient.DeprecateRelationshipTypeAsync(new DeprecateRelationshipTypeRequest
+            {
+                RelationshipTypeId = child.RelationshipTypeId,
+                Reason = "Lifecycle test cleanup"
+            });
+
+            // Step 7: Delete child first (required order)
+            Console.WriteLine("  Step 7: Deleting child type...");
             await typeClient.DeleteRelationshipTypeAsync(new DeleteRelationshipTypeRequest
             {
                 RelationshipTypeId = child.RelationshipTypeId
             });
 
-            // Step 7: Delete root
-            Console.WriteLine("  Step 7: Deleting root type...");
+            // Step 8: Deprecate root (required before deletion)
+            Console.WriteLine("  Step 8: Deprecating root type...");
+            await typeClient.DeprecateRelationshipTypeAsync(new DeprecateRelationshipTypeRequest
+            {
+                RelationshipTypeId = root.RelationshipTypeId,
+                Reason = "Lifecycle test cleanup"
+            });
+
+            // Step 9: Delete root
+            Console.WriteLine("  Step 9: Deleting root type...");
             await typeClient.DeleteRelationshipTypeAsync(new DeleteRelationshipTypeRequest
             {
                 RelationshipTypeId = root.RelationshipTypeId
             });
 
-            // Step 8: Verify deletion
-            Console.WriteLine("  Step 8: Verifying deletion...");
+            // Step 10: Verify deletion
+            Console.WriteLine("  Step 10: Verifying deletion...");
             try
             {
                 await typeClient.GetRelationshipTypeAsync(new GetRelationshipTypeRequest
