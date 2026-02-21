@@ -810,7 +810,15 @@ public class DocumentationWebSocketTestHandler : BaseWebSocketTestHandler
             }
 
             Console.WriteLine($"   Bound repository, binding ID: {response.Result.BindingId}");
-            return response.Result.BindingId != Guid.Empty;
+            var passed = response.Result.BindingId != Guid.Empty;
+
+            // Clean up: unbind so background scheduler doesn't retry a repo that requires auth
+            await adminClient.Documentation.UnbindRepositoryAsync(new UnbindRepositoryRequest
+            {
+                Namespace = testNamespace
+            }, timeout: TimeSpan.FromSeconds(5));
+
+            return passed;
         });
     }
 
@@ -847,12 +855,35 @@ public class DocumentationWebSocketTestHandler : BaseWebSocketTestHandler
             if (!response.IsSuccess || response.Result == null)
             {
                 Console.WriteLine($"   Failed to sync: {FormatError(response.Error)}");
+                // Clean up binding even on failure
+                await adminClient.Documentation.UnbindRepositoryAsync(new UnbindRepositoryRequest
+                {
+                    Namespace = testNamespace
+                }, timeout: TimeSpan.FromSeconds(5));
                 return false;
             }
 
             Console.WriteLine($"   Sync status: {response.Result.Status}");
             Console.WriteLine($"   Documents created: {response.Result.DocumentsCreated}, updated: {response.Result.DocumentsUpdated}, deleted: {response.Result.DocumentsDeleted}");
-            return response.Result.SyncId != Guid.Empty;
+
+            // The test repo (https://github.com/test/docs.git) requires authentication,
+            // so the sync should fail. Validate that the response correctly reports failure.
+            var passed = response.Result.SyncId != Guid.Empty
+                && response.Result.Status == SyncStatus.Failed
+                && !string.IsNullOrEmpty(response.Result.ErrorMessage);
+
+            if (!passed)
+            {
+                Console.WriteLine($"   UNEXPECTED: Expected sync to fail (repo requires auth), but got status={response.Result.Status}, errorMessage={response.Result.ErrorMessage}");
+            }
+
+            // Clean up: unbind so background scheduler doesn't retry a repo that requires auth
+            await adminClient.Documentation.UnbindRepositoryAsync(new UnbindRepositoryRequest
+            {
+                Namespace = testNamespace
+            }, timeout: TimeSpan.FromSeconds(5));
+
+            return passed;
         });
     }
 
@@ -882,6 +913,12 @@ public class DocumentationWebSocketTestHandler : BaseWebSocketTestHandler
 
             Console.WriteLine("   Getting repository status...");
             var response = await adminClient.Documentation.GetRepositoryStatusAsync(new RepositoryStatusRequest
+            {
+                Namespace = testNamespace
+            }, timeout: TimeSpan.FromSeconds(5));
+
+            // Clean up: unbind so background scheduler doesn't retry a repo that requires auth
+            await adminClient.Documentation.UnbindRepositoryAsync(new UnbindRepositoryRequest
             {
                 Namespace = testNamespace
             }, timeout: TimeSpan.FromSeconds(5));

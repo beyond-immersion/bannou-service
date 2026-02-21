@@ -71,12 +71,6 @@ public class GitSyncService : IGitSyncService
                     timedOut ? "timed out" : "cancelled", repositoryUrl);
                 return GitSyncResult.Failed(message);
             }
-            catch (LibGit2SharpException ex) when (IsAuthenticationError(ex))
-            {
-                _logger.LogWarning("Authentication failed for repository {Repository}: {Message}",
-                    repositoryUrl, ex.Message);
-                return GitSyncResult.Failed(ex.Message);
-            }
             catch (LibGit2SharpException ex)
             {
                 _logger.LogError(ex, "Git operation failed for {Repository}", repositoryUrl);
@@ -405,14 +399,6 @@ public class GitSyncService : IGitSyncService
 
             return GitSyncResult.Succeeded(commitHash, isClone: true);
         }
-        catch (Exception ex) when (IsAuthenticationError(ex))
-        {
-            // Authentication failures are dependency configuration issues, not service errors.
-            // A client binding a repo that requires auth (or providing wrong credentials) is
-            // a normal failure mode that should not emit error-level service error events.
-            _logger.LogWarning("Authentication failed for repository {Url}: {Message}", repositoryUrl, ex.Message);
-            return GitSyncResult.Failed(ex.Message);
-        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to clone repository {Url}", repositoryUrl);
@@ -487,11 +473,6 @@ public class GitSyncService : IGitSyncService
 
             return GitSyncResult.Succeeded(commitHash, isClone: false);
         }
-        catch (Exception ex) when (IsAuthenticationError(ex))
-        {
-            _logger.LogWarning("Authentication failed for repository at {Path}: {Message}", localPath, ex.Message);
-            return GitSyncResult.Failed(ex.Message);
-        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to pull repository at {Path}", localPath);
@@ -507,21 +488,6 @@ public class GitSyncService : IGitSyncService
                 stack: ex.StackTrace);
             return GitSyncResult.Failed(ex.Message);
         }
-    }
-
-    /// <summary>
-    /// Detects authentication-related git errors that represent configuration issues,
-    /// not service failures. These should be logged at Warning, not Error, and should
-    /// not emit service error events.
-    /// </summary>
-    private static bool IsAuthenticationError(Exception ex)
-    {
-        var message = ex.Message;
-        return message.Contains("authentication required", StringComparison.OrdinalIgnoreCase)
-            || message.Contains("authentication failed", StringComparison.OrdinalIgnoreCase)
-            || message.Contains("credentials", StringComparison.OrdinalIgnoreCase)
-            || message.Contains("401", StringComparison.Ordinal)
-            || message.Contains("403", StringComparison.Ordinal);
     }
 
     #endregion
