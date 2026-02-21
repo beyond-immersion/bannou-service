@@ -52,7 +52,7 @@ public sealed class EmotionalArc
         var upperIndex = Math.Min(lowerIndex + 1, SampledTrajectory.Length - 1);
         var fraction = scaledPosition - lowerIndex;
 
-        return SampledTrajectory[lowerIndex] * (1 - fraction) +
-               SampledTrajectory[upperIndex] * fraction;
+        return (SampledTrajectory[lowerIndex] * (1 - fraction)) +
+            (SampledTrajectory[upperIndex] * fraction);
     }
 }
