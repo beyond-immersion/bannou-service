@@ -829,10 +829,7 @@ public class ContractTestHandler : BaseHttpTestHandler
                 contractClient, template.TemplateId, charA.CharacterId, charB.CharacterId,
                 new ContractTerms
                 {
-                    CustomTerms = new Dictionary<string, object>
-                    {
-                        ["exclusivity"] = true
-                    }
+                    Exclusivity = true
                 });
 
             if (firstContract.Status != ContractStatus.Active)
@@ -1254,32 +1251,8 @@ public class ContractTestHandler : BaseHttpTestHandler
                 IdempotencyKey = $"contract_test_credit_{Guid.NewGuid():N}"
             });
 
-            // Step 4: Create contract template with currency clauses in CustomTerms
+            // Step 4: Create contract template with typed currency clauses
             // The clauses define a fee (10%) and a distribution (remainder)
-            var clausesJson = $@"[
-                {{
-                    ""id"": ""platform_fee"",
-                    ""type"": ""currency_transfer"",
-                    ""category"": ""fee"",
-                    ""source_wallet"": ""{{{{PartyA_WalletId}}}}"",
-                    ""destination_wallet"": ""{{{{FeeWalletId}}}}"",
-                    ""currency_code"": ""{currencyCode}"",
-                    ""amount_type"": ""percentage"",
-                    ""amount_value"": 10,
-                    ""party_role"": ""employer""
-                }},
-                {{
-                    ""id"": ""worker_payment"",
-                    ""type"": ""currency_transfer"",
-                    ""category"": ""distribution"",
-                    ""source_wallet"": ""{{{{PartyA_WalletId}}}}"",
-                    ""destination_wallet"": ""{{{{PartyB_WalletId}}}}"",
-                    ""currency_code"": ""{currencyCode}"",
-                    ""amount_type"": ""remainder"",
-                    ""party_role"": ""employer""
-                }}
-            ]";
-
             var template = await contractClient.CreateContractTemplateAsync(new CreateContractTemplateRequest
             {
                 Code = $"exec_template_{DateTime.Now.Ticks}",
@@ -1308,9 +1281,29 @@ public class ContractTestHandler : BaseHttpTestHandler
                 DefaultTerms = new ContractTerms
                 {
                     Duration = "P30D",
-                    CustomTerms = new Dictionary<string, object>
+                    Clauses = new List<ContractClauseDefinition>
                     {
-                        ["clauses"] = clausesJson
+                        new ContractClauseDefinition
+                        {
+                            Id = "platform_fee",
+                            Type = "fee",
+                            Party = "employer",
+                            SourceWallet = "{{PartyA_WalletId}}",
+                            RecipientWallet = "{{FeeWalletId}}",
+                            CurrencyCode = currencyCode,
+                            AmountType = "percentage",
+                            Amount = "10"
+                        },
+                        new ContractClauseDefinition
+                        {
+                            Id = "worker_payment",
+                            Type = "currency_transfer",
+                            Party = "employer",
+                            SourceWallet = "{{PartyA_WalletId}}",
+                            DestinationWallet = "{{PartyB_WalletId}}",
+                            CurrencyCode = currencyCode,
+                            Amount = "remainder"
+                        }
                     }
                 },
                 DefaultEnforcementMode = EnforcementMode.EventOnly,
