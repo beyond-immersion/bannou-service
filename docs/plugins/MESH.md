@@ -287,3 +287,5 @@ This section tracks active development work on items from the quirks/bugs lists 
 - **2026-02-07**: Closed [#324](https://github.com/beyond-immersion/bannou-service/issues/324) - Added `RequestTimeoutSeconds` configuration (default 30s) for per-request timeout.
 - **2026-02-08**: Closed [#162](https://github.com/beyond-immersion/bannou-service/issues/162) - LocalMeshStateManager minimal by design; testing uses mocked interfaces (unit) and real Redis (integration).
 - **2026-02-08**: Closed [#144](https://github.com/beyond-immersion/bannou-service/issues/144) - ABML `service_call` contradicts established architecture; forbidden at compiler and runtime. Purpose-built actions and Variable Providers are the correct patterns.
+- **2026-02-08**: Closed [#260](https://github.com/beyond-immersion/bannou-service/issues/260) - ServiceNavigator.RawApi uses IMeshInvocationClient instead of direct HttpClient.
+- **2026-02-21**: L3 hardening pass — schema NRT/validation fixes, enum consolidation to `-api.yaml`, T23/T26/T30/T7 code fixes, BuildServiceProvider anti-pattern removed, test updates. 0 warnings, 55 tests passing.

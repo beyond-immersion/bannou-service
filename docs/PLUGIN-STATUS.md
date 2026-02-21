@@ -44,7 +44,7 @@ This is **NOT** a code investigation tool. It reports the state depicted in each
 |--------|-------|-------|------|---------|
 | [State](#state-status) | L0 | 95% | 0 | Rock-solid foundation. No stubs, no bugs. Only migration tooling remains. |
 | [Messaging](#messaging-status) | L0 | 82% | 0 | Core pub/sub excellent. Stubs (lifecycle events, metrics) and design debt remain. |
-| [Mesh](#mesh-status) | L0 | 93% | 0 | Feature-complete. Circuit breaker, health checks, load balancing all done. |
+| [Mesh](#mesh-status) | L0 | 97% | 0 | L3-hardened. Schema NRT/validation, T23/T26/T30/T7 code fixes, BuildServiceProvider removed. |
 | [Telemetry](#telemetry-status) | L0 | 93% | 0 | Feature-complete observability. OpenTelemetry + Prometheus. Only speculative extensions remain. |
 | [Account](#account-status) | L1 | 92% | 0 | Production-ready. Only post-launch extensions remain. |
 | [Auth](#auth-status) | L1 | 88% | 0 | Core complete with MFA. Remaining items are downstream integration. |
@@ -191,9 +191,9 @@ gh issue list --search "Messaging:" --state open
 
 **Layer**: L0 Infrastructure | **Deep Dive**: [MESH.md](plugins/MESH.md)
 
-### Production Readiness: 93%
+### Production Readiness: 97%
 
-Feature-complete service mesh: YARP-based HTTP routing, Redis-backed service discovery with TTL health tracking, 5 load balancing algorithms (RoundRobin, LeastConnections, Weighted, WeightedRoundRobin, Random), distributed per-appId circuit breaker with Lua-backed atomic state transitions and cross-instance sync via RabbitMQ, retry with exponential backoff, proactive health checking with automatic deregistration, degradation detection, event-driven auto-registration from Orchestrator heartbeats, endpoint caching. 27 configuration properties all wired. No stubs, no bugs, no design considerations. All production readiness issues closed. Only two speculative extensions remain.
+Feature-complete service mesh: YARP-based HTTP routing, Redis-backed service discovery with TTL health tracking, 5 load balancing algorithms (RoundRobin, LeastConnections, Weighted, WeightedRoundRobin, Random), distributed per-appId circuit breaker with Lua-backed atomic state transitions and cross-instance sync via RabbitMQ, retry with exponential backoff, proactive health checking with automatic deregistration, degradation detection, event-driven auto-registration from Orchestrator heartbeats, endpoint caching. 27 configuration properties all wired. No stubs, no bugs, no design considerations. All production readiness issues closed. L3-hardened (2026-02-21): schema NRT compliance, validation constraints, enum consolidation to `-api.yaml`, T23 async patterns, T26 sentinel value removal, T30 telemetry spans across all helper classes, T7 error event publishing, BuildServiceProvider anti-pattern removed. 0 warnings, 55 tests passing. Only one speculative extension remains.
 
 ### Bug Count: 0
 

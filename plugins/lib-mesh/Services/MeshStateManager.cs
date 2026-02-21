@@ -18,6 +18,7 @@ public class MeshStateManager : IMeshStateManager
 {
     private readonly ILogger<MeshStateManager> _logger;
     private readonly IStateStoreFactory _stateStoreFactory;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     // Index key for tracking all known instance IDs (avoids KEYS/SCAN)
     private const string GLOBAL_INDEX_KEY = "_index";
@@ -34,17 +35,22 @@ public class MeshStateManager : IMeshStateManager
     /// </summary>
     /// <param name="stateStoreFactory">State store factory for Redis access.</param>
     /// <param name="logger">Logger instance.</param>
+    /// <param name="telemetryProvider">Telemetry provider for instrumentation (NullTelemetryProvider when telemetry disabled).</param>
     public MeshStateManager(
         IStateStoreFactory stateStoreFactory,
-        ILogger<MeshStateManager> logger)
+        ILogger<MeshStateManager> logger,
+        ITelemetryProvider telemetryProvider)
     {
         _stateStoreFactory = stateStoreFactory;
         _logger = logger;
+        _telemetryProvider = telemetryProvider;
     }
 
     /// <inheritdoc/>
     public async Task<bool> InitializeAsync(CancellationToken cancellationToken = default)
     {
+        using var activity = _telemetryProvider.StartActivity(TelemetryComponents.Mesh, "mesh.state.initialize", ActivityKind.Internal);
+
         try
         {
             // Thread-safe check-and-set to prevent double initialization
@@ -94,6 +100,8 @@ public class MeshStateManager : IMeshStateManager
     /// <inheritdoc/>
     public async Task<(bool IsHealthy, string? Message, TimeSpan? OperationTime)> CheckHealthAsync()
     {
+        using var activity = _telemetryProvider.StartActivity(TelemetryComponents.Mesh, "mesh.state.check_health", ActivityKind.Internal);
+
         if (_globalIndexStore == null)
         {
             return (false, "State stores not initialized", null);
@@ -119,6 +127,8 @@ public class MeshStateManager : IMeshStateManager
     /// <inheritdoc/>
     public async Task<bool> RegisterEndpointAsync(MeshEndpoint endpoint, int ttlSeconds)
     {
+        using var activity = _telemetryProvider.StartActivity(TelemetryComponents.Mesh, "mesh.state.register", ActivityKind.Internal);
+
         if (_endpointStore == null || _appIdIndexStore == null || _globalIndexStore == null)
         {
             _logger.LogWarning("State stores not initialized. Cannot register endpoint.");
@@ -155,6 +165,8 @@ public class MeshStateManager : IMeshStateManager
     /// <inheritdoc/>
     public async Task<bool> DeregisterEndpointAsync(Guid instanceId, string appId)
     {
+        using var activity = _telemetryProvider.StartActivity(TelemetryComponents.Mesh, "mesh.state.deregister", ActivityKind.Internal);
+
         if (_endpointStore == null || _appIdIndexStore == null || _globalIndexStore == null)
         {
             _logger.LogWarning("State stores not initialized. Cannot deregister endpoint.");
@@ -197,6 +209,8 @@ public class MeshStateManager : IMeshStateManager
         ICollection<string>? issues,
         int ttlSeconds)
     {
+        using var activity = _telemetryProvider.StartActivity(TelemetryComponents.Mesh, "mesh.state.heartbeat", ActivityKind.Internal);
+
         if (_endpointStore == null || _appIdIndexStore == null)
         {
             _logger.LogWarning("State stores not initialized. Cannot update heartbeat.");
@@ -247,6 +261,8 @@ public class MeshStateManager : IMeshStateManager
     /// <inheritdoc/>
     public async Task<List<MeshEndpoint>> GetEndpointsForAppIdAsync(string appId, bool includeUnhealthy = false)
     {
+        using var activity = _telemetryProvider.StartActivity(TelemetryComponents.Mesh, "mesh.state.get_endpoints", ActivityKind.Internal);
+
         var endpoints = new List<MeshEndpoint>();
 
         if (_endpointStore == null || _appIdIndexStore == null)
@@ -292,6 +308,8 @@ public class MeshStateManager : IMeshStateManager
     /// <inheritdoc/>
     public async Task<List<MeshEndpoint>> GetAllEndpointsAsync(string? appIdPrefix = null)
     {
+        using var activity = _telemetryProvider.StartActivity(TelemetryComponents.Mesh, "mesh.state.get_all", ActivityKind.Internal);
+
         var endpoints = new List<MeshEndpoint>();
 
         if (_endpointStore == null || _globalIndexStore == null)
@@ -338,6 +356,8 @@ public class MeshStateManager : IMeshStateManager
     /// <inheritdoc/>
     public async Task<MeshEndpoint?> GetEndpointByInstanceIdAsync(Guid instanceId)
     {
+        using var activity = _telemetryProvider.StartActivity(TelemetryComponents.Mesh, "mesh.state.get_by_id", ActivityKind.Internal);
+
         if (_endpointStore == null)
         {
             _logger.LogWarning("State stores not initialized. Cannot get endpoint.");

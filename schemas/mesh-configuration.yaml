@@ -42,12 +42,15 @@ x-service-configuration:
 
     EndpointPort:
       type: integer
+      minimum: 1
+      maximum: 65535
       description: Port for mesh endpoint registration.
       env: MESH_ENDPOINT_PORT
       default: 80
 
     DefaultMaxConnections:
       type: integer
+      minimum: 1
       description: Default max connections for auto-registered endpoints when heartbeat does not provide capacity info.
       env: MESH_DEFAULT_MAX_CONNECTIONS
       default: 1000
@@ -134,6 +137,7 @@ x-service-configuration:
 
     HealthCheckFailureThreshold:
       type: integer
+      minimum: 0
       description: Consecutive health check failures before deregistering endpoint (0 disables deregistration)
       env: MESH_HEALTH_CHECK_FAILURE_THRESHOLD
       default: 3
@@ -168,6 +172,7 @@ x-service-configuration:
 
     CircuitBreakerThreshold:
       type: integer
+      minimum: 1
       description: Number of consecutive failures before opening circuit
       env: MESH_CIRCUIT_BREAKER_THRESHOLD
       default: 5
@@ -184,12 +189,14 @@ x-service-configuration:
     # =========================================================================
     MaxRetries:
       type: integer
+      minimum: 0
       description: Maximum retry attempts for failed service calls
       env: MESH_MAX_RETRIES
       default: 3
 
     RetryDelayMilliseconds:
       type: integer
+      minimum: 0
       description: Initial delay between retries (doubles on each retry)
       env: MESH_RETRY_DELAY_MILLISECONDS
       default: 100
@@ -245,11 +252,13 @@ x-service-configuration:
     # =========================================================================
     MaxTopEndpointsReturned:
       type: integer
+      minimum: 1
       description: Maximum top endpoints returned in health status queries
       env: MESH_MAX_TOP_ENDPOINTS_RETURNED
       default: 2
     MaxServiceMappingsDisplayed:
       type: integer
+      minimum: 1
       description: Maximum service mappings shown in diagnostic logs
       env: MESH_MAX_SERVICE_MAPPINGS_DISPLAYED
       default: 10

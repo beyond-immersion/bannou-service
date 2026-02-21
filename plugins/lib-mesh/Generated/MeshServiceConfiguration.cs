@@ -69,12 +69,14 @@ public class MeshServiceConfiguration : IServiceConfiguration
     /// Port for mesh endpoint registration.
     /// Environment variable: MESH_ENDPOINT_PORT
     /// </summary>
+    [ConfigRange(Minimum = 1, Maximum = 65535)]
     public int EndpointPort { get; set; } = 80;
 
     /// <summary>
     /// Default max connections for auto-registered endpoints when heartbeat does not provide capacity info.
     /// Environment variable: MESH_DEFAULT_MAX_CONNECTIONS
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int DefaultMaxConnections { get; set; } = 1000;
 
     /// <summary>
@@ -148,6 +150,7 @@ public class MeshServiceConfiguration : IServiceConfiguration
     /// Consecutive health check failures before deregistering endpoint (0 disables deregistration)
     /// Environment variable: MESH_HEALTH_CHECK_FAILURE_THRESHOLD
     /// </summary>
+    [ConfigRange(Minimum = 0)]
     public int HealthCheckFailureThreshold { get; set; } = 3;
 
     /// <summary>
@@ -174,6 +177,7 @@ public class MeshServiceConfiguration : IServiceConfiguration
     /// Number of consecutive failures before opening circuit
     /// Environment variable: MESH_CIRCUIT_BREAKER_THRESHOLD
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int CircuitBreakerThreshold { get; set; } = 5;
 
     /// <summary>
@@ -187,12 +191,14 @@ public class MeshServiceConfiguration : IServiceConfiguration
     /// Maximum retry attempts for failed service calls
     /// Environment variable: MESH_MAX_RETRIES
     /// </summary>
+    [ConfigRange(Minimum = 0)]
     public int MaxRetries { get; set; } = 3;
 
     /// <summary>
     /// Initial delay between retries (doubles on each retry)
     /// Environment variable: MESH_RETRY_DELAY_MILLISECONDS
     /// </summary>
+    [ConfigRange(Minimum = 0)]
     public int RetryDelayMilliseconds { get; set; } = 100;
 
     /// <summary>
@@ -241,12 +247,14 @@ public class MeshServiceConfiguration : IServiceConfiguration
     /// Maximum top endpoints returned in health status queries
     /// Environment variable: MESH_MAX_TOP_ENDPOINTS_RETURNED
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int MaxTopEndpointsReturned { get; set; } = 2;
 
     /// <summary>
     /// Maximum service mappings shown in diagnostic logs
     /// Environment variable: MESH_MAX_SERVICE_MAPPINGS_DISPLAYED
     /// </summary>
+    [ConfigRange(Minimum = 1)]
     public int MaxServiceMappingsDisplayed { get; set; } = 10;
 
 }

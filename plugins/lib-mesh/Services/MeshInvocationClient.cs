@@ -95,6 +95,7 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
             stateStoreFactory,
             messageBus,
             logger,
+            telemetryProvider,
             configuration.CircuitBreakerThreshold,
             TimeSpan.FromSeconds(configuration.CircuitBreakerResetSeconds));
 
@@ -208,7 +209,7 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
         }
 
         // Start telemetry activity for this mesh invocation
-        using var activity = _telemetryProvider?.StartActivity(
+        using var activity = _telemetryProvider.StartActivity(
             TelemetryComponents.Mesh,
             "mesh.invoke",
             ActivityKind.Client);
@@ -403,11 +404,6 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
     /// </summary>
     private void RecordInvocationMetrics(string appId, string method, bool success, int retryCount, double durationSeconds)
     {
-        if (_telemetryProvider == null)
-        {
-            return;
-        }
-
         var tags = new[]
         {
             new KeyValuePair<string, object?>("service", appId),
@@ -424,11 +420,6 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
     /// </summary>
     private void RecordRetryMetric(string appId, string method, string reason)
     {
-        if (_telemetryProvider == null)
-        {
-            return;
-        }
-
         var tags = new[]
         {
             new KeyValuePair<string, object?>("service", appId),
@@ -444,11 +435,6 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
     /// </summary>
     private void RecordCircuitBreakerStateChange(string appId, string state)
     {
-        if (_telemetryProvider == null)
-        {
-            return;
-        }
-
         var tags = new[]
         {
             new KeyValuePair<string, object?>("app_id", appId),
@@ -539,7 +525,7 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
         }
 
         // Start telemetry activity for this raw mesh invocation (distinct from normal invoke)
-        using var activity = _telemetryProvider?.StartActivity(
+        using var activity = _telemetryProvider.StartActivity(
             TelemetryComponents.Mesh,
             "mesh.invoke.raw",
             ActivityKind.Client);
@@ -698,11 +684,6 @@ public sealed class MeshInvocationClient : IMeshInvocationClient, IDisposable
     /// </summary>
     private void RecordRawInvocationMetrics(string appId, string method, bool success, int retryCount, double durationSeconds)
     {
-        if (_telemetryProvider == null)
-        {
-            return;
-        }
-
         var tags = new[]
         {
             new KeyValuePair<string, object?>("service", appId),

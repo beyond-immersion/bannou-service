@@ -6,6 +6,7 @@ using BeyondImmersion.BannouService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace BeyondImmersion.BannouService.Mesh;
 
@@ -23,6 +24,7 @@ public partial class MeshService : IMeshService
     private readonly MeshServiceConfiguration _configuration;
     private readonly IMeshStateManager _stateManager;
     private readonly IServiceAppMappingResolver _mappingResolver;
+    private readonly ITelemetryProvider _telemetryProvider;
 
     // Round-robin counter for load balancing (per app-id)
     // Uses RoundRobinCounter from MeshServiceModels.cs for thread-safe atomic increments
@@ -46,19 +48,22 @@ public partial class MeshService : IMeshService
     /// <param name="stateManager">The state manager for endpoint registry access via lib-state.</param>
     /// <param name="mappingResolver">The service-to-app-id mapping resolver (shared across all services).</param>
     /// <param name="eventConsumer">The event consumer for registering event handlers.</param>
+    /// <param name="telemetryProvider">Telemetry provider for instrumentation (NullTelemetryProvider when telemetry disabled).</param>
     public MeshService(
         IMessageBus messageBus,
         ILogger<MeshService> logger,
         MeshServiceConfiguration configuration,
         IMeshStateManager stateManager,
         IServiceAppMappingResolver mappingResolver,
-        IEventConsumer eventConsumer)
+        IEventConsumer eventConsumer,
+        ITelemetryProvider telemetryProvider)
     {
         _messageBus = messageBus;
         _logger = logger;
         _configuration = configuration;
         _stateManager = stateManager;
         _mappingResolver = mappingResolver;
+        _telemetryProvider = telemetryProvider;
 
         RegisterEventConsumers(eventConsumer);
     }
@@ -148,7 +153,7 @@ public partial class MeshService : IMeshService
             "Registering endpoint for app {AppId} at {Host}:{Port}",
             body.AppId, body.Host, body.Port);
 
-        var instanceId = body.InstanceId != Guid.Empty ? body.InstanceId : Guid.NewGuid();
+        var instanceId = body.InstanceId;
         var now = DateTimeOffset.UtcNow;
 
         var endpoint = new MeshEndpoint
@@ -190,7 +195,7 @@ public partial class MeshService : IMeshService
     /// Deregister an endpoint from the mesh.
     /// Called on graceful shutdown.
     /// </summary>
-    public async Task<StatusCodes> DeregisterEndpointAsync(
+    public async Task<(StatusCodes, DeregisterEndpointResponse?)> DeregisterEndpointAsync(
         DeregisterEndpointRequest body,
         CancellationToken cancellationToken)
     {
@@ -201,7 +206,7 @@ public partial class MeshService : IMeshService
         if (endpoint == null)
         {
             _logger.LogWarning("Endpoint {InstanceId} not found for deregistration", body.InstanceId);
-            return StatusCodes.NotFound;
+            return (StatusCodes.NotFound, null);
         }
 
         var success = await _stateManager.DeregisterEndpointAsync(body.InstanceId, endpoint.AppId);
@@ -209,17 +214,20 @@ public partial class MeshService : IMeshService
         if (!success)
         {
             _logger.LogWarning("Failed to deregister endpoint {InstanceId}", body.InstanceId);
-            return StatusCodes.NotFound;
+            return (StatusCodes.NotFound, null);
         }
 
         // Publish deregistration event
         await PublishEndpointDeregisteredEventAsync(
             body.InstanceId,
             endpoint.AppId,
-            MeshEndpointDeregisteredEventReason.Graceful,
+            DeregistrationReason.Graceful,
             cancellationToken);
 
-        return StatusCodes.OK;
+        return (StatusCodes.OK, new DeregisterEndpointResponse
+        {
+            Message = $"Endpoint {body.InstanceId} deregistered from app-id '{endpoint.AppId}'"
+        });
     }
 
     /// <summary>
@@ -623,6 +631,8 @@ public partial class MeshService : IMeshService
     {
         try
         {
+            using var activity = _telemetryProvider.StartActivity(TelemetryComponents.Mesh, "mesh.publish_registered", ActivityKind.Internal);
+
             var evt = new MeshEndpointRegisteredEvent
             {
                 EventName = "mesh.endpoint_registered",
@@ -645,17 +655,23 @@ public partial class MeshService : IMeshService
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to publish endpoint registered event");
+            await _messageBus.TryPublishErrorAsync(
+                "mesh", "PublishEndpointRegistered", ex.GetType().Name, ex.Message,
+                severity: ServiceErrorEventSeverity.Warning,
+                cancellationToken: cancellationToken);
         }
     }
 
     private async Task PublishEndpointDeregisteredEventAsync(
         Guid instanceId,
         string appId,
-        MeshEndpointDeregisteredEventReason reason,
+        DeregistrationReason reason,
         CancellationToken cancellationToken)
     {
         try
         {
+            using var activity = _telemetryProvider.StartActivity(TelemetryComponents.Mesh, "mesh.publish_deregistered", ActivityKind.Internal);
+
             var evt = new MeshEndpointDeregisteredEvent
             {
                 EventName = "mesh.endpoint_deregistered",
@@ -676,6 +692,10 @@ public partial class MeshService : IMeshService
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to publish endpoint deregistered event");
+            await _messageBus.TryPublishErrorAsync(
+                "mesh", "PublishEndpointDeregistered", ex.GetType().Name, ex.Message,
+                severity: ServiceErrorEventSeverity.Warning,
+                cancellationToken: cancellationToken);
         }
     }
 

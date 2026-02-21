@@ -46,37 +46,40 @@ public sealed class LocalMeshStateManager : IMeshStateManager
     }
 
     /// <inheritdoc/>
-    public Task<bool> InitializeAsync(CancellationToken cancellationToken = default)
+    public async Task<bool> InitializeAsync(CancellationToken cancellationToken = default)
     {
+        await Task.CompletedTask;
         _logger.LogInformation("Local mesh state manager ready (no state store connection required)");
-        return Task.FromResult(true);
+        return true;
     }
 
     /// <inheritdoc/>
-    public Task<(bool IsHealthy, string? Message, TimeSpan? OperationTime)> CheckHealthAsync()
+    public async Task<(bool IsHealthy, string? Message, TimeSpan? OperationTime)> CheckHealthAsync()
     {
-        return Task.FromResult<(bool IsHealthy, string? Message, TimeSpan? OperationTime)>(
-            (true, "Local routing mode (no state store)", TimeSpan.Zero));
+        await Task.CompletedTask;
+        return (true, "Local routing mode (no state store)", TimeSpan.Zero);
     }
 
     /// <inheritdoc/>
-    public Task<bool> RegisterEndpointAsync(MeshEndpoint endpoint, int ttlSeconds)
+    public async Task<bool> RegisterEndpointAsync(MeshEndpoint endpoint, int ttlSeconds)
     {
+        await Task.CompletedTask;
         _logger.LogDebug("Endpoint registration ignored in local mode: {AppId}:{InstanceId}",
             endpoint.AppId, endpoint.InstanceId);
-        return Task.FromResult(true);
+        return true;
     }
 
     /// <inheritdoc/>
-    public Task<bool> DeregisterEndpointAsync(Guid instanceId, string appId)
+    public async Task<bool> DeregisterEndpointAsync(Guid instanceId, string appId)
     {
+        await Task.CompletedTask;
         _logger.LogDebug("Endpoint deregistration ignored in local mode: {AppId}:{InstanceId}",
             appId, instanceId);
-        return Task.FromResult(true);
+        return true;
     }
 
     /// <inheritdoc/>
-    public Task<bool> UpdateHeartbeatAsync(
+    public async Task<bool> UpdateHeartbeatAsync(
         Guid instanceId,
         string appId,
         EndpointStatus status,
@@ -85,36 +88,41 @@ public sealed class LocalMeshStateManager : IMeshStateManager
         ICollection<string>? issues,
         int ttlSeconds)
     {
+        await Task.CompletedTask;
         _logger.LogDebug("Heartbeat ignored in local mode: {AppId}:{InstanceId}", appId, instanceId);
-        return Task.FromResult(true);
+        return true;
     }
 
     /// <inheritdoc/>
-    public Task<List<MeshEndpoint>> GetEndpointsForAppIdAsync(string appId, bool includeUnhealthy = false)
+    public async Task<List<MeshEndpoint>> GetEndpointsForAppIdAsync(string appId, bool includeUnhealthy = false)
     {
+        await Task.CompletedTask;
         // Always return the local endpoint - all routing goes local
         _logger.LogDebug("Returning local endpoint for app-id '{AppId}' (local mode)", appId);
-        return Task.FromResult(new List<MeshEndpoint> { _localEndpoint });
+        return new List<MeshEndpoint> { _localEndpoint };
     }
 
     /// <inheritdoc/>
-    public Task<List<MeshEndpoint>> GetAllEndpointsAsync(string? appIdPrefix = null)
+    public async Task<List<MeshEndpoint>> GetAllEndpointsAsync(string? appIdPrefix = null)
     {
-        return Task.FromResult(new List<MeshEndpoint> { _localEndpoint });
+        await Task.CompletedTask;
+        return new List<MeshEndpoint> { _localEndpoint };
     }
 
     /// <inheritdoc/>
-    public Task<MeshEndpoint?> GetEndpointByInstanceIdAsync(Guid instanceId)
+    public async Task<MeshEndpoint?> GetEndpointByInstanceIdAsync(Guid instanceId)
     {
+        await Task.CompletedTask;
+
         // If looking for our local instance, return it
         if (instanceId == _localEndpoint.InstanceId)
         {
-            return Task.FromResult<MeshEndpoint?>(_localEndpoint);
+            return _localEndpoint;
         }
 
         // Otherwise, still return the local endpoint (all routing goes local)
         _logger.LogDebug("Instance {InstanceId} not found in local mode, returning local endpoint", instanceId);
-        return Task.FromResult<MeshEndpoint?>(_localEndpoint);
+        return _localEndpoint;
     }
 
     /// <inheritdoc/>

@@ -18,34 +18,32 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
     public override string DisplayName => "Mesh Service";
 
     private IMeshStateManager? _stateManager;
-    private bool _useLocalRouting;
-    private MeshServiceConfiguration? _cachedConfig;
 
     public override void ConfigureServices(IServiceCollection services)
     {
         Logger?.LogDebug("Configuring mesh service dependencies");
 
-        // Get configuration to check for local routing mode
-        // Cache the provider to avoid multiple builds and ensure consistent config
-        var tempProvider = services.BuildServiceProvider();
-        _cachedConfig = tempProvider.GetService<MeshServiceConfiguration>();
-        var config = _cachedConfig;
-        _useLocalRouting = config?.UseLocalRouting ?? false;
-
-        if (_useLocalRouting)
+        // Register IMeshStateManager via factory delegate that checks config at resolution time.
+        // Avoids BuildServiceProvider anti-pattern - config is resolved when the singleton is
+        // first requested, not during ConfigureServices. Follows established Actor/Asset plugin pattern.
+        services.AddSingleton<IMeshStateManager>(sp =>
         {
-            Logger?.LogWarning(
-                "Mesh using LOCAL ROUTING mode. All service calls will route locally (no state store)!");
+            var config = sp.GetRequiredService<MeshServiceConfiguration>();
+            if (config.UseLocalRouting)
+            {
+                sp.GetRequiredService<ILogger<MeshServicePlugin>>().LogWarning(
+                    "Mesh using LOCAL ROUTING mode. All service calls will route locally (no state store)!");
 
-            // Register LocalMeshStateManager (no state store connection)
-            services.AddSingleton<IMeshStateManager, LocalMeshStateManager>();
-        }
-        else
-        {
-            // Register MeshStateManager as Singleton (uses lib-state for Redis access)
-            // Uses IStateStoreFactory for consistent infrastructure access per IMPLEMENTATION TENETS
-            services.AddSingleton<IMeshStateManager, MeshStateManager>();
-        }
+                return new LocalMeshStateManager(
+                    config,
+                    sp.GetRequiredService<ILogger<LocalMeshStateManager>>());
+            }
+
+            return new MeshStateManager(
+                sp.GetRequiredService<IStateStoreFactory>(),
+                sp.GetRequiredService<ILogger<MeshStateManager>>(),
+                sp.GetRequiredService<ITelemetryProvider>());
+        });
 
         // Register active health checking background service
         services.AddHostedService<MeshHealthCheckService>();
@@ -81,9 +79,11 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
 
     protected override async Task<bool> OnStartAsync()
     {
-        Logger?.LogInformation("Starting Mesh service{Mode}", _useLocalRouting ? " (local routing)" : "");
-
         var serviceProvider = ServiceProvider ?? throw new InvalidOperationException("ServiceProvider not available during OnStartAsync");
+        var meshConfig = serviceProvider.GetRequiredService<MeshServiceConfiguration>();
+
+        Logger?.LogInformation("Starting Mesh service{Mode}", meshConfig.UseLocalRouting ? " (local routing)" : "");
+
         _stateManager = serviceProvider.GetRequiredService<IMeshStateManager>();
 
         if (!await _stateManager.InitializeAsync(CancellationToken.None))
@@ -113,7 +113,7 @@ public class MeshServicePlugin : StandardServicePlugin<IMeshService>
 
         // Get app configuration for app-id
         var appConfig = serviceProvider.GetRequiredService<AppConfiguration>();
-        var meshConfig = _cachedConfig ?? serviceProvider.GetRequiredService<MeshServiceConfiguration>();
+        var meshConfig = serviceProvider.GetRequiredService<MeshServiceConfiguration>();
         var appId = appConfig.EffectiveAppId;
 
         // Endpoint host defaults to app-id for Docker Compose compatibility (hostname = service name)

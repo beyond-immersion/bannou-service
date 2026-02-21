@@ -91,7 +91,7 @@ public partial class MeshService
             {
                 // Auto-register new endpoint from heartbeat
                 // This enables automatic discovery without explicit registration
-                var instanceId = evt.ServiceId != Guid.Empty ? evt.ServiceId : Guid.NewGuid();
+                var instanceId = evt.ServiceId;
                 var endpoint = new MeshEndpoint
                 {
                     InstanceId = instanceId,
@@ -219,24 +219,24 @@ public partial class MeshService
     /// <summary>
     /// Determines the reason for degradation based on heartbeat data.
     /// </summary>
-    private MeshEndpointDegradedEventReason DetermineDegradationReason(
+    private DegradedReason DetermineDegradationReason(
         ServiceHeartbeatEvent evt,
         MeshEndpoint existingEndpoint)
     {
         // Check for high load first (most specific)
         if (evt.Capacity?.CpuUsage >= _configuration.LoadThresholdPercent)
         {
-            return MeshEndpointDegradedEventReason.HighLoad;
+            return DegradedReason.HighLoad;
         }
 
         // Check for high connection count
         if (evt.Capacity?.CurrentConnections >= existingEndpoint.MaxConnections)
         {
-            return MeshEndpointDegradedEventReason.HighConnectionCount;
+            return DegradedReason.HighConnectionCount;
         }
 
         // Default to missed heartbeat (status came from heartbeat status field)
-        return MeshEndpointDegradedEventReason.MissedHeartbeat;
+        return DegradedReason.MissedHeartbeat;
     }
 
     /// <summary>
@@ -247,7 +247,7 @@ public partial class MeshService
         MeshEndpoint endpoint,
         EndpointStatus previousStatus,
         EndpointStatus newStatus,
-        MeshEndpointDegradedEventReason reason,
+        DegradedReason reason,
         float? loadPercent,
         DateTimeOffset? lastHeartbeatAt)
     {
@@ -302,6 +302,10 @@ public partial class MeshService
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to publish degradation event for endpoint {InstanceId}", endpoint.InstanceId);
+            await _messageBus.TryPublishErrorAsync(
+                "mesh", "PublishDegradationEvent", ex.GetType().Name, ex.Message,
+                severity: ServiceErrorEventSeverity.Warning,
+                cancellationToken: CancellationToken.None);
         }
     }
 }
